@@ -59,38 +59,53 @@ export default async function middleware(request: NextRequest) {
   const dashboardUrl = (): URL =>
     new URL(locale === 'en' ? '/en/dashboard' : '/dashboard', request.url)
 
-  // ── Auth guard for /dashboard ─────────────────────────────────────────────
+  // ── Auth & RBAC logic ─────────────────────────────────────────────────────
 
-  if (DASHBOARD_PATTERN.test(pathname)) {
+  const isDashboard = DASHBOARD_PATTERN.test(pathname)
+  const isLogin     = LOGIN_PATTERN.test(pathname)
+
+  if (isDashboard || isLogin) {
     if (!user) {
-      return NextResponse.redirect(loginUrl(pathname))
+      if (isDashboard) {
+        const response = NextResponse.redirect(loginUrl(pathname))
+        supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+        return response
+      }
+      // On login page and not authenticated -> fall through to intlMiddleware
+    } else {
+      // User is authenticated in Supabase Auth. Now check if they are authorized staff.
+      const { data: staffRow } = await supabase
+        .from('staff_basic')
+        .select('role')
+        .eq('id', user.id)
+        .eq('is_active', true)
+        .single()
+
+      if (!staffRow) {
+        // Logged in but NO staff profile -> only allowed on /login
+        if (isDashboard) {
+          const response = NextResponse.redirect(loginUrl())
+          supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+          return response
+        }
+        // If on /login and no profile, stay there (prevents loop)
+      } else {
+        // Logged in AND has valid staff profile
+        if (isLogin) {
+          const response = NextResponse.redirect(dashboardUrl())
+          supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+          return response
+        }
+
+        // Dashboard specific RBAC
+        const role = staffRow.role as StaffRole
+        if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
+          const response = NextResponse.redirect(dashboardUrl())
+          supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+          return response
+        }
+      }
     }
-
-    // Verify the user has a valid, active staff profile
-    const { data: staffRow } = await supabase
-      .from('staff_basic')
-      .select('role')
-      .eq('id', user.id)
-      .eq('is_active', true)
-      .single()
-
-    if (!staffRow) {
-      // Authenticated in Supabase Auth but no staff profile — deny access
-      return NextResponse.redirect(loginUrl())
-    }
-
-    const role = staffRow.role as StaffRole
-
-    // /dashboard/staff requires branch_manager rank or above
-    if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
-      return NextResponse.redirect(dashboardUrl())
-    }
-  }
-
-  // ── Redirect authenticated users away from /login ─────────────────────────
-
-  if (LOGIN_PATTERN.test(pathname) && user) {
-    return NextResponse.redirect(dashboardUrl())
   }
 
   // ── Run next-intl locale routing ──────────────────────────────────────────
@@ -107,7 +122,7 @@ export default async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all paths except: _next/static, _next/image, favicon, public assets
-    '/((?!_next/static|_next/image|favicon|public|assets|fonts|icons|images|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|css|js|woff|woff2|ttf|otf)).*)',
+    // Match all paths except: _next internals, public assets, and auth callbacks
+    '/((?!_next/static|_next/image|favicon|public|assets|fonts|icons|images|auth|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|css|js|woff|woff2|ttf|otf)).*)',
   ],
 }
