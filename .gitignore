@@ -57,5 +57,6 @@ next-env.d.ts
 
 .vercel
 .env*
+!.env*.example
 .agent/reports/
 scratch/
