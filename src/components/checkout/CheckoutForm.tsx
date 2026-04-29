@@ -114,15 +114,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
     try {
       // ── Unified checkout path — always via Server Action ──────────────────
-      console.log('[Checkout Form] Submitting order payload:', {
-        customer: values.customerName,
-        phone: values.customerPhone,
-        branch: values.branchId,
-        itemCount: items.length,
-        points: usePoints ? availablePoints : 0,
-        coupon: appliedCoupon?.id
-      })
-
       const result = await createOrderWithPoints({
         order: {
           customer_name:    values.customerName  ?? null,
@@ -148,8 +139,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
           ? { couponId: appliedCoupon.id }
           : undefined,
       })
-      
-      console.log('[Checkout Form] Result:', result)
 
       if (result.error || !result.orderId) {
         throw new Error(result.error ?? 'Order creation failed')
