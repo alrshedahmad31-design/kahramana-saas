@@ -107,7 +107,7 @@ export default function ExportButtons({ report, isAr }: Props) {
       <button
         onClick={handleCSV}
         disabled={disabled}
-        className={`${btn} border-brand-border bg-brand-surface2 text-brand-text hover:border-brand-gold/50 hover:text-brand-gold disabled:opacity-40`}
+        className={`${btn} border-brand-border bg-brand-surface-2 text-brand-text hover:border-brand-gold/50 hover:text-brand-gold disabled:opacity-40`}
       >
         <File size={14} />
         {busy === 'csv'
@@ -119,7 +119,7 @@ export default function ExportButtons({ report, isAr }: Props) {
       <button
         onClick={handleExcel}
         disabled={disabled}
-        className={`${btn} border-brand-border bg-brand-surface2 text-brand-text hover:border-emerald-700/60 hover:text-emerald-400 disabled:opacity-40`}
+        className={`${btn} border-brand-border bg-brand-surface-2 text-brand-text hover:border-brand-success/60 hover:text-brand-success disabled:opacity-40`}
       >
         <FileSpreadsheet size={14} />
         {busy === 'excel'
@@ -131,7 +131,7 @@ export default function ExportButtons({ report, isAr }: Props) {
       <button
         onClick={handlePDF}
         disabled={disabled}
-        className={`${btn} border-brand-border bg-brand-surface2 text-brand-text hover:border-red-700/60 hover:text-red-400 disabled:opacity-40`}
+        className={`${btn} border-brand-border bg-brand-surface-2 text-brand-text hover:border-brand-error/60 hover:text-brand-error disabled:opacity-40`}
       >
         <FileText size={14} />
         {busy === 'pdf'

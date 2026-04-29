@@ -42,15 +42,8 @@ export default async function AboutPage() {
     '@type': 'AboutPage',
     name: isAr ? 'قصتنا — كهرمانة بغداد' : 'Our Story — Kahramana Baghdad',
     url: `https://kahramanat.com/${locale}/about`,
-    mainEntity: {
-      '@type': 'Restaurant',
-      name: 'كهرمانة بغداد',
-      alternateName: 'Kahramana Baghdad',
-      foundingDate: '2018',
-      url: 'https://kahramanat.com',
-      addressCountry: 'BH',
-      servesCuisine: ['Iraqi', 'Middle Eastern'],
-    },
+    inLanguage: isAr ? 'ar-BH' : 'en-BH',
+    mainEntity: { '@id': 'https://kahramanat.com/#organization' },
   }
 
   return (

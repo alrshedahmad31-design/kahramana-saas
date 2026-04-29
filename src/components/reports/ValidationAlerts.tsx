@@ -14,15 +14,15 @@ const ICONS: Record<string, string> = {
 }
 
 const BG: Record<string, string> = {
-  error:   'bg-red-950/40 border-red-800/50 text-red-300',
-  warning: 'bg-orange-950/40 border-orange-700/50 text-orange-300',
-  info:    'bg-blue-950/40 border-blue-800/50 text-blue-300',
+  error:   'bg-brand-error/15 border-brand-error/40 text-brand-error',
+  warning: 'bg-brand-gold-light/10 border-brand-gold-light/30 text-brand-gold-light',
+  info:    'bg-brand-surface-2 border-brand-border text-brand-muted',
 }
 
 export default function ValidationAlerts({ validation, isAr }: Props) {
   if (validation.flags.length === 0) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 text-sm">
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-success/10 border border-brand-success/30 text-brand-success text-sm">
         <span>✓</span>
         <span className={isAr ? 'font-almarai' : 'font-satoshi'}>
           {isAr ? 'البيانات سليمة — جميع فحوصات الجودة اجتازت بنجاح' : 'Data quality verified — all checks passed'}

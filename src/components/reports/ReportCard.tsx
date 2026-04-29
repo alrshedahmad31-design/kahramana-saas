@@ -37,14 +37,14 @@ export default function ReportCard({
     <div
       className={`rounded-xl border transition-all ${
         isActive
-          ? 'border-brand-gold/60 bg-brand-surface2 shadow-[0_0_20px_rgba(200,146,42,0.08)]'
+          ? 'border-brand-gold/60 bg-brand-surface-2 shadow-[0_0_20px_rgba(200,146,42,0.08)]'
           : 'border-brand-border bg-brand-surface hover:border-brand-gold/30'
       }`}
     >
       <div className="p-5">
         {/* Icon + title */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <div className={`p-2 rounded-lg ${isActive ? 'bg-brand-gold/15' : 'bg-brand-surface2'}`}>
+          <div className={`p-2 rounded-lg ${isActive ? 'bg-brand-gold/15' : 'bg-brand-surface-2'}`}>
             <Icon size={20} className={isActive ? 'text-brand-gold' : 'text-brand-muted'} />
           </div>
           {isActive && (
@@ -75,7 +75,7 @@ export default function ReportCard({
           className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
             isActive && !isGenerating
               ? 'bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20'
-              : 'bg-brand-surface2 border border-brand-border text-brand-text hover:border-brand-gold/40 hover:text-brand-gold'
+              : 'bg-brand-surface-2 border border-brand-border text-brand-text hover:border-brand-gold/40 hover:text-brand-gold'
           } disabled:opacity-50`}
         >
           {isGenerating && isActive ? (

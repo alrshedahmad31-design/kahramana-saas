@@ -5,6 +5,11 @@ import FeatureArtifacts from '@/components/home/FeatureArtifacts'
 import PhilosophyManifesto from '@/components/home/PhilosophyManifesto'
 import ProtocolStack from '@/components/home/ProtocolStack'
 import CinematicButton from '@/components/ui/CinematicButton'
+import {
+  buildOrganizationSchema,
+  buildFAQSchema,
+  buildHomepageFAQ,
+} from '@/lib/seo/schemas'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -24,40 +29,24 @@ export async function generateMetadata(): Promise<Metadata> {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const locale = await getLocale()
+  const locale = (await getLocale()) as 'ar' | 'en'
   const t      = await getTranslations()
   const isRTL  = locale === 'ar'
 
+  const organizationSchema = buildOrganizationSchema(locale)
+  const faqSchema          = buildFAQSchema(buildHomepageFAQ(locale))
+
   return (
     <>
-      {/* Schema.org JSON-LD */}
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Restaurant',
-            name: 'كهرمانة بغداد',
-            alternateName: 'Kahramana Baghdad',
-            url: 'https://kahramanat.com',
-            image: 'https://kahramanat.com/assets/hero/og-image.webp',
-            servesCuisine: ['Iraqi', 'Middle Eastern'],
-            priceRange: '$$',
-            address: [
-              {
-                '@type': 'PostalAddress',
-                addressLocality: 'Riffa',
-                addressCountry: 'BH',
-              },
-              {
-                '@type': 'PostalAddress',
-                addressLocality: 'Muharraq',
-                addressCountry: 'BH',
-              },
-            ],
-          }),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
       <div className="flex flex-col">

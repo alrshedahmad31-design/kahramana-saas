@@ -35,9 +35,9 @@ function daysAgo(n: number): string {
 function segmentBadgeClass(segment: string): string {
   const map: Record<string, string> = {
     vip:        'bg-brand-gold/20 text-brand-gold border-brand-gold/40',
-    regular:    'bg-emerald-900/40 text-emerald-400 border-emerald-700/40',
-    occasional: 'bg-blue-900/40 text-blue-400 border-blue-700/40',
-    one_time:   'bg-brand-surface2 text-brand-muted border-brand-border',
+    regular:    'bg-brand-success/15 text-brand-success border-brand-success/30',
+    occasional: 'bg-brand-gold-light/15 text-brand-gold-light border-brand-gold-light/30',
+    one_time:   'bg-brand-surface-2 text-brand-muted border-brand-border',
   }
   return map[segment] ?? map['one_time']
 }
@@ -188,14 +188,14 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-brand-surface2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
+              className="flex-1 px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
             />
             <span className="text-brand-muted font-satoshi text-xs">→</span>
             <input
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-brand-surface2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
+              className="flex-1 px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
             />
           </div>
 
@@ -203,7 +203,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
             <select
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
-              className="px-3 py-1.5 rounded-lg bg-brand-surface2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
+              className="px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
             >
               <option value="">{isAr ? 'كل الفروع' : 'All branches'}</option>
               {branches.map((b) => (
@@ -272,7 +272,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                 </thead>
                 <tbody>
                   {history.map((row) => (
-                    <tr key={row.id} className="border-b border-brand-border/50 hover:bg-brand-surface2/50 transition-colors">
+                    <tr key={row.id} className="border-b border-brand-border/50 hover:bg-brand-surface-2/50 transition-colors">
                       <td className={`px-5 py-3 text-brand-text ${lf}`}>{row.report_name}</td>
                       <td className="px-5 py-3 text-brand-muted text-xs font-satoshi">
                         {row.filters?.from && row.filters?.to ? `${row.filters.from} → ${row.filters.to}` : '—'}
@@ -321,7 +321,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
 
       {/* Error */}
       {error && (
-        <div className="px-4 py-3 rounded-xl border border-red-800/50 bg-red-950/40 text-red-300 text-sm font-satoshi">
+        <div className="px-4 py-3 rounded-xl border border-brand-error/40 bg-brand-error/15 text-brand-error text-sm font-satoshi">
           ✕ {error}
         </div>
       )}
@@ -331,7 +331,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
         <div ref={resultRef} className="rounded-xl border border-brand-gold/30 bg-brand-surface overflow-hidden">
 
           {/* Panel header */}
-          <div className="px-6 pt-6 pb-5 border-b border-brand-border bg-brand-surface2/40">
+          <div className="px-6 pt-6 pb-5 border-b border-brand-border bg-brand-surface-2/40">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className={`text-xl font-bold text-brand-gold ${hf}`}>
@@ -367,7 +367,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
             {reportData.summary.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {reportData.summary.map((item, i) => (
-                  <div key={i} className="bg-brand-surface2 border border-brand-border rounded-lg px-4 py-3">
+                  <div key={i} className="bg-brand-surface-2 border border-brand-border rounded-lg px-4 py-3">
                     <p className={`text-xs text-brand-muted mb-1 ${lf}`}>
                       {isAr ? item.label_ar : item.label_en}
                     </p>
@@ -380,14 +380,14 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
             )}
 
             {/* Export buttons */}
-            <div className="bg-brand-surface2 border border-brand-border rounded-lg px-4 py-3">
+            <div className="bg-brand-surface-2 border border-brand-border rounded-lg px-4 py-3">
               <ExportButtons report={reportData} isAr={isAr} />
             </div>
 
             {/* Data table */}
             {reportData.rows.length > 0 ? (
               <div className="rounded-xl border border-brand-border overflow-hidden">
-                <div className="px-4 py-3 border-b border-brand-border bg-brand-surface2 flex items-center justify-between gap-3">
+                <div className="px-4 py-3 border-b border-brand-border bg-brand-surface-2 flex items-center justify-between gap-3">
                   <span className={`text-xs font-semibold text-brand-muted uppercase tracking-wide ${lf}`}>
                     {isAr ? 'البيانات التفصيلية' : 'Detailed Data'}
                     {' '}
@@ -408,7 +408,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-brand-border bg-brand-surface2">
+                      <tr className="border-b border-brand-border bg-brand-surface-2">
                         {columns.map((col, i) => (
                           <th
                             key={i}
@@ -427,8 +427,8 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                       {visibleRows.map((row, ri) => (
                         <tr
                           key={ri}
-                          className={`border-b border-brand-border/40 transition-colors hover:bg-brand-surface2/60 ${
-                            ri % 2 !== 0 ? 'bg-brand-surface2/20' : ''
+                          className={`border-b border-brand-border/40 transition-colors hover:bg-brand-surface-2/60 ${
+                            ri % 2 !== 0 ? 'bg-brand-surface-2/20' : ''
                           }`}
                         >
                           {row.map((cell, ci) => {
@@ -453,7 +453,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                 </div>
 
                 {reportData.rows.length > 50 && (
-                  <div className="px-4 py-3 border-t border-brand-border bg-brand-surface2 text-center">
+                  <div className="px-4 py-3 border-t border-brand-border bg-brand-surface-2 text-center">
                     <button
                       onClick={() => setShowAllRows(!showAllRows)}
                       className={`text-sm text-brand-gold hover:opacity-80 transition-opacity ${lf}`}

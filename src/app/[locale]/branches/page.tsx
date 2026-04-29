@@ -3,6 +3,11 @@ import { BRANCH_LIST } from '@/constants/contact'
 import { getBranchMetadata } from '@/lib/branches'
 import BranchesHero from '@/components/branches/branches-hero'
 import BranchCard from '@/components/branches/branch-card'
+import {
+  buildBranchesPageGraph,
+  buildBreadcrumb,
+  buildFAQSchema,
+} from '@/lib/seo/schemas'
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -26,6 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function BranchesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   setRequestLocale(locale)
+  const localeKey = locale === 'ar' ? 'ar' : 'en'
   const isAr = locale === 'ar'
   const t = await getTranslations('branches')
 
@@ -36,28 +42,37 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
     return 0
   })
 
-  // Local SEO Schema (JSON-LD)
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Restaurant',
-    'name': 'Kahramana Baghdad',
-    'image': 'https://kahramanat.com/assets/hero/hero-branches.webp',
-    'url': 'https://kahramanat.com',
-    'servesCuisine': 'Iraqi',
-    'address': BRANCH_LIST.map(b => ({
-      '@type': 'PostalAddress',
-      'streetAddress': isAr ? b.addressAr : b.addressEn,
-      'addressLocality': isAr ? b.cityAr : b.cityEn,
-      'addressRegion': isAr ? b.cityAr : b.cityEn,
-      'addressCountry': 'BH'
-    }))
-  }
+  // Local SEO graph: one LocalBusiness per active branch + planned marker
+  const graph = buildBranchesPageGraph(localeKey)
+
+  const breadcrumb = buildBreadcrumb([
+    { name: isAr ? 'الرئيسية' : 'Home',     url: localeKey === 'en' ? '/en/'         : '/' },
+    { name: isAr ? 'الفروع'   : 'Branches', url: localeKey === 'en' ? '/en/branches' : '/branches' },
+  ])
+
+  const faqSchema = buildFAQSchema(
+    ['hours', 'delivery', 'party', 'quality'].map((key) => ({
+      question: t(`faq.items.${key}.q`),
+      answer:   t(`faq.items.${key}.a`),
+    })),
+  )
 
   return (
     <main className="min-h-screen bg-brand-black pb-24" dir={isAr ? 'rtl' : 'ltr'}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
       <BranchesHero 

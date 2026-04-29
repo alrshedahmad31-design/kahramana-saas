@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
+import { tokens } from '@/lib/design-tokens'
 
 interface Props {
   code: string
@@ -16,9 +17,9 @@ export default function CouponQRCode({ code }: Props) {
         width: 160,
         margin: 2,
         color: {
-          dark: '#110b05',
-          light: '#f4ecd8'
-        }
+          dark:  tokens.color.qrInk,
+          light: tokens.color.qrPaper,
+        },
       }, (err) => {
         if (err) console.error('QR Code error:', err)
       })
@@ -26,7 +27,10 @@ export default function CouponQRCode({ code }: Props) {
   }, [code])
 
   return (
-    <div className="flex flex-col items-center gap-3 p-6 bg-[#f4ecd8] rounded-3xl border border-brand-border shadow-inner">
+    <div
+      className="flex flex-col items-center gap-3 p-6 rounded-3xl border border-brand-border shadow-inner"
+      style={{ backgroundColor: tokens.color.qrPaper }}
+    >
       <div className="bg-white p-2 rounded-xl shadow-md">
         <canvas ref={canvasRef} className="rounded-lg" />
       </div>

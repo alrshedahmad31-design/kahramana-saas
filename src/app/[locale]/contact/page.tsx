@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { BRANCH_LIST, GENERAL_CONTACT } from '@/constants/contact'
 import ContactForm from '@/components/contact/ContactForm'
+import { buildContactPageSchema, buildBreadcrumb } from '@/lib/seo/schemas'
 
 export async function generateMetadata({
   params,
@@ -25,29 +26,29 @@ export default async function ContactPage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  const localeKey = locale === 'ar' ? 'ar' : 'en'
   const isAr = locale === 'ar'
   const t    = await getTranslations('contact')
   const tB   = await getTranslations('branches')
 
-  const jsonLd = {
-    '@context':   'https://schema.org',
-    '@type':      'ContactPage',
-    name:         isAr ? 'تواصل معنا — كهرمانة بغداد' : 'Contact Us — Kahramana Baghdad',
-    url:          `https://kahramanat.com${locale === 'en' ? '/en' : ''}/contact`,
-    contactPoint: {
-      '@type':       'ContactPoint',
-      email:         GENERAL_CONTACT.email,
-      contactType:   'customer support',
-      areaServed:    'BH',
-      availableLanguage: ['Arabic', 'English'],
-    },
-  }
+  const contactSchema = buildContactPageSchema(localeKey)
+
+  const breadcrumb = buildBreadcrumb([
+    { name: isAr ? 'الرئيسية' : 'Home',     url: localeKey === 'en' ? '/en/'        : '/' },
+    { name: isAr ? 'تواصل معنا' : 'Contact', url: localeKey === 'en' ? '/en/contact' : '/contact' },
+  ])
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
 
       <div

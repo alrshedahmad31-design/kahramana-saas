@@ -14,6 +14,7 @@ import {
 import dynamic from 'next/dynamic'
 const MenuExperience = dynamic(() => import('@/components/menu/menu-experience'), { ssr: true })
 import MenuHero from '@/components/menu/menu-hero'
+import { buildCategoryBreadcrumb } from '@/lib/seo/schemas'
 
 type Props = {
   params: Promise<{
@@ -95,8 +96,19 @@ export default async function MenuCategoryPage({ params }: Props) {
   const t = await getTranslations({ locale, namespace: 'menu' })
   const categoryItems = getItemsByCategory(slug)
 
+  const breadcrumb = buildCategoryBreadcrumb(
+    locale,
+    isRTL ? category.name.ar : category.name.en,
+    slug,
+  )
+
   return (
     <main className="min-h-screen bg-brand-black">
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
       <MenuHero
         eyebrow={t('categoryEyebrow')}
         title={isRTL ? category.name.ar : category.name.en}

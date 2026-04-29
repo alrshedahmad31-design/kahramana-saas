@@ -45,7 +45,7 @@ export default function OrderActions({ orderId, customerName, customerPhone, loc
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg
                      border border-brand-border font-satoshi text-sm text-brand-muted
-                     hover:border-green-500 hover:text-green-400
+                     hover:border-brand-success hover:text-brand-success
                      transition-colors duration-150 min-h-[36px]"
         >
           {t('contactCustomer')}

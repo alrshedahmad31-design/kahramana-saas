@@ -8,6 +8,7 @@ import {
 import dynamic from 'next/dynamic'
 const MenuExperience = dynamic(() => import('@/components/menu/menu-experience'), { ssr: true })
 import MenuHero from '@/components/menu/menu-hero'
+import { buildMenuBreadcrumb } from '@/lib/seo/schemas'
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as LocaleCode
@@ -36,8 +37,34 @@ export default async function MenuPage() {
   const categories = getMenuCategories()
   const items = getAllMenuItems()
 
+  const menuSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Menu',
+    name: locale === 'ar' ? 'منيو كهرمانة بغداد' : 'Kahramana Baghdad Menu',
+    inLanguage: locale === 'ar' ? 'ar-BH' : 'en-BH',
+    url: `https://kahramanat.com/${locale === 'en' ? 'en/' : ''}menu`,
+    isPartOf: { '@id': 'https://kahramanat.com/#organization' },
+    hasMenuSection: categories.map((c) => ({
+      '@type': 'MenuSection',
+      name: locale === 'ar' ? c.name.ar : c.name.en,
+      url:  `https://kahramanat.com/${locale === 'en' ? 'en/' : ''}menu/${c.slug}`,
+    })),
+  }
+
+  const breadcrumb = buildMenuBreadcrumb(locale)
+
   return (
     <main className="min-h-screen bg-brand-black">
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
       <MenuHero
         eyebrow={t('heroEyebrow')}
         title={t('heroTitle')}
