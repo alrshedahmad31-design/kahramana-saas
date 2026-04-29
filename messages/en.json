@@ -512,7 +512,31 @@
     "sessionExpired": "Session expired, please sign in again",
     "twoFactorRequired": "Two-factor authentication required",
     "staffOnly": "This page is for staff only",
-    "networkError": "Connection failed — check your internet and try again"
+    "networkError": "Connection failed — check your internet and try again",
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "description": "Enter your email and we'll send you a reset link",
+      "submit": "Send Reset Link",
+      "submitting": "Sending...",
+      "successTitle": "Check your email",
+      "successMessage": "If the account exists, you'll receive a message within a few minutes",
+      "backToLogin": "Back to Sign In",
+      "error": "Something went wrong, please try again"
+    },
+    "setPassword": {
+      "title": "Set New Password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "At least 8 characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "submit": "Save Password",
+      "submitting": "Saving...",
+      "success": "Password set successfully",
+      "mismatch": "Passwords do not match",
+      "tooShort": "Password must be at least 8 characters",
+      "error": "Something went wrong, please try again",
+      "sessionExpired": "Reset link has expired, please request a new one"
+    }
   },
   "branches": {
     "footerTitle": "Our Branches",

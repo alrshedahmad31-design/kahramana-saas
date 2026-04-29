@@ -5,6 +5,7 @@ import { cookies }                           from 'next/headers'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code        = searchParams.get('code')
+  const type        = searchParams.get('type')
   const errorParam  = searchParams.get('error')
   const errorDesc   = searchParams.get('error_description')
 
@@ -44,6 +45,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(
       `${origin}/login?error=${encodeURIComponent(exchangeError.message)}`
     )
+  }
+
+  // Password reset flow — send to set-password page
+  if (type === 'recovery') {
+    return NextResponse.redirect(`${origin}/set-password`)
   }
 
   // Verify the user has an active staff profile before letting them in
