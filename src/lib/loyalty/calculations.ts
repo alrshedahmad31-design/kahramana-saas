@@ -1,4 +1,4 @@
-import type { LoyaltyTier } from '@/lib/supabase/types'
+import type { LoyaltyTier } from '@/lib/supabase/custom-types'
 
 export const POINTS_PER_BHD     = 5
 export const POINT_VALUE_BHD    = 0.005   // 1 point = 0.005 BHD

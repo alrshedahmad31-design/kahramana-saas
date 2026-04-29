@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canManageCoupons } from '@/lib/auth/rbac'
-import type { CouponInsert } from '@/lib/supabase/types'
+import type { CouponInsert } from '@/lib/supabase/custom-types'
 
 export type ActionResult = { success: true } | { success: false; error: string }
 

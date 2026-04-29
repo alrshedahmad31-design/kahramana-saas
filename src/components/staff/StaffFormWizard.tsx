@@ -1,6 +1,6 @@
 import { useState, useRef }   from 'react'
 import { BRANCH_LIST }     from '@/constants/contact'
-import type { StaffRole, EmploymentType } from '@/lib/supabase/types'
+import type { StaffRole, EmploymentType } from '@/lib/supabase/custom-types'
 import { createStaffFull } from '@/app/[locale]/dashboard/staff/actions'
 import type { CreateStaffFullResult } from '@/app/[locale]/dashboard/staff/actions'
 import { createClient }    from '@/lib/supabase/client'

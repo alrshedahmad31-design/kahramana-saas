@@ -3,7 +3,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canAccessDriver } from '@/lib/auth/rbac'
-import type { DriverLocationInsert } from '@/lib/supabase/types'
+import type { DriverLocationInsert } from '@/lib/supabase/custom-types'
 
 export type DriverActionResult = { success: true } | { success: false; error: string }
 

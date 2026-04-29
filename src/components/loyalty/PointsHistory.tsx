@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import type { PointsTransactionRow, PointsTransactionType } from '@/lib/supabase/types'
+import type { PointsTransactionRow, PointsTransactionType } from '@/lib/supabase/custom-types'
 
 interface Props {
   transactions: PointsTransactionRow[]
@@ -94,7 +94,7 @@ export default function PointsHistory({ transactions }: Props) {
                   })}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`font-satoshi text-xs font-bold capitalize ${TYPE_STYLES[tx.transaction_type]}`}>
+                  <span className={`font-satoshi text-xs font-bold capitalize ${TYPE_STYLES[tx.transaction_type as PointsTransactionType]}`}>
                     {t(`transactions.${tx.transaction_type}`)}
                   </span>
                   {tx.description && (

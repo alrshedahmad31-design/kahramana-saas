@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { BRANCHES }    from '@/constants/contact'
 import type { BranchId } from '@/constants/contact'
 import DriverDashboard from '@/components/driver/DriverDashboard'
-import type { DriverOrder } from '@/lib/supabase/types'
+import type { DriverOrder } from '@/lib/supabase/custom-types'
 
 interface Props {
   params: Promise<{ locale: string }>

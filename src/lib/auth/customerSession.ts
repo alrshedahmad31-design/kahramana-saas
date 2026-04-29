@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { CustomerProfileRow } from '@/lib/supabase/types'
+import type { CustomerProfileRow } from '@/lib/supabase/custom-types'
 
 export async function getCustomerSession(): Promise<CustomerProfileRow | null> {
   try {

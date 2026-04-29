@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import StatusBadge from '@/components/dashboard/StatusBadge'
 import { BRANCHES } from '@/constants/contact'
-import type { OrderStatus } from '@/lib/supabase/types'
+import type { OrderStatus } from '@/lib/supabase/custom-types'
 
 export interface OrderCardItem {
   name_ar:          string

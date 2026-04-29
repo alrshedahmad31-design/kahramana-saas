@@ -1,6 +1,6 @@
 'use client'
 
-import type { KDSOrder } from '@/lib/supabase/types'
+import type { KDSOrder } from '@/lib/supabase/custom-types'
 import KDSOrderCard from './KDSOrderCard'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'

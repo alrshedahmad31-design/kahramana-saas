@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { createShift, deleteShift } from '@/app/[locale]/dashboard/schedule/actions'
 import { formatTimeRange }          from '@/lib/staff/calculations'
 import { BRANCHES }                 from '@/constants/contact'
-import type { ShiftWithStaff, StaffBasicRow, ShiftStatus } from '@/lib/supabase/types'
+import type { ShiftWithStaff, StaffBasicRow, ShiftStatus } from '@/lib/supabase/custom-types'
 
 interface Props {
   weekStart:   string  // YYYY-MM-DD (Monday)
@@ -159,7 +159,7 @@ function ShiftPill({ shift, isRTL }: { shift: ShiftWithStaff; isRTL: boolean }) 
   }
 
   return (
-    <div className={`group relative text-xs rounded border px-1.5 py-1 mb-0.5 ${STATUS_CLS[shift.status]} ${isPending ? 'opacity-40' : ''}`}>
+    <div className={`group relative text-xs rounded border px-1.5 py-1 mb-0.5 ${STATUS_CLS[shift.status as ShiftStatus]} ${isPending ? 'opacity-40' : ''}`}>
       <p className="font-satoshi font-bold tabular-nums">
         {formatTimeRange(shift.start_time, shift.end_time)}
       </p>

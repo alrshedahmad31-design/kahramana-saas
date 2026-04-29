@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useLocale } from 'next-intl'
-import type { BranchRow } from '@/lib/supabase/types'
+import type { BranchRow } from '@/lib/supabase/custom-types'
 
 export type CouponStatus     = 'all' | 'active' | 'paused' | 'expired' | 'scheduled'
 export type CouponTypeFilter = 'all' | 'percentage' | 'fixed' | 'free_delivery' | 'bogo' | 'free_item'

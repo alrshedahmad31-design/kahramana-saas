@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import type { KDSQueueItem, KDSStatus } from '@/lib/supabase/types'
+import type { KDSQueueItem, KDSStatus } from '@/lib/supabase/custom-types'
 import { getAgeStatus, formatElapsed } from '@/lib/kds/priorities'
 import LuxuryIcon from '@/components/icons/LuxuryIcon'
 
@@ -50,7 +50,7 @@ export default function KDSCard({ item, onBump }: Props) {
   async function handleBump() {
     if (bumping || isFinished) return
     setBumping(true)
-    await onBump(item.id, item.status)
+    await onBump(item.id, item.status as KDSStatus)
     setBumping(false)
   }
 

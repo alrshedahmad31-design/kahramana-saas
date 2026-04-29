@@ -1,7 +1,7 @@
 'use client'
 
 import { formatTimeRange } from '@/lib/staff/calculations'
-import type { ShiftRow }   from '@/lib/supabase/types'
+import type { ShiftRow }   from '@/lib/supabase/custom-types'
 
 interface Props {
   shifts: ShiftRow[]

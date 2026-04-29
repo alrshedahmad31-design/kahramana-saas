@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import type { StaffRole } from '@/lib/supabase/types'
+import type { StaffRole } from '@/lib/supabase/custom-types'
 export { ALLOWED_TRANSITIONS, CAN_CANCEL } from './permissions'
 
 export interface AuthUser {

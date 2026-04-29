@@ -72,7 +72,7 @@ function hourLabel(h: number): string {
   return h < 12 ? `${h}am` : `${h - 12}pm`
 }
 
-import type { OrderStatus } from '@/lib/supabase/types'
+import type { OrderStatus } from '@/lib/supabase/custom-types'
 
 const ACTIVE_STATUSES   = ['new', 'under_review', 'accepted', 'preparing', 'ready', 'out_for_delivery']
 const DONE_STATUSES: OrderStatus[] = ['delivered', 'completed']

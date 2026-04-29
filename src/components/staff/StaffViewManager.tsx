@@ -1,7 +1,7 @@
 'use client'
 
 import { useState }       from 'react'
-import type { StaffExtendedRow, StaffRole } from '@/lib/supabase/types'
+import type { StaffExtendedRow, StaffRole } from '@/lib/supabase/custom-types'
 import StaffTable         from '@/components/dashboard/StaffTable'
 import StaffCardGrid      from './StaffCardGrid'
 import StaffFormWizard    from './StaffFormWizard'

@@ -8,7 +8,7 @@ import CouponStatsCards from '@/components/coupons/CouponStatsCards'
 import CouponFilters, { type FilterState } from '@/components/coupons/CouponFilters'
 import CouponCardGrid from '@/components/coupons/CouponCardGrid'
 import CouponAnalyticsModal from '@/components/coupons/CouponAnalyticsModal'
-import type { CouponRow, BranchRow } from '@/lib/supabase/types'
+import type { CouponRow, BranchRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   coupons: CouponRow[]

@@ -25,21 +25,18 @@ export default function OrderStatsBar() {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('orders')
         .select('status, total_bhd')
         .gte('created_at', today.toISOString())
 
       if (!data) return
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const d = data as { status: string; total_bhd: number }[]
 
-      const done = d.filter(o => ['delivered', 'completed'].includes(o.status))
+      const done = data.filter(o => ['delivered', 'completed'].includes(o.status))
       setStats({
-        newCount:       d.filter(o => ['new', 'under_review'].includes(o.status)).length,
-        preparingCount: d.filter(o => ['accepted', 'preparing'].includes(o.status)).length,
-        readyCount:     d.filter(o => ['ready', 'out_for_delivery'].includes(o.status)).length,
+        newCount:       data.filter(o => ['new', 'under_review'].includes(o.status)).length,
+        preparingCount: data.filter(o => ['accepted', 'preparing'].includes(o.status)).length,
+        readyCount:     data.filter(o => ['ready', 'out_for_delivery'].includes(o.status)).length,
         deliveredToday: done.length,
         revenueToday:   done.reduce((s, o) => s + Number(o.total_bhd || 0), 0),
       })

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { canManageCoupons } from '@/lib/auth/rbac'
 import { createClient } from '@/lib/supabase/server'
-import type { CouponRow, BranchRow } from '@/lib/supabase/types'
+import type { CouponRow, BranchRow } from '@/lib/supabase/custom-types'
 import CouponsClient from './CouponsClient'
 
 interface Props {

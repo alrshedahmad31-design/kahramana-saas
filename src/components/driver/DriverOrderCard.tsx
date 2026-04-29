@@ -7,7 +7,7 @@ import {
   resolveExpectedAt, fmtDistance, fmtETA, mapsNavUrl,
 }                                                             from '@/lib/utils/delivery'
 import { mapsDirectionsUrl }                                  from '@/lib/utils/distance'
-import type { DriverOrder }                                   from '@/lib/supabase/types'
+import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
 import type { BranchId }                                      from '@/constants/contact'
 
 type DriverActiveStatus = 'ready' | 'out_for_delivery'

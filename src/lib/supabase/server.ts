@@ -1,15 +1,10 @@
 import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr'
-import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import type { Database } from './types'
 
-// Cast bypasses @supabase/ssr 0.5.2 return-type mismatch with supabase-js 2.105.0.
-// Both createServerClient and createBrowserClient return SupabaseClient<D, SchemaName, Schema>
-// (old 3-param form) but SupabaseClient now has 5 params — the Schema arg lands on SchemaName
-// (3rd position), causing the real Schema param to default to never. Explicit cast fixes it.
-
 // Anon client — uses cookie-based session for RLS and auth.
-export async function createClient(): Promise<SupabaseClient<Database>> {
+export async function createClient() {
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
@@ -29,13 +24,10 @@ export async function createClient(): Promise<SupabaseClient<Database>> {
         },
       },
     }
-  ) as unknown as SupabaseClient<Database>
+  )
 }
 
 // Service-role client — bypasses RLS. No cookie handling needed.
-// Uses createClient from @supabase/supabase-js directly so the Database
-// generic resolves correctly (avoids @supabase/ssr return-type mismatch with
-// @supabase/supabase-js 2.105.0).
 export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -51,4 +43,3 @@ export function createServiceClient() {
     { auth: { persistSession: false, autoRefreshToken: false } }
   )
 }
-

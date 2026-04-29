@@ -1,4 +1,4 @@
-import type { KDSStation } from '@/lib/supabase/types'
+import type { KDSStation } from '@/lib/supabase/custom-types'
 
 // Stations that take longer to prepare get higher urgency earlier
 const STATION_COMPLEXITY: Record<KDSStation, number> = {

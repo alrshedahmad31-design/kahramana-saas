@@ -3,7 +3,7 @@ import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import { routing } from '@/i18n/routing'
 import { ROLE_RANK } from '@/lib/auth/rbac'
-import type { StaffRole } from '@/lib/supabase/types'
+import type { StaffRole } from '@/lib/supabase/custom-types'
 
 const intlMiddleware = createMiddleware(routing)
 

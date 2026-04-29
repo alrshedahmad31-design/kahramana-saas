@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { createLeaveRequest }      from '@/app/[locale]/dashboard/staff/[id]/actions'
-import type { LeaveRequestRow, LeaveType } from '@/lib/supabase/types'
+import type { LeaveRequestRow, LeaveType } from '@/lib/supabase/custom-types'
 
 interface Props {
   staffId:    string

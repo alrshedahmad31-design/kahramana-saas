@@ -1,7 +1,7 @@
 'use client'
 
 import { TIER_COLORS } from '@/lib/design-tokens'
-import type { LoyaltyTier } from '@/lib/supabase/types'
+import type { LoyaltyTier } from '@/lib/supabase/custom-types'
 
 interface Props {
   tier: LoyaltyTier

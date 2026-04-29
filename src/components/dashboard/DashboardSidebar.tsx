@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { StaffRole } from '@/lib/supabase/types'
+import type { StaffRole } from '@/lib/supabase/custom-types'
 
 interface NavItem {
   key: string

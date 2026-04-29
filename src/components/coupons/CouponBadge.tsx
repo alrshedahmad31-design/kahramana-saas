@@ -1,7 +1,7 @@
 'use client'
 
 import { useLocale } from 'next-intl'
-import type { CouponRow } from '@/lib/supabase/types'
+import type { CouponRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   coupon:   Pick<CouponRow, 'code' | 'type' | 'value' | 'description_ar' | 'description_en'>

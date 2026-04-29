@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import CouponQRCode from './CouponQRCode'
-import type { CouponRow, CouponRedemptionRow } from '@/lib/supabase/types'
+import type { CouponRow, CouponRedemptionRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   coupon:  CouponRow
@@ -116,10 +116,10 @@ export default function CouponAnalyticsModal({ coupon, onClose }: Props) {
                       <div key={r.id} className="flex items-center justify-between p-4 bg-brand-surface rounded-xl border border-brand-border hover:bg-brand-surface/50 transition-colors">
                         <div className="flex flex-col">
                           <span className={`text-sm font-bold text-brand-text tracking-wide ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                            {isAr ? `طلب #${r.order_id.slice(0, 8)}` : `Order #${r.order_id.slice(0, 8)}`}
+                            {isAr ? `طلب #${(r.order_id ?? '').slice(0, 8)}` : `Order #${(r.order_id ?? '').slice(0, 8)}`}
                           </span>
                           <span className={`text-[10px] text-brand-muted uppercase tracking-widest ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                            {new Date(r.redeemed_at).toLocaleString(dateLocale, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            {r.redeemed_at && new Date(r.redeemed_at).toLocaleString(dateLocale, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <div className="text-end">

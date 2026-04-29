@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { advanceOrderStatus } from '@/app/[locale]/dashboard/kds/actions'
 import KDSColumn from './KDSColumn'
-import type { KDSOrder } from '@/lib/supabase/types'
+import type { KDSOrder } from '@/lib/supabase/custom-types'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'
 

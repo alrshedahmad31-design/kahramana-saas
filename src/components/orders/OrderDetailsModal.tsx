@@ -7,7 +7,7 @@ import OrderStatusSelect from '@/components/dashboard/OrderStatusSelect'
 import OrderTimeline from '@/components/orders/OrderTimeline'
 import { BRANCHES } from '@/constants/contact'
 import { getOrderDetails, type OrderDetails } from '@/app/[locale]/dashboard/orders/actions'
-import type { OrderStatus, StaffRole } from '@/lib/supabase/types'
+import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 
 interface Props {
   orderId:  string | null

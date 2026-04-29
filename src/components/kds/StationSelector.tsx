@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import type { KDSStation } from '@/lib/supabase/types'
+import type { KDSStation } from '@/lib/supabase/custom-types'
 import { ALL_STATIONS } from '@/lib/kds/constants'
 
 export { ALL_STATIONS }

@@ -7,7 +7,7 @@ import DriverHeader from './DriverHeader'
 import DriverOrderCard from './DriverOrderCard'
 import DriverPerformanceDashboard from './DriverPerformanceDashboard'
 import { resolveExpectedAt, getUrgencyLevel } from '@/lib/utils/delivery'
-import type { DriverOrder } from '@/lib/supabase/types'
+import type { DriverOrder } from '@/lib/supabase/custom-types'
 
 interface Props {
   initialOrders:          DriverOrder[]

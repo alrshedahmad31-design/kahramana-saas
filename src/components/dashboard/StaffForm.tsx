@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import type { StaffBasicRow, StaffRole } from '@/lib/supabase/types'
+import type { StaffBasicRow, StaffRole } from '@/lib/supabase/custom-types'
 import { canAssignRole } from '@/lib/auth/rbac'
 import { createStaff, updateStaff } from '@/app/[locale]/dashboard/staff/actions'
 

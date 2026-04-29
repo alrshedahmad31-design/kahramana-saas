@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { calculateDiscount } from './calculations'
-import type { CouponRow } from '@/lib/supabase/types'
+import type { CouponRow } from '@/lib/supabase/custom-types'
 
 export interface CouponValidationResult {
   valid:       boolean

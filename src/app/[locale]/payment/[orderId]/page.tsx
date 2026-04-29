@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import PaymentHandler from './PaymentHandler'
-import type { PaymentMethod } from '@/lib/supabase/types'
+import type { PaymentMethod } from '@/lib/supabase/custom-types'
 
 interface Props {
   params: Promise<{ locale: string; orderId: string }>

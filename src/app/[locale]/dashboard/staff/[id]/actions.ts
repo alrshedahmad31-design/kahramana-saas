@@ -4,7 +4,7 @@ import { revalidatePath }      from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession }          from '@/lib/auth/session'
 import { canManageStaff }      from '@/lib/auth/rbac'
-import type { EmploymentType, StaffBasicRow } from '@/lib/supabase/types'
+import type { EmploymentType, StaffBasicRow, TablesUpdate } from '@/lib/supabase/custom-types'
 
 type ActionResult = { success: true } | { success: false; error: string }
 
@@ -46,7 +46,7 @@ export async function updateStaffProfile(input: UpdateProfileInput): Promise<Act
     return { success: false, error: 'PIN must be exactly 4 digits' }
   }
 
-  const updates: Record<string, unknown> = {}
+  const updates: TablesUpdate<'staff_basic'> = {}
   if (input.phone                   !== undefined) updates.phone                   = input.phone || null
   if (input.hire_date               !== undefined) updates.hire_date               = input.hire_date
   if (input.employment_type         !== undefined) updates.employment_type         = input.employment_type
@@ -57,8 +57,7 @@ export async function updateStaffProfile(input: UpdateProfileInput): Promise<Act
   if (input.clock_pin               !== undefined) updates.clock_pin               = input.clock_pin || null
   if (input.staff_notes             !== undefined) updates.staff_notes             = input.staff_notes || null
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('staff_basic').update(updates).eq('id', input.id)
+  const { error } = await service.from('staff_basic').update(updates).eq('id', input.id)
 
   if (error) return { success: false, error: error.message }
   revalidateProfile(input.id)
@@ -88,8 +87,7 @@ export async function createLeaveRequest(input: LeaveRequestInput): Promise<Acti
   if (days < 1) return { success: false, error: 'End date must be after start date' }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('leave_requests').insert({
+  const { error } = await service.from('leave_requests').insert({
     staff_id:   input.staff_id,
     leave_type: input.leave_type,
     start_date: input.start_date,
@@ -113,8 +111,7 @@ export async function approveTimeEntry(entryId: string): Promise<ActionResult> {
   }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('time_entries').update({
+  const { error } = await service.from('time_entries').update({
     approved_by: caller.id,
     approved_at: new Date().toISOString(),
   }).eq('id', entryId)

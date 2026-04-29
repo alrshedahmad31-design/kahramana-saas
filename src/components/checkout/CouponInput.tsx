@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useLocale } from 'next-intl'
 import { validateCoupon } from '@/lib/coupons/validation'
 import CouponBadge from '@/components/coupons/CouponBadge'
-import type { CouponRow } from '@/lib/supabase/types'
+import type { CouponRow } from '@/lib/supabase/custom-types'
 
 export interface AppliedCoupon {
   id:       string

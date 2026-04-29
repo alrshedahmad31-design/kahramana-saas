@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { verifyPin, clockIn, clockOut } from './actions'
 import { BRANCHES } from '@/constants/contact'
-import type { StaffRole } from '@/lib/supabase/types'
+import type { StaffRole } from '@/lib/supabase/custom-types'
 
 const ROLE_LABEL: Record<StaffRole, string> = {
   owner:           'Owner',

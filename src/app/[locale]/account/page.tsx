@@ -13,7 +13,7 @@ import {
   TIER_BENEFITS,
 } from '@/lib/loyalty/calculations'
 import { TIER_COLORS } from '@/lib/design-tokens'
-import type { PointsTransactionRow } from '@/lib/supabase/types'
+import type { PointsTransactionRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   params: Promise<{ locale: string }>

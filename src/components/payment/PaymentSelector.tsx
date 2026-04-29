@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Banknote, QrCode, CreditCard } from 'lucide-react'
-import type { PaymentMethod } from '@/lib/supabase/types'
+import type { PaymentMethod } from '@/lib/supabase/custom-types'
 
 interface MethodConfig {
   id:        PaymentMethod

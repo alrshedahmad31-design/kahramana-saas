@@ -8,7 +8,7 @@ import StaffOverview              from '@/components/staff/StaffOverview'
 import StaffScheduleTab           from '@/components/staff/StaffScheduleTab'
 import StaffTimesheetTab          from '@/components/staff/StaffTimesheetTab'
 import StaffLeaveTab              from '@/components/staff/StaffLeaveTab'
-import type { StaffExtendedRow, ShiftRow, TimeEntryRow, LeaveRequestRow } from '@/lib/supabase/types'
+import type { StaffExtendedRow } from '@/lib/supabase/custom-types'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,34 +27,25 @@ export default async function StaffProfilePage({ params }: Props) {
   // Fetch staff member with extended fields
   const { data: staffData } = await supabase
     .from('staff_basic')
-    .select(`
-      id, name, role, branch_id, is_active, created_at,
-      hire_date, employment_type, hourly_rate, phone,
-      emergency_contact_name, emergency_contact_phone,
-      id_number, date_of_birth, address, profile_photo_url,
-      staff_notes, clock_pin
-    `)
+    .select('*')
     .eq('id', id)
     .single()
 
   if (!staffData) notFound()
 
-  const staff = staffData as unknown as StaffExtendedRow
+  const staff: StaffExtendedRow = staffData
   const canEdit = canManageStaff(user, { id: staff.id, role: staff.role, branch_id: staff.branch_id ?? null })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
-
-  // Parallel data fetches (new tables — as any until DB type is regenerated after migration)
+  // Parallel data fetches
   const [shiftsRes, entriesRes, leavesRes] = await Promise.all([
-    db.from('shifts').select('*').eq('staff_id', id).order('shift_date', { ascending: false }).limit(30),
-    db.from('time_entries').select('*').eq('staff_id', id).order('clock_in', { ascending: false }).limit(30),
-    db.from('leave_requests').select('*').eq('staff_id', id).order('requested_at', { ascending: false }),
+    supabase.from('shifts').select('*').eq('staff_id', id).order('shift_date', { ascending: false }).limit(30),
+    supabase.from('time_entries').select('*').eq('staff_id', id).order('clock_in', { ascending: false }).limit(30),
+    supabase.from('leave_requests').select('*').eq('staff_id', id).order('requested_at', { ascending: false }),
   ])
 
-  const shifts  = (shiftsRes.data  ?? []) as ShiftRow[]
-  const entries = (entriesRes.data ?? []) as TimeEntryRow[]
-  const leaves  = (leavesRes.data  ?? []) as LeaveRequestRow[]
+  const shifts  = shiftsRes.data  ?? []
+  const entries = entriesRes.data ?? []
+  const leaves  = leavesRes.data  ?? []
 
   return (
     <div className="flex flex-col gap-5" dir={isAr ? 'rtl' : 'ltr'}>

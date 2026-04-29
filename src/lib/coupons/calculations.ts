@@ -1,4 +1,4 @@
-import type { CouponRow } from '@/lib/supabase/types'
+import type { CouponRow } from '@/lib/supabase/custom-types'
 
 export function calculateDiscount(
   coupon: Pick<CouponRow, 'type' | 'value' | 'max_discount_bhd'>,

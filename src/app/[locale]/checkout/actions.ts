@@ -6,7 +6,7 @@ import { getCustomerSession } from '@/lib/auth/customerSession'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
 import { calculateDiscount } from '@/lib/coupons/calculations'
-import type { PointsTransactionInsert, CouponUsageInsert, CouponRow } from '@/lib/supabase/types'
+import type { PointsTransactionInsert, CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
 
 // ── Server-side input validation ──────────────────────────────────────────────
 // Sanity-check the payload before touching the DB. unit_price_bhd remains

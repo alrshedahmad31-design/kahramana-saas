@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { BRANCHES }                from '@/constants/contact'
 import { updateStaffProfile }      from '@/app/[locale]/dashboard/staff/[id]/actions'
-import type { StaffExtendedRow, EmploymentType, StaffRole } from '@/lib/supabase/types'
+import type { StaffExtendedRow, EmploymentType, StaffRole } from '@/lib/supabase/custom-types'
 
 interface Props {
   staff:       StaffExtendedRow
@@ -153,7 +153,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
           <InfoCard label={isRTL ? 'تاريخ التعيين' : 'Hire Date'} value={staff.hire_date ?? null} isRTL={isRTL} />
           <InfoCard
             label={isRTL ? 'نوع التوظيف' : 'Employment Type'}
-            value={staff.employment_type ? (isRTL ? EMP_LABEL[staff.employment_type].ar : EMP_LABEL[staff.employment_type].en) : null}
+            value={staff.employment_type ? (isRTL ? EMP_LABEL[staff.employment_type as EmploymentType].ar : EMP_LABEL[staff.employment_type as EmploymentType].en) : null}
             isRTL={isRTL}
           />
           <InfoCard

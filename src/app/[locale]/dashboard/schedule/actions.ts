@@ -3,7 +3,7 @@
 import { revalidatePath }       from 'next/cache'
 import { createServiceClient }  from '@/lib/supabase/server'
 import { getSession }           from '@/lib/auth/session'
-import type { ShiftStatus }     from '@/lib/supabase/types'
+import type { ShiftStatus }     from '@/lib/supabase/custom-types'
 
 type ActionResult = { success: true } | { success: false; error: string }
 
@@ -34,8 +34,7 @@ export async function createShift(input: CreateShiftInput): Promise<ActionResult
   if (!caller || !canManageSchedule(caller.role)) return { success: false, error: 'Unauthorized' }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('shifts').insert({
+  const { error } = await service.from('shifts').insert({
     staff_id:   input.staff_id,
     branch_id:  input.branch_id,
     shift_date: input.shift_date,
@@ -59,8 +58,7 @@ export async function updateShiftStatus(shiftId: string, status: ShiftStatus): P
   if (!caller || !canManageSchedule(caller.role)) return { success: false, error: 'Unauthorized' }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('shifts').update({ status, updated_at: new Date().toISOString() }).eq('id', shiftId)
+  const { error } = await service.from('shifts').update({ status, updated_at: new Date().toISOString() }).eq('id', shiftId)
 
   if (error) return { success: false, error: error.message }
   revalidateSchedule()
@@ -74,8 +72,7 @@ export async function deleteShift(shiftId: string): Promise<ActionResult> {
   if (!caller || !canManageSchedule(caller.role)) return { success: false, error: 'Unauthorized' }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('shifts').delete().eq('id', shiftId)
+  const { error } = await service.from('shifts').delete().eq('id', shiftId)
 
   if (error) return { success: false, error: error.message }
   revalidateSchedule()
@@ -93,8 +90,7 @@ export async function reviewLeaveRequest(
   if (!caller || !canManageSchedule(caller.role)) return { success: false, error: 'Unauthorized' }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('leave_requests').update({
+  const { error } = await service.from('leave_requests').update({
     status:         decision,
     reviewed_by:    caller.id,
     reviewed_at:    new Date().toISOString(),

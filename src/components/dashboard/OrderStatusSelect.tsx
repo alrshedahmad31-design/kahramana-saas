@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { ALLOWED_TRANSITIONS, CAN_CANCEL } from '@/lib/auth/permissions'
-import type { OrderStatus, StaffRole } from '@/lib/supabase/types'
+import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 
 interface Props {
   orderId:       string
@@ -38,8 +38,7 @@ export default function OrderStatusSelect({
     setError(null)
     startTrans(async () => {
       const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: dbError } = await (supabase as any)
+      const { error: dbError } = await supabase
         .from('orders')
         .update({ status: next })
         .eq('id', orderId)

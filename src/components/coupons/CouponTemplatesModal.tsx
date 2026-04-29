@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import type { CouponTemplateRow } from '@/lib/supabase/types'
+import type { CouponTemplateRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   onSelect: (template: CouponTemplateRow) => void

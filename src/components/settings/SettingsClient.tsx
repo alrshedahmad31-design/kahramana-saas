@@ -12,7 +12,7 @@ import NotificationsSettings from '@/components/settings/NotificationsSettings'
 import IntegrationsSettings  from '@/components/settings/IntegrationsSettings'
 import StaffSettings         from '@/components/settings/StaffSettings'
 import AppearanceSettings    from '@/components/settings/AppearanceSettings'
-import type { StaffRole } from '@/lib/supabase/types'
+import type { StaffRole } from '@/lib/supabase/custom-types'
 
 type TabId =
   | 'profile' | 'security'

@@ -11,7 +11,7 @@ import {
   confirmBenefitPayment,
   initiateTapPayment,
 } from './actions'
-import type { PaymentMethod } from '@/lib/supabase/types'
+import type { PaymentMethod } from '@/lib/supabase/custom-types'
 
 interface Props {
   orderId:           string

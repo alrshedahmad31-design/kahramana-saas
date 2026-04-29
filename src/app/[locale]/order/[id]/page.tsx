@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
-import type { OrderWithItems } from '@/lib/supabase/types'
+import type { OrderWithItems } from '@/lib/supabase/custom-types'
 import { BRANCHES } from '@/constants/contact'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ import TierBadge from '@/components/loyalty/TierBadge'
 import CouponInput from '@/components/checkout/CouponInput'
 import { pointsToCredit, formatPoints, MIN_REDEMPTION } from '@/lib/loyalty/calculations'
 import { createOrderWithPoints } from '@/app/[locale]/checkout/actions'
-import type { CustomerProfileRow } from '@/lib/supabase/types'
+import type { CustomerProfileRow } from '@/lib/supabase/custom-types'
 import type { AppliedCoupon } from '@/components/checkout/CouponInput'
 
 // ── Validation schema ─────────────────────────────────────────────────────────

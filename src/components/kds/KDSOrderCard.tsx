@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { KDSOrder } from '@/lib/supabase/types'
+import type { KDSOrder } from '@/lib/supabase/custom-types'
 import { getAgeStatus, formatElapsed } from '@/lib/kds/priorities'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'

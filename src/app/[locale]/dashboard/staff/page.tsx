@@ -3,7 +3,7 @@ import { redirect }        from 'next/navigation'
 import { getSession }      from '@/lib/auth/session'
 import { canAccessStaffPage, canManageStaff } from '@/lib/auth/rbac'
 import { createClient }    from '@/lib/supabase/server'
-import type { StaffBasicRow, StaffExtendedRow } from '@/lib/supabase/types'
+import type { StaffExtendedRow } from '@/lib/supabase/custom-types'
 import StaffViewManager    from '@/components/staff/StaffViewManager'
 
 interface Props {
@@ -23,22 +23,15 @@ export default async function StaffPage({ params }: Props) {
   const t = await getTranslations('dashboard.staff')
 
   const supabase = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: staff } = await (supabase as any)
+  const { data: staff } = await supabase
     .from('staff_basic')
-    .select(`
-      id, name, role, branch_id, is_active, created_at,
-      phone, hire_date, employment_type, hourly_rate,
-      emergency_contact_name, emergency_contact_phone,
-      id_number, date_of_birth, address, profile_photo_url,
-      staff_notes, clock_pin
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
 
-  const rows = (staff ?? []) as StaffExtendedRow[]
+  const rows: StaffExtendedRow[] = staff ?? []
 
   const manageable = new Set(
-    rows.filter((s) => canManageStaff(user, s as unknown as StaffBasicRow)).map((s) => s.id),
+    rows.filter((s) => canManageStaff(user, s)).map((s) => s.id),
   )
 
   return (

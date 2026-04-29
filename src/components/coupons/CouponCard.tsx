@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useLocale } from 'next-intl'
-import type { CouponRow } from '@/lib/supabase/types'
+import type { CouponRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   coupon:          CouponRow

@@ -2,11 +2,12 @@ import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
+import { canViewOrder } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import StatusBadge from '@/components/dashboard/StatusBadge'
 import OrderStatusSelect from '@/components/dashboard/OrderStatusSelect'
 import OrderActions from '@/components/dashboard/OrderActions'
-import type { OrderRow, OrderItemRow } from '@/lib/supabase/types'
+import type { OrderRow, OrderItemRow } from '@/lib/supabase/custom-types'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -41,6 +42,11 @@ export default async function OrderDetailPage({ params }: Props) {
 
     if (error || !orderData) notFound()
     order = orderData as unknown as OrderRow
+
+    // RBAC: branch-bound staff may only view orders within their branch
+    if (!canViewOrder(user, { branch_id: order.branch_id })) {
+      redirect(locale === 'en' ? '/en/dashboard/orders' : '/dashboard/orders')
+    }
 
     const { data: itemsData } = await supabase
       .from('order_items')

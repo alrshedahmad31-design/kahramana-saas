@@ -2,7 +2,7 @@
 
 import { useLocale } from 'next-intl'
 import CouponCard from './CouponCard'
-import type { CouponRow } from '@/lib/supabase/types'
+import type { CouponRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   coupons:         CouponRow[]

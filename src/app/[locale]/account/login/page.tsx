@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import type { CustomerProfileInsert } from '@/lib/supabase/types'
+import type { CustomerProfileInsert } from '@/lib/supabase/custom-types'
 import CinematicButton from '@/components/ui/CinematicButton'
 
 type Mode = 'login' | 'register'

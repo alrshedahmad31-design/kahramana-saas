@@ -1,4 +1,4 @@
-import type { StaffRole } from '@/lib/supabase/types'
+import type { StaffRole } from '@/lib/supabase/custom-types'
 
 // Roles allowed to cancel orders
 export const CAN_CANCEL: StaffRole[] = ['owner', 'general_manager', 'branch_manager']

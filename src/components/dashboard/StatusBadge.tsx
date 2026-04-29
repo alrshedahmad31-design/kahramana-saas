@@ -1,4 +1,4 @@
-import type { OrderStatus } from '@/lib/supabase/types'
+import type { OrderStatus } from '@/lib/supabase/custom-types'
 
 interface Props {
   status: OrderStatus

@@ -3,7 +3,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canAccessKDS } from '@/lib/auth/rbac'
-import type { OrderStatus } from '@/lib/supabase/types'
+import type { OrderStatus } from '@/lib/supabase/custom-types'
 
 export type AdvanceResult = { success: true } | { success: false; error: string }
 

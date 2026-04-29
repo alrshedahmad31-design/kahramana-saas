@@ -27,11 +27,10 @@ export default async function DeliveryPage({ params }: Props) {
   const today    = new Date().toISOString().split('T')[0]
 
   // Active delivery orders
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: ordersRaw } = await (supabase as any)
+  const { data: ordersRaw } = await supabase
     .from('orders')
     .select(`
-      id, order_number, status, customer_name, customer_phone,
+      id, status, customer_name, customer_phone,
       branch_id, notes, source, total_bhd, created_at, updated_at,
       assigned_driver_id,
       order_items(id)
@@ -40,37 +39,34 @@ export default async function DeliveryPage({ params }: Props) {
     .order('created_at', { ascending: true })
 
   // Completed today (for metrics + per-driver count)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: completedRaw } = await (supabase as any)
+  const { data: completedRaw } = await supabase
     .from('orders')
     .select('id, total_bhd, created_at, assigned_driver_id')
     .in('status', ['delivered', 'completed'])
     .gte('created_at', today)
 
   // Drivers (staff with role='driver', active)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: driversRaw } = await (supabase as any)
+  const { data: driversRaw } = await supabase
     .from('staff_basic')
     .select('id, name, phone, branch_id')
     .eq('role', 'driver')
     .eq('is_active', true)
 
   // Latest driver locations
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: locationsRaw } = await (supabase as any)
+  const { data: locationsRaw } = await supabase
     .from('driver_locations')
     .select('driver_id, lat, lng, created_at')
     .order('created_at', { ascending: false })
 
   // Build driver location map (latest per driver)
   const locationMap = new Map<string, { lat: number; lng: number }>()
-  for (const loc of (locationsRaw ?? []) as { driver_id: string; lat: number; lng: number }[]) {
+  for (const loc of locationsRaw ?? []) {
     if (!locationMap.has(loc.driver_id)) locationMap.set(loc.driver_id, { lat: loc.lat, lng: loc.lng })
   }
 
   // Build driver → current order map
   const driverOrderMap = new Map<string, string>()
-  for (const o of (ordersRaw ?? []) as { assigned_driver_id: string | null; id: string; status: string }[]) {
+  for (const o of ordersRaw ?? []) {
     if (o.assigned_driver_id && o.status === 'out_for_delivery') {
       driverOrderMap.set(o.assigned_driver_id, o.id)
     }
@@ -78,15 +74,13 @@ export default async function DeliveryPage({ params }: Props) {
 
   // Completed today per driver
   const driverCompletedMap = new Map<string, number>()
-  for (const o of (completedRaw ?? []) as { assigned_driver_id: string | null }[]) {
+  for (const o of completedRaw ?? []) {
     if (o.assigned_driver_id) {
       driverCompletedMap.set(o.assigned_driver_id, (driverCompletedMap.get(o.assigned_driver_id) ?? 0) + 1)
     }
   }
 
-  const drivers: Driver[] = (driversRaw ?? []).map((d: {
-    id: string; name: string; phone: string | null; branch_id: string | null
-  }) => ({
+  const drivers: Driver[] = (driversRaw ?? []).map((d) => ({
     id:               d.id,
     name:             d.name,
     phone:            d.phone,
@@ -95,18 +89,13 @@ export default async function DeliveryPage({ params }: Props) {
     current_order_id: driverOrderMap.get(d.id) ?? null,
     completed_today:  driverCompletedMap.get(d.id) ?? 0,
     branch_id:        d.branch_id,
-  })) as Driver[]
+  }))
 
-  const orders: DeliveryOrder[] = (ordersRaw ?? []).map((o: {
-    id: string; order_number: string; status: string; customer_name: string | null
-    customer_phone: string | null; branch_id: string; notes: string | null; source: string
-    total_bhd: number; created_at: string; updated_at: string; assigned_driver_id: string | null
-    order_items: unknown[]
-  }) => {
+  const orders: DeliveryOrder[] = (ordersRaw ?? []).map((o) => {
     const driver = drivers.find(d => d.id === o.assigned_driver_id)
     return {
       id:               o.id,
-      order_number:     o.order_number,
+      order_number:     o.id.slice(0, 8).toUpperCase(),
       status:           o.status as DeliveryOrder['status'],
       customer_name:    o.customer_name,
       customer_phone:   o.customer_phone,
@@ -125,7 +114,7 @@ export default async function DeliveryPage({ params }: Props) {
     }
   })
 
-  const completed = (completedRaw ?? []) as { total_bhd: number }[]
+  const completed = completedRaw ?? []
   const revenueToday  = completed.reduce((s, o) => s + (Number(o.total_bhd) || 0), 0)
   const inTransit     = orders.filter(o => o.status === 'out_for_delivery').length
   const nowMs         = Date.now()

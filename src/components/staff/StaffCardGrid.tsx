@@ -3,7 +3,7 @@
 import { useState }           from 'react'
 import Link                   from 'next/link'
 import { useTranslations }    from 'next-intl'
-import type { StaffExtendedRow, StaffRole } from '@/lib/supabase/types'
+import type { StaffExtendedRow, StaffRole } from '@/lib/supabase/custom-types'
 import { toggleStaffActive, resendStaffInvitation } from '@/app/[locale]/dashboard/staff/actions'
 import { ROLE_RANK }          from '@/lib/auth/rbac'
 import { BRANCH_LIST }        from '@/constants/contact'

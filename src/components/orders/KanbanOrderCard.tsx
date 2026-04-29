@@ -9,7 +9,7 @@ import { buildCustomerContactLink } from '@/lib/whatsapp'
 import { ALLOWED_TRANSITIONS } from '@/lib/auth/permissions'
 import { BRANCHES } from '@/constants/contact'
 import type { OrderCardData } from './OrderCard'
-import type { OrderStatus, StaffRole } from '@/lib/supabase/types'
+import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 
 // Simplified advance map for kanban one-click actions
 const KANBAN_NEXT: Partial<Record<OrderStatus, OrderStatus>> = {

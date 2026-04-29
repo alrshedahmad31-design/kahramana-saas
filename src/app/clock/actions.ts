@@ -2,7 +2,7 @@
 
 import { createServiceClient }        from '@/lib/supabase/server'
 import { calcTotalHours, calcOvertimeHours } from '@/lib/staff/calculations'
-import type { StaffBasicRow, StaffRole } from '@/lib/supabase/types'
+import type { StaffBasicRow, StaffRole } from '@/lib/supabase/custom-types'
 
 export type ClockResult =
   | { success: true;  staff: Pick<StaffBasicRow, 'id' | 'name' | 'role' | 'branch_id'>; activeEntry: string | null }

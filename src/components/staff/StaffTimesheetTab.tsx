@@ -1,7 +1,7 @@
 'use client'
 
 import { formatHours } from '@/lib/staff/calculations'
-import type { TimeEntryRow } from '@/lib/supabase/types'
+import type { TimeEntryRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   entries: TimeEntryRow[]

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canManageStaff, canAssignRole, canDeactivateStaff, ROLE_RANK } from '@/lib/auth/rbac'
-import type { StaffRole, StaffBasicRow, EmploymentType } from '@/lib/supabase/types'
+import type { StaffRole, StaffBasicRow, EmploymentType, TablesUpdate, Json } from '@/lib/supabase/custom-types'
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ function auditPayload(
   table: string,
   action: 'INSERT' | 'UPDATE' | 'DELETE',
   recordId: string,
-  changes: Record<string, unknown>,
+  changes: Json,
 ) {
   return {
     table_name: table,
@@ -213,7 +213,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
     return { success: false, error: insertError.message }
   }
 
-  const profile: Record<string, unknown> = {}
+  const profile: TablesUpdate<'staff_basic'> = {}
   if (input.phone)                   profile.phone                   = input.phone
   if (input.date_of_birth)           profile.date_of_birth           = input.date_of_birth
   if (input.id_number)               profile.id_number               = input.id_number
@@ -228,8 +228,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
   if (input.staff_notes)             profile.staff_notes             = input.staff_notes
 
   if (Object.keys(profile).length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (service as any).from('staff_basic').update(profile).eq('id', staffId)
+    await service.from('staff_basic').update(profile).eq('id', staffId)
   }
 
   await service.from('audit_logs').insert(

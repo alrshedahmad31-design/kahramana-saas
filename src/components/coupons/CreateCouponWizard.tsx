@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useLocale } from 'next-intl'
 import { createCoupon, updateCoupon } from '@/app/[locale]/dashboard/coupons/actions'
 import CouponTemplatesModal from './CouponTemplatesModal'
-import type { CouponRow, BranchRow, CouponTemplateRow } from '@/lib/supabase/types'
+import type { CouponRow, BranchRow, CouponTemplateRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   coupon?:  CouponRow
