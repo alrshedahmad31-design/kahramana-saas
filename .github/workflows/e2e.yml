@@ -1,0 +1,78 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  auth-e2e:
+    name: Auth E2E (@supabase/ssr regression)
+    runs-on: ubuntu-latest
+    environment: staging
+
+    # Skip if secrets not configured (e.g. dependabot PRs)
+    if: >
+      vars.E2E_ENABLED == 'true' ||
+      github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run auth E2E suite
+        run: npm run test:e2e:auth
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL:       ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY:  ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:      ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_BASE_URL:                   ${{ vars.E2E_BASE_URL || 'http://localhost:3000' }}
+          E2E_TEST_PASSWORD:              ${{ secrets.E2E_TEST_PASSWORD }}
+          # App env vars needed to start Next.js dev server
+          NEXT_PUBLIC_SANITY_PROJECT_ID:  ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+          NEXT_PUBLIC_SANITY_DATASET:     production
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-auth
+          path: playwright-report/
+          retention-days: 14
+
+  realtime-rls:
+    name: Realtime RLS Tests
+    runs-on: ubuntu-latest
+    environment: staging
+    if: vars.E2E_ENABLED == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Realtime RLS tests
+        run: npm run test:e2e:realtime
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL:       ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY:  ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          E2E_TEST_PASSWORD:              ${{ secrets.E2E_TEST_PASSWORD }}

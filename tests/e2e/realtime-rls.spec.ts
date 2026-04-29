@@ -158,18 +158,18 @@ test.describe('Pre-flight checks', () => {
   })
 
   test('cashier can authenticate and query orders (branch-scoped)', async () => {
-    const cashier = await signIn(TEST_USERS.cashier.email, TEST_USERS.cashier.password)
+    const cashier = await signIn(TEST_USERS.cashierRiffa.email, TEST_USERS.cashierRiffa.password)
     const { data, error } = await cashier.from('orders').select('id, branch_id').limit(50)
     expect(error).toBeNull()
     // Every row the cashier can read must belong to their branch
     for (const row of data ?? []) {
-      expect(row.branch_id).toBe(TEST_USERS.cashier.branchId)
+      expect(row.branch_id).toBe(TEST_USERS.cashierRiffa.branchId)
     }
     await cashier.auth.signOut()
   })
 
   test('cashier realtime channel subscribes successfully', async () => {
-    const cashier  = await signIn(TEST_USERS.cashier.email, TEST_USERS.cashier.password)
+    const cashier  = await signIn(TEST_USERS.cashierRiffa.email, TEST_USERS.cashierRiffa.password)
     const watcher  = watchOrders(cashier, 'preflight')
     const status   = await Promise.race([
       watcher.subscribeStatus(),
@@ -207,7 +207,7 @@ test.describe('Scenario A — Cashier receives events for own branch (riffa)', (
   })
 
   test('receives INSERT event for own branch and fetchOrders would return the row', async () => {
-    const cashier = await signIn(TEST_USERS.cashier.email, TEST_USERS.cashier.password)
+    const cashier = await signIn(TEST_USERS.cashierRiffa.email, TEST_USERS.cashierRiffa.password)
     const watcher = watchOrders(cashier, 'scenario-a')
 
     // Wait for channel to connect
@@ -215,7 +215,7 @@ test.describe('Scenario A — Cashier receives events for own branch (riffa)', (
 
     // Owner inserts an order in the cashier's branch
     const eventArrived = watcher.waitForEvent(8_000)
-    insertedId = await insertTestOrder(ownerClient, TEST_USERS.cashier.branchId)
+    insertedId = await insertTestOrder(ownerClient, TEST_USERS.cashierRiffa.branchId)
 
     const got = await eventArrived
     expect(got, 'Cashier should receive a realtime INSERT event for their own branch').toBe(true)
@@ -227,7 +227,7 @@ test.describe('Scenario A — Cashier receives events for own branch (riffa)', (
       .eq('id', insertedId)
       .single()
     expect(error).toBeNull()
-    expect(data?.branch_id).toBe(TEST_USERS.cashier.branchId)
+    expect(data?.branch_id).toBe(TEST_USERS.cashierRiffa.branchId)
 
     await watcher.cleanup()
   })
@@ -238,7 +238,7 @@ test.describe('Scenario A — Cashier receives events for own branch (riffa)', (
 test.describe('Scenario B — Cashier receives NO events for other branch (qallali)', () => {
   test.skip(!E2E_CONFIGURED, 'E2E env vars not configured — see .env.test.example')
 
-  const OTHER_BRANCH = TEST_USERS.cashier.branchId === 'riffa' ? 'qallali' : 'riffa'
+  const OTHER_BRANCH = TEST_USERS.cashierRiffa.branchId === 'riffa' ? 'qallali' : 'riffa'
   let ownerClient: SupabaseClient<Database>
   let insertedId: string
 
@@ -252,7 +252,7 @@ test.describe('Scenario B — Cashier receives NO events for other branch (qalla
   })
 
   test('no event arrives within 3s after INSERT in other branch', async () => {
-    const cashier = await signIn(TEST_USERS.cashier.email, TEST_USERS.cashier.password)
+    const cashier = await signIn(TEST_USERS.cashierRiffa.email, TEST_USERS.cashierRiffa.password)
     const watcher = watchOrders(cashier, 'scenario-b')
 
     await watcher.subscribeStatus()
@@ -326,7 +326,7 @@ test.describe('Channel health checks', () => {
   test.skip(!E2E_CONFIGURED, 'E2E env vars not configured — see .env.test.example')
 
   test('no RLS policy violation on cashier channel subscribe', async () => {
-    const cashier = await signIn(TEST_USERS.cashier.email, TEST_USERS.cashier.password)
+    const cashier = await signIn(TEST_USERS.cashierRiffa.email, TEST_USERS.cashierRiffa.password)
     const errors: string[] = []
 
     const channel = cashier
