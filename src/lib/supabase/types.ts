@@ -38,6 +38,8 @@ export type BranchRow = {
   whatsapp:   string
   wa_link:    string
   maps_url:   string | null
+  latitude:   number | null
+  longitude:  number | null
   is_active:  boolean
   created_at: string
 }
@@ -57,6 +59,10 @@ export type OrderRow = {
   branch_id:        string
   status:           OrderStatus
   notes:            string | null
+  delivery_address:      string | null
+  delivery_lat:          number | null
+  delivery_lng:          number | null
+  delivery_instructions: string | null
   source:               string
   total_bhd:            number
   whatsapp_sent_at:     string | null
@@ -238,12 +244,16 @@ export type ContactMessageInsert = Omit<ContactMessageRow, 'id' | 'created_at' |
 
 // ── Insert types (id + timestamps optional) ───────────────────────────────────
 
-export type OrderInsert = Omit<OrderRow, 'id' | 'created_at' | 'updated_at' | 'coupon_id' | 'coupon_discount_bhd' | 'assigned_driver_id'> & {
+export type OrderInsert = Omit<OrderRow, 'id' | 'created_at' | 'updated_at' | 'coupon_id' | 'coupon_discount_bhd' | 'assigned_driver_id' | 'delivery_address' | 'delivery_lat' | 'delivery_lng' | 'delivery_instructions'> & {
   id?: string
   whatsapp_sent_at?: string | null
   coupon_id?: string | null
   coupon_discount_bhd?: number | null
   assigned_driver_id?: string | null
+  delivery_address?: string | null
+  delivery_lat?: number | null
+  delivery_lng?: number | null
+  delivery_instructions?: string | null
 }
 
 export type OrderItemInsert = Omit<OrderItemRow, 'id' | 'created_at'> & {
@@ -457,7 +467,7 @@ export type Database = {
     Tables: {
       branches: {
         Row:    BranchRow
-        Insert: Omit<BranchRow, 'created_at'>
+        Insert: Omit<BranchRow, 'created_at' | 'latitude' | 'longitude'> & { latitude?: number | null; longitude?: number | null }
         Update: Partial<Omit<BranchRow, 'id' | 'created_at'>>
         Relationships: []
       }

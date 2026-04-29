@@ -21,7 +21,8 @@ export default async function DriverPage({ params }: Props) {
 
   const ORDER_SELECT = `
     id, customer_name, customer_phone, branch_id, status,
-    notes, total_bhd, assigned_driver_id, created_at, updated_at,
+    notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
+    total_bhd, assigned_driver_id, created_at, updated_at,
     source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
     order_items(name_ar, name_en, quantity, selected_size, selected_variant),
     payments(method)

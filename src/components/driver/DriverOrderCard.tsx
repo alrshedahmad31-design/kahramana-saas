@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { BRANCHES }           from '@/constants/contact'
-import { mapsDirectionsUrl }  from '@/lib/utils/distance'
-import type { DriverOrder }   from '@/lib/supabase/types'
-import type { BranchId }      from '@/constants/contact'
+import { useState, useEffect }         from 'react'
+import { BRANCHES }                    from '@/constants/contact'
+import { haversine, estimateETA, formatDistance, mapsDirectionsUrl } from '@/lib/utils/distance'
+import type { DriverOrder }            from '@/lib/supabase/types'
+import type { BranchId }               from '@/constants/contact'
 
 type DriverActiveStatus = 'ready' | 'out_for_delivery'
 
@@ -39,6 +39,26 @@ const PAYMENT_LABEL: Record<string, { en: string; ar: string; icon: string }> = 
   tap_knet:   { en: 'KNET',             ar: 'كي-نت',            icon: '💳' },
 }
 
+// ── Distance badge ────────────────────────────────────────────────────────────
+
+function DistanceBadge({ distanceKm, isRTL }: { distanceKm: number; isRTL: boolean }) {
+  const eta = estimateETA(distanceKm)
+  return (
+    <div className="flex items-center gap-2 mt-1.5">
+      <span className="flex items-center gap-1 rounded-md bg-brand-black/50 border border-brand-border px-2 py-0.5">
+        <RulerIcon />
+        <span className="font-satoshi text-xs text-brand-muted tabular-nums">{formatDistance(distanceKm)}</span>
+      </span>
+      <span className="flex items-center gap-1 rounded-md bg-brand-black/50 border border-brand-border px-2 py-0.5">
+        <ClockTinyIcon />
+        <span className={`text-xs text-brand-muted tabular-nums ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+          {isRTL ? `${eta} د` : `${eta} min`}
+        </span>
+      </span>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant = 'active', onAction }: Props) {
@@ -68,9 +88,26 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
   const paymentEntry = order.payments?.[0]
   const paymentInfo  = paymentEntry ? PAYMENT_LABEL[paymentEntry.method] : null
 
-  // Google Maps navigation link for customer delivery (uses notes as address query)
-  const customerNavUrl = order.notes
-    ? mapsDirectionsUrl(order.notes)
+  // Delivery address: prefer explicit field, fall back to notes
+  const deliveryAddrText  = order.delivery_address ?? order.notes ?? null
+  const deliveryInstructions = order.delivery_instructions ?? null
+
+  // Navigation URLs
+  const branchNavUrl   = branch?.latitude != null && branch?.longitude != null
+    ? mapsDirectionsUrl(`${branch.latitude},${branch.longitude}`)
+    : branchMapsUrl
+  const customerNavUrl = order.delivery_lat != null && order.delivery_lng != null
+    ? mapsDirectionsUrl(`${order.delivery_lat},${order.delivery_lng}`)
+    : deliveryAddrText
+      ? mapsDirectionsUrl(deliveryAddrText)
+      : null
+
+  // Delivery leg distance (branch → customer) — shows on both ready and on-road cards
+  const deliveryDistance = (
+    branch?.latitude != null && branch?.longitude != null &&
+    order.delivery_lat != null && order.delivery_lng != null
+  )
+    ? haversine(branch.latitude, branch.longitude, order.delivery_lat, order.delivery_lng)
     : null
 
   return (
@@ -157,7 +194,7 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
           <div className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-2.5 mb-3">
             <div className="flex items-start gap-2 mb-2">
               <PinIcon className="text-brand-gold mt-0.5 shrink-0" />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                   {isRTL ? 'نقطة الاستلام' : 'Pickup'}
                 </p>
@@ -169,16 +206,16 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
                 )}
               </div>
             </div>
-            {branchMapsUrl && (
+            {branchNavUrl && (
               <a
-                href={branchMapsUrl}
+                href={branchNavUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full min-h-[40px] rounded-lg border border-brand-gold/30 bg-brand-gold/10 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150"
               >
                 <MapIcon />
                 <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'اتجاهات للفرع' : 'Navigate to Branch'}
+                  {isRTL ? 'انتقل للفرع' : 'Navigate to Branch'}
                 </span>
               </a>
             )}
@@ -186,17 +223,20 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
         )}
 
         {/* ── Delivery navigation ──────────────────────────────────────────── */}
-        {!isCompleted && order.notes && (
+        {!isCompleted && deliveryAddrText && (
           <div className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-2.5 mb-3">
             <div className="flex items-start gap-2 mb-2">
               <PinIcon className="text-brand-success mt-0.5 shrink-0" />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                   {isRTL ? 'عنوان التوصيل' : 'Delivery Address'}
                 </p>
                 <p className={`text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {order.notes}
+                  {deliveryAddrText}
                 </p>
+                {deliveryDistance != null && (
+                  <DistanceBadge distanceKm={deliveryDistance} isRTL={isRTL} />
+                )}
               </div>
             </div>
             {customerNavUrl && (
@@ -208,10 +248,22 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
               >
                 <MapIcon />
                 <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'اتجاهات للعميل' : 'Navigate to Customer'}
+                  {isRTL ? 'انتقل للعميل' : 'Navigate to Customer'}
                 </span>
               </a>
             )}
+          </div>
+        )}
+
+        {/* ── Customer instructions (speech bubble) ───────────────────────── */}
+        {!isCompleted && deliveryInstructions && (
+          <div className="rounded-lg border border-brand-gold/20 bg-brand-gold/5 px-3 py-2.5 mb-3">
+            <div className="flex items-start gap-2">
+              <SpeechIcon />
+              <p className={`text-sm text-brand-text/90 leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                &ldquo;{deliveryInstructions}&rdquo;
+              </p>
+            </div>
           </div>
         )}
 
@@ -266,14 +318,14 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
           )}
         </div>
 
-        {/* ── Customer notes (when no delivery navigation shown) ────────────── */}
-        {isCompleted && order.notes && (
+        {/* ── Notes (completed variant) ─────────────────────────────────────── */}
+        {isCompleted && (order.notes ?? order.delivery_address) && (
           <div className="rounded-lg border border-brand-gold/20 bg-brand-gold/5 px-3 py-2.5 mb-3">
             <p className={`text-xs text-brand-muted uppercase tracking-wider mb-1 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {isRTL ? 'الملاحظات' : 'Notes'}
+              {isRTL ? 'العنوان' : 'Address'}
             </p>
             <p className={`text-sm text-brand-text leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {order.notes}
+              {order.delivery_address ?? order.notes}
             </p>
           </div>
         )}
@@ -348,6 +400,30 @@ function PersonIcon() {
   return (
     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  )
+}
+
+function SpeechIcon() {
+  return (
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-gold mt-0.5 shrink-0" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+  )
+}
+
+function RulerIcon() {
+  return (
+    <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10l4-4m0 0l4 4M7 6v12M21 14l-4 4m0 0l-4-4m4 4V6" />
+    </svg>
+  )
+}
+
+function ClockTinyIcon() {
+  return (
+    <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
     </svg>
   )
 }

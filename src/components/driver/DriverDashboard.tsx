@@ -45,7 +45,8 @@ export default function DriverDashboard({
       .from('orders')
       .select(`
         id, customer_name, customer_phone, branch_id, status,
-        notes, total_bhd, assigned_driver_id, created_at, updated_at,
+        notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
+        total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
         payments(method)
@@ -69,7 +70,8 @@ export default function DriverDashboard({
       .from('orders')
       .select(`
         id, customer_name, customer_phone, branch_id, status,
-        notes, total_bhd, assigned_driver_id, created_at, updated_at,
+        notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
+        total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
         payments(method)
@@ -139,6 +141,15 @@ export default function DriverDashboard({
   const availableOrders = orders.filter((o) => o.status === 'ready')
   const totalRevenue    = completedOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
 
+  const avgDeliveryMins = completedOrders.length > 0
+    ? Math.round(
+        completedOrders.reduce((sum, o) => {
+          const mins = (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60_000
+          return sum + Math.max(0, mins)
+        }, 0) / completedOrders.length
+      )
+    : 0
+
   return (
     <div className="flex flex-col h-full bg-brand-black" dir={isAr ? 'rtl' : 'ltr'}>
       <DriverHeader
@@ -146,6 +157,7 @@ export default function DriverDashboard({
         onToggle={() => setIsOnline((v) => !v)}
         completedToday={completedOrders.length}
         totalRevenue={totalRevenue}
+        avgDeliveryMins={avgDeliveryMins}
         isRTL={isAr}
         clock={clock}
       />

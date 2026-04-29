@@ -25,6 +25,9 @@ export interface Branch {
   waLink: string
   /** Google Maps URL — to be confirmed by restaurant */
   mapsUrl: string | null
+  /** Branch GPS coordinates — used for driver distance/ETA calculations */
+  latitude:  number | null
+  longitude: number | null
   hours: {
     ar: string
     en: string
@@ -49,6 +52,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     whatsapp: '+97317131413',
     waLink: 'https://wa.me/97317131413',
     mapsUrl: 'https://maps.app.goo.gl/J3CMk9AnhSqSBsGQA',
+    latitude: 26.0667,
+    longitude: 50.5577,
     hours: {
       ar: 'يومياً ٧:٠٠م – ١:٠٠ص',
       en: 'Daily 7:00 PM – 1:00 AM',
@@ -72,6 +77,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     whatsapp: '+97317131213',
     waLink: 'https://wa.me/97317131213',
     mapsUrl: 'https://maps.app.goo.gl/cVsYGpibZxy2rPEV8',
+    latitude: 26.2172,
+    longitude: 50.5865,
     hours: {
       ar: 'يومياً ١٢:٠٠م – ١:٠٠ص',
       en: 'Daily 12:00 PM – 1:00 AM',
@@ -95,6 +102,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     whatsapp: '',
     waLink: '',
     mapsUrl: null,
+    latitude: null,
+    longitude: null,
     hours: {
       ar: 'قريباً',
       en: 'Coming Soon',
