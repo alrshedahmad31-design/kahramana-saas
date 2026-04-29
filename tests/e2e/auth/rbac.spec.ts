@@ -127,6 +127,15 @@ test.describe('Owner full access', () => {
       await expect(page).toHaveURL(new RegExp(`/dashboard/${name}`))
     })
   }
+
+  // Owner can access /driver — owner needs visibility into dispatch
+  // without role-juggling. canAccessDriver stays as role IN (owner, driver).
+  test('owner /driver → allowed (dispatch visibility)', async ({ page }) => {
+    await loginAs(page, TEST_USERS.owner.email, TEST_USERS.owner.password)
+    await page.goto(PATHS.driver)
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(/\/driver/)
+  })
 })
 
 // ── Driver RBAC ────────────────────────────────────────────────────────────────
