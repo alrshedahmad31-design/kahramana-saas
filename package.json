@@ -14,7 +14,9 @@
     "db:status": "npx supabase migration list --linked",
     "test:e2e:auth": "playwright test tests/e2e/auth/",
     "test:e2e:realtime": "playwright test tests/e2e/realtime-rls.spec.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "email:dev": "email dev --dir emails/templates --port 3001",
+    "email:export": "npx tsx emails/scripts/render-for-supabase.ts"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
@@ -32,12 +34,14 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.8.1",
+    "resend": "^6.12.2",
     "xlsx": "^0.18.5",
     "zod": "^3.23.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@react-email/components": "^1.0.12",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^22.0.0",
     "@types/qrcode": "^1.5.5",
@@ -48,6 +52,7 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.0.0",
     "postcss": "^8.4.0",
+    "react-email": "^6.0.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.6.0"
   },
