@@ -1,0 +1,872 @@
+{
+  "common": {
+    "appName": "Kahramana Baghdad",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "currency": "BD",
+    "required": "This field is required",
+    "optional": "Optional",
+    "systemOperational": "System Operational"
+  },
+  "nav": {
+    "menu": "Menu",
+    "about": "About Us",
+    "contact": "Contact",
+    "branches": "Branches",
+    "catering": "Catering",
+    "cart": "Cart",
+    "cartAlt": "View cart",
+    "dashboard": "Dashboard",
+    "language": "عربي",
+    "languageAlt": "Switch to Arabic",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation",
+    "orderNow": "Order Now"
+  },
+  "catering": {
+    "seo": {
+      "title": "Catering and Private Orders",
+      "description": "Private orders, family feasts, home hospitality, and corporate catering from Kahramana Baghdad, coordinated after the team reviews your request."
+    },
+    "hero": {
+      "eyebrow": "Catering & Private Orders",
+      "title": "Iraqi hospitality made for your occasions",
+      "description": "From family gatherings to business meetings, Kahramana Baghdad prepares special orders with care, structure, and a level of hospitality worthy of the occasion.",
+      "primaryCta": "Request a Catering Quote",
+      "secondaryCta": "View Menu",
+      "microcopy": "Details and pricing are confirmed after the Kahramana team reviews your request.",
+      "visualAlt": "Luxury Iraqi hospitality by Kahramana Baghdad for private occasions",
+      "visualLabel": "Requests by occasion",
+      "consultationBadge": "Consultation before confirmation",
+      "visualItems": {
+        "family": "Family occasions",
+        "corporate": "Corporate orders",
+        "feasts": "Private feasts",
+        "home": "Home hospitality"
+      }
+    },
+    "eventTypes": {
+      "eyebrow": "Service Fields",
+      "title": "Occasions We Serve with Care",
+      "items": {
+        "familyFeasts": {
+          "title": "Family Feasts",
+          "description": "Large family orders prepared for gatherings, guests, and shared tables."
+        },
+        "businessMeetings": {
+          "title": "Business Meetings",
+          "description": "Options suited for corporate meetings and professional hospitality, based on guest count and timing."
+        },
+        "majlis": {
+          "title": "Majlis Gatherings",
+          "description": "Authentic Iraqi dishes prepared for majlis gatherings and special invitations."
+        },
+        "privateOccasions": {
+          "title": "Private Occasions",
+          "description": "Flexible options for private occasions, coordinated after reviewing the request details."
+        }
+      }
+    },
+    "protocol": {
+      "eyebrow": "How It Works",
+      "title": "Kahramana Hospitality Protocol",
+      "description": "Every private order starts with clear details, then team review before confirming dishes, timing, and pickup or delivery method.",
+      "steps": {
+        "request": {
+          "title": "Request",
+          "description": "The client shares the occasion details: date, guest count, area, and preferred service type."
+        },
+        "review": {
+          "title": "Review",
+          "description": "The Kahramana team reviews the request and suggests suitable selections based on guest count and occasion type."
+        },
+        "confirmation": {
+          "title": "Confirmation",
+          "description": "Once the items and timing are agreed, the order and pickup or delivery method are confirmed."
+        },
+        "preparation": {
+          "title": "Preparation",
+          "description": "The order is prepared with care, with quality and packaging reviewed before leaving the kitchen."
+        }
+      }
+    },
+    "styles": {
+      "eyebrow": "Flexible Styles",
+      "title": "Catering Request Styles",
+      "items": {
+        "familyOrder": {
+          "title": "Family Order",
+          "description": "Ideal for home and family gatherings, with main dishes and appetizers selected based on guest count.",
+          "cta": "Request a Suggestion"
+        },
+        "corporateHospitality": {
+          "title": "Corporate Hospitality",
+          "description": "Organized selections for business meetings and professional hospitality, based on timing and attendees.",
+          "cta": "Request a Quote"
+        },
+        "iraqiFeast": {
+          "title": "Iraqi Feast",
+          "description": "A fuller Iraqi dining experience for larger occasions, coordinated after reviewing the details.",
+          "cta": "Discuss Details"
+        }
+      },
+      "note": "No fixed prices are shown here; pricing depends on selected dishes, quantity, timing, and area."
+    },
+    "signature": {
+      "eyebrow": "From the Menu",
+      "title": "Dishes Made for Sharing",
+      "description": "Examples from the menu that suit sharing, shown without prices. Availability and suitable quantities are reviewed after contact.",
+      "note": "Displaying these dishes does not mean they are available for every occasion; final selections are confirmed based on availability and order size.",
+      "fallback": {
+        "iraqiRice": {
+          "title": "Iraqi rice dishes"
+        },
+        "grills": {
+          "title": "Grills"
+        },
+        "appetizers": {
+          "title": "Appetizers"
+        },
+        "sharingDishes": {
+          "title": "Sharing dishes"
+        },
+        "dessertsDrinks": {
+          "title": "Desserts & drinks"
+        }
+      }
+    },
+    "form": {
+      "eyebrow": "Inquiry Request",
+      "title": "Tell Us About Your Occasion",
+      "description": "Share the essential details and we will open a structured WhatsApp message so the Kahramana team can review your request and prepare a suitable quote.",
+      "notice": "Submission is through WhatsApp only in this phase. No online payment is collected through this form.",
+      "submit": "Send Catering Request",
+      "fields": {
+        "name": {
+          "label": "Name",
+          "placeholder": "Your full name"
+        },
+        "phone": {
+          "label": "Phone number",
+          "placeholder": "Contact number"
+        },
+        "occasionType": {
+          "label": "Occasion type",
+          "placeholder": "Select occasion type"
+        },
+        "eventDate": {
+          "label": "Occasion date"
+        },
+        "eventTime": {
+          "label": "Occasion time"
+        },
+        "guestCount": {
+          "label": "Approximate guest count",
+          "placeholder": "Example: 20 guests"
+        },
+        "area": {
+          "label": "Area / approximate address",
+          "placeholder": "Area or general address"
+        },
+        "preferredBranch": {
+          "label": "Preferred branch if any",
+          "placeholder": "No preference"
+        },
+        "serviceType": {
+          "label": "Service type",
+          "placeholder": "Select service type"
+        },
+        "notes": {
+          "label": "Requested dishes or notes",
+          "placeholder": "Write preferred dishes, hospitality style, or important notes"
+        },
+        "budget": {
+          "label": "Approximate budget optional",
+          "placeholder": "Optional"
+        }
+      },
+      "occasionOptions": {
+        "familyFeast": "Family feast",
+        "majlis": "Majlis or invitation",
+        "corporateMeeting": "Business meeting",
+        "privateOccasion": "Private occasion",
+        "other": "Other"
+      },
+      "serviceOptions": {
+        "pickup": "Pickup from branch",
+        "delivery": "Delivery",
+        "coordination": "Needs coordination"
+      }
+    },
+    "whatsapp": {
+      "title": "New catering request",
+      "emptyValue": "Not specified",
+      "labels": {
+        "name": "Name",
+        "phone": "Phone",
+        "occasionType": "Occasion type",
+        "eventDate": "Date",
+        "eventTime": "Time",
+        "guestCount": "Guest count",
+        "area": "Area",
+        "preferredBranch": "Preferred branch",
+        "serviceType": "Service type",
+        "notes": "Dishes / notes",
+        "budget": "Approximate budget"
+      }
+    },
+    "faq": {
+      "eyebrow": "Important Questions",
+      "title": "Before Sending the Request",
+      "items": {
+        "pricing": {
+          "question": "Are there fixed prices for catering?",
+          "answer": "Fixed prices are not shown here. Pricing is determined after reviewing selected dishes, quantity, timing, and area."
+        },
+        "notice": {
+          "question": "When should I send the request?",
+          "answer": "It is best to send the details as early as possible so the team can review availability and suggest suitable selections."
+        },
+        "delivery": {
+          "question": "Can delivery be arranged to the occasion location?",
+          "answer": "Delivery may be available depending on occasion size, area, and team confirmation. Pickup from the branch can also be arranged."
+        },
+        "customization": {
+          "question": "Can the team suggest dishes based on the occasion?",
+          "answer": "Yes. The team can suggest suitable selections after reviewing guest count, timing, and the preferred hospitality style."
+        }
+      }
+    },
+    "finalCta": {
+      "title": "Let us arrange hospitality worthy of your occasion",
+      "description": "Send the essential details and the Kahramana team will review availability and suitable selections before confirming.",
+      "cta": "Start Catering Request"
+    }
+  },
+  "menu": {
+    "title": "Our Menu",
+    "search": "Search dishes...",
+    "searchNoResults": "No results found",
+    "searchNoResultsHint": "Try a different category or change your search term",
+    "allCategories": "All",
+    "outOfStock": "Out of Stock",
+    "addToCart": "Add to Cart",
+    "addToCartAlt": "Add {name} to cart",
+    "details": "Details",
+    "size": "Size",
+    "variant": "Type",
+    "filterBy": "Filter",
+    "categories": "Categories",
+    "priceFrom": "From",
+    "sizeSmall": "Small",
+    "sizeLarge": "Large",
+    "sizeGlass": "Glass",
+    "size500ml": "0.5 L",
+    "size1L": "1 L",
+    "size1_5L": "1.5 L",
+    "size1kg": "1 KG",
+    "sizeHalfKg": "0.5 KG",
+    "breadcrumbLabel": "Menu",
+    "homeLabel": "Home",
+    "unavailableDetail": "This item is currently unavailable",
+    "relatedTitle": "Related Items",
+    "seoTitle": "Menu — Kahramana Baghdad",
+    "seoDescription": "Explore our full menu of authentic Iraqi dishes: Masgouf, Quzi, Grills, and more. Kahramana Baghdad restaurant in Bahrain.",
+    "heroEyebrow": "Discover the Flavors of Baghdad",
+    "heroTitle": "Our Menu",
+    "heroDescription": "Authentic Iraqi cuisine prepared with care to deliver an unforgettable dining experience",
+    "heroItemCount": "{count, plural, one {# dish} other {# dishes}}",
+    "heroCategoryCount": "{count, plural, one {# category} other {# categories}}",
+    "heroImageAlt": "Kahramana Baghdad menu dishes",
+    "categoryEyebrow": "Category",
+    "categorySingleLabel": "1 category",
+    "categorySeoTitle": "{category} — Kahramana Baghdad",
+    "categorySeoDescription": "Discover authentic {category} dishes at Kahramana Baghdad restaurant in Bahrain.",
+    "categoryFallbackDescription": "Explore our finest dishes in the {category} selection",
+    "branchLabel": "{branch} Branch",
+    "availableOnly": "Available only",
+    "sectionTitle": "Our Menu",
+    "categoryItemCount": "{count} items",
+    "resultsCount": "{count}",
+    "resultsLabel": "Showing {count} of {total}",
+    "clearSearch": "Clear search",
+    "itemCountSuffix": " items"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "emptyHint": "Add items from the menu",
+    "items": "Items",
+    "itemCount": "{count, plural, one {# item} other {# items}}",
+    "subtotal": "Subtotal",
+    "checkout": "Proceed to Order",
+    "remove": "Remove",
+    "removeAlt": "Remove {name} from cart",
+    "increase": "Increase quantity",
+    "decrease": "Decrease quantity",
+    "quantity": "Qty",
+    "browseMenu": "Browse Menu"
+  },
+  "checkout": {
+    "title": "Place Your Order",
+    "orderSummary": "Order Summary",
+    "name": "Name",
+    "namePlaceholder": "Your name (optional)",
+    "phone": "Phone",
+    "phonePlaceholder": "Your phone number (optional)",
+    "phoneHint": "Used only to contact you about your order",
+    "branch": "Branch",
+    "branchPlaceholder": "Select a branch",
+    "branchRequired": "Please select a branch",
+    "notes": "Notes",
+    "notesPlaceholder": "Any special requests? (optional)",
+    "total": "Total",
+    "placeOrder": "Send Order via WhatsApp",
+    "paymentNote": "Pay on delivery or at the branch",
+    "terms": "By continuing you agree to our Privacy Policy and Terms of Service",
+    "processing": "Sending..."
+  },
+  "order": {
+    "title": "Order Received",
+    "subtitle": "Our team will contact you shortly via WhatsApp",
+    "orderNumber": "Order #",
+    "trackOrder": "Track Your Order",
+    "continueShopping": "Continue Shopping",
+    "status": {
+      "new": "New",
+      "under_review": "Under Review",
+      "accepted": "Accepted",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "out_for_delivery": "Out for Delivery",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "payment_failed": "Payment Failed"
+    },
+    "statusDescription": {
+      "new": "Your order has been received and will be reviewed shortly",
+      "under_review": "Our team is reviewing your order",
+      "accepted": "Your order has been accepted and will start preparing soon",
+      "preparing": "Our team is preparing your order",
+      "ready": "Your order is ready for pickup or delivery",
+      "out_for_delivery": "Your order is on its way",
+      "delivered": "Your order has been delivered",
+      "completed": "Your order is complete, thank you!",
+      "cancelled": "Your order has been cancelled",
+      "payment_failed": "Payment failed, please try again"
+    }
+  },
+  "tracking": {
+    "title": "Track Your Order",
+    "orderNotFound": "Order not found",
+    "orderNotFoundHint": "Please check the order number and try again",
+    "statusHistory": "Status History",
+    "branch": "Branch",
+    "orderedAt": "Ordered at",
+    "items": "Items",
+    "total": "Total"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "orders": "Orders",
+    "newOrders": "New Orders",
+    "allBranches": "All Branches",
+    "today": "Today",
+    "noOrders": "No orders yet",
+    "noOrdersHint": "New orders will appear here as they come in",
+    "updateStatus": "Update Status",
+    "selectStatus": "Select Status",
+    "statusUpdated": "Status updated",
+    "orderDetails": "Order Details",
+    "customer": "Customer",
+    "phone": "Phone",
+    "customerGuest": "Guest",
+    "items": "Items",
+    "total": "Total",
+    "notes": "Notes",
+    "createdAt": "Ordered At",
+    "status": "Status",
+    "actions": "Actions",
+    "branch": "Branch",
+    "searchByPhoneOrName": "Search by name or phone...",
+    "printReceipt": "Print Receipt",
+    "cancelOrder": "Cancel Order",
+    "confirmCancelOrder": "Are you sure you want to cancel this order?",
+    "cancelSuccess": "Order cancelled",
+    "statusTimeline": "Status Timeline",
+    "contactCustomer": "Contact Customer",
+    "viewCard": "Card View",
+    "viewTable": "Table View",
+    "filterYesterday": "Yesterday",
+    "filterLast7": "Last 7 Days",
+    "filterLast30": "Last 30 Days",
+    "filterAllDates": "All Time",
+    "ordersStats": "{count} orders · BD {total}",
+    "closeModal": "Close",
+    "paymentSummary": "Payment Summary",
+    "itemsSubtotal": "Items Subtotal",
+    "couponDiscount": "Coupon Discount",
+    "nav": {
+      "home": "Home",
+      "orders": "Orders",
+      "inventory": "Inventory",
+      "staff": "Staff",
+      "settings": "Settings",
+      "logout": "Sign Out",
+      "kds": "Kitchen Display",
+      "driver": "Deliveries",
+      "coupons": "Coupons",
+      "analytics": "Analytics",
+      "reports": "Reports"
+    },
+    "stats": {
+      "todayOrders": "Today's Orders",
+      "pendingOrders": "Pending Orders",
+      "weekRevenue": "Week Revenue",
+      "activeMenuItems": "Active Menu Items"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {current} of {total}",
+      "showing": "Showing {from}–{to} of {total}"
+    },
+    "filter": {
+      "all": "All",
+      "new": "New",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "roles": {
+      "title": "Role Management",
+      "assign": "Assign Role",
+      "revoke": "Revoke Role",
+      "owner": "Owner",
+      "general_manager": "General Manager",
+      "branch_manager": "Branch Manager",
+      "cashier": "Cashier",
+      "kitchen": "Kitchen",
+      "driver": "Driver",
+      "inventory": "Inventory",
+      "marketing": "Marketing",
+      "support": "Support"
+    },
+    "staff": {
+      "title": "Staff Management",
+      "add": "Add Staff Member",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "edit": "Edit",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "noStaff": "No staff members found",
+      "name": "Full Name",
+      "email": "Email Address",
+      "password": "Password",
+      "role": "Role",
+      "branch": "Branch",
+      "branchAll": "All Branches",
+      "saveChanges": "Save Changes",
+      "addTitle": "Add Staff Member",
+      "editTitle": "Edit Staff Member",
+      "confirmDeactivate": "Deactivate {name}? They will lose dashboard access immediately.",
+      "createSuccess": "Staff member created",
+      "updateSuccess": "Staff member updated",
+      "deactivateSuccess": "Staff member deactivated",
+      "activateSuccess": "Staff member activated",
+      "errorCreate": "Failed to create staff member",
+      "errorUpdate": "Failed to update staff member"
+    },
+    "audit": {
+      "title": "Audit Log",
+      "user": "User",
+      "action": "Action",
+      "entity": "Record",
+      "timestamp": "Time",
+      "ip": "IP Address"
+    }
+  },
+  "auth": {
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email address",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "signingIn": "Signing in...",
+    "loginError": "Invalid email or password",
+    "sendMagicLink": "Send Magic Link",
+    "magicLinkSent": "Magic link sent",
+    "checkEmail": "Check your email and click the link we sent you",
+    "unauthorized": "Unauthorized",
+    "sessionExpired": "Session expired, please sign in again",
+    "twoFactorRequired": "Two-factor authentication required",
+    "staffOnly": "This page is for staff only",
+    "networkError": "Connection failed — check your internet and try again"
+  },
+  "branches": {
+    "footerTitle": "Our Branches",
+    "seo": {
+      "title": "Our Branches — Kahramana Baghdad",
+      "description": "Visit us at our two branches in Bahrain: Riffa and Muharraq. Serving authentic Iraqi cuisine for dine-in and delivery."
+    },
+    "hero": {
+      "badge": "Our Presence",
+      "title": "Mesopotamian Roots, Reimagined",
+      "description": "We await you at Bahrain's most prestigious locations to offer you the exceptional Kahramana experience, blending the authenticity of the past with the luxury of the present."
+    },
+    "viewOnMap": "Google Maps",
+    "comingSoon": "Coming Soon",
+    "orderWhatsApp": "Order via WhatsApp",
+    "whatsapp": "WhatsApp",
+    "status": {
+      "active": "Active Now",
+      "planned": "In Preparation"
+    },
+    "trust": {
+      "title": "Why Choose Kahramana?",
+      "items": {
+        "authentic": {
+          "title": "Authentic Taste",
+          "description": "We adhere to authentic Baghdadi ancestral recipes to ensure an unforgettable flavor in every dish."
+        },
+        "quality": {
+          "title": "Ingredient Quality",
+          "description": "We select the finest fresh meats and vegetables daily to ensure the highest quality standards."
+        },
+        "speed": {
+          "title": "Service Speed",
+          "description": "We value your time, so we ensure orders are served quickly and efficiently without compromising on taste."
+        },
+        "hospitality": {
+          "title": "Warm Hospitality",
+          "description": "We welcome you with Iraqi generosity that reflects the warmth of the people of Mesopotamia in all our branches."
+        }
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": {
+        "hours": {
+          "q": "What are your opening hours?",
+          "a": "We are open daily from 12:00 PM to 12:00 AM. Hours may vary on public holidays."
+        },
+        "delivery": {
+          "q": "Do you offer delivery?",
+          "a": "Yes, we offer delivery via WhatsApp order. Contact your nearest branch to confirm delivery area and timing."
+        },
+        "party": {
+          "q": "Do you accept group reservations?",
+          "a": "Yes, we welcome group bookings and private gatherings. Please contact your nearest branch in advance."
+        },
+        "quality": {
+          "q": "How do you ensure food quality?",
+          "a": "We use fresh, daily-sourced ingredients and follow authentic Baghdadi recipes passed down through generations."
+        }
+      }
+    }
+  },
+  "seo": {
+    "homeTitle": "Kahramana Baghdad — Authentic Iraqi Restaurant in Bahrain",
+    "homeDescription": "Experience the finest authentic Iraqi cuisine in Bahrain. Masgouf, Quzi, Timan, and more traditional dishes. Two branches in Riffa and Muharraq.",
+    "aboutTitle": "Our Story — Kahramana Baghdad",
+    "contactTitle": "Contact Us — Kahramana Baghdad"
+  },
+  "errors": {
+    "notFound": "Page Not Found",
+    "notFoundHint": "This page may have been moved or deleted. Check the link and try again.",
+    "goHome": "Go Home",
+    "generic": "Something went wrong",
+    "tryAgain": "Please try again or return to the home page.",
+    "retry": "Try Again"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We'd love to hear from you. Reach us via the form or directly at your nearest branch.",
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email address",
+    "phone": "Phone Number",
+    "phonePlaceholder": "Optional",
+    "branch": "Branch",
+    "branchPlaceholder": "Select a branch (optional)",
+    "message": "Message",
+    "messagePlaceholder": "Write your message here...",
+    "send": "Send Message",
+    "sending": "Sending...",
+    "success": "Your message has been sent successfully! We'll get back to you soon.",
+    "error": "An error occurred while sending. Please try again.",
+    "contactInfo": "Contact Information",
+    "followUs": "Follow Us",
+    "generalEnquiries": "General Enquiries",
+    "contactTitle": "Contact Us — Kahramana Baghdad"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Authentic Iraqi Cuisine",
+      "titlePart1": "The Taste of",
+      "titlePart2": "Baghdad",
+      "orderNow": "Order Now",
+      "branches": "Our Branches",
+      "scrollDown": "Scroll to explore"
+    },
+    "features": {
+      "proximity": {
+        "eyebrow": "Two Locations",
+        "title": "Always Near You",
+        "link": "View Branches",
+        "features": [
+          "Comfortable Family Seating",
+          "Authentic Baghdad Vibe",
+          "Full Guest Privacy"
+        ]
+      },
+      "telemetry": {
+        "eyebrow": "Live Orders",
+        "title": "Real-Time Kitchen",
+        "desc": "Every order tracked from placement to delivery.",
+        "liveFeed": "Live Feed",
+        "link": "Order Now",
+        "steps": [
+          "Order received",
+          "Sent to kitchen",
+          "Preparing",
+          "Ready for pickup",
+          "Out for delivery",
+          "Delivered"
+        ]
+      },
+      "vault": {
+        "eyebrow": "Heritage Recipes",
+        "title": "Guarded Flavors",
+        "desc": "Ancestral recipes perfected over generations.",
+        "link": "Our Story"
+      }
+    },
+    "philosophy": {
+      "eyebrow": "Our Philosophy",
+      "standard": "Where every dish tells a story of Baghdad's rich culinary heritage.",
+      "kahramana": "Taste the Authenticity"
+    },
+    "protocol": {
+      "title": "How We Work",
+      "steps": {
+        "01": {
+          "title": "Source",
+          "desc": "We carefully select the finest fresh ingredients daily from trusted local suppliers."
+        },
+        "02": {
+          "title": "Prepare",
+          "desc": "Our chefs follow authentic Baghdadi recipes, preparing each dish with precision and care."
+        },
+        "03": {
+          "title": "Cook",
+          "desc": "Traditional cooking methods bring out the true flavors of every ingredient."
+        },
+        "04": {
+          "title": "Serve",
+          "desc": "Each dish is presented with pride, delivering a complete dining experience."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to taste Baghdad?",
+      "button": "Order Now"
+    }
+  },
+  "story": {
+    "hero": {
+      "eyebrow": "Our Story",
+      "title": "From Baghdad to Bahrain",
+      "desc": "A journey of flavors, heritage, and the passion to bring authentic Iraqi cuisine to the world."
+    },
+    "founder": {
+      "eyebrow": "The Founder",
+      "title": "A Vision Born in Baghdad",
+      "quote": "Every dish we serve carries the soul of Baghdad — its history, its warmth, and its love for good food.",
+      "role": "Founder & Executive Chef",
+      "vision": "We didn't just open a restaurant. We built a bridge between two cultures, connected by the universal language of food."
+    },
+    "narrative": {
+      "eyebrow": "The Journey",
+      "title": "Roots That Run Deep",
+      "p1": "Kahramana Baghdad was born from a deep love for Iraqi culinary heritage — the smoky masgouf grilled by the Tigris, the slow-roasted quzi served at family celebrations, and the humble timan that anchors every Iraqi meal.",
+      "p2": "When we opened our doors in Bahrain, our mission was clear: to offer an authentic taste of Baghdad without compromise. No shortcuts. No substitutions. Just the real thing.",
+      "p3": "Today, with two branches and a growing family of loyal guests, we continue that promise every single day."
+    },
+    "milestones": {
+      "title": "Our Journey",
+      "m1": {
+        "year": "2018",
+        "title": "The Beginning",
+        "desc": "Kahramana Baghdad opens its first branch in Riffa, introducing authentic Iraqi cuisine to Bahrain."
+      },
+      "m2": {
+        "year": "2021",
+        "title": "Growing Family",
+        "desc": "Our second branch opens in Muharraq, bringing the flavors of Baghdad closer to more communities."
+      },
+      "m3": {
+        "year": "2024",
+        "title": "Digital Evolution",
+        "desc": "Launching our digital platform to make ordering easier while preserving the authentic Kahramana experience."
+      }
+    },
+    "philosophy": {
+      "eyebrow": "Our Philosophy",
+      "title": "More Than a Meal",
+      "desc": "We believe food is memory, culture, and connection. Every dish we serve is a piece of Baghdad's soul, prepared with the same care as if you were a guest in our home."
+    },
+    "protocol": {
+      "title": "Our Standards",
+      "step1": {
+        "title": "Authenticity",
+        "desc": "We never compromise on recipes. Every dish follows the original Baghdadi method, no substitutions."
+      },
+      "step2": {
+        "title": "Freshness",
+        "desc": "Ingredients are sourced daily. If it's not fresh, it's not served."
+      },
+      "step3": {
+        "title": "Craft",
+        "desc": "Our chefs train for years to master the techniques that make Iraqi cuisine unique."
+      },
+      "step4": {
+        "title": "Hospitality",
+        "desc": "Every guest is welcomed as family — with warmth, respect, and genuine care."
+      }
+    },
+    "values": {
+      "title": "What We Stand For",
+      "v1": {
+        "title": "Authenticity",
+        "desc": "True to Baghdad's culinary heritage in every dish."
+      },
+      "v2": {
+        "title": "Quality",
+        "desc": "Uncompromising standards from ingredient to plate."
+      },
+      "v3": {
+        "title": "Innovation",
+        "desc": "Honoring tradition while embracing modern hospitality."
+      },
+      "v4": {
+        "title": "Heart",
+        "desc": "Cooking with passion, serving with love."
+      },
+      "v5": {
+        "title": "Community",
+        "desc": "Building connections one shared meal at a time."
+      },
+      "v6": {
+        "title": "Legacy",
+        "desc": "Preserving Iraqi culinary heritage for generations to come."
+      }
+    },
+    "branches": {
+      "title": "Find Us",
+      "desc": "Two branches in Bahrain, one authentic experience."
+    },
+    "cta": {
+      "title": "Ready to Experience Baghdad?",
+      "desc": "Visit us at either of our branches or order online via WhatsApp.",
+      "button": "Order Now"
+    }
+  },
+  "kds": {
+    "title": "Kitchen Display",
+    "colNew": "New Orders",
+    "colPreparing": "In Progress",
+    "colReady": "Ready",
+    "empty": "All clear",
+    "emptyHint": "Accepted orders will appear here automatically",
+    "btnStart": "Start",
+    "btnReady": "Ready",
+    "btnComplete": "Complete",
+    "urgent": "URGENT",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "loading": "Loading..."
+  },
+  "driver": {
+    "title": "My Deliveries",
+    "noOrders": "No active orders",
+    "noOrdersHint": "New orders will appear here automatically",
+    "statusReady": "Ready for Pickup",
+    "statusOutForDelivery": "Out for Delivery",
+    "actionPickUp": "PICK UP",
+    "actionDelivered": "DELIVERED",
+    "orderLabel": "Order",
+    "customer": "Customer",
+    "items": "Items",
+    "notes": "Notes",
+    "gpsOn": "GPS Tracking ON",
+    "gpsOff": "GPS Tracking OFF",
+    "gpsIosNote": "GPS background tracking is not available on iOS. Please update status manually.",
+    "gpsError": "Location access denied",
+    "installPrompt": "Install App",
+    "installPromptHint": "Add to home screen for the best experience",
+    "offline": "You are offline",
+    "offlineHint": "Status updates will sync when you reconnect",
+    "backToDashboard": "Dashboard",
+    "completedToday": "Completed Today",
+    "noCompleted": "No deliveries completed yet today",
+    "deliveredAt": "Delivered at"
+  },
+  "loyalty": {
+    "totalOrders": "Total Orders",
+    "totalSpent": "Total Spent",
+    "memberSince": "Member Since",
+    "pointsBalance": "Points Balance",
+    "points": "pts",
+    "pointValue": "1 pt = 0.005 BD",
+    "expiryNote": "Points expire after 12 months of inactivity",
+    "progressToNextTier": "Progress to {tier}",
+    "benefits": "Your Benefits"
+  },
+  "account": {
+    "title": "My Account",
+    "login": "Sign In",
+    "register": "Register",
+    "createAccountHint": "Create an account to earn loyalty points and track your order history.",
+    "pointsHistory": "Points History"
+  },
+  "payment": {
+    "title": "Complete Your Payment",
+    "selectMethod": "Select a payment method",
+    "order_label": "Order",
+    "processing": "Processing...",
+    "confirm_method": "Continue",
+    "methods": {
+      "cash": "Cash on Delivery",
+      "cash_desc": "Pay when your order arrives",
+      "benefit_qr": "Benefit Pay (QR)",
+      "benefit_qr_desc": "Scan with the Benefit app",
+      "tap_card": "Credit / Debit Card",
+      "tap_card_desc": "Visa, Mastercard via Tap Payments",
+      "tap_knet": "KNET",
+      "tap_knet_desc": "Pay with KNET",
+      "coming_soon": "Coming soon"
+    },
+    "benefit": {
+      "title": "Scan with Benefit Pay",
+      "instructions": "Open the Benefit app, tap Scan to Pay, and scan the QR code below to complete your payment.",
+      "order_label": "Order",
+      "paid_button": "I've Paid",
+      "timer_label": "Expires in",
+      "expired_title": "QR Code Expired",
+      "expired_message": "This QR code has expired. Please go back and try again."
+    }
+  }
+}

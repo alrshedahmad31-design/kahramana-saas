@@ -1,0 +1,136 @@
+'use client'
+
+import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
+import { ShoppingBag, Minus, Plus } from 'lucide-react'
+import { useCartStore } from '@/lib/cart'
+import type { MenuVariantOption } from '@/lib/menu'
+import { useItemSelection } from '@/components/menu/item-selection-provider'
+import ItemSizeSelector from '@/components/menu/item-size-selector'
+import ItemVariantSelector from '@/components/menu/item-variant-selector'
+import { motion, AnimatePresence } from 'framer-motion'
+
+interface Props {
+  isRTL: boolean
+}
+
+export default function AddToCartButton({ isRTL }: Props) {
+  const t = useTranslations('menu')
+  const tCart = useTranslations('cart')
+  const tCommon = useTranslations('common')
+  const addItem = useCartStore((state) => state.addItem)
+  
+  const {
+    item,
+    selectedSize,
+    selectedVariant,
+    quantity,
+    computedPrice,
+    lineTotal,
+    setSelectedSize,
+    setSelectedVariant,
+    setQuantity
+  } = useItemSelection()
+
+  const variantAr = useMemo(() => {
+    if (!item.variants || !selectedVariant) return undefined
+    return item.variants.find((v: MenuVariantOption) => v.label.en === selectedVariant)?.label.ar ?? selectedVariant
+  }, [item.variants, selectedVariant])
+
+  function handleAdd() {
+    addItem({
+      itemId: item.id,
+      nameAr: item.name.ar,
+      nameEn: item.name.en,
+      imageUrl: item.image,
+      priceBhd: computedPrice,
+      selectedSize,
+      selectedVariant: variantAr,
+      quantity,
+    })
+  }
+
+  return (
+    <div className="flex flex-col gap-8" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Selectors Row */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+        {item.sizes && Object.keys(item.sizes).length > 0 && (
+          <ItemSizeSelector
+            sizes={item.sizes}
+            selectedSize={selectedSize}
+            onChange={setSelectedSize}
+            label={t('size')}
+            currency={tCommon('currency')}
+            isRTL={isRTL}
+          />
+        )}
+
+        {item.variants && item.variants.length > 0 && (
+          <ItemVariantSelector
+            variants={item.variants}
+            selectedVariant={selectedVariant}
+            onChange={setSelectedVariant}
+            label={t('variant')}
+            currency={tCommon('currency')}
+            isRTL={isRTL}
+            showPrices={!item.sizes}
+          />
+        )}
+      </div>
+
+      {/* Action Row */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        {/* Modern Quantity Stepper */}
+        <div className="flex min-h-[56px] items-center gap-1 rounded-2xl border border-brand-border bg-brand-surface-2 p-1.5 shadow-inner">
+          <button
+            type="button"
+            onClick={() => setQuantity(q => Math.max(1, q - 1))}
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brand-muted transition-all hover:bg-brand-surface hover:text-brand-text active:scale-90"
+            aria-label={tCart('decrease')}
+          >
+            <Minus size={18} />
+          </button>
+          
+          <div className="flex min-w-[40px] items-center justify-center">
+             <AnimatePresence mode="wait">
+               <motion.span
+                 key={quantity}
+                 initial={{ y: 10, opacity: 0 }}
+                 animate={{ y: 0, opacity: 1 }}
+                 exit={{ y: -10, opacity: 0 }}
+                 className="text-lg font-black tabular-nums text-brand-text"
+               >
+                 {quantity}
+               </motion.span>
+             </AnimatePresence>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setQuantity(q => q + 1)}
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brand-muted transition-all hover:bg-brand-surface hover:text-brand-text active:scale-90"
+            aria-label={tCart('increase')}
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+
+        {/* Premium Add Button */}
+        <button
+          type="button"
+          onClick={handleAdd}
+          className={`group relative flex min-h-[56px] flex-1 items-center justify-center gap-3 overflow-hidden rounded-2xl bg-brand-gold px-8 text-lg font-black text-brand-black transition-all duration-300 hover:shadow-[0_8px_25px_rgba(200,146,42,0.4)] active:scale-[0.98] ${
+            isRTL ? 'font-almarai' : 'font-satoshi'
+          }`}
+        >
+          <ShoppingBag className="h-5 w-5 transition-transform group-hover:-translate-y-1 group-hover:scale-110" aria-hidden="true" />
+          <span>{t('addToCart')}</span>
+          <div className="ms-auto flex items-baseline gap-1 rounded-lg bg-brand-black/10 px-3 py-1 tabular-nums">
+            <span className="text-xl">{lineTotal.toFixed(3)}</span>
+            <span className="text-[10px] font-bold opacity-60">{tCommon('currency')}</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  )
+}

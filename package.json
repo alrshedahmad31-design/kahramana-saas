@@ -1,0 +1,54 @@
+{
+  "name": "kahramana-baghdad",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "deploy:preview": "vercel",
+    "deploy:prod": "vercel --prod",
+    "db:migrate:prod": "npx supabase db push --linked",
+    "db:status": "npx supabase migration list --linked"
+  },
+  "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.105.1",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.0.0",
+    "gsap": "^3.12.5",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^1.11.0",
+    "next": "^15.0.0",
+    "next-intl": "^3.22.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.8.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.23.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "dotenv": "^17.4.2",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

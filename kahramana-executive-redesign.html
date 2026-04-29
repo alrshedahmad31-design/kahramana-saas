@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0c0a08" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Kahramana Proposal" />
+  <title>كهرمانة بغداد — عرض تطوير المنصة</title>
+  <style>
+    :root {
+      --bg: #0c0a08;
+      --bg-soft: #15110d;
+      --surface: rgba(29, 22, 17, 0.88);
+      --surface-2: rgba(35, 28, 22, 0.96);
+      --surface-3: rgba(49, 39, 29, 0.92);
+      --card: rgba(255, 255, 255, 0.04);
+      --text: #f8f2e9;
+      --muted: #c2b6a5;
+      --muted-2: #9d8f7c;
+      --line: rgba(219, 178, 88, 0.18);
+      --line-strong: rgba(219, 178, 88, 0.42);
+      --gold: #d0a24a;
+      --gold-2: #f3d690;
+      --gold-deep: #9e7128;
+      --success: #23b26d;
+      --warning: #e9a63a;
+      --info: #60a5fa;
+      --danger: #ef4444;
+      --bronze: #CD7F32;
+      --silver: #C0C0C0;
+      --gold-tier: #FFD700;
+      --platinum: #8E9EAB;
+      --shadow: 0 20px 50px rgba(0,0,0,.35);
+      --radius-xs: 12px;
+      --radius-sm: 18px;
+      --radius-md: 24px;
+      --radius-lg: 32px;
+      --container: 1240px;
+      --nav-h: 72px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --transition: 220ms cubic-bezier(.2,.7,.2,1);
+      --grad-main: radial-gradient(circle at top right, rgba(208,162,74,.18), transparent 30%), radial-gradient(circle at top left, rgba(255,255,255,.06), transparent 26%), linear-gradient(180deg, #0c0a08 0%, #100c09 100%);
+      --grad-card: linear-gradient(180deg, rgba(255,255,255,.06) 0%, rgba(255,255,255,.02) 100%);
+      --hero-overlay: linear-gradient(135deg, rgba(208,162,74,.22), rgba(8,8,8,.08) 44%, rgba(8,8,8,.45));
+    }
+
+    [data-theme="light"] {
+      --bg: #f7f1e8;
+      --bg-soft: #efe7db;
+      --surface: rgba(255,255,255,.88);
+      --surface-2: rgba(255,255,255,.96);
+      --surface-3: rgba(250,246,239,.95);
+      --card: rgba(0,0,0,.03);
+      --text: #211a14;
+      --muted: #6d6254;
+      --muted-2: #827568;
+      --line: rgba(200,146,42,.18);
+      --line-strong: rgba(200,146,42,.44);
+      --gold: #c8922a;
+      --gold-2: #a6761d;
+      --gold-deep: #6f4e15;
+      --shadow: 0 18px 40px rgba(90, 71, 42, 0.08);
+      --grad-main: radial-gradient(circle at top right, rgba(200,146,42,.14), transparent 28%), radial-gradient(circle at top left, rgba(255,255,255,.45), transparent 18%), linear-gradient(180deg, #f7f1e8 0%, #f3ebdf 100%);
+      --grad-card: linear-gradient(180deg, rgba(255,255,255,.82) 0%, rgba(247,241,232,.96) 100%);
+      --hero-overlay: linear-gradient(135deg, rgba(200,146,42,.16), rgba(255,255,255,.35) 48%, rgba(255,255,255,.08));
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--grad-main);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+      line-height: 1.65;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: inherit; }
+    button { font: inherit; }
+
+    .shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      background: color-mix(in srgb, var(--bg) 86%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: calc(14px + var(--safe-top)) 20px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(208,162,74,.18), rgba(208,162,74,.06));
+      border: 1px solid var(--line-strong);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .brand-mark svg { width: 28px; height: 28px; fill: none; stroke: var(--gold); stroke-width: 1.8; }
+    .brand-text { min-width: 0; }
+    .brand-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -.02em;
+    }
+    .brand-sub {
+      margin: 2px 0 0;
+      font-size: .81rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--gold);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform var(--transition), border-color var(--transition), background var(--transition);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .icon-btn:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+    .icon-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+    .nav-wrap {
+      position: sticky;
+      top: calc(var(--safe-top) + 74px);
+      z-index: 990;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--bg) 90%, transparent);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .tabs {
+      max-width: var(--container);
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 14px 20px;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 0 0 auto;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: .9rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+    }
+    .tab-btn.has-dot::before {
+      content: '';
+      position: absolute;
+      top: 7px;
+      inset-inline-start: 13px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 0 4px rgba(233,166,58,.18);
+    }
+    .tab-btn.active {
+      background: linear-gradient(180deg, var(--gold), var(--gold-2));
+      color: #15110d;
+      border-color: rgba(255,255,255,.15);
+      box-shadow: 0 8px 20px rgba(208,162,74,.25);
+    }
+
+    .main {
+      max-width: var(--container);
+      margin: 0 auto;
+      width: 100%;
+      padding: 28px 20px calc(110px + var(--safe-bottom));
+    }
+
+    .view {
+      display: none;
+      animation: fadeUp .35s ease;
+      scroll-margin-top: 110px;
+    }
+    .view.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 26px;
+    }
+    .hero-main, .hero-side {
+      background: var(--grad-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+    .hero-main::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--hero-overlay);
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      gap: 18px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      background: rgba(208,162,74,.12);
+      color: var(--gold-2);
+      border: 1px solid rgba(208,162,74,.28);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: .78rem;
+      font-weight: 900;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.75rem, 4vw, 2.8rem);
+      line-height: 1.15;
+      letter-spacing: -.03em;
+      font-weight: 950;
+      max-width: 12ch;
+    }
+    .hero p.lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 62ch;
+    }
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      font-size: .84rem;
+      color: var(--text);
+      font-weight: 700;
+    }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: auto;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform var(--transition), border-color var(--transition), background var(--transition);
+      cursor: pointer;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+    .btn-primary {
+      background: linear-gradient(180deg, var(--gold), var(--gold-2));
+      color: #17120d;
+      border-color: rgba(255,255,255,.14);
+      box-shadow: 0 10px 24px rgba(208,162,74,.24);
+    }
+
+    .hero-side {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: space-between;
+    }
+    .logo-panel {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+    .logo-badge {
+      width: 72px;
+      height: 72px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(160deg, rgba(208,162,74,.18), rgba(208,162,74,.06));
+      border: 1px solid var(--line-strong);
+    }
+    .logo-badge svg { width: 42px; height: 42px; fill: none; stroke: var(--gold); stroke-width: 1.8; }
+    .mini-note {
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .mini-note strong { display: block; margin-bottom: 4px; }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+    .grid.stats { grid-template-columns: repeat(4, minmax(0,1fr)); margin-bottom: 24px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0,1fr)); }
+
+    .card {
+      background: var(--grad-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      transition: background .2s ease, border-color .2s ease, transform .2s ease;
+    }
+    .card:hover { transform: translateY(-1px); border-color: var(--line-strong); background: color-mix(in srgb, var(--surface-2) 88%, rgba(255,255,255,.08)); }
+    .stat-card {
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+      min-height: 164px;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+      opacity: .35;
+    }
+    .stat-card.gold { background: linear-gradient(180deg, rgba(208,162,74,.16), rgba(255,255,255,.02)); }
+    .stat-card.blue { background: linear-gradient(180deg, rgba(96,165,250,.14), rgba(255,255,255,.02)); }
+    .stat-card.green { background: linear-gradient(180deg, rgba(35,178,109,.14), rgba(255,255,255,.02)); }
+    .stat-card.purple { background: linear-gradient(180deg, rgba(164,123,255,.12), rgba(255,255,255,.02)); }
+    .trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .78rem;
+      font-weight: 800;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .trend.up { color: var(--success); }
+    .trend.warn { color: var(--warning); }
+    .trend svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .stat-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .stat-head .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .stat-head .icon svg { width: 20px; height: 20px; stroke: var(--gold); fill: none; stroke-width: 1.8; }
+    .stat-kicker { font-size: .76rem; color: var(--muted); font-weight: 800; }
+    .stat-value { margin: 0; font-size: 2rem; line-height: 1; font-weight: 950; }
+    .stat-sub { margin: 10px 0 0; color: var(--muted); font-size: .9rem; }
+
+    .section-title {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .section-title h2 {
+      margin: 0;
+      font-size: clamp(1.3rem, 2vw, 1.8rem);
+      font-weight: 950;
+      letter-spacing: -.03em;
+    }
+    .section-title p { margin: 6px 0 0; color: var(--muted); max-width: 72ch; }
+
+    .card-icon-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .card-title-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .card-title-wrap .icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(208,162,74,.12);
+      color: var(--gold);
+      border: 1px solid rgba(208,162,74,.22);
+      flex: 0 0 auto;
+    }
+    .card-title-wrap .icon-box svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+    .card-title-wrap h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 900;
+    }
+    .card-title-wrap small { color: var(--muted); display: block; margin-top: 2px; font-size: .78rem; }
+    .card-divider {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 14px 0 16px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: .75rem;
+      font-weight: 900;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+    }
+    .badge.success { color: var(--success); border-color: color-mix(in srgb, var(--success) 45%, transparent); background: color-mix(in srgb, var(--success) 14%, transparent); }
+    .badge.warning { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 45%, transparent); background: color-mix(in srgb, var(--warning) 14%, transparent); }
+    .badge.info { color: var(--info); border-color: color-mix(in srgb, var(--info) 45%, transparent); background: color-mix(in srgb, var(--info) 14%, transparent); }
+
+    .callout, .success-callout {
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+    .callout {
+      border-inline-start: 4px solid var(--warning);
+      background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+    }
+    .success-callout {
+      border-inline-start: 4px solid var(--success);
+      background: color-mix(in srgb, var(--success) 8%, var(--surface));
+    }
+    .callout strong, .success-callout strong { display: block; margin-bottom: 6px; }
+    .lux-icon {
+      inline-size: 1em;
+      block-size: 1em;
+      flex: 0 0 auto;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.65;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vertical-align: -0.14em;
+    }
+    .lux-icon-status {
+      inline-size: .78em;
+      block-size: .78em;
+      fill: currentColor;
+      stroke: none;
+    }
+    .callout-icon { display: inline-flex; margin-inline-end: 8px; vertical-align: -0.14em; }
+
+    .metric-list, .check-list, .bullet-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+    .metric-list li, .check-list li, .bullet-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--text);
+    }
+    .metric-list li span:first-child,
+    .check-list li span:first-child,
+    .bullet-list li span:first-child {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      font-size: .75rem;
+      font-weight: 900;
+      margin-top: 2px;
+      background: rgba(208,162,74,.12);
+      color: var(--gold);
+      border: 1px solid rgba(208,162,74,.22);
+    }
+
+    .phase {
+      position: relative;
+      padding: 22px;
+      border-radius: var(--radius-md);
+      background: var(--grad-card);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .phase-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .phase-num {
+      display: inline-grid;
+      place-items: center;
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(208,162,74,.18), rgba(208,162,74,.06));
+      border: 1px solid var(--line-strong);
+      color: var(--gold);
+      font-weight: 950;
+      font-size: 1.1rem;
+    }
+    .phase h3 { margin: 0; font-size: 1.12rem; font-weight: 900; }
+    .phase small { display: block; color: var(--muted); margin-top: 5px; font-size: .82rem; }
+    .phase p { color: var(--muted); margin: 12px 0 0; }
+    .phase-cols {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .mini-box {
+      border-radius: 16px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      padding: 14px;
+    }
+    .mini-box h4 { margin: 0 0 8px; font-size: .9rem; font-weight: 900; }
+    .mini-box ul { margin: 0; padding-inline-start: 18px; color: var(--muted); }
+    .mini-box li + li { margin-top: 6px; }
+    .progress {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.04);
+      margin-top: 16px;
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-2));
+    }
+
+    .sub-group {
+      padding: 22px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      background: var(--grad-card);
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    .sub-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; margin-top: 16px; }
+    .sub-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding: 18px;
+      transition: transform .2s ease, border-color .2s ease;
+    }
+    .sub-card:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+    .price-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(208,162,74,.12);
+      border: 1px solid rgba(208,162,74,.26);
+      color: var(--gold-2);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .75rem;
+      font-weight: 900;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    .sub-card h4 { margin: 0; font-size: 1rem; font-weight: 900; }
+    .sub-card p { margin: 8px 0 0; color: var(--muted); font-size: .92rem; }
+    .tiny-label { display: block; color: var(--text); font-size: .8rem; font-weight: 800; margin-top: 10px; }
+
+    .flow-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+    .flow-step {
+      position: relative;
+      border-radius: 18px;
+      padding: 18px 18px 18px 20px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      min-height: 180px;
+      scroll-margin-top: 80px;
+    }
+    .flow-step.input { background: color-mix(in srgb, var(--info) 8%, var(--surface)); }
+    .flow-step.processing { background: color-mix(in srgb, var(--gold) 8%, var(--surface)); }
+    .flow-step.output { background: color-mix(in srgb, var(--success) 8%, var(--surface)); }
+    .flow-step::before {
+      content: attr(data-step);
+      position: absolute;
+      inset-inline-start: 14px;
+      top: 14px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, var(--gold), var(--gold-2));
+      color: #17120d;
+      font-weight: 950;
+      box-shadow: 0 10px 18px rgba(208,162,74,.2);
+    }
+    .flow-step:not(:last-child)::after {
+      content: '←';
+      position: absolute;
+      inset-inline-start: -18px;
+      top: calc(50% - 11px);
+      font-size: 1.25rem;
+      color: var(--gold);
+      opacity: .65;
+    }
+    .flow-step h4 { margin: 0 0 8px; padding-inline-start: 42px; font-size: 1rem; font-weight: 900; }
+    .flow-step p { color: var(--muted); margin: 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .92rem;
+    }
+    th, td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: start;
+      vertical-align: top;
+    }
+    th { color: var(--gold-2); font-size: .8rem; font-weight: 900; }
+    tbody tr:hover { background: var(--card); }
+    .perm-basic { color: var(--success); font-weight: 900; }
+    .perm-medium { color: var(--warning); font-weight: 900; }
+    .perm-high { color: var(--danger); font-weight: 900; }
+    .role-title { display: inline-flex; align-items: center; gap: 8px; font-weight: 900; }
+
+    .tier-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+    .tier-card {
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      padding: 18px;
+      transition: var(--transition);
+      background: rgba(255,255,255,.04);
+    }
+    .tier-card:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+    .tier-card h4 { margin: 0; font-size: 1.02rem; font-weight: 900; }
+    .tier-card p { margin: 8px 0 0; color: var(--muted); }
+    .tier-card.bronze { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bronze) 35%, transparent); }
+    .tier-card.silver { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--silver) 35%, transparent); }
+    .tier-card.gold-tier { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold-tier) 35%, transparent); }
+    .tier-card.platinum { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--platinum) 35%, transparent); }
+    .tier-card .label {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 900;
+      margin-bottom: 10px;
+      color: #15110d;
+    }
+    .tier-card.bronze .label { background: var(--bronze); }
+    .tier-card.silver .label { background: var(--silver); }
+    .tier-card.gold-tier .label { background: var(--gold-tier); }
+    .tier-card.platinum .label { background: var(--platinum); }
+
+    .footer-nav {
+      position: fixed;
+      inset-inline: 14px;
+      bottom: calc(10px + var(--safe-bottom));
+      z-index: 1001;
+      display: none;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      padding: 10px;
+      border-radius: 22px;
+      background: color-mix(in srgb, var(--bg) 92%, transparent);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      box-shadow: var(--shadow);
+    }
+    .footer-nav button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: .73rem;
+      font-weight: 900;
+      display: grid;
+      place-items: center;
+      gap: 6px;
+      padding: 8px 4px;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+    .footer-nav button.active { background: rgba(208,162,74,.12); color: var(--gold); }
+
+    .kpi-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .kpi {
+      flex: 1 1 180px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      padding: 14px;
+      background: rgba(255,255,255,.04);
+    }
+    .kpi strong { display: block; font-size: 1.1rem; }
+    .kpi small { color: var(--muted); }
+
+    .muted { color: var(--muted); }
+    .dim { color: var(--muted-2); }
+
+    @media (max-width: 1080px) {
+      .hero { grid-template-columns: 1fr; }
+      .grid.stats, .grid.three, .grid.four, .flow-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid.two, .sub-grid, .tier-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .header-inner { padding-inline: 16px; }
+      .nav-wrap { top: calc(var(--safe-top) + 72px); }
+      .tabs { padding-inline: 16px; }
+      .main { padding-inline: 16px; }
+      .grid.stats, .grid.three, .grid.four, .flow-grid, .phase-cols { grid-template-columns: 1fr; }
+      .flow-step:not(:last-child)::after { content: '↓'; inset-inline-start: calc(50% - 7px); top: auto; bottom: -14px; }
+      .footer-nav { display: grid; }
+      .hero-content, .hero-side, .card, .sub-group, .phase { padding: 18px; }
+      .hero h1 { max-width: none; font-size: 1.85rem; }
+      .logo-panel { grid-template-columns: 56px 1fr; }
+      .logo-badge { width: 56px; height: 56px; border-radius: 18px; }
+    }
+
+    @media print {
+      .header, .nav-wrap, .footer-nav, .cta-row, .header-actions { display: none !important; }
+      .main { max-width: none; padding: 0; }
+      .view { display: block !important; break-inside: avoid; page-break-inside: avoid; }
+      body { background: #fff; color: #111; }
+      .hero-main, .hero-side, .card, .phase, .sub-group, .sub-card { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3c-2.2 1.7-3.4 4.3-3.4 7.2v4.6c0 1.7 1.1 3.2 2.6 3.8l2.8 1.1 2.8-1.1c1.6-.6 2.6-2.1 2.6-3.8v-4.6C19.4 7.3 18.2 4.7 16 3"/>
+              <path d="M10 10.5c1.2-.4 2.7-.4 4 0"/>
+              <path d="M12 7.6v6.7"/>
+              <path d="M7 20.5h10"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <p class="brand-title">كهرمانة بغداد — عرض تطوير المنصة</p>
+            <p class="brand-sub">نسخة تنفيذية فاخرة قابلة للعرض على صاحب المشروع ورفعها مباشرة على Vercel</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" id="themeToggle" title="تبديل الثيم" aria-label="تبديل الثيم">
+            <svg id="themeIcon" viewBox="0 0 24 24"><path d="M20 15.3A8 8 0 1 1 8.7 4a6.5 6.5 0 1 0 11.3 11.3Z"></path></svg>
+          </button>
+          <button class="icon-btn" id="printBtn" title="طباعة / حفظ PDF" aria-label="طباعة / حفظ PDF">
+            <svg viewBox="0 0 24 24"><path d="M7 9V4h10v5"></path><path d="M7 18h10v2H7z"></path><path d="M6 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1"></path></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="nav-wrap">
+      <div class="tabs" role="tablist" aria-label="أقسام العرض">
+        <button class="tab-btn active" data-tab="overview">نظرة عامة</button>
+        <button class="tab-btn has-dot" data-tab="roadmap">المراحل</button>
+        <button class="tab-btn has-dot" data-tab="pricing">الاشتراكات</button>
+        <button class="tab-btn" data-tab="ops">التشغيل والرقابة</button>
+        <button class="tab-btn" data-tab="roles">الأدوار والصلاحيات</button>
+        <button class="tab-btn" data-tab="loyalty">الولاء والنقاط</button>
+        <button class="tab-btn has-dot" data-tab="requirements">المتطلبات</button>
+        <button class="tab-btn has-dot" data-tab="risks">المخاطر والاعتماديات</button>
+      </div>
+    </div>
+
+    <main class="main">
+      <section class="view active" id="view-overview">
+        <div class="hero">
+          <article class="hero-main">
+            <div class="hero-content">
+              <span class="eyebrow">منصة طلبات وتشغيل متدرجة — من الموقع الحالي إلى تجربة منافسة لمنصات الطلبات</span>
+              <h1>إعادة تصميم موقع كهرمانة بغداد وتحويله إلى منصة تشغيل وطلبات احترافية</h1>
+              <p class="lead">الخطة تبقي كل المميزات المطلوبة، وتنقل الطلبات من WhatsApp العشوائي إلى لوحة تحكم تشغيلية متكاملة تشمل الطلبات، المطبخ، المخزون، الولاء، السائقين، التحليلات، وتقليل الهدر ومؤشرات الاستخدام غير المبرر — مع الحفاظ على التنفيذ على مراحل واضحة ومفهومة لصاحب المطعم.</p>
+              <div class="hero-meta">
+                <span class="meta-chip"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg> فرعان حاليًا: الرفاع + قلالي</span>
+                <span class="meta-chip"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5h6v6H5z"></path><path d="M13 5h6v6h-6z"></path><path d="M5 13h6v6H5z"></path><path d="M13 13h6v6h-6z"></path></svg> فرع البديع Planned — مضاف من الآن لتسهيل الدمج لاحقًا</span>
+                <span class="meta-chip"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8.5 12 4l7 4.5v7L12 20l-7-4.5v-7Z"></path><path d="m5.5 9 6.5 4 6.5-4"></path><path d="M12 13v7"></path></svg> طلب Guest برقم هاتف اختياري ثم ربطه بحساب لاحقًا</span>
+                <span class="meta-chip"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 6.5h14v9H9l-4 3v-12Z"></path><path d="M8.5 10h7"></path><path d="M8.5 13h4"></path></svg> Phase 1 يبدأ بـ wa.me بدون API ثم ترقية في Phase 6</span>
+              </div>
+              <div class="cta-row">
+                <button class="btn btn-primary" data-goto="pricing">الانتقال إلى صفحة الأسعار</button>
+                <button class="btn" data-goto="roadmap">استعراض المراحل كاملة</button>
+              </div>
+            </div>
+          </article>
+
+          <aside class="hero-side">
+            <div class="logo-panel">
+              <div class="logo-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3c-2.2 1.7-3.4 4.3-3.4 7.2v4.6c0 1.7 1.1 3.2 2.6 3.8l2.8 1.1 2.8-1.1c1.6-.6 2.6-2.1 2.6-3.8v-4.6C19.4 7.3 18.2 4.7 16 3"></path>
+                  <path d="M12 7.4v6.9"></path>
+                  <path d="M10.1 11c1.1-.3 2.7-.3 3.8 0"></path>
+                </svg>
+              </div>
+              <div>
+                <strong style="display:block;font-size:1.02rem;">هوية تنفيذية فاخرة</strong>
+                <span class="muted">تصميم راقٍ أسود / ذهبي، مناسب للعرض المباشر على صاحب المشروع أو نشره على Vercel بدون أي ملفات خارجية.</span>
+              </div>
+            </div>
+            <div class="mini-note">
+              <strong>ملاحظة فنية على الموقع الحالي</strong>
+              أثناء مراجعة الموقع الحالي ظهرت مشكلة في الأصول البصرية: بعض الصور مكسورة أو لا تظهر بشكل صحيح، كما أن الشعار الحالي يحتاج نسخة أوضح للاستخدام في واجهة طلبات احترافية. المرحلة الأولى يجب أن تشمل تنظيف مكتبة الصور، استبدال الصور المكسورة، تجهيز شعار واضح بصيغ SVG/PNG، وتوحيد أبعاد صور القائمة.
+            </div>
+            <div class="kpi-box">
+              <div class="kpi"><strong>14–20 شهر</strong><small>المنصة الكاملة حسب جاهزية البيانات والعقود الخارجية</small></div>
+              <div class="kpi"><strong>$45</strong><small>تكلفة تشغيل أولية بسيطة جدًا عند تفعيل Vercel + Supabase فقط</small></div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="grid stats">
+          <article class="card stat-card gold">
+            <div class="stat-head">
+              <div>
+                <div class="stat-kicker">الخطة التنفيذية</div>
+                <h3 class="stat-value">9</h3>
+              </div>
+              <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 12h16"></path><path d="M4 6h16"></path><path d="M4 18h16"></path></svg></div>
+            </div>
+            <p class="stat-sub">من التحليل إلى منصة متقدمة · 14–20 شهر تشغيل كامل</p>
+            <div class="trend up"><svg viewBox="0 0 24 24"><path d="M5 15l5-5 4 4 5-7"></path></svg>تدرّج عملي يمنع تحميل المشروع كل التعقيد منذ البداية</div>
+          </article>
+          <article class="card stat-card blue">
+            <div class="stat-head">
+              <div>
+                <div class="stat-kicker">الوضع التشغيلي</div>
+                <h3 class="stat-value">2 + 1</h3>
+              </div>
+              <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10Z"></path><circle cx="12" cy="11" r="2"></circle></svg></div>
+            </div>
+            <p class="stat-sub">فرعان عاملان الآن + فرع البديع Planned تحت التفاوض</p>
+            <div class="trend up"><svg viewBox="0 0 24 24"><path d="M5 15l5-5 4 4 5-7"></path></svg>الهيكل جاهز لاستقبال التوسع بدون إعادة بناء لاحقة</div>
+          </article>
+          <article class="card stat-card green">
+            <div class="stat-head">
+              <div>
+                <div class="stat-kicker">تكلفة البداية</div>
+                <h3 class="stat-value">$45</h3>
+              </div>
+              <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14.5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+            </div>
+            <p class="stat-sub">Vercel Pro + Supabase Pro فقط كبداية، مع بقاء خدمات أساسية عدة مجانية</p>
+            <div class="trend warn"><svg viewBox="0 0 24 24"><path d="M12 19V5"></path><path d="M5 12l7-7 7 7"></path></svg>التشغيل الواقعي لـ MVP الجاد غالبًا $90–120/شهر عند إضافة البريد والـ workers</div>
+          </article>
+          <article class="card stat-card purple">
+            <div class="stat-head">
+              <div>
+                <div class="stat-kicker">الهدف النهائي</div>
+                <h3 class="stat-value">360°</h3>
+              </div>
+              <div class="icon"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 3v7h-7"></path></svg></div>
+            </div>
+            <p class="stat-sub">منصة شبيهة بالمطاعم العالمية: طلبات، KDS، ولاء، مخزون، سائقين، تحليلات</p>
+            <div class="trend up"><svg viewBox="0 0 24 24"><path d="M5 15l5-5 4 4 5-7"></path></svg>تحسين الرقابة، قياس التأخير، ومعرفة الفرع الأكثر أداءً وربحية</div>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21 4 16.5v-9L12 3Z"></path><path d="M12 12l8-4.5"></path><path d="M12 12v9"></path><path d="M12 12 4 7.5"></path></svg></div>
+                <div>
+                  <h3>ما الذي سيستلمه صاحب المطعم في النهاية؟</h3>
+                  <small>منصة تشغيل وطلبات قابلة للتوسع بدل الاعتماد على WhatsApp فقط</small>
+                </div>
+              </div>
+              <span class="badge success"><svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> يبدأ فورًا</span>
+            </div>
+            <hr class="card-divider" />
+            <ul class="check-list">
+              <li><span>1</span><span>موقع جديد راقٍ سريع ومهيأ للهواتف والـ PWA مع سلة شراء وتجربة طلب واضحة.</span></li>
+              <li><span>2</span><span>لوحة تحكم تدير الطلبات، الفروع، الحالات، أوقات التنفيذ، والصلاحيات.</span></li>
+              <li><span>3</span><span>شاشة مطبخ KDS، واجهة سائق، نظام ولاء، كوبونات، وتحليلات تشغيلية وتسويقية.</span></li>
+              <li><span>4</span><span>مخزون مركزي وفرعي، ربط الوصفات، كشف الهدر، ومؤشرات الاستخدام غير المبرر.</span></li>
+              <li><span>5</span><span>منصة نهائية قابلة للتوسع إلى ربط الدفع، WhatsApp API، المنصات الخارجية، والذكاء الاصطناعي.</span></li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M8 6h8"></path><path d="M8 12h8"></path><path d="M8 18h5"></path><path d="M5 4h14v16H5z"></path></svg></div>
+                <div>
+                  <h3>محاور النجاح الأساسية</h3>
+                  <small>النظام الجيد يحتاج كودًا جيدًا + بيانات جيدة + تدريب جيد</small>
+                </div>
+              </div>
+              <span class="badge warning"><svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مشروط</span>
+            </div>
+            <hr class="card-divider" />
+            <ul class="check-list">
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>توفير وصفات الشيف بالكميات الدقيقة — مفتاح نجاح المخزون وCOGS.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>قرار واضح بشأن بوابة الدفع، مزود WhatsApp، ووجود POS من عدمه.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>تعاون داخلي من المطعم لإدخال البيانات والتجربة والتدريب.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>صور أطباق واضحة وشعار بجودة عالية لتحسين الانطباع البصري وSEO.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>اعتماد التنفيذ المرحلي بدل محاولة بناء كل شيء دفعة واحدة.</span></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-roadmap">
+        <div class="section-title">
+          <div>
+            <h2>خارطة الطريق التنفيذية — 9 مراحل</h2>
+            <p>تمديد الخطة إلى مراحل متتالية يحافظ على نفس الرؤية المطلوبة من صاحب المطعم، مع ترتيب واقعي للتنفيذ والميزانية والتبني التشغيلي.</p>
+          </div>
+          <span class="badge info">إجمالي المنصة الكاملة: 14–20 شهر</span>
+        </div>
+
+        <div class="grid two">
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">0</div>
+                <div>
+                  <h3>Discovery & Operational Audit</h3>
+                  <small>1–2 أسبوع · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> يبدأ فورًا</small>
+                </div>
+              </div>
+              <span class="badge success">0%</span>
+            </div>
+            <p>تدقيق الموقع الحالي، تحليل الطلبات عبر WhatsApp، تجهيز هيكل البيانات، تدقيق الصور واللوغو، وخطة SEO Migration حتى لا نفقد الظهور الحالي.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>الهدف</h4><ul><li>فهم الوضع الحالي بدقة</li><li>توثيق المشاكل الفعلية</li><li>منع قرارات تقنية خاطئة مبكرًا</li></ul></div>
+              <div class="mini-box"><h4>ما يتم تسليمه</h4><ul><li>تدقيق تشغيلي وفني</li><li>خريطة بيانات أولية</li><li>خطة ترحيل SEO وصور</li></ul></div>
+            </div>
+            <div class="progress"><span style="width:0%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">1</div>
+                <div>
+                  <h3>Redesign & Smart Dashboard</h3>
+                  <small>6–8 أسابيع · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> يبدأ فورًا</small>
+                </div>
+              </div>
+              <span class="badge success">~12%</span>
+            </div>
+            <p>إعادة تصميم الموقع وتجربة الطلب، سلة احترافية، إدخال بيانات العميل، ربط الطلب بالـ Dashboard، وfallback عبر wa.me بدون API في البداية.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>ما يتم تسليمه</h4><ul><li>تصميم جديد كامل</li><li>Checkout منظم</li><li>طلب Guest برقم هاتف اختياري — يمكن ربطه بحساب عميل لاحقًا في Phase 5</li><li>إرسال ملخص الطلب عبر رابط wa.me (بدون API — لا تكلفة إضافية)</li></ul></div>
+              <div class="mini-box"><h4>الأثر</h4><ul><li>تحويل الطلبات من WhatsApp العشوائي إلى Dashboard</li><li>تحسين تجربة العميل والوضوح</li><li>أساس جاهز للولاء والدفع لاحقًا</li></ul></div>
+            </div>
+            <div class="progress"><span style="width:12%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">2</div>
+                <div>
+                  <h3>KDS & Live Orders</h3>
+                  <small>6–8 أسابيع · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مشروط</small>
+                </div>
+              </div>
+              <span class="badge warning">~25%</span>
+            </div>
+            <p>شاشة مطبخ KDS، حالات الطلب، مؤقتات زمنية، وتنبيهات فورية حتى يصبح مسار الطلب واضحًا ومقاسًا من الاستلام حتى التسليم.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>الهدف</h4><ul><li>إزالة الضياع بين الكاشير والمطبخ</li><li>قياس زمن القبول والتحضير</li><li>تحسين SLA داخلي</li></ul></div>
+              <div class="mini-box"><h4>الحالات</h4><ul><li>New → Under Review → Accepted</li><li>Preparing → Ready → Out for Delivery</li><li>Delivered → Completed | Cancelled</li></ul></div>
+            </div>
+            <div class="progress"><span style="width:25%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">3</div>
+                <div>
+                  <h3>Inventory & Waste / COGS</h3>
+                  <small>3–5 أشهر · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مشروط</small>
+                </div>
+              </div>
+              <span class="badge warning">~37%</span>
+            </div>
+            <p>مخزون مركزي وفرعي، وصفات الشيف، خصم المكونات تلقائيًا، الجرد، التالف، والهدر وتقارير تكلفة البضاعة المباعة. <strong>يعتمد على جاهزية وصفات الشيف.</strong></p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>ما يتم تسليمه</h4><ul><li>مخزن مشترك لكل الفروع</li><li>تحويلات بين الفروع</li><li>تقارير فرق بين الصرف والمدخول</li></ul></div>
+              <div class="mini-box"><h4>الفائدة</h4><ul><li>تقليل الهدر</li><li>كشف مؤشرات الاستخدام غير المبرر</li><li>معرفة الفرع الأكثر استهلاكًا وربحية</li></ul></div>
+              <div class="mini-box"><h4>جهد البيانات التشغيلية</h4><ul><li>إدخال 194+ وصفة بالكميات الدقيقة يحتاج تعاون مباشر مع الشيف</li><li>مدة تقديرية: 3–5 أسابيع عمل مشترك قبل تفعيل المخزون</li><li>مسؤولية إدخال البيانات تُحدد في العقد</li></ul></div>
+              <div class="mini-box"><h4>تنبيه</h4><ul><li>نجاح هذه المرحلة تشغيلي بقدر ما هو تقني</li><li>أي نقص في الوصفات يضعف دقة المخزون</li></ul></div>
+            </div>
+            <div class="progress"><span style="width:37%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">4</div>
+                <div>
+                  <h3>Driver PWA & Delivery Tracking</h3>
+                  <small>4–6 أسابيع · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مستقبلي</small>
+                </div>
+              </div>
+              <span class="badge info">~50%</span>
+            </div>
+            <p>واجهة سائق خفيفة لتحديث الحالة، استلام الطلبات، وإرسال رابط تتبع للعميل. تساعد على فهم أين يتأخر التسليم ومن هو السائق الأكثر التزامًا.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>ما يتم تسليمه</h4><ul><li>PWA للسائق</li><li>إسناد الطلبات</li><li>رابط تتبع للعميل</li></ul></div>
+              <div class="mini-box"><h4>الفائدة</h4><ul><li>قياس وقت الخروج والتسليم</li><li>تقليل الاتصالات اليدوية</li><li>تحسين تجربة العميل</li></ul></div>
+            </div>
+            <div class="callout"><strong><span class="callout-icon"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4.5 20 18.5H4L12 4.5Z"></path><path d="M12 9.25v4"></path><path d="M12 16.5h.01"></path></svg></span>تحديد مهم — iOS</strong>تتبع GPS يتوقف عند قفل الشاشة على iPhone. واجهة السائق مصممة لـ Android Chrome. السائقون الذين يستخدمون iOS يحتاجون fallback يدوي لتحديث حالة الطلب.</div>
+            <div class="progress"><span style="width:50%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">5</div>
+                <div>
+                  <h3>Loyalty & Coupons</h3>
+                  <small>4–6 أسابيع · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مستقبلي</small>
+                </div>
+              </div>
+              <span class="badge info">~62%</span>
+            </div>
+            <p>نظام ولاء متدرج، كوبونات، وربط الطلبات المباشرة بسلوك العميل لرفع التكرار وتقليل الاعتماد على المنصات الخارجية.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>ما يتم تسليمه</h4><ul><li>نقاط ومكافآت</li><li>مستويات ولاء</li><li>كوبونات ومناسبات</li></ul></div>
+              <div class="mini-box"><h4>الأثر</h4><ul><li>رفع Retention</li><li>زيادة الطلب المباشر</li><li>رفع متوسط الطلب</li></ul></div>
+            </div>
+            <div class="progress"><span style="width:62%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">6</div>
+                <div>
+                  <h3>Payment & WhatsApp API</h3>
+                  <small>حسب الموافقات · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مشروط</small>
+                </div>
+              </div>
+              <span class="badge warning">~75%</span>
+            </div>
+            <p>ربط بوابات الدفع مثل Benefit / Tap / CrediMax، وترقية من wa.me link إلى WhatsApp Business API الرسمي مع Wati.io لإرسال رسائل حالة الطلب الرسمية.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>ما يتم تسليمه</h4><ul><li>دفع إلكتروني</li><li>Webhooks للدفع</li><li>رسائل رسمية آلية</li></ul></div>
+              <div class="mini-box"><h4>الاعتماديات</h4><ul><li>حساب تاجر</li><li>موافقة مزود الدفع</li><li>Meta Business Verification</li></ul></div>
+            </div>
+            <div class="callout"><strong><span class="callout-icon"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4.5 20 18.5H4L12 4.5Z"></path><path d="M12 9.25v4"></path><path d="M12 16.5h.01"></path></svg></span>تنبيه تشغيلي — Benefit Pay</strong>تسجيل Merchant يمر عبر إجراءات مطابقة مع البنك المركزي البحريني. المدة المتوقعة للموافقة: 2–4 أشهر. يُنصح بالبدء بهذا الإجراء بالتوازي مع Phase 1.</div>
+            <div class="progress"><span style="width:75%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">7</div>
+                <div>
+                  <h3>Deliverect & POS Integration</h3>
+                  <small>حسب العقود · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مستقبلي</small>
+                </div>
+              </div>
+              <span class="badge info">~87%</span>
+            </div>
+            <p>ربط منصات خارجية مثل Talabat وKeeta، وربط الكاشير / الـ POS عند توفر العقود وواجهات الربط المناسبة.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>الفائدة</h4><ul><li>تجميع الطلبات في شاشة واحدة</li><li>تقليل الإدخال اليدوي</li><li>تحسين موثوقية التشغيل</li></ul></div>
+              <div class="mini-box"><h4>الاعتماديات</h4><ul><li>عقد Deliverect</li><li>توفر البحرين</li><li>API للكاشير الحالي</li></ul></div>
+            </div>
+            <div class="progress"><span style="width:87%"></span></div>
+          </article>
+
+          <article class="phase">
+            <div class="phase-top">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <div class="phase-num">8</div>
+                <div>
+                  <h3>AI & Advanced Analytics</h3>
+                  <small>مستقبلي جدًا · <svg class="lux-icon lux-icon-status" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg> مستقبلي</small>
+                </div>
+              </div>
+              <span class="badge info">100%</span>
+            </div>
+            <p>AI Ordering Agent، تحليل مناطق الطلب، توقع نفاد المخزون، وتوصيات تشغيلية وتسويقية مبنية على بيانات حقيقية.</p>
+            <div class="phase-cols">
+              <div class="mini-box"><h4>الفائدة</h4><ul><li>مساعد طلبات ذكي</li><li>توصيات عروض</li><li>تحليلات متقدمة</li></ul></div>
+              <div class="mini-box"><h4>شرط التفعيل</h4><ul><li>6+ أشهر من بيانات الطلبات الحقيقية على الأقل</li><li>استقرار المراحل التشغيلية السابقة</li></ul></div>
+            </div>
+            <div class="progress"><span style="width:100%"></span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-pricing">
+        <div class="section-title">
+          <div>
+            <h2>إدارة الاشتراكات والتكاليف التشغيلية</h2>
+            <p>يتم تفعيل الاشتراكات تدريجيًا حسب الحاجة التشغيلية لكل مرحلة. الهدف هو ضمان الاستقرار، الأمان، التحليلات، إدارة الطلبات، والتوسع بدون دفع تكاليف غير ضرورية من البداية.</p>
+          </div>
+          <span class="badge warning">آخر مراجعة للأسعار: أبريل 2026</span>
+        </div>
+
+        <div class="callout">
+          <strong><span class="callout-icon"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4.5 20 18.5H4L12 4.5Z"></path><path d="M12 9.25v4"></path><path d="M12 16.5h.01"></path></svg></span>ملاحظة تسعيرية مهمة</strong>
+          الأسعار التالية تقديرية وليست عرض سعر نهائي. بعض الخدمات مجانية في البداية، وبعضها يتغير حسب الاستخدام أو العقود الخارجية. كذلك هناك تحذيرات تشغيلية مهمة يجب أخذها في الحسبان، مثل: تكلفة Build Minutes على Vercel، حاجة Supabase إلى Compute أكبر عند النمو، وأن Railway الإنتاجي للـ Workers لا يُحسب عادة على خطة Hobby فقط.
+        </div>
+
+        <article class="sub-group">
+          <div class="card-icon-header">
+            <div class="card-title-wrap">
+              <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8.6-8 10-4.5-1.4-8-5-8-10V6l8-4Z"></path><path d="M9 12l2 2 4-4"></path></svg></div>
+              <div>
+                <h3>الحماية والتحليلات — من البداية</h3>
+                <small>تأمين الموقع، حماية SEO، وفهم سلوك الزوار قبل وبعد إطلاق تجربة الطلب.</small>
+              </div>
+            </div>
+            <span class="badge success">من البداية</span>
+          </div>
+          <hr class="card-divider" />
+          <div class="sub-grid">
+            <article class="sub-card">
+              <h4>Cloudflare</h4>
+              <div class="price-badge">مجاني / Pro $20 سنويًا أو $25 شهريًا</div>
+              <p>حماية الموقع، SSL، DNS، CDN، تسريع التحميل، وتقليل الهجمات والزيارات المشبوهة.</p>
+              <span class="tiny-label">متى نضيفها؟</span>
+              <p>Free من البداية، وPro عند الحاجة لقواعد حماية وأداء أعلى.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Google Analytics</h4>
+              <div class="price-badge">مجاني</div>
+              <p>معرفة عدد الزوار، مصادرهم، الصفحات الأكثر زيارة، ونسبة من يصل إلى السلة أو يكمل الطلب.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Google Search Console</h4>
+              <div class="price-badge">مجاني</div>
+              <p>متابعة ظهور الموقع في Google، حماية SEO الموقع الحالي أثناء إعادة التصميم، واكتشاف مشاكل الفهرسة والروابط.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Microsoft Clarity</h4>
+              <div class="price-badge">مجاني</div>
+              <p>تسجيل سلوك الزبائن داخل الموقع، Heatmaps، ومعرفة أين يتوقف العميل قبل إتمام الطلب.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Sentry / Monitoring</h4>
+              <div class="price-badge">مجاني بالبداية / من $26 شهريًا</div>
+              <p>مراقبة أخطاء الموقع ولوحة التحكم والطلبات فور حدوثها، حتى يتم إصلاح المشاكل قبل أن تؤثر على الطلبات.</p>
+            </article>
+          </div>
+        </article>
+
+        <article class="sub-group">
+          <div class="card-icon-header">
+            <div class="card-title-wrap">
+              <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M3 7h18"></path><path d="M7 3h10v18H7z"></path><path d="M11 11h2"></path></svg></div>
+              <div>
+                <h3>المنصة والعمليات — Phase 1–3</h3>
+                <small>أساس تشغيل الموقع، لوحة التحكم، قاعدة البيانات، إدارة القائمة، والمهام الخلفية.</small>
+              </div>
+            </div>
+            <span class="badge success">Phase 1–3</span>
+          </div>
+          <hr class="card-divider" />
+          <div class="sub-grid">
+            <article class="sub-card">
+              <h4>Vercel Pro</h4>
+              <div class="price-badge">$20 شهريًا + استخدام Build فعلي</div>
+              <p>استضافة الموقع ولوحة التحكم بسرعة وثبات، مع نشر التحديثات بدون تعطيل الموقع.</p>
+              <span class="tiny-label">تحذير مهم</span>
+              <p>Turbo Build Machines أصبحت افتراضية لبعض المشاريع الجديدة؛ يجب ضبط Preview Deployments على Standard عند الحاجة لتفادي فواتير Build Minutes المرتفعة.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Supabase Pro</h4>
+              <div class="price-badge">$25 base + compute حسب الحجم</div>
+              <p>قاعدة البيانات السحابية للطلبات، العملاء، الفروع، الصلاحيات، الولاء، والمخزون لاحقًا.</p>
+              <span class="tiny-label">تحذير مهم</span>
+              <p>$25 هو الحد الأساسي، لكنه ليس دائمًا التكلفة النهائية للإنتاج. قد نحتاج Compute إضافيًا ($10–100+) حسب البيانات والأداء. كما أن ما فوق 100,000 MAU يضيف رسومًا مستقبلية.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Sanity CMS</h4>
+              <div class="price-badge">مجاني بالبداية / $15 لكل مستخدم عند التوسع</div>
+              <p>إدارة قائمة الطعام، الأسعار، الصور، التصنيفات، والعروض بدون الرجوع للمبرمج كل مرة.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Railway / Background Workers</h4>
+              <div class="price-badge">$5–20 شهريًا عند الحاجة · إنتاجيًا $20+ أفضل</div>
+              <p>تشغيل مهام الخلفية مثل تنبيهات التأخير، تقارير نهاية اليوم، معالجة Webhooks، ومهام المخزون.</p>
+              <span class="tiny-label">تحذير مهم</span>
+              <p>Hobby مناسب للتجارب، أما التشغيل الحقيقي للـ Workers والإشعارات وBullMQ فيُفضّل له Pro من $20/شهر على الأقل.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Upstash Redis</h4>
+              <div class="price-badge">مجاني بالبداية / حسب الاستخدام</div>
+              <p>تنظيم الطلبات الحية، Queues، Cache، منع التكرار، وتحسين سرعة لوحة التحكم.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Google Workspace</h4>
+              <div class="price-badge">حسب عدد المستخدمين</div>
+              <p>بريد رسمي للمطعم، حسابات إدارية، مستندات، وتنبيهات رسمية بدل استخدام بريد شخصي. مثال 3 مستخدمين ≈ $18/شهر في Business Starter.</p>
+            </article>
+            <article class="sub-card">
+              <h4>POS Integration</h4>
+              <div class="price-badge">حسب مزود الكاشير</div>
+              <p>ربط الطلبات والمبيعات والمخزون مع نظام الكاشير الحالي لتقليل الإدخال اليدوي والأخطاء.</p>
+              <span class="tiny-label">ملاحظة</span>
+              <p>لا يُفعّل إلا بعد معرفة نظام POS الحالي وتوفر API أو طريقة ربط رسمية.</p>
+            </article>
+          </div>
+        </article>
+
+        <article class="sub-group">
+          <div class="card-icon-header">
+            <div class="card-title-wrap">
+              <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 12h16"></path><path d="M12 4l8 8-8 8"></path></svg></div>
+              <div>
+                <h3>التوسعة والربط الخارجي — Phase 6+</h3>
+                <small>بوابات الدفع، رسائل WhatsApp الرسمية، وربط منصات التوصيل عند التوسع.</small>
+              </div>
+            </div>
+            <span class="badge warning">Phase 6+</span>
+          </div>
+          <hr class="card-divider" />
+          <div class="sub-grid">
+            <article class="sub-card">
+              <h4>Payment Gateway</h4>
+              <div class="price-badge">نسبة معاملات + احتمال رسوم إعداد</div>
+              <p>تأكيد الدفع تلقائيًا وربط الدفع بالطلب بدل التأكيد اليدوي. الخيارات المقترحة: Benefit / BenefitPay / Tap Payments / CrediMax.</p>
+              <span class="tiny-label">ملاحظة</span>
+              <p>يتطلب حساب تاجر، موافقة مزود الدفع، وربط Webhook.</p>
+            </article>
+            <article class="sub-card">
+              <h4>WhatsApp Business API / Wati.io</h4>
+              <div class="price-badge">اشتراك مزود + رسوم رسائل Meta متغيرة</div>
+              <p>إرسال رسائل رسمية تلقائية للزبون: تم الاستلام، قيد التحضير، جاهز، في الطريق، وتم التسليم.</p>
+              <span class="tiny-label">ملاحظة</span>
+              <p>لا يُعرض كتكلفة ثابتة؛ لأن التكلفة تعتمد على نوع الرسائل، الدولة، وحجم الرسائل الشهري.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Deliverect</h4>
+              <div class="price-badge">يحتاج عرض سعر مباشر</div>
+              <p>تجميع طلبات Talabat وKeeta والمنصات الأخرى في شاشة واحدة مع طلبات الموقع عند التوسع.</p>
+              <span class="tiny-label">متى نضيفها؟</span>
+              <p>عند وجود حجم طلبات كافٍ من المنصات وبعد تأكيد توفر الخدمة والتكاملات في البحرين.</p>
+            </article>
+          </div>
+        </article>
+
+        <article class="sub-group">
+          <div class="card-icon-header">
+            <div class="card-title-wrap">
+              <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2v20"></path><path d="M2 12h20"></path></svg></div>
+              <div>
+                <h3>خدمات إضافية ومستقبلية — حسب الحاجة</h3>
+                <small>خدمات تُضاف عند الحاجة للتوصيل المتقدم، البريد، التخزين، النسخ الاحتياطي، أو الذكاء الاصطناعي.</small>
+              </div>
+            </div>
+            <span class="badge info">حسب الحاجة</span>
+          </div>
+          <hr class="card-divider" />
+          <div class="sub-grid">
+            <article class="sub-card">
+              <h4>Google Maps / Mapbox</h4>
+              <div class="price-badge">حسب الاستخدام / Google Starter قد يبدأ من $100 شهريًا</div>
+              <p>تحديد العناوين بدقة، حساب مناطق التوصيل، مساعدة السائقين، وتحليل مناطق الطلب.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Resend / SendGrid</h4>
+              <div class="price-badge">مجاني بالبداية / مدفوع عند التوسع</div>
+              <p>إرسال تقارير النظام، Reset Password، تنبيهات البريد، ورسائل الإدارة.</p>
+            </article>
+            <article class="sub-card">
+              <h4>Backup & Storage</h4>
+              <div class="price-badge">حسب الاستخدام</div>
+              <p>نسخ احتياطي متقدم، تخزين صور الفواتير، إيصالات الدفع، ومرفقات الموردين.</p>
+            </article>
+            <article class="sub-card">
+              <h4>AI Ordering Agent</h4>
+              <div class="price-badge">حسب الاستخدام مع سقف شهري</div>
+              <p>مساعد ذكي للطلبات، الاقتراحات، الأسئلة عن المكونات، وزيادة متوسط قيمة الطلب.</p>
+              <span class="tiny-label">شرط التفعيل</span>
+              <p>يُفضّل بعد توفر 6+ أشهر من بيانات الطلبات الحقيقية على الأقل.</p>
+            </article>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-icon-header">
+            <div class="card-title-wrap">
+              <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14.5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+              <div>
+                <h3>ملخص تكلفة البداية</h3>
+                <small>تقديرين: تكلفة بسيطة جدًا، ثم تكلفة تشغيلية أكثر واقعية لـ MVP الجاد.</small>
+              </div>
+            </div>
+          </div>
+          <hr class="card-divider" />
+          <div class="grid two">
+            <div>
+              <p><strong>الحد الأدنى للبدء:</strong> يمكن بدء المرحلة الأولى بتكلفة تشغيلية مدفوعة تقارب <strong>$45 شهريًا</strong> فقط عند تفعيل Vercel Pro وSupabase Pro. باقي الخدمات الأساسية مثل Cloudflare Free وGoogle Analytics وSearch Console وMicrosoft Clarity وSentry Free وSanity Free يمكن أن تبقى ضمن الخطة المجانية في البداية.</p>
+              <p><strong>التشغيل الواقعي لـ MVP الجاد:</strong> عند تفعيل خدمات مدفوعة إضافية مثل Google Workspace وRailway وCloudflare Pro أو Sentry Team أو Sanity Growth، قد ترتفع التكلفة التشغيلية إلى حدود <strong>$90–120 شهريًا تقريبًا</strong>.</p>
+              <div class="callout"><strong><span class="callout-icon"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4.5 20 18.5H4L12 4.5Z"></path><path d="M12 9.25v4"></path><path d="M12 16.5h.01"></path></svg></span>غير مشمول في هذا التقدير</strong>رسوم الدومين، بوابات الدفع، WhatsApp API، Deliverect، POS، الخرائط، أو أي تكامل خارجي أو استخدام مرتفع غير متوقع.</div>
+            </div>
+            <div>
+              <table>
+                <thead><tr><th>الخدمة</th><th>التقدير</th><th>ملاحظة</th></tr></thead>
+                <tbody>
+                  <tr><td>Vercel Pro</td><td>$20 + Build Usage</td><td>راقب Build Machines</td></tr>
+                  <tr><td>Supabase Pro</td><td>$25–35+</td><td>حسب Compute</td></tr>
+                  <tr><td>Railway Workers</td><td>$20+</td><td>للإنتاج الجاد</td></tr>
+                  <tr><td>Google Workspace</td><td>~$18 / 3 مستخدمين</td><td>اختياري لكنه عملي</td></tr>
+                  <tr><td>Domain</td><td>~$1/شهر تقريبيًا</td><td>إذا قُسم سنويًا</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="view" id="view-ops">
+        <div class="section-title">
+          <div>
+            <h2>التشغيل والرقابة</h2>
+            <p>هذا القسم يشرح كيف ستعمل المنصة يوميًا: كيف يدخل الطلب، كيف يتحرك داخل المطعم، كيف نقيس الوقت، وكيف نعرف الفرع الأكثر كفاءة وأين يحدث التأخير أو الاستخدام غير المبرر.</p>
+          </div>
+          <span class="badge info">منظور Owner / Manager</span>
+        </div>
+
+        <div class="flow-grid" style="margin-bottom:18px;">
+          <article class="flow-step input" data-step="1">
+            <h4>New — طلب جديد</h4>
+            <p>يصل الطلب من الموقع أو عبر wa.me fallback إلى لوحة التحكم. يتم تسجيل وقت الدخول فورًا واحتساب زمن الانتظار الأولي.</p>
+          </article>
+          <article class="flow-step input" data-step="2">
+            <h4>Under Review — مراجعة</h4>
+            <p>موظف الطلبات يراجع العنوان، الفرع، وسيلة الدفع، وأي ملاحظات مهمة. يتم قياس وقت المراجعة بدقة.</p>
+          </article>
+          <article class="flow-step processing" data-step="3">
+            <h4>Accepted — قبول</h4>
+            <p>بعد القبول ينتقل الطلب للمطبخ وتبدأ مسؤولية التنفيذ الداخلية، مع احتساب زمن القبول ضمن KPIs اليومية.</p>
+          </article>
+          <article class="flow-step processing" data-step="4">
+            <h4>Preparing — التحضير</h4>
+            <p>شاشة المطبخ KDS تعرض الطلب للطاهي وتبدأ ساعة التحضير. يمكن قياس متوسط التحضير لكل فرع ولكل فترة ذروة.</p>
+          </article>
+          <article class="flow-step processing" data-step="5">
+            <h4>Ready — جاهز</h4>
+            <p>عند انتهاء التحضير يصبح الطلب جاهزًا للتسليم الداخلي أو الإسناد للسائق. هذا يكشف هل التأخير من المطبخ أو من التوصيل.</p>
+          </article>
+          <article class="flow-step output" data-step="6">
+            <h4>Out for Delivery — في الطريق</h4>
+            <p>يُسند الطلب إلى السائق أو يسلَّم للاستلام الذاتي. يتم قياس زمن الخروج وزمن الوصول لكل سائق أو منطقة.</p>
+          </article>
+          <article class="flow-step output" data-step="7">
+            <h4>Delivered — تم التسليم</h4>
+            <p>العميل استلم الطلب. هذه الحالة تؤكد اكتمال الخدمة الميدانية، لكنها ليست الإغلاق النهائي للنظام بعد.</p>
+          </article>
+          <article class="flow-step output" data-step="8">
+            <h4>Completed / Cancelled</h4>
+            <p>Completed يغلق الطلب محاسبيًا ويضيف النقاط إذا كان مؤهلًا. Cancelled يسجل سبب الإلغاء لتحليل الفاقد وتحسين العمليات.</p>
+          </article>
+        </div>
+
+        <div class="grid three">
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 20V10"></path><path d="m7 15 5 5 5-5"></path><path d="M5 4h14"></path></svg></div>
+                <div><h3>أين يحدث التأخير؟</h3><small>قياس فعلي بدل التخمين</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <p>النظام يسجل وقت دخول الطلب، وقت مراجعته، وقت قبوله، وقت بدء التحضير، وقت الجاهزية، ووقت التسليم. بهذه الطريقة يعرف المدير هل التأخير من موظف الطلبات، المطبخ، السائق، أو الفرع نفسه.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-3"></path></svg></div>
+                <div><h3>مقارنة الفروع</h3><small>الرفاع × قلالي × البديع Planned</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <p>تعرض لوحة الإدارة أداء فرع الرفاع وفرع قلالي، مع تجهيز فرع البديع كفرع Planned لحين افتتاحه. يمكن معرفة أي فرع يبيع أكثر، أي فرع يتأخر أكثر، وأي فرع لديه هدر أعلى أو معدل إلغاء أعلى.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M6 8h12"></path><path d="M6 12h12"></path><path d="M6 16h7"></path><path d="M4 4h16v16H4z"></path></svg></div>
+                <div><h3>المخزون والتلاعب</h3><small>رقابة موضوعية وليست اتهامًا</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <p>النظام لا يتهم موظفًا بالسرقة، لكنه يقلل فرص التلاعب ويكشف مؤشرات الاستخدام غير المبرر من خلال مقارنة المبيعات، الوصفات، المخزون الفعلي، والهدر المسجل. وهذا يساعد في فهم أين يحدث الخلل بين الصرف والمدخول.</p>
+          </article>
+        </div>
+
+        <div class="success-callout"><strong><span class="callout-icon"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span>ما الذي يربحه صاحب المشروع من هذا القسم؟</strong>معرفة دقيقة لمكان التأخير، الفرع الأكثر أداءً، المواد الأكثر استهلاكًا، ومؤشرات الخلل التشغيلي — بدل الاكتفاء بانطباعات عامة أو متابعة WhatsApp يدويًا.</div>
+      </section>
+
+      <section class="view" id="view-roles">
+        <div class="section-title">
+          <div>
+            <h2>الأدوار والصلاحيات</h2>
+            <p>توزيع الأدوار ضروري لمنع التداخل، توضيح المسؤولية، وضمان أن كل تعديل على الطلبات أو المخزون أو العروض يحمل اسم المستخدم والوقت ونوع الإجراء.</p>
+          </div>
+          <span class="badge warning">Role-Based Access Control</span>
+        </div>
+
+        <div class="callout"><strong><span class="callout-icon"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4.5 20 18.5H4L12 4.5Z"></path><path d="M12 9.25v4"></path><path d="M12 16.5h.01"></path></svg></span>قاعدة الحوكمة</strong>الصلاحيات تقلل التداخل، وتوضح المسؤولية، وتمنع تعديل الطلبات أو المخزون بدون تسجيل. كل عملية داخل النظام يجب أن تحمل اسم المستخدم، الوقت، ونوع الإجراء.</div>
+
+        <article class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>الدور</th>
+                <th>المهام الأساسية</th>
+                <th>مستوى الصلاحية</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 17h14"></path><path d="M6.5 17 5 7.5l4.5 4L12 6l2.5 5.5 4.5-4L17.5 17"></path></svg> Owner</span></td>
+                <td>صلاحية كاملة على الفروع، التقارير، الأسعار، الصلاحيات، الاشتراكات، والموافقات العليا.</td>
+                <td class="perm-high">حساس / كامل</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"></circle><path d="m14.75 8.75-1.5 4.5-4.5 1.5 1.5-4.5 4.5-1.5Z"></path></svg> General Manager</span></td>
+                <td>متابعة جميع الفروع، لوحات الأداء، التأخير، المبيعات، والهدر، واعتماد قرارات التشغيل اليومية.</td>
+                <td class="perm-high">حساس</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4.5 10.5h15"></path><path d="M6 10.5v8h12v-8"></path><path d="M8 18.5v-4h3v4"></path><path d="M7 6h10l2.5 4.5h-15L7 6Z"></path></svg> Branch Manager</span></td>
+                <td>إدارة فرعه فقط: الطلبات، الموظفون، الجرد، والملاحظات التشغيلية الخاصة بالفرع.</td>
+                <td class="perm-medium">متوسط</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 4.5h10v15l-2-1.25-2 1.25-2-1.25-2 1.25-2-1.25v-15Z"></path><path d="M9.5 8h5"></path><path d="M9.5 11.5h5"></path><path d="M9.5 15h3"></path></svg> Cashier / Orders Staff</span></td>
+                <td>مراجعة الطلبات، قبولها، مراجعة الدفع، تحديث الحالة، والتواصل التشغيلي مع المطبخ والسائق.</td>
+                <td class="perm-medium">متوسط</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7.5 12.5c-1.4-.35-2.5-1.55-2.5-3.05A3.05 3.05 0 0 1 8.4 6.4a4 4 0 0 1 7.2 0A3.05 3.05 0 0 1 19 9.45c0 1.5-1.1 2.7-2.5 3.05"></path><path d="M7.5 12.5h9v6h-9z"></path><path d="M9.5 15.5h5"></path></svg> Kitchen / KDS</span></td>
+                <td>استلام الطلبات على شاشة المطبخ، تحديث التحضير والجاهزية فقط.</td>
+                <td class="perm-basic">أساسي</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 17.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M17.5 10.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M8.5 15.5h4a3 3 0 0 0 0-6h-1"></path></svg> Driver</span></td>
+                <td>رؤية الطلبات المسندة له فقط، تحديث الخروج والتسليم، واستقبال ملاحظات العنوان.</td>
+                <td class="perm-basic">أساسي</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 8.5 12 4l7 4.5v7L12 20l-7-4.5v-7Z"></path><path d="m5.5 9 6.5 4 6.5-4"></path><path d="M12 13v7"></path></svg> Inventory Officer</span></td>
+                <td>الاستلام، الصرف، الجرد، التحويل بين الفروع، تسجيل التالف والهدر، ومراجعة فرق المخزون.</td>
+                <td class="perm-medium">متوسط</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 13h3l9 4V7l-9 4H5v2Z"></path><path d="M8 13.5 9 19h3"></path></svg> Marketing</span></td>
+                <td>العروض، الكوبونات، رسائل الحملات، وشرائح العملاء بدون صلاحيات مالية حساسة.</td>
+                <td class="perm-medium">متوسط</td>
+              </tr>
+              <tr>
+                <td><span class="role-title"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 19h14"></path><path d="M7 16v-5"></path><path d="M12 16V7"></path><path d="M17 16v-8"></path></svg> Accountant Viewer</span></td>
+                <td>قراءة التقارير المالية والتشغيلية فقط بدون تعديل.</td>
+                <td class="perm-basic">قراءة فقط</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section class="view" id="view-loyalty">
+        <div class="section-title">
+          <div>
+            <h2>الولاء والنقاط</h2>
+            <p>برنامج الولاء مصمم لرفع معدل تكرار الطلب، تشجيع الطلب المباشر، وبناء علاقة طويلة مع العميل بدل الاعتماد على الخصومات العشوائية فقط.</p>
+          </div>
+          <span class="badge success">Phase 5</span>
+        </div>
+
+        <div class="tier-grid" style="margin-bottom:18px;">
+          <article class="tier-card bronze">
+            <span class="label">Bronze</span>
+            <h4>عميل جديد</h4>
+            <p><strong>الشرط:</strong> 0–9 طلبات</p>
+            <p><strong>الميزة:</strong> بداية العلاقة، رسائل ترحيبية، وعروض دخول أولية.</p>
+          </article>
+          <article class="tier-card silver">
+            <span class="label">Silver</span>
+            <h4>عميل متكرر</h4>
+            <p><strong>الشرط:</strong> 10–29 طلبًا أو 50+ BD إنفاقًا</p>
+            <p><strong>الميزة:</strong> عروض أكثر انتظامًا وأولوية بسيطة في الحملات.</p>
+          </article>
+          <article class="tier-card gold-tier">
+            <span class="label">Gold</span>
+            <h4>عميل عالي القيمة</h4>
+            <p><strong>الشرط:</strong> 30–59 طلبًا أو 150+ BD إنفاقًا</p>
+            <p><strong>الميزة:</strong> مكافآت أعلى، عروض خاصة، وأيام حصرية.</p>
+          </article>
+          <article class="tier-card platinum">
+            <span class="label">Platinum</span>
+            <h4>أفضل العملاء</h4>
+            <p><strong>الشرط:</strong> 60+ طلبًا أو 300+ BD إنفاقًا</p>
+            <p><strong>الميزة:</strong> أعلى قيمة، عروض VIP، ومكافآت موسمية مدروسة.</p>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l2.9 5.9 6.5 1-4.7 4.5 1.1 6.4L12 16.8 6.2 19.8l1.1-6.4L2.6 8.9l6.5-1L12 2z"></path></svg></div>
+                <div><h3>قواعد النقاط</h3><small>قابلة للقياس ومفهومة لصاحب المشروع</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="check-list">
+              <li><span>•</span><span>5 نقاط لكل 1 دينار بحريني.</span></li>
+              <li><span>•</span><span>قيمة النقطة = 5 فلس.</span></li>
+              <li><span>•</span><span>تضاف النقاط بعد اكتمال الطلب فقط.</span></li>
+              <li><span>•</span><span>الطلب الملغي لا يكسب نقاطًا.</span></li>
+              <li><span>•</span><span>الدفع بالنقاط لا يكسب نقاطًا جديدة.</span></li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></div>
+                <div><h3>قيود الاستخدام</h3><small>لضبط الربحية وعدم إساءة الاستفادة</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="check-list">
+              <li><span>•</span><span>الحد الأقصى لاستخدام النقاط: 20% من قيمة الطلب.</span></li>
+              <li><span>•</span><span>لا يمكن دمج النقاط مع الكوبونات إلا إذا سمح التسويق بذلك.</span></li>
+              <li><span>•</span><span>صلاحية النقاط: 12 شهرًا من آخر طلب.</span></li>
+              <li><span>•</span><span>يمكن تخصيص عروض حسب المستوى لاحقًا.</span></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="success-callout"><strong><span class="callout-icon"><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span>معلومة ربحية مهمة</strong>نسبة الاسترداد الفعلية: <strong>2.5%</strong>، وهي مناسبة لمطاعم الفئة الفاخرة. الدفع بالنقاط لا يكسب نقاطًا جديدة، ولا يمكن دمج النقاط مع الكوبونات إلا إذا سمح التسويق بذلك.</div>
+      </section>
+
+      <section class="view" id="view-requirements">
+        <div class="section-title">
+          <div>
+            <h2>المتطلبات والقرارات المطلوبة</h2>
+            <p>هذا القسم يوضح ما يحتاجه المشروع من صاحب المطعم وفريقه حتى ينتقل من عرض جميل إلى تنفيذ فعلي ناجح.</p>
+          </div>
+          <span class="badge warning">جاهزية المشروع</span>
+        </div>
+
+        <div class="grid three">
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></div>
+                <div><h3>قرارات مطلوبة قبل التنفيذ</h3><small>القرارات التي تمنع التعطّل لاحقًا</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="bullet-list">
+              <li><span>1</span><span>اختيار مزود بوابة الدفع: Benefit / Tap / CrediMax.</span></li>
+              <li><span>2</span><span>اختيار مزود WhatsApp API.</span></li>
+              <li><span>3</span><span>تأكيد هل يوجد POS حالي أم لا.</span></li>
+              <li><span>4</span><span>تحديد وضع فرع البديع (Planned لحين الافتتاح).</span></li>
+              <li><span>5</span><span>اعتماد سياسة الإلغاء والاسترجاع.</span></li>
+              <li><span>6</span><span>تعيين مسؤول داخلي للتواصل.</span></li>
+              <li><span>7</span><span>توفير وصفات الشيف بالكميات الدقيقة.</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 8h8"></path><path d="M8 12h8"></path><path d="M8 16h5"></path></svg></div>
+                <div><h3>بيانات مطلوبة من المطعم</h3><small>المدخلات التي لا يمكن بناء النظام بدونها</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="bullet-list">
+              <li><span>1</span><span>قائمة الأصناف بالعربي والإنجليزي.</span></li>
+              <li><span>2</span><span>صور الأطباق وصور الفروع.</span></li>
+              <li><span>3</span><span>وصفات الشيف بالكميات الدقيقة.</span></li>
+              <li><span>4</span><span>قائمة الموردين والمواد الخام.</span></li>
+              <li><span>5</span><span>بيانات الموظفين والأدوار.</span></li>
+              <li><span>6</span><span>أرقام WhatsApp للفروع.</span></li>
+              <li><span>7</span><span>سياسة الأسعار والعروض.</span></li>
+              <li><span>8</span><span>الشعار بصيغة واضحة.</span></li>
+              <li><span>9</span><span>بيانات Google Business Profile إن وجدت.</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 2l7 4v6c0 4.2-2.5 8-7 10-4.5-2-7-5.8-7-10V6l7-4Z"></path><path d="M9 12l2 2 4-4"></path></svg></div>
+                <div><h3>المتطلبات القانونية والتشغيلية</h3><small>لضمان الجاهزية القانونية والأمنية</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="bullet-list">
+              <li><span>1</span><span>سياسة الخصوصية.</span></li>
+              <li><span>2</span><span>شروط الاستخدام.</span></li>
+              <li><span>3</span><span>شروط برنامج الولاء.</span></li>
+              <li><span>4</span><span>سياسة الإلغاء والاسترجاع.</span></li>
+              <li><span>5</span><span>تفعيل 2FA لحسابات Owner وManager.</span></li>
+              <li><span>6</span><span>النسخ الاحتياطي وخطة الاسترجاع.</span></li>
+              <li><span>7</span><span>Audit Logs لكل العمليات الحساسة.</span></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-risks">
+        <div class="section-title">
+          <div>
+            <h2>المخاطر والاعتماديات والتدريب</h2>
+            <p>من المهم أن يرى صاحب المشروع بوضوح ما الذي يعتمد على قرارات داخلية، وما الذي يعتمد على مزودين خارجيين، وما الذي يحتاج تدريبًا حتى ينجح على أرض الواقع.</p>
+          </div>
+          <span class="badge warning">لمنع المفاجآت لاحقًا</span>
+        </div>
+
+        <div class="grid two">
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.29 3.86 1.82 18A2 2 0 0 0 3.55 21h16.9a2 2 0 0 0 1.73-3l-8.47-14.14a2 2 0 0 0-3.42 0Z"></path></svg></div>
+                <div><h3>الاعتماديات الخارجية</h3><small>عناصر لا نتحكم بها بالكامل</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="bullet-list">
+              <li><span>!</span><span>الدفع الآلي يعتمد على البنك ومزود الدفع والموافقات.</span></li>
+              <li><span>!</span><span>WhatsApp API يعتمد على Meta والمزود.</span></li>
+              <li><span>!</span><span>Deliverect يحتاج عقدًا رسميًا وتأكيد توفر البحرين.</span></li>
+              <li><span>!</span><span>POS يحتاج API أو طريقة ربط رسمية.</span></li>
+              <li><span>!</span><span>تتبع iOS عبر PWA محدود في الخلفية.</span></li>
+              <li><span>!</span><span>فرع البديع تحت التفاوض وليس ضمن التشغيل الحالي.</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="9"></circle></svg></div>
+                <div><h3>المخاطر الداخلية</h3><small>أشياء قد تؤخر النجاح حتى لو كان الكود ممتازًا</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="bullet-list">
+              <li><span>!</span><span>دقة المخزون تعتمد على وصفات الشيف والجرد الواقعي.</span></li>
+              <li><span>!</span><span>نجاح الطلب المباشر يعتمد على التسويق واعتياد الموظفين على النظام.</span></li>
+              <li><span>!</span><span>عدم توفير صور صحيحة وشعار واضح يضعف تأثير المرحلة الأولى.</span></li>
+              <li><span>!</span><span>تأخير الموافقات الخارجية يمدد المراحل المتقدمة.</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M6 19V5"></path><path d="M18 19V5"></path><path d="M6 12h12"></path></svg></div>
+                <div><h3>تدريب الموظفين</h3><small>Onboarding تشغيلي إلزامي</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="bullet-list">
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 4.5v2"></path><path d="M12 17.5v2"></path><path d="M4.5 12h2"></path><path d="M17.5 12h2"></path><path d="m6.7 6.7 1.4 1.4"></path><path d="m15.9 15.9 1.4 1.4"></path><path d="m17.3 6.7-1.4 1.4"></path><path d="m8.1 15.9-1.4 1.4"></path></svg></span><span>الكاشير والطباخ والسائق يحتاجون جلسة تدريب مخصصة لكل دور.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 4.5v2"></path><path d="M12 17.5v2"></path><path d="M4.5 12h2"></path><path d="M17.5 12h2"></path><path d="m6.7 6.7 1.4 1.4"></path><path d="m15.9 15.9 1.4 1.4"></path><path d="m17.3 6.7-1.4 1.4"></path><path d="m8.1 15.9-1.4 1.4"></path></svg></span><span>الأنظمة الجيدة تفشل بسبب عدم الاستخدام الصحيح لا بسبب الكود فقط.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 4.5v2"></path><path d="M12 17.5v2"></path><path d="M4.5 12h2"></path><path d="M17.5 12h2"></path><path d="m6.7 6.7 1.4 1.4"></path><path d="m15.9 15.9 1.4 1.4"></path><path d="m17.3 6.7-1.4 1.4"></path><path d="m8.1 15.9-1.4 1.4"></path></svg></span><span>المقترح: جلسة تدريب مدفوعة لكل دور (2–3 ساعات) عند التسليم.</span></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <div class="card-icon-header">
+              <div class="card-title-wrap">
+                <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h10"></path><path d="M4 17h16"></path></svg></div>
+                <div><h3>ماذا نحتاج لتقليل هذه المخاطر؟</h3><small>توصيات تشغيلية عملية</small></div>
+              </div>
+            </div>
+            <hr class="card-divider">
+            <ul class="bullet-list">
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>البدء بـ Phase 0 وPhase 1 بسرعة بدل تأجيل جمع البيانات.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>تسمية مسؤول داخلي من المطعم للتواصل واتخاذ القرارات.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>بدء معاملة Benefit Pay مبكرًا إذا كان الدفع الإلكتروني مطلوبًا.</span></li>
+              <li><span><svg class="lux-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12.5 4.25 4.25L19 7"></path></svg></span><span>جمع الوصفات والصور والشعار قبل بدء التطوير المرئي النهائي.</span></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="تنقل سريع للهاتف">
+      <button class="active" data-tab="overview">الرئيسية</button>
+      <button data-tab="roadmap">المراحل</button>
+      <button data-tab="pricing">الأسعار</button>
+      <button data-tab="ops">التشغيل</button>
+      <button data-tab="requirements">المتطلبات</button>
+    </nav>
+  </div>
+
+  <script>
+    (function () {
+      const html = document.documentElement;
+      const savedTheme = localStorage.getItem('kahramana-theme');
+      if (savedTheme) html.setAttribute('data-theme', savedTheme);
+
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const printBtn = document.getElementById('printBtn');
+      const tabs = [...document.querySelectorAll('.tab-btn')];
+      const footerTabs = [...document.querySelectorAll('.footer-nav button')];
+      const views = [...document.querySelectorAll('.view')];
+      const gotoButtons = [...document.querySelectorAll('[data-goto]')];
+
+      function updateThemeIcon() {
+        const isLight = html.getAttribute('data-theme') === 'light';
+        themeIcon.innerHTML = isLight
+          ? '<path d="M12 3v2.5"></path><path d="M12 18.5V21"></path><path d="m4.9 4.9 1.8 1.8"></path><path d="m17.3 17.3 1.8 1.8"></path><path d="M3 12h2.5"></path><path d="M18.5 12H21"></path><path d="m4.9 19.1 1.8-1.8"></path><path d="m17.3 6.7 1.8-1.8"></path><circle cx="12" cy="12" r="4"></circle>'
+          : '<path d="M20 15.3A8 8 0 1 1 8.7 4a6.5 6.5 0 1 0 11.3 11.3Z"></path>';
+      }
+      updateThemeIcon();
+
+      themeToggle.addEventListener('click', () => {
+        const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('kahramana-theme', next);
+        updateThemeIcon();
+      });
+
+      function activateTab(key) {
+        tabs.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === key));
+        footerTabs.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === key));
+        views.forEach(view => view.classList.toggle('active', view.id === `view-${key}`));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      tabs.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+      footerTabs.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+      gotoButtons.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.goto)));
+      printBtn.addEventListener('click', () => window.print());
+    })();
+  </script>
+</body>
+</html>

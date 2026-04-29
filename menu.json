@@ -1,0 +1,3370 @@
+[
+  {
+    "category": {
+      "ar": "الفطور البغدادي",
+      "en": "Baghdadi Breakfast",
+      "description": {
+        "ar": "نقدم فطوراً بغدادياً عريقاً يضم ٢٣ صنفاً متنوعاً، يجمع بين النكهات الأصيلة والتحضير التقليدي لتبدأ يومك بعبق الرافدين. من المخلمة وأطباق البيض والطاوات العراقية إلى اللمسات الخفيفة التي تناسب جميع الأذواق، مع خيارات مشبعة تليق ببداية يومك.",
+        "en": "We serve a classic Baghdadi breakfast with 23 varieties, combining authentic flavors and traditional preparation to start your day with the spirit of Mesopotamia. From Makhlama and Iraqi egg skillets to lighter morning plates, you’ll find comforting, satisfying options made fresh every day."
+      }
+    },
+    "items": [
+      {
+        "id": "breakfast-eggs-fried-eggs",
+        "name": {
+          "ar": "بيض عيون",
+          "en": "Fried Eggs"
+        },
+        "description": {
+          "ar": "بيض مقلي بالسمن البلدي (الدهن الحر) بصفار غني، يقدم لك الطعم العراقي الأصيل لفطور دافئ ومثالي.",
+          "en": "Sunny-side-up eggs fried in rich ghee, delivering the comforting and authentic taste of a classic Iraqi breakfast."
+        },
+        "price_bhd": 1.6,
+        "image_url": "/assets/gallery/fried-eggs.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-tomatoes",
+        "name": {
+          "ar": "بيض مع الطماطم",
+          "en": "Eggs with Tomatoes"
+        },
+        "description": {
+          "ar": "بيض مطهو مع الطماطم الطازجة، مزيج بسيط وغني بالنكهات لوجبة صباحية دافئة.",
+          "en": "Eggs simmered with fresh, juicy tomatoes for a hearty and comforting morning favorite."
+        },
+        "price_bhd": 1.9,
+        "image_url": "/assets/gallery/eggs-tomatoes.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-shakshouka",
+        "name": {
+          "ar": "شكشوكة",
+          "en": "Shakshouka"
+        },
+        "description": {
+          "ar": "بيض مطهو ببطء في صلصة طماطم غنية ومتبلة بعناية، لقوام دسم ومذاق لا يُقاوم.",
+          "en": "Eggs slowly simmered in a rich, deeply flavored, and delicately spiced tomato sauce."
+        },
+        "price_bhd": 2.1,
+        "image_url": "/assets/gallery/shakshouka.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-shakshouka-special",
+        "name": {
+          "ar": "شكشوكة خاصة",
+          "en": "Special Shakshouka"
+        },
+        "description": {
+          "ar": "نسختنا المميزة من الشكشوكة؛ مغطاة بمزيج من الأجبان الذائبة والجبن الكريمي لقوام أكثر غنى ولذاذة.",
+          "en": "Our signature shakshouka elevated with a blend of melted and cream cheeses for an indulgently rich and creamy twist."
+        },
+        "price_bhd": 2.2,
+        "image_url": "/assets/gallery/special-shakshouka.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-potato",
+        "name": {
+          "ar": "بيض مع البطاطس",
+          "en": "Eggs with Potatoes"
+        },
+        "description": {
+          "ar": "بيض مقلي مع قطع البطاطس المحمرة والمقرمشة، طبق مشبع يجمع بين بساطة المكونات وروعة المذاق.",
+          "en": "Fried eggs cooked with golden, crispy potatoes—a simple, hearty, and satisfyingly flavorful dish."
+        },
+        "price_bhd": 1.7,
+        "image_url": "/assets/gallery/eggs-potato.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-meat",
+        "name": {
+          "ar": "بيض مع اللحم",
+          "en": "Eggs with Meat"
+        },
+        "description": {
+          "ar": "بيض مطهو مع اللحم المفروم المتبل بأجود البهارات، لفطور فاخر وغني بالطاقة.",
+          "en": "Tender, perfectly seasoned minced meat cooked with eggs for a rich and hearty breakfast experience."
+        },
+        "price_bhd": 2.5,
+        "image_url": "/assets/gallery/eggs-meat.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-cheese",
+        "name": {
+          "ar": "بيض مع الجبن",
+          "en": "Eggs with Cheese"
+        },
+        "description": {
+          "ar": "بيض مخفوق بعناية مع الجبن الذائب، لقوام ناعم ومذاق كريمي في كل لقمة.",
+          "en": "Softly scrambled eggs folded with beautifully melted cheese for a smooth, creamy bite in every spoonful."
+        },
+        "price_bhd": 2.1,
+        "image_url": "/assets/gallery/eggs-cheese.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-zaatar",
+        "name": {
+          "ar": "بيض مع الزعتر",
+          "en": "Eggs with Zaatar"
+        },
+        "description": {
+          "ar": "بيض مقلي مزين برشة من الزعتر العطري، يمزج بين النكهة الترابية الغنية واللمسة الكلاسيكية.",
+          "en": "Fried eggs sprinkled with aromatic za'atar, beautifully blending earthy notes with a classic touch."
+        },
+        "price_bhd": 2.1,
+        "image_url": "/assets/gallery/eggs-zaatar.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-eggs-basterma",
+        "name": {
+          "ar": "بيض مع البسترما",
+          "en": "Eggs with Basterma"
+        },
+        "description": {
+          "ar": "بيض مقلي يُطهى مع شرائح البسترما الغنية، ليمنحك نكهة قوية ومدخنة لا تُنسى.",
+          "en": "Fried eggs cooked with highly seasoned basterma, delivering a bold, rich, and slightly smoky flavor."
+        },
+        "price_bhd": 2.5,
+        "image_url": "/assets/gallery/eggs-basterma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-tawat-tomato-tawah",
+        "name": {
+          "ar": "طاوة طماطم",
+          "en": "Tomato Tawah Special"
+        },
+        "description": {
+          "ar": "طماطم طازجة تُشوى في الطاوة حتى تتكرمل وتكتسب لسعة شواء خفيفة، لتبرز نكهتها المدخنة والغنية.",
+          "en": "Fresh tomatoes pan-grilled in a traditional tawah until slightly charred, releasing a naturally sweet and smoky depth of flavor."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/tomato-tawah.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-tawat-chicken-liver",
+        "name": {
+          "ar": "كبد دجاج",
+          "en": "Chicken Liver"
+        },
+        "description": {
+          "ar": "قطع طرية من كبد الدجاج المطهوة مع البصل المكرمل وصلصة الرمان، لتوازن مثالي بين الحلاوة والحموضة.",
+          "en": "Tender chicken liver sautéed with caramelized onions and glazed with rich pomegranate molasses for a perfect sweet-and-sour balance."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/liver.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-tawat-beef-liver",
+        "name": {
+          "ar": "كبد عجل",
+          "en": "Beef Liver"
+        },
+        "description": {
+          "ar": "كبد عجل طري ومتبل بالبهارات الأصيلة، يُشوى في الطاوة ليقدم لك نكهة قوية وغنية.",
+          "en": "Tender beef liver sautéed with traditional spices in a hot skillet, offering a bold and authentic flavor profile."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/beef-liver.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-tawat-makhlama",
+        "name": {
+          "ar": "مخلمة",
+          "en": "Makhlama"
+        },
+        "description": {
+          "ar": "فطور عراقي كلاسيكي يتكون من البيض المطهو مع اللحم المفروم المتبل، البصل، الفليفلة، البطاطس، والطماطم. خيار غني ومثالي مع الخبز الطازج.",
+          "en": "A traditional Iraqi breakfast hash blending eggs with spiced minced meat, onions, capsicum, potatoes, and tomatoes. Rich, hearty, and best paired with fresh bread."
+        },
+        "price_bhd": 2.1,
+        "image_url": "/assets/gallery/makhlama.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-bagella-bil-dihen",
+        "name": {
+          "ar": "باقلاء بالدهن",
+          "en": "Fava Beans bil Dihen"
+        },
+        "description": {
+          "ar": "طبق بغدادي أصيل؛ باقلاء مطهوة بالدهن الحر، تعلوها طبقة من البيض المقلي وتُقدم فوق خبز التنور المغموس بمرق الباقلاء الدافئ.",
+          "en": "An authentic Baghdadi classic; fava beans slow-cooked in rich ghee, topped with a fried egg, and served over fresh tandoor bread soaked in a hearty, warm fava bean broth."
+        },
+        "price_bhd": 2.5,
+        "image_url": "/assets/gallery/bagila-bil-dihin.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-halloumi",
+        "name": {
+          "ar": "حلومي",
+          "en": "Halloumi"
+        },
+        "description": {
+          "ar": "شرائح جبن الحلومي المشوية بعناية؛ قوام طري من الداخل وقشرة ذهبية مقرمشة، تُقدم دافئة.",
+          "en": "Carefully grilled halloumi cheese—warm and soft on the inside with a perfectly golden, crispy crust."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/halloumi-breakfast.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-falafel",
+        "name": {
+          "ar": "فلافل",
+          "en": "Falafel"
+        },
+        "description": {
+          "ar": "حبات فلافل ذهبية طازجة، تتميز بقرمشتها من الخارج وقوامها الهش من الداخل.",
+          "en": "Freshly prepared, golden falafel pieces—satisfyingly crunchy on the outside and wonderfully soft within."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/falafel-plate.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-dibis-rashi",
+        "name": {
+          "ar": "دبس وراشي",
+          "en": "Dibis w Rashi"
+        },
+        "description": {
+          "ar": "مزيج عراقي كلاسيكي يجمع بين حلاوة دبس التمر الصافي ونعومة الطحينة (الراشي)، لتجربة أصيلة تعيد ذكريات الزمن الجميل.",
+          "en": "A nostalgic Iraqi staple combining sweet date molasses with smooth, rich tahini. Simple, authentic, and delightful."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/dibis-rashi.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-lablabeh",
+        "name": {
+          "ar": "لبلبي",
+          "en": "Lablabeh"
+        },
+        "description": {
+          "ar": "اللبلبي العراقي الكلاسيكي؛ حبات حمص طرية غنية بالبروتين، مطهوة بعناية مع لمسة من الكمون، رشة فلفل خفيفة، وعصير الليمون الطازج. بداية مثالية ودافئة لوجبتك.",
+          "en": "The classic Iraqi Lablabeh; tender, protein-rich chickpeas carefully simmered with a touch of cumin, a light pinch of chili, and fresh lemon juice. A perfect, warm start to your meal."
+        },
+        "price_bhd": 0.8,
+        "image_url": "/assets/gallery/lablabeh.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-msabaha",
+        "name": {
+          "ar": "مسبحة",
+          "en": "Msabaha"
+        },
+        "description": {
+          "ar": "حبات حمص كاملة ومطهوة تُدمج مع صلصة الطحينة الكريمية، الثوم، الليمون، وزيت الزيتون الفاخر.",
+          "en": "Whole, tender chickpeas enveloped in a creamy tahini sauce infused with garlic, lemon, and a drizzle of premium olive oil."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/msabaha.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-foul-mdammas",
+        "name": {
+          "ar": "فول مدمس",
+          "en": "Foul Mdammas"
+        },
+        "description": {
+          "ar": "فول مطهو ببطء، يُتبل بالثوم والليمون وزيت الزيتون، ليقدم لك نكهة الشرق الأوسط الدافئة والمشبعة.",
+          "en": "Slow-cooked fava beans perfectly seasoned with garlic, fresh lemon juice, and olive oil for a deeply satisfying, hearty dish."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/foul-mdammas.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-labneh",
+        "name": {
+          "ar": "لبنة",
+          "en": "Labneh"
+        },
+        "description": {
+          "ar": "لبنة مصفاة كريمية ومنعشة، بلمسة حموضة خفيفة تجعلها الإضافة المثالية لأي وجبة إفطار.",
+          "en": "Fresh, creamy strained yogurt served chilled. Its light, refreshing tang makes it a perfect accompaniment to any breakfast."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/labneh-breakfast.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-debis-dehin",
+        "name": {
+          "ar": "دبس ودهن",
+          "en": "Debis w Dehin"
+        },
+        "description": {
+          "ar": "باقلاء مطهوة بعناية في الدهن الحر ومزينة بخطوط من دبس التمر، لمزيج عراقي ساحر يجمع بين المذاقين الحلو والمالح.",
+          "en": "Slow-cooked fava beans enriched with ghee and drizzled with date molasses, creating a delightful Iraqi sweet-and-savory bite."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/debis-dehin.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-plates-bagella",
+        "name": {
+          "ar": "باقلاء",
+          "en": "Fava Beans"
+        },
+        "description": {
+          "ar": "حبات باقلاء طرية مطهوة على نار هادئة، تُقدم دافئة ومتبلة بالثوم والكمون لطبق بسيط ومريح.",
+          "en": "Tender fava beans slowly simmered to perfection, warmly seasoned with garlic and cumin for a simple, comforting dish."
+        },
+        "price_bhd": 0.8,
+        "image_url": "/assets/gallery/bagella.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "معجنات",
+      "en": "Pastries",
+      "description": {
+        "ar": "مخبوزات التنور والفرن؛ فطائر طرية تُحضر يدوياً يومياً، من اللحم بعجين البغدادي إلى المناقيش العطرة بالزعتر واللبنة.",
+        "en": "Tandoor and oven specialties; handmade dough baked daily, from Baghdadi Lahm bil Ajeen to aromatic Zaatar and Labneh manakish."
+      }
+    },
+    "items": [
+      {
+        "id": "pastry-akkawi",
+        "name": {
+          "ar": "فطيرة عكاوي",
+          "en": "Akkawi cheese pie"
+        },
+        "description": {
+          "ar": "فطيرة مخبوزة محشوة بجبن العكاوي المشوي، تتميز بقوام كريمي ناعم من الداخل ولون ذهبي جذاب من الخارج.",
+          "en": "Flatbread generously filled with soft Akkawi cheese, baked until golden and irresistibly creamy on the inside."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/akkawi-cheese-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-labnah",
+        "name": {
+          "ar": "فطيرة لبنة",
+          "en": "Labnah Pie"
+        },
+        "description": {
+          "ar": "عجينة طرية ومخبوزة طازجاً، محشوة باللبنة الكريمية المنعشة.",
+          "en": "Soft, freshly baked flatbread generously filled with creamy, tangy labneh."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/labneh-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-labnah-cheese",
+        "name": {
+          "ar": "فطيرة لبنة مع جبن",
+          "en": "Labnah & Cheese"
+        },
+        "description": {
+          "ar": "مزيج متناغم من اللبنة الكريمية والجبن الذائب فوق عجينة طازجة.",
+          "en": "A harmonious blend of creamy labneh and melted cheese over fresh dough."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/labneh-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-spinach-labnah",
+        "name": {
+          "ar": "فطيرة سبانخ",
+          "en": "Spinach Pastries"
+        },
+        "description": {
+          "ar": "سبانخ طازجة متبلة بالبصل والليمون والسماق، مخبوزة داخل عجينة ذهبية هشة.",
+          "en": "Fresh spinach seasoned with onions, lemon, and sumac, baked inside a golden, fluffy dough."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/spinach-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-honey-labnah",
+        "name": {
+          "ar": "فطيرة لبنة وعسل",
+          "en": "Honey & Labnah"
+        },
+        "description": {
+          "ar": "توازن مثالي بين حموضة اللبنة وحلاوة العسل الطبيعي الصافي.",
+          "en": "A perfect balance between the tanginess of labneh and the sweetness of pure natural honey."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/labneh-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-zaatar-labnah",
+        "name": {
+          "ar": "فطيرة زعتر ولبنة",
+          "en": "Thyme & Labnah"
+        },
+        "description": {
+          "ar": "الزعتر العطري الفاخر مع اللبنة الكريمية في مزيج تقليدي لا غنى عنه.",
+          "en": "Premium aromatic za'atar with creamy labneh in an indispensable traditional mix."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/zaatar-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-sausage-labnah",
+        "name": {
+          "ar": "فطيرة سجق ولبنة",
+          "en": "Sausage & Labnah"
+        },
+        "description": {
+          "ar": "قطع السجق المتبلة مع اللبنة الكريمية فوق عجينة مخبوزة حتى القرمشة.",
+          "en": "Spiced sausage pieces with creamy labneh over a crispy baked dough."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/labneh-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-sausage-cheese-labnah",
+        "name": {
+          "ar": "فطيرة سجق ولبنة وجبن",
+          "en": "Cheese & Sausage & Labnah"
+        },
+        "description": {
+          "ar": "وليمة من النكهات تجمع بين السجق، اللبنة، والجبن الذائب.",
+          "en": "A feast of flavors combining sausage, labneh, and melted cheese."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/labneh-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-meat-shawarma-labnah",
+        "name": {
+          "ar": "فطيرة شاورما لحم ولبنة",
+          "en": "Meat Iraqi Shawarma & Labnah"
+        },
+        "description": {
+          "ar": "شرائح شاورما اللحم العراقية الأصيلة مع اللبنة المنعشة في ابتكار مميز.",
+          "en": "Authentic Iraqi meat shawarma slices with refreshing labneh in a unique creation."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/labnah-iraqi-meat-shawarma-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-chicken-shawarma-labnah",
+        "name": {
+          "ar": "فطيرة شاورما دجاج ولبنة",
+          "en": "Chicken Shawarma & Labnah"
+        },
+        "description": {
+          "ar": "شاورما دجاج متبلة مع اللبنة الكريمية فوق عجينة طازجة.",
+          "en": "Marinated chicken shawarma with creamy labneh over fresh dough."
+        },
+        "price_bhd": 1.3,
+        "image_url": "/assets/gallery/labnah-chicken-shawarma-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-falafel-labnah",
+        "name": {
+          "ar": "فطيرة فلافل ولبنة",
+          "en": "Falafel & Labnah"
+        },
+        "description": {
+          "ar": "فلافل مقرمشة مع اللبنة والبهارات الخاصة في فطيرة مشبعة.",
+          "en": "Crispy falafel with labneh and special spices in a satisfying flatbread."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/labnah-falafel-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-spring-pie",
+        "name": {
+          "ar": "فطيرة ربيع",
+          "en": "Spring Pie"
+        },
+        "description": {
+          "ar": "مزيج غني من الأجبان والخضروات الطازجة تعكس نضارة فصل الربيع.",
+          "en": "A rich blend of fresh cheeses and vegetables reflecting the freshness of spring."
+        },
+        "price_bhd": 1.4,
+        "image_url": "/assets/gallery/vegetable-pizza.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-meat-pie",
+        "name": {
+          "ar": "فطيرة لحم",
+          "en": "Meat Pie"
+        },
+        "description": {
+          "ar": "فطيرة محشوة باللحم المفروم المتبل على الطريقة العراقية.",
+          "en": "A flatbread stuffed with seasoned ground meat prepared in the authentic Iraqi way."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/meat-bread-pastry.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-lahm-bi-ajeen",
+        "name": {
+          "ar": "لحم بعجين",
+          "en": "Lahm Bi Ajeen (Meat Bread)"
+        },
+        "description": {
+          "ar": "عجينة رقيقة ومقرمشة تُغطى بطبقة خفيفة من اللحم المفروم الغني (ضأن أو بقر) الممزوج بالخضروات كالبصل، الطماطم، والبقدونس، ومتبل بدبس الرمان والبهارات. يُخبز على حرارة عالية، ويُقدم ساخناً مع الليمون.",
+          "en": "A thin, crispy dough topped with a savory layer of minced meat (lamb or beef) mixed with onions, tomatoes, and parsley, seasoned with pomegranate molasses and spices. Baked at high heat and served hot with a squeeze of fresh lemon."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "سادة",
+              "en": "Plain"
+            },
+            "price_bhd": 1.8
+          },
+          {
+            "label": {
+              "ar": "مع الجبن",
+              "en": "With Cheese"
+            },
+            "price_bhd": 2.3
+          }
+        ],
+        "image_url": "/assets/gallery/lahm-bi-ajeen.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-cheese",
+        "name": {
+          "ar": "فطيرة جبن",
+          "en": "Cheese Pie"
+        },
+        "description": {
+          "ar": "فطيرة كلاسيكية محشوة بمزيج غني من الأجبان الذائبة.",
+          "en": "A classic flatbread filled with a rich blend of melted cheeses."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/margherita-pizza.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-zaatar-cheese",
+        "name": {
+          "ar": "فطيرة زعتر وجبن",
+          "en": "Thyme & Cheese"
+        },
+        "description": {
+          "ar": "مزيج رائع يجمع بين الزعتر العطري وملوحة الجبن المعتدلة.",
+          "en": "A wonderful mix combining aromatic za'atar with the moderate saltiness of cheese."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/zaatar-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-sausage-cheese",
+        "name": {
+          "ar": "فطيرة سجق جبن",
+          "en": "Sausage & Cheese"
+        },
+        "description": {
+          "ar": "قطع السجق مع الجبن الذائب فوق عجينة مقرمشة.",
+          "en": "Sausage pieces with melted cheese over a crispy dough."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/meat-bread-pastry-with-cheese.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-meat-shawarma-cheese",
+        "name": {
+          "ar": "فطيرة شاورما لحم وجبن",
+          "en": "Meat Iraqi Shawarma & Cheese"
+        },
+        "description": {
+          "ar": "شاورما لحم عراقية مع الجبن الساخن في فطيرة غنية.",
+          "en": "Iraqi meat shawarma with hot melted cheese in a rich flatbread."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/cheese-iraqi-meat-shawarma-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-chicken-shawarma-cheese",
+        "name": {
+          "ar": "فطيرة شاورما دجاج وجبن",
+          "en": "Chicken Shawarma & Cheese"
+        },
+        "description": {
+          "ar": "شاورما دجاج متبلة مع الجبن الذائب لنكهة لا تقاوم.",
+          "en": "Marinated chicken shawarma with melted cheese for an irresistible flavor."
+        },
+        "price_bhd": 1.4,
+        "image_url": "/assets/gallery/chicken-shawarma-cheese-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-meat-kabab-cheese",
+        "name": {
+          "ar": "فطيرة كباب لحم وجبن",
+          "en": "Meat Kabab & Cheese"
+        },
+        "description": {
+          "ar": "قطع الكباب العراقي الغنية بالعصارة مع الجبن الذائب.",
+          "en": "Juicy chunks of authentic Iraqi kabab with melted cheese."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/kebab-cheese-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-meat-spinach",
+        "name": {
+          "ar": "فطيرة لحم وسبانخ",
+          "en": "Meat & Spinach"
+        },
+        "description": {
+          "ar": "مزيج غني يجمع بين اللحم المفروم المتبل والسبانخ الطازجة.",
+          "en": "A rich mix combining seasoned ground meat and fresh spinach."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/spinach-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-chicken-spinach",
+        "name": {
+          "ar": "فطيرة دجاج وسبانخ",
+          "en": "Chicken & Spinach"
+        },
+        "description": {
+          "ar": "قطع الدجاج المتبلة مع السبانخ في فطيرة مشبعة.",
+          "en": "Marinated chicken pieces with spinach in a satisfying flatbread."
+        },
+        "price_bhd": 1.4,
+        "image_url": "/assets/gallery/spinach-pie.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-zaatar-plain",
+        "name": {
+          "ar": "فطيرة زعتر",
+          "en": "Thyme Pastries"
+        },
+        "description": {
+          "ar": "الزعتر العطري مع زيت الزيتون البكر فوق عجينة مخبوزة طازجاً.",
+          "en": "Aromatic za'atar with extra virgin olive oil over freshly baked dough."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/zaatar-manakish.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-iraqi-bread-dozen",
+        "name": {
+          "ar": "صمون عراقي (درزن)",
+          "en": "Iraqi Bread/Dozen"
+        },
+        "description": {
+          "ar": "درزن من خبز الصمون العراقي التقليدي، مخبوز طازجاً يومياً.",
+          "en": "A dozen of traditional Iraqi samoon bread, baked fresh daily."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/iraqi-samoon-bread.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "pastry-fatayer-dozen",
+        "name": {
+          "ar": "فطائر (درزن)",
+          "en": "Pastries /Dozen"
+        },
+        "description": {
+          "ar": "درزن متنوع من الفطائر المشكلة حسب اختيارك.",
+          "en": "A dozen of assorted pastries of your choice."
+        },
+        "price_bhd": 2.2,
+        "image_url": "/assets/gallery/iraqi-bread-dozen.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "فتات",
+      "en": "Fatteh",
+      "description": {
+        "ar": "سيمفونية القرمشة؛ طبقات من الخبز المحمص المغطى بصلصات اللبن والطحينة الغنية، مع ورق العنب أو الباذنجان المتبل.",
+        "en": "A symphony of crunch; layers of toasted bread topped with rich yogurt and tahini sauces, featuring stuffed vine leaves or seasoned eggplant."
+      }
+    },
+    "items": [
+      {
+        "id": "breakfast-fattat-vine-leaves",
+        "name": {
+          "ar": "فتة ورق عنب",
+          "en": "Vine Leaves Fatteh"
+        },
+        "description": {
+          "ar": "طبقات من الخبز المقرمش يعلوها ورق العنب المحشي، وتُغمر بصلصة اللبن الكريمية وتُزين بحبات الرمان، لطبق غني يفيض بالنكهات.",
+          "en": "Layers of crispy toasted bread topped with savory stuffed vine leaves, generously draped in a creamy yogurt sauce, and finished with fresh pomegranate seeds."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/vine-leaves-fatta.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-fattat-falafel",
+        "name": {
+          "ar": "فتة فلافل",
+          "en": "Falafel Fatteh"
+        },
+        "description": {
+          "ar": "قطع الفلافل المقرمشة تُقدم فوق طبقة من الخبز المحمص المغموس بصلصة العمبة، وتُغطى بمزيج غني من اللبن والطحينة لتوازن مثالي.",
+          "en": "Crispy falafel pieces layered over toasted bread soaked in tangy amba sauce, beautifully topped with a rich yogurt and tahini blend for the perfect textural balance."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/falafel-fatta.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-fattat-eggplant-chickpeas",
+        "name": {
+          "ar": "فتة باذنجان وحمص",
+          "en": "Eggplant & Chickpea Fatteh"
+        },
+        "description": {
+          "ar": "حمص كريمي ومكعبات باذنجان مقلية تتداخل مع طبقات الخبز المحمص، اللبن، وحبات الرمان، لطبق دافئ يرضي الذائقة.",
+          "en": "Creamy chickpeas and fried eggplant cubes arranged over layers of toasted bread and yogurt, garnished with pomegranate seeds for a deeply comforting dish."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/eggplant-chickpea-fatta.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "الشوربات",
+      "en": "Soups",
+      "description": {
+        "ar": "دفء المائدة؛ شوربات تقليدية تُطهى ببطء لاستخلاص النكهات العميقة، من العدس الذهبي إلى كبة الحامض البغدادية الشهيرة.",
+        "en": "Warmth of the table; traditional soups slow-simmered to extract deep flavors, from golden lentils to the famous Baghdadi Sour Kubba."
+      }
+    },
+    "items": [
+      {
+        "id": "soup-lentil",
+        "name": {
+          "ar": "شوربة عدس",
+          "en": "Lentil Soup"
+        },
+        "description": {
+          "ar": "شوربة العدس الذهبية المحضرة على الطريقة العراقية؛ تُطهى ببطء مع البصل، الثوم، الطماطم والبهارات لتمنحك قواماً مخملياً ناعماً وتُقدم مع الخبز المحمص والليمون.",
+          "en": "Golden red lentils slow-cooked with onions, garlic, tomatoes, and warm spices, blended into a smooth, velvety soup. Served with a wedge of lemon and crisp bread."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/lentil-soup.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "soup-mushroom",
+        "name": {
+          "ar": "شوربة الفطر",
+          "en": "Mushroom Soup"
+        },
+        "description": {
+          "ar": "شوربة كريمية غنية وناعمة، تُحضر من الفطر الطازج المطهو ببطء مع الزبدة لتمنحك مذاقاً دافئاً ومريحاً.",
+          "en": "Fresh mushrooms simmered in a rich, creamy, and buttery velvety base. Smooth, light, and deeply comforting."
+        },
+        "price_bhd": 1.3,
+        "image_url": "/assets/gallery/creamy-mushroom-soup.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "soup-sour-kubba",
+        "name": {
+          "ar": "شوربة كبة حامض",
+          "en": "Sour Kubba Soup"
+        },
+        "description": {
+          "ar": "من قلب المطبخ البغدادي؛ حبات الكبة المحشوة باللحم والمطهوة في مرق غني وحامض من التمر الهندي، الطماطم، الثوم، والأعشاب الطازجة.",
+          "en": "A beloved Baghdadi specialty. Plump kubba dumplings filled with meat and simmered in a tangy broth of tamarind, tomatoes, garlic, and fresh herbs. Hearty and deeply satisfying."
+        },
+        "price_bhd": 1.8,
+        "image_url": "/assets/gallery/sour-kubba-soup.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "soup-red",
+        "name": {
+          "ar": "الشوربة الحمراء",
+          "en": "Red Soup"
+        },
+        "description": {
+          "ar": "شوربة رمضان العراقية الأيقونية؛ مرق طماطم غني يُطهى ببطء مع خلاصة مرق اللحم، البصل، والتوابل الدافئة، لطبق خفيف بلون نابض ونكهة عميقة.",
+          "en": "The iconic Iraqi Ramadan soup. A vibrant, clear tomato broth carefully simmered with rich meat stock, onions, and warm spices. Deep in flavor and unmistakably authentic."
+        },
+        "price_bhd": 0.8,
+        "image_url": "/assets/gallery/red-tomato-soup.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "السلطات",
+      "en": "Salads",
+      "description": {
+        "ar": "نضارة البساتين؛ مقبلات خضراء منعشة متبلة بزيت الزيتون والليمون ودبس الرمان، الإضافة المثالية لموازنة الأطباق الدسمة.",
+        "en": "Garden freshness; crisp green appetizers seasoned with olive oil, lemon, and pomegranate molasses, the perfect balance to rich main courses."
+      }
+    },
+    "items": [
+      {
+        "id": "salad-eggplant",
+        "name": {
+          "ar": "سلطة باذنجان",
+          "en": "Eggplant Salad"
+        },
+        "description": {
+          "ar": "باذنجان مشوي يدوياً ومتبل بزيت الزيتون الفاخر، يُقدم مع الطماطم الطازجة والبصل لنكهة شواء طبيعية وأصيلة.",
+          "en": "Hand-grilled eggplant marinated in premium olive oil, tossed with fresh tomatoes and onions for an authentic, smoky flavor."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/smoky-eggplant-salad.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "salad-rocca",
+        "name": {
+          "ar": "سلطة جرجير",
+          "en": "Rocca Salad"
+        },
+        "description": {
+          "ar": "أوراق الجرجير الطازجة واللاذعة، تُقدم مع لمسة غنية من دبس الرمان الحلو والحامض، لتوازن منعش يكمل أطباقك المشوية.",
+          "en": "Fresh, peppery rocca leaves beautifully drizzled with sweet and tangy pomegranate molasses for a light, refreshing bite."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/rocket-pomegranate-salad.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "salad-tabbouleh",
+        "name": {
+          "ar": "تبولة",
+          "en": "Tabbouleh"
+        },
+        "description": {
+          "ar": "سلطة منعشة تُحضر من البقدونس المفروم ناعماً، الطماطم، النعناع الطازج، والبرغل، وتُتبل بعصير الليمون وزيت الزيتون الصافي.",
+          "en": "A vibrant and refreshing salad made with finely chopped parsley, tomatoes, fresh mint, and bulgur, perfectly dressed with lemon juice and olive oil."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/tabbouleh.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "salad-fattoush",
+        "name": {
+          "ar": "فتوش",
+          "en": "Fattoush"
+        },
+        "description": {
+          "ar": "مزيج غني من الخضروات المقرمشة كالطماطم، الخيار، والخس، يُزين بقطع الخبز المحمص ويُتبل بصلصة الرمان المميزة.",
+          "en": "A crisp, colorful mix of fresh tomatoes, cucumbers, and lettuce, generously tossed with toasted bread and a vibrant pomegranate dressing."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/fattoush.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "salad-jajeek",
+        "name": {
+          "ar": "جاجيك",
+          "en": "Jajeek"
+        },
+        "description": {
+          "ar": "غموس اللبن العراقي البارد والمنعش، مدموج بالخيار المبشور، الثوم، ولمسة من النعناع المجفف. رفيق مثالي لمائدتك العراقية.",
+          "en": "A refreshing and cooling Iraqi yogurt dip blended with grated cucumber, garlic, and a hint of dried mint. The perfect companion for any Iraqi meal."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/jajik-cucumber-yogurt.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "salad-green",
+        "name": {
+          "ar": "سلطة خضراء",
+          "en": "Green Salad"
+        },
+        "description": {
+          "ar": "مزيج من الخضروات الورقية الطازجة والموسمية مع تتبيلة الليمون وزيت الزيتون.",
+          "en": "A fresh blend of seasonal leafy greens with a zesty lemon and olive oil dressing."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/green-salad.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "المقبلات الباردة",
+      "en": "Cold Appetizers",
+      "description": {
+        "ar": "تفتتح شهيتك بألوان الطبيعة؛ تشكيلة من المقبلات الباردة المحضرة يومياً بزيت الزيتون البكر والأعشاب الطازجة.",
+        "en": "A vibrant start to your meal; a selection of cold appetizers prepared daily with extra virgin olive oil and fresh herbs."
+      }
+    },
+    "items": [
+      {
+        "id": "cold-apps-mtabal",
+        "name": {
+          "ar": "متبل",
+          "en": "Moutabal"
+        },
+        "description": {
+          "ar": "باذنجان مشوي ومهروس، يُمزج بعناية مع الطحينة، اللبن، الثوم، وزيت الزيتون ليمنحك قواماً كريمياً بنكهة مدخنة متوازنة.",
+          "en": "Smoky, fire-roasted eggplant beautifully blended with tahini, garlic, lemon, and premium olive oil for a rich, creamy, and balanced dip."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/moutabal.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "cold-apps-hummus",
+        "name": {
+          "ar": "حمص",
+          "en": "Hummus"
+        },
+        "description": {
+          "ar": "الحمص الكلاسيكي الناعم، يُحضر من الحمص المهروس الممزوج بالطحينة الفاخرة، الثوم، والليمون، ويُزين بزيت الزيتون.",
+          "en": "The classic Middle Eastern dip of smooth chickpeas blended with premium tahini, lemon, and garlic, finished with a drizzle of olive oil."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/classic-hummus.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "cold-apps-pepper-hummus",
+        "name": {
+          "ar": "حمص بالفلفل",
+          "en": "Pepper Hummus"
+        },
+        "description": {
+          "ar": "طبق الحمص التقليدي بلمسة مبتكرة؛ يُمزج مع الفليفلة الحمراء المشوية ليقدم نكهة مدخنة وحلاوة خفيفة مع لمسة حارة.",
+          "en": "Traditional smooth hummus beautifully blended with roasted red peppers, adding a smoky, slightly sweet, and vibrant kick."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/roasted-pepper-hummus.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "cold-apps-hummus-meat",
+        "name": {
+          "ar": "حمص باللحم",
+          "en": "Hummus with Meat"
+        },
+        "description": {
+          "ar": "طبق حمص كريمي ومخملي، يُغطى بطبقة سخية من اللحم المفروم المتبل والمقلى بالسمن، مع لمسة من الصنوبر وزيت الزيتون.",
+          "en": "Velvety, creamy hummus lavishly topped with sautéed spiced minced meat, pine nuts, and a generous drizzle of olive oil."
+        },
+        "price_bhd": 1.8,
+        "image_url": "/assets/gallery/hummus-spiced-lamb.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "cold-apps-hummus-shawarma",
+        "name": {
+          "ar": "حمص بشاورما عراقية",
+          "en": "Hummus with Iraqi Shawarma"
+        },
+        "description": {
+          "ar": "قوام الحمص الناعم يعانق شرائح الشاورما العراقية الطرية والغنية بالتوابل، تجربة دسمة ومستوحاة من عراقة شوارع بغداد.",
+          "en": "Smooth, creamy hummus crowned with tender, warmly spiced slices of authentic Iraqi shawarma. A rich and indulgent street-style classic."
+        },
+        "price_bhd": 1.8,
+        "image_url": "/assets/gallery/hummus-iraqi-kaas.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "cold-apps-mix-appetizer",
+        "name": {
+          "ar": "تشكيلة مقبلات",
+          "en": "Mixed Appetizers"
+        },
+        "description": {
+          "ar": "تشكيلة فاخرة من أفضل مقبلاتنا الباردة؛ تضم الحمص، المتبل، ورق العنب، والجاجيك، في طبق واحد يرضي جميع الأذواق.",
+          "en": "A curated selection of our finest cold starters featuring hummus, moutabal, vine leaves, and jajeek. Perfect for those who want to taste it all."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/mezze-platter.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "cold-apps-vine-leaves",
+        "name": {
+          "ar": "ورق عنب",
+          "en": "Vine Leaves"
+        },
+        "description": {
+          "ar": "أوراق عنب طرية تُلف يدوياً وتحشى بالأرز المتبل والأعشاب الطازجة مع لمسة من الليمون، لطبق خفيف ومنعش.",
+          "en": "Tender grape leaves delicately rolled and stuffed with seasoned rice, fresh herbs, and a bright touch of lemon."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/stuffed-vine-leaves.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.5,
+          "L": 2.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "cold-apps-turshi",
+        "name": {
+          "ar": "طرشي",
+          "en": "Turshi Pickles"
+        },
+        "description": {
+          "ar": "تشكيلة من الخضروات المخللة المقرمشة والمحضرة على الطريقة العراقية الأصيلة، الإضافة المثالية والموازنة لأي وجبة غنية.",
+          "en": "An assortment of crisp, house-pickled vegetables prepared in the authentic Iraqi style. The perfect zesty accompaniment to any meal."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/iraqi-pickles-torshi.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "المقبلات الحارة",
+      "en": "Hot Appetizers",
+      "description": {
+        "ar": "دفء الضيافة في كل صنف؛ مقبلات ساخنة تمزج بين القرمشة والنكهات الغنية المستوحاة من الأصالة.",
+        "en": "The warmth of hospitality in every bite; hot appetizers blending crunch and rich, authentic flavors."
+      }
+    },
+    "items": [
+      {
+        "id": "hot-apps-dolma",
+        "name": {
+          "ar": "دولمة",
+          "en": "Dolma"
+        },
+        "description": {
+          "ar": "درة التاج في المطبخ العراقي؛ أوراق العنب، البصل، الكوسا، والباذنجان، محشوة بعناية بالأرز، الأعشاب، واللحم المفروم، وتُطهى ببطء في مرق طماطم غني وحامض لتذوب في الفم.",
+          "en": "The crown jewel of Iraqi cuisine. Vine leaves, onions, zucchini, and eggplant carefully stuffed with rice, fresh herbs, and minced lamb, slow-cooked in a rich, tangy tomato broth."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/dolma-platter.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "hot-apps-halab-kubba",
+        "name": {
+          "ar": "كبة حلب (كبة الأرز)",
+          "en": "Aleppo Rice Kubba"
+        },
+        "description": {
+          "ar": "كبة عراقية مقلية مقرمشة، تُصنع من عجينة الرز المغلي المهروس مع الكركم، وتُحشى بلحم مفروم مع بصل وبهارات (قرفة، فلفل أسود)، وتتميز بقوامها الهش من الخارج والطري من الداخل.",
+          "en": "Authentic crispy Iraqi rice kubba, crafted from mashed boiled rice with turmeric, stuffed with spiced minced meat, onions, cinnamon, and black pepper. Perfectly crunchy on the outside, tender on the inside."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/baghdadi-fried-kibbeh.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "hot-apps-mosul-kubba",
+        "name": {
+          "ar": "الكبة الموصلية",
+          "en": "Mosul Kubba"
+        },
+        "description": {
+          "ar": "طبقة رقيقة ومقرمشة من البرغل الفاخر، محشوة بأجود اللحوم الطازجة ولمسة من التوابل العطرية الأصيلة. تُقدم ذهبية ومقرمشة من الخارج وطرية من الداخل لترضي أصحاب الذوق الرفيع.",
+          "en": "Premium thin-crust bulgur kubba, generously stuffed with high-quality fresh meats and aromatic spices. Golden and crispy on the outside, succulent on the inside—a choice for true connoisseurs."
+        },
+        "price_bhd": 2.5,
+        "image_url": "/assets/gallery/mosul-fried-kubba.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "hot-apps-oroug",
+        "name": {
+          "ar": "عروق",
+          "en": "Oroug (Iraqi Meat Pie)"
+        },
+        "description": {
+          "ar": "أقراص عجين مخبوزة حتى اللون الذهبي، وممزوجة باللحم المفروم، البصل، البقدونس، والتوابل العراقية، لطبق دافئ يحمل طعم البيت الأصيل.",
+          "en": "A traditional savory dough beautifully blended with minced meat, onions, parsley, and authentic Iraqi spices, baked to golden perfection."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/aroog.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "hot-apps-burek-cheese",
+        "name": {
+          "ar": "بورك الجبن",
+          "en": "Cheese Burek"
+        },
+        "description": {
+          "ar": "رقائق عجين رقيقة وهشة، تُحشى بمزيج كريمي من الأجبان البيضاء والأعشاب، وتُخبز حتى تكتسب قرمشة ذهبية لا تُقاوم.",
+          "en": "Crispy, golden, and flaky pastry rolls encasing a beautifully melted, creamy blend of white cheeses and herbs."
+        },
+        "price_bhd": 1.7,
+        "image_url": "/assets/gallery/cheese-borek.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "hot-apps-hareesa",
+        "name": {
+          "ar": "هريسة",
+          "en": "Hareesa"
+        },
+        "description": {
+          "ar": "طبق عراقي تقليدي مريح للروح؛ قمح كامل يُطهى ببطء مع لحم الغنم الطري حتى يتهرس ويصبح بقوام كريمي ناعم، ويُزين بلمسة من الزبدة والتوابل الدافئة.",
+          "en": "A deeply comforting traditional Iraqi porridge made of whole wheat, slow-cooked with tender lamb until rich and creamy. Finished with a touch of butter and warm spices."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/harees.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.6,
+          "L": 2.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "hot-apps-madhroobah",
+        "name": {
+          "ar": "مضروبة",
+          "en": "Madhroobah"
+        },
+        "description": {
+          "ar": "طعم الدفء في طبق.. المضروبة البحرينية المحضرة ببطء والمتبلة بأجود البهارات، تُهرس لتندمج نكهة الدجاج مع القمح وقوامها المخملي الناعم، وتُقدم معطرة بالزبدة لتأسر حواسك بعبق الضيافة الخليجية.",
+          "en": "The taste of warmth in a dish. Traditional Bahraini Madhroobah, slow-cooked and seasoned with the finest spices. Beaten until the chicken blends seamlessly with the wheat into a smooth, velvety texture, finished with a touch of butter to capture the essence of Gulf hospitality."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/madrouba.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.4,
+          "L": 2
+        },
+        "ingredients": []
+      },
+      {
+        "id": "hot-apps-french-fries",
+        "name": {
+          "ar": "بطاطس مقلية",
+          "en": "French Fries"
+        },
+        "description": {
+          "ar": "أصابع بطاطس مقلية مقرمشة من الخارج وطرية من الداخل، متبلة بخفة لترافق أي وجبة.",
+          "en": "Crispy, golden French fries, perfectly seasoned and wonderfully light."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/french-fries.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.4,
+          "M": 2,
+          "L": 2.6
+        },
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "الأطباق الرئيسية",
+      "en": "Main Courses",
+      "description": {
+        "ar": "٢٥ طبقاً تمثل قلب المطبخ العراقي، على رأسها المسكوف المشوي على حطب المشمش، القوزي الملكي المطهو ببطء، والدولمة البغدادية. نركز على النكهات التراثية والتقديم الأصيل، مع خيارات متنوعة تناسب المشاركة والولائم العائلية وتجمع بين الدسم والراحة في طبق واحد.",
+        "en": "25 dishes that represent the heart of Iraqi cuisine—led by wood-fired Masgouf, slow-cooked royal Quzi, and Baghdadi Dolma. Expect heritage flavors, authentic presentation, and a variety of hearty plates ideal for sharing and family feasts, balancing richness with comfort in every bite."
+      }
+    },
+    "items": [
+      {
+        "id": "mains-quzi-iraqi-lamb",
+        "name": {
+          "ar": "قوزي لحم عراقي",
+          "en": "Iraqi Lamb Quzi"
+        },
+        "description": {
+          "ar": "سلطان المائدة البغدادية؛ لحم غنم طري يُطهى ببطء لأكثر من 8 ساعات حتى يذوب تماماً، متبل بهارات القوزي العراقية النادرة، يُقدم فوق أرز بسمتي بالزعفران ومزين بـ 'الحشو' العراقي (لوز، زبيب، بهارات)، مع اختيارك من مرق بامية أو فاصولياء أصيل.",
+          "en": "The Sultan of the Baghdadi table; hand-selected lamb slow-roasted for over 8 hours until melt-in-your-mouth tender. Seasoned with rare Iraqi Quzi spices, served over saffron-infused basmati rice crowned with traditional 'Hashu' (almonds, raisins, and aromatic spices). Accompanied by authentic okra or white bean stew."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع مرق البامية",
+              "en": "With Okra Stew"
+            }
+          },
+          {
+            "label": {
+              "ar": "مع مرق الفاصولياء البيضاء",
+              "en": "With White Bean Stew"
+            }
+          },
+          {
+            "label": {
+              "ar": "مع مرق تبسي الباذنجان",
+              "en": "With Tebsi Stew"
+            }
+          }
+        ],
+        "price_bhd": null,
+        "image_url": "/assets/gallery/slow-cooked-lamb-quzi.webp",
+        "available": true,
+        "sizes": {
+          "S": 4,
+          "M": 8,
+          "L": 12,
+          "XL": 16
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-quzi-iraqi-chicken",
+        "name": {
+          "ar": "قوزي دجاج عراقي",
+          "en": "Iraqi Chicken Quzi"
+        },
+        "description": {
+          "ar": "دجاج طري مطهو ببطء في مرق وتوابل عراقية أصيلة، يُقدم فوق أرز عطري مزين باللوز، الزبيب، ولمسة من الزعفران. خيار احتفالي فاخر.",
+          "en": "Tender, slow-cooked chicken delicately seasoned with authentic Iraqi spices, served over aromatic rice garnished with almonds, raisins, and a hint of saffron."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع مرق البامية",
+              "en": "With Okra Stew"
+            }
+          },
+          {
+            "label": {
+              "ar": "مع مرق الفاصولياء البيضاء",
+              "en": "With White Bean Stew"
+            }
+          },
+          {
+            "label": {
+              "ar": "مع مرق تبسي الباذنجان",
+              "en": "With Tebsi Stew"
+            }
+          }
+        ],
+        "price_bhd": null,
+        "image_url": "/assets/gallery/iraqi-chicken-quzi.webp",
+        "available": true,
+        "sizes": {
+          "S": 2.4,
+          "M": 3,
+          "L": 5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-meat-thareed",
+        "name": {
+          "ar": "ثريد اللحم",
+          "en": "Meat Thareed"
+        },
+        "description": {
+          "ar": "من كلاسيكيات المائدة العراقية؛ مرق غني بطعم الطماطم والخضروات تتخلله قطع لحم الغنم الطرية، ويُسكب ببطء فوق طبقات من خبز التنور الذي يتشرب عصارة النكهات.",
+          "en": "A classic Iraqi stew featuring exceptionally tender lamb and fresh vegetables simmered in a rich tomato broth, poured over traditional tandoor bread that soaks up every drop of flavor."
+        },
+        "price_bhd": null,
+        "variants": [
+          {
+            "label": {
+              "ar": "دجاج",
+              "en": "Chicken"
+            },
+            "price_bhd": 3.5
+          },
+          {
+            "label": {
+              "ar": "لحم",
+              "en": "Meat"
+            },
+            "price_bhd": 3.5
+          }
+        ],
+        "image_url": "/assets/gallery/lamb-tashreeb.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-iraqi-shawarma-rice",
+        "name": {
+          "ar": "شاورما عراقية مع الأرز",
+          "en": "Iraqi Shawarma with Rice"
+        },
+        "description": {
+          "ar": "شرائح رقيقة وطرية من الشاورما المتبلة على الطريقة البغدادية والمشوية ببطء، تُقدم فوق أرز بسمتي معطر بتوابل خفيفة ولمسة من السماق، وترافقها المخللات.",
+          "en": "Thin, tender slices of slow-roasted, heavily spiced beef or chicken shawarma, served over fragrant Iraqi basmati rice with a hint of turmeric, and beautifully finished with sumac."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "دجاج",
+              "en": "Chicken"
+            },
+            "price_bhd": 2.5
+          },
+          {
+            "label": {
+              "ar": "لحم",
+              "en": "Beef"
+            },
+            "price_bhd": 2.5
+          }
+        ],
+        "image_url": "/assets/gallery/iraqi-kaas-with-rice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-grilled-chicken-rice",
+        "name": {
+          "ar": "دجاج مشوي مع الأرز",
+          "en": "Grilled Chicken with Rice"
+        },
+        "description": {
+          "ar": "دجاج متبل بعناية بمزيج من التوابل العراقية ومُشوى على الفحم ليكتسب نكهة مدخنة أصيلة، يُقدم مع الأرز البسمتي العطري، المخللات، ولمسة من الليمون.",
+          "en": "Half or whole charcoal-grilled chicken, deeply marinated in Iraqi spices to achieve the perfect smoky crust, served over aromatic basmati rice alongside pickles and fresh lemon."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/quarter-grilled-chicken-rice.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.5,
+          "M": 2.5,
+          "L": 4.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-kabab-rice",
+        "name": {
+          "ar": "كباب مع الأرز",
+          "en": "Kabab with Rice"
+        },
+        "description": {
+          "ar": "أسياخ الكباب العراقي الغنية بالعصارة والمحضرة من اللحم المفروم المتبل بدقة، تُشوى على الفحم وتُقدم فوق فراش من الأرز البسمتي، برفقة الطماطم المشوية.",
+          "en": "Juicy, charcoal-grilled Iraqi kebabs crafted from finely minced lamb and spices, beautifully presented over a bed of fragrant basmati rice alongside fire-roasted tomatoes."
+        },
+        "price_bhd": 2.2,
+        "image_url": "/assets/gallery/kebab-with-rice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-iraqi-shawarma-thareed",
+        "name": {
+          "ar": "ثريد الشاورما العراقي",
+          "en": "Iraqi Shawarma Thareed"
+        },
+        "description": {
+          "ar": "اندماج جريء ومبتكر بين المفضلات العراقية؛ شرائح الشاورما الغنية تُوضع فوق طبقات من الخبز المغموس في مرق الطماطم الدافئ، لتجربة استثنائية وفريدة.",
+          "en": "A bold, innovative fusion of two beloved classics; richly spiced, tender shawarma layered over pieces of traditional bread deeply soaked in a hearty tomato stew."
+        },
+        "price_bhd": 2.2,
+        "image_url": "/assets/gallery/tashreeb-kaas.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-bahraini-quzi-lamb",
+        "name": {
+          "ar": "قوزي لحم بحريني",
+          "en": "Bahraini Lamb Quzi"
+        },
+        "description": {
+          "ar": "لحم طري مطهو ببطء على الطريقة البحرينية، يُقدم فوق أرز أصفر معطر ومتبل بدقة، مُزين بالزبيب والحمص ولمسة فاخرة من الزعفران.",
+          "en": "Exquisitely slow-cooked lamb served over incredibly aromatic Bahraini yellow rice, delicately spiced and garnished with raisins, chickpeas, and a luxurious hint of saffron."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/bahraini-lamb-quzi.webp",
+        "available": true,
+        "sizes": {
+          "S": 3.5,
+          "M": 7,
+          "L": 10.5,
+          "XL": 14
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-bahraini-quzi-chicken",
+        "name": {
+          "ar": "قوزي دجاج بحريني",
+          "en": "Bahraini Chicken Quzi"
+        },
+        "description": {
+          "ar": "دجاج مطهو ببطء ومُقدم مع الأرز الأصفر البحريني الغني بنكهات التوابل الخفيفة والزعفران، مُزين بالزبيب والحمص لتجربة تذوق دافئة.",
+          "en": "Tender, slow-cooked chicken served over wonderfully aromatic Bahraini yellow rice, delicately spiced and topped with sweet raisins, chickpeas, and infused with saffron."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/bahraini-chicken-quzi.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.9,
+          "M": 2.5,
+          "L": 4.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-machbous-lamb",
+        "name": {
+          "ar": "مجبوس اللحم",
+          "en": "Lamb Machboos"
+        },
+        "description": {
+          "ar": "الكلاسيكية الخليجية الخالدة؛ لحم غنم طري يُطهى ببطء مع مزيج غني من البصل، الثوم، الطماطم والبهارات العطرية، ويُطبخ مع الأرز ليتشرب العصارة بالكامل. يُقدم مع صلصة الدقوس.",
+          "en": "A timeless Gulf classic. Tender, slow-cooked lamb deeply simmered with onions, garlic, tomatoes, and aromatic spices, then cooked together with fragrant rice. Served with spicy daqous sauce."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/lamb-machboos.webp",
+        "available": true,
+        "sizes": {
+          "S": 3.5,
+          "M": 7,
+          "L": 10.5,
+          "XL": 14
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-machbous-chicken",
+        "name": {
+          "ar": "مجبوس الدجاج",
+          "en": "Chicken Machboos"
+        },
+        "description": {
+          "ar": "دجاج طري مطبوخ مع الأرز في صلصة غنية بالطماطم، البصل، التوابل العطرية، وحبات اللومي، لطبق خليجي أصيل يُقدم مع الدقوس.",
+          "en": "A beloved Gulf staple featuring exceptionally tender chicken cooked alongside fragrant rice in a rich, spiced base of tomatoes, onions, and dried limes. Served with daqous."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/chicken-machboos.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.9,
+          "M": 2.5,
+          "L": 4.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-chicken-mandi",
+        "name": {
+          "ar": "مندي الدجاج",
+          "en": "Chicken Mandi"
+        },
+        "description": {
+          "ar": "أرز بسمتي طويل الحبة، معطر بمزيج من التوابل العربية ومطهو ببطء ليترافق مع دجاج طري ومدخن على طريقة التنور التقليدية.",
+          "en": "Long-grain, fragrant basmati rice masterfully infused with Arabian spices, topped with incredibly tender, slow-cooked chicken featuring a distinct, traditional tandoor-style smokiness."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/chicken-mandi.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.9,
+          "M": 2.5,
+          "L": 4.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-rice",
+        "name": {
+          "ar": "الأرز",
+          "en": "Rice"
+        },
+        "description": {
+          "ar": "أرز بسمتي مفلفل وخفيف، محضر بعناية ليكون المرافق المثالي والمكمل لأي من أطباقنا الرئيسية. متوفر بعدة نكهات تقليدية.",
+          "en": "Perfectly steamed, fluffy basmati rice, beautifully prepared to be the ultimate companion to any of our rich main courses. Available in a variety of traditional styles."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "أرز عراقي",
+              "en": "Iraqi Rice"
+            },
+            "price_bhd": 0.8
+          },
+          {
+            "label": {
+              "ar": "أرز بحريني",
+              "en": "Bahraini Rice"
+            },
+            "price_bhd": 0.8
+          },
+          {
+            "label": {
+              "ar": "أرز مندي",
+              "en": "Mandi Rice"
+            },
+            "price_bhd": 0.8
+          },
+          {
+            "label": {
+              "ar": "أرز مجبوس",
+              "en": "Machboos Rice"
+            },
+            "price_bhd": 0.8
+          },
+          {
+            "label": {
+              "ar": "أرز برياني",
+              "en": "Biryani Rice"
+            },
+            "price_bhd": 0.8
+          }
+        ],
+        "image_url": "/assets/gallery/steamed-iraqi-rice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-meat-mandi",
+        "name": {
+          "ar": "مندي اللحم",
+          "en": "Meat Mandi"
+        },
+        "description": {
+          "ar": "أرز البسمتي العطري المطبوخ بالتوابل العربية، يعلوه لحم غنم طري للغاية مطهو ببطء ليكتسب نكهة التدخين المميزة. يُقدم مع المكسرات المحمصة والدقوس.",
+          "en": "Fragrant basmati rice beautifully cooked with a signature blend of Arabian spices, crowned with melt-in-the-mouth, slow-cooked lamb. Smoky, rich, and served with toasted nuts and daqous."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/lamb-mandi.webp",
+        "available": true,
+        "sizes": {
+          "S": 3.5,
+          "M": 7,
+          "L": 10.5,
+          "XL": 14
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-dlemiya",
+        "name": {
+          "ar": "الدليمية",
+          "en": "Dlemiya"
+        },
+        "description": {
+          "ar": "من أعرق أطباق الكرم العراقي؛ طبقات من الخبز الرقيق المسقي بمرق اللحم الساخن، يعلوه الأرز المعطر وقطع اللحم الغنية والمطهوة حتى الذوبان.",
+          "en": "A grand display of Iraqi hospitality. Delicate layers of thin bread beautifully soaked in rich meat stock, topped with highly fragrant rice and exceptionally tender, slow-cooked meat."
+        },
+        "price_bhd": 3.5,
+        "image_url": "/assets/gallery/dleimiya.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-biryani-chicken",
+        "name": {
+          "ar": "برياني الدجاج",
+          "en": "Chicken Biryani"
+        },
+        "description": {
+          "ar": "دجاج متبل ومطهو مع مزيج من اللبن، معجون الطماطم، واللومي العطري، يُدمج في طبقات مع الأرز البسمتي الملون بالزعفران وقطع البطاطس، ليُبخر حتى تتغلغل النكهات في كل حبة.",
+          "en": "Marinated chicken masterfully slow-cooked with yogurt, tomato purée, and dried limes, beautifully layered with potatoes and fragrant, saffron-infused basmati rice. Steamed to perfect harmony."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/chicken-biryani.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.9,
+          "M": 2.5,
+          "L": 4.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-biryani-meat",
+        "name": {
+          "ar": "برياني اللحم",
+          "en": "Meat Biryani"
+        },
+        "description": {
+          "ar": "لحم غنم طري للغاية ومطهو ببطء في مزيج غني من اللبن والتوابل العطرية، يُرتب في طبقات متداخلة مع البطاطس وأرز البسمتي العراقي الفاخر ليقدم لك سيمفونية من المذاق.",
+          "en": "Exceedingly tender, slow-cooked lamb deeply marinated in yogurt and aromatic spices, beautifully layered with potatoes and fluffy, premium basmati rice for a rich symphony of flavor."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/lamb-biryani.webp",
+        "available": true,
+        "sizes": {
+          "S": 3.5,
+          "M": 7,
+          "L": 10.5,
+          "XL": 14
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-lamb-neck-rice",
+        "name": {
+          "ar": "رقبة اللحم مع الأرز",
+          "en": "Lamb Neck with Rice"
+        },
+        "description": {
+          "ar": "رقبة غنم مطهوة ببطء شديد حتى ينفصل اللحم عن العظم بنعومة، تُقدم فوق أرز بسمتي متبل بالغنى العطري ومزين بالجزر والبازلاء، لطبق دافئ وفاخر.",
+          "en": "Incredibly tender lamb neck, meticulously slow-cooked until it falls beautifully off the bone, elegantly served over highly aromatic, spiced basmati rice studded with carrots and peas."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/lamb-neck-with-rice.webp",
+        "available": true,
+        "sizes": {
+          "S": 4,
+          "M": 8,
+          "L": 12,
+          "XL": 16
+        },
+        "ingredients": []
+      },
+      {
+        "id": "mains-masgouf",
+        "name": {
+          "ar": "المسكوف العراقي الأصيل",
+          "en": "Authentic Iraqi Masgouf"
+        },
+        "description": {
+          "ar": "سمك طازج يُشق من الظهر ويُشوى ببطء على وهج حطب المشمش بالطريقة البغدادية التقليدية، يُقدم مع صلصة الطماطم والتمر الهندي.",
+          "en": "Fresh river fish butterflied and slow-grilled over apricot wood fire in the traditional Baghdadi way, served with tomato and tamarind sauce."
+        },
+        "alt": {
+          "ar": "سمك مسكوف عراقي مشوي على الحطب في البحرين",
+          "en": "Iraqi Masgouf fish grilled on wood fire in Bahrain"
+        },
+        "price_bhd": 9,
+        "image_url": "/assets/gallery/iraqi-masgouf.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-stuffed-onion",
+        "name": {
+          "ar": "بصل محشي",
+          "en": "Stuffed Onions"
+        },
+        "description": {
+          "ar": "حبات بصل كاملة ومحشوة بعناية بمزيج من الأرز المتبل واللحم، تُطهى ببطء في مرق غني حتى تكتسب قواماً يذوب في الفم وحلاوة مكرملة.",
+          "en": "Whole, tender onions beautifully stuffed with an aromatic blend of spiced rice and meat, meticulously slow-cooked in a rich broth until they melt in your mouth."
+        },
+        "price_bhd": 2.5,
+        "image_url": "/assets/gallery/stuffed-onions.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-stuffed-zucchini",
+        "name": {
+          "ar": "كوسا محشي",
+          "en": "Stuffed Zucchini"
+        },
+        "description": {
+          "ar": "كوسا طرية ومحشوة بالأرز واللحم المتبل، مطبوخة ببطء شديد في مرق طماطم غني لتتشرب النكهة بالكامل.",
+          "en": "Exceptionally tender zucchini delicately stuffed with heavily seasoned rice and meat, gracefully slow-cooked in a rich, vibrant red tomato broth."
+        },
+        "price_bhd": 2.5,
+        "image_url": "/assets/gallery/stuffed-zucchini.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "mains-dolma",
+        "name": {
+          "ar": "الدولمة البغدادية",
+          "en": "Authentic Baghdadi Dolma"
+        },
+        "description": {
+          "ar": "تشكيلة من الخضروات المحشوة بالأرز واللحم المفروم الطازج مع دبس الرمان الفاخر، مطبوخة على نار هادئة لضمان النكهة العراقية الأصيلة.",
+          "en": "A selection of vegetables stuffed with rice and fresh minced meat with premium pomegranate molasses, slow-cooked to ensure authentic Iraqi flavor."
+        },
+        "alt": {
+          "ar": "طبق دولمة بغدادية تقليدية",
+          "en": "Traditional Baghdadi Dolma dish"
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/dolma-platter.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "main-safi-fish-rice",
+        "name": {
+          "ar": "سمك صافي مع الأرز",
+          "en": "Safi Fish with Rice"
+        },
+        "description": {
+          "ar": "سمك الصافي مع الأرز البسمتي العطري بالتوابل.",
+          "en": "Safi fish served with aromatic spiced rice."
+        },
+        "sizes": {
+          "S": 2.5,
+          "M": 4.5,
+          "L": 7
+        },
+        "image_url": "/assets/gallery/safi-fish-with-rice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "main-rotisserie-chicken",
+        "name": {
+          "ar": "دجاج شواية فاخر",
+          "en": "Premium Rotisserie Chicken"
+        },
+        "description": {
+          "ar": "دجاج فاخر يُشوى ببطء على الشواية الدوارة حتى يكتسب لوناً ذهبياً وقشرة مقرمشة، متبل بخلطة كهرمانة السرية التي تضمن نكهة غنية وعصارة لا تُقاوم.",
+          "en": "Premium chicken slow-roasted on a rotisserie until achieving a perfect golden crisp, marinated in Kahramana's secret spice blend for an irresistibly juicy and flavorful experience."
+        },
+        "sizes": {
+          "S": 1.5,
+          "L": 2.5
+        },
+        "image_url": "/assets/gallery/charcoal-grilled-chicken.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "main-kharof",
+        "name": {
+          "ar": "خروف",
+          "en": "Kharof (Whole Lamb)"
+        },
+        "description": {
+          "ar": "خروف كامل يُحضر للمناسبات والولائم الفاخرة، يُطهى ببطء فائق على الطريقة البغدادية الأصيلة ليذوب اللحم عن العظم، ويُقدم فوق جبل من الأرز المزين بالمكسرات والزبيب.",
+          "en": "A majestic whole lamb prepared for grand feasts and special occasions. Slow-cooked to perfection in authentic Baghdadi style until the meat falls off the bone, served over a mountain of aromatic rice garnished with toasted nuts and raisins."
+        },
+        "sizes": {
+          "S": 40,
+          "M": 75,
+          "XL": 140
+        },
+        "image_url": "/assets/gallery/bahraini-lamb-quzi.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "المرق",
+      "en": "Stews",
+      "description": {
+        "ar": "أصالة المرق العراقي؛ أطباق دافئة مطبوخة ببطء حتى الامتزاج الكامل للنكهات، تقدم مع أرز البسمتي العطري.",
+        "en": "The heart of Iraqi cuisine; slowly simmered stews with perfectly balanced flavors, served with aromatic basmati rice."
+      }
+    },
+    "items": [
+      {
+        "id": "stews-white-beans",
+        "name": {
+          "ar": "مرق الفاصولياء البيضاء",
+          "en": "White Bean Stew"
+        },
+        "description": {
+          "ar": "مرق يجسد الدفء المنزلي؛ فاصولياء بيضاء طرية تُطهى ببطء في قاعدة طماطم غنية بالثوم، البصل، والتوابل الدافئة.",
+          "en": "A deeply comforting, hearty Iraqi stew featuring exceptionally tender white beans slowly simmered in a rich, vibrant tomato base infused with garlic and warm spices."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع اللحم",
+              "en": "With Meat"
+            },
+            "price_bhd": 3.5
+          },
+          {
+            "label": {
+              "ar": "سادة",
+              "en": "Plain"
+            },
+            "price_bhd": 1
+          }
+        ],
+        "image_url": "/assets/gallery/white-bean-stew.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "stews-bamih",
+        "name": {
+          "ar": "مرق البامية",
+          "en": "Okra Stew"
+        },
+        "description": {
+          "ar": "مرق البامية العراقي الكلاسيكي؛ يُحضر ببطء في صلصة طماطم غنية ولاذعة قليلاً، مع الثوم ومزيج من البهارات، لتكتسب البامية قواماً يذوب في المرق.",
+          "en": "The quintessential Iraqi okra stew, meticulously slow-cooked in a rich, slightly tangy tomato sauce deeply infused with garlic and a warming blend of traditional spices."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع اللحم",
+              "en": "With Meat"
+            },
+            "price_bhd": 3.5
+          },
+          {
+            "label": {
+              "ar": "سادة",
+              "en": "Plain"
+            },
+            "price_bhd": 1
+          }
+        ],
+        "image_url": "/assets/gallery/okra-stew.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "stews-tabsi",
+        "name": {
+          "ar": "تبسي الباذنجان",
+          "en": "Eggplant Tabsi Stew"
+        },
+        "description": {
+          "ar": "طاجن الباذنجان العراقي بنسخة المرق المريحة للروح؛ طبقات من الباذنجان، الفليفلة، الطماطم، والبطاطس، تُطهى ببطء مع الثوم وصلصة الطماطم العطرية.",
+          "en": "A soul-warming stew version of the classic Iraqi eggplant casserole. Beautifully layered eggplant, capsicum, tomatoes, and potatoes delicately simmered in a highly aromatic garlic-tomato base."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع اللحم",
+              "en": "With Meat"
+            },
+            "price_bhd": 3.5
+          },
+          {
+            "label": {
+              "ar": "سادة",
+              "en": "Plain"
+            },
+            "price_bhd": 1
+          }
+        ],
+        "image_url": "/assets/gallery/tepsi-eggplant-stew.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "مشاوي كهرمانة",
+      "en": "Signature Grills",
+      "description": {
+        "ar": "١٤ صنفاً من اللحوم الطازجة التي تُشوى باحترافية على الفحم الحي، لتمنحك طعم المشاوي العراقية الأصيلة ونكهة الشواء الفريدة. نختار القطع بعناية ونوازن التتبيلة مع حرارة الفحم للحصول على عصارة مثالية، مع خيارات متعددة للأحجام تناسب الفرد والعائلة.",
+        "en": "14 charcoal-grilled selections prepared from fresh meats, delivering authentic Iraqi grill flavor and a distinctive smoky finish. We choose cuts carefully and balance seasoning with live charcoal heat for perfect juiciness, with multiple portion sizes designed for individuals, sharing, and families."
+      }
+    },
+    "items": [
+      {
+        "id": "grills-tikka-meat",
+        "name": {
+          "ar": "تكة لحم",
+          "en": "Meat Tikka"
+        },
+        "description": {
+          "ar": "قطع لحم غنم متبلة بعناية ومشوية ببطء على الفحم لتذوب في الفم.",
+          "en": "Tender chunks of marinated lamb, slow-grilled over charcoal to succulent perfection."
+        },
+        "price_bhd": 3.2,
+        "image_url": "/assets/gallery/lamb-tikka-skewers.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-meat-kabab",
+        "name": {
+          "ar": "كباب لحم",
+          "en": "Meat Kabab Grills"
+        },
+        "description": {
+          "ar": "أسياخ من اللحم النعيمي الطازج المفروم والمتبل بالبصل والتوابل العراقية، تُشوى على الفحم وتُقدم مع الخبز الحار، الطماطم المشوية، البصل، والسماق لنكهة بغدادية أصيلة.",
+          "en": "Skewers of fresh minced Naeemi meat seasoned with onions and Iraqi spices, charcoal-grilled to perfection. Served with warm tandoor bread, grilled tomatoes, onions, and sumac for an authentic Baghdadi experience."
+        },
+        "alt": {
+          "ar": "كباب لحم عراقي مشوي على الفحم",
+          "en": "Iraqi meat kabab grilled over charcoal"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/charcoal-lamb-kebab.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.5,
+          "M": 2.8,
+          "L": 5,
+          "XL": 10
+        },
+        "ingredients": []
+      },
+      {
+        "id": "grills-chicken-kabab",
+        "name": {
+          "ar": "كباب دجاج",
+          "en": "Chicken Kabab"
+        },
+        "description": {
+          "ar": "4 أسياخ من كباب الدجاج الطري والمتبل بالأعشاب الطازجة والبهارات الناعمة، يُشوى على الفحم حتى يكتسب لوناً ذهبياً وقرمشة خفيفة من الخارج.",
+          "en": "4 skewers of exceptionally tender ground chicken, delicately seasoned with fresh herbs and spices, elegantly charcoal-grilled to golden perfection with a beautiful hint of char."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/charcoal-chicken-kebab.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.2,
+          "M": 2.2,
+          "L": 4.4,
+          "XL": 7.9
+        },
+        "ingredients": []
+      },
+      {
+        "id": "grills-chicken-tikka",
+        "name": {
+          "ar": "تكة دجاج",
+          "en": "Chicken Tikka"
+        },
+        "description": {
+          "ar": "قطع دجاج طرية ومنزوعة العظم، تُنقع في مزيج غني من اللبن، البهارات العراقية، والليمون، ثم تُشوى على الفحم لتمنحك نكهة عميقة ولوناً جذاباً.",
+          "en": "Incredibly tender, boneless chicken chunks deeply marinated in a rich blend of Iraqi spices and yogurt, expertly flame-grilled for robust flavor and an unmistakable smoky crust."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/chicken-tikka-skewers.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.2,
+          "M": 2.5,
+          "L": 4.4,
+          "XL": 8.4
+        },
+        "ingredients": []
+      },
+      {
+        "id": "grills-ribs",
+        "name": {
+          "ar": "ﺿﻠﻮع",
+          "en": "RIBS Grills"
+        },
+        "description": {
+          "ar": "ضلوع الغنم الفاخرة، المتبلة بعناية والمشوية على الفحم لتكون مقرمشة من الخارج وطرية ومليئة بالعصارة من الداخل.",
+          "en": "Succulent, highly premium lamb ribs, wonderfully seasoned and charcoal-grilled until satisfyingly crisp on the outside and exceptionally juicy within."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/grilled-lamb-ribs.webp",
+        "available": true,
+        "sizes": {
+          "S": 2.6,
+          "M": 5,
+          "L": 7.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "grills-chicken-wings",
+        "name": {
+          "ar": "جوانح دجاج",
+          "en": "Chicken Wings"
+        },
+        "description": {
+          "ar": "أجنحة دجاج متبلة ومُشواة فوق لهب مكشوف، تجمع بين النكهة المدخنة القوية ولمسة التوابل العراقية المميزة لمتعة تذوق استثنائية.",
+          "en": "Deeply marinated chicken wings brilliantly grilled over an open flame, flawlessly combining a powerful smoky flavor with a beautifully balanced touch of authentic Iraqi spice."
+        },
+        "price_bhd": 2.5,
+        "image_url": "/assets/gallery/grilled-chicken-wings.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-kahramana-mix",
+        "name": {
+          "ar": "مشاوي كهرمانة (6 أسياخ)",
+          "en": "Kahramana Mixed Grill (6 skewers)"
+        },
+        "description": {
+          "ar": "وليمة فاخرة من أفضل المشاوي العراقية؛ تشكيلة تضم 6 أسياخ من الكباب وتكة اللحم والدجاج، تقدم مع الخبز الطازج لتجربة تذوق غنية ومتنوعة.",
+          "en": "A spectacular feast showcasing the finest mixed Iraqi grills. A beautifully curated selection of 6 skewers featuring kebab, meat tikka, and chicken tikka for the ultimate flavor experience."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مشاوي كهرمانة (6 أسياخ)",
+              "en": "Kahramana Mixed Grill (6 skewers)"
+            },
+            "price_bhd": 4
+          },
+          {
+            "label": {
+              "ar": "كيلو مشاوي مشكل",
+              "en": "1 kg Mixed Grill"
+            },
+            "price_bhd": 9.8
+          }
+        ],
+        "image_url": "/assets/gallery/kahramana-grills-6-skewers.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-liver",
+        "name": {
+          "ar": "معلاق مشوي",
+          "en": "Grilled Liver"
+        },
+        "description": {
+          "ar": "قطع من المعلاق الطازج المتبل بمهارة والمشوي على الفحم حتى ينضج تماماً، ليعكس نكهات الشارع العراقي الأصيلة والجريئة.",
+          "en": "Extraordinarily fresh lamb liver intricately marinated with authentic spices and elegantly grilled until tender—a wonderfully bold, deeply traditional Iraqi delicacy."
+        },
+        "price_bhd": 2.6,
+        "image_url": "/assets/gallery/charcoal-grilled-offal.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-grilled-chicken",
+        "name": {
+          "ar": "دجاج مشوي",
+          "en": "Grilled Chicken"
+        },
+        "description": {
+          "ar": "دجاج كامل أو نصف دجاجة، متبلة بعمق بمزيج من التوابل العراقية ومُشواة على الفحم ببطء.",
+          "en": "Whole or half chicken, deeply marinated in Iraqi spices and meticulously charcoal-grilled."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "نصف دجاجة",
+              "en": "Half Chicken"
+            },
+            "price_bhd": 1.6
+          },
+          {
+            "label": {
+              "ar": "دجاجة كاملة",
+              "en": "Whole Chicken"
+            },
+            "price_bhd": 3.2
+          }
+        ],
+        "image_url": "/assets/gallery/charcoal-grilled-chicken.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-arayes",
+        "name": {
+          "ar": "عرايس",
+          "en": "Arayes"
+        },
+        "description": {
+          "ar": "خبز محشي بطبقة سخية من اللحم المفروم المتبل بدقة، يُشوى على الفحم حتى يكتسب قرمشة ذهبية رائعة، ليمنحك وجبة خفيفة مليئة بالنكهات.",
+          "en": "Wonderfully crispy pita bread generously stuffed with heavily seasoned minced meat, elegantly grilled until golden brown. Highly satisfying, wonderfully crunchy, and bursting with flavor."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "دجاج",
+              "en": "Chicken"
+            },
+            "price_bhd": 1.4
+          },
+          {
+            "label": {
+              "ar": "لحم",
+              "en": "Meat"
+            },
+            "price_bhd": 1.4
+          }
+        ],
+        "image_url": "/assets/gallery/arayes.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-grilled-neck",
+        "name": {
+          "ar": "رقبة مشوية",
+          "en": "Grilled Neck"
+        },
+        "description": {
+          "ar": "رقبة غنم تُشوى ببطء على الفحم حتى تصبح طرية وتذوب في الفم، غنية بالعصارة وتتميز بنغمات مدخنة عميقة تلبي ذائقة عشاق اللحوم.",
+          "en": "Exquisitely slow-grilled lamb neck, remarkably rich, tender, and beautifully laced with deep smoky notes—an absolute masterpiece designed for true meat connoisseurs."
+        },
+        "price_bhd": 4,
+        "image_url": "/assets/gallery/grilled-lamb-neck.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-mix-grill",
+        "name": {
+          "ar": "مشاوي مشكلة",
+          "en": "Mix Grill"
+        },
+        "description": {
+          "ar": "وليمة فاخرة تجمع بين كباب اللحم، كباب الدجاج، تكة اللحم، وتكة الدجاج؛ تُشوى على الفحم لتمنحك تنوعاً مثالياً من نكهات الشواء العراقي الأصيل.",
+          "en": "A deluxe feast gathering the best of Iraqi grills: meat kabab, chicken kabab, meat tikka, and chicken tikka. Expertly charcoal-grilled for a perfect variety of smoky, traditional flavors."
+        },
+        "sizes": {
+          "S": 2.5,
+          "M": 4.7,
+          "L": 9.8
+        },
+        "image_url": "/assets/gallery/kahramana-mixed-grill.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-meat-grills",
+        "name": {
+          "ar": "مشاوي لحم",
+          "en": "Meat Grills"
+        },
+        "description": {
+          "ar": "أسياخ من اللحم المحلي الطازج، متبلة بخلطة كهرمانة السرية ومُشواة ببطء على لهب الفحم لتظل طرية ومليئة بالعصارة.",
+          "en": "Skewers of fresh local meat, marinated in our signature Kahramana secret blend and slow-grilled over charcoal to remain incredibly tender and juicy."
+        },
+        "sizes": {
+          "S": 2.8,
+          "M": 5.5,
+          "L": 11
+        },
+        "image_url": "/assets/gallery/mixed-grill-platter.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "grills-chicken-grills",
+        "name": {
+          "ar": "مشاوي دجاج",
+          "en": "Chicken Grills"
+        },
+        "description": {
+          "ar": "دجاج متبل بأجود أنواع البهارات العراقية والزبادي، يُشوى على الفحم ليكتسب طبقة خارجية مقرمشة وقلباً طرياً غنياً بالنكهات العطرية.",
+          "en": "Succulent chicken marinated in premium Iraqi spices and yogurt, charcoal-grilled to achieve a crispy exterior and a tender, aromatically rich heart."
+        },
+        "sizes": {
+          "S": 2.1,
+          "M": 4.2,
+          "L": 8.4
+        },
+        "image_url": "/assets/gallery/charcoal-grilled-chicken.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "شاورما",
+      "en": "Shawarma",
+      "description": {
+        "ar": "١٢ صنفاً من الشاورما العراقية المميزة، تُحضّر يومياً بتتبيلة البهارات البغدادية الأصيلة وتُشوى ببطء لتشبع حواسك. اختر بين اللحم أو الدجاج وبأكثر من طريقة تقديم—سندويشات، صاج، أو أطباق—مع إضافات متوازنة تعزز الطعم دون أن تطغى عليه.",
+        "en": "12 Iraqi shawarma favorites prepared daily with authentic Baghdadi spices and slow-roasted for deep, satisfying flavor. Choose meat or chicken across multiple serving styles—sandwiches, saj, or plates—paired with balanced toppings that enhance the taste without overpowering it."
+      }
+    },
+    "items": [
+      {
+        "id": "shawarma-iraqi-meat",
+        "name": {
+          "ar": "شاورما لحم عراقية (خبز تنور)",
+          "en": "Iraqi Meat Shawarma (Tandoor)"
+        },
+        "description": {
+          "ar": "شرائح رقيقة من لحم العجل المتبل على الطريقة العراقية والمُشوى ببطء على السيخ الدوار. تُقدم في خبز التنور الدافئ مع الطحينة، الطماطم، الخس، والمخللات لنكهة بغدادية لا تُضاهى.",
+          "en": "Beautifully thin, profoundly flavorful slices of marinated beef, slow-roasted to absolute perfection and packed with bold Iraqi spices. Elegantly served in warm tandoor bread with tahini, tomatoes, lettuce, and pickles."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/kahramana-lamb-kaas.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-iraqi-chicken",
+        "name": {
+          "ar": "شاورما دجاج عراقية (خبز تنور)",
+          "en": "Iraqi Chicken Shawarma (Tandoor)"
+        },
+        "description": {
+          "ar": "شرائح طرية من الدجاج المُشوى ببطء والمتبل بالبهارات البغدادية العريقة، تُلف في خبز التنور الطازج مع صلصة الثوم الكريمية والمخللات.",
+          "en": "Incredibly tender slices of deeply marinated chicken, gracefully slow-roasted and perfectly seasoned with traditional Iraqi spices. Beautifully wrapped in fresh tandoor bread with rich garlic sauce and crisp pickles."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/iraqi-chicken-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-iraqi-meat-plate",
+        "name": {
+          "ar": "صحن كص لحم",
+          "en": "Iraqi Meat Shawarma plate"
+        },
+        "description": {
+          "ar": "وجبة متكاملة وسخية من شاورما اللحم المتبلة بأصالة، تُقدم في طبق مع البطاطس المقلية المقرمشة، المخللات، والسلطة الطازجة.",
+          "en": "A remarkably hearty serving of incredibly tender, perfectly spiced beef shawarma, beautifully presented on a plate alongside crispy golden fries, crisp pickles, and a fresh side salad."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/iraqi-kaas-plate.webp",
+        "available": true,
+        "sizes": {
+          "M": 2.5,
+          "HALF KG": 5,
+          "1KG": 10
+        },
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-lebnani-meat",
+        "name": {
+          "ar": "شاورما لحم (خبز لبناني)",
+          "en": "Meat Shawarma (Lebanese Bread)"
+        },
+        "description": {
+          "ar": "شاورما اللحم العراقية الأصيلة تُقدم ملفوفة في الخبز اللبناني الرقيق والدافئ.",
+          "en": "Authentic Iraqi meat shawarma wrapped in thin Lebanese bread."
+        },
+        "price_bhd": 0.6,
+        "image_url": "/assets/gallery/meat-chapati-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-lebnani-chicken",
+        "name": {
+          "ar": "شاورما دجاج (خبز لبناني)",
+          "en": "Chicken Shawarma (Lebanese Bread)"
+        },
+        "description": {
+          "ar": "شاورما الدجاج المتبلة تُقدم ملفوفة في الخبز اللبناني الرقيق.",
+          "en": "Marinated chicken shawarma wrapped in thin Lebanese bread."
+        },
+        "price_bhd": 0.5,
+        "image_url": "/assets/gallery/chicken-shawarma-lebanese.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-saj-meat",
+        "name": {
+          "ar": "صاج لحم (ملغوم)",
+          "en": "Meat Saj (Malghoom)"
+        },
+        "description": {
+          "ar": "شاورما لحم ملفوفة في خبز الصاج الرقيق والمحمص.",
+          "en": "Meat shawarma wrapped in thin saj bread and toasted."
+        },
+        "price_bhd": 0.6,
+        "image_url": "/assets/gallery/saj-chicken-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-chapati-meat",
+        "name": {
+          "ar": "شباتي لحم",
+          "en": "Meat Chapati Shawarma"
+        },
+        "description": {
+          "ar": "شاورما لحم في خبز الشباتي الهندي التقليدي.",
+          "en": "Meat shawarma in traditional Indian chapati bread."
+        },
+        "price_bhd": 0.7,
+        "image_url": "/assets/gallery/meat-chapati-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-chapati-chicken",
+        "name": {
+          "ar": "شباتي دجاج",
+          "en": "Chicken Chapati Shawarma"
+        },
+        "description": {
+          "ar": "شاورما دجاج في خبز الشباتي الهندي التقليدي.",
+          "en": "Chicken shawarma in traditional Indian chapati bread."
+        },
+        "price_bhd": 0.6,
+        "image_url": "/assets/gallery/chicken-chapati-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-arabic-chicken",
+        "name": {
+          "ar": "عربي دجاج",
+          "en": "Arabi chiken shawarma"
+        },
+        "description": {
+          "ar": "شاورما دجاج مقطعة بأسلوب الشارع وتُقدم مع البطاطس والمخللات.",
+          "en": "Chicken shawarma cut street-style, served with fries and pickles."
+        },
+        "price_bhd": 1.7,
+        "image_url": "/assets/gallery/arabi-chicken-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-arabic-meat",
+        "name": {
+          "ar": "عربي لحم",
+          "en": "ARABI SHAWARMA"
+        },
+        "description": {
+          "ar": "شاورما لحم مقطعة بأسلوب الشارع وتُقدم مع البطاطس والمخللات.",
+          "en": "Meat shawarma cut street-style, served with fries and pickles."
+        },
+        "price_bhd": 1.8,
+        "image_url": "/assets/gallery/arabi-meat-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-arabic-mix",
+        "name": {
+          "ar": "عربي مشكل",
+          "en": "arabi mix chawarma"
+        },
+        "description": {
+          "ar": "مزيج من شاورما اللحم والدجاج مقطعة بأسلوب الشارع.",
+          "en": "A mix of meat and chicken shawarma cut street-style."
+        },
+        "price_bhd": 1.8,
+        "image_url": "/assets/gallery/arabi-meat-shawarma.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "shawarma-samoon-meat",
+        "name": {
+          "ar": "صمون عراقي لحم",
+          "en": "Meat Shawarma Shawarma"
+        },
+        "description": {
+          "ar": "شاورما لحم في خبز الصمون العراقي التقليدي.",
+          "en": "Meat shawarma in traditional Iraqi samoon bread."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/french-samoon.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "بيتزا",
+      "en": "Pizza",
+      "description": {
+        "ar": "حين تلتقي العجينة الهشة بلمسة كهرمانة؛ بيتزا محضرة يدوياً بمواد طازجة وتشكيلة متنوعة ترضي جميع الأذواق.",
+        "en": "Where fine dough meets the Kahramana touch; handmade pizzas prepared with fresh ingredients and a diverse selection to satisfy all tastes."
+      }
+    },
+    "items": [
+      {
+        "id": "pizza-margarita",
+        "name": {
+          "ar": "بيتزا مارغريتا",
+          "en": "Margherita Pizza"
+        },
+        "description": {
+          "ar": "الكلاسيكية الإيطالية الخالدة؛ جبن الموزاريلا الطازج الذائب فوق صلصة طماطم غنية، ومزينة بلمسة من أوراق الريحان العطرية على عجينة مخبوزة حتى القرمشة.",
+          "en": "The timeless Italian classic. Fresh, melting mozzarella layered perfectly over a rich tomato sauce, finished with an aromatic touch of basil on a baked golden crust."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/margherita-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.6,
+          "M": 2
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-vegetarian",
+        "name": {
+          "ar": "بيتزا الخضار",
+          "en": "Vegetarian Pizza"
+        },
+        "description": {
+          "ar": "مزيج زاهٍ من الباذنجان المشوي، الزيتون، الفليفلة، المشروم الطازج، والبصل، يُوزع فوق طبقة سخية من جبن الموزاريلا الذائب وصلصة الطماطم الكلاسيكية.",
+          "en": "A colorful, flavorful medley of roasted eggplant, olives, capsicum, fresh mushrooms, and onions, generously layered over melted cheese and rich tomato sauce on a satisfying crust."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/vegetable-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.8,
+          "M": 2.2
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-kahramana-signature",
+        "name": {
+          "ar": "بيتزا كهرمانة",
+          "en": "KAHRAMANA SIGNATURE Pizza"
+        },
+        "description": {
+          "ar": "اندماج استثنائي يحمل بصمتنا؛ بيتزا محملة بالشاورما، الببروني، المشروم، الذرة، الزيتون، والفليفلة، يعلوها مزيج من الأجبان الذائبة التي تربط النكهات معاً بلمسة بغدادية فاخرة.",
+          "en": "A bold, absolute masterpiece of a fusion. Loaded with tender shawarma, flavorful pepperoni, fresh mushrooms, sweet corn, olives, and capsicum. Bound together by melted cheese on a crisp crust, finished with a deeply authentic Baghdad flair."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/kahramana-signature-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 2.5,
+          "M": 3
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-pollo",
+        "name": {
+          "ar": "بيتزا بولو",
+          "en": "Pollo Pizza"
+        },
+        "description": {
+          "ar": "بيتزا كريمية ولذيذة، مغطاة بقطع الدجاج الطرية والمشروم الطازج، تحت طبقة غنية من الجبن الذائب المخبوز على عجينة ذهبية مثالية.",
+          "en": "An exceptionally creamy creation topped with tender chicken, fresh mushrooms, and melted cheese on a flawlessly golden crust. Simple, rich, and irresistibly satisfying."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/chicken-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.9,
+          "M": 2.4
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-spinach",
+        "name": {
+          "ar": "بيتزا السبانخ",
+          "en": "Spinach Pizza"
+        },
+        "description": {
+          "ar": "سبانخ طازجة ومُقلبة بلطف، تُوزع فوق جبن الموزاريلا الكريمي وصلصة الطماطم الغنية، لتقدم لك نكهة خفيفة، متوازنة، وراقية.",
+          "en": "Fresh spinach elegantly layered over creamy mozzarella and deeply rich tomato sauce. Light, flavorful, and perfectly balanced."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/spinach-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 1.8,
+          "M": 2.3
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-pepperonata",
+        "name": {
+          "ar": "بيتزا بابروني",
+          "en": "Pepperoni Pizza"
+        },
+        "description": {
+          "ar": "الخيار المفضل دائماً؛ طبقة غنية من شرائح ببروني اللحم البقري مع جبن الموزاريلا الذائب وصلصة الطماطم، لتقدم لك شريحة مقرمشة ومليئة بالنكهة.",
+          "en": "A timeless, beloved favorite. Loaded with spicy beef pepperoni and bubbling mozzarella over a rich tomato sauce. Crispy, cheesy, and irresistibly classic in every slice."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/pepperoni-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 2,
+          "M": 2.6
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-jalapeno-chicken",
+        "name": {
+          "ar": "بيتزا دجاج جلابينو",
+          "en": "Jalapeno Chicken Pizza"
+        },
+        "description": {
+          "ar": "لعشاق النكهات الحادة؛ قطع دجاج طرية، فليفلة، زيتون، وشرائح الهالبينو الحارة، مدمجة بصلصتنا الخاصة لتوازن مثالي بين الحرارة واللذة الكريمية.",
+          "en": "Vibrant and spicy. Elegantly topped with tender chicken, capsicum, olives, and jalapenos, brought to life with our robust signature special sauce. A flawless mix of heat, flavor, and creamy indulgence."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/chicken-jalapeno-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 2.5,
+          "M": 3
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-kabab",
+        "name": {
+          "ar": "بيتزا كباب",
+          "en": "Pizza Kabab"
+        },
+        "description": {
+          "ar": "قطع الكباب العراقي الغنية بالعصارة تُخبز فوق الجبن الذائب، وتُرش بالسماق اللاذع. مزيج مبتكر يجمع بين روعة الشواء وسحر البيتزا المخبوزة في الفرن.",
+          "en": "Juicy, authentic Iraqi kebab pieces baked over melted cheese and elegantly sprinkled with tangy sumac. A perfect mix of the traditional grill and the classic oven—rich, zesty, and unmistakably Middle Eastern."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/kebab-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 2,
+          "M": 2.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "pizza-shawarma",
+        "name": {
+          "ar": "بيتزا شاورما",
+          "en": "Pizza Shawarma"
+        },
+        "description": {
+          "ar": "بيتزا غنية بشرائح شاورما اللحم الطرية، مغطاة بالجبن الذائب ومتبلة بلمسة من التوابل العراقية ورشة سماق لنكهة شواء بغدادية مدخنة وأصيلة.",
+          "en": "Loaded with tender, flavorful beef shawarma, beautifully melted cheese, and a hint of authentic Iraqi spices, all masterfully baked to absolute perfection. Finished with a touch of sumac for a rich, smoky Baghdad flavor."
+        },
+        "cuisine": {
+          "ar": "إيطالي",
+          "en": "Italian"
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/kaas-pizza.webp",
+        "available": true,
+        "sizes": {
+          "S": 2,
+          "M": 2.5
+        },
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "السندويشات",
+      "en": "Sandwiches",
+      "description": {
+        "ar": "وجبات سريعة بطعم الأصالة؛ سندويشات متنوعة في خبز التنور الساخن، مثالية للأكل أثناء التنقل أو كوجبة خفيفة.",
+        "en": "Quick bites with an authentic taste; varied sandwiches in warm tandoor bread, perfect for on-the-go or a light meal."
+      }
+    },
+    "items": [
+      {
+        "id": "sandwiches-meat-kabab",
+        "name": {
+          "ar": "سندويش كباب لحم",
+          "en": "Meat Kabab Sandwich"
+        },
+        "description": {
+          "ar": "سيخ كباب عراقي مشوي، يُلف في خبز التنور الدافئ مع البصل الطازج، البقدونس، الطماطم، ورشة من السماق وصلصة الطحينة، لتجربة طعام شارع بغدادية بامتياز.",
+          "en": "Juicy, charcoal-grilled Iraqi kebab wrapped in warm tandoor bread with fresh onions, parsley, and an elegant sprinkle of sumac. Finished with creamy tahini for that remarkably smoky, unmistakable Baghdad street flavor."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/lamb-kebab-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-chicken-kabab",
+        "name": {
+          "ar": "سندويش كباب دجاج",
+          "en": "Chicken Kabab Sandwich"
+        },
+        "description": {
+          "ar": "كباب دجاج طري ومشوي، يُلف في خبز التنور الناعم مع البصل، البقدونس، الطماطم، ولمسة من السماق والطحينة، لنكهة مدخنة وخفيفة ترضي ذائقتك.",
+          "en": "Exceptionally tender, beautifully grilled chicken kebab wrapped in soft tandoor bread with fresh onions, vibrant parsley, and a dash of tangy sumac. Lightly dressed with creamy tahini for a flavorful, smoky Iraqi bite."
+        },
+        "price_bhd": 0.9,
+        "image_url": "/assets/gallery/chicken-kebab-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-meat-tikka",
+        "name": {
+          "ar": "سندويش تكة لحم",
+          "en": "Meat Tikka Sandwich"
+        },
+        "description": {
+          "ar": "مكعبات تكة اللحم المشوية على اللهب المكشوف، تُلف في خبز التنور مع البصل، البقدونس، والطماطم، لتقدم لك نكهة الشواء الأصيلة والمركزة.",
+          "en": "Succulent, beautifully marinated cubes of flavorful beef tikka, expertly grilled over an open flame and wrapped in warm tandoor bread with fresh onions, parsley, and ripe tomatoes. Bold, smoky, and bursting with true Iraqi flavor."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/lamb-tikka-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-chicken-tikka",
+        "name": {
+          "ar": "سندويش تكة دجاج",
+          "en": "Chicken Tikka Sandwich"
+        },
+        "description": {
+          "ar": "قطع تكة الدجاج الطرية والمتبلة، مشوية على الفحم وملفوفة في خبز التنور الدافئ مع البصل والبقدونس الطازج، لنكهة شواء كلاسيكية غنية.",
+          "en": "Tender, deeply marinated chicken tikka expertly grilled over charcoal, elegantly wrapped in wonderfully warm tandoor bread with remarkably fresh onions and incredibly vibrant parsley for a phenomenally classic, exceptionally smoky flavor."
+        },
+        "price_bhd": 0.9,
+        "image_url": "/assets/gallery/chicken-tikka-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-grilled-liver",
+        "name": {
+          "ar": "سندويش معلاق مشوي",
+          "en": "Grilled Liver Sandwich"
+        },
+        "description": {
+          "ar": "قطع المعلاق الغنية والمشوية مع البصل والتوابل، تُلف في خبز التنور الدافئ لتقدم لك المذاق البغدادي الأصيل والمركز الذي عشاقه يعرفونه جيداً.",
+          "en": "Tender pieces of highly flavorful liver beautifully grilled with fresh onions and authentic spices, wrapped in warm tandoor bread. Rich, hearty, and bursting with the bold, traditional flavors of Baghdad's iconic street grills."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/grilled-offal-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-kubba",
+        "name": {
+          "ar": "سندويش كبة",
+          "en": "Kubba Sandwich"
+        },
+        "description": {
+          "ar": "حبات الكبة المقلية والمقرمشة بحشوتها الغنية باللحم المتبل، تُلف في خبز التنور الناعم مع الخس، الطماطم، والبصل. توازن رائع بين القرمشة والنضارة.",
+          "en": "Crispy, flawlessly fried kubba generously stuffed with spiced meat, elegantly wrapped in soft tandoor bread with fresh lettuce, beautifully ripe tomatoes, and crisp onions. A perfect mix of satisfying crunch, profound flavor, and incredible freshness."
+        },
+        "price_bhd": 0.9,
+        "image_url": "/assets/gallery/kibbeh-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-falafel",
+        "name": {
+          "ar": "سندويش فلافل",
+          "en": "Falafel Sandwich"
+        },
+        "description": {
+          "ar": "أقراص الفلافل الذهبية والمقرمشة، تُلف في خبز التنور الطري مع الخيار، الطماطم، والخس. يمكنك اختيار الإضافة من صلصة العمبة أو الطحينة الكريمية لختام مثالي.",
+          "en": "Golden, incredibly crisp falafel elegantly wrapped in soft tandoor bread with fresh cucumber, ripe tomatoes, and crisp lettuce. Finished with your choice of tangy amba sauce or creamy tahini—wonderfully fresh and full of authentic Iraqi street flavor."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "فلافل مع الطحينة",
+              "en": "Falafel with Tahini"
+            },
+            "price_bhd": 0.8
+          },
+          {
+            "label": {
+              "ar": "فلافل مع العمبة",
+              "en": "Falafel with Amba"
+            },
+            "price_bhd": 0.8
+          },
+          {
+            "label": {
+              "ar": "فلافل مشكلة (مع البطاطس والباذنجان)",
+              "en": "Mixed Falafel (with Potato and Eggplant)"
+            },
+            "price_bhd": 1
+          }
+        ],
+        "image_url": "/assets/gallery/falafel-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-beef-liver",
+        "name": {
+          "ar": "سندويش كبد عجل",
+          "en": "Beef Liver Sandwich"
+        },
+        "description": {
+          "ar": "كبد عجل طري متبل ومشوي، يُقدم في خبز التنور الدافئ.",
+          "en": "Tender beef liver seasoned and grilled, served in warm tandoor bread."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/beef-liver-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-chicken-liver",
+        "name": {
+          "ar": "سندويش كبد دجاج",
+          "en": "Chicken Liver Sandwich"
+        },
+        "description": {
+          "ar": "كبد دجاج طري مطهو مع البصل والتوابل، يُلف في خبز التنور.",
+          "en": "Tender chicken liver cooked with onions and spices, wrapped in tandoor bread."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/chicken-liver-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-makhlama",
+        "name": {
+          "ar": "سندويش مخلمة",
+          "en": "Makhlama Sandwich"
+        },
+        "description": {
+          "ar": "المخلمة العراقية الشهيرة (بيض ولحم) تُقدم في سندويش دافئ.",
+          "en": "The famous Iraqi Makhlama (eggs and meat) served in a warm sandwich."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/makhlama-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-shakshouka",
+        "name": {
+          "ar": "سندويش شكشوكة",
+          "en": "Shakshouka Sandwich"
+        },
+        "description": {
+          "ar": "بيض مطهو مع الطماطم والبهارات، يُلف في خبز التنور.",
+          "en": "Eggs simmered with tomatoes and spices, wrapped in tandoor bread."
+        },
+        "price_bhd": 0.9,
+        "image_url": "/assets/gallery/shakshouka-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-special-shakshouka",
+        "name": {
+          "ar": "سندويش شكشوكة خاصة",
+          "en": "Special Shakshouka Sandwich"
+        },
+        "description": {
+          "ar": "شكشوكة بالجبن الكريمي تُقدم في سندويش دافئ.",
+          "en": "Shakshouka with cream cheese served in a warm sandwich."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/special-shakshouka-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-tomato-special",
+        "name": {
+          "ar": "سندويش طاوة طماطم",
+          "en": "Tomato Tawa Sandwich"
+        },
+        "description": {
+          "ar": "طماطم مشوية ومكرملة تُقدم في سندويش دافئ.",
+          "en": "Grilled and caramelized tomatoes served in a warm sandwich."
+        },
+        "price_bhd": 0.8,
+        "image_url": "/assets/gallery/tomato-special-tawa-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "عصائر كهرمانة المنعشة",
+      "en": "Signature Fresh Juices",
+      "description": {
+        "ar": "انتعاش الطبيعة في كل رشفة؛ عصائر طازجة 100٪ تُعصر عند الطلب من ثمار الفواكه المختارة بعناية لتمنحك مذاقاً نابضاً بالحياة.",
+        "en": "Nature's refreshment in every sip; 100% fresh juices squeezed to order from carefully selected fruits, offering a vibrant and revitalizing taste experience."
+      }
+    },
+    "items": [
+      {
+        "id": "drinks-avocado",
+        "name": {
+          "ar": "عصير أفوكادو",
+          "en": "Avocado Juice"
+        },
+        "description": {
+          "ar": "تجربة كريمية غنية مفعمة بالطاقة؛ أفوكادو طازج يُحضر بحرفية ليقدم قواماً مخملياً ومذاقاً طبيعياً فاخراً.",
+          "en": "A rich, creamy energy boost; fresh avocado masterfully blended to a velvet-smooth texture with an elegantly natural sweetness."
+        },
+        "price_bhd": 1.6,
+        "image_url": "/assets/gallery/avocado-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-kahramana-cocktail",
+        "name": {
+          "ar": "كوكتيل كهرمانة",
+          "en": "Kahramana Cocktail"
+        },
+        "description": {
+          "ar": "سيمفونية من الفواكه الاستوائية والموسمية؛ طبقات متناغمة من النكهات الطازجة المختارة بعناية لترضي ذائقتك.",
+          "en": "A symphony of tropical and seasonal fruits; harmonious layers of hand-picked fresh flavors crafted to delight your palate."
+        },
+        "price_bhd": 1.4,
+        "image_url": "/assets/gallery/kahramana-cocktail.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-strawberry",
+        "name": {
+          "ar": "عصير فراولة",
+          "en": "Strawberry Juice"
+        },
+        "description": {
+          "ar": "جوهر الصيف في كأس؛ عصير فراولة طبيعي 100٪ يتميز بحلاوة الثمار الناضجة ولونها الأحمر النابض.",
+          "en": "The essence of summer in a glass; 100% natural strawberry juice featuring the sweetness of sun-ripened berries and a vibrant ruby hue."
+        },
+        "price_bhd": 1.3,
+        "image_url": "/assets/gallery/strawberry-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-orange",
+        "name": {
+          "ar": "عصير برتقال",
+          "en": "Orange Juice"
+        },
+        "description": {
+          "ar": "إشراقة صباحية منعشة؛ برتقال منتقى بعناية يُعصر فوراً ليمنحك حيوية ونكهة حمضية متوازنة وحلوة.",
+          "en": "A bright morning refresh; carefully selected oranges pressed on demand for a burst of vitality and a perfectly balanced, sweet citrus flavor."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/fresh-orange-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-lemon",
+        "name": {
+          "ar": "عصير ليمون",
+          "en": "Lemon Juice"
+        },
+        "description": {
+          "ar": "نقاء وانتعاش لا يضاهى؛ عصير ليمون صافٍ يُحضر من أجود الثمار ليمنحك لسعة حموضة حيوية تروي العطش.",
+          "en": "Unmatched purity and refreshment; clear lemon juice prepared from the finest fruits for a vibrant, thirst-quenching citrus zing."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/lemon-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-pomegranate",
+        "name": {
+          "ar": "عصير رمان",
+          "en": "Pomegranate Juice"
+        },
+        "description": {
+          "ar": "ياقوت الطبيعة المصفى؛ عصير رمان غني بمضادات الأكسدة، يجمع بين الحلاوة العميقة واللمسة الحامضة المنعشة.",
+          "en": "Nature's liquid ruby; antioxidant-rich pomegranate juice offering a deep floral sweetness with a refreshing tart finish."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/pomegranate-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-pineapple",
+        "name": {
+          "ar": "عصير أناناس",
+          "en": "Pineapple Juice"
+        },
+        "description": {
+          "ar": "رحلة إلى الاستوائي؛ عصير أناناس ذهبي يفيض بالحلاوة المنعشة والمذاق الاستوائي الغني في كل رشفة.",
+          "en": "A trip to the tropics; golden pineapple juice overflowing with refreshing sweetness and a rich, sun-drenched exotic flavor."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/pineapple-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-apple",
+        "name": {
+          "ar": "عصير تفاح",
+          "en": "Apple Juice"
+        },
+        "description": {
+          "ar": "صفاء الطبيعة؛ عصير تفاح طازج يُعصر من أجود الأنواع ليقدم لك مذاقاً مقرمشاً وحلاوة طبيعية هادئة.",
+          "en": "Nature's clarity; fresh apple juice pressed from premium varieties for a crisp taste and a gentle, natural sweetness."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/apple-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-watermelon",
+        "name": {
+          "ar": "عصير بطيخ",
+          "en": "Watermelon Juice"
+        },
+        "description": {
+          "ar": "ملاذ الصيف البارد؛ عصير رقي (بطيخ) طبيعي يروي الظمأ بحلاوته الخفيفة وقوامه المنعش كنسيم البحر.",
+          "en": "A cool summer escape; natural watermelon juice that quenches thirst with its light sweetness and refreshing, breezy texture."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/watermelon-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-cantaloupe",
+        "name": {
+          "ar": "عصير شمام",
+          "en": "Cantaloupe Juice"
+        },
+        "description": {
+          "ar": "نعومة الشمام الفواحة؛ عصير مخملي يتميز بنكهة الشمام الرقيقة وحلاوته الهادئة التي تنعش الحواس.",
+          "en": "Fragrant melon sweetness; a velvety cantaloupe juice featuring a delicate flavor and a calm sweetness that refreshes the senses."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/melon-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-grape",
+        "name": {
+          "ar": "عصير عنب",
+          "en": "Grape Juice"
+        },
+        "description": {
+          "ar": "مذاق كلاسيكي فاخر؛ عصير عنب نقي مليء بالنكهة الغنية والسكريات الطبيعية المنعشة.",
+          "en": "A classic luxury; pure grape juice bursting with rich flavor and refreshing natural sugars."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/grape-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-banana",
+        "name": {
+          "ar": "عصير موز",
+          "en": "Banana Juice"
+        },
+        "description": {
+          "ar": "طاقة وحيوية؛ عصير موز كثيف وسلس يقدم لك الحلاوة الطبيعية في قوام كريمي مشبع.",
+          "en": "Energy and vitality; a thick, smooth banana juice offering pure natural sweetness in a satisfyingly creamy texture."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/banana-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-grape-pomegranate",
+        "name": {
+          "ar": "عصير عنب ورمان",
+          "en": "Grape & Pomegranate Juice"
+        },
+        "description": {
+          "ar": "مزيج ملكي؛ يجمع بين حلاوة العنب الفاخرة ونكهة الرمان القوية في توازن فريد ومبهر.",
+          "en": "A royal blend; combining premium grape sweetness with bold pomegranate flavor in a unique and dazzling balance."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/grape-pomegranate-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-lemon-mint",
+        "name": {
+          "ar": "عصير ليمون بالنعناع",
+          "en": "Lemon Mint Juice"
+        },
+        "description": {
+          "ar": "قمة الانتعاش البارد؛ ليمون حامض ممزوج بأوراق النعناع الطازجة ليمنحك شعوراً فورياً بالبرودة والراحة.",
+          "en": "The peak of cool refreshment; tart lemon combined with garden-fresh mint leaves for an instant sensation of chill and comfort."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/mint-lemonade.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-mango",
+        "name": {
+          "ar": "عصير مانجو",
+          "en": "Mango Juice"
+        },
+        "description": {
+          "ar": "ملك الثمار الاستوائية؛ عصير مانجو كثيف وذهبي يتميز بنكهة مركزة وقوام غني يغمر الحواس.",
+          "en": "The king of tropical fruits; thick, golden mango juice featuring a concentrated flavor and a rich texture that coats the senses."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/mango-juice.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-laban-mint",
+        "name": {
+          "ar": "لبن بالنعناع",
+          "en": "Laban with Mint"
+        },
+        "description": {
+          "ar": "توازن تقليدي مثالي؛ لبن بارد وقوام خفيف مع لمسة النعناع المنعشة، الرفيق الأمثل لكل وجبة دسمة.",
+          "en": "A perfect traditional balance; cool, light buttermilk with a refreshing mint twist, the ultimate companion for every hearty meal."
+        },
+        "price_bhd": 1,
+        "image_url": "/assets/gallery/laban.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-laban",
+        "name": {
+          "ar": "لبن",
+          "en": "Laban"
+        },
+        "description": {
+          "ar": "أصالة المذاق؛ لبن عيران تقليدي مبرد يتميز بحموضته الهادئة وقوامه المنعش الذي يطهر الحنك.",
+          "en": "Authentic taste; chilled traditional ayran buttermilk featuring a gentle tang and a refreshing palate-cleansing texture."
+        },
+        "price_bhd": 0.8,
+        "image_url": "/assets/gallery/laban.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-soft-drinks",
+        "name": {
+          "ar": "مشروبات غازية",
+          "en": "Soft Drinks"
+        },
+        "description": {
+          "ar": "فقاعات من الانتعاش؛ تشكيلة مختارة من المشروبات الغازية الكلاسيكية والمحلية تقدم باردة جداً.",
+          "en": "Bubbles of refreshment; a curated selection of classic and local carbonated drinks served ice-cold."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "كينزا كولا",
+              "en": "Kinza Cola"
+            },
+            "price_bhd": 0.4
+          },
+          {
+            "label": {
+              "ar": "كينزا سيتروس",
+              "en": "Kinza Citrus"
+            },
+            "price_bhd": 0.4
+          }
+        ],
+        "image_url": "/assets/gallery/soft-drinks.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-water",
+        "name": {
+          "ar": "ماء",
+          "en": "Water"
+        },
+        "description": {
+          "ar": "نقاوة مطلقة؛ مياه معدنية طبيعية معبأة ومبردة لتقديم الانتعاش الصافي.",
+          "en": "Absolute purity; natural bottled mineral water, chilled to provide pristine hydration."
+        },
+        "price_bhd": 0.2,
+        "image_url": "/assets/gallery/bottled-water.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "drinks-ice",
+        "name": {
+          "ar": "ثلج",
+          "en": "Ice"
+        },
+        "description": {
+          "ar": "مكعبات من البلور النقي؛ ثلج صافٍ لضمان بقاء مشروباتك في قمة البرودة والمنظر الجذاب.",
+          "en": "Crystalline purity; clear ice cubes to ensure your drinks stay at peak chill and look exquisitely refreshing."
+        },
+        "price_bhd": 0.2,
+        "image_url": "/assets/gallery/ice.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "ركن الشاي والقهوة الأصيلة",
+      "en": "Traditional Tea & Coffee",
+      "description": {
+        "ar": "شاي عراقي مخدر على الأصول وقهوة عربية معطرة بالهيل.",
+        "en": "Authentic Iraqi tea and traditional Arabic coffee infused with cardamom."
+      }
+    },
+    "items": [
+      {
+        "id": "drinks-iraqi-tea",
+        "name": {
+          "ar": "شاي عراقي",
+          "en": "Iraqi Tea"
+        },
+        "description": {
+          "ar": "شاي عراقي مهيل ومخدر على أصوله.",
+          "en": "Authentic Iraqi tea infused with cardamom."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/iraqi-tea.webp",
+        "available": true,
+        "sizes": {
+          "Glass": 0.5,
+          "0.5L": 1.5,
+          "1L": 2,
+          "1.5L": 2.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "drinks-karak-tea",
+        "name": {
+          "ar": "شاي كرك",
+          "en": "Karak Tea"
+        },
+        "description": {
+          "ar": "شاي بالحليب والتوابل العطرية.",
+          "en": "Tea with milk and aromatic spices."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/karak-tea.webp",
+        "available": true,
+        "sizes": {
+          "Glass": 0.6,
+          "0.5L": 2,
+          "1L": 2.5,
+          "1.5L": 3
+        },
+        "ingredients": []
+      },
+      {
+        "id": "drinks-black-lemon-tea",
+        "name": {
+          "ar": "شاي حامض (نومي بصرة)",
+          "en": "Black Lemon Tea (Noomi Basra)"
+        },
+        "description": {
+          "ar": "شاي النومي بصرة العراقي الشهير، منعش ومهدئ.",
+          "en": "The famous Iraqi Noomi Basra tea, refreshing and soothing."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/black-lemon-tea.webp",
+        "available": true,
+        "sizes": {
+          "Glass": 0.5,
+          "0.5L": 1.5,
+          "1L": 2,
+          "1.5L": 2.5
+        },
+        "ingredients": []
+      },
+      {
+        "id": "drinks-cinnamon-tea",
+        "name": {
+          "ar": "شاي بالقرفة",
+          "en": "Cinnamon Tea"
+        },
+        "description": {
+          "ar": "شاي دافئ بنكهة القرفة العطرية.",
+          "en": "Warm tea with aromatic cinnamon flavor."
+        },
+        "price_bhd": null,
+        "image_url": "/assets/gallery/cinnamon-tea.webp",
+        "available": true,
+        "sizes": {
+          "Glass": 0.5,
+          "0.5L": 1.5,
+          "1L": 2,
+          "1.5L": 2.5
+        },
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "الحلويات",
+      "en": "Desserts",
+      "description": {
+        "ar": "ختامها مسك؛ استمتع بتشكيلة من الحلويات الشرقية الكلاسيكية لتكتمل تجربة الضيافة العراقية.",
+        "en": "A sweet finale; enjoy a selection of classic Middle Eastern desserts to complete your Iraqi hospitality experience."
+      }
+    },
+    "items": [
+      {
+        "id": "desserts-umm-ali",
+        "name": {
+          "ar": "أم علي",
+          "en": "Umm Ali"
+        },
+        "description": {
+          "ar": "أم علي هي الحلوى الشرقية الكلاسيكية التي تمزج بين رقائق العجين الهشة والحليب كامل الدسم مع القشطة الفاخرة. تُزين بتشكيلة سخية من المكسرات المحمصة التي تضفي قرمشة مميزة، ليأخذك طعمها إلى عالم من الدفء والحنين.",
+          "en": "A beloved Middle Eastern dessert made with layers of puff pastry, milk, cream, nuts, and a touch of cinnamon. Baked until golden and served warm — rich, creamy, and comforting in every spoonful."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/umm-ali.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "desserts-fruit-salad",
+        "name": {
+          "ar": "سلطة الفواكه",
+          "en": "Fruit Salad"
+        },
+        "description": {
+          "ar": "مزيج زاهٍ من الفواكه الموسمية الطازجة والمُقطعة، تُقدم باردة لتكون ختاماً خفيفاً ومنعشاً لوجبتك.",
+          "en": "A colorful mix of fresh seasonal fruits, cut and served chilled for a refreshing, naturally sweet treat. Light, juicy, and the perfect finish to any meal."
+        },
+        "price_bhd": 2,
+        "image_url": "/assets/gallery/fruit-salad.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  }
+]
