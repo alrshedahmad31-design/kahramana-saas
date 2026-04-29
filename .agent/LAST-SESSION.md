@@ -1,123 +1,64 @@
-# Last Session — 2026-04-30 (Session 24 — NF tasks + Email System)
-
-## What was done
-
-### 1. DASH-NF-1: Server Component Shell + RBAC Guards ✅
-Commits: multiple (see git log from session 23 continuation)
-
-- `src/app/[locale]/dashboard/orders/page.tsx` → async Server Component, fetches today's orders server-side
-- `src/app/[locale]/dashboard/schedule/page.tsx` → Server Component + `canManageSchedule` (branch_manager+) gate
-- `src/app/[locale]/dashboard/settings/page.tsx` → Server Component + `canManageSettings` (owner/general_manager only) gate
-- `src/components/orders/OrdersClient.tsx` → added `initialOrders`, `initialTotalCount`, `initialFilteredTotal` props + `skipInitialFetch` ref pattern
-- `src/lib/auth/rbac.ts` → added `canManageSchedule()` and `canManageSettings()` guards
-- `src/lib/supabase/custom-types.ts` → new canonical type layer (stable import surface over auto-gen types.ts)
-
-### 2. DASH-NF-3: Remove unused Tailwind tokens ✅
-- Removed `brand-cream: '#f4ecd8'` from `tailwind.config.ts` (0 usages confirmed)
-
-### 3. DASH-NF-4: STATUS_COLORS removal ✅
-- Already complete in commit `1629d50` — verified, no new work needed
-
-### 4. DASH-NF-5: Playwright E2E — Realtime RLS Verification ✅
-Commit included in session
-
-- `tests/e2e/realtime-rls.spec.ts` — 10 tests, 3 scenarios:
-  - Scenario A: cashier receives events for own branch (riffa)
-  - Scenario B: cashier receives NO events for other branch (qallali)
-  - Scenario C: owner receives events from ALL branches
-  - Pre-flight checks + channel health checks
-- No service role key used in tests; direct Supabase JS client approach
-- `tests/fixtures/users.ts` — 6 test users (`cashierRiffa` vs old `cashier` rename)
-
-### 5. Auth E2E Suite ✅
-Full comprehensive auth flow test suite:
-
-**Files created:**
-- `playwright.config.ts` — fullyParallel: false, workers: 1, retries: 2 on CI, webServer, globalSetup/Teardown
-- `tests/fixtures/users.ts` — 6 test users (owner, manager, branchMgr, cashierRiffa, cashierQallali, driver)
-- `tests/fixtures/auth-helpers.ts` — `loginAs()`, `logout()`, `getAuthCookies()`, `PATHS` constants
-- `tests/global-setup.ts` — creates 6 test users via admin API (idempotent), upserts staff_basic rows
-- `tests/global-teardown.ts` — deletes test users + e2e-invite-* cleanup
-- `tests/e2e/auth/login.spec.ts` — 7 tests
-- `tests/e2e/auth/logout.spec.ts` — 4 tests
-- `tests/e2e/auth/middleware.spec.ts` — 10 tests
-- `tests/e2e/auth/rbac.spec.ts` — 14 tests
-- `tests/e2e/auth/invite.spec.ts` — 3 tests using `admin.generateLink({ type: 'invite' })`
-- `tests/e2e/auth/password-reset.spec.ts` — 5 tests
-- `.github/workflows/e2e.yml` — CI workflow (auth-e2e + realtime-rls jobs)
-- `package.json` → added `test:e2e:auth`, `test:e2e:realtime`, `test:e2e` scripts
-- `.env.test.example` — template for test env vars
-
-**Key fixes during E2E work:**
-- `.gitignore` → added `!.env*.example` negation after `.env*` line
-- `invite.spec.ts` TS2531 null assertions → replaced with explicit `if (err || !data) throw` guards
-- `realtime-rls.spec.ts` `TEST_USERS.cashier` → `TEST_USERS.cashierRiffa`
-
-### 6. Email System — React Email + Resend ✅
-Commit: `0b2f638`
-
-**Installed:**
-- `react-email` (devDependency)
-- `@react-email/components` (devDependency)
-- `resend` (dependency)
-
-**Files created:**
-- `emails/components/KahramanaLayout.tsx` — RTL (`dir="rtl"`), Cairo font, `#0a0a0a` bg, `#141414` card, `#c9a961` border
-- `emails/components/KahramanaHeader.tsx` — wordmark or logo img
-- `emails/components/KahramanaFooter.tsx` — links, disclaimer
-- `emails/components/KahramanaButton.tsx` — `#c9a961` bg, `#0a0a0a` text
-- `emails/templates/InviteStaff.tsx` — Arabic invite with role label map, `PreviewProps`
-- `emails/templates/MagicLink.tsx` — magic link email
-- `emails/templates/ResetPassword.tsx` — password reset email
-- `emails/templates/OrderConfirmation.tsx` — order summary with items table, totals in د.ب
-- `emails/templates/OrderStatusUpdate.tsx` — status-specific badge, content, driver/ETA fields
-- `emails/scripts/render-for-supabase.ts` — renders HTML with `{{ .ConfirmationURL }}` placeholders, writes to `emails/rendered/`
-- `emails/rendered/invite-staff.html` — pre-built, ready to paste into Supabase Auth
-- `emails/rendered/magic-link.html` — pre-built
-- `emails/rendered/reset-password.html` — pre-built
-- `src/lib/email/send.ts` — Resend SDK wrappers: `sendStaffInvite`, `sendMagicLink`, `sendPasswordReset`, `sendOrderConfirmation`, `sendOrderStatusUpdate`
-
-**Scripts added to package.json:**
-- `email:dev` → `email dev --dir emails/templates --port 3001` (live preview)
-- `email:export` → `npx tsx emails/scripts/render-for-supabase.ts`
+# LAST-SESSION.md — Session 25
+> Date: 2026-04-30 | Time: 02:12 AST
+> Status at close: `production_seo_activated`
 
 ---
 
-## Build State
-- `npx tsc --noEmit` → 0 errors
-- `npm run build` → clean (757 pages)
-- `npm run email:export` → 3 HTML files written to `emails/rendered/`
-- All 9 CLAUDE.md phase checks pass
+## ما تم في هذه الجلسة
+
+### P0 — Production Blockers (All ✅ Done from prev session, verified this session)
+- **BA-01**: RLS lockdown (Migration 028) مُطبَّق — 9 سياسات نشطة، 7 متساهلة محذوفة
+- **BA-02**: أعمدة `orders` (Migration 025) — 6 أعمدة موجودة بأنواع صحيحة
+- **BA-03**: Supabase SMTP → Resend مُفعَّل، قوالب RTL عربية
+- **BA-04**: Auth URLs مُضبَّطة (kahramanat.com)
+- **BA-05**: Resend DNS موثّق (SPF + DKIM + DMARC = كلها خضراء)
+- **BA-06**: كل 28 migration مُطبَّقة على production
+- **BA-07**: Realtime مُفعَّل على `orders` + `order_items`
+- **BA-08**: ⚠ DEFERRED — `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` منتظِران مفاتيح Tap من أحمد
+
+### P1 — SEO Activation
+- **BA-09**: Google Search Console — مسجّل، sitemap مُرسَل
+- **BA-10**: Bing Webmaster Tools — مسجّل، meta tag أُضيف: `B17AC8B01413ADA36191E083B8C09562`
+- **BA-11**: Google Business Profile — ⚠ جزئي — يحتاج تحقق بريدي/هاتفي
+- **BA-12**: GA4 `G-521712793` مُضاف لـ `NEXT_PUBLIC_GA_ID`. Scripts في layout جاهزة. Clarity ID منتظَر.
+- **BA-13**: `@vercel/speed-insights` مثبَّت + `<SpeedInsights />` في layout.tsx
+
+### P2 — E2E QA
+- **BA-16**: Schema.org ✅ — 9 صفحات بـ JSON-LD كامل (Organization, Restaurant, MenuItem, FAQPage, BreadcrumbList, ContactPage)
+- **BA-14, BA-15, BA-17**: ⚠ منتظِرة — تُشغَّل بعد اكتمال deployment الحالي
 
 ---
 
-## Commits This Session
-| Hash | Message |
-|------|---------|
-| `0b2f638` | feat: Email system — React Email templates + Resend integration |
-| (earlier commits) | DASH-NF-1, NF-3, NF-5, Auth E2E suite |
+## Code Changes Committed
+```
+commit 34d2f75
+feat: add Vercel Speed Insights + Bing meta tag + GA4/Clarity env hooks (BA-10/BA-12/BA-13)
+
+Files changed:
+  - src/app/[locale]/layout.tsx  (SpeedInsights + Bing meta + GA4/Clarity hooks)
+  - package.json                 (@vercel/speed-insights added)
+  - package-lock.json
+```
 
 ---
 
-## Ahmed Action Required (carry forward)
+## المهام المتبقية للجلسة القادمة
 
-| Item | Notes |
-|------|-------|
-| **Add `RESEND_API_KEY` to `.env.local`** | Get from resend.com dashboard |
-| **Add `EMAIL_FROM`** | e.g. `كهرمانة <noreply@kahramanat.com>` |
-| **Paste rendered HTML into Supabase Auth Email Templates** | Dashboard → Auth → Email Templates → use files in `emails/rendered/` |
-| **Configure `.env.test`** | Copy `.env.test.example`, fill in test user credentials for E2E |
-| **Set `E2E_ENABLED=true` + secrets in GitHub staging environment** | For CI to run realtime-rls tests |
-| **Apply migration 025 to production** | SQL in Supabase SQL Editor |
-| **Manual auth flow smoke test** | Login, logout, middleware protection, SSR session reads — verify `@supabase/ssr` 0.10.2 works in prod |
-| **Vercel redeploy** | `vercel_push_pending: true` |
-| **Supabase key rotation** | `supabase_key_rotation_required: true` |
+### أولوية عالية
+1. **Clarity ID** → أنشئ مشروع على https://clarity.microsoft.com → أضف `NEXT_PUBLIC_CLARITY_ID` في Vercel → redeploy
+2. **BA-14/15/17 E2E** → بعد اكتمال الـ deployment، شغّل test matrix من `docs/handoff/02-browsing-agent-tasks.md`
+3. **BA-08 Tap** → متى وفّر أحمد `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` → Vercel env → redeploy
+
+### أولوية متوسطة
+4. **BA-11 Google Business Profile** → تحقق بريدي/هاتفي لفرع الرفاع وقلالي
+5. **BA-16 Rich Results Validation** → افحص https://search.google.com/test/rich-results للصفحات الخمس
 
 ---
 
-## Key Decisions This Session
-- **React Email over raw HTML**: All email templates are JSX components with `PreviewProps` for live preview. Zero Tailwind — inline styles only (email client compatibility).
-- **`emails/rendered/` committed**: Pre-built HTML checked into repo so Ahmed can paste into Supabase without running `email:export` locally.
-- **`send.ts` is non-fatal on missing key**: If `RESEND_API_KEY` is not set, logs a warning and returns `{ success: false }` — never throws. Email send failures don't break staff invite flow (matches existing `createStaffFull` behavior where `inviteSent` is a non-fatal flag).
-- **Supabase template approach**: `{{ .ConfirmationURL }}` placeholder survives Supabase's template engine. The `render-for-supabase.ts` script outputs full HTML — Supabase strips `<html>/<head>/<body>` automatically.
-- **Order emails are Resend-only**: They require explicit opt-in from the customer flow — not wired to order events yet. The `send.ts` functions are ready; caller decides when to trigger.
+## حالة النظام عند الإغلاق
+- **Git**: master @ `34d2f75` — pushed ✅
+- **Vercel**: deployment in progress (kahramana.vercel.app)
+- **Supabase**: 28 migrations applied, RLS hardened, Realtime active
+- **Email**: SMTP via Resend live, custom RTL templates active
+- **Analytics**: GA4 hook ready, Speed Insights live
+- **Payments**: Cash + Benefit-QR paths functional. Tap deferred.

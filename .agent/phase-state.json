@@ -1,33 +1,55 @@
 {
   "project": "kahramana-baghdad",
-  "last_updated": "2026-04-30 (session 24 — Production Config & Migration 025)",
+  "last_updated": "2026-04-30 (session 25 — Production Security + SEO Activation)",
   "current_phase": 7,
   "next_phase": 8,
-  "overall_status": "production_configured_verified",
+  "overall_status": "production_seo_activated",
   "deployment": {
     "status": "deployed",
     "url": "https://kahramana.vercel.app",
-    "deployed_at": "2026-04-29",
+    "last_deploy": "2026-04-30",
     "platform": "vercel",
     "region": "sin1",
     "database": "supabase_production",
     "build_pages": 757,
     "git_tag": "v1.5-enterprise-coupons",
     "pending_db_migrations": [],
-    "migration_status": "ALL APPLIED — 019, 020, 022, 023, 025 deployed to production on 2026-04-29",
+    "migration_status": "ALL 28 APPLIED — including 028_security_lockdown on 2026-04-30",
     "applied_db_migrations": [
       "019_report_audit_log.sql — applied 2026-04-29",
       "020_restaurant_profile.sql — applied 2026-04-29",
       "022_staff_complete.sql — applied 2026-04-29",
       "023_settings_schema.sql — applied 2026-04-29",
-      "025_delivery_notes_columns.sql — applied 2026-04-29"
+      "025_delivery_notes_columns.sql — applied 2026-04-29",
+      "028_security_lockdown.sql — applied 2026-04-30 (9 new RLS policies, 7 permissive removed)"
     ],
     "settings_page": "deployed",
     "git_remote": "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-    "git_history": "clean single commit ebddc7f — secrets scrubbed, orphan rewrite",
+    "last_git_commit": "34d2f75 — feat: add Vercel Speed Insights + Bing meta tag + GA4/Clarity env hooks",
     "vercel_push_pending": false,
     "supabase_key_rotation_required": false,
-    "driver_page_fix": "verified on production"
+    "driver_page_fix": "verified on production",
+    "seo_status": {
+      "google_search_console": "registered — sitemap submitted",
+      "bing_webmaster": "registered — meta tag in layout.tsx (B17AC8B01413ADA36191E083B8C09562)",
+      "google_business_profile": "partial — pending postcard verification for Riffa + Qallali",
+      "ga4": "G-521712793 — env hook in layout.tsx, NEXT_PUBLIC_GA_ID set",
+      "clarity": "pending — add NEXT_PUBLIC_CLARITY_ID to Vercel env after creating project",
+      "speed_insights": "live — @vercel/speed-insights installed + <SpeedInsights /> in layout",
+      "schema_org": "complete — Organization, Restaurant, MenuItem, FAQPage, BreadcrumbList, ContactPage"
+    },
+    "env_vars_production": {
+      "NEXT_PUBLIC_SUPABASE_URL": "set",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "set",
+      "SUPABASE_SERVICE_ROLE_KEY": "set",
+      "NEXT_PUBLIC_SITE_URL": "https://kahramanat.com",
+      "RESEND_API_KEY": "set",
+      "EMAIL_FROM": "noreply@kahramanat.com",
+      "NEXT_PUBLIC_GA_ID": "G-521712793",
+      "NEXT_PUBLIC_CLARITY_ID": "PENDING — set after clarity.microsoft.com project creation",
+      "TAP_SECRET_KEY": "DEFERRED — waiting on Ahmed's Tap account",
+      "PAYMENT_WEBHOOK_SECRET": "DEFERRED — waiting on Ahmed's Tap account"
+    }
   },
   "phases": {
     "0": {
