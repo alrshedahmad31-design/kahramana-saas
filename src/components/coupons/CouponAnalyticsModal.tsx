@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import CouponQRCode from './CouponQRCode'
 import type { CouponRow, CouponRedemptionRow } from '@/lib/supabase/custom-types'
@@ -13,6 +13,7 @@ interface Props {
 
 export default function CouponAnalyticsModal({ coupon, onClose }: Props) {
   const isAr = useLocale() === 'ar'
+  const tCommon = useTranslations('common')
   const [redemptions, setRedemptions] = useState<CouponRedemptionRow[]>([])
   const [loading, setLoading]         = useState(true)
 
@@ -35,7 +36,7 @@ export default function CouponAnalyticsModal({ coupon, onClose }: Props) {
     ? redemptions.reduce((acc, r) => acc + Number(r.order_total), 0) / redemptions.length
     : 0
 
-  const currency   = isAr ? 'د.ب' : 'BHD'
+  const currency   = tCommon('currency')
   const dateLocale = isAr ? 'ar-BH' : 'en-BH'
 
   return (

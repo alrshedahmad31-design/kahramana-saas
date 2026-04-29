@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import type { CouponRow } from '@/lib/supabase/custom-types'
 
 interface Props {
@@ -13,7 +13,8 @@ interface Props {
 }
 
 export default function CouponCard({ coupon, onEdit, onTogglePause, onCopy, onViewAnalytics }: Props) {
-  const isAr = useLocale() === 'ar'
+  const isAr    = useLocale() === 'ar'
+  const tCommon = useTranslations('common')
   const [copying, setCopying] = useState(false)
 
   const isExpired   = coupon.valid_until && new Date(coupon.valid_until) < new Date()
@@ -89,7 +90,7 @@ export default function CouponCard({ coupon, onEdit, onTogglePause, onCopy, onVi
           <span className={`text-xs font-bold text-brand-muted uppercase ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
             {coupon.type === 'percentage'
               ? (isAr ? 'خصم' : 'Discount')
-              : (isAr ? 'د.ب خصم' : 'BHD OFF')}
+              : (isAr ? `${tCommon('currency')} خصم` : `${tCommon('currency')} OFF`)}
           </span>
         </div>
 

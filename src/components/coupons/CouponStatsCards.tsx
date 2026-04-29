@@ -1,6 +1,6 @@
 'use client'
 
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import type { CouponRow } from '@/lib/supabase/custom-types'
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
 
 export default function CouponStatsCards({ coupons }: Props) {
   const isAr = useLocale() === 'ar'
+  const tCommon = useTranslations('common')
   const now = new Date()
 
   const activeCount = coupons.filter(c =>
@@ -77,7 +78,7 @@ export default function CouponStatsCards({ coupons }: Props) {
               {totalRevenue.toFixed(2)}
             </h3>
             <span className="text-sm font-black text-brand-gold font-satoshi uppercase">
-              {isAr ? 'د.ب' : 'BHD'}
+              {tCommon('currency')}
             </span>
           </div>
           <span className={`text-brand-gold text-[10px] font-black uppercase tracking-widest ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
