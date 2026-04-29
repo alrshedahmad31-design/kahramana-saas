@@ -201,7 +201,7 @@ export default function DriverDashboard({
                 dotColor="bg-brand-success"
                 pulse
               />
-              <div className="flex flex-col gap-3 mt-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-3">
                 {sortByUrgency(activeOrders).map((order) => (
                   <DriverOrderCard
                     key={order.id}
@@ -231,7 +231,7 @@ export default function DriverDashboard({
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 mt-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-3">
                 {sortByUrgency(availableOrders).map((order) => (
                   <DriverOrderCard
                     key={order.id}
@@ -261,7 +261,7 @@ export default function DriverDashboard({
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 mt-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-3">
                 {completedOrders.map((order) => (
                   <DriverOrderCard
                     key={order.id}
