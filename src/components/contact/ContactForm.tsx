@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
 import { BRANCH_LIST } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import LuxuryIcon from '@/components/icons/LuxuryIcon'
+import { submitContactMessage } from '@/app/[locale]/contact/actions'
 
 const schema = z.object({
   name:      z.string().min(2).max(100),
@@ -16,7 +16,7 @@ const schema = z.object({
   message:   z.string().min(10).max(2000),
 })
 
-type FormData = z.infer<typeof schema>
+type FormData   = z.infer<typeof schema>
 type FieldErrors = Partial<Record<keyof FormData, string>>
 
 export default function ContactForm() {
@@ -28,8 +28,9 @@ export default function ContactForm() {
   const [form, setForm]     = useState<FormData>({
     name: '', email: '', phone: '', branch_id: '', message: '',
   })
+  const [honeypot, setHoneypot] = useState('')
   const [errors,   setErrors]   = useState<FieldErrors>({})
-  const [status,   setStatus]   = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [status,   setStatus]   = useState<'idle' | 'sending' | 'success' | 'error' | 'rate_limit'>('idle')
 
   function update(field: keyof FormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -53,17 +54,17 @@ export default function ContactForm() {
 
     setStatus('sending')
 
-    const supabase = createClient()
-    const { error } = await supabase.from('contact_messages').insert({
+    const response = await submitContactMessage({
       name:      result.data.name,
       email:     result.data.email,
-      phone:     result.data.phone || null,
-      branch_id: result.data.branch_id || null,
+      phone:     result.data.phone ?? '',
+      branch_id: result.data.branch_id ?? '',
       message:   result.data.message,
+      website:   honeypot,
     })
 
-    if (error) {
-      setStatus('error')
+    if (!response.success) {
+      setStatus(response.error === 'rate_limit' ? 'rate_limit' : 'error')
       return
     }
 
@@ -90,6 +91,20 @@ export default function ContactForm() {
       className="flex flex-col gap-5"
       noValidate
     >
+      {/* Honeypot — hidden from real users, filled by bots */}
+      <div style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
+        <label htmlFor="website">Website</label>
+        <input
+          id="website"
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
+
       {/* Name + Email row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <Field label={t('name')} error={errors.name}>
@@ -164,14 +179,14 @@ export default function ContactForm() {
         />
       </Field>
 
-      {/* Server error */}
-      {status === 'error' && (
+      {/* Server errors */}
+      {(status === 'error' || status === 'rate_limit') && (
         <p
           role="alert"
           className="rounded-lg bg-brand-error/10 border border-brand-error/30
                      px-4 py-3 font-satoshi text-sm text-brand-error"
         >
-          {t('error')}
+          {status === 'rate_limit' ? t('rateLimit') : t('error')}
         </p>
       )}
 
