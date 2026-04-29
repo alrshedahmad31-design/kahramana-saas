@@ -39,10 +39,6 @@ export async function createClient(): Promise<SupabaseClient<Database>> {
 export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  
-  console.log('[Supabase Server] URL:', url)
-  console.log('[Supabase Server] Key defined:', !!key)
-  if (key) console.log('[Supabase Server] Key prefix:', key.substring(0, 10))
 
   if (!url || !key) {
     throw new Error(

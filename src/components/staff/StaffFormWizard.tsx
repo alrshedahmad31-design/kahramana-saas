@@ -2,6 +2,7 @@ import { useState, useRef }   from 'react'
 import { BRANCH_LIST }     from '@/constants/contact'
 import type { StaffRole, EmploymentType } from '@/lib/supabase/types'
 import { createStaffFull } from '@/app/[locale]/dashboard/staff/actions'
+import type { CreateStaffFullResult } from '@/app/[locale]/dashboard/staff/actions'
 import { createClient }    from '@/lib/supabase/client'
 
 interface Props {
@@ -17,7 +18,6 @@ interface FormData {
   // Step 0 – Account
   name:      string
   email:     string
-  password:  string
   role:      StaffRole
   branch_id: string
   // Step 1 – Personal
@@ -39,7 +39,7 @@ interface FormData {
 }
 
 const INITIAL: FormData = {
-  name: '', email: '', password: '', role: 'cashier', branch_id: '',
+  name: '', email: '', role: 'cashier', branch_id: '',
   phone: '', date_of_birth: '', id_number: '', address: '', profile_photo_url: '',
   hire_date: '', employment_type: '', hourly_rate: '',
   emergency_contact_name: '', emergency_contact_phone: '',
@@ -82,6 +82,7 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
   const [error,         setError]         = useState<string | null>(null)
   const [loading,       setLoading]       = useState(false)
   const [uploadPending, setUploadPending] = useState(false)
+  const [submitted,     setSubmitted]     = useState<Extract<CreateStaffFullResult, { success: true }> | null>(null)
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
     setData(prev => ({ ...prev, [key]: value }))
@@ -121,10 +122,10 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
 
   function validateStep(): string | null {
     if (step === 0) {
-      if (!data.name.trim())    return isAr ? 'الاسم مطلوب'  : 'Name is required'
-      if (!data.email.trim())   return isAr ? 'البريد مطلوب' : 'Email is required'
-      if (!data.password || data.password.length < 8)
-        return isAr ? 'كلمة المرور ٨ أحرف على الأقل' : 'Password must be at least 8 characters'
+      if (!data.name.trim())  return isAr ? 'الاسم مطلوب'  : 'Name is required'
+      if (!data.email.trim()) return isAr ? 'البريد مطلوب' : 'Email is required'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()))
+        return isAr ? 'البريد الإلكتروني غير صحيح' : 'Invalid email address'
     }
     if (step === 4) {
       if (data.clock_pin && !/^\d{4}$/.test(data.clock_pin))
@@ -153,7 +154,6 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
     const result = await createStaffFull({
       name:      data.name.trim(),
       email:     data.email.trim(),
-      password:  data.password,
       role:      data.role,
       branch_id: data.branch_id || null,
       locale,
@@ -176,8 +176,7 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
       setError(result.error)
       return
     }
-    onSuccess()
-    onClose()
+    setSubmitted(result)
   }
 
   const fieldCls = `w-full bg-brand-surface-2 border border-brand-border rounded-xl
@@ -185,6 +184,81 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
     focus:outline-none focus:border-brand-gold transition-colors`
 
   const labelCls = `block font-almarai font-bold text-brand-muted text-xs mb-1.5`
+
+  // ── Success screen ──────────────────────────────────────────────────────────
+  if (submitted) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4
+                   bg-brand-black/80 backdrop-blur-sm"
+        onClick={e => { if (e.target === e.currentTarget) { onSuccess(); onClose() } }}
+      >
+        <div
+          className="w-full max-w-sm bg-brand-surface border border-brand-border rounded-2xl
+                     flex flex-col items-center gap-5 px-8 py-10 shadow-2xl text-center"
+          dir={isAr ? 'rtl' : 'ltr'}
+        >
+          <div className="w-16 h-16 rounded-2xl bg-brand-success/15 border border-brand-success/30
+                          flex items-center justify-center">
+            <CheckCircleIcon />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <h3 className={`font-black text-xl text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+              {isAr ? 'تم إضافة الموظف بنجاح!' : 'Staff member added!'}
+            </h3>
+            <p className={`text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              <span className="text-brand-text font-bold">{submitted.staffName}</span>
+            </p>
+          </div>
+
+          <div className={`w-full rounded-xl border px-4 py-3 text-sm
+            ${submitted.inviteSent
+              ? 'bg-brand-success/8 border-brand-success/25 text-brand-success'
+              : 'bg-brand-gold/8 border-brand-gold/25 text-brand-gold'
+            }`}>
+            {submitted.inviteSent ? (
+              <>
+                <p className={`font-bold mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? 'تم إرسال رسالة الدعوة' : 'Invitation email sent'}
+                </p>
+                <p className={`text-xs opacity-80 break-all ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                   dir="ltr">
+                  {submitted.staffEmail}
+                </p>
+                <p className={`text-xs opacity-70 mt-1.5 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr
+                    ? 'يجب على الموظف فتح الإيميل والضغط على الرابط لإنشاء كلمة المرور'
+                    : 'Staff must open the email and click the link to set their password'}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className={`font-bold mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? 'تعذّر إرسال الدعوة' : 'Invitation email failed'}
+                </p>
+                <p className={`text-xs opacity-80 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr
+                    ? 'يمكن إعادة إرسال الدعوة من قائمة الموظفين'
+                    : 'You can resend the invitation from the staff list'}
+                </p>
+              </>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { onSuccess(); onClose() }}
+            className="w-full min-h-[48px] rounded-xl bg-brand-gold text-brand-black
+                       font-cairo font-black text-base
+                       hover:bg-brand-gold-light transition-colors active:scale-[0.98]"
+          >
+            {isAr ? 'إغلاق' : 'Done'}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -264,16 +338,11 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
                   className={fieldCls}
                   dir="ltr"
                 />
-              </div>
-              <div>
-                <label className={labelCls}>{isAr ? 'كلمة المرور *' : 'Password *'}</label>
-                <input
-                  type="password"
-                  value={data.password}
-                  onChange={e => set('password', e.target.value)}
-                  placeholder={isAr ? '٨ أحرف على الأقل' : 'Min 8 characters'}
-                  className={fieldCls}
-                />
+                <p className={`mt-1.5 text-xs text-brand-muted/70 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr
+                    ? 'سيتلقى الموظف رابط تفعيل على هذا البريد لإنشاء كلمة مروره'
+                    : 'Staff will receive an activation link at this email to set their password'}
+                </p>
               </div>
               <div>
                 <label className={labelCls}>{isAr ? 'الدور *' : 'Role *'}</label>
@@ -578,6 +647,10 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
+
+function CheckCircleIcon() {
+  return <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-brand-success" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+}
 
 function CloseIcon() {
   return <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>

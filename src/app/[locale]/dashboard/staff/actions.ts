@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
-import { canManageStaff, canAssignRole, canDeactivateStaff } from '@/lib/auth/rbac'
+import { canManageStaff, canAssignRole, canDeactivateStaff, ROLE_RANK } from '@/lib/auth/rbac'
 import type { StaffRole, StaffBasicRow, EmploymentType } from '@/lib/supabase/types'
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -149,7 +149,6 @@ export async function updateStaff(input: UpdateStaffInput): Promise<ActionResult
 export type CreateStaffFullInput = {
   name:      string
   email:     string
-  password:  string
   role:      StaffRole
   branch_id: string | null
   locale:    string
@@ -167,7 +166,19 @@ export type CreateStaffFullInput = {
   profile_photo_url?:       string
 }
 
-export async function createStaffFull(input: CreateStaffFullInput): Promise<ActionResult> {
+export type CreateStaffFullResult =
+  | { success: true;  staffName: string; staffEmail: string; inviteSent: boolean }
+  | { success: false; error: string }
+
+// Type alias for the auth admin subset we use
+type AuthAdmin = {
+  createUser:         (opts: { email: string; password: string; email_confirm: boolean; user_metadata?: Record<string, unknown> }) => Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }>
+  deleteUser:         (id: string)  => Promise<{ error: { message: string } | null }>
+  inviteUserByEmail:  (email: string, opts?: { data?: Record<string, unknown> }) => Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }>
+  getUserById:        (id: string)  => Promise<{ data: { user: { id: string; email?: string } | null }; error: { message: string } | null }>
+}
+
+export async function createStaffFull(input: CreateStaffFullInput): Promise<CreateStaffFullResult> {
   const caller = await getSession()
   if (!caller) return { success: false, error: 'Unauthorized' }
   if (!canAssignRole(caller, input.role)) return { success: false, error: 'Insufficient permissions' }
@@ -176,15 +187,16 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Acti
     return { success: false, error: 'PIN must be exactly 4 digits' }
   }
 
-  const service = await createServiceClient()
+  const service = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const authAdmin = (service.auth as any).admin as {
-    createUser: (opts: { email: string; password: string; email_confirm: boolean }) => Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }>
-    deleteUser: (id: string) => Promise<void>
-  }
+  const authAdmin = (service.auth as any).admin as AuthAdmin
 
+  // Create auth user with a random temp password — the invite email lets staff set their own
   const { data: authData, error: authError } = await authAdmin.createUser({
-    email: input.email, password: input.password, email_confirm: true,
+    email:          input.email,
+    password:       `${crypto.randomUUID()}-${Date.now()}`,
+    email_confirm:  true,
+    user_metadata:  { name: input.name, role: input.role },
   })
   if (authError || !authData.user) {
     return { success: false, error: authError?.message ?? 'Failed to create auth user' }
@@ -226,7 +238,46 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Acti
     }),
   )
 
+  // Send invitation email so staff can set their own password (non-fatal if SMTP not configured)
+  let inviteSent = false
+  try {
+    const { error: inviteError } = await authAdmin.inviteUserByEmail(input.email, {
+      data: { name: input.name, role: input.role },
+    })
+    if (inviteError) {
+      console.warn('[createStaffFull] invite email failed:', inviteError.message)
+    } else {
+      inviteSent = true
+    }
+  } catch (e) {
+    console.warn('[createStaffFull] invite email exception:', e)
+  }
+
   await revalidateStaff(input.locale)
+  return { success: true, staffName: input.name, staffEmail: input.email, inviteSent }
+}
+
+// ── resendStaffInvitation ─────────────────────────────────────────────────────
+
+export async function resendStaffInvitation(staffId: string): Promise<ActionResult> {
+  const caller = await getSession()
+  if (!caller) return { success: false, error: 'Unauthorized' }
+  if ((ROLE_RANK[caller.role!] ?? 0) < ROLE_RANK['branch_manager']) {
+    return { success: false, error: 'Insufficient permissions' }
+  }
+
+  const service = createServiceClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const authAdmin = (service.auth as any).admin as AuthAdmin
+
+  const { data: userData, error: userError } = await authAdmin.getUserById(staffId)
+  if (userError || !userData?.user?.email) {
+    return { success: false, error: 'Could not find email for this staff member' }
+  }
+
+  const { error: inviteError } = await authAdmin.inviteUserByEmail(userData.user.email)
+  if (inviteError) return { success: false, error: inviteError.message }
+
   return { success: true }
 }
 

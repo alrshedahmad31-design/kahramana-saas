@@ -4,7 +4,7 @@ import { useState }           from 'react'
 import Link                   from 'next/link'
 import { useTranslations }    from 'next-intl'
 import type { StaffExtendedRow, StaffRole } from '@/lib/supabase/types'
-import { toggleStaffActive }  from '@/app/[locale]/dashboard/staff/actions'
+import { toggleStaffActive, resendStaffInvitation } from '@/app/[locale]/dashboard/staff/actions'
 import { ROLE_RANK }          from '@/lib/auth/rbac'
 import { BRANCH_LIST }        from '@/constants/contact'
 
@@ -53,8 +53,9 @@ export default function StaffCardGrid({
   const tR = useTranslations('dashboard.roles')
   const isAr = locale === 'ar'
 
-  const [pending, setPending] = useState<string | null>(null)
-  const [toast,   setToast]   = useState<string | null>(null)
+  const [pending,       setPending]       = useState<string | null>(null)
+  const [resendPending, setResendPending] = useState<string | null>(null)
+  const [toast,         setToast]         = useState<string | null>(null)
 
   const manageable = new Set(manageableIds)
   const canCreate  = callerRole !== null && (ROLE_RANK[callerRole] ?? 0) >= ROLE_RANK['branch_manager']
@@ -69,6 +70,15 @@ export default function StaffCardGrid({
     const result = await toggleStaffActive(member.id, !member.is_active, locale)
     setPending(null)
     if (result.success) showToast(member.is_active ? t('deactivateSuccess') : t('activateSuccess'))
+  }
+
+  async function handleResend(memberId: string, memberName: string) {
+    setResendPending(memberId)
+    const result = await resendStaffInvitation(memberId)
+    setResendPending(null)
+    showToast(result.success
+      ? (isAr ? `تم إرسال الدعوة إلى ${memberName}` : `Invitation resent to ${memberName}`)
+      : (isAr ? `فشل الإرسال: ${result.error}` : `Failed: ${result.error}`))
   }
 
   return (
@@ -222,6 +232,22 @@ export default function StaffCardGrid({
                   </>
                 )}
               </div>
+
+              {/* Resend invitation — managers only */}
+              {canManage && (
+                <button
+                  type="button"
+                  disabled={resendPending === member.id}
+                  onClick={() => handleResend(member.id, member.name)}
+                  className="w-full flex items-center justify-center gap-1.5 py-2
+                             rounded-xl border border-brand-border text-brand-muted
+                             font-almarai text-xs hover:text-brand-gold hover:border-brand-gold/40
+                             transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resendPending === member.id ? <SpinnerIcon /> : <MailIcon />}
+                  {isAr ? 'إعادة إرسال الدعوة' : 'Resend Invitation'}
+                </button>
+              )}
             </article>
           )
         })}
@@ -265,6 +291,9 @@ function EditIcon() {
 }
 function SpinnerIcon() {
   return <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="animate-spin" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+}
+function MailIcon() {
+  return <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
 }
 function TeamIcon() {
   return <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-brand-muted" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
