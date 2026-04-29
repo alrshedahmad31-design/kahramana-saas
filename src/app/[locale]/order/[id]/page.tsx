@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { headers } from 'next/headers'
 import { Link } from '@/i18n/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { OrderWithItems } from '@/lib/supabase/custom-types'
@@ -48,6 +49,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
     // Supabase not configured — show generic confirmation below
   }
 
+  const nonce   = (await headers()).get('x-nonce') ?? undefined
   const shortId = id.slice(-8).toUpperCase()
   const branch  = order ? BRANCHES[order.branch_id as keyof typeof BRANCHES] ?? null : null
 
@@ -69,6 +71,7 @@ export default async function OrderConfirmationPage({ params }: Props) {
         <script
           type="application/ld+json"
           suppressHydrationWarning
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
         />
       )}

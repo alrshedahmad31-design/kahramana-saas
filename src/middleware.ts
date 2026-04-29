@@ -7,25 +7,80 @@ import type { StaffRole } from '@/lib/supabase/custom-types'
 
 const intlMiddleware = createMiddleware(routing)
 
-const DASHBOARD_PATTERN = /^(\/en)?\/dashboard(\/.*)?$/
-const LOGIN_PATTERN     = /^(\/en)?\/login$/
-// Routes that require branch_manager rank or above
-const STAFF_ROUTE_PATTERN = /^(\/en)?\/dashboard\/staff(\/.*)?$/
+const DASHBOARD_PATTERN   = /^(\/en)?\/dashboard(\/.*)?$/
+const LOGIN_PATTERN        = /^(\/en)?\/login$/
+const STAFF_ROUTE_PATTERN  = /^(\/en)?\/dashboard\/staff(\/.*)?$/
 
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
 
+// ── CSP builder (nonce injected per request) ──────────────────────────────────
+
+function buildCsp(nonce: string): string {
+  const isDev       = process.env.NODE_ENV !== 'production'
+  const evalSrc     = isDev ? "'unsafe-eval'" : ''
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' ${evalSrc} https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://cdn.sanity.io`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://cdn.sanity.io https://images.unsplash.com https://*.google.com",
+    "font-src 'self'",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com",
+    "media-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "frame-src 'self' https://www.google.com",
+    "upgrade-insecure-requests",
+  ].join('; ')
+}
+
+// ── Finalize a "next" response: forward nonce + add CSP + merge cookies ───────
+
+function finalizeResponse(
+  headersWithNonce: Headers,
+  nonce:            string,
+  supabaseResponse: NextResponse,
+  intlResponse:     NextResponse,
+): NextResponse {
+  // Create a fresh "next" response that forwards the nonce to Server Components
+  // via modified request headers (readable via headers() in Server Components)
+  const response = NextResponse.next({ request: { headers: headersWithNonce } })
+
+  // Copy intl response headers (e.g. locale cookie, Link header)
+  intlResponse.headers.forEach((value, key) => {
+    if (key.toLowerCase() !== 'content-security-policy') {
+      response.headers.set(key, value)
+    }
+  })
+
+  // Merge cookies from both responses
+  supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+  intlResponse.cookies.getAll().forEach((c)     => response.cookies.set(c))
+
+  response.headers.set('Content-Security-Policy', buildCsp(nonce))
+  return response
+}
+
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Generate nonce for this request
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const headersWithNonce = new Headers(request.headers)
+  headersWithNonce.set('x-nonce', nonce)
 
   // Skip RBAC entirely if Supabase env vars are missing (local dev without Supabase)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !supabaseKey) {
-    return intlMiddleware(request)
+    const res = intlMiddleware(request)
+    res.headers.set('Content-Security-Policy', buildCsp(nonce))
+    return res
   }
 
   // Collect Supabase auth-cookie updates in a mutable response
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = NextResponse.next({ request: { headers: headersWithNonce } })
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
@@ -34,7 +89,7 @@ export default async function middleware(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }: { name: string; value: string }) =>
           request.cookies.set(name, value),
         )
-        supabaseResponse = NextResponse.next({ request })
+        supabaseResponse = NextResponse.next({ request: { headers: headersWithNonce } })
         cookiesToSet.forEach(
           ({ name, value, options }: { name: string; value: string; options?: CookieOptionsWithName }) =>
             supabaseResponse.cookies.set(name, value, options),
@@ -111,13 +166,7 @@ export default async function middleware(request: NextRequest) {
   // ── Run next-intl locale routing ──────────────────────────────────────────
 
   const intlResponse = intlMiddleware(request)
-
-  // Merge Supabase cookie updates into the intl response
-  supabaseResponse.cookies.getAll().forEach((cookie) => {
-    intlResponse.cookies.set(cookie)
-  })
-
-  return intlResponse
+  return finalizeResponse(headersWithNonce, nonce, supabaseResponse, intlResponse)
 }
 
 export const config = {

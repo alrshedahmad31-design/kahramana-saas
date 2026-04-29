@@ -1,4 +1,5 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server'
+import { headers } from 'next/headers'
 import { BRANCH_LIST } from '@/constants/contact'
 import { getBranchMetadata } from '@/lib/branches'
 import BranchesHero from '@/components/branches/branches-hero'
@@ -33,6 +34,7 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
   setRequestLocale(locale)
   const localeKey = locale === 'ar' ? 'ar' : 'en'
   const isAr = locale === 'ar'
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations('branches')
 
   // Sort branches: active first
@@ -62,16 +64,19 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 

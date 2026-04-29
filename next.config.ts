@@ -3,46 +3,8 @@ import createNextIntlPlugin from 'next-intl/plugin'
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
-// 'unsafe-eval' is only needed by the Next.js dev runtime / Sanity Studio dev.
-// In production we drop it so an injected payload cannot eval() arbitrary JS.
-const isDev = process.env.NODE_ENV !== 'production'
-const scriptSrcEval = isDev ? "'unsafe-eval'" : ''
-
-const ContentSecurityPolicy = `
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' ${scriptSrcEval}
-    https://www.googletagmanager.com
-    https://www.google-analytics.com
-    https://www.clarity.ms
-    https://cdn.sanity.io;
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' data: blob:
-    https://cdn.sanity.io
-    https://images.unsplash.com
-    https://*.google.com;
-  font-src 'self';
-  connect-src 'self'
-    https://*.supabase.co
-    wss://*.supabase.co
-    https://api.sanity.io
-    https://cdn.sanity.io
-    https://www.google-analytics.com
-    https://analytics.google.com
-    https://www.googletagmanager.com
-    https://www.clarity.ms
-    https://dc.services.visualstudio.com;
-  media-src 'self';
-  object-src 'none';
-  base-uri 'self';
-  form-action 'self';
-  frame-ancestors 'none';
-  frame-src 'self'
-    https://www.google.com;
-  upgrade-insecure-requests;
-`.replace(/\n\s+/g, ' ').trim()
-
+// CSP is injected per-request with a nonce in src/middleware.ts
 const securityHeaders = [
-  { key: 'Content-Security-Policy',   value: ContentSecurityPolicy },
   { key: 'X-Frame-Options',           value: 'DENY' },
   { key: 'X-Content-Type-Options',    value: 'nosniff' },
   { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },

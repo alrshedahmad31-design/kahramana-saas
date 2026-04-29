@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations, getLocale } from 'next-intl/server'
+import { headers } from 'next/headers'
 import CinematicHero from '@/components/home/CinematicHero'
 import FeatureArtifacts from '@/components/home/FeatureArtifacts'
 import PhilosophyManifesto from '@/components/home/PhilosophyManifesto'
@@ -32,6 +33,7 @@ export default async function HomePage() {
   const locale = (await getLocale()) as 'ar' | 'en'
   const t      = await getTranslations()
   const isRTL  = locale === 'ar'
+  const nonce  = (await headers()).get('x-nonce') ?? undefined
 
   const organizationSchema = buildOrganizationSchema(locale)
   const faqSchema          = buildFAQSchema(buildHomepageFAQ(locale))
@@ -41,11 +43,13 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 

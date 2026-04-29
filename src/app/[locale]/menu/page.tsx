@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getLocale, getTranslations } from 'next-intl/server'
+import { headers } from 'next/headers'
 import {
   getAllMenuItems,
   getMenuCategories,
@@ -32,6 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function MenuPage() {
   const locale = (await getLocale()) as LocaleCode
   const isRTL = locale === 'ar'
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations({ locale, namespace: 'menu' })
 
   const categories = getMenuCategories()
@@ -58,11 +60,13 @@ export default async function MenuPage() {
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <MenuHero

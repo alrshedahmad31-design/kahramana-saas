@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
+import { headers } from 'next/headers'
 import {
   getItemSlugs,
   getMenuItemBySlug,
@@ -71,6 +72,7 @@ export default async function MenuItemPage({ params }: Props) {
   if (!item) notFound()
 
   const isRTL = locale === 'ar'
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations({ locale, namespace: 'menu' })
   const tCommon = await getTranslations({ locale, namespace: 'common' })
   const relatedItems = getRelatedItems(item.slug, 3)
@@ -102,11 +104,13 @@ export default async function MenuItemPage({ params }: Props) {
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(dishSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <ItemDetailHero

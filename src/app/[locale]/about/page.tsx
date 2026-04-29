@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
+import { headers } from 'next/headers'
 
 // ── Components ──────────────────────────────────────────────────────────────
 import StoryHero from '@/components/story/StoryHero'
@@ -36,6 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AboutPage() {
   const locale = await getLocale()
   const isAr   = locale === 'ar'
+  const nonce  = (await headers()).get('x-nonce') ?? undefined
 
   const schemaOrg = {
     '@context': 'https://schema.org',
@@ -51,6 +53,7 @@ export default async function AboutPage() {
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
       />
 

@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { headers } from 'next/headers'
 import CateringHero from '@/components/catering/catering-hero'
 import EventTypes from '@/components/catering/event-types'
 import CateringProtocol from '@/components/catering/catering-protocol'
@@ -37,6 +38,7 @@ export default async function CateringPage({ params }: Props) {
   setRequestLocale(locale)
   const isAr = locale === 'ar'
   const localeKey = locale === 'ar' ? 'ar' : 'en'
+  const nonce = (await headers()).get('x-nonce') ?? undefined
 
   const serviceSchema = {
     '@context': 'https://schema.org',
@@ -62,11 +64,13 @@ export default async function CateringPage({ params }: Props) {
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <CateringHero />
