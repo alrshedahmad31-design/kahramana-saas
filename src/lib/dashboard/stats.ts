@@ -104,8 +104,7 @@ export async function getDashboardData(branchId?: string | null): Promise<Dashbo
   if (branchId) yestQ = yestQ.eq('branch_id', branchId)
 
   // Top items today (order_items joined to orders)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let itemsQ = (sb as any)
+  let itemsQ = sb
     .from('order_items')
     .select('name_ar, name_en, quantity, orders!inner(created_at, status, branch_id)')
     .gte('orders.created_at', todayStart.toISOString())

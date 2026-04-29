@@ -47,7 +47,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
   useEffect(() => {
     if (!order) { setItems([]); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(supabase as any)
+    ;supabase
       .from('order_items')
       .select('id, name_ar, name_en, quantity, unit_price_bhd, item_total_bhd, selected_size, selected_variant')
       .eq('order_id', order.id)
@@ -59,7 +59,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
     if (!order) return
     setCtaLoading('cancel')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    await supabase
       .from('orders')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', order.id)
@@ -71,7 +71,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
     if (!order) return
     setCtaLoading('confirm')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    await supabase
       .from('orders')
       .update({ status: 'delivered', updated_at: new Date().toISOString() })
       .eq('id', order.id)

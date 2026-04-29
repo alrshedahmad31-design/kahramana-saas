@@ -65,9 +65,8 @@ export default function CinematicButton({
       )
     }
     return (
-      <Link 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        href={href as any} 
+      <Link
+        href={href as Parameters<typeof Link>[0]['href']}
         className={baseClasses}
       >
         {content}

@@ -34,12 +34,12 @@ export default function MenuSettings() {
   useEffect(() => {
     async function load() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('system_settings')
         .select('value')
         .eq('key', 'menu_display')
         .maybeSingle()
-      if (data?.value) setSettings({ ...DEFAULTS, ...data.value })
+      if (data?.value) setSettings({ ...DEFAULTS, ...(data.value as Record<string, unknown>) })
       setLoading(false)
     }
     load()
@@ -49,9 +49,9 @@ export default function MenuSettings() {
     setSaveState('saving')
     const { data: { user } } = await supabase.auth.getUser()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('system_settings')
-      .upsert({ key: 'menu_display', value: settings, updated_by: user?.id ?? null, updated_at: new Date().toISOString() })
+      .upsert({ key: 'menu_display', value: settings as never, updated_by: user?.id ?? null, updated_at: new Date().toISOString() })
     setSaveState(error ? 'error' : 'saved')
     if (!error) setTimeout(() => setSaveState('idle'), 2500)
   }

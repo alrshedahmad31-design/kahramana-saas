@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS coupon_redemptions (
 
 CREATE INDEX IF NOT EXISTS idx_redemptions_coupon ON coupon_redemptions(coupon_id);
 CREATE INDEX IF NOT EXISTS idx_redemptions_customer ON coupon_redemptions(customer_id);
-CREATE INDEX IF NOT EXISTS idx_redemptions_date ON coupon_redemptions(DATE(redeemed_at));
+-- DATE(timestamptz) is STABLE (not IMMUTABLE) — Postgres rejects it in a
+-- functional index. Index the raw timestamptz; range queries work fine.
+CREATE INDEX IF NOT EXISTS idx_redemptions_redeemed_at ON coupon_redemptions(redeemed_at);
 
 -- 3. Coupon templates (pre-made campaigns for quick launch)
 CREATE TABLE IF NOT EXISTS coupon_templates (

@@ -90,7 +90,7 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
     if (!nextStatus || !canAdvance) return
     startTransition(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('orders')
         .update({ status: nextStatus })
         .eq('id', order.id)

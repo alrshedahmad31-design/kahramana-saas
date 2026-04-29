@@ -14,9 +14,7 @@ export async function verifyPin(pin: string): Promise<ClockResult> {
   if (!/^\d{4}$/.test(pin)) return { success: false, error: 'Invalid PIN format' }
 
   const service = await createServiceClient()
-  // clock_pin is a new column — use `as any` until DB type is regenerated
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (service as any)
+  const { data, error } = await service
     .from('staff_basic')
     .select('id, name, role, branch_id, is_active, clock_pin')
     .eq('clock_pin', pin)
@@ -27,9 +25,7 @@ export async function verifyPin(pin: string): Promise<ClockResult> {
 
   const staff = data as { id: string; name: string; role: StaffRole; branch_id: string | null }
 
-  // Check for an open time entry
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: openEntry } = await (service as any)
+  const { data: openEntry } = await service
     .from('time_entries')
     .select('id')
     .eq('staff_id', staff.id)
@@ -48,9 +44,7 @@ export async function verifyPin(pin: string): Promise<ClockResult> {
 export async function clockIn(staffId: string): Promise<{ success: boolean; error?: string; entryId?: string }> {
   const service = await createServiceClient()
 
-  // Guard against double clock-in
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: open } = await (service as any)
+  const { data: open } = await service
     .from('time_entries')
     .select('id')
     .eq('staff_id', staffId)
@@ -59,8 +53,7 @@ export async function clockIn(staffId: string): Promise<{ success: boolean; erro
 
   if (open) return { success: false, error: 'Already clocked in' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (service as any)
+  const { data, error } = await service
     .from('time_entries')
     .insert({ staff_id: staffId, clock_in: new Date().toISOString(), break_minutes: 0 })
     .select('id')
@@ -75,8 +68,7 @@ export async function clockIn(staffId: string): Promise<{ success: boolean; erro
 export async function clockOut(entryId: string, staffId: string): Promise<{ success: boolean; error?: string; hoursWorked?: number }> {
   const service = await createServiceClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: entry } = await (service as any)
+  const { data: entry } = await service
     .from('time_entries')
     .select('id, clock_in, break_minutes')
     .eq('id', entryId)
@@ -90,8 +82,7 @@ export async function clockOut(entryId: string, staffId: string): Promise<{ succ
   const totalHours    = calcTotalHours(clock_in, clockOutTime, break_minutes)
   const overtimeHours = calcOvertimeHours(totalHours)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (service as any).from('time_entries').update({
+  const { error } = await service.from('time_entries').update({
     clock_out:      clockOutTime,
     total_hours:    totalHours,
     overtime_hours: overtimeHours,

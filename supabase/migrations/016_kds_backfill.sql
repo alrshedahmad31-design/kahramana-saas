@@ -8,9 +8,13 @@
 --   Any orders placed before migration 005 was applied to production have
 --   no kds_queue rows. This migration backfills them.
 --
--- Only inserts rows for active orders (pending/under_review/accepted/preparing).
+-- Only inserts rows for active orders (new/under_review/accepted/preparing).
 -- Completed, cancelled, and delivered orders are skipped intentionally.
 -- Existing kds_queue rows are not touched (NOT EXISTS guard).
+--
+-- NOTE: 'pending' is NOT a member of the order_status enum (the initial state
+-- is 'new'). The kds_queue.status enum, however, does have 'pending' — that's
+-- what the CASE expression below populates.
 -- ============================================================
 
 INSERT INTO kds_queue (order_id, order_item_id, station, status, priority, created_at)
@@ -28,7 +32,7 @@ SELECT
 FROM order_items oi
 JOIN orders o ON o.id = oi.order_id
 LEFT JOIN menu_items_sync mis ON mis.slug = oi.menu_item_slug
-WHERE o.status IN ('pending', 'under_review', 'accepted', 'preparing')
+WHERE o.status IN ('new', 'under_review', 'accepted', 'preparing')
   AND NOT EXISTS (
     SELECT 1 FROM kds_queue kq WHERE kq.order_item_id = oi.id
   );

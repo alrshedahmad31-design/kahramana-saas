@@ -41,7 +41,7 @@ export default function HoursSettings() {
   useEffect(() => {
     async function loadBranches() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('branches')
         .select('id, name_ar, name_en')
         .eq('is_active', true)
@@ -61,15 +61,14 @@ export default function HoursSettings() {
     async function loadHours() {
       setLoading(true)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('business_hours')
         .select('*')
         .eq('branch_id', branchId)
         .order('day_of_week')
       if (data && data.length === 7) {
         setHours(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (data as any[]).map(row => ({
+          data.map(row => ({
             dayIndex:  row.day_of_week,
             openTime:  row.open_time,
             closeTime: row.close_time,
@@ -100,7 +99,7 @@ export default function HoursSettings() {
       updated_at:  new Date().toISOString(),
     }))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('business_hours')
       .upsert(rows, { onConflict: 'branch_id,day_of_week' })
     if (error) {

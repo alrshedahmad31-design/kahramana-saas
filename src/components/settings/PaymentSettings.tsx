@@ -26,12 +26,12 @@ export default function PaymentSettings() {
   useEffect(() => {
     async function load() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('system_settings')
         .select('value')
         .eq('key', 'payment_methods')
         .maybeSingle()
-      if (data?.value) setMethods({ ...DEFAULTS, ...data.value })
+      if (data?.value) setMethods({ ...DEFAULTS, ...(data.value as Record<string, unknown>) })
       setLoading(false)
     }
     load()
@@ -41,9 +41,9 @@ export default function PaymentSettings() {
     setSaveState('saving')
     const { data: { user } } = await supabase.auth.getUser()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('system_settings')
-      .upsert({ key: 'payment_methods', value: methods, updated_by: user?.id ?? null, updated_at: new Date().toISOString() })
+      .upsert({ key: 'payment_methods', value: methods as never, updated_by: user?.id ?? null, updated_at: new Date().toISOString() })
     setSaveState(error ? 'error' : 'saved')
     if (!error) setTimeout(() => setSaveState('idle'), 2500)
   }

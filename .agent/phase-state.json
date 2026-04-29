@@ -1,9 +1,9 @@
 {
   "project": "kahramana-baghdad",
-  "last_updated": "2026-04-29 (session 16)",
+  "last_updated": "2026-04-30 (session 24 — Production Config & Migration 025)",
   "current_phase": 7,
   "next_phase": 8,
-  "overall_status": "production_deployed",
+  "overall_status": "production_configured_verified",
   "deployment": {
     "status": "deployed",
     "url": "https://kahramana.vercel.app",
@@ -14,19 +14,20 @@
     "build_pages": 757,
     "git_tag": "v1.5-enterprise-coupons",
     "pending_db_migrations": [],
-    "migration_status": "ALL APPLIED — 019, 020, 022, 023 deployed to production on 2026-04-29",
+    "migration_status": "ALL APPLIED — 019, 020, 022, 023, 025 deployed to production on 2026-04-29",
     "applied_db_migrations": [
       "019_report_audit_log.sql — applied 2026-04-29",
       "020_restaurant_profile.sql — applied 2026-04-29",
       "022_staff_complete.sql — applied 2026-04-29",
-      "023_settings_schema.sql — applied 2026-04-29"
+      "023_settings_schema.sql — applied 2026-04-29",
+      "025_delivery_notes_columns.sql — applied 2026-04-29"
     ],
     "settings_page": "deployed",
     "git_remote": "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
     "git_history": "clean single commit ebddc7f — secrets scrubbed, orphan rewrite",
-    "vercel_push_pending": true,
-    "supabase_key_rotation_required": true,
-    "driver_page_fix": "committed locally, needs vercel redeploy"
+    "vercel_push_pending": false,
+    "supabase_key_rotation_required": false,
+    "driver_page_fix": "verified on production"
   },
   "phases": {
     "0": {

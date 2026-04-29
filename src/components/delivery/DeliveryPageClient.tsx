@@ -47,26 +47,21 @@ export default function DeliveryPageClient({
   // ── Realtime: orders ────────────────────────────────────────────────────────
   const refreshOrders = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('orders')
       .select(`
-        id, order_number, status, customer_name, customer_phone,
+        id, status, customer_name, customer_phone,
         branch_id, notes, source, total_bhd, created_at, updated_at,
         assigned_driver_id, order_items(id)
       `)
-      .in('status', ACTIVE_STATUSES)
+      .in('status', ACTIVE_STATUSES as never[])
       .order('created_at', { ascending: true })
 
     if (!data) return
     const nowMs = Date.now()
-    setOrders(data.map((o: {
-      id: string; order_number: string; status: string; customer_name: string | null
-      customer_phone: string | null; branch_id: string; notes: string | null; source: string
-      total_bhd: number; created_at: string; updated_at: string; assigned_driver_id: string | null
-      order_items: unknown[]
-    }) => ({
+    setOrders(data.map((o) => ({
       id:               o.id,
-      order_number:     o.order_number,
+      order_number:     undefined,
       status:           o.status as DeliveryOrder['status'],
       customer_name:    o.customer_name,
       customer_phone:   o.customer_phone,
@@ -99,8 +94,8 @@ export default function DeliveryPageClient({
     }
     prevCountRef.current = data.length
 
-    const inTransit  = data.filter((o: { status: string }) => o.status === 'out_for_delivery').length
-    const lateCount  = data.filter((o: { created_at: string }) =>
+    const inTransit  = data.filter((o) => o.status === 'out_for_delivery').length
+    const lateCount  = data.filter((o) =>
       (nowMs - new Date(o.created_at).getTime()) / 60_000 > 45
     ).length
     setMetrics(prev => ({ ...prev, orders_total: data.length, in_transit: inTransit, late_count: lateCount }))

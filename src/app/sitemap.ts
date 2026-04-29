@@ -70,6 +70,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority:        0.7,
       alternates:      alternates('/catering', '/en/catering'),
     },
+    {
+      url:             url('/privacy'),
+      lastModified:    now,
+      changeFrequency: 'yearly',
+      priority:        0.2,
+      alternates:      alternates('/privacy', '/en/privacy'),
+    },
+    {
+      url:             url('/terms'),
+      lastModified:    now,
+      changeFrequency: 'yearly',
+      priority:        0.2,
+      alternates:      alternates('/terms', '/en/terms'),
+    },
+    {
+      url:             url('/refund-policy'),
+      lastModified:    now,
+      changeFrequency: 'yearly',
+      priority:        0.2,
+      alternates:      alternates('/refund-policy', '/en/refund-policy'),
+    },
   ]
 
   // ── Menu category pages ───────────────────────────────────────────────────

@@ -33,7 +33,7 @@ export default async function DriverPage({ params }: Props) {
 
   // Active orders for this branch (ready = at restaurant, out_for_delivery = en route)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let activeQ = (supabase as any)
+  let activeQ = supabase
     .from('orders')
     .select(ORDER_SELECT)
     .in('status', ['ready', 'out_for_delivery'])
@@ -45,7 +45,7 @@ export default async function DriverPage({ params }: Props) {
 
   // Completed today by this driver
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: completedRaw } = await (supabase as any)
+  const { data: completedRaw } = await supabase
     .from('orders')
     .select(ORDER_SELECT)
     .eq('status', 'delivered')

@@ -27,7 +27,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
     if (!selected || !order) return
     setLoading(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    await supabase
       .from('orders')
       .update({ assigned_driver_id: selected, status: 'out_for_delivery' })
       .eq('id', order.id)

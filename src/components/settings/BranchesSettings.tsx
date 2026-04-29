@@ -31,7 +31,7 @@ export default function BranchesSettings() {
   useEffect(() => {
     async function load() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('branches')
         .select('*')
         .order('created_at', { ascending: true })
@@ -56,7 +56,7 @@ export default function BranchesSettings() {
     if (!editId || !editForm) return
     setSaveState('saving')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('branches')
       .update({
         name_ar:  editForm.name_ar,
@@ -79,7 +79,7 @@ export default function BranchesSettings() {
   async function toggleActive(branch: Branch) {
     const next = !branch.is_active
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    await supabase
       .from('branches')
       .update({ is_active: next })
       .eq('id', branch.id)

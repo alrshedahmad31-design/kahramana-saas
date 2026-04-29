@@ -42,13 +42,13 @@ export default function NotificationsSettings() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('user_preferences')
         .select('notification_prefs')
         .eq('user_id', user.id)
         .maybeSingle()
       if (data?.notification_prefs && Object.keys(data.notification_prefs).length > 0) {
-        setPrefs({ ...DEFAULTS, ...data.notification_prefs })
+        setPrefs({ ...DEFAULTS, ...(data.notification_prefs as Record<string, unknown>) })
       }
       setLoading(false)
     }
@@ -60,9 +60,9 @@ export default function NotificationsSettings() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaveState('error'); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('user_preferences')
-      .upsert({ user_id: user.id, notification_prefs: prefs, updated_at: new Date().toISOString() })
+      .upsert({ user_id: user.id, notification_prefs: prefs as never, updated_at: new Date().toISOString() })
     setSaveState(error ? 'error' : 'saved')
     if (!error) setTimeout(() => setSaveState('idle'), 2500)
   }

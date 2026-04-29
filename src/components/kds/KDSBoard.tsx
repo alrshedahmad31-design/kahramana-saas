@@ -86,11 +86,11 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
   useEffect(() => { mutedRef.current = muted }, [muted])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = useMemo(() => createClient() as any, [])
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let q = (supabase as any)
+    let q = supabase
       .from('orders')
       .select(`
         id, customer_name, customer_phone, branch_id, status, notes,
@@ -140,7 +140,7 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
       .channel('kds-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
       .subscribe()
-    return () => supabase.removeChannel(channel)
+    return () => { void supabase.removeChannel(channel) }
   }, [supabase, fetchOrders])
 
   // Live clock

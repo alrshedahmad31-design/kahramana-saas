@@ -3,7 +3,6 @@
 import { useState }          from 'react'
 import { Download, FileText, FileSpreadsheet, File } from 'lucide-react'
 import { buildCSVWithMeta }  from '@/lib/reports/export-csv'
-import { buildExcelBlob }    from '@/lib/reports/export-excel'
 import { logExportFormat }   from '@/app/[locale]/dashboard/reports/actions'
 import type { ReportResult } from '@/app/[locale]/dashboard/reports/actions'
 
@@ -56,7 +55,8 @@ export default function ExportButtons({ report, isAr }: Props) {
   async function handleExcel() {
     setBusy('excel')
     try {
-      const blob = buildExcelBlob(
+      const { buildExcelBlob } = await import('@/lib/reports/export-excel')
+      const blob = await buildExcelBlob(
         isAr ? report.title_ar : report.title_en,
         report.generatedAt,
         filterLabel,

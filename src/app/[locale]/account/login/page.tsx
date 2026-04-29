@@ -59,7 +59,7 @@ export default function CustomerLoginPage() {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: profileErr } = await (supabase as any)
+        const { error: profileErr } = await supabase
           .from('customer_profiles')
           .insert(profileInsert)
 

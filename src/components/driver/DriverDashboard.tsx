@@ -39,11 +39,11 @@ export default function DriverDashboard({
   const [clock,           setClock]           = useState(formatClock)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = useMemo(() => createClient() as any, [])
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let q = (supabase as any)
+    let q = supabase
       .from('orders')
       .select(`
         id, customer_name, customer_phone, branch_id, status,
@@ -71,7 +71,7 @@ export default function DriverDashboard({
     todayStart.setHours(0, 0, 0, 0)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('orders')
       .select(`
         id, customer_name, customer_phone, branch_id, status,
@@ -109,7 +109,7 @@ export default function DriverDashboard({
         fetchCompleted()
       })
       .subscribe()
-    return () => supabase.removeChannel(channel)
+    return () => { void supabase.removeChannel(channel) }
   }, [supabase, fetchOrders, fetchCompleted])
 
   // GPS — auto-starts when online

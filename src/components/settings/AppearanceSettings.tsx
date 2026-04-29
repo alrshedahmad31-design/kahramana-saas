@@ -48,12 +48,12 @@ export default function AppearanceSettings() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('user_preferences')
         .select('language, theme, timezone, date_format')
         .eq('user_id', user.id)
         .maybeSingle()
-      if (data) setPrefs({ ...DEFAULTS, ...data })
+      if (data) setPrefs({ ...DEFAULTS, ...(data as Partial<Prefs>) })
       setLoading(false)
     }
     load()
@@ -64,7 +64,7 @@ export default function AppearanceSettings() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaveState('error'); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('user_preferences')
       .upsert({ user_id: user.id, ...prefs, updated_at: new Date().toISOString() })
     setSaveState(error ? 'error' : 'saved')

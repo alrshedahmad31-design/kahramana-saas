@@ -35,7 +35,7 @@ export default function ProfileSettings() {
   useEffect(() => {
     async function load() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('restaurant_profile')
         .select('*')
         .limit(1)
@@ -67,12 +67,12 @@ export default function ProfileSettings() {
     const ext  = file.name.split('.').pop()
     const path = `logos/${profile.id}.${ext}`
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).storage
+    const { error } = await supabase.storage
       .from('restaurant-assets')
       .upload(path, file, { upsert: true, contentType: file.type })
     if (!error) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: urlData } = (supabase as any).storage
+      const { data: urlData } = supabase.storage
         .from('restaurant-assets')
         .getPublicUrl(path)
       const url = urlData.publicUrl as string
@@ -86,7 +86,7 @@ export default function ProfileSettings() {
     if (!form || !profile) return
     setSaveState('saving')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('restaurant_profile')
       .update(form)
       .eq('id', profile.id)

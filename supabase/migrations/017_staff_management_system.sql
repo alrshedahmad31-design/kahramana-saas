@@ -63,7 +63,10 @@ CREATE TABLE IF NOT EXISTS time_entries (
 );
 
 CREATE INDEX IF NOT EXISTS idx_time_entries_staff ON time_entries(staff_id);
-CREATE INDEX IF NOT EXISTS idx_time_entries_date  ON time_entries(DATE(clock_in));
+-- DATE(timestamptz) is STABLE (not IMMUTABLE), which Postgres rejects for
+-- functional indexes. Index the raw timestamptz instead — range queries
+-- (WHERE clock_in >= :from AND clock_in < :to) use it just as efficiently.
+CREATE INDEX IF NOT EXISTS idx_time_entries_clock_in ON time_entries(clock_in);
 
 -- ── Leave requests ────────────────────────────────────────────────────────────
 
@@ -110,18 +113,30 @@ ALTER TABLE leave_requests      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shift_swap_requests ENABLE ROW LEVEL SECURITY;
 
 -- Service role bypasses (for time clock server action)
+DROP POLICY IF EXISTS "service_all_shifts"        ON shifts;
+DROP POLICY IF EXISTS "service_all_time_entries"  ON time_entries;
+DROP POLICY IF EXISTS "service_all_leaves"        ON leave_requests;
+DROP POLICY IF EXISTS "service_all_swaps"         ON shift_swap_requests;
 CREATE POLICY "service_all_shifts"        ON shifts              FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "service_all_time_entries"  ON time_entries        FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "service_all_leaves"        ON leave_requests      FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "service_all_swaps"         ON shift_swap_requests FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Staff view own data
+DROP POLICY IF EXISTS "auth_view_own_shifts"  ON shifts;
+DROP POLICY IF EXISTS "auth_view_own_entries" ON time_entries;
+DROP POLICY IF EXISTS "auth_view_own_leaves"  ON leave_requests;
+DROP POLICY IF EXISTS "auth_create_own_leave" ON leave_requests;
 CREATE POLICY "auth_view_own_shifts"  ON shifts        FOR SELECT TO authenticated USING (staff_id = auth.uid());
 CREATE POLICY "auth_view_own_entries" ON time_entries  FOR SELECT TO authenticated USING (staff_id = auth.uid());
 CREATE POLICY "auth_view_own_leaves"  ON leave_requests FOR SELECT TO authenticated USING (staff_id = auth.uid());
 CREATE POLICY "auth_create_own_leave" ON leave_requests FOR INSERT TO authenticated WITH CHECK (staff_id = auth.uid());
 
 -- Managers manage everything
+DROP POLICY IF EXISTS "managers_all_shifts"  ON shifts;
+DROP POLICY IF EXISTS "managers_all_entries" ON time_entries;
+DROP POLICY IF EXISTS "managers_all_leaves"  ON leave_requests;
+DROP POLICY IF EXISTS "managers_all_swaps"   ON shift_swap_requests;
 CREATE POLICY "managers_all_shifts" ON shifts FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM staff_basic WHERE id = auth.uid() AND role IN ('owner','general_manager','branch_manager')))
   WITH CHECK (EXISTS (SELECT 1 FROM staff_basic WHERE id = auth.uid() AND role IN ('owner','general_manager','branch_manager')));

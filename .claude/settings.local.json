@@ -73,7 +73,19 @@
       "Bash(grep -v \"^$\")",
       "Bash(git log *)",
       "Bash(git branch *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(echo \"OK exit=$?\")",
+      "Bash(grep -E \"^      [a-z_]+: \\\\{$\" src/lib/supabase/types.ts)",
+      "Bash(npm view *)",
+      "Bash(git stash *)",
+      "Bash(grep -v \":0$\")",
+      "Bash(echo \"EXITCODE=$?\")",
+      "Bash(git diff *)",
+      "Bash(npx playwright *)",
+      "Bash(npx tsx *)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\forgot-password\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\set-password\")",
+      "Bash(grep \"^\\\\s*[a-z_]*: {$\" src/lib/supabase/types.ts)"
     ]
   }
 }

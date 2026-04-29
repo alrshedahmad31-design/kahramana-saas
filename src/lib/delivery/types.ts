@@ -21,7 +21,7 @@ export type DriverStatus = 'available' | 'delivering' | 'busy' | 'returning' | '
 
 export type DeliveryOrder = {
   id:               string
-  order_number:     string
+  order_number:     string | undefined
   status:           DeliveryStatus
   customer_name:    string | null
   customer_phone:   string | null

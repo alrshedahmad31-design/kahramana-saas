@@ -54,12 +54,12 @@ export default function DeliveryDetailPage() {
     if (!orderId) return
     async function load() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('orders')
         .select('*')
         .eq('id', orderId)
         .single()
-      setDelivery(data ?? null)
+      setDelivery(data as DeliveryDetail | null)
       setLoading(false)
     }
     load()
@@ -69,17 +69,17 @@ export default function DeliveryDetailPage() {
     if (!orderId || updating) return
     setUpdating(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    await supabase
       .from('orders')
-      .update({ status })
+      .update({ status: status as never })
       .eq('id', orderId)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
       .single()
-    setDelivery(data ?? null)
+    setDelivery(data as DeliveryDetail | null)
     setUpdating(false)
   }
 

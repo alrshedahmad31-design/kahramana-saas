@@ -15,17 +15,16 @@ export function EarningsWidget() {
       const today = new Date().toISOString().split('T')[0]
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('orders')
-        .select('delivery_fee')
-        .eq('driver_id', user.id)
+        .select('total_bhd')
+        .eq('assigned_driver_id', user.id)
         .eq('status', 'delivered')
         .gte('delivered_at', today)
 
       if (data) {
         setEarnings({
-          today: (data as { delivery_fee: number | null }[])
-            .reduce((sum, o) => sum + (Number(o.delivery_fee) || 0), 0),
+          today: data.reduce((sum, o) => sum + (Number(o.total_bhd) || 0), 0),
           deliveries_today: data.length,
         })
       }
