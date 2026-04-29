@@ -1,87 +1,96 @@
-# Last Session — 2026-04-29 (Session 18)
+# Last Session — 2026-04-29 (Session 19 — continued from compacted context)
 
 ## What was done
 
-### 1. DriverFleetPanel — Daily Rating ✅
-- Added `DailyRating` component to each driver card
-- Shows 0–5 amber stars derived from `driver.completed_today`
-  - 0 = no stars, 1–2 = ★, 3–5 = ★★, 6–8 = ★★★, 9–11 = ★★★★, 12+ = ★★★★★
-- Removed unused `UserCircle` import
+### 1. World-Class Driver Interface Rebuild ✅
+Complete rebuild of the driver system. Commit: `2ccdae5`
 
-### 2. DB Migrations — All Applied to Production ✅
-Applied manually via Supabase SQL Editor in order:
-- `019_report_audit_log.sql` → `report_audit_log` table
-- `020_restaurant_profile.sql` → `restaurant_profile` table (seeded)
-- `022_staff_complete.sql` → `staff_permissions`, `staff_documents`, `staff_payroll`
-- `023_settings_schema.sql` → `business_hours`, `user_preferences`, `system_settings` (seeded)
+**New files:**
+- `src/lib/utils/delivery.ts` — Haversine distance (object API), traffic-aware ETA (Baghdad peak hours 7–9, 12–2, 5–8), urgency levels, `travelmode=driving` nav URLs, RTL formatters, `resolveExpectedAt`
+- `src/components/driver/DriverPerformanceDashboard.tsx` — 4-metric 2×2 grid: deliveries today, avg delivery time, order total (BD), on-time rate (%)
+- `supabase/migrations/025_driver_complete.sql` — 6 new columns: `delivery_building`, `delivery_street`, `delivery_area`, `expected_delivery_time`, `customer_notes`, `driver_notes`
 
-8 new tables total, all RLS policies confirmed active.
+**Modified files:**
+- `DriverOrderCard.tsx` — full rewrite:
+  - Urgency banner (red pulsing = critical <10 min, orange = urgent <20 min, with countdown)
+  - Connected route view: gold dot → line → green dot, both nav buttons use `travelmode=driving`
+  - Distance + ETA pills with traffic awareness
+  - Collapsible items section (auto-expanded for `ready` orders)
+  - `customer_notes` speech bubble (falls back to `delivery_instructions`)
+  - Card border highlights by urgency
+- `DriverDashboard.tsx` — added `sortByUrgency`, `onTimeRate`, `DriverPerformanceDashboard`, expanded SELECT with 9 new columns
+- `driver/page.tsx` — expanded ORDER_SELECT to include all new columns
+- `src/lib/supabase/types.ts` — `OrderRow` gains 9 new fields: `delivery_building/street/area`, `expected_delivery_time`, `customer_notes`, `driver_notes`, `picked_up_at`, `arrived_at`, `delivered_at`; `OrderInsert` updated accordingly
 
-### 3. Driver Page — Critical Bug Fix ✅
-**Root cause:** `src/app/[locale]/driver/page.tsx` was a broken standalone `'use client'` component that:
-- Queried statuses `ready_for_pickup / picked_up / en_route` → don't exist in schema
-- Used `driver_id` field → schema uses `assigned_driver_id`
-- Referenced non-existent columns (`customer_location`, `restaurant_name`)
-- Result: always 0 results → empty state "لا توجد طلبات حالياً"
-
-`DriverDashboard.tsx` with all rich UI (`DriverOrderCard` + `DriverHeader`) was fully built but never mounted.
-
-**Fix:** Replaced `page.tsx` with a server component that:
-- Fetches active orders (status `ready` + `out_for_delivery`, scoped to driver's branch)
-- Fetches completed-today orders for this driver
-- Resolves branch `mapsUrl` from `BRANCHES` constant
-- Passes all data to `<DriverDashboard>`
-
-### 4. Security — Git History Cleaned ✅
-**Problem:** Supabase service key was in old commits (`60eb84e`, `3db3d6d`) via `scratch/` files. GitHub push protection blocked the push.
-
-**Fix:**
-- Created `backup-full-history` branch (local copy of full history)
-- Created clean orphan branch (`clean-master`) with single commit `ebddc7f`
-- Removed from commit: `.env.vercel.tmp`, all `scratch/*.mjs`, `scratch/*.ts`
-- Renamed to `master`, pushed to `origin/master`
-- GitHub push protection passed ✅
-
----
-
-## CRITICAL — Action Required Before Next Session
-
-**Rotate the Supabase service role key immediately:**
-The key existed in old commits and was scanned by GitHub. Even though push was blocked, rotation is mandatory.
-
-1. Supabase Dashboard → Project Settings → API → **Regenerate** `service_role` key
-2. Update `.env.local` → `SUPABASE_SERVICE_ROLE_KEY=<new key>`
-3. Vercel Dashboard → Project → Settings → Environment Variables → update `SUPABASE_SERVICE_ROLE_KEY`
-4. Trigger Vercel redeploy (picks up key rotation + driver page fix)
+### 2. Auth Callback Fix ✅ (completed earlier in this session)
+- Created `/src/app/auth/callback/route.ts` — full PKCE handler for magic links + password reset
+- Updated middleware matcher to exclude `/auth/*`
+- Fix shipped in commit `06e0998`
 
 ---
 
 ## Git State
-- **Remote:** `https://github.com/alrshedahmad31-design/kahramana-saas.git`
-- **Branch:** `master` — single clean commit `ebddc7f`
-- **Local backup:** `backup-full-history` branch (full old history)
-- **Working tree:** clean
+- **Branch:** `master`
+- **Latest commit:** `2ccdae5` — world-class driver rebuild
+- **Remote:** pushed ✅
 
 ## Vercel
-- Last deploy: v1.5-enterprise-coupons (2026-04-29) — BEFORE driver fix
-- **Next deploy needed** to ship: driver page fix + DriverFleetPanel rating
+- Vercel auto-deploys on push to master — deploy triggered by `2ccdae5`
+
+---
+
+## Action Required Before Next Session
+
+### CRITICAL — Apply Migration 025 to Production
+Migration 025 is local only. Run in Supabase Dashboard → SQL Editor:
+
+```sql
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='delivery_building') THEN
+    ALTER TABLE orders ADD COLUMN delivery_building TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='delivery_street') THEN
+    ALTER TABLE orders ADD COLUMN delivery_street TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='delivery_area') THEN
+    ALTER TABLE orders ADD COLUMN delivery_area TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='expected_delivery_time') THEN
+    ALTER TABLE orders ADD COLUMN expected_delivery_time TIMESTAMPTZ;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='customer_notes') THEN
+    ALTER TABLE orders ADD COLUMN customer_notes TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='driver_notes') THEN
+    ALTER TABLE orders ADD COLUMN driver_notes TEXT;
+  END IF;
+END $$;
+```
+
+App will NOT break without it (all new fields are nullable), but urgency will always use the 45-min fallback until `expected_delivery_time` is populated.
+
+### Add Supabase Redirect URL
+Go to Supabase Dashboard → Authentication → URL Configuration → Redirect URLs.
+Add: `https://kahramana.vercel.app/auth/callback`
+(Required for magic link + password reset to work on production.)
 
 ---
 
 ## Next Session — Start Here
-1. Confirm Supabase key rotated + Vercel env updated
-2. Trigger Vercel redeploy (`vercel --prod` or via dashboard)
-3. Test driver page at `/ar/driver` — should show rich cards, not empty state
-4. Wire delivery filter dropdowns (currently UI-only)
-5. Optional: StaffSettings stat tiles → wire to live counts
+1. Confirm migration 025 applied to production
+2. Confirm `/auth/callback` redirect URL added in Supabase
+3. Test driver page at `/ar/driver` — should show urgency banners, connected route, performance dashboard
+4. Optional next feature: wire `expected_delivery_time` into order creation so urgency is live from day 1
+5. Optional: driver notes (`driver_notes`) — allow drivers to add notes from their UI
 
 ---
 
 ## Active Blockers
 | Blocker | Owner |
 |---------|-------|
-| **Rotate Supabase service key** | Ahmed — do this NOW |
+| Migration 025 apply on prod | Ahmed |
+| Supabase redirect URL for /auth/callback | Ahmed |
 | Chef recipes for ~194 dishes | Chef |
 | Benefit Pay merchant approval | Restaurant owner |
 | Meta Business Verification | Restaurant owner |
-| Deliverect contract | Restaurant owner |
