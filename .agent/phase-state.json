@@ -22,8 +22,11 @@
       "023_settings_schema.sql — applied 2026-04-29"
     ],
     "settings_page": "deployed",
-    "git_remote": "NOT CONFIGURED — connect https://github.com/alrshedahmad31-design/kahramana-saas.git",
-    "vercel_push_pending": true
+    "git_remote": "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
+    "git_history": "clean single commit ebddc7f — secrets scrubbed, orphan rewrite",
+    "vercel_push_pending": true,
+    "supabase_key_rotation_required": true,
+    "driver_page_fix": "committed locally, needs vercel redeploy"
   },
   "phases": {
     "0": {
