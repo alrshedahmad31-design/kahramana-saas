@@ -1,11 +1,8 @@
-import { IBM_Plex_Sans_Arabic } from 'next/font/google'
 import { redirect }             from 'next/navigation'
 import { getSession }           from '@/lib/auth/session'
 import { createClient }         from '@/lib/supabase/server'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 import DeliveryPageClient       from '@/components/delivery/DeliveryPageClient'
-
-const ibmPlex = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['400', '600', '700'] })
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -124,7 +121,7 @@ export default async function DeliveryPage({ params }: Props) {
   }).length
 
   return (
-    <div className={ibmPlex.className} style={{ fontFamily: 'IBM Plex Sans Arabic, sans-serif' }}>
+    <div>
       <DeliveryPageClient
         initialOrders={orders}
         initialDrivers={drivers}
