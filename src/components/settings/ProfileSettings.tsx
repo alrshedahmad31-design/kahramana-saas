@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useLocale } from 'next-intl'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
 interface Profile {
@@ -147,9 +148,9 @@ export default function ProfileSettings() {
           {isAr ? 'شعار المطعم' : 'Restaurant Logo'}
         </label>
         <div className="flex items-center gap-5">
-          <div className="w-20 h-20 rounded-2xl bg-brand-surface-2 border border-brand-border overflow-hidden flex items-center justify-center shrink-0">
+          <div className="relative w-20 h-20 rounded-2xl bg-brand-surface-2 border border-brand-border overflow-hidden flex items-center justify-center shrink-0">
             {logoPreview
-              ? <img src={logoPreview} alt="logo" className="w-full h-full object-cover" />
+              ? <Image src={logoPreview} alt="logo" fill sizes="80px" className="object-cover" />
               : <span className={`text-brand-muted text-2xl ${font}`}>🏪</span>
             }
           </div>

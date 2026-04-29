@@ -1,4 +1,5 @@
 import { useState, useRef }   from 'react'
+import Image from 'next/image'
 import { BRANCH_LIST }     from '@/constants/contact'
 import type { StaffRole, EmploymentType } from '@/lib/supabase/custom-types'
 import { createStaffFull } from '@/app/[locale]/dashboard/staff/actions'
@@ -387,7 +388,7 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {data.profile_photo_url ? (
-                    <img src={data.profile_photo_url} alt="Profile" className="w-full h-full object-cover" />
+                    <Image src={data.profile_photo_url} alt="Profile" fill sizes="96px" className="object-cover" />
                   ) : (
                     <PhotoIcon className="w-8 h-8 text-brand-muted group-hover:text-brand-gold transition-colors" />
                   )}

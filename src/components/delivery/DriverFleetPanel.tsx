@@ -1,7 +1,8 @@
 'use client'
 
 import { Phone, MapPin, PackageCheck } from 'lucide-react'
-import { motion }      from 'framer-motion'
+import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { DV, DRIVER_STATUS } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 
@@ -85,6 +86,7 @@ function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <div style={{
+            position:       'relative',
             width:          '40px',
             height:         '40px',
             borderRadius:   '50%',
@@ -96,9 +98,10 @@ function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
             fontSize:       '15px',
             fontWeight:     700,
             color:          DV.amber,
+            overflow:       'hidden',
           }}>
             {driver.avatar_url
-              ? <img src={driver.avatar_url} alt={driver.name ?? 'driver'} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ? <Image src={driver.avatar_url} alt={driver.name ?? 'driver'} fill sizes="40px" style={{ borderRadius: '50%', objectFit: 'cover' }} />
               : initials
             }
           </div>

@@ -2,6 +2,7 @@
 
 import { useState }           from 'react'
 import Link                   from 'next/link'
+import Image                  from 'next/image'
 import { useTranslations }    from 'next-intl'
 import type { StaffExtendedRow, StaffRole } from '@/lib/supabase/custom-types'
 import { toggleStaffActive, resendStaffInvitation } from '@/app/[locale]/dashboard/staff/actions'
@@ -126,10 +127,10 @@ export default function StaffCardGrid({
               {/* Header: avatar + status */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center
+                  <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center
                     shrink-0 font-cairo font-black text-xl overflow-hidden ${badge.bg} ${badge.text}`}>
                     {member.profile_photo_url ? (
-                      <img src={member.profile_photo_url} alt={member.name} className="w-full h-full object-cover" />
+                      <Image src={member.profile_photo_url} alt={member.name} fill sizes="56px" className="object-cover" />
                     ) : (
                       initials(member.name)
                     )}
