@@ -233,7 +233,12 @@ function AddShiftModal({
               {staffName} · {formattedDate}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="text-brand-muted hover:text-brand-text text-xl leading-none">×</button>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={isRTL ? 'إغلاق' : 'Close'}
+            className="text-brand-muted hover:text-brand-text text-xl leading-none"
+          >×</button>
         </div>
 
         {error && (

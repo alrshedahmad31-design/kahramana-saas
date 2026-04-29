@@ -82,7 +82,7 @@ function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
             color:          DV.amber,
           }}>
             {driver.avatar_url
-              ? <img src={driver.avatar_url} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ? <img src={driver.avatar_url} alt={driver.name ?? 'driver'} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
               : initials
             }
           </div>

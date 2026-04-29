@@ -1,68 +1,41 @@
-# Last Session — 2026-04-29 (Session 20 — Staff Invitation Flow)
+# Last Session — 2026-04-29 (Session 21 — Status Sync + Grid Layout)
 
 ## What was done
 
-### 1. Staff Invitation Flow — Auth user creation + email invite ✅
-**Problem:** New staff added via UI received a `staff_basic` row but no auth account, so they
-could never log in. Fix: use Supabase admin API to create the auth user + send invitation email.
+### 1. Driver Page — 2-Column Responsive Grid ✅
+Commit: `01f9fde`
 
-Commit: `7a7d181`
+Changed all three order list containers in `DriverDashboard.tsx` from
+`flex flex-col gap-3` to `grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6`.
 
-**Modified files:**
-- `src/lib/supabase/server.ts` — removed 3 debug `console.log` lines that fired on every
-  staff operation via `createServiceClient()`
-- `src/app/[locale]/dashboard/staff/actions.ts`:
-  - Defined `AuthAdmin` type alias with all 4 admin methods
-  - `createStaffFull` now uses `crypto.randomUUID()` as temp password + calls
-    `inviteUserByEmail` (non-fatal — logs warn if SMTP not configured)
-  - Added `CreateStaffFullResult` discriminated union: `{ success: true; staffName; staffEmail; inviteSent }` or `{ success: false; error }`
-  - Added `resendStaffInvitation(staffId)` server action (branch_manager+ only) —
-    looks up email via `getUserById` then calls `inviteUserByEmail`
-  - Added `ROLE_RANK` to imports from `@/lib/auth/rbac`
-- `src/components/staff/StaffFormWizard.tsx`:
-  - Removed `password` field from form and `FormData` interface
-  - Step 0 now shows an "invitation email will be sent" hint instead of password input
-  - Added `submitted` state (`Extract<CreateStaffFullResult, { success: true }> | null`)
-  - Added success screen: CheckCircleIcon, staff name + email, invite sent/failed indicator,
-    Done button
-- `src/components/staff/StaffCardGrid.tsx`:
-  - Added `resendStaffInvitation` import
-  - Added `resendPending` state + `handleResend` with toast feedback
-  - Added Resend Invitation button with MailIcon (visible to canManage roles only)
+| Breakpoint | Layout |
+|---|---|
+| Mobile <768px | 1 column |
+| Tablet/Desktop ≥768px | 2 columns, 24px gap |
 
-### 2. World-Class Driver Interface Rebuild ✅ (session 19)
-Complete rebuild — see previous session notes. Commit: `2ccdae5`
+Section headers (جاري التوصيل, جاهزة للاستلام, مُسلَّمة اليوم) and the
+performance dashboard stay full-width — they sit outside the grid containers.
 
-### 3. Auth Callback Fix ✅ (session 19)
-`/auth/callback` PKCE route. Commit: `06e0998`
+### 2. Staff Invitation Flow ✅ (session 20)
+Commit: `7a7d181` — auto auth user + invite email + resend button + success screen.
+
+### 3. World-Class Driver Interface ✅ (session 19)
+Commit: `2ccdae5` — urgency banners, connected route, performance dashboard.
 
 ---
 
-## Git State
-- **Branch:** `master`
-- **Latest commit:** `7a7d181` — staff invitation flow
-- **Remote:** pushed ✅
-- **Vercel:** auto-deploys on push — deploy triggered
+## Production State (confirmed by Ahmed)
+- URL: https://kahramana.vercel.app
+- DB migrations 017–024 applied ✅
+- Migration 025 still pending ⏳
+- SMTP not yet configured ⏳
 
 ---
 
 ## Action Required Before Next Session
 
-### CRITICAL — Configure Supabase SMTP + Invitation Email Template
-Without SMTP configured, `inviteUserByEmail` silently fails. Go to:
-1. Supabase Dashboard → Project Settings → Auth → SMTP Settings — add your SMTP provider
-2. Authentication → Email Templates → "Invite user" — add Arabic welcome text:
-
-```
-Subject: دعوة للانضمام إلى فريق كهرمانة
-Body:
-مرحباً،
-تمت إضافتك كموظف في منصة كهرمانة. انقر على الرابط أدناه لتعيين كلمة المرور:
-{{ .ConfirmationURL }}
-```
-
-### CRITICAL — Apply Migration 025 to Production
-Still pending. Run in Supabase Dashboard → SQL Editor:
+### 1. Apply Migration 025 to Production (CRITICAL)
+Run in Supabase Dashboard → SQL Editor:
 
 ```sql
 DO $$
@@ -88,31 +61,32 @@ BEGIN
 END $$;
 ```
 
-### Add Supabase Redirect URL
-Supabase Dashboard → Authentication → URL Configuration → Redirect URLs.
-Add: `https://kahramana.vercel.app/auth/callback`
-(Required for magic link + password reset on production.)
+### 2. SMTP Configuration
+**Option A (test/Gmail):** Supabase Dashboard → Project Settings → Auth → SMTP
+— click "Continue anyway" on Gmail warning, check Spam folder for invitations.
+
+**Option B (production/Resend):**
+1. Sign up at resend.com, get API key
+2. Supabase Dashboard → Project Settings → Auth → SMTP:
+   - Host: smtp.resend.com | Port: 465 | User: resend | Password: [API key]
+   - Sender email: noreply@yourdomain.com
 
 ---
 
-## Next Session — Start Here
-1. Confirm SMTP is configured in Supabase (test by adding a staff member)
-2. Confirm invitation email template is set
-3. Confirm migration 025 applied to production
-4. Confirm `/auth/callback` redirect URL added in Supabase
-5. Test staff creation: add a new staff → success screen should show "Invitation sent ✓"
-6. Optional: wire `expected_delivery_time` into order creation so driver urgency is live
-7. Optional: allow drivers to add `driver_notes` from their mobile UI
+## Next Session Focus (Ahmed confirmed)
+1. Apply migration 025
+2. Finalize SMTP (Gmail or Resend)
+3. Test staff invitation end-to-end
+4. RBAC implementation (role-based page/action permissions)
+5. Performance dashboard sticky header for driver page
 
 ---
 
 ## Active Blockers
 | Blocker | Owner |
 |---------|-------|
-| Supabase SMTP configuration | Ahmed |
-| Invitation email template | Ahmed |
 | Migration 025 apply on prod | Ahmed |
-| Supabase redirect URL for /auth/callback | Ahmed |
+| SMTP configuration | Ahmed |
 | Chef recipes for ~194 dishes | Chef |
 | Benefit Pay merchant approval | Restaurant owner |
 | Meta Business Verification | Restaurant owner |

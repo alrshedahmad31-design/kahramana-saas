@@ -137,8 +137,13 @@ export default function CreateCouponWizard({ coupon, branches, onClose, onSaved 
                 : `Step ${stepIdx + 1} of 7: ${STEP_LABEL_EN[step].toUpperCase()}`}
             </p>
           </div>
-          <button onClick={onClose} className="text-brand-muted hover:text-brand-text transition-colors">
-            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={isAr ? 'إغلاق' : 'Close'}
+            className="text-brand-muted hover:text-brand-text transition-colors"
+          >
+            <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
             </svg>
           </button>

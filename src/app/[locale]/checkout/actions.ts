@@ -1,11 +1,45 @@
 'use server'
 
+import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
 import { calculateDiscount } from '@/lib/coupons/calculations'
 import type { PointsTransactionInsert, CouponUsageInsert, CouponRow } from '@/lib/supabase/types'
+
+// ── Server-side input validation ──────────────────────────────────────────────
+// Sanity-check the payload before touching the DB. unit_price_bhd remains
+// client-supplied (size/variant pricing lives in Sanity, not the DB) but we
+// reject obviously hostile inputs (negative/huge prices, oversized carts).
+
+const itemSchema = z.object({
+  menu_item_slug:   z.string().min(1).max(120),
+  name_ar:          z.string().min(1).max(200),
+  name_en:          z.string().min(1).max(200),
+  selected_size:    z.string().max(50).nullable(),
+  selected_variant: z.string().max(50).nullable(),
+  quantity:         z.number().int().min(1).max(50),
+  unit_price_bhd:   z.number().min(0.001).max(500),
+  item_total_bhd:   z.number().min(0).max(50_000),
+})
+
+const orderSchema = z.object({
+  customer_name:    z.string().max(120).nullable(),
+  customer_phone:   z.string().max(20).nullable(),
+  branch_id:        z.string().min(1).max(50),
+  status:           z.literal('new'),
+  notes:            z.string().max(500).nullable(),
+  source:           z.string().max(50),
+  whatsapp_sent_at: z.null(),
+})
+
+const checkoutSchema = z.object({
+  order:          orderSchema,
+  items:          z.array(itemSchema).min(1).max(60),
+  pointsToRedeem: z.number().int().min(0).max(1_000_000),
+  coupon:         z.object({ couponId: z.string().uuid() }).optional(),
+})
 
 type TypedSupabase = Awaited<ReturnType<typeof createServiceClient>>
 
@@ -159,29 +193,26 @@ async function recordCouponUsage(
 // ── Main action ───────────────────────────────────────────────────────────────
 
 export async function createOrderWithPoints(payload: CheckoutPayload): Promise<CheckoutResult> {
-  console.log('[Checkout Action] Starting order creation...', {
-    branchId: payload.order.branch_id,
-    itemCount: payload.items.length,
-    pointsToRedeem: payload.pointsToRedeem,
-    hasCoupon: !!payload.coupon
-  })
+  // Validate the entire payload server-side before touching the DB
+  const parsed = checkoutSchema.safeParse(payload)
+  if (!parsed.success) {
+    return { orderId: '', finalTotal: 0, error: 'Invalid checkout payload' }
+  }
 
   try {
-    const { order: orderData, items, pointsToRedeem, coupon } = payload
+    const { order: orderData, items, pointsToRedeem, coupon } = parsed.data
 
-    // Basic input guards
-    if (!items.length) {
-      console.warn('[Checkout Action] Validation failed: No items')
-      return { orderId: '', finalTotal: 0, error: 'No items in order' }
-    }
-    if (!orderData.branch_id) {
-      console.warn('[Checkout Action] Validation failed: No branch ID')
-      return { orderId: '', finalTotal: 0, error: 'Branch required' }
+    // Any flow involving loyalty redemption or a coupon requires a verified
+    // customer session — we cannot trust a client-supplied couponId / points
+    // amount without knowing who is redeeming.
+    if (pointsToRedeem > 0 || coupon) {
+      const sessionCheck = await getCustomerSession()
+      if (!sessionCheck) {
+        return { orderId: '', finalTotal: 0, error: 'Login required to use points or coupons' }
+      }
     }
 
-    console.log('[Checkout Action] Creating service client...')
     const supabase = await createServiceClient()
-    console.log('[Checkout Action] Service client created successfully')
 
   const branchResult = await ensureCheckoutBranch(supabase, orderData.branch_id)
   if ('error' in branchResult) {
@@ -225,7 +256,6 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     const pointsDiscount = pointsToCredit(pointsToRedeem)
     const finalTotal = Math.max(0.001, subtotal - serverCouponDiscount - pointsDiscount)
 
-    console.log('[Checkout Action] Inserting order into database...')
     const { data: order, error: orderErr } = await supabase
       .from('orders')
       .insert({ ...resolvedOrderData, total_bhd: finalTotal })
@@ -233,10 +263,8 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       .single()
 
     if (orderErr || !order) {
-      console.error('[Checkout Action] Order Insert Error:', orderErr)
       return { orderId: '', finalTotal: 0, error: orderErr?.message ?? 'Order creation failed' }
     }
-    console.log('[Checkout Action] Order created successfully:', order.id)
 
     const { error: itemsErr } = await supabase
       .from('order_items')
@@ -269,18 +297,12 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       await recordCouponUsage(supabase, resolvedCouponId, customer.id, order.id, serverCouponDiscount)
     }
 
-    if (resolvedCouponId) {
-      await recordCouponUsage(supabase, resolvedCouponId, customer.id, order.id, serverCouponDiscount)
-    }
-
     return { orderId: order.id, finalTotal }
   }
 
   // ── Standard path (coupon only, no points) ────────────────────────────────
-  console.log('[Checkout Action] Executing standard checkout path...')
   const finalTotal = Math.max(0.001, subtotal - serverCouponDiscount)
 
-  console.log('[Checkout Action] Inserting order into database...')
   const { data: order, error: orderErr } = await supabase
     .from('orders')
     .insert({ ...resolvedOrderData, total_bhd: finalTotal })
@@ -288,12 +310,9 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     .single()
 
   if (orderErr || !order) {
-    console.error('[Checkout Action] Order Insert Error:', orderErr)
     return { orderId: '', finalTotal: 0, error: orderErr?.message ?? 'Order creation failed' }
   }
-  console.log('[Checkout Action] Order created successfully:', order.id)
 
-  console.log('[Checkout Action] Inserting order items...')
   const { error: itemsErr } = await supabase
     .from('order_items')
     .insert(items.map((i) => ({
@@ -303,20 +322,16 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     })))
 
   if (itemsErr) {
-    console.error('[Checkout Action] Order Items Insert Error:', itemsErr)
     return { orderId: '', finalTotal: 0, error: itemsErr.message }
   }
 
   if (resolvedCouponId) {
-    console.log('[Checkout Action] Recording coupon usage...')
     const customer = await getCustomerSession()
     await recordCouponUsage(supabase, resolvedCouponId, customer?.id ?? null, order.id, serverCouponDiscount)
   }
 
-  console.log('[Checkout Action] Checkout completed successfully')
   return { orderId: order.id, finalTotal }
-} catch (err: unknown) {
-  console.error('[Checkout Action] FATAL CRASH:', err)
+} catch (err) {
   return {
     orderId: '',
     finalTotal: 0,

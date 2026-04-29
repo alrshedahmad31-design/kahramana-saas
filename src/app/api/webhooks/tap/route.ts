@@ -2,15 +2,36 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyWebhookSignature, tapStatusToPaymentStatus } from '@/lib/payments/tap-client'
 
+// Hard cap on webhook body size to keep a malicious POST from filling up
+// payment_webhooks with multi-MB JSON. 64 KiB is far above any real Tap event.
+const MAX_BODY_BYTES = 64 * 1024
+
 export async function POST(request: Request) {
+  // ── Body-size guard ─────────────────────────────────────────────────────────
+  const lengthHeader = request.headers.get('content-length')
+  if (lengthHeader && Number(lengthHeader) > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+  }
+
+  const raw = await request.text()
+  if (raw.length > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+  }
+
   let body: Record<string, unknown>
   try {
-    body = await request.json() as Record<string, unknown>
+    body = JSON.parse(raw) as Record<string, unknown>
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Verify Tap HMAC signature
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+  }
+
+  // ── Signature verification ──────────────────────────────────────────────────
+  // verifyWebhookSignature already fails-closed when PAYMENT_WEBHOOK_SECRET is
+  // unset, so an unauthenticated POST cannot persist anything below.
   const hashstring = String(body['hashstring'] ?? '')
   if (!verifyWebhookSignature(body, hashstring)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

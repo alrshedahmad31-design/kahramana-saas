@@ -3,9 +3,14 @@ import createNextIntlPlugin from 'next-intl/plugin'
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
+// 'unsafe-eval' is only needed by the Next.js dev runtime / Sanity Studio dev.
+// In production we drop it so an injected payload cannot eval() arbitrary JS.
+const isDev = process.env.NODE_ENV !== 'production'
+const scriptSrcEval = isDev ? "'unsafe-eval'" : ''
+
 const ContentSecurityPolicy = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval'
+  script-src 'self' 'unsafe-inline' ${scriptSrcEval}
     https://www.googletagmanager.com
     https://www.google-analytics.com
     https://www.clarity.ms
