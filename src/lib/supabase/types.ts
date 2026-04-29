@@ -59,10 +59,19 @@ export type OrderRow = {
   branch_id:        string
   status:           OrderStatus
   notes:            string | null
-  delivery_address:      string | null
-  delivery_lat:          number | null
-  delivery_lng:          number | null
-  delivery_instructions: string | null
+  delivery_address:       string | null
+  delivery_lat:           number | null
+  delivery_lng:           number | null
+  delivery_instructions:  string | null
+  delivery_building:      string | null
+  delivery_street:        string | null
+  delivery_area:          string | null
+  expected_delivery_time: string | null
+  customer_notes:         string | null
+  driver_notes:           string | null
+  picked_up_at:           string | null
+  arrived_at:             string | null
+  delivered_at:           string | null
   source:               string
   total_bhd:            number
   whatsapp_sent_at:     string | null
@@ -244,7 +253,14 @@ export type ContactMessageInsert = Omit<ContactMessageRow, 'id' | 'created_at' |
 
 // ── Insert types (id + timestamps optional) ───────────────────────────────────
 
-export type OrderInsert = Omit<OrderRow, 'id' | 'created_at' | 'updated_at' | 'coupon_id' | 'coupon_discount_bhd' | 'assigned_driver_id' | 'delivery_address' | 'delivery_lat' | 'delivery_lng' | 'delivery_instructions'> & {
+export type OrderInsert = Omit<OrderRow,
+  'id' | 'created_at' | 'updated_at' |
+  'coupon_id' | 'coupon_discount_bhd' | 'assigned_driver_id' |
+  'delivery_address' | 'delivery_lat' | 'delivery_lng' | 'delivery_instructions' |
+  'delivery_building' | 'delivery_street' | 'delivery_area' |
+  'expected_delivery_time' | 'customer_notes' | 'driver_notes' |
+  'picked_up_at' | 'arrived_at' | 'delivered_at'
+> & {
   id?: string
   whatsapp_sent_at?: string | null
   coupon_id?: string | null
@@ -254,6 +270,15 @@ export type OrderInsert = Omit<OrderRow, 'id' | 'created_at' | 'updated_at' | 'c
   delivery_lat?: number | null
   delivery_lng?: number | null
   delivery_instructions?: string | null
+  delivery_building?: string | null
+  delivery_street?: string | null
+  delivery_area?: string | null
+  expected_delivery_time?: string | null
+  customer_notes?: string | null
+  driver_notes?: string | null
+  picked_up_at?: string | null
+  arrived_at?: string | null
+  delivered_at?: string | null
 }
 
 export type OrderItemInsert = Omit<OrderItemRow, 'id' | 'created_at'> & {

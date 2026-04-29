@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { driverBumpOrder, postDriverLocation } from '@/app/[locale]/driver/actions'
 import DriverHeader from './DriverHeader'
 import DriverOrderCard from './DriverOrderCard'
+import DriverPerformanceDashboard from './DriverPerformanceDashboard'
+import { resolveExpectedAt, getUrgencyLevel } from '@/lib/utils/delivery'
 import type { DriverOrder } from '@/lib/supabase/types'
 
 interface Props {
@@ -46,6 +48,9 @@ export default function DriverDashboard({
       .select(`
         id, customer_name, customer_phone, branch_id, status,
         notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
+        delivery_building, delivery_street, delivery_area,
+        expected_delivery_time, customer_notes, driver_notes,
+        picked_up_at, arrived_at, delivered_at,
         total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
@@ -71,6 +76,9 @@ export default function DriverDashboard({
       .select(`
         id, customer_name, customer_phone, branch_id, status,
         notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
+        delivery_building, delivery_street, delivery_area,
+        expected_delivery_time, customer_notes, driver_notes,
+        picked_up_at, arrived_at, delivered_at,
         total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
@@ -150,6 +158,15 @@ export default function DriverDashboard({
       )
     : 0
 
+  const onTimeRate = completedOrders.length > 0
+    ? Math.round(
+        completedOrders.filter((o) => {
+          const ms = new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()
+          return ms <= 45 * 60_000
+        }).length / completedOrders.length * 100
+      )
+    : 0
+
   return (
     <div className="flex flex-col h-full bg-brand-black" dir={isAr ? 'rtl' : 'ltr'}>
       <DriverHeader
@@ -165,6 +182,15 @@ export default function DriverDashboard({
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-4 pb-10 flex flex-col gap-6">
 
+          {/* Performance stats — only when deliveries exist */}
+          <DriverPerformanceDashboard
+            completedToday={completedOrders.length}
+            totalRevenueBD={totalRevenue}
+            avgDeliveryMins={avgDeliveryMins}
+            onTimeRate={onTimeRate}
+            isRTL={isAr}
+          />
+
           {/* Active deliveries */}
           {activeOrders.length > 0 && (
             <section>
@@ -176,7 +202,7 @@ export default function DriverDashboard({
                 pulse
               />
               <div className="flex flex-col gap-3 mt-3">
-                {activeOrders.map((order) => (
+                {sortByUrgency(activeOrders).map((order) => (
                   <DriverOrderCard
                     key={order.id}
                     order={order}
@@ -206,7 +232,7 @@ export default function DriverDashboard({
               </div>
             ) : (
               <div className="flex flex-col gap-3 mt-3">
-                {availableOrders.map((order) => (
+                {sortByUrgency(availableOrders).map((order) => (
                   <DriverOrderCard
                     key={order.id}
                     order={order}
@@ -267,6 +293,19 @@ export default function DriverDashboard({
       </div>
     </div>
   )
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const URGENCY_RANK: Record<string, number> = { critical: 0, urgent: 1, normal: 2 }
+
+function sortByUrgency(orders: DriverOrder[]): DriverOrder[] {
+  return [...orders].sort((a, b) => {
+    const ra = URGENCY_RANK[getUrgencyLevel(resolveExpectedAt(a.created_at, a.expected_delivery_time))]
+    const rb = URGENCY_RANK[getUrgencyLevel(resolveExpectedAt(b.created_at, b.expected_delivery_time))]
+    if (ra !== rb) return ra - rb
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  })
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────

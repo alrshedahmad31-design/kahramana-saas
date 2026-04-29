@@ -1,12 +1,17 @@
 'use client'
 
-import { useState, useEffect }         from 'react'
-import { BRANCHES }                    from '@/constants/contact'
-import { haversine, estimateETA, formatDistance, mapsDirectionsUrl } from '@/lib/utils/distance'
-import type { DriverOrder }            from '@/lib/supabase/types'
-import type { BranchId }               from '@/constants/contact'
+import { useState, useEffect }                                from 'react'
+import { BRANCHES }                                           from '@/constants/contact'
+import {
+  calculateDistance, calculateETA, getUrgencyLevel,
+  resolveExpectedAt, fmtDistance, fmtETA, mapsNavUrl,
+}                                                             from '@/lib/utils/delivery'
+import { mapsDirectionsUrl }                                  from '@/lib/utils/distance'
+import type { DriverOrder }                                   from '@/lib/supabase/types'
+import type { BranchId }                                      from '@/constants/contact'
 
 type DriverActiveStatus = 'ready' | 'out_for_delivery'
+type Urgency            = 'critical' | 'urgent' | 'normal'
 
 interface Props {
   order:         DriverOrder
@@ -16,7 +21,46 @@ interface Props {
   onAction?:     (id: string, status: DriverActiveStatus) => Promise<void>
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Urgency config ─────────────────────────────────────────────────────────────
+
+const URGENCY_CFG: Record<Urgency, {
+  bannerCls:  string
+  cardBorder: string
+  labelAr:    string
+  labelEn:    string
+  pulse:      boolean
+}> = {
+  critical: {
+    bannerCls:  'bg-red-500/15 border-b border-red-500/30 text-red-500',
+    cardBorder: 'border-red-500/60 shadow-[0_0_24px_rgba(239,68,68,0.10)]',
+    labelAr:    'عاجل جداً',
+    labelEn:    'CRITICAL',
+    pulse:      true,
+  },
+  urgent: {
+    bannerCls:  'bg-orange-400/15 border-b border-orange-400/30 text-orange-400',
+    cardBorder: 'border-orange-400/50',
+    labelAr:    'عاجل',
+    labelEn:    'URGENT',
+    pulse:      false,
+  },
+  normal: {
+    bannerCls:  '',
+    cardBorder: 'border-brand-gold/35',
+    labelAr:    '',
+    labelEn:    '',
+    pulse:      false,
+  },
+}
+
+const PAYMENT_LABEL: Record<string, { en: string; ar: string; icon: string }> = {
+  cash:       { en: 'Cash',       ar: 'كاش',   icon: '💵' },
+  benefit_qr: { en: 'BenefitPay', ar: 'بنفت',  icon: '📱' },
+  tap_card:   { en: 'Card',       ar: 'بطاقة',  icon: '💳' },
+  tap_knet:   { en: 'KNET',       ar: 'كي-نت',  icon: '💳' },
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatElapsed(createdAt: string): string {
   const mins = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60_000)
@@ -28,42 +72,15 @@ function formatTime(iso: string): string {
   const d    = new Date(iso)
   const h    = String(d.getHours() % 12 || 12).padStart(2, '0')
   const m    = String(d.getMinutes()).padStart(2, '0')
-  const ampm = d.getHours() >= 12 ? 'PM' : 'AM'
-  return `${h}:${m} ${ampm}`
+  return `${h}:${m} ${d.getHours() >= 12 ? 'PM' : 'AM'}`
 }
 
-const PAYMENT_LABEL: Record<string, { en: string; ar: string; icon: string }> = {
-  cash:       { en: 'Cash on delivery', ar: 'كاش عند التسليم', icon: '💵' },
-  benefit_qr: { en: 'BenefitPay',       ar: 'بنفت باي',        icon: '📱' },
-  tap_card:   { en: 'Card',             ar: 'بطاقة',            icon: '💳' },
-  tap_knet:   { en: 'KNET',             ar: 'كي-نت',            icon: '💳' },
-}
-
-// ── Distance badge ────────────────────────────────────────────────────────────
-
-function DistanceBadge({ distanceKm, isRTL }: { distanceKm: number; isRTL: boolean }) {
-  const eta = estimateETA(distanceKm)
-  return (
-    <div className="flex items-center gap-2 mt-1.5">
-      <span className="flex items-center gap-1 rounded-md bg-brand-black/50 border border-brand-border px-2 py-0.5">
-        <RulerIcon />
-        <span className="font-satoshi text-xs text-brand-muted tabular-nums">{formatDistance(distanceKm)}</span>
-      </span>
-      <span className="flex items-center gap-1 rounded-md bg-brand-black/50 border border-brand-border px-2 py-0.5">
-        <ClockTinyIcon />
-        <span className={`text-xs text-brand-muted tabular-nums ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-          {isRTL ? `${eta} د` : `${eta} min`}
-        </span>
-      </span>
-    </div>
-  )
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant = 'active', onAction }: Props) {
-  const [elapsed, setElapsed] = useState(() => formatElapsed(order.created_at))
-  const [busy,    setBusy]    = useState(false)
+  const [elapsed,       setElapsed]       = useState(() => formatElapsed(order.created_at))
+  const [busy,          setBusy]          = useState(false)
+  const [itemsExpanded, setItemsExpanded] = useState(() => order.status === 'ready')
 
   const isCompleted = variant === 'completed'
   const isReady     = order.status === 'ready'
@@ -75,6 +92,48 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
     return () => clearInterval(id)
   }, [order.created_at, isCompleted])
 
+  // Branch
+  const branch     = BRANCHES[order.branch_id as BranchId] ?? null
+  const branchName = branch ? (isRTL ? branch.nameAr : branch.nameEn) : order.branch_id
+  const branchAddr = branch ? (isRTL ? branch.addressAr : branch.addressEn) : null
+
+  // Payment
+  const paymentEntry = order.payments?.[0]
+  const paymentInfo  = paymentEntry ? PAYMENT_LABEL[paymentEntry.method] : null
+
+  // Address & notes
+  const deliveryAddrText = order.delivery_address ?? order.notes ?? null
+  const customerNotes    = order.customer_notes ?? order.delivery_instructions ?? null
+
+  // Urgency
+  const expectedAt    = resolveExpectedAt(order.created_at, order.expected_delivery_time)
+  const urgency: Urgency = isCompleted ? 'normal' : getUrgencyLevel(expectedAt)
+  const minsRemaining = Math.round((expectedAt.getTime() - Date.now()) / 60_000)
+  const uc            = URGENCY_CFG[urgency]
+
+  // Navigation URLs (always travelmode=driving)
+  const branchNavUrl = branch?.latitude != null && branch?.longitude != null
+    ? mapsNavUrl(branch.latitude, branch.longitude)
+    : branchMapsUrl
+
+  const customerNavUrl = order.delivery_lat != null && order.delivery_lng != null
+    ? mapsNavUrl(order.delivery_lat, order.delivery_lng)
+    : deliveryAddrText
+      ? mapsDirectionsUrl(deliveryAddrText)
+      : null
+
+  // Distance + ETA (branch → customer)
+  const deliveryDist =
+    branch?.latitude != null && branch?.longitude != null &&
+    order.delivery_lat  != null && order.delivery_lng  != null
+      ? calculateDistance(
+          { lat: branch.latitude,    lng: branch.longitude },
+          { lat: order.delivery_lat, lng: order.delivery_lng },
+        )
+      : null
+
+  const etaMins = deliveryDist != null ? calculateETA(deliveryDist) : null
+
   async function handleAction() {
     if (busy || (!isReady && !isOnRoad) || !onAction) return
     setBusy(true)
@@ -82,47 +141,31 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
     setBusy(false)
   }
 
-  const branch       = BRANCHES[order.branch_id as BranchId] ?? null
-  const branchName   = branch ? (isRTL ? branch.nameAr : branch.nameEn) : order.branch_id
-  const branchAddr   = branch ? (isRTL ? branch.addressAr : branch.addressEn) : null
-  const paymentEntry = order.payments?.[0]
-  const paymentInfo  = paymentEntry ? PAYMENT_LABEL[paymentEntry.method] : null
-
-  // Delivery address: prefer explicit field, fall back to notes
-  const deliveryAddrText  = order.delivery_address ?? order.notes ?? null
-  const deliveryInstructions = order.delivery_instructions ?? null
-
-  // Navigation URLs
-  const branchNavUrl   = branch?.latitude != null && branch?.longitude != null
-    ? mapsDirectionsUrl(`${branch.latitude},${branch.longitude}`)
-    : branchMapsUrl
-  const customerNavUrl = order.delivery_lat != null && order.delivery_lng != null
-    ? mapsDirectionsUrl(`${order.delivery_lat},${order.delivery_lng}`)
-    : deliveryAddrText
-      ? mapsDirectionsUrl(deliveryAddrText)
-      : null
-
-  // Delivery leg distance (branch → customer) — shows on both ready and on-road cards
-  const deliveryDistance = (
-    branch?.latitude != null && branch?.longitude != null &&
-    order.delivery_lat != null && order.delivery_lng != null
-  )
-    ? haversine(branch.latitude, branch.longitude, order.delivery_lat, order.delivery_lng)
-    : null
-
   return (
     <div className={`
-      flex flex-col rounded-xl border-2 bg-brand-surface
+      flex flex-col rounded-2xl border-2 bg-brand-surface overflow-hidden
       transition-all duration-300
-      ${isCompleted
-        ? 'border-brand-border opacity-70'
-        : isOnRoad
-          ? 'border-brand-success/60 shadow-[0_0_24px_rgba(39,174,96,0.10)]'
-          : 'border-brand-gold/40'
-      }
+      ${isCompleted ? 'border-brand-border opacity-70' : uc.cardBorder}
     `}>
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      {/* ── Urgency banner ──────────────────────────────────────────────────── */}
+      {!isCompleted && urgency !== 'normal' && (
+        <div className={`flex items-center justify-between px-4 py-2 ${uc.bannerCls} ${uc.pulse ? 'animate-pulse' : ''}`}>
+          <div className="flex items-center gap-2">
+            <AlarmIcon />
+            <span className={`font-black text-xs uppercase tracking-widest ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+              {isRTL ? uc.labelAr : uc.labelEn}
+            </span>
+          </div>
+          <span className="font-satoshi font-black text-xs tabular-nums">
+            {minsRemaining > 0
+              ? (isRTL ? `${minsRemaining} د متبقي` : `${minsRemaining} min left`)
+              : (isRTL ? 'تأخر!' : 'LATE!')}
+          </span>
+        </div>
+      )}
+
+      {/* ── Card header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-brand-border/60">
         <div className="flex items-center gap-2.5">
           <span className="font-satoshi font-black text-2xl text-brand-text tabular-nums leading-none">
@@ -148,17 +191,17 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
           `}>
             {isRTL
               ? (isOnRoad ? 'قيد التوصيل' : 'جاهز للاستلام')
-              : (isOnRoad ? 'Out for delivery' : 'Ready for pickup')
+              : (isOnRoad ? 'On Route' : 'Ready')
             }
           </span>
         )}
       </div>
 
-      <div className="flex flex-col gap-0 px-4 py-3">
+      <div className="px-4 py-3 flex flex-col gap-3">
 
-        {/* ── Customer ─────────────────────────────────────────────────────── */}
+        {/* ── Customer row ────────────────────────────────────────────────────── */}
         {(order.customer_name || order.customer_phone) && (
-          <div className="flex items-center justify-between gap-2 rounded-lg bg-brand-surface-2 border border-brand-border px-3 py-2.5 mb-3">
+          <div className="flex items-center justify-between gap-2 rounded-xl bg-brand-surface-2 border border-brand-border px-3 py-2.5">
             <div className="flex items-center gap-2.5 min-w-0">
               <PersonIcon />
               <div className="min-w-0">
@@ -177,7 +220,7 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
             {order.customer_phone && (
               <a
                 href={`tel:${order.customer_phone}`}
-                className="shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-2 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150 min-h-[40px]"
+                className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150 min-h-[40px]"
                 aria-label={isRTL ? 'اتصل بالعميل' : 'Call customer'}
               >
                 <PhoneIcon />
@@ -189,122 +232,176 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
           </div>
         )}
 
-        {/* ── Pickup navigation ────────────────────────────────────────────── */}
+        {/* ── Connected route (active orders only) ────────────────────────────── */}
         {!isCompleted && (
-          <div className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-2.5 mb-3">
-            <div className="flex items-start gap-2 mb-2">
-              <PinIcon className="text-brand-gold mt-0.5 shrink-0" />
-              <div className="min-w-0 flex-1">
+          <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
+            {/* Pickup row */}
+            <div className="flex items-start gap-3 px-3 pt-3">
+              <div className="flex flex-col items-center shrink-0 mt-0.5">
+                <div className="w-3 h-3 rounded-full bg-brand-gold ring-2 ring-brand-gold/25 shrink-0" />
+                {(deliveryAddrText != null) && (
+                  <div className="w-px bg-brand-border/50 flex-1 min-h-[28px] mt-1" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 pb-2">
                 <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'نقطة الاستلام' : 'Pickup'}
+                  {isRTL ? 'الاستلام' : 'Pickup'}
                 </p>
-                <p className={`font-bold text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {branchName}
-                </p>
+                <p className={`font-bold text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>{branchName}</p>
                 {branchAddr && (
                   <p className="font-satoshi text-xs text-brand-muted/70 mt-0.5">{branchAddr}</p>
                 )}
               </div>
+              {branchNavUrl && (
+                <a
+                  href={branchNavUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 self-center flex items-center gap-1.5 rounded-lg px-3 py-2 min-h-[36px] border border-brand-gold/30 bg-brand-gold/10 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150"
+                >
+                  <MapIcon />
+                  <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {isRTL ? 'ابحث' : 'Go'}
+                  </span>
+                </a>
+              )}
             </div>
-            {branchNavUrl && (
-              <a
-                href={branchNavUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full min-h-[40px] rounded-lg border border-brand-gold/30 bg-brand-gold/10 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150"
-              >
-                <MapIcon />
-                <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'انتقل للفرع' : 'Navigate to Branch'}
-                </span>
-              </a>
-            )}
-          </div>
-        )}
 
-        {/* ── Delivery navigation ──────────────────────────────────────────── */}
-        {!isCompleted && deliveryAddrText && (
-          <div className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-2.5 mb-3">
-            <div className="flex items-start gap-2 mb-2">
-              <PinIcon className="text-brand-success mt-0.5 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'عنوان التوصيل' : 'Delivery Address'}
-                </p>
-                <p className={`text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {deliveryAddrText}
-                </p>
-                {deliveryDistance != null && (
-                  <DistanceBadge distanceKm={deliveryDistance} isRTL={isRTL} />
+            {/* Distance + ETA pills */}
+            {deliveryDist != null && (
+              <div className="flex items-center gap-2 ps-8 pb-2">
+                <span className="flex items-center gap-1 rounded-md border border-brand-border bg-brand-black/30 px-2 py-0.5">
+                  <RouteIcon />
+                  <span className="font-satoshi text-xs text-brand-muted tabular-nums">
+                    {fmtDistance(deliveryDist, isRTL)}
+                  </span>
+                </span>
+                {etaMins != null && (
+                  <span className="flex items-center gap-1 rounded-md border border-brand-border bg-brand-black/30 px-2 py-0.5">
+                    <ClockTinyIcon />
+                    <span className={`text-xs text-brand-muted tabular-nums ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                      {fmtETA(etaMins, isRTL)}
+                    </span>
+                  </span>
                 )}
               </div>
-            </div>
-            {customerNavUrl && (
-              <a
-                href={customerNavUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full min-h-[40px] rounded-lg border border-brand-success/30 bg-brand-success/10 text-brand-success hover:bg-brand-success/20 transition-colors duration-150"
-              >
-                <MapIcon />
-                <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'انتقل للعميل' : 'Navigate to Customer'}
-                </span>
-              </a>
+            )}
+
+            {/* Delivery row */}
+            {deliveryAddrText && (
+              <div className="flex items-start gap-3 px-3 pb-3">
+                <div className="shrink-0 mt-0.5">
+                  <div className="w-3 h-3 rounded-full bg-brand-success ring-2 ring-brand-success/25" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {isRTL ? 'التوصيل' : 'Delivery'}
+                  </p>
+                  <p className={`text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {deliveryAddrText}
+                  </p>
+                </div>
+                {customerNavUrl && (
+                  <a
+                    href={customerNavUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 self-center flex items-center gap-1.5 rounded-lg px-3 py-2 min-h-[36px] border border-brand-success/30 bg-brand-success/10 text-brand-success hover:bg-brand-success/20 transition-colors duration-150"
+                  >
+                    <MapIcon />
+                    <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                      {isRTL ? 'ابحث' : 'Go'}
+                    </span>
+                  </a>
+                )}
+              </div>
             )}
           </div>
         )}
 
-        {/* ── Customer instructions (speech bubble) ───────────────────────── */}
-        {!isCompleted && deliveryInstructions && (
-          <div className="rounded-lg border border-brand-gold/20 bg-brand-gold/5 px-3 py-2.5 mb-3">
+        {/* ── Completed address summary ────────────────────────────────────────── */}
+        {isCompleted && (order.notes ?? order.delivery_address) && (
+          <div className="rounded-xl border border-brand-border bg-brand-surface-2 px-3 py-2.5">
+            <div className="flex items-center gap-2 mb-1">
+              <PinIcon className="text-brand-muted" />
+              <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? 'العنوان' : 'Delivered to'}
+              </p>
+            </div>
+            <p className={`text-sm text-brand-text/80 ps-5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+              {order.delivery_address ?? order.notes}
+            </p>
+          </div>
+        )}
+
+        {/* ── Customer instructions ────────────────────────────────────────────── */}
+        {!isCompleted && customerNotes && (
+          <div className="rounded-xl border border-brand-gold/20 bg-brand-gold/5 px-3 py-2.5">
             <div className="flex items-start gap-2">
               <SpeechIcon />
               <p className={`text-sm text-brand-text/90 leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                &ldquo;{deliveryInstructions}&rdquo;
+                &ldquo;{customerNotes}&rdquo;
               </p>
             </div>
           </div>
         )}
 
-        {/* ── Items ────────────────────────────────────────────────────────── */}
+        {/* ── Items — collapsible ──────────────────────────────────────────────── */}
         {order.order_items.length > 0 && (
-          <div className="flex flex-col gap-1.5 mb-3">
-            <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-1 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {isRTL ? 'الأصناف' : 'Items'}
-            </p>
-            {order.order_items.map((item, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-lg bg-brand-surface-2 px-3 py-2">
-                <span className="font-satoshi font-black text-base text-brand-gold tabular-nums leading-none shrink-0 pt-0.5">
-                  ×{item.quantity}
+          <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setItemsExpanded(v => !v)}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-start"
+            >
+              <div className="flex items-center gap-2">
+                <BoxIcon />
+                <span className={`font-bold text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isRTL ? 'الأصناف' : 'Items'}
                 </span>
-                <div className="min-w-0">
-                  <p className={`font-bold text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai font-cairo' : 'font-satoshi'}`}>
-                    {isRTL ? item.name_ar : item.name_en}
-                  </p>
-                  {(item.selected_size || item.selected_variant) && (
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                      {item.selected_size && (
-                        <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
-                          {item.selected_size}
-                        </span>
-                      )}
-                      {item.selected_variant && (
-                        <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
-                          {item.selected_variant}
-                        </span>
+                <span className="min-w-[22px] h-[22px] rounded-full bg-brand-gold/20 border border-brand-gold/30 text-brand-gold font-satoshi font-black text-xs flex items-center justify-center tabular-nums">
+                  {order.order_items.reduce((s, i) => s + i.quantity, 0)}
+                </span>
+              </div>
+              <ChevronIcon expanded={itemsExpanded} />
+            </button>
+
+            {itemsExpanded && (
+              <div className="border-t border-brand-border/60 px-3 pb-3 pt-2 flex flex-col gap-2">
+                {order.order_items.map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 rounded-lg bg-brand-black/20 px-3 py-2">
+                    <span className="font-satoshi font-black text-base text-brand-gold tabular-nums leading-none shrink-0 pt-0.5">
+                      ×{item.quantity}
+                    </span>
+                    <div className="min-w-0">
+                      <p className={`font-bold text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {isRTL ? item.name_ar : item.name_en}
+                      </p>
+                      {(item.selected_size || item.selected_variant) && (
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {item.selected_size && (
+                            <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
+                              {item.selected_size}
+                            </span>
+                          )}
+                          {item.selected_variant && (
+                            <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
+                              {item.selected_variant}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
 
-        {/* ── Total + Payment ──────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-3 rounded-lg bg-brand-surface-2 border border-brand-border px-3 py-2.5 mb-3">
-          <span className="font-satoshi font-black text-xl text-brand-gold tabular-nums">
+        {/* ── Total + Payment ──────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-brand-surface-2 border border-brand-border px-3 py-2.5">
+          <span className="font-satoshi font-black text-2xl text-brand-gold tabular-nums">
             {Number(order.total_bhd).toFixed(3)}
             <span className="text-sm font-medium text-brand-muted ms-1">BD</span>
           </span>
@@ -318,26 +415,14 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
           )}
         </div>
 
-        {/* ── Notes (completed variant) ─────────────────────────────────────── */}
-        {isCompleted && (order.notes ?? order.delivery_address) && (
-          <div className="rounded-lg border border-brand-gold/20 bg-brand-gold/5 px-3 py-2.5 mb-3">
-            <p className={`text-xs text-brand-muted uppercase tracking-wider mb-1 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {isRTL ? 'العنوان' : 'Address'}
-            </p>
-            <p className={`text-sm text-brand-text leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {order.delivery_address ?? order.notes}
-            </p>
-          </div>
-        )}
-
-        {/* ── Action button ────────────────────────────────────────────────── */}
+        {/* ── Action button ────────────────────────────────────────────────────── */}
         {!isCompleted && (
           <button
             type="button"
             onClick={handleAction}
             disabled={busy}
             className={`
-              w-full min-h-[60px] rounded-xl font-satoshi font-black text-xl
+              w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
               transition-all duration-150 active:scale-[0.98]
               disabled:opacity-50 disabled:cursor-not-allowed
               ${busy
@@ -361,7 +446,15 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
   )
 }
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
+// ── Icons ──────────────────────────────────────────────────────────────────────
+
+function AlarmIcon() {
+  return (
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+    </svg>
+  )
+}
 
 function CheckIcon() {
   return (
@@ -379,27 +472,27 @@ function PhoneIcon() {
   )
 }
 
-function PinIcon({ className }: { className?: string }) {
+function PersonIcon() {
   return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   )
 }
 
 function MapIcon() {
   return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
     </svg>
   )
 }
 
-function PersonIcon() {
+function PinIcon({ className }: { className?: string }) {
   return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   )
 }
@@ -412,7 +505,27 @@ function SpeechIcon() {
   )
 }
 
-function RulerIcon() {
+function BoxIcon() {
+  return (
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  )
+}
+
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
+      className={`text-brand-muted/60 transition-transform duration-200 shrink-0 ${expanded ? 'rotate-180' : ''}`}
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  )
+}
+
+function RouteIcon() {
   return (
     <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 10l4-4m0 0l4 4M7 6v12M21 14l-4 4m0 0l-4-4m4 4V6" />
