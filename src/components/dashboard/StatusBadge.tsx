@@ -7,16 +7,16 @@ interface Props {
 }
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
-  new:              'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  new:              'bg-brand-gold/10 text-brand-gold border-brand-gold/30',
   under_review:     'bg-brand-surface-2 text-brand-muted border-brand-border',
-  accepted:         'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  preparing:        'bg-orange-500/10 text-orange-400 border-orange-500/20',
-  ready:            'bg-green-500/10 text-green-400 border-green-500/20',
-  out_for_delivery: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  delivered:        'bg-emerald-600/10 text-emerald-500 border-emerald-600/20',
+  accepted:         'bg-brand-gold-light/10 text-brand-gold-light border-brand-gold-light/30',
+  preparing:        'bg-brand-gold-light/10 text-brand-gold-light border-brand-gold-light/30',
+  ready:            'bg-brand-success/10 text-brand-success border-brand-success/30',
+  out_for_delivery: 'bg-brand-text/5 text-brand-text border-brand-muted/40',
+  delivered:        'bg-brand-success/10 text-brand-success border-brand-success/30',
   completed:        'bg-brand-surface-2 text-brand-muted border-brand-border',
-  cancelled:        'bg-red-500/10 text-red-400 border-red-500/20',
-  payment_failed:   'bg-red-700/10 text-red-500 border-red-700/20',
+  cancelled:        'bg-brand-error/10 text-brand-error border-brand-error/30',
+  payment_failed:   'bg-brand-error/15 text-brand-error border-brand-error/40',
 }
 
 export default function StatusBadge({ status, label, size = 'sm' }: Props) {

@@ -5,6 +5,22 @@ import { motion }      from 'framer-motion'
 import { DV, DRIVER_STATUS } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 
+const STATUS_DOT_CLS: Record<string, string> = {
+  available:  'bg-brand-success',
+  delivering: 'bg-sky-400',
+  busy:       'bg-brand-gold',
+  returning:  'bg-pink-400',
+  offline:    'bg-brand-muted',
+}
+
+const STATUS_BADGE_CLS: Record<string, string> = {
+  available:  'bg-brand-success/15 text-brand-success',
+  delivering: 'bg-sky-400/20 text-sky-400',
+  busy:       'bg-brand-gold/15 text-brand-gold',
+  returning:  'bg-pink-400/20 text-pink-400',
+  offline:    'bg-brand-surface-2 text-brand-muted',
+}
+
 interface Props {
   drivers:  Driver[]
   orders:   DeliveryOrder[]
@@ -87,32 +103,19 @@ function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
             }
           </div>
           {/* Status dot */}
-          <span style={{
-            position:        'absolute',
-            bottom:          '-1px',
-            insetInlineEnd:  '-1px',
-            width:           '11px',
-            height:          '11px',
-            borderRadius:    '50%',
-            background:      statusCfg.text,
-            border:          `2px solid ${DV.bgCard}`,
-          }} />
+          <span
+            className={`absolute bottom-[-1px] end-[-1px] w-[11px] h-[11px] rounded-full ${STATUS_DOT_CLS[driver.status] ?? 'bg-brand-muted'}`}
+            style={{ border: `2px solid ${DV.bgCard}` }}
+          />
         </div>
 
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: '13px', fontWeight: 600, color: DV.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {driver.name}
           </div>
-          <span style={{
-            fontSize:     '11px',
-            fontWeight:   600,
-            color:        statusCfg.text,
-            background:   statusCfg.bg,
-            padding:      '1px 6px',
-            borderRadius: '4px',
-            display:      'inline-block',
-            marginTop:    '2px',
-          }}>
+          <span
+            className={`inline-block text-[11px] font-semibold px-[6px] py-[1px] rounded mt-[2px] ${STATUS_BADGE_CLS[driver.status] ?? 'bg-brand-surface-2 text-brand-muted'}`}
+          >
             {statusCfg.label}
           </span>
         </div>

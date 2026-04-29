@@ -1,18 +1,23 @@
-// SINGLE SOURCE OF TRUTH — import from here, never hardcode in components
+// SINGLE SOURCE OF TRUTH — import from here, never hardcode in components.
+// Values MUST match tailwind.config.ts so `bg-brand-*` Tailwind classes and
+// inline `tokens.color.*` styles render the exact same hue. Update both.
 // Only this file may contain raw hex values (exempt from grep check 8)
 
 export const tokens = {
   color: {
-    black:     '#0A0A0A', // page background ONLY — never for text
-    surface:   '#141210', // card backgrounds — first level
-    surface2:  '#1C1A16', // nested cards, input fields, dropdowns
-    gold:      '#C8922A', // primary accent — CTAs, highlights, active borders
-    goldLight: '#E8B86D', // hover states ONLY — never the default color
-    goldDark:  '#A67C00', // pressed/active states, decorative borders
-    text:      '#F5F5F5', // all primary text on dark backgrounds
-    muted:     '#6B6560', // secondary text, placeholders, disabled labels
+    black:     '#110b05', // page background ONLY — never for text
+    surface:   '#2d180b', // card backgrounds — first level
+    surface2:  '#3a1a08', // nested cards, input fields, dropdowns
+    gold:      '#d19f51', // primary accent — CTAs, highlights, active borders
+    goldLight: '#dfc9aa', // hover states ONLY — never the default color
+    goldDark:  '#a8771c', // pressed/active states, decorative borders
+    text:      '#f4ecd8', // all primary text on dark backgrounds
+    muted:     '#dfc9aa', // secondary text, placeholders, disabled labels
+    border:    '#743417', // dividers, card borders, input outlines
     error:     '#C0392B', // errors, out-of-stock badges, destructive actions
     success:   '#27AE60', // confirmations, available status, checkmarks
+    qrInk:     '#110b05', // QR-code foreground — paper-themed printables
+    qrPaper:   '#f4ecd8', // QR-code background — paper-themed printables
   },
   font: {
     arHeading: 'Cairo',         // Arabic headings — weight 800 ONLY
@@ -59,22 +64,6 @@ export const fonts  = tokens.font
 
 export type ColorToken = keyof typeof tokens.color
 export type FontToken  = keyof typeof tokens.font
-
-// Order status badge colors — centralized here to avoid hardcoding in components
-export const STATUS_COLORS = {
-  new:              { text: tokens.color.gold,      border: tokens.color.gold      },
-  under_review:     { text: tokens.color.goldLight,  border: tokens.color.goldLight },
-  accepted:         { text: tokens.color.goldLight,  border: tokens.color.goldLight },
-  preparing:        { text: tokens.color.goldLight,  border: tokens.color.goldLight },
-  ready:            { text: tokens.color.success,    border: tokens.color.success   },
-  out_for_delivery: { text: tokens.color.text,       border: tokens.color.muted     },
-  delivered:        { text: tokens.color.success,    border: tokens.color.success   },
-  completed:        { text: tokens.color.success,    border: tokens.color.success   },
-  cancelled:        { text: tokens.color.error,      border: tokens.color.error     },
-  payment_failed:   { text: tokens.color.error,      border: tokens.color.error     },
-} as const
-
-export type OrderStatus = keyof typeof STATUS_COLORS
 
 // Filter tag colors — used in menu item cards
 export const TAG_COLORS = {

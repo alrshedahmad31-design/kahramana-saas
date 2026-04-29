@@ -5,11 +5,7 @@ import { createClient }         from '@/lib/supabase/server'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 import DeliveryPageClient       from '@/components/delivery/DeliveryPageClient'
 
-const ibmPlex = IBM_Plex_Sans_Arabic({
-  subsets:  ['arabic', 'latin'],
-  weight:   ['300', '400', '600', '700'],
-  variable: '--font-ibm-plex-arabic',
-})
+const ibmPlex = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['400', '600', '700'] })
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -19,6 +15,13 @@ export default async function DeliveryPage({ params }: Props) {
   const { locale } = await params
   const user = await getSession()
   if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+
+  // Restrict to roles that legitimately need the delivery board:
+  // dispatchers (branch_manager+), drivers, and global admins.
+  const allowedRoles = new Set(['owner', 'general_manager', 'branch_manager', 'driver'])
+  if (!user.role || !allowedRoles.has(user.role)) {
+    redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
+  }
 
   const supabase = await createClient()
   const today    = new Date().toISOString().split('T')[0]
