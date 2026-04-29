@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyWebhookSignature, tapStatusToPaymentStatus } from '@/lib/payments/tap-client'
+import type { Json } from '@/lib/supabase/custom-types'
 
 // Hard cap on webhook body size to keep a malicious POST from filling up
 // payment_webhooks with multi-MB JSON. 64 KiB is far above any real Tap event.
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     .insert({
       provider:   'tap',
       event_type: String(body['object'] ?? ''),
-      payload:    body,
+      payload:    body as unknown as Json,
     })
     .select('id')
     .single()
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
         .update({
           status,
           gateway_transaction_id: gatewayId,
-          gateway_response:       body,
+          gateway_response:       body as unknown as Json,
         })
         .eq('gateway_transaction_id', gatewayId)
         .select('id')
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
             .update({
               status,
               gateway_transaction_id: gatewayId,
-              gateway_response:       body,
+              gateway_response:       body as unknown as Json,
             })
             .eq('order_id', reference)
             .in('status', ['pending', 'processing'])

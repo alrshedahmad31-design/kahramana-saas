@@ -20,6 +20,7 @@ import {
   buildPrevRange, formatCurrency, calculateGrowth,
 } from '@/lib/analytics/calculations'
 import type { ReportType } from '@/lib/reports/templates'
+import type { Json } from '@/lib/supabase/custom-types'
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -80,15 +81,14 @@ async function logReport(params: {
   export_format?:   string
 }): Promise<void> {
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (sb as any).from('report_audit_log').insert({
+  await sb.from('report_audit_log').insert({
     report_name:      params.report_name,
     report_type:      params.report_type,
     generated_by:     params.generated_by,
-    filters:          params.filters,
+    filters:          params.filters as unknown as Json,
     row_count:        params.row_count,
-    data_snapshot:    params.data_snapshot ?? null,
-    validation_flags: params.validation_flags,
+    data_snapshot:    (params.data_snapshot ?? null) as Json,
+    validation_flags: params.validation_flags as unknown as Json,
     export_format:    params.export_format ?? 'preview',
   })
 }
@@ -123,14 +123,13 @@ export async function getReportHistory(limit = 25): Promise<ReportHistoryRow[]> 
   if (!user || !canAccessReports(user)) return []
 
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (sb as any)
+  const { data } = await sb
     .from('report_audit_log')
     .select('id, report_name, report_type, generated_at, row_count, export_format, filters')
     .order('generated_at', { ascending: false })
     .limit(limit)
 
-  return (data as ReportHistoryRow[]) ?? []
+  return (data ?? []) as ReportHistoryRow[]
 }
 
 export async function logExportFormat(
@@ -141,8 +140,7 @@ export async function logExportFormat(
   if (!user) return
 
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (sb as any).from('report_audit_log').insert({
+  await sb.from('report_audit_log').insert({
     report_name:   `${reportType} — ${format.toUpperCase()} export`,
     report_type:   reportType,
     generated_by:  user.id,

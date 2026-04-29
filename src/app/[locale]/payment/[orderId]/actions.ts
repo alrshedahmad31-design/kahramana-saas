@@ -5,7 +5,7 @@ import { getCustomerSession } from '@/lib/auth/customerSession'
 import { getSession } from '@/lib/auth/session'
 import { generateStaticQR } from '@/lib/payments/benefit'
 import { createCharge } from '@/lib/payments/tap-client'
-import type { PaymentMethod, PaymentStatus } from '@/lib/supabase/types'
+import type { Json, PaymentMethod, PaymentStatus } from '@/lib/supabase/custom-types'
 
 export interface InitPaymentResult {
   paymentId: string
@@ -208,7 +208,7 @@ export async function initiateTapPayment(
       .update({
         status:                 'processing',
         gateway_transaction_id: charge.id,
-        gateway_response:       charge as unknown as Record<string, unknown>,
+        gateway_response:       charge as unknown as Json,
       })
       .eq('id', paymentId)
 
@@ -219,7 +219,7 @@ export async function initiateTapPayment(
       .from('payments')
       .update({
         status:           'failed',
-        gateway_response: { error: msg } as Record<string, unknown>,
+        gateway_response: { error: msg } as unknown as Json,
       })
       .eq('id', paymentId)
     return { error: msg }

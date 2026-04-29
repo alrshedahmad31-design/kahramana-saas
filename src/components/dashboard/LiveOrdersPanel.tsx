@@ -25,8 +25,7 @@ interface StatusRow {
 
 export default function LiveOrdersPanel({ counts, avgPrepMins, prefix, isRTL }: Props) {
   const router  = useRouter()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = useMemo(() => createClient() as any, [])
+  const supabase = useMemo(() => createClient(), [])
 
   // Realtime: any order change triggers a page refresh for fresh server data
   useEffect(() => {
@@ -36,7 +35,7 @@ export default function LiveOrdersPanel({ counts, avgPrepMins, prefix, isRTL }: 
         router.refresh()
       })
       .subscribe()
-    return () => supabase.removeChannel(ch)
+    return () => { supabase.removeChannel(ch) }
   }, [supabase, router])
 
   const ordersUrl = `${prefix}/dashboard/orders`

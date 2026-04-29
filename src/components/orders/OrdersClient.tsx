@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import StatusBadge from '@/components/dashboard/StatusBadge'
@@ -11,7 +11,7 @@ import OrdersCardGrid from '@/components/orders/OrdersCardGrid'
 import OrderDetailsModal from '@/components/orders/OrderDetailsModal'
 import KanbanOrderCard from '@/components/orders/KanbanOrderCard'
 import type { OrderCardData } from '@/components/orders/OrderCard'
-import type { OrderStatus, StaffRole } from '@/lib/supabase/types'
+import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 import { BRANCHES } from '@/constants/contact'
 
 const PAGE_SIZE = 20
@@ -88,20 +88,28 @@ function getDateRange(filter: DateFilter): { from: string; to?: string } | null 
 type ViewMode = 'card' | 'table' | 'kanban'
 
 interface Props {
-  userRole: StaffRole | null
+  userRole:             StaffRole | null
+  initialOrders:        OrderCardData[]
+  initialTotalCount:    number
+  initialFilteredTotal: number
 }
 
-export default function OrdersClient({ userRole }: Props) {
+export default function OrdersClient({
+  userRole,
+  initialOrders,
+  initialTotalCount,
+  initialFilteredTotal,
+}: Props) {
   const t      = useTranslations('dashboard')
   const tS     = useTranslations('order.status')
   const tC     = useTranslations('common')
   const locale = useLocale()
   const isAr   = locale === 'ar'
 
-  const [orders,        setOrders]        = useState<OrderCardData[]>([])
-  const [loading,       setLoading]       = useState(true)
-  const [totalCount,    setTotalCount]    = useState(0)
-  const [filteredTotal, setFilteredTotal] = useState(0)
+  const [orders,        setOrders]        = useState<OrderCardData[]>(initialOrders)
+  const [loading,       setLoading]       = useState(initialOrders.length === 0)
+  const [totalCount,    setTotalCount]    = useState(initialTotalCount)
+  const [filteredTotal, setFilteredTotal] = useState(initialFilteredTotal)
 
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -112,6 +120,9 @@ export default function OrdersClient({ userRole }: Props) {
   const [view,       setView]       = useState<ViewMode>('kanban')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
+  // Skip the first useEffect fetch when the server already provided initial data
+  const skipInitialFetch = useRef(initialOrders.length > 0)
+
   const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
@@ -120,14 +131,12 @@ export default function OrdersClient({ userRole }: Props) {
     const statuses = STATUS_MAP[statusFilter]
     const range    = getDateRange(dateFilter)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let q = (supabase as any)
+    let q = supabase
       .from('orders')
-      .select(`
-        id, customer_name, customer_phone, branch_id, status, total_bhd,
-        created_at, updated_at,
-        order_items(name_ar, name_en, quantity, selected_size, selected_variant)
-      `, { count: 'exact' })
+      .select(
+        'id, customer_name, customer_phone, branch_id, status, total_bhd, created_at, updated_at, order_items(name_ar, name_en, quantity, selected_size, selected_variant)',
+        { count: 'exact' },
+      )
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1)
 
@@ -137,8 +146,7 @@ export default function OrdersClient({ userRole }: Props) {
     if (range?.from)            q = q.gte('created_at', range.from)
     if (range?.to)              q = q.lt('created_at', range.to)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let tq = (supabase as any).from('orders').select('total_bhd')
+    let tq = supabase.from('orders').select('total_bhd')
     if (statuses)               tq = tq.in('status', statuses)
     if (branchFilter !== 'all') tq = tq.eq('branch_id', branchFilter)
     if (search.trim())          tq = tq.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%`)
@@ -147,16 +155,24 @@ export default function OrdersClient({ userRole }: Props) {
 
     const [{ data, count }, { data: totals }] = await Promise.all([q, tq])
 
-    if (data) setOrders(data as OrderCardData[])
+    setOrders((data ?? []) as unknown as OrderCardData[])
     setTotalCount(count ?? 0)
     setFilteredTotal(
-      (totals as { total_bhd: number }[] | null)?.reduce((s, r) => s + Number(r.total_bhd), 0) ?? 0
+      ((totals ?? []) as { total_bhd: number }[]).reduce((s, r) => s + Number(r.total_bhd), 0)
     )
     setLoading(false)
   }, [supabase, statusFilter, branchFilter, dateFilter, search, page])
 
-  useEffect(() => { fetchOrders() }, [fetchOrders])
+  // Skip the first fetch when server already provided initial data
+  useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false
+      return
+    }
+    fetchOrders()
+  }, [fetchOrders])
 
+  // Realtime subscription — always active regardless of initial data
   useEffect(() => {
     const channel = supabase
       .channel('orders-dashboard-v2')

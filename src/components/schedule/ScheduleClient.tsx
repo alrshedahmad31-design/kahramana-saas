@@ -1,18 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient }        from '@/lib/supabase/client'
-import WeeklyScheduleGrid      from '@/components/schedule/WeeklyScheduleGrid'
-import type { ShiftWithStaff, StaffBasicRow } from '@/lib/supabase/types'
-import type { StaffRole } from '@/lib/supabase/types'
-
-function getMondayOf(date: Date): string {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  return d.toISOString().split('T')[0]
-}
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { createClient }   from '@/lib/supabase/client'
+import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid'
+import type { ShiftWithStaff, StaffBasicRow, StaffRole } from '@/lib/supabase/custom-types'
 
 function addDays(base: string, n: number): string {
   const d = new Date(base + 'T00:00:00')
@@ -21,28 +12,48 @@ function addDays(base: string, n: number): string {
 }
 
 interface Props {
-  locale:   string
-  userRole: StaffRole | null
+  locale:           string
+  userRole:         StaffRole | null
+  initialStaff:     StaffBasicRow[]
+  initialShifts:    ShiftWithStaff[]
+  initialWeekStart: string
 }
 
-export default function ScheduleClient({ locale, userRole: _userRole }: Props) {
+export default function ScheduleClient({
+  locale,
+  userRole:         _userRole,
+  initialStaff,
+  initialShifts,
+  initialWeekStart,
+}: Props) {
   const isAr = locale === 'ar'
 
-  const [weekStart, setWeekStart] = useState(() => getMondayOf(new Date()))
-  const [staff,   setStaff]   = useState<StaffBasicRow[]>([])
-  const [shifts,  setShifts]  = useState<ShiftWithStaff[]>([])
-  const [loading, setLoading] = useState(true)
+  const [weekStart, setWeekStart] = useState(initialWeekStart)
+  const [staff,     setStaff]     = useState<StaffBasicRow[]>(initialStaff)
+  const [shifts,    setShifts]    = useState<ShiftWithStaff[]>(initialShifts)
+  const [loading,   setLoading]   = useState(initialStaff.length === 0)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = createClient() as any
+  // Skip the initial load when the server already provided data for the current week
+  const skipInitialLoad = useRef(initialStaff.length > 0)
+
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
+    if (skipInitialLoad.current) {
+      skipInitialLoad.current = false
+      return
+    }
+
     async function load() {
       setLoading(true)
       const weekEnd = addDays(weekStart, 6)
 
       const [staffRes, shiftsRes] = await Promise.all([
-        supabase.from('staff_basic').select('id, name, role, branch_id, is_active, created_at').eq('is_active', true).order('name'),
+        supabase
+          .from('staff_basic')
+          .select('id, name, role, branch_id, is_active, created_at')
+          .eq('is_active', true)
+          .order('name'),
         supabase
           .from('shifts')
           .select('*, staff_basic(name, role)')
@@ -52,11 +63,12 @@ export default function ScheduleClient({ locale, userRole: _userRole }: Props) {
       ])
 
       setStaff((staffRes.data ?? []) as StaffBasicRow[])
-      setShifts((shiftsRes.data ?? []) as ShiftWithStaff[])
+      setShifts((shiftsRes.data ?? []) as unknown as ShiftWithStaff[])
       setLoading(false)
     }
+
     load()
-  }, [weekStart]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [weekStart, supabase])
 
   function handleWeekChange(dir: 1 | -1) {
     setWeekStart((prev) => addDays(prev, dir * 7))

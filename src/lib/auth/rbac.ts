@@ -1,5 +1,5 @@
 import type { AuthUser } from './session'
-import type { OrderRow, StaffBasicRow, StaffRole, OrderStatus } from '@/lib/supabase/types'
+import type { OrderRow, StaffBasicRow, StaffRole, OrderStatus } from '@/lib/supabase/custom-types'
 import { ALLOWED_TRANSITIONS, CAN_CANCEL } from './permissions'
 
 // ── Role hierarchy ────────────────────────────────────────────────────────────
@@ -178,6 +178,18 @@ export function canAccessAnalytics(user: AuthUser): boolean {
 
 // Reports (export): owner + general_manager only
 export function canAccessReports(user: AuthUser): boolean {
+  if (!user.role) return false
+  return isGlobalAdmin(user)
+}
+
+// Schedule management: branch_manager and above
+export function canManageSchedule(user: AuthUser): boolean {
+  if (!user.role) return false
+  return rankOf(user.role) >= rankOf('branch_manager')
+}
+
+// System settings: owner and general_manager only
+export function canManageSettings(user: AuthUser): boolean {
   if (!user.role) return false
   return isGlobalAdmin(user)
 }

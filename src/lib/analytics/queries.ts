@@ -519,7 +519,7 @@ export async function getSecondaryMetrics(
     .not('orders.status', 'in', `(${excludedStatuses().join(',')})`)
     .gte('orders.created_at', toISO(from))
     .lte('orders.created_at', toISO(to))
-  if (branchId) itemsQ = (itemsQ as ReturnType<typeof sb.from>) .eq('orders.branch_id', branchId)
+  if (branchId) itemsQ = itemsQ.eq('orders.branch_id', branchId)
 
   const [periodRes, prevRes, itemsRes] = await Promise.all([periodQ, prevQ, itemsQ])
 
