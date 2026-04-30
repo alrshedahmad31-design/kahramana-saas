@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Image from 'next/image'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useLocale, useTranslations } from 'next-intl'
@@ -13,12 +14,12 @@ export default function CinematicHero() {
   const isRTL = locale === 'ar'
   const t = useTranslations('home.hero')
   const containerRef = useRef<HTMLDivElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const mediaRef     = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Parallax effect for video
-      gsap.to(videoRef.current, {
+      // Parallax on wrapper containing both Image and Video
+      gsap.to(mediaRef.current, {
         y: '20%',
         ease: 'none',
         scrollTrigger: {
@@ -31,7 +32,7 @@ export default function CinematicHero() {
 
       // Staggered text reveals
       const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 1.2 } })
-      
+
       tl.from('.hero-eyebrow', { opacity: 0, y: 20, delay: 0.5 })
         .from('.hero-title-part-1', { opacity: 0, y: 40, stagger: 0.1 }, '-=0.8')
         .from('.hero-title-part-2', { opacity: 0, scale: 0.95, filter: 'blur(10px)' }, '-=0.6')
@@ -42,23 +43,45 @@ export default function CinematicHero() {
   }, [])
 
   return (
-    <section 
+    <section
       ref={containerRef}
       className="relative h-[100dvh] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16"
     >
       {/* Background Media */}
-      <div className="absolute inset-0 z-0">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover scale-110"
-          poster="/assets/hero/hero-poster.webp"
-        >
-          <source src="/assets/hero/hero-menu.mp4" type="video/mp4" />
-        </video>
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {/*
+          mediaRef wrapper: Image + Video scale together for parallax.
+          scale-110 provides buffer so edges don't show during y:20% translation.
+        */}
+        <div ref={mediaRef} className="absolute inset-0 scale-110">
+          {/*
+            Next.js Image as LCP element:
+            - priority → <link rel="preload"> injected into <head> during SSR
+            - fill + sizes → serves ~750px WebP to mobile instead of 186KB full poster
+            - quality={85} → optimal compression/quality balance
+          */}
+          <Image
+            src="/assets/hero/hero-poster.webp"
+            alt=""
+            fill
+            priority
+            quality={85}
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1920px"
+            className="object-cover"
+          />
+
+          {/* Video overlays Image once loaded — no poster needed since Image handles visual */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/assets/hero/hero-menu.mp4" type="video/mp4" />
+          </video>
+        </div>
+
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />
@@ -71,7 +94,7 @@ export default function CinematicHero() {
         </p>
 
         <h1 className="mb-10 leading-[0.9] flex flex-col">
-          <span 
+          <span
             className={`
               hero-title-part-1 text-5xl sm:text-8xl font-bold text-brand-text
               ${isRTL ? 'font-cairo' : 'font-editorial'}
@@ -79,7 +102,7 @@ export default function CinematicHero() {
           >
             {t('titlePart1')}
           </span>
-          <span 
+          <span
             className={`
               hero-title-part-2 text-7xl sm:text-[12rem] font-bold text-brand-gold mt-2
               ${isRTL ? 'font-cairo' : 'font-editorial italic'}
@@ -89,7 +112,7 @@ export default function CinematicHero() {
           </span>
         </h1>
 
-        <div className={`hero-cta flex flex-wrap gap-4 justify-start`}>
+        <div className="hero-cta flex flex-wrap gap-4 justify-start">
           <CinematicButton
             href="/menu"
             isRTL={isRTL}
@@ -111,17 +134,11 @@ export default function CinematicHero() {
 
       {/* Scroll indicator */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-50">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-brand-gold vertical-text">
+        <span className="text-[10px] font-bold tracking-widest uppercase text-brand-gold [writing-mode:vertical-rl]">
           {t('scrollDown')}
         </span>
         <div className="w-px h-12 bg-gradient-to-b from-brand-gold to-transparent" />
       </div>
-
-      <style jsx>{`
-        .vertical-text {
-          writing-mode: vertical-rl;
-        }
-      `}</style>
     </section>
   )
 }
