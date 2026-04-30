@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { SITE_URL } from '@/constants/contact'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -29,7 +30,7 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: 'https://kahramanat.com/sitemap.xml',
-    host:    'https://kahramanat.com',
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host:    SITE_URL,
   }
 }

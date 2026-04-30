@@ -123,9 +123,24 @@ export const DEFAULT_BRANCH_ID: BranchId = 'riffa'
 export const DEFAULT_BRANCH = BRANCHES[DEFAULT_BRANCH_ID]
 export const WHATSAPP_BASE_URL = 'https://wa.me'
 
+/**
+ * Canonical site URL — drives canonicals, sitemap, schema.org, OG metadata.
+ * Pulled from NEXT_PUBLIC_SITE_URL so we can switch between
+ *   - https://kahramana.vercel.app  (current preview deployment)
+ *   - https://kahramanat.com        (future custom domain)
+ * without redeploying with a code change. Falls back to the Vercel preview.
+ *
+ * IMPORTANT: when the custom domain goes live, set
+ *   NEXT_PUBLIC_SITE_URL=https://kahramanat.com
+ * in Vercel env and redeploy. No source change needed.
+ */
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kahramana.vercel.app'
+).replace(/\/$/, '')
+
 export const GENERAL_CONTACT = {
   email: 'info@kahramanat.com',
-  website: 'https://kahramanat.com',
+  website: SITE_URL,
   instagram: 'https://www.instagram.com/kahramanat_b',
   tiktok: 'https://www.tiktok.com/@kahramanat_b',
   snapchat: '@kahramanat_b',

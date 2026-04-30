@@ -60,3 +60,10 @@ next-env.d.ts
 !.env*.example
 .agent/reports/
 scratch/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

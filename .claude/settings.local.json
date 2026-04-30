@@ -85,7 +85,8 @@
       "Bash(npx tsx *)",
       "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\forgot-password\")",
       "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\set-password\")",
-      "Bash(grep \"^\\\\s*[a-z_]*: {$\" src/lib/supabase/types.ts)"
+      "Bash(grep \"^\\\\s*[a-z_]*: {$\" src/lib/supabase/types.ts)",
+      "Bash(grep -nE \"^      [a-z_]+: \\\\{$\" src/lib/supabase/types.ts)"
     ]
   }
 }

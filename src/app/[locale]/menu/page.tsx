@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic'
 const MenuExperience = dynamic(() => import('@/components/menu/menu-experience'), { ssr: true })
 import MenuHero from '@/components/menu/menu-hero'
 import { buildMenuBreadcrumb } from '@/lib/seo/schemas'
+import { SITE_URL } from '@/constants/contact'
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as LocaleCode
@@ -44,12 +45,12 @@ export default async function MenuPage() {
     '@type': 'Menu',
     name: locale === 'ar' ? 'منيو كهرمانة بغداد' : 'Kahramana Baghdad Menu',
     inLanguage: locale === 'ar' ? 'ar-BH' : 'en-BH',
-    url: `https://kahramanat.com/${locale === 'en' ? 'en/' : ''}menu`,
-    isPartOf: { '@id': 'https://kahramanat.com/#organization' },
+    url: `${SITE_URL}/${locale === 'en' ? 'en/' : ''}menu`,
+    isPartOf: { '@id': `${SITE_URL}/#organization` },
     hasMenuSection: categories.map((c) => ({
       '@type': 'MenuSection',
       name: locale === 'ar' ? c.name.ar : c.name.en,
-      url:  `https://kahramanat.com/${locale === 'en' ? 'en/' : ''}menu/${c.slug}`,
+      url:  `${SITE_URL}/${locale === 'en' ? 'en/' : ''}menu/${c.slug}`,
     })),
   }
 

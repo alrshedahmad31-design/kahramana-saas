@@ -14,17 +14,36 @@ const STAFF_ROUTE_PATTERN  = /^(\/en)?\/dashboard\/staff(\/.*)?$/
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
 
 // ── CSP builder (nonce injected per request) ──────────────────────────────────
+// Strategy:
+//   - Production: nonce-based + 'strict-dynamic'. Modern browsers ignore
+//     'unsafe-inline' when a nonce is present, so adding it doesn't weaken
+//     prod security but keeps Next.js framework scripts working when the
+//     nonce occasionally fails to thread (RSC streaming edge cases).
+//   - Development: 'unsafe-inline' is required because Turbopack's HMR
+//     runtime injects inline scripts that the nonce mechanism cannot tag.
+//   - Both: allow the Vercel SpeedInsights origin va.vercel-scripts.com
+//     so client telemetry works.
 
 function buildCsp(nonce: string): string {
-  const isDev       = process.env.NODE_ENV !== 'production'
-  const evalSrc     = isDev ? "'unsafe-eval'" : ''
+  const isDev = process.env.NODE_ENV !== 'production'
+  const SCRIPT_HOSTS =
+    'https://www.googletagmanager.com https://www.google-analytics.com ' +
+    'https://www.clarity.ms https://cdn.sanity.io https://va.vercel-scripts.com'
+
+  const scriptSrc = isDev
+    // Dev: permissive for HMR + inline framework scripts
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${SCRIPT_HOSTS}`
+    // Prod: nonce-strict; 'unsafe-inline' is a legacy-browser fallback that
+    // modern browsers ignore once a nonce is present.
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' ${SCRIPT_HOSTS}`
+
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' ${evalSrc} https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://cdn.sanity.io`,
+    scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://cdn.sanity.io https://images.unsplash.com https://*.google.com",
     "font-src 'self'",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",

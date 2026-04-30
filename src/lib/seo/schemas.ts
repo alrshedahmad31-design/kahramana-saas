@@ -17,7 +17,8 @@ import {
   type Branch,
 } from '@/constants/contact'
 
-const SITE = GENERAL_CONTACT.website // https://kahramanat.com
+// Resolved at module load from NEXT_PUBLIC_SITE_URL → preview vs prod domain
+const SITE = GENERAL_CONTACT.website
 
 type Locale = 'ar' | 'en'
 
