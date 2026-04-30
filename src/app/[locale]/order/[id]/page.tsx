@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
 import type { OrderWithItems } from '@/lib/supabase/custom-types'
 import { BRANCHES } from '@/constants/contact'
+import AutoRefresh from '@/components/ui/AutoRefresh'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -65,8 +66,11 @@ export default async function OrderConfirmationPage({ params }: Props) {
       }
     : null
 
+  const isTerminal = order && ['delivered', 'completed', 'cancelled', 'payment_failed'].includes(order.status)
+
   return (
     <div className="min-h-screen bg-brand-black">
+      {!isTerminal && <AutoRefresh intervalMs={30_000} />}
       {schemaOrg && (
         <script
           type="application/ld+json"

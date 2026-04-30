@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { advanceOrderStatus } from '@/app/[locale]/dashboard/kds/actions'
 import KDSColumn from './KDSColumn'
 import type { KDSOrder } from '@/lib/supabase/custom-types'
+import { BRANCH_LIST } from '@/constants/contact'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'
 
@@ -78,6 +79,7 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
   const [fullscreen,     setFullscreen]     = useState(false)
   const [clock,          setClock]          = useState(formatClock)
   const [activeStation,  setActiveStation]  = useState<StationFilter>('all')
+  const [viewBranch,     setViewBranch]     = useState<string | null>(null)
 
   // Track known IDs to detect new accepted & new ready transitions
   const knownIds      = useRef(new Set(initialOrders.map((o) => o.id)))
@@ -162,8 +164,10 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
     if (!muted && currentStatus === 'preparing') playBell('ready')
   }
 
-  // Station filter — passes through all orders for now (activates once station field added to orders)
-  const filteredOrders = orders
+  // Branch filter (client-side) — only active when GM/Owner has no assigned branch
+  const filteredOrders = viewBranch
+    ? orders.filter((o) => o.branch_id === viewBranch)
+    : orders
 
   const accepted  = filteredOrders.filter((o) => o.status === 'accepted')
   const preparing = filteredOrders.filter((o) => o.status === 'preparing')
@@ -189,8 +193,23 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
           )}
         </div>
 
-        {/* Center: station filter */}
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        {/* Center: branch filter (GM/Owner only) + station filter */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {!branchId && (
+            <select
+              value={viewBranch ?? ''}
+              onChange={(e) => setViewBranch(e.target.value || null)}
+              className={`h-9 rounded-lg border border-brand-border bg-brand-surface-2 text-brand-text text-sm font-bold ps-3 pe-8 shrink-0 focus:outline-none focus:border-brand-gold cursor-pointer ${font}`}
+              aria-label={isAr ? 'تصفية حسب الفرع' : 'Filter by branch'}
+            >
+              <option value="">{isAr ? 'كل الفروع' : 'All Branches'}</option>
+              {BRANCH_LIST.filter((b) => b.status === 'active').map((b) => (
+                <option key={b.id} value={b.id}>
+                  {isAr ? b.nameAr : b.nameEn}
+                </option>
+              ))}
+            </select>
+          )}
           {STATIONS.map((s) => {
             const active = activeStation === s.id
             return (
