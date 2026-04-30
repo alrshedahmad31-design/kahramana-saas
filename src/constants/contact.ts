@@ -52,8 +52,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     whatsapp: '+97317131413',
     waLink: 'https://wa.me/97317131413',
     mapsUrl: 'https://maps.app.goo.gl/J3CMk9AnhSqSBsGQA',
-    latitude: 26.0667,
-    longitude: 50.5577,
+    latitude: 26.1366914,
+    longitude: 50.5593132,
     hours: {
       ar: 'يومياً ٧:٠٠م – ١:٠٠ص',
       en: 'Daily 7:00 PM – 1:00 AM',
@@ -77,8 +77,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     whatsapp: '+97317131213',
     waLink: 'https://wa.me/97317131213',
     mapsUrl: 'https://maps.app.goo.gl/cVsYGpibZxy2rPEV8',
-    latitude: 26.2172,
-    longitude: 50.5865,
+    latitude: 26.269074,
+    longitude: 50.6433552,
     hours: {
       ar: 'يومياً ١٢:٠٠م – ١:٠٠ص',
       en: 'Daily 12:00 PM – 1:00 AM',

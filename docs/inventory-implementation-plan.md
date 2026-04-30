@@ -595,6 +595,22 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+-- platform_order_id: رقم الطلب من المنصة الخارجية — يمنع التكرار عند الدمج بين يدوي + CSV
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'orders' AND column_name = 'platform_order_id'
+  ) THEN
+    ALTER TABLE orders ADD COLUMN platform_order_id TEXT;
+  END IF;
+END $$;
+
+-- UNIQUE INDEX على مستوى قاعدة البيانات — يرفض أي تكرار لنفس رقم الطلب من نفس المنصة
+-- NULL مسموح (= طلبات website/walk_in/phone ليس لها رقم خارجي)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_platform_dedup
+  ON orders(order_source, platform_order_id)
+  WHERE platform_order_id IS NOT NULL;
+
 -- role جديد لمدير المخزون
 ALTER TYPE staff_role ADD VALUE IF NOT EXISTS 'inventory_manager';
 ```
@@ -1789,15 +1805,42 @@ POST /api/orders/platform-import
 
 1. استقبال CSV + تحديد المنصة (talabat / jahez / keeta)
 2. قراءة الصفوف بـ SheetJS
-3. لكل صف:
+3. لكل صف → استخراج platform_order_id (رقم الطلب الفريد من المنصة)
+
+4. فحص التكرار (Anti-Duplicate Check):
+   SELECT id FROM orders
+   WHERE order_source = platform AND platform_order_id = X
+   → موجود → أضفه لقائمة "مُتخطَّى" (مدخَل يدوياً مسبقاً)
+   → غير موجود → تابع للاستيراد
+
+5. لكل صف جديد:
    a. البحث عن platform_item_name في delivery_platform_mappings
    b. لو موجود → ربط بـ menu_item_slug
    c. لو غير موجود → يُضاف لقائمة "أصناف غير مُعرَّفة" للمراجعة
-4. Preview: { matched: N, unmatched: [{name, count}] }
-5. عند التأكيد:
-   - INSERT orders (order_source = platform, status = 'delivered')
+
+6. Preview قبل التأكيد:
+   {
+     to_import:  [{ platform_order_id, items, total }],  -- جديد
+     duplicates: [{ platform_order_id, entered_at }],    -- مدخَل يدوياً
+     unmatched:  [{ item_name, count }]                  -- أصناف غير معروفة
+   }
+
+7. عند التأكيد:
+   - INSERT orders (order_source = platform, platform_order_id, status = 'delivered')
    - INSERT order_items → trigger يُشغَّل → المخزون يُخصم
-6. تقرير: { imported: N, skipped: M, unmatched_items: [...] }
+   - الـ duplicates تُتخطَّى تلقائياً (لا تُلمس)
+
+8. تقرير نهائي:
+   { imported: N, skipped_duplicates: M, unmatched_items: [...] }
+```
+
+**قاعدة الأمان الإضافية (Database Level):**
+```sql
+-- حتى لو كان هناك bug في الكود، قاعدة البيانات ترفض التكرار
+-- UNIQUE INDEX يُعيد خطأ 23505 (unique_violation)
+-- الكود يلتقطه ويُضيف الطلب لقائمة duplicates بدلاً من crash
+ON CONFLICT (order_source, platform_order_id) DO NOTHING
+-- RETURNING id → لو NULL = تكرار محذوف
 ```
 
 **واجهة CSV Import:**

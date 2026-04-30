@@ -88,10 +88,10 @@ export default function ContactForm() {
     <form
       onSubmit={handleSubmit}
       dir={isAr ? 'rtl' : 'ltr'}
-      className="flex flex-col gap-5"
+      className="contact-form flex flex-col gap-8"
       noValidate
     >
-      {/* Honeypot — hidden from real users, filled by bots */}
+      {/* Honeypot */}
       <div style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
         <label htmlFor="website">Website</label>
         <input
@@ -106,7 +106,7 @@ export default function ContactForm() {
       </div>
 
       {/* Name + Email row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
         <Field label={t('name')} error={errors.name}>
           <input
             type="text"
@@ -135,7 +135,7 @@ export default function ContactForm() {
       </div>
 
       {/* Phone + Branch row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
         <Field label={`${t('phone')} (${tC('optional')})`} error={errors.phone}>
           <input
             type="tel"
@@ -150,19 +150,26 @@ export default function ContactForm() {
         </Field>
 
         <Field label={`${t('branch')} (${tC('optional')})`} error={errors.branch_id}>
-          <select
-            value={form.branch_id}
-            onChange={(e) => update('branch_id', e.target.value)}
-            disabled={status === 'sending'}
-            className={inputCls(false)}
-          >
-            <option value="">{t('branchPlaceholder')}</option>
-            {BRANCH_LIST.map((b) => (
-              <option key={b.id} value={b.id}>
-                {isAr ? b.nameAr : b.nameEn}
-              </option>
-            ))}
-          </select>
+          <div className="relative group">
+            <select
+              value={form.branch_id}
+              onChange={(e) => update('branch_id', e.target.value)}
+              disabled={status === 'sending'}
+              className={`${inputCls(false)} appearance-none`}
+            >
+              <option value="">{t('branchPlaceholder')}</option>
+              {BRANCH_LIST.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {isAr ? b.nameAr : b.nameEn}
+                </option>
+              ))}
+            </select>
+            <div className={`absolute top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${isAr ? 'left-4' : 'right-4'}`}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-brand-muted group-hover:text-brand-gold">
+                <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
         </Field>
       </div>
 
@@ -170,34 +177,39 @@ export default function ContactForm() {
       <Field label={t('message')} error={errors.message}>
         <textarea
           required
-          rows={5}
+          rows={6}
           value={form.message}
           onChange={(e) => update('message', e.target.value)}
           placeholder={t('messagePlaceholder')}
           disabled={status === 'sending'}
-          className={`${inputCls(!!errors.message)} resize-none`}
+          className={`${inputCls(!!errors.message)} resize-none py-4`}
         />
       </Field>
 
       {/* Server errors */}
       {(status === 'error' || status === 'rate_limit') && (
-        <p
-          role="alert"
-          className="rounded-lg bg-brand-error/10 border border-brand-error/30
-                     px-4 py-3 font-satoshi text-sm text-brand-error"
-        >
-          {status === 'rate_limit' ? t('rateLimit') : t('error')}
-        </p>
+        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+          <p
+            role="alert"
+            className="rounded-xl bg-brand-error/10 border border-brand-error/30
+                       px-6 py-4 font-almarai text-sm text-brand-error flex items-center gap-3"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-error animate-pulse" />
+            {status === 'rate_limit' ? t('rateLimit') : t('error')}
+          </p>
+        </div>
       )}
 
-      <CinematicButton
-        type="submit"
-        disabled={status === 'sending'}
-        isRTL={isAr}
-        className="w-full py-4 font-bold rounded-full"
-      >
-        {status === 'sending' ? t('sending') : t('send')}
-      </CinematicButton>
+      <div className="mt-4">
+        <CinematicButton
+          type="submit"
+          disabled={status === 'sending'}
+          isRTL={isAr}
+          className="w-full sm:w-auto px-12 py-5 font-black rounded-full text-lg shadow-xl shadow-brand-gold/10"
+        >
+          {status === 'sending' ? t('sending') : t('send')}
+        </CinematicButton>
+      </div>
     </form>
   )
 }
@@ -214,20 +226,23 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="font-almarai text-sm font-medium text-brand-text">{label}</label>
+    <div className="flex flex-col gap-2.5">
+      <label className="font-almarai text-sm font-bold tracking-wide text-brand-gold/80 uppercase px-1">{label}</label>
       {children}
       {error && (
-        <p className="font-satoshi text-xs text-brand-error">{error}</p>
+        <p className="font-almarai text-xs font-bold text-brand-error px-1 flex items-center gap-1.5">
+          <span className="w-1 h-1 rounded-full bg-brand-error" />
+          {error}
+        </p>
       )}
     </div>
   )
 }
 
 function inputCls(hasError: boolean) {
-  return `min-h-[48px] w-full rounded-lg border bg-brand-surface px-4 py-3
-          font-satoshi text-base text-brand-text placeholder:text-brand-muted/50
-          focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold
-          transition-colors duration-150 disabled:opacity-50
-          ${hasError ? 'border-brand-error' : 'border-brand-border'}`
+  return `min-h-[56px] w-full rounded-2xl border bg-brand-surface/40 backdrop-blur-md px-5 py-3
+          font-almarai text-base text-brand-text placeholder:text-brand-muted/30
+          focus:outline-none focus:ring-4 focus:ring-brand-gold/10 focus:border-brand-gold/60
+          transition-all duration-300 disabled:opacity-50
+          ${hasError ? 'border-brand-error' : 'border-brand-border hover:border-brand-gold/30'}`
 }

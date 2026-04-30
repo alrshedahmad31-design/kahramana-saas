@@ -45,23 +45,20 @@ export default function BranchMap({ latitude, longitude, isAr }: Props) {
           </div>
 
           <div className="relative aspect-video w-full overflow-hidden rounded-3xl border border-brand-border bg-brand-surface-2 group">
-            {/* Darkening Overlay (visual only) */}
-            <div className="absolute inset-0 pointer-events-none z-10 bg-brand-black/10 mix-blend-multiply group-hover:bg-transparent transition-all duration-700" />
-            
             <iframe
               src={mapUrl}
               width="100%"
               height="100%"
-              style={{ border: 0, filter: 'grayscale(0.6) contrast(1.1) brightness(0.8) invert(0)' }}
+              style={{ border: 0 }}
               allowFullScreen={true}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Branch Location"
-              className="grayscale-[0.3] invert-[0.05] contrast-[1.1]"
+              className="grayscale transition-all duration-1000 group-hover:grayscale-0 contrast-[1.1] brightness-[0.9] group-hover:brightness-100"
             />
 
             {/* Frame accent */}
-            <div className="absolute inset-4 border border-brand-gold/10 pointer-events-none rounded-2xl z-20" />
+            <div className="absolute inset-4 border border-brand-gold/10 pointer-events-none rounded-2xl z-20 group-hover:border-brand-gold/30 transition-colors duration-700" />
           </div>
         </div>
       </div>

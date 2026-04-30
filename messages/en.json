@@ -617,6 +617,9 @@
     "retry": "Try Again"
   },
   "contact": {
+    "heroEyebrow": "Contact Us",
+    "heroTitle": "We're Here to Serve You",
+    "heroDescription": "Whether you have a query about an order, want to organize a special event, or would like to share your feedback — the Kahramana team is always waiting for you.",
     "title": "Contact Us",
     "subtitle": "We'd love to hear from you. Reach us via the form or directly at your nearest branch.",
     "name": "Name",

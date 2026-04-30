@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
+import { preload } from 'react-dom'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { headers } from 'next/headers'
-import CinematicHero from '@/components/home/CinematicHero'
+import HeroWrapper from '@/components/home/HeroWrapper'
 import FeatureArtifacts from '@/components/home/FeatureArtifacts'
 import PhilosophyManifesto from '@/components/home/PhilosophyManifesto'
 import ProtocolStack from '@/components/home/ProtocolStack'
@@ -35,6 +36,9 @@ export default async function HomePage() {
   const isRTL  = locale === 'ar'
   const nonce  = (await headers()).get('x-nonce') ?? undefined
 
+  // Preload hero poster via React 19 API → injected into <head> during SSR
+  preload('/assets/hero/hero-poster.webp', { as: 'image', type: 'image/webp', fetchPriority: 'high' })
+
   const organizationSchema = buildOrganizationSchema(locale)
   const faqSchema          = buildFAQSchema(buildHomepageFAQ(locale))
 
@@ -55,7 +59,7 @@ export default async function HomePage() {
 
       <div className="flex flex-col">
         {/* A. Cinematic Opening */}
-        <CinematicHero />
+        <HeroWrapper />
 
         {/* B. Feature Artifacts */}
         <FeatureArtifacts />

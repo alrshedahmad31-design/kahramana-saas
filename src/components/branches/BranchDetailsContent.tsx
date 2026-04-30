@@ -29,7 +29,7 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
         ease: 'power3.out',
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: 'top 85%',
+          start: 'top 95%', // Trigger earlier
         },
       })
 
@@ -53,7 +53,7 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
         
         {/* Address Card */}
-        <div className="info-card group flex flex-col justify-between p-8 rounded-3xl bg-brand-surface/40 backdrop-blur-xl border border-brand-border hover:border-brand-gold/40 transition-all duration-500 min-h-[280px]">
+        <div className="info-card group flex flex-col justify-between p-8 rounded-3xl bg-brand-surface/90 backdrop-blur-xl border border-brand-border hover:border-brand-gold/40 transition-all duration-500 min-h-[280px]">
           <div>
             <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
               <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-brand-gold">
@@ -84,7 +84,7 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
         </div>
 
         {/* Hours Card */}
-        <div className="info-card group flex flex-col p-8 rounded-3xl bg-brand-surface/40 backdrop-blur-xl border border-brand-border hover:border-brand-gold/40 transition-all duration-500 min-h-[280px]">
+        <div className="info-card group flex flex-col p-8 rounded-3xl bg-brand-surface/90 backdrop-blur-xl border border-brand-border hover:border-brand-gold/40 transition-all duration-500 min-h-[280px]">
           <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
             <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-brand-gold">
               <circle cx="12" cy="12" r="10" />
@@ -104,7 +104,7 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
         </div>
 
         {/* Contact Card */}
-        <div className="info-card group flex flex-col p-8 rounded-3xl bg-brand-surface/40 backdrop-blur-xl border border-brand-border hover:border-brand-gold/40 transition-all duration-500 min-h-[280px]">
+        <div className="info-card group flex flex-col p-8 rounded-3xl bg-brand-surface/90 backdrop-blur-xl border border-brand-border hover:border-brand-gold/40 transition-all duration-500 min-h-[280px]">
           <div className="w-12 h-12 rounded-2xl bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
             <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-brand-gold">
               <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 015.06 3h3a2 2 0 012 1.72 12.81 12.81 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
