@@ -135,36 +135,28 @@
 الحل: إضافة عمود `order_source` على `orders`:
 
 ```sql
-ALTER TABLE orders ADD COLUMN order_source TEXT NOT NULL DEFAULT 'website'
-  CHECK (order_source IN (
-    'website',    -- طلبات الموقع
-    'walk_in',    -- طلبات داخل المطعم
-    'talabat',    -- تطبيق طلبات
-    'jahez',      -- تطبيق جاهز
-    'keeta',      -- تطبيق كيتا
-    'phone',      -- طلبات هاتفية
-    'other'       -- مصادر أخرى
-  ));
+-- Guard: تحقق من وجود العمود قبل الإضافة
+-- migration 025 قد يكون أضافه مسبقاً — تحقق عبر: npx supabase db diff --linked
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'orders'
+      AND column_name  = 'order_source'
+  ) THEN
+    ALTER TABLE orders ADD COLUMN order_source TEXT NOT NULL DEFAULT 'website'
+      CHECK (order_source IN (
+        'website',    -- طلبات الموقع
+        'walk_in',    -- طلبات داخل المطعم
+        'talabat',    -- تطبيق طلبات
+        'jahez',      -- تطبيق جاهز
+        'keeta',      -- تطبيق كيتا
+        'phone',      -- طلبات هاتفية
+        'other'       -- مصادر أخرى
+      ));
+  END IF;
+END $$;
 ```
-
-### order_source — تحقق قبل الإضافة
-
-> ⚠️ قبل إضافة العمود في migration 029:
-> ```bash
-> npx supabase db diff --linked
-> ```
-> تحقق أن العمود غير موجود أصلاً.
-> لو موجود (من migration سابقة)، تخطّى الـ ALTER TABLE.
-> استخدم IF NOT EXISTS pattern:
-> ```sql
-> DO $$ BEGIN
->   IF NOT EXISTS (SELECT 1 FROM information_schema.columns
->     WHERE table_name='orders' AND column_name='order_source') THEN
->     ALTER TABLE orders ADD COLUMN order_source TEXT NOT NULL DEFAULT 'website'
->       CHECK (order_source IN ('website','walk_in','talabat','jahez','keeta','phone','other'));
->   END IF;
-> END $$;
-> ```
 
 **الطريقة الحالية الواقعية:** الكاشير يدخل طلبات التوصيل يدوياً عبر POS dashboard. الـ triggers تخصم المخزون تلقائياً بغض النظر عن المصدر.
 
@@ -189,27 +181,19 @@ BEGIN
 
   -- لكل مكوّن في وصفة هذا الصنف
   FOR r IN
-    SELECT r.ingredient_id,
-           r.quantity * COALESCE(r.yield_factor, i.yield_factor) AS qty_per_unit
-    FROM recipes r
-    JOIN ingredients i ON i.id = r.ingredient_id
-    WHERE r.menu_item_slug = NEW.menu_item_slug
-      AND (r.variant_key IS NULL
-           OR r.variant_key = COALESCE(NEW.selected_variant, NEW.size))
+    SELECT rec.ingredient_id,
+           rec.quantity
+             * COALESCE(rec.yield_factor, ing.default_yield_factor, 1.000)
+             AS qty_per_unit
+    FROM recipes rec
+    JOIN ingredients ing ON ing.id = rec.ingredient_id
+    WHERE rec.menu_item_slug = NEW.menu_item_slug
+      AND (rec.variant_key IS NULL
+           OR rec.variant_key = COALESCE(NEW.selected_variant, NEW.size))
   LOOP
     v_required := r.qty_per_unit * NEW.qty;
 
-    -- تحقق أولاً: هل الـ row موجود أصلاً؟
-    IF NOT EXISTS (
-      SELECT 1 FROM inventory_stock
-      WHERE branch_id = v_branch_id AND ingredient_id = r.ingredient_id
-    ) THEN
-      RAISE EXCEPTION 'MISSING_STOCK_RECORD: ingredient=% branch=% — run opening balance first',
-        r.ingredient_id, v_branch_id
-        USING ERRCODE = 'P0002';
-    END IF;
-
-    -- ثم حاول الحجز (خصم ذرّي: يفحص التوفر ويحجز في نفس اللحظة)
+    -- خصم ذرّي: يفحص التوفر ويحجز في نفس اللحظة
     UPDATE inventory_stock
        SET reserved = reserved + v_required,
            last_movement_at = NOW()
@@ -217,10 +201,20 @@ BEGIN
        AND ingredient_id = r.ingredient_id
        AND (on_hand - reserved) >= v_required;
 
+    -- تمييز بين: صف غير موجود في inventory_stock (P0002) VS مخزون غير كافٍ (P0001)
     IF NOT FOUND THEN
-      RAISE EXCEPTION 'INSUFFICIENT_STOCK: ingredient=% required=% branch=%',
-        r.ingredient_id, v_required, v_branch_id
-        USING ERRCODE = 'P0001';
+      IF NOT EXISTS (
+        SELECT 1 FROM inventory_stock
+        WHERE branch_id = v_branch_id AND ingredient_id = r.ingredient_id
+      ) THEN
+        RAISE EXCEPTION 'MISSING_STOCK_RECORD: ingredient=% branch=%',
+          r.ingredient_id, v_branch_id
+          USING ERRCODE = 'P0002';
+      ELSE
+        RAISE EXCEPTION 'INSUFFICIENT_STOCK: ingredient=% required=% branch=%',
+          r.ingredient_id, v_required, v_branch_id
+          USING ERRCODE = 'P0001';
+      END IF;
     END IF;
 
     -- تسجيل الحركة في السجل
@@ -315,67 +309,43 @@ IF NOT FOUND AND NOT EXISTS (
 END IF;
 ```
 
-### معالجة أخطاء المخزون في Next.js
+### 3.5 معالجة نفاد صنف واحد (Partial Stock-Out)
 
-```typescript
-// src/app/[locale]/checkout/actions.ts
-export async function createOrder(formData: FormData) {
-  // 1. Pre-check: هل المخزون يكفي؟
-  const { data: stockCheck } = await supabase.rpc('rpc_check_stock_for_cart', {
-    p_branch_id: branchId,
-    p_items: cartItems.map(i => ({ slug: i.slug, quantity: i.qty, variant: i.variant }))
-  });
+عند نفاد مكوّن لصنف واحد في طلب متعدد الأصناف، الـ transaction تُلغى بالكامل — الزبون يخسر الأصناف المتوفرة معه. الحل يحتاج مرحلتين:
 
-  const insufficient = stockCheck?.filter(s => !s.is_sufficient);
-  if (insufficient?.length) {
-    return {
-      error: 'INSUFFICIENT_STOCK',
-      items: insufficient.map(s => ({
-        slug: s.menu_item_slug,
-        ingredient: s.ingredient_name,
-        required: s.required,
-        available: s.available
-      }))
-    };
-  }
+**Pre-check قبل إنشاء الطلب:**
 
-  // 2. إنشاء الطلب (trigger يحجز المخزون)
-  const { error } = await supabase.from('order_items').insert(items);
+```ts
+// في server action / checkout — قبل INSERT orders
+const { data: stockCheck } = await supabase.rpc('rpc_check_stock_for_cart', {
+  p_branch_id: branchId,
+  p_items: cartItems.map(i => ({ slug: i.slug, qty: i.qty, size: i.size ?? null }))
+})
 
-  if (error?.message.includes('INSUFFICIENT_STOCK')) {
-    // Race condition: شخص آخر أخذ المخزون بين الـ check والـ insert
-    return { error: 'STOCK_CHANGED', message: 'المخزون تغيّر، حاول مرة أخرى' };
-  }
-
-  if (error?.message.includes('MISSING_STOCK_RECORD')) {
-    // مكوّن بدون رصيد افتتاحي — مشكلة إعداد
-    console.error('Missing stock record:', error.message);
-    return { error: 'SYSTEM_ERROR', message: 'خطأ في النظام، تواصل مع الإدارة' };
-  }
+const outOfStock = stockCheck?.filter(i => !i.available) ?? []
+if (outOfStock.length > 0) {
+  // أعد للـ UI قائمة الأصناف الناقصة — لا تُنشئ الطلب
+  return { outOfStockItems: outOfStock }
 }
 ```
 
-الأماكن التي تحتاج تعديل في الكود الحالي:
-- `src/app/[locale]/checkout/` — إضافة rpc_check_stock_for_cart قبل الإنشاء
-- `src/components/checkout/CheckoutForm.tsx` — عرض أسماء الأصناف غير المتوفرة
-- `src/app/[locale]/dashboard/pos/` (جديد) — نفس المعالجة
-- `src/components/menu/ItemCard.tsx` — اختيارياً: تعطيل زر "أضف للسلة" لو المنتج نافد
+**UI Flow عند النقص:**
 
-### التعامل مع نفاد صنف واحد من الطلب
+```
+الزبون يضغط "تأكيد الطلب"
+          │
+          ▼
+  rpc_check_stock_for_cart()
+          │
+    ┌─────┴──────────────────┐
+    │                        │
+  كل شيء متوفر          صنف ناقص:
+    │                "كباب اللحم غير متوفر"
+    ▼                    ├── [إزالة الصنف وإكمال الطلب ▶]
+  إنشاء الطلب            └── [إلغاء الطلب ✕]
+```
 
-**المشكلة:** الزبون يطلب 3 أصناف، الثالث غير متوفر. الـ exception الحالي يلغي الطلب كلياً.
-
-**الحل — Pre-check + UI flow:**
-
-- `rpc_check_stock_for_cart()` يُشغَّل قبل الـ INSERT
-- لو أصناف غير متوفرة: → UI يعرض: "الأصناف التالية غير متوفرة حالياً: [قائمة]"
-  - خيارات: [إتمام الطلب بدون هذه الأصناف] [إلغاء الطلب]
-- الزبون يقرر → الطلب يُنشأ بالأصناف المتوفرة فقط
-- لا يصل أبداً للـ RAISE EXCEPTION (الـ pre-check يمسكه)
-
-**لماذا لا نعدّل الـ trigger نفسه؟**
-
-الـ trigger يبقى كـ safety net — لو race condition بين الـ check والـ insert. لكن في الحالة العادية، الـ UI يمنع الوصول لهذه الحالة.
+> الـ trigger يبقى كـ atomic guard للطوارئ (race condition بين pre-check والإنشاء). الـ UX الصحيح يعتمد على `rpc_check_stock_for_cart` دائماً أولاً.
 
 ---
 
@@ -384,6 +354,11 @@ export async function createOrder(formData: FormData) {
 ### الجدول الأساسي
 
 ```sql
+-- أضف default_yield_factor على ingredients (خاصية المكوّن، لا الوصفة)
+ALTER TABLE ingredients
+  ADD COLUMN IF NOT EXISTS default_yield_factor NUMERIC(5,3) NOT NULL DEFAULT 1.000;
+-- مثال: لحم ضأن → 1.15، بصل → 1.10، أرز → 1.05، توابل → 1.00
+
 CREATE TABLE recipes (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   menu_item_slug  TEXT NOT NULL REFERENCES menu_items_sync(slug) ON DELETE CASCADE,
@@ -391,13 +366,13 @@ CREATE TABLE recipes (
   quantity        NUMERIC(12,4) NOT NULL CHECK (quantity > 0),
   is_optional     BOOLEAN NOT NULL DEFAULT false,
   variant_key     TEXT,           -- 'size:large', 'variant:with_broth'
-  yield_factor    NUMERIC(5,3),  -- NULL = استخدم قيمة ingredients. override لحالات خاصة فقط
+  yield_factor    NUMERIC(5,3),   -- NULL = استخدم default_yield_factor من ingredients
   notes           TEXT,
   updated_by      UUID REFERENCES staff_basic(id),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-  -- PostgreSQL 15+: NULL = NULL في UNIQUE constraint
-  -- بدونها يمكن إدخال نفس المكوّن مرتين لنفس الطبق عندما variant_key = NULL
+  -- PostgreSQL 15+: يعامل NULLs كمتساوية في UNIQUE
+  -- يمنع إدخال نفس المكوّن المشترك (variant_key=NULL) مرتين
   UNIQUE NULLS NOT DISTINCT (menu_item_slug, ingredient_id, variant_key)
 );
 ```
@@ -427,18 +402,6 @@ CREATE TABLE recipes (
 - توابل جافة: فاقد صفري → factor = 1.00
 
 **بدون yield_factor:** المخزون النظري يبدو أكثر من الفعلي دائماً → variance مستمر.
-
-> **yield_factor مزدوج:** القيمة الافتراضية في `ingredients` (فاقد اللحم 15% ثابت).
-> Override في `recipes` فقط عند اختلاف (لحم مفروم 5% vs قطع 15% من نفس المكوّن).
-> `COALESCE(recipe.yield_factor, ingredient.yield_factor)` يختار الأدق.
-
-```sql
--- في جدول ingredients (حقل جديد في migration 029):
-yield_factor    NUMERIC(5,3) NOT NULL DEFAULT 1.000,  -- الفاقد الافتراضي للمكوّن
-
--- في جدول recipes (nullable — override فقط عند الحاجة):
-yield_factor    NUMERIC(5,3),  -- NULL = استخدم قيمة ingredients
-```
 
 ### التعامل مع Variants و Sizes
 
@@ -541,14 +504,13 @@ CREATE TRIGGER trg_waste_deduct
 
 ```
 1. الموظف يسجّل هدر (مكوّن + كمية + سبب + صورة اختيارية)
-2. لو الكمية > حد معين (مثلاً 500g لحم) → تحتاج موافقة مدير
-3. المدير يوافق أو يرفض
-   لو المدير لم يوافق خلال 4 ساعات: → escalation تلقائي لـ GM (تنبيه + إيميل)
-   لو GM لم يوافق خلال 8 ساعات: → تنبيه للـ Owner
-   لا يوجد auto-approve أبداً — لمنع التلاعب
-   المخزون الفعلي يبقى مختلفاً عن النظام حتى الموافقة → يظهر في dashboard كـ "هدر معلّق: X items"
+2. لو الكمية > حد معين (مثلاً 500g لحم) → تحتاج موافقة (Escalation Chain — لا auto-approve أبداً):
+   - 0h:  إشعار فوري لـ Branch Manager
+   - 4h بدون موافقة: إشعار لـ General Manager
+   - 8h بدون موافقة: إشعار للـ Owner مع طلب قرار عاجل
+3. المدير يوافق أو يرفض يدوياً (الموافقة إجبارية — طلب الهدر لا يُنفَّذ حتى تصدر)
 4. عند الموافقة → trigger يخصم من inventory_stock + يسجل movement
-5. لو السبب 'theft_suspected' → تنبيه فوري للمالك
+5. لو السبب 'theft_suspected' → تنبيه فوري للـ Owner بصرف النظر عن الكمية
 ```
 
 ### Workflow الإلغاء
@@ -616,36 +578,35 @@ CREATE POLICY "movements_no_delete"
 └──────────────────┴──────┴──────┴──────┴──────┴──────┴──────┘
 ```
 
-### تعديلات مطلوبة على RBAC
+### 6.2.1 تحديث RBAC Enum لـ Supabase
+
+دور `inventory_manager` لم يكن في `staff_role` الـ Enum الأصلي. يُضاف في migration قبل RLS policies الجديدة:
 
 ```sql
--- إضافة دور مدير المخزون
+-- migration 029 — قبل أي CREATE POLICY تستخدم 'inventory_manager'
 ALTER TYPE staff_role ADD VALUE IF NOT EXISTS 'inventory_manager';
 
--- تحديث auth_user_role() لتشمل الدور الجديد (لو لازم)
--- تحديث كل RLS policies التي تفحص الأدوار
+-- تحقق بعد التطبيق:
+-- SELECT auth_user_role();  -- يجب أن يعمل بدون خطأ casting
 ```
 
-> ملاحظة: هذا يؤثر على `auth_user_role()` وجميع الـ RLS policies الحالية.
-> يُنفَّذ كجزء من migration 029.
+> ⚠️ **تأثير على RLS الحالي:** كل policy تستخدم `auth_user_role()` مع قائمة أدوار تحتاج مراجعة لتشمل `'inventory_manager'` حيثما مناسب. ابحث عن: `grep -rn "auth_user_role" supabase/migrations/`
 
 ### 6.3 تنبيهات الفروقات (Variance Alerts)
 
 ```sql
 -- Materialized View: مقارنة الاستهلاك النظري بالفعلي
+-- تُحدَّث كل ساعة عبر pg_cron — لا query ثقيلة عند كل تحميل للـ dashboard
+-- بعد 6 أشهر من التشغيل: 300K+ movement → live view ثقيلة جداً
 CREATE MATERIALIZED VIEW mv_variance_report AS
 SELECT
   i.id AS ingredient_id,
   i.name_ar,
   i.name_en,
   s.branch_id,
-  -- النظري: ما كان يجب أن يُستهلك بناءً على المبيعات
   COALESCE(theoretical.total, 0) AS theoretical_usage,
-  -- الفعلي: ما استُهلك فعلاً (consumption + waste)
   COALESCE(actual.total, 0) AS actual_usage,
-  -- الفرق
   COALESCE(actual.total, 0) - COALESCE(theoretical.total, 0) AS variance,
-  -- النسبة
   CASE WHEN COALESCE(theoretical.total, 0) > 0
     THEN ROUND(
       ((COALESCE(actual.total, 0) - COALESCE(theoretical.total, 0))
@@ -656,8 +617,11 @@ SELECT
 FROM ingredients i
 CROSS JOIN inventory_stock s
 LEFT JOIN LATERAL (
-  -- حساب الاستهلاك النظري من المبيعات
-  SELECT SUM(r.quantity * COALESCE(r.yield_factor, i.yield_factor) * oi.qty) AS total
+  SELECT SUM(
+    r.quantity
+      * COALESCE(r.yield_factor, i.default_yield_factor, 1.000)
+      * oi.qty
+  ) AS total
   FROM order_items oi
   JOIN orders o ON o.id = oi.order_id
   JOIN recipes r ON r.menu_item_slug = oi.menu_item_slug
@@ -667,7 +631,6 @@ LEFT JOIN LATERAL (
     AND o.created_at > NOW() - INTERVAL '7 days'
 ) theoretical ON true
 LEFT JOIN LATERAL (
-  -- حساب الاستهلاك الفعلي
   SELECT SUM(quantity) AS total
   FROM inventory_movements
   WHERE ingredient_id = i.id
@@ -675,22 +638,18 @@ LEFT JOIN LATERAL (
     AND movement_type IN ('consumption','waste')
     AND performed_at > NOW() - INTERVAL '7 days'
 ) actual ON true
-WHERE s.ingredient_id = i.id
-WITH NO DATA;
+WHERE s.ingredient_id = i.id;
 
--- Refresh كل ساعة عبر pg_cron
+-- UNIQUE INDEX مطلوب لـ REFRESH CONCURRENTLY (بدون downtime)
+CREATE UNIQUE INDEX ON mv_variance_report(ingredient_id, branch_id);
+
+-- Refresh كل ساعة عبر pg_cron (مُفعَّل على Supabase تلقائياً)
 SELECT cron.schedule(
-  'refresh-variance',
+  'refresh-variance-report',
   '0 * * * *',
-  'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_variance_report'
+  $$REFRESH MATERIALIZED VIEW CONCURRENTLY mv_variance_report$$
 );
-
-CREATE UNIQUE INDEX idx_mv_variance
-  ON mv_variance_report (ingredient_id, branch_id);
 ```
-
-> مع 50,000+ حركة/شهر، الـ View العادي يصبح بطيئاً بعد 6 أشهر.
-> Materialized View + CONCURRENTLY refresh = قراءة فورية بدون blocking.
 
 **قواعد التنبيه:**
 
@@ -726,7 +685,7 @@ CREATE UNIQUE INDEX idx_mv_variance
    → query: GROUP BY reported_by, ingredient_id HAVING COUNT > 3 per week
 
 2. Variance عالٍ في مكونات غالية (لحوم، مأكولات بحرية)
-   → v_variance_report WHERE variance_pct > 10 AND category = 'protein'
+   → mv_variance_report WHERE variance_pct > 10 AND category = 'protein'
 
 3. طلبات ملغاة كثيرة بعد التحضير
    → orders WHERE status='cancelled'
@@ -826,10 +785,31 @@ CREATE UNIQUE INDEX idx_mv_variance
 │    delivered → trg_inventory_finalize       │
 │    cancelled → trg_inventory_release        │
 │                                             │
-│  ⚠️ Checkout يحتاج: pre-check + معالجة      │
-│  أخطاء INSUFFICIENT_STOCK و MISSING_RECORD  │
-│  (انظر قسم "معالجة أخطاء المخزون في Next.js")│
+│  ⚠️ Dashboard يحتاج 3 تعديلات في الكود:     │
+│  1. error handler لـ INSUFFICIENT_STOCK     │
+│  2. order_source في كل فورم طلب            │
+│  3. pre-check rpc_check_stock_for_cart()    │
 └─────────────────────────────────────────────┘
+```
+
+**معالجة الأخطاء في Server Action (مطلوبة):**
+
+```ts
+const { error } = await supabase.from('order_items').insert(items)
+
+if (error) {
+  if (error.message.includes('INSUFFICIENT_STOCK')) {
+    // P0001: مخزون غير كافٍ — اعرض للزبون اسم المكوّن الناقص
+    const match = error.message.match(/ingredient=([^\s]+)/)
+    return { error: 'out_of_stock', ingredientId: match?.[1] }
+  }
+  if (error.message.includes('MISSING_STOCK_RECORD')) {
+    // P0002: مكوّن غير مُضاف لـ inventory_stock — خطأ في الإعداد
+    console.error('[inventory] setup error:', error.message)
+    return { error: 'setup_error' }
+  }
+  throw error
+}
 ```
 
 ### 8.2 منصات التوصيل (Talabat/Jahez/Keeta)
