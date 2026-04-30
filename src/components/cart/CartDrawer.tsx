@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from '@/i18n/navigation'
 import { useCartStore, selectTotalItems, selectSubtotal, type CartItem } from '@/lib/cart'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
@@ -14,15 +15,17 @@ export default function CartBottomSheet() {
   const isRTL  = locale === 'ar'
   const t      = useTranslations('cart')
   const tCommon = useTranslations('common')
+  const router = useRouter()
 
-  const items        = useCartStore((s) => s.items)
-  const branchId     = useCartStore((s) => s.branchId)
-  const isOpen       = useCartStore((s) => s.isOpen)
-  const closeCart    = useCartStore((s) => s.closeCart)
-  const removeItem   = useCartStore((s) => s.removeItem)
-  const updateQty    = useCartStore((s) => s.updateQuantity)
-  const clearCart    = useCartStore((s) => s.clearCart)
-  const setBranch    = useCartStore((s) => s.setBranch)
+  const items            = useCartStore((s) => s.items)
+  const branchId         = useCartStore((s) => s.branchId)
+  const isOpen           = useCartStore((s) => s.isOpen)
+  const closeCart        = useCartStore((s) => s.closeCart)
+  const removeItem       = useCartStore((s) => s.removeItem)
+  const updateQty        = useCartStore((s) => s.updateQuantity)
+  const updateItemNotes  = useCartStore((s) => s.updateItemNotes)
+  const clearCart        = useCartStore((s) => s.clearCart)
+  const setBranch        = useCartStore((s) => s.setBranch)
 
   const totalItems = selectTotalItems(items)
   const subtotal   = selectSubtotal(items)
@@ -161,6 +164,7 @@ export default function CartBottomSheet() {
                       currency={tCommon('currency')}
                       onRemove={() => removeItem(item.cartKey)}
                       onUpdateQty={(q: number) => updateQty(item.cartKey, q)}
+                      onUpdateNotes={(n: string) => updateItemNotes(item.cartKey, n)}
                     />
                   ))}
                 </div>
@@ -183,8 +187,7 @@ export default function CartBottomSheet() {
 
                 <div className="flex flex-col gap-4">
                   <CinematicButton
-                    href="/checkout"
-                    onClick={closeCart}
+                    onClick={() => { closeCart(); router.push('/checkout') }}
                     isRTL={isRTL}
                     className="h-[64px] rounded-2xl text-lg font-black"
                   >
@@ -208,13 +211,15 @@ export default function CartBottomSheet() {
   )
 }
 
-function CartItemRow({ item, isRTL, currency, onRemove, onUpdateQty }: {
+function CartItemRow({ item, isRTL, currency, onRemove, onUpdateQty, onUpdateNotes }: {
   item: CartItem
   isRTL: boolean
   currency: string
   onRemove: () => void
   onUpdateQty: (q: number) => void
+  onUpdateNotes: (n: string) => void
 }) {
+  const [notesOpen, setNotesOpen] = useState(false)
   const lineTotal = (item.priceBhd * item.quantity).toFixed(3)
   const name = isRTL ? item.nameAr : item.nameEn
 
@@ -224,66 +229,97 @@ function CartItemRow({ item, isRTL, currency, onRemove, onUpdateQty }: {
       initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
-      className="group relative flex gap-4 rounded-2xl border border-brand-border/30 bg-brand-surface-2/40 p-4 transition-all hover:border-brand-gold/20 hover:bg-brand-surface-2/60"
+      className="group relative flex flex-col gap-2 rounded-2xl border border-brand-border/30 bg-brand-surface-2/40 p-4 transition-all hover:border-brand-gold/20 hover:bg-brand-surface-2/60"
     >
-      {/* Image with Glow */}
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-brand-border/50 bg-brand-black">
-        <Image
-          src={item.imageUrl ?? '/assets/hero/hero-menu.webp'}
-          alt={name}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-110"
-          sizes="80px"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-black/40 to-transparent" />
+      <div className="flex gap-4">
+        {/* Image with Glow */}
+        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-brand-border/50 bg-brand-black">
+          <Image
+            src={item.imageUrl ?? '/assets/hero/hero-menu.webp'}
+            alt={name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            sizes="80px"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-brand-black/40 to-transparent" />
+        </div>
+
+        {/* Item Info */}
+        <div className="flex flex-1 flex-col justify-between py-0.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-col gap-1 text-start">
+              <h4 className={`line-clamp-1 text-sm font-black text-brand-text ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+                {name}
+              </h4>
+              {(item.selectedSize || item.selectedVariant) && (
+                <p className="font-almarai text-[10px] font-bold uppercase tracking-wider text-brand-gold/60">
+                  {[item.selectedSize, item.selectedVariant].filter(Boolean).join(' · ')}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={onRemove}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-brand-muted/40 transition-colors hover:bg-brand-error/10 hover:text-brand-error"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+
+          <div className="mt-2 flex items-center justify-between">
+            {/* Enhanced Stepper */}
+            <div className="flex items-center gap-1 rounded-lg bg-brand-black/20 p-1">
+              <button
+                onClick={() => onUpdateQty(Math.max(1, item.quantity - 1))}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-text active:scale-90"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="min-w-[24px] text-center font-satoshi text-xs font-black tabular-nums text-brand-text">
+                {item.quantity}
+              </span>
+              <button
+                onClick={() => onUpdateQty(item.quantity + 1)}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-text active:scale-90"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+
+            <div className="flex items-baseline gap-1 font-satoshi text-brand-gold">
+              <span className="text-lg font-black tabular-nums">{lineTotal}</span>
+              <span className="text-[10px] font-bold opacity-60">{currency}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Item Info */}
-      <div className="flex flex-1 flex-col justify-between py-0.5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col gap-1 text-start">
-            <h4 className={`line-clamp-1 text-sm font-black text-brand-text ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
-              {name}
-            </h4>
-            {(item.selectedSize || item.selectedVariant) && (
-              <p className="font-almarai text-[10px] font-bold uppercase tracking-wider text-brand-gold/60">
-                {[item.selectedSize, item.selectedVariant].filter(Boolean).join(' · ')}
-              </p>
-            )}
-          </div>
+      {/* Per-item notes */}
+      <div>
+        {item.notes && !notesOpen ? (
           <button
-            onClick={onRemove}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-brand-muted/40 transition-colors hover:bg-brand-error/10 hover:text-brand-error"
+            onClick={() => setNotesOpen(true)}
+            className={`text-[11px] text-brand-gold/70 hover:text-brand-gold transition-colors ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
           >
-            <Trash2 size={16} />
+            ✏️ {item.notes}
           </button>
-        </div>
-
-        <div className="mt-2 flex items-center justify-between">
-          {/* Enhanced Stepper */}
-          <div className="flex items-center gap-1 rounded-lg bg-brand-black/20 p-1">
-            <button
-              onClick={() => onUpdateQty(Math.max(1, item.quantity - 1))}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-text active:scale-90"
-            >
-              <Minus size={14} />
-            </button>
-            <span className="min-w-[24px] text-center font-satoshi text-xs font-black tabular-nums text-brand-text">
-              {item.quantity}
-            </span>
-            <button
-              onClick={() => onUpdateQty(item.quantity + 1)}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-text active:scale-90"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-
-          <div className="flex items-baseline gap-1 font-satoshi text-brand-gold">
-            <span className="text-lg font-black tabular-nums">{lineTotal}</span>
-            <span className="text-[10px] font-bold opacity-60">{currency}</span>
-          </div>
-        </div>
+        ) : notesOpen ? (
+          <textarea
+            autoFocus
+            defaultValue={item.notes ?? ''}
+            onBlur={(e) => { onUpdateNotes(e.target.value); setNotesOpen(false) }}
+            placeholder={isRTL ? 'مثال: بدون بصل، إضافي حارة...' : 'e.g. no onions, extra spicy...'}
+            rows={2}
+            dir={isRTL ? 'rtl' : 'ltr'}
+            className={`w-full rounded-lg border border-brand-border/50 bg-brand-black/40 px-3 py-2 text-xs text-brand-text placeholder:text-brand-muted/50 focus:border-brand-gold/50 focus:outline-none resize-none ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+          />
+        ) : (
+          <button
+            onClick={() => setNotesOpen(true)}
+            className={`text-[11px] text-brand-muted/40 hover:text-brand-muted transition-colors ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+          >
+            + {isRTL ? 'ملاحظات خاصة' : 'Special instructions'}
+          </button>
+        )}
       </div>
     </motion.div>
   )

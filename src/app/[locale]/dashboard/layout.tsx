@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children, params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-brand-black flex" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="-mt-20 md:-mt-24 min-h-screen bg-brand-black flex" dir={isAr ? 'rtl' : 'ltr'}>
       <DashboardSidebar userName={user.name} userRole={user.role} />
 
       {/* Main content — sidebar is static in flex on lg+; mobile needs top padding for hamburger */}

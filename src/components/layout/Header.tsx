@@ -52,6 +52,9 @@ export default function Header() {
     setIsOpen(false)
   }
 
+  // Hide header on dashboard and driver routes
+  if (pathname.includes('/dashboard') || pathname.includes('/driver')) return null
+
   return (
     <div className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none pt-4 sm:pt-6">
       <header 

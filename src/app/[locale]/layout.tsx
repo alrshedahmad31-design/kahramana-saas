@@ -9,8 +9,10 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { headers } from 'next/headers'
 import { routing } from '@/i18n/routing'
 import { tokens } from '@/lib/design-tokens'
+import { SITE_URL } from '@/constants/contact'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import ConditionalFooter from '@/components/layout/ConditionalFooter'
 import dynamic from 'next/dynamic'
 const CartDrawer = dynamic(() => import('@/components/cart/CartDrawer'))
 import '../globals.css'
@@ -68,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       default: locale === 'ar' ? 'كهرمانة بغداد' : 'Kahramana Baghdad',
     },
     description: t('homeDescription'),
-    metadataBase: new URL('https://kahramanat.com'),
+    metadataBase: new URL(SITE_URL),
     alternates: {
       canonical: '/',
       languages: {
@@ -143,7 +145,9 @@ export default async function LocaleLayout({ children, params }: Props) {
           <main className="flex-1 pt-20 md:pt-24">
             {children}
           </main>
-          <Footer />
+          <ConditionalFooter>
+            <Footer />
+          </ConditionalFooter>
           <CartDrawer />
         </NextIntlClientProvider>
 

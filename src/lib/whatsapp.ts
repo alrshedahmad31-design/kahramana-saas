@@ -14,13 +14,14 @@ export function formatOrderMessage(
   const branch   = BRANCHES[branchId]
   const subtotal = selectSubtotal(items)
 
-  const itemLines = items.map((item) => {
+  const itemLines = items.flatMap((item) => {
     const sizeLabel    = item.selectedSize
       ? ` (${SIZE_LABELS[item.selectedSize]?.ar ?? item.selectedSize})`
       : ''
     const variantLabel = item.selectedVariant ? ` — ${item.selectedVariant}` : ''
     const lineTotal    = (item.priceBhd * item.quantity).toFixed(3)
-    return `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal} BD`
+    const line = `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal} BD`
+    return item.notes ? [line, `  ↳ ${item.notes}`] : [line]
   })
 
   return [
@@ -40,6 +41,7 @@ export function formatOrderMessage(
 export interface CheckoutMessageOptions {
   customerName?:  string
   customerPhone?: string
+  address?:       string  // formatted delivery address or Maps link
   notes?:         string
   orderNumber?:   string  // short ID shown to customer, e.g. last 8 chars of UUID
 }
@@ -54,13 +56,14 @@ export function formatCheckoutMessage(
   const branch   = BRANCHES[branchId]
   const subtotal = selectSubtotal(items)
 
-  const itemLines = items.map((item) => {
+  const itemLines = items.flatMap((item) => {
     const sizeLabel    = item.selectedSize
       ? ` (${SIZE_LABELS[item.selectedSize]?.ar ?? item.selectedSize})`
       : ''
     const variantLabel = item.selectedVariant ? ` — ${item.selectedVariant}` : ''
     const lineTotal    = (item.priceBhd * item.quantity).toFixed(3)
-    return `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal} BD`
+    const line = `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal} BD`
+    return item.notes ? [line, `  ↳ ${item.notes}`] : [line]
   })
 
   const lines: string[] = [
@@ -72,6 +75,7 @@ export function formatCheckoutMessage(
   if (options.orderNumber) lines.push(`رقم الطلب: #${options.orderNumber}`)
   if (options.customerName)  lines.push(`الاسم: ${options.customerName}`)
   if (options.customerPhone) lines.push(`الهاتف: ${options.customerPhone}`)
+  if (options.address)       lines.push(`العنوان: ${options.address}`)
 
   lines.push('', 'الطلب:', ...itemLines, DIVIDER, `الإجمالي: ${subtotal.toFixed(3)} BD`)
 

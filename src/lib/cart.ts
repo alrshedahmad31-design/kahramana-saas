@@ -14,6 +14,7 @@ export interface CartItem {
   priceBhd: number       // price snapshot at add-to-cart time — immutable
   selectedSize?: string
   selectedVariant?: string
+  notes?: string         // per-item special instructions
 }
 
 // ── Size display labels (all possible size keys in menu.json) ─────────────────
@@ -61,6 +62,7 @@ interface CartActions {
   addItem: (item: Omit<CartItem, 'cartKey' | 'quantity'> & { quantity?: number }) => void
   removeItem: (cartKey: string) => void
   updateQuantity: (cartKey: string, quantity: number) => void
+  updateItemNotes: (cartKey: string, notes: string) => void
   clearCart: () => void
   setBranch: (branchId: BranchId) => void
   openCart: () => void
@@ -120,6 +122,13 @@ export const useCartStore = create<CartState & CartActions>()(
           ),
         }))
       },
+
+      updateItemNotes: (cartKey, notes) =>
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.cartKey === cartKey ? { ...i, notes: notes.trim() || undefined } : i,
+          ),
+        })),
 
       clearCart: () => set({ items: [] }),
 
