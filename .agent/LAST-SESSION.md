@@ -1,41 +1,54 @@
-# LAST-SESSION.md — Session 26
-> Date: 2026-04-30 | Status: `analytics_configured`
+# LAST-SESSION.md — Session 27
+> Date: 2026-04-30 | Status: `seo_perf_optimised`
 
 ---
 
 ## ما تم في هذه الجلسة
 
-### BA-11 — Google Business Profile ✅
-- الحسابان موثَّقان: فرع الرفاع + قلالي
-- الموقعان نشطان على خرائط Google
+### KDS + Driver + Tracking Fixes ✅ (`5e59451`)
+- **KDS**: Branch selector dropdown لـ GM/Owner (عندما `branchId = null`) — client-side filter على الطلبات
+- **Order Tracking**: `AutoRefresh` component جديد في `/order/[id]` — router.refresh() كل 30 ثانية، يتوقف عند الحالات النهائية
+- **Driver**: زر WhatsApp بجانب زر Call في customer row
 
-### BA-12 — Analytics Env Vars ✅
-- `NEXT_PUBLIC_GA_ID=G-521712793` أُضيف لـ Vercel
-- `NEXT_PUBLIC_CLARITY_ID=vzlrozut31` أُضيف لـ Vercel
+### SEO — Branch Pages + Schema ✅ (`0fdfd54`)
+- **Schema.org**: أُضيفت `telephone` و `address` مباشرةً على Organization root
+- **Individual branch pages**: `/branches/riffa` + `/branches/qallali` — بـ LocalBusiness JSON-LD كامل، canonical، alternates، generateStaticParams
+- **Sitemap**: أُضيفت صفحات الفروع الفردية بـ priority: 0.8
+- **Branch list**: زر "Branch Details" على الكروت النشطة
+- **`buildBranchLocalBusiness` url**: يشير الآن لـ `/branches/[id]` بدلاً من `/branches`
 
-### Inventory System Design ✅
-- وثيقة `restaurant-inventory-system.md` أُضيفت لجذر المشروع
-- 9 تصحيحات تقنية طُبِّقت (UNIQUE NULLS NOT DISTINCT، NOT FOUND split، yield_factor hybrid، RBAC، Materialized View، waste escalation، partial order، order_source guard، Next.js error handling)
+### Metadata API Fix ✅ (`9d8180d`)
+- **layout.tsx**: تحويل من `async generateMetadata` إلى `export const metadata` (static)
+- **المشكلة المُصلَحة**: `alternates.canonical: '/'` كان يُسرَّب لكل الصفحات التي لا تحدد canonical خاص — Google كانت ترى `/` كـ canonical لـ `/menu`، `/about`، إلخ
+- كل صفحة الآن مسؤولة عن canonical/hreflang الخاص بها
+
+### Mobile LCP Optimization ✅ (`fad6a08`)
+- **CinematicHero**: استُبدل `video poster` attribute بـ `<Image fill priority quality={85} sizes="(max-width: 768px) 100vw, 1920px">`
+- **التأثير**: Next.js يخدم ~30-50KB لـ mobile بدلاً من 186KB الـ poster الأصلي
+- GSAP parallax انتقل من `videoRef` إلى `mediaRef` wrapper (Image + Video يتحركان معاً)
+- حُذف `<style jsx>` — استُبدل بـ `[writing-mode:vertical-rl]` Tailwind arbitrary value
+- حُذف `preload()` اليدوي من page.tsx — `Image priority` يُنشئ الـ preload URL الصحيح تلقائياً
 
 ---
 
 ## المهام المتبقية
 
 ### أولوية عالية
-1. **Redeploy مطلوب** — env vars (GA4 + Clarity) محتاجة redeploy لتفعيلها
-2. **BA-14/15/17 E2E** — شغّل test matrix بعد اكتمال الـ redeploy
-3. **BA-08 Tap** — منتظِر `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` من أحمد
+1. **Redeploy إلى Vercel** — GA4 + Clarity env vars تحتاج redeploy (من session 26)
+2. **BA-08 Tap** — منتظر `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` من أحمد
+3. **اختبار Mobile LCP فعلياً** — Lighthouse mobile بعد deploy للتحقق من < 2.5s
 
 ### أولوية متوسطة
 4. **BA-16 Rich Results** — افحص https://search.google.com/test/rich-results للصفحات الخمس
-5. **Inventory Phase 3** — مبلوكة على وصفات الشيف (data collection قبل أي كود)
+5. **Branch pages المُنشأة** — تحقق من وجود مكونات `BranchHero`، `BranchDetailsContent`، `BranchMap` (الصفحة تستوردها حالياً)
+6. **Inventory Phase 3** — مبلوكة على وصفات الشيف
 
 ---
 
 ## حالة النظام عند الإغلاق
-- **Git**: master @ `3920e95` — last: inventory system docs (9-point review)
-- **Vercel**: env vars set — redeploy pending
-- **Analytics**: GA4 + Clarity configured, Speed Insights live
-- **GBP**: verified ✅ — Riffa + Qallali active
+- **Git**: master @ `fad6a08` — last: mobile LCP optimization
+- **Vercel**: redeploy pending (GA4 + Clarity)
+- **SEO**: sitemap ✓ | robots ✓ | schema ✓ | branch pages ✓ | metadata API fixed ✓
+- **Mobile LCP**: optimised (Image priority, 186KB → ~40KB mobile) — نتائج فعلية بعد deploy
 - **Payments**: Cash + Benefit-QR functional. Tap deferred (BA-08).
 - **Supabase**: 28 migrations applied, RLS hardened

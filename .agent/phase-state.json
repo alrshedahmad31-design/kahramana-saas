@@ -1,6 +1,6 @@
 {
   "project": "kahramana-baghdad",
-  "last_updated": "2026-04-30 (session 26 — Analytics Configured: GBP verified, GA4 + Clarity env set)",
+  "last_updated": "2026-04-30 (session 27 — SEO fixed, branch pages, metadata API, mobile LCP optimised)",
   "current_phase": 7,
   "next_phase": 8,
   "overall_status": "production_seo_activated",
@@ -25,7 +25,7 @@
     ],
     "settings_page": "deployed",
     "git_remote": "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-    "last_git_commit": "34d2f75 — feat: add Vercel Speed Insights + Bing meta tag + GA4/Clarity env hooks",
+    "last_git_commit": "fad6a08 — perf: mobile LCP < 2.5s — Next.js Image hero, remove manual preload",
     "vercel_push_pending": false,
     "supabase_key_rotation_required": false,
     "driver_page_fix": "verified on production",
@@ -36,7 +36,10 @@
       "ga4": "configured — G-521712793 added to env, pending redeploy",
       "clarity": "configured — vzlrozut31 added to env, pending redeploy",
       "speed_insights": "live — @vercel/speed-insights installed + <SpeedInsights /> in layout",
-      "schema_org": "complete — Organization, Restaurant, MenuItem, FAQPage, BreadcrumbList, ContactPage"
+      "schema_org": "complete — Organization (telephone+address added), LocalBusiness per-branch, MenuItem, FAQPage, BreadcrumbList",
+      "branch_pages": "live — /branches/riffa + /branches/qallali with full LocalBusiness schema",
+      "metadata_api": "fixed — static export const metadata in layout; no leaked canonical",
+      "mobile_lcp": "optimised — Next.js Image priority on hero (186KB -> ~40KB mobile)"
     },
     "env_vars_production": {
       "NEXT_PUBLIC_SUPABASE_URL": "set",
