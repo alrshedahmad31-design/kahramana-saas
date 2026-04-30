@@ -654,7 +654,7 @@
       "items": {
         "hours": {
           "q": "What are your opening hours?",
-          "a": "We are open daily from 12:00 PM to 12:00 AM. Hours may vary on public holidays."
+          "a": "Riffa Branch: daily 7:00 PM – 1:00 AM — Qallali Branch: daily 12:00 PM – 1:00 AM. Hours may vary on public holidays."
         },
         "delivery": {
           "q": "Do you offer delivery?",

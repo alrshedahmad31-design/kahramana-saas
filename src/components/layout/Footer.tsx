@@ -123,10 +123,6 @@ export default async function Footer() {
             © {year} KAHRAMANA BAGHDAD. ALL RIGHTS RESERVED.
           </p>
 
-          {/* Designer Credit (Subtle) */}
-          <div className="text-[10px] text-brand-muted font-satoshi uppercase tracking-tighter opacity-30">
-            Design: MESOPOTAMIAN LUXE V1
-          </div>
         </div>
       </div>
     </footer>

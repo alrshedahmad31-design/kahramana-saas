@@ -13,6 +13,7 @@ import { SITE_URL } from '@/constants/contact'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import ConditionalFooter from '@/components/layout/ConditionalFooter'
+import { CookieBanner } from '@/components/layout/CookieBanner'
 import dynamic from 'next/dynamic'
 const CartDrawer = dynamic(() => import('@/components/cart/CartDrawer'))
 import '../globals.css'
@@ -132,6 +133,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
             <Footer />
           </ConditionalFooter>
           <CartDrawer />
+          <CookieBanner />
         </NextIntlClientProvider>
 
         {process.env.NEXT_PUBLIC_GA_ID && (

@@ -78,7 +78,7 @@ function PrivacyArabic({ email }: { email: string }) {
 
       <LegalSection title="ملفات تعريف الارتباط (Cookies)">
         <p>
-          يستخدم موقعنا ملفات تعريف ارتباط ضرورية لعمل الموقع (كحفظ محتوى سلة التسوق).
+          يستخدم موقعنا ملفات تعريف ارتباط ضرورية لعمل الموقع وتحليل الأداء التقني.
           لا نستخدم ملفات تعريف الارتباط لأغراض تسويقية أو تتبع سلوكي في الوقت الحالي.
           يمكنك تعطيل ملفات تعريف الارتباط في إعدادات متصفحك، مع الأخذ بعين الاعتبار أن
           ذلك قد يؤثر على بعض وظائف الموقع.
@@ -155,8 +155,8 @@ function PrivacyEnglish({ email }: { email: string }) {
 
       <LegalSection title="Cookies">
         <p>
-          Our website uses essential cookies necessary for its operation (such as preserving
-          your shopping cart). We do not currently use cookies for marketing or behavioural
+          Our website uses essential cookies necessary for its operation and technical
+          performance monitoring. We do not currently use cookies for marketing or behavioural
           tracking. You may disable cookies in your browser settings, though this may affect
           some website functionality.
         </p>
