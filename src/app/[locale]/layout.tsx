@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Cairo, Almarai } from 'next/font/google'
 import localFont from 'next/font/local'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages, getTranslations } from 'next-intl/server'
+import { getMessages } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -53,53 +53,31 @@ const satoshi = localFont({
   display: 'swap',
 })
 
-// ── Metadata ──────────────────────────────────────────────────────────────────
+// ── Metadata — global fallback; each page defines its own canonical/hreflang ──
 
-type Props = {
-  children: React.ReactNode
-  params: Promise<{ locale: string }>
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params
-  const t = await getTranslations({ locale, namespace: 'seo' })
-
-  return {
-    title: {
-      template: `%s | ${locale === 'ar' ? 'كهرمانة بغداد' : 'Kahramana Baghdad'}`,
-      default: locale === 'ar' ? 'كهرمانة بغداد' : 'Kahramana Baghdad',
-    },
-    description: t('homeDescription'),
-    metadataBase: new URL(SITE_URL),
-    alternates: {
-      canonical: '/',
-      languages: {
-        'x-default': '/',
-        ar:          '/',
-        en:          '/en',
-      },
-    },
-    openGraph: {
-      siteName: locale === 'ar' ? 'كهرمانة بغداد' : 'Kahramana Baghdad',
-      locale: locale === 'ar' ? 'ar_BH' : 'en_BH',
-      type: 'website',
-      images: [{ url: '/assets/brand/og-image.webp', width: 1200, height: 630 }],
-    },
-    twitter: {
-      card:   'summary_large_image',
-      site:   '@kahramanat_b',
-      images: ['/assets/brand/og-image.webp'],
-    },
-    icons: {
-      icon: '/assets/favicon/favicon.ico',
-      apple: '/assets/favicon/apple-touch-icon.png',
-    },
-    verification: {
-      other: {
-        'msvalidate.01': 'B17AC8B01413ADA36191E083B8C09562',
-      },
-    },
-  }
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Kahramana Baghdad',
+    default:  'Kahramana Baghdad',
+  },
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    siteName: 'Kahramana Baghdad',
+    type:     'website',
+    images:   [{ url: '/assets/brand/og-image.webp', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card:   'summary_large_image',
+    site:   '@kahramanat_b',
+    images: ['/assets/brand/og-image.webp'],
+  },
+  icons: {
+    icon:  '/assets/favicon/favicon.ico',
+    apple: '/assets/favicon/apple-touch-icon.png',
+  },
+  verification: {
+    other: { 'msvalidate.01': 'B17AC8B01413ADA36191E083B8C09562' },
+  },
 }
 
 export function generateStaticParams() {
@@ -115,7 +93,12 @@ export const viewport: Viewport = {
 
 // ── Root Layout ───────────────────────────────────────────────────────────────
 
-export default async function LocaleLayout({ children, params }: Props) {
+interface LayoutProps {
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
+}
+
+export default async function LocaleLayout({ children, params }: LayoutProps) {
   const { locale } = await params
 
   if (!routing.locales.includes(locale as 'ar' | 'en')) {
