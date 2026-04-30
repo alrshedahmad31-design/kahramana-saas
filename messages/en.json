@@ -30,6 +30,77 @@
     "closeMenu": "Close navigation",
     "orderNow": "Order Now"
   },
+  "home": {
+    "hero": {
+      "eyebrow": "Ambassador of Baghdadi Taste",
+      "titlePart1": "Authentic Baghdad",
+      "titlePart2": "In the Heart of Bahrain",
+      "orderNow": "Order Now",
+      "branches": "Our Branches",
+      "scrollDown": "Discover More"
+    },
+    "features": {
+      "vault": {
+        "eyebrow": "Taste Vault",
+        "title": "Archive of Authenticity",
+        "desc": "Every dish is a historical document preserved with care and served with passion.",
+        "link": "Browse Archive"
+      },
+      "telemetry": {
+        "eyebrow": "System Status",
+        "title": "Live Quality Feed",
+        "liveFeed": "Live Feed",
+        "desc": "Live tracking of preparation, cooking, and presentation standards for absolute consistency.",
+        "link": "View Standards",
+        "steps": [
+          "Fresh Ingredient Inventory",
+          "Temperature Calibration",
+          "Final Quality Inspection",
+          "Delivery Protocol"
+        ]
+      },
+      "proximity": {
+        "eyebrow": "Privacy",
+        "title": "Hospitality Engineering",
+        "link": "Book Your Table",
+        "features": [
+          "Private Family Seating",
+          "Ancient Baghdadi Ambiance",
+          "Distinguished Royal Service"
+        ]
+      }
+    },
+    "philosophy": {
+      "eyebrow": "Official Manifesto",
+      "standard": "In a world of fast food and compromises...",
+      "kahramana": "...we hold onto the origin, to build a legacy that never fades."
+    },
+    "protocol": {
+      "title": "Kahramana Protocol",
+      "steps": {
+        "01": {
+          "title": "Authenticity",
+          "desc": "Recipes that transcend time, preserved with absolute trust."
+        },
+        "02": {
+          "title": "Precision",
+          "desc": "Carefully selected ingredients to ensure flavour perfection."
+        },
+        "03": {
+          "title": "Craftsmanship",
+          "desc": "The art of Baghdadi cooking embodied in every touch."
+        },
+        "04": {
+          "title": "Perfection",
+          "desc": "A final touch fit for Kahramana's distinguished guests."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to experience Baghdad?",
+      "button": "Order Now"
+    }
+  },
   "catering": {
     "seo": {
       "title": "Event & Wedding Catering — Kahramana Baghdad | Bahrain",
