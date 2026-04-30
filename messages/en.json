@@ -711,7 +711,9 @@
     "contactInfo": "Contact Information",
     "followUs": "Follow Us",
     "generalEnquiries": "General Enquiries",
-    "contactTitle": "Contact Us — Kahramana Baghdad"
+    "contactTitle": "Contact Us — Kahramana Baghdad",
+    "formTitle": "Send Us a Message",
+    "formDesc": "Fill in the form below and we'll get back to you as soon as possible."
   },
   "home": {
     "hero": {
