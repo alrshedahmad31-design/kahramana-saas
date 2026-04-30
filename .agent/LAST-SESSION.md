@@ -1,54 +1,68 @@
 # LAST-SESSION.md — Session 27
-> Date: 2026-04-30 | Status: `seo_perf_optimised`
+> Date: 2026-04-30 | Status: `inventory_plan_enterprise`
 
 ---
 
 ## ما تم في هذه الجلسة
 
-### KDS + Driver + Tracking Fixes ✅ (`5e59451`)
-- **KDS**: Branch selector dropdown لـ GM/Owner (عندما `branchId = null`) — client-side filter على الطلبات
-- **Order Tracking**: `AutoRefresh` component جديد في `/order/[id]` — router.refresh() كل 30 ثانية، يتوقف عند الحالات النهائية
-- **Driver**: زر WhatsApp بجانب زر Call في customer row
+### Inventory Plan — Enterprise Edition ✅
 
-### SEO — Branch Pages + Schema ✅ (`0fdfd54`)
-- **Schema.org**: أُضيفت `telephone` و `address` مباشرةً على Organization root
-- **Individual branch pages**: `/branches/riffa` + `/branches/qallali` — بـ LocalBusiness JSON-LD كامل، canonical، alternates، generateStaticParams
-- **Sitemap**: أُضيفت صفحات الفروع الفردية بـ priority: 0.8
-- **Branch list**: زر "Branch Details" على الكروت النشطة
-- **`buildBranchLocalBusiness` url**: يشير الآن لـ `/branches/[id]` بدلاً من `/branches`
+الخطة أُعيد كتابتها من نسخة أساسية (6 phases, 10 جداول) إلى Enterprise:
 
-### Metadata API Fix ✅ (`9d8180d`)
-- **layout.tsx**: تحويل من `async generateMetadata` إلى `export const metadata` (static)
-- **المشكلة المُصلَحة**: `alternates.canonical: '/'` كان يُسرَّب لكل الصفحات التي لا تحدد canonical خاص — Google كانت ترى `/` كـ canonical لـ `/menu`، `/about`، إلخ
-- كل صفحة الآن مسؤولة عن canonical/hreflang الخاص بها
+**Commits:** 11a97e9 → 8643ad7 → 63832aa
 
-### Mobile LCP Optimization ✅ (`fad6a08`)
-- **CinematicHero**: استُبدل `video poster` attribute بـ `<Image fill priority quality={85} sizes="(max-width: 768px) 100vw, 1920px">`
-- **التأثير**: Next.js يخدم ~30-50KB لـ mobile بدلاً من 186KB الـ poster الأصلي
-- GSAP parallax انتقل من `videoRef` إلى `mediaRef` wrapper (Image + Video يتحركان معاً)
-- حُذف `<style jsx>` — استُبدل بـ `[writing-mode:vertical-rl]` Tailwind arbitrary value
-- حُذف `preload()` اليدوي من page.tsx — `Image priority` يُنشئ الـ preload URL الصحيح تلقائياً
+**ما أُضيف:**
+- 18 جدول بدل 10 (inventory_lots, prep_items, ingredient_allergens, supplier_price_history, par_levels, unit_conversions, delivery_platform_mappings)
+- FEFO lot tracking مع تواريخ انتهاء
+- Sub-recipes / Prep Items (صلصات، عجائن، مرق)
+- 14 مسبب حساسية (EU+GCC)
+- سلسلة تصعيد الهدر: 0h→BM, 4h→GM, 8h→Owner (pg_cron كل 30 دقيقة)
+- Auto-PO generation (pg_cron يومياً)
+- Menu Engineering Matrix: Star/Plowhorse/Puzzle/Dog
+- Vendor Performance Scorecard
+- ABC cycle count classification
+- Dynamic par levels (default/weekend/ramadan/event)
+- 12 تقرير متقدم بدل 4
+- Barcode support + Multi-unit purchasing
+- 7 مهام pg_cron
+
+### طلبات منصات التوصيل ✅
+
+- **الخيار A:** POS يدوي per طلب (source selector: talabat/jahez/keeta)
+- **الخيار B:** CSV Import من بوابة المنصة (مجاني)
+- **delivery_platform_mappings:** ربط أسماء المنصة بالـ slugs (مرة واحدة)
+- صاحب المطعم يختار حسب الحجم — لا قيد
+
+### Anti-Duplicate Protection ✅
+
+- `platform_order_id` column على جدول orders (nullable)
+- `UNIQUE INDEX (order_source, platform_order_id) WHERE NOT NULL`
+- CSV import يفحص قبل الإدراج → skipped_duplicates list
+- `ON CONFLICT DO NOTHING` كشبكة أمان على مستوى DB
+- Import UI يعرض: ✅ 39 جديد | ⏭ 8 مُتخطَّاة (مدخَلة يدوياً)
 
 ---
 
 ## المهام المتبقية
 
 ### أولوية عالية
-1. **Redeploy إلى Vercel** — GA4 + Clarity env vars تحتاج redeploy (من session 26)
-2. **BA-08 Tap** — منتظر `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` من أحمد
-3. **اختبار Mobile LCP فعلياً** — Lighthouse mobile بعد deploy للتحقق من < 2.5s
+1. **بدء التنفيذ** — Phase 1: Migration 029 جاهزة للبناء
+2. **BA-08 Tap** — منتظِر `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` من أحمد
 
 ### أولوية متوسطة
-4. **BA-16 Rich Results** — افحص https://search.google.com/test/rich-results للصفحات الخمس
-5. **Branch pages المُنشأة** — تحقق من وجود مكونات `BranchHero`، `BranchDetailsContent`، `BranchMap` (الصفحة تستوردها حالياً)
-6. **Inventory Phase 3** — مبلوكة على وصفات الشيف
+3. **BA-14/15/17 E2E** — اختبار بعد redeploy
+4. **BA-16 Rich Results** — فحص rich results للصفحات الخمس
 
 ---
 
 ## حالة النظام عند الإغلاق
-- **Git**: master @ `fad6a08` — last: mobile LCP optimization
-- **Vercel**: redeploy pending (GA4 + Clarity)
-- **SEO**: sitemap ✓ | robots ✓ | schema ✓ | branch pages ✓ | metadata API fixed ✓
-- **Mobile LCP**: optimised (Image priority, 186KB → ~40KB mobile) — نتائج فعلية بعد deploy
+- **Git**: master @ `63832aa`
+- **Inventory Plan**: Enterprise Edition جاهزة — لم يُنفَّذ بعد
+- **Vercel**: env vars set — redeploy pending (GA4 + Clarity)
 - **Payments**: Cash + Benefit-QR functional. Tap deferred (BA-08).
-- **Supabase**: 28 migrations applied, RLS hardened
+- **Supabase**: 28 migrations applied
+
+## قرارات مهمة
+- منصات التوصيل: يدوي + CSV — لا API integration الآن
+- Anti-duplicate: طبقتان (DB UNIQUE INDEX + code-level check)
+- delivery_platform_mappings: إعداد مرة واحدة → import تلقائي 100%
