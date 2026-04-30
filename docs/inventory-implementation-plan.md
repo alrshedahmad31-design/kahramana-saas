@@ -9,7 +9,7 @@
 ```
 Phase 1 — Migration 029 Enterprise   (أسبوع 1)   → قاعدة بيانات كاملة + 17 جدول
 Phase 2 — Excel Import               (أسبوع 1)   → صاحب المطعم يرفع بياناته
-Phase 3 — Core UI + POS              (أسبوع 2)   → إدخال يدوي + POS لجميع مصادر الطلبات
+Phase 3 — Core UI + POS + Platforms  (أسبوع 2)   → يدوي per طلب + CSV Import لمنصات التوصيل
 Phase 4 — Operational Workflows      (أسبوع 3)   → هدر + جرد + مشتريات + تحويلات
 Phase 5 — Reports & Intelligence     (أسبوع 4)   → 12 تقرير متقدم
 Phase 6 — Dashboard Integration      (أسبوع 4)   → ربط مع الطلبات والـ KPIs
@@ -48,7 +48,8 @@ Phase 7 — Advanced Features          (أسبوع 5-6) → Catering + Budget + 
 15. inventory_transfers
 16. par_levels                           ← Dynamic par per day type
 17. unit_conversions
-18. order_source guard على orders
+18. delivery_platform_mappings          ← ربط أسماء المنصات بالأصناف
+19. order_source guard على orders
 19. Functions + Triggers
 20. RPCs (11 وظيفة)
 21. Views + Materialized Views
@@ -1716,20 +1717,138 @@ dashboard/inventory/
 └── par-levels/page.tsx          ← جديد: إدارة مستويات Par
 ```
 
-### 3.2 — POS لجميع مصادر الطلبات (Phase 3.5)
+### 3.2 — طلبات منصات التوصيل (Phase 3.5)
+
+صاحب المطعم يختار الأسلوب الذي يناسب فريقه — **كلاهما يُنتج نفس النتيجة** في المخزون.
+
+---
+
+#### الخيار A — إدخال يدوي لكل طلب (POS)
+
+مناسب لـ: حجم طلبات منخفض-متوسط، أو عند بداية التشغيل.
 
 ```
 dashboard/pos/
-├── page.tsx         واجهة POS بسيطة
-│   ├── اختيار مصدر الطلب:
+├── page.tsx
+│   ├── تبويب مصدر الطلب:
 │   │   [🏠 أكل داخلي] [📞 هاتف] [🛵 طلبات] [🍔 جاهز] [🐦 كيتا] [🎉 تموين]
 │   ├── اختيار الفرع
-│   ├── قائمة الأطباق مع الأسعار
+│   ├── قائمة الأطباق مع أزرار + و −
 │   ├── فحص المخزون real-time (rpc_check_stock_for_cart)
-│   └── إتمام الطلب → order_source يُحدَّد تلقائياً
+│   ├── حقل: رقم طلب المنصة (اختياري — للمرجعية)
+│   └── [تأكيد الطلب] → order_source = 'talabat'/'jahez'/'keeta'
 ```
 
-**الجميع يمر بنفس trigger المخزون** — talabat وwalk_in وphone وغيرها يُخصم مخزونها بنفس الطريقة.
+**تجربة الموظف:**
+```
+1. يفتح Talabat على الهاتف ويرى الطلب
+2. يفتح POS كهرمنة → يختار [🛵 طلبات]
+3. يُدخل الأصناف → يضغط تأكيد (30 ثانية)
+4. المخزون يُخصم تلقائياً
+```
+
+---
+
+#### الخيار B — CSV Import من بوابة المنصة (دفعة واحدة)
+
+مناسب لـ: حجم طلبات مرتفع، أو لتسوية نهاية اليوم دفعةً واحدة.
+
+**الطريقة:**
+```
+1. الموظف يفتح بوابة Talabat/Jahez/Keeta للمطعم
+2. يحمّل تقرير الطلبات (Excel/CSV) — كل منصة تدعم هذا
+3. يرفعه في لوحة كهرمنة → [استيراد طلبات المنصة]
+4. النظام يُنشئ الطلبات تلقائياً ويخصم المخزون دفعةً
+```
+
+**جدول ربط أسماء المنصة بالأصناف:**
+
+```sql
+-- يُضاف إلى Migration 029
+-- المشكلة: Talabat يسمي الطبق "Grilled Chicken" لكن slug-نا "grilled-chicken-special"
+-- الحل: جدول ربط يُعبأ مرة واحدة عند الإعداد الأولي
+
+CREATE TABLE delivery_platform_mappings (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  platform        TEXT NOT NULL CHECK (platform IN ('talabat','jahez','keeta','other')),
+  platform_item_name TEXT NOT NULL,   -- اسم الصنف في بوابة المنصة
+  menu_item_slug  TEXT NOT NULL REFERENCES menu_items_sync(slug),
+  is_active       BOOLEAN NOT NULL DEFAULT true,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (platform, platform_item_name)
+);
+ALTER TABLE delivery_platform_mappings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "mappings_all" ON delivery_platform_mappings
+  FOR ALL TO authenticated
+  USING (auth_user_role() IN ('owner','general_manager','branch_manager'));
+```
+
+**منطق CSV Import (route.ts):**
+```
+POST /api/orders/platform-import
+
+1. استقبال CSV + تحديد المنصة (talabat / jahez / keeta)
+2. قراءة الصفوف بـ SheetJS
+3. لكل صف:
+   a. البحث عن platform_item_name في delivery_platform_mappings
+   b. لو موجود → ربط بـ menu_item_slug
+   c. لو غير موجود → يُضاف لقائمة "أصناف غير مُعرَّفة" للمراجعة
+4. Preview: { matched: N, unmatched: [{name, count}] }
+5. عند التأكيد:
+   - INSERT orders (order_source = platform, status = 'delivered')
+   - INSERT order_items → trigger يُشغَّل → المخزون يُخصم
+6. تقرير: { imported: N, skipped: M, unmatched_items: [...] }
+```
+
+**واجهة CSV Import:**
+```
+┌──────────────────────────────────────────────────────┐
+│  📥 استيراد طلبات المنصة                              │
+│                                                      │
+│  المنصة: [🛵 طلبات ▾]  الفرع: [الرفاع ▾]            │
+│                                                      │
+│  ┌────────────────────────────────────────┐          │
+│  │  اسحب ملف CSV/Excel هنا أو اضغط للرفع  │          │
+│  └────────────────────────────────────────┘          │
+│                                                      │
+│  نتائج المطابقة:                                      │
+│  ✅ 47 طلب (142 صنف) — مطابق ومعالَج                  │
+│  ⚠️ 3 أصناف غير معروفة:                              │
+│     "Chicken Meal" → [اختر من القائمة ▾] [+ حفظ]    │
+│     "Rice Special" → [اختر من القائمة ▾] [+ حفظ]    │
+│                                                      │
+│  [استيراد الـ 47 طلب ✓]  [إلغاء ✕]                  │
+└──────────────────────────────────────────────────────┘
+```
+
+**إعداد الربط الأولي (مرة واحدة):**
+```
+dashboard/delivery-platforms/mappings/page.tsx
+  → جدول: اسم الصنف في المنصة | الصنف في كهرمنة | الحالة
+  → عند أول import → الأصناف غير المعروفة تظهر هنا للمطابقة
+  → بعد المطابقة الأولى → الـ imports القادمة تعمل تلقائياً 100%
+```
+
+---
+
+**كلا الخيارين — نفس النتيجة للمخزون:**
+
+```
+الخيار A (يدوي):   طلب Talabat → POS → order_source='talabat' → trigger → خصم فوري
+الخيار B (CSV):    تقرير Talabat → Import → order_source='talabat' → trigger → خصم دفعي
+
+inventory_movements يسجّل كلاهما بنفس الطريقة تماماً.
+التقارير والـ COGS والـ Variance تشمل كلاهما بشكل موحَّد.
+```
+
+**متى تستخدم كل خيار:**
+
+| الموقف | الخيار المناسب |
+|--------|---------------|
+| طلبات Talabat < 20/يوم | A — يدوي (أسرع وأبسط) |
+| طلبات Talabat > 20/يوم | B — CSV آخر اليوم |
+| بداية التشغيل | A حتى يُعرَّف كل الأصناف |
+| بعد إعداد الربط | B (تلقائي 100% بعد أول import) |
 
 ---
 
@@ -1931,9 +2050,15 @@ kahramana-Saas/
 │   │   ├── api/inventory/
 │   │   │   ├── template/route.ts                  ← Phase 2 (GET: 6-sheet Excel)
 │   │   │   └── import/route.ts                    ← Phase 2 (POST: parse + insert)
+│   │   ├── api/orders/
+│   │   │   └── platform-import/route.ts           ← Phase 3.5 (POST: CSV منصات التوصيل)
 │   │   │
 │   │   └── [locale]/dashboard/
-│   │       ├── pos/page.tsx                       ← Phase 3.5 (POS + source)
+│   │       ├── pos/page.tsx                       ← Phase 3.5 (الخيار A: إدخال يدوي)
+│   │       ├── delivery-platforms/
+│   │       │   ├── import/page.tsx                ← Phase 3.5 (الخيار B: CSV Import)
+│   │       │   ├── import/actions.ts
+│   │       │   └── mappings/page.tsx              ← Phase 3.5 (إعداد ربط الأصناف)
 │   │       └── inventory/
 │   │           ├── page.tsx                       ← Phase 3
 │   │           ├── ingredients/page.tsx
@@ -2040,7 +2165,8 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public'
     'inventory_stock','inventory_lots','inventory_movements',
     'purchase_orders','purchase_order_items','waste_log',
     'inventory_counts','inventory_transfers','par_levels',
-    'unit_conversions','suppliers','inventory_alerts'
+    'unit_conversions','suppliers','inventory_alerts',
+    'delivery_platform_mappings'
   );
 
 -- 2 ENUMs جديدة
