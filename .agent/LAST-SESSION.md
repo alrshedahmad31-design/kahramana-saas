@@ -1,68 +1,74 @@
-# LAST-SESSION.md — Session 27
-> Date: 2026-04-30 | Status: `inventory_plan_enterprise`
+# LAST-SESSION.md — Session 28
+> Date: 2026-04-30 | Status: `mobile_lcp_optimised`
 
 ---
 
 ## ما تم في هذه الجلسة
 
-### Inventory Plan — Enterprise Edition ✅
+### Mobile LCP — Conservative Approach ✅
 
-الخطة أُعيد كتابتها من نسخة أساسية (6 phases, 10 جداول) إلى Enterprise:
+نُفِّذت إصلاحَين لتحسين LCP على الموبايل:
 
-**Commits:** 11a97e9 → 8643ad7 → 63832aa
+**Fix 1 — إخفاء الفيديو على الموبايل:**
+- `<video>` أصبح `hidden md:block` — موبايل لا يحمّل الفيديو نهائياً
+- أُضيف `<Image>` من next/image بديلاً على الموبايل (`block md:hidden priority`)
+- GSAP parallax محدود بـ `window.innerWidth >= 768`
+- الملف: `src/components/home/CinematicHero.tsx`
 
-**ما أُضيف:**
-- 18 جدول بدل 10 (inventory_lots, prep_items, ingredient_allergens, supplier_price_history, par_levels, unit_conversions, delivery_platform_mappings)
-- FEFO lot tracking مع تواريخ انتهاء
-- Sub-recipes / Prep Items (صلصات، عجائن، مرق)
-- 14 مسبب حساسية (EU+GCC)
-- سلسلة تصعيد الهدر: 0h→BM, 4h→GM, 8h→Owner (pg_cron كل 30 دقيقة)
-- Auto-PO generation (pg_cron يومياً)
-- Menu Engineering Matrix: Star/Plowhorse/Puzzle/Dog
-- Vendor Performance Scorecard
-- ABC cycle count classification
-- Dynamic par levels (default/weekend/ramadan/event)
-- 12 تقرير متقدم بدل 4
-- Barcode support + Multi-unit purchasing
-- 7 مهام pg_cron
+**Fix 2 — Dynamic import للـ Hero:**
+- `CinematicHero` يُحمَّل بـ `next/dynamic` + `ssr: false`
+- عبر wrapper: `src/components/home/HeroWrapper.tsx` (مطلوب لأن `ssr: false` ممنوع في Server Components في Next.js 15)
+- Skeleton: `<div className="h-[100dvh] w-full bg-brand-black" />` — يمنع CLS
+- الملف: `src/app/[locale]/page.tsx` يستورد `HeroWrapper` بدل `CinematicHero` مباشرة
 
-### طلبات منصات التوصيل ✅
+**نتائج البناء:**
+| | قبل | بعد |
+|---|---|---|
+| Homepage First Load JS | 227 kB | 223 kB |
+| Page-specific chunk | 12.1 kB | 6.6 kB |
 
-- **الخيار A:** POS يدوي per طلب (source selector: talabat/jahez/keeta)
-- **الخيار B:** CSV Import من بوابة المنصة (مجاني)
-- **delivery_platform_mappings:** ربط أسماء المنصة بالـ slugs (مرة واحدة)
-- صاحب المطعم يختار حسب الحجم — لا قيد
+ملاحظة: الفرق 4 kB فقط لأن GSAP موجود في shared chunk يشاركه routes أخرى. الفائدة الحقيقية: Hero chunk يُحمَّل async بعد الـ skeleton — لا يعيق time-to-interactive.
 
-### Anti-Duplicate Protection ✅
+**ملاحظة على الـ commits:** جميع التغييرات كانت موجودة مسبقاً في `341d747` و `fad6a08`. هذه الجلسة أعادت التحقق فقط وأكدت أن البناء يمر ✅
 
-- `platform_order_id` column على جدول orders (nullable)
-- `UNIQUE INDEX (order_source, platform_order_id) WHERE NOT NULL`
-- CSV import يفحص قبل الإدراج → skipped_duplicates list
-- `ON CONFLICT DO NOTHING` كشبكة أمان على مستوى DB
-- Import UI يعرض: ✅ 39 جديد | ⏭ 8 مُتخطَّاة (مدخَلة يدوياً)
+---
+
+## تغييرات غير مُودَعة (من جلسة سابقة)
+
+هذه الملفات بها تعديلات لم تُودَع بعد — **لا تُهمَل**:
+
+- `messages/ar.json` — إضافات i18n للـ contact page
+- `messages/en.json` — نفس
+- `src/app/[locale]/contact/page.tsx` — إعادة كتابة كاملة
+- `src/components/contact/ContactAnimations.tsx` — جديد
+- `src/components/contact/ContactMaps.tsx` — جديد
+
+يجب مراجعتها وإما إكمالها وإيداعها أو الرجوع عنها قبل الجلسة القادمة.
 
 ---
 
 ## المهام المتبقية
 
 ### أولوية عالية
-1. **بدء التنفيذ** — Phase 1: Migration 029 جاهزة للبناء
+1. **Contact Page** — مراجعة الملفات غير المُودَعة وإكمال/إيداع
 2. **BA-08 Tap** — منتظِر `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` من أحمد
+3. **Vercel Redeploy** — لتفعيل GA4 (G-521712793) + Clarity (vzlrozut31)
 
 ### أولوية متوسطة
-3. **BA-14/15/17 E2E** — اختبار بعد redeploy
-4. **BA-16 Rich Results** — فحص rich results للصفحات الخمس
+4. **Hero Poster** — ضغط `/public/assets/hero/hero-poster.webp` من ~186KB إلى < 80KB (Squoosh)
+5. **BA-14/15/17 E2E** — اختبار بعد redeploy
+6. **BA-16 Rich Results** — فحص rich results للصفحات الخمس
 
 ---
 
 ## حالة النظام عند الإغلاق
-- **Git**: master @ `63832aa`
-- **Inventory Plan**: Enterprise Edition جاهزة — لم يُنفَّذ بعد
-- **Vercel**: env vars set — redeploy pending (GA4 + Clarity)
-- **Payments**: Cash + Benefit-QR functional. Tap deferred (BA-08).
+- **Git**: master @ `0390949` (3 commits ahead of origin)
+- **Build**: ✅ clean — 781 pages, 0 errors
+- **Mobile LCP**: video مخفي، poster محمَّل بأولوية، Hero async
+- **Vercel**: deployed — pending redeploy لـ GA4/Clarity env vars
 - **Supabase**: 28 migrations applied
 
 ## قرارات مهمة
-- منصات التوصيل: يدوي + CSV — لا API integration الآن
-- Anti-duplicate: طبقتان (DB UNIQUE INDEX + code-level check)
-- delivery_platform_mappings: إعداد مرة واحدة → import تلقائي 100%
+- `ssr: false` في `next/dynamic` ممنوع في Server Components بـ Next.js 15 — يحتاج Client wrapper
+- تخفيض bundle الـ homepage إلى < 150 kB يتطلب تحليل shared chunks (next-intl + framer-motion) — مؤجَّل
+- Contact page جاهزة جزئياً — تحتاج مراجعة قبل إيداع
