@@ -1,64 +1,41 @@
-# LAST-SESSION.md — Session 25
-> Date: 2026-04-30 | Time: 02:12 AST
-> Status at close: `production_seo_activated`
+# LAST-SESSION.md — Session 26
+> Date: 2026-04-30 | Status: `analytics_configured`
 
 ---
 
 ## ما تم في هذه الجلسة
 
-### P0 — Production Blockers (All ✅ Done from prev session, verified this session)
-- **BA-01**: RLS lockdown (Migration 028) مُطبَّق — 9 سياسات نشطة، 7 متساهلة محذوفة
-- **BA-02**: أعمدة `orders` (Migration 025) — 6 أعمدة موجودة بأنواع صحيحة
-- **BA-03**: Supabase SMTP → Resend مُفعَّل، قوالب RTL عربية
-- **BA-04**: Auth URLs مُضبَّطة (kahramanat.com)
-- **BA-05**: Resend DNS موثّق (SPF + DKIM + DMARC = كلها خضراء)
-- **BA-06**: كل 28 migration مُطبَّقة على production
-- **BA-07**: Realtime مُفعَّل على `orders` + `order_items`
-- **BA-08**: ⚠ DEFERRED — `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` منتظِران مفاتيح Tap من أحمد
+### BA-11 — Google Business Profile ✅
+- الحسابان موثَّقان: فرع الرفاع + قلالي
+- الموقعان نشطان على خرائط Google
 
-### P1 — SEO Activation
-- **BA-09**: Google Search Console — مسجّل، sitemap مُرسَل
-- **BA-10**: Bing Webmaster Tools — مسجّل، meta tag أُضيف: `B17AC8B01413ADA36191E083B8C09562`
-- **BA-11**: Google Business Profile — ⚠ جزئي — يحتاج تحقق بريدي/هاتفي
-- **BA-12**: GA4 `G-521712793` مُضاف لـ `NEXT_PUBLIC_GA_ID`. Scripts في layout جاهزة. Clarity ID منتظَر.
-- **BA-13**: `@vercel/speed-insights` مثبَّت + `<SpeedInsights />` في layout.tsx
+### BA-12 — Analytics Env Vars ✅
+- `NEXT_PUBLIC_GA_ID=G-521712793` أُضيف لـ Vercel
+- `NEXT_PUBLIC_CLARITY_ID=vzlrozut31` أُضيف لـ Vercel
 
-### P2 — E2E QA
-- **BA-16**: Schema.org ✅ — 9 صفحات بـ JSON-LD كامل (Organization, Restaurant, MenuItem, FAQPage, BreadcrumbList, ContactPage)
-- **BA-14, BA-15, BA-17**: ⚠ منتظِرة — تُشغَّل بعد اكتمال deployment الحالي
+### Inventory System Design ✅
+- وثيقة `restaurant-inventory-system.md` أُضيفت لجذر المشروع
+- 9 تصحيحات تقنية طُبِّقت (UNIQUE NULLS NOT DISTINCT، NOT FOUND split، yield_factor hybrid، RBAC، Materialized View، waste escalation، partial order، order_source guard، Next.js error handling)
 
 ---
 
-## Code Changes Committed
-```
-commit 34d2f75
-feat: add Vercel Speed Insights + Bing meta tag + GA4/Clarity env hooks (BA-10/BA-12/BA-13)
-
-Files changed:
-  - src/app/[locale]/layout.tsx  (SpeedInsights + Bing meta + GA4/Clarity hooks)
-  - package.json                 (@vercel/speed-insights added)
-  - package-lock.json
-```
-
----
-
-## المهام المتبقية للجلسة القادمة
+## المهام المتبقية
 
 ### أولوية عالية
-1. **Clarity ID** → أنشئ مشروع على https://clarity.microsoft.com → أضف `NEXT_PUBLIC_CLARITY_ID` في Vercel → redeploy
-2. **BA-14/15/17 E2E** → بعد اكتمال الـ deployment، شغّل test matrix من `docs/handoff/02-browsing-agent-tasks.md`
-3. **BA-08 Tap** → متى وفّر أحمد `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` → Vercel env → redeploy
+1. **Redeploy مطلوب** — env vars (GA4 + Clarity) محتاجة redeploy لتفعيلها
+2. **BA-14/15/17 E2E** — شغّل test matrix بعد اكتمال الـ redeploy
+3. **BA-08 Tap** — منتظِر `TAP_SECRET_KEY` + `PAYMENT_WEBHOOK_SECRET` من أحمد
 
 ### أولوية متوسطة
-4. **BA-11 Google Business Profile** → تحقق بريدي/هاتفي لفرع الرفاع وقلالي
-5. **BA-16 Rich Results Validation** → افحص https://search.google.com/test/rich-results للصفحات الخمس
+4. **BA-16 Rich Results** — افحص https://search.google.com/test/rich-results للصفحات الخمس
+5. **Inventory Phase 3** — مبلوكة على وصفات الشيف (data collection قبل أي كود)
 
 ---
 
 ## حالة النظام عند الإغلاق
-- **Git**: master @ `34d2f75` — pushed ✅
-- **Vercel**: deployment in progress (kahramana.vercel.app)
-- **Supabase**: 28 migrations applied, RLS hardened, Realtime active
-- **Email**: SMTP via Resend live, custom RTL templates active
-- **Analytics**: GA4 hook ready, Speed Insights live
-- **Payments**: Cash + Benefit-QR paths functional. Tap deferred.
+- **Git**: master @ `3920e95` — last: inventory system docs (9-point review)
+- **Vercel**: env vars set — redeploy pending
+- **Analytics**: GA4 + Clarity configured, Speed Insights live
+- **GBP**: verified ✅ — Riffa + Qallali active
+- **Payments**: Cash + Benefit-QR functional. Tap deferred (BA-08).
+- **Supabase**: 28 migrations applied, RLS hardened

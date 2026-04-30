@@ -1,6 +1,6 @@
 {
   "project": "kahramana-baghdad",
-  "last_updated": "2026-04-30 (session 25 — Production Security + SEO Activation)",
+  "last_updated": "2026-04-30 (session 26 — Analytics Configured: GBP verified, GA4 + Clarity env set)",
   "current_phase": 7,
   "next_phase": 8,
   "overall_status": "production_seo_activated",
@@ -32,9 +32,9 @@
     "seo_status": {
       "google_search_console": "registered — sitemap submitted",
       "bing_webmaster": "registered — meta tag in layout.tsx (B17AC8B01413ADA36191E083B8C09562)",
-      "google_business_profile": "partial — pending postcard verification for Riffa + Qallali",
-      "ga4": "G-521712793 — env hook in layout.tsx, NEXT_PUBLIC_GA_ID set",
-      "clarity": "pending — add NEXT_PUBLIC_CLARITY_ID to Vercel env after creating project",
+      "google_business_profile": "verified — Riffa + Qallali locations active",
+      "ga4": "configured — G-521712793 added to env, pending redeploy",
+      "clarity": "configured — vzlrozut31 added to env, pending redeploy",
       "speed_insights": "live — @vercel/speed-insights installed + <SpeedInsights /> in layout",
       "schema_org": "complete — Organization, Restaurant, MenuItem, FAQPage, BreadcrumbList, ContactPage"
     },
@@ -46,7 +46,7 @@
       "RESEND_API_KEY": "set",
       "EMAIL_FROM": "noreply@kahramanat.com",
       "NEXT_PUBLIC_GA_ID": "G-521712793",
-      "NEXT_PUBLIC_CLARITY_ID": "PENDING — set after clarity.microsoft.com project creation",
+      "NEXT_PUBLIC_CLARITY_ID": "vzlrozut31",
       "TAP_SECRET_KEY": "DEFERRED — waiting on Ahmed's Tap account",
       "PAYMENT_WEBHOOK_SECRET": "DEFERRED — waiting on Ahmed's Tap account"
     }
