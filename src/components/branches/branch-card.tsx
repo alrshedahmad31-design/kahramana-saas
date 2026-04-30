@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import { Link } from '@/i18n/navigation'
 import { Branch, buildWaOrderLink } from '@/constants/contact'
 import { BranchMetadata } from '@/lib/branches'
 import BranchStatusBadge from './branch-status-badge'
@@ -17,18 +18,20 @@ interface Props {
   tOrderWhatsApp: string
   tStatusActive: string
   tStatusPlanned: string
+  detailHref?: string
 }
 
-export default function BranchCard({ 
-  branch, 
-  metadata, 
-  isAr, 
+export default function BranchCard({
+  branch,
+  metadata,
+  isAr,
   locale,
   tViewOnMap,
   tComingSoon,
   tOrderWhatsApp,
   tStatusActive,
-  tStatusPlanned
+  tStatusPlanned,
+  detailHref,
 }: Props) {
   const waLink = buildWaOrderLink(branch.id, locale as 'ar' | 'en')
   const isPlanned = branch.status === 'planned'
@@ -133,7 +136,7 @@ export default function BranchCard({
         </div>
 
         {/* CTA */}
-        <div className="mt-4">
+        <div className={`mt-4 flex flex-col gap-2`}>
           <CinematicButton
             href={isPlanned ? undefined : waLink}
             disabled={isPlanned}
@@ -143,6 +146,14 @@ export default function BranchCard({
           >
             {isPlanned ? tComingSoon : tOrderWhatsApp}
           </CinematicButton>
+          {detailHref && !isPlanned && (
+            <Link
+              href={detailHref as '/'}
+              className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold text-xs font-bold transition-colors ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+            >
+              {isAr ? 'تفاصيل الفرع' : 'Branch Details'}
+            </Link>
+          )}
         </div>
       </div>
     </motion.div>

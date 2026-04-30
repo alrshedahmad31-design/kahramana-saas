@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { GENERAL_CONTACT } from '@/constants/contact'
+import { GENERAL_CONTACT, BRANCH_LIST } from '@/constants/contact'
 import { getCategorySlugs, getItemSlugs } from '@/lib/menu'
 
 const BASE_URL = GENERAL_CONTACT.website
@@ -93,6 +93,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
+  // ── Individual branch pages ───────────────────────────────────────────────
+
+  const branchPages: MetadataRoute.Sitemap = BRANCH_LIST
+    .filter((b) => b.status === 'active')
+    .map((b) => ({
+      url:             url(`/branches/${b.id}`),
+      lastModified:    now,
+      changeFrequency: 'monthly' as const,
+      priority:        0.8,
+      alternates:      alternates(`/branches/${b.id}`, `/en/branches/${b.id}`),
+    }))
+
   // ── Menu category pages ───────────────────────────────────────────────────
 
   const categoryPages: MetadataRoute.Sitemap = getCategorySlugs().map((slug) => ({
@@ -113,5 +125,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     alternates:      alternates(`/menu/item/${slug}`, `/en/menu/item/${slug}`),
   }))
 
-  return [...staticPages, ...categoryPages, ...dishPages]
+  return [...staticPages, ...branchPages, ...categoryPages, ...dishPages]
 }

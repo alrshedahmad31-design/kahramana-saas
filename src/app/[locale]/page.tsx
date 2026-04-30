@@ -40,6 +40,9 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Preload hero poster to improve LCP — video poster is the LCP candidate */}
+      <link rel="preload" href="/assets/hero/hero-poster.webp" as="image" type="image/webp" />
+
       <script
         type="application/ld+json"
         suppressHydrationWarning

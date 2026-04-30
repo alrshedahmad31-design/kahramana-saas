@@ -54,7 +54,7 @@ function buildOpeningHours(branch: Branch) {
 // ── LocalBusiness per active branch ────────────────────────────────────────
 
 export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
-  const url = `${SITE}/${locale === 'en' ? 'en/' : ''}branches`
+  const url = `${SITE}/${locale === 'en' ? 'en/' : ''}branches/${branch.id}`
 
   const base: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -123,6 +123,8 @@ export function buildPlannedBranchSchema(branch: Branch, locale: Locale) {
 // ── Organization / Restaurant root for the homepage ────────────────────────
 
 export function buildOrganizationSchema(locale: Locale) {
+  const primaryBranch = BRANCHES.riffa
+
   const contactPoints = activeBranches.map((b) => ({
     '@type': 'ContactPoint',
     telephone: b.phone,
@@ -138,6 +140,14 @@ export function buildOrganizationSchema(locale: Locale) {
     name: 'كهرمانة بغداد',
     alternateName: 'Kahramana Baghdad',
     url: SITE,
+    telephone: primaryBranch.phone,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress:   localized(locale, primaryBranch.addressAr,  primaryBranch.addressEn),
+      addressLocality: localized(locale, primaryBranch.cityAr,     primaryBranch.cityEn),
+      addressRegion:   localized(locale, primaryBranch.cityAr,     primaryBranch.cityEn),
+      addressCountry:  'BH',
+    },
     logo: `${SITE}/assets/brand/logo.svg`,
     image: `${SITE}/assets/brand/og-image.webp`,
     servesCuisine: ['Iraqi', 'Middle Eastern', 'عراقي'],

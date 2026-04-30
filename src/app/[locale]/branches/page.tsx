@@ -101,6 +101,7 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
               tOrderWhatsApp={t('orderWhatsApp')}
               tStatusActive={t('status.active')}
               tStatusPlanned={t('status.planned')}
+              detailHref={branch.status === 'active' ? `/branches/${branch.id}` : undefined}
             />
           ))}
         </div>
