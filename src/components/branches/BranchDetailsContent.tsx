@@ -131,8 +131,8 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
 
       {/* ── CTA Box ───────────────────────────────────────────────────── */}
       <div className="cta-box relative overflow-hidden rounded-[2.5rem] bg-brand-surface p-10 sm:p-16 border border-brand-border">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 blur-[100px] -mr-32 -mt-32" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-gold/5 blur-[100px] -ml-32 -mb-32" />
+        <div className="absolute top-0 end-0 w-64 h-64 bg-brand-gold/5 blur-[100px] -me-32 -mt-32" />
+        <div className="absolute bottom-0 start-0 w-64 h-64 bg-brand-gold/5 blur-[100px] -ms-32 -mb-32" />
 
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="max-w-lg text-center md:text-start">
