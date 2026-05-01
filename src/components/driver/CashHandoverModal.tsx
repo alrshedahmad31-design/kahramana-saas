@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClose, onConfirmed }: Props) {
-  const totalCash = cashOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
+  const totalCash = cashOrders.reduce((s, o) => s + Number(o.total_bhd) + Number(o.tip_bhd ?? 0), 0)
 
   const [loading,  setLoading]  = useState(false)
   const [done,     setDone]     = useState(false)
@@ -95,6 +95,11 @@ export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClos
                     )}
                     <span className="font-satoshi font-black text-sm text-red-300 tabular-nums">
                       {Number(o.total_bhd).toFixed(3)} BD
+                      {Number(o.tip_bhd ?? 0) > 0 && (
+                        <span className="text-brand-success ms-1 text-xs">
+                          +{Number(o.tip_bhd).toFixed(3)}
+                        </span>
+                      )}
                     </span>
                   </div>
                 ))}

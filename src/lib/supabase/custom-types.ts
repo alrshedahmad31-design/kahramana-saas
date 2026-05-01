@@ -115,6 +115,8 @@ export type DriverOrder = OrderRow & {
   // Added by migration 037 — manually typed until types.ts is regenerated
   cash_settled_at?: string | null;
   cash_settlement_id?: string | null;
+  // Added by migration 040
+  tip_bhd?: number | null;
 };
 
 // Re-narrow `audit_logs.action` for safer call sites — the column is a generic

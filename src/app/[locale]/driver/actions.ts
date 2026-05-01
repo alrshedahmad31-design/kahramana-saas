@@ -18,6 +18,7 @@ export type DriverActionResult = { success: true } | { success: false; error: st
 export async function driverBumpOrder(
   orderId:       string,
   currentStatus: 'ready' | 'out_for_delivery',
+  tipBhd?:       number,   // only meaningful for the delivered transition
 ): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
@@ -71,6 +72,11 @@ export async function driverBumpOrder(
   }
   if (currentStatus === 'out_for_delivery') {
     orderUpdate.delivered_at = now
+    if (tipBhd && tipBhd > 0) {
+      if (tipBhd > 50) return { success: false, error: 'Tip exceeds maximum (50 BD)' }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(orderUpdate as any).tip_bhd = Number(tipBhd.toFixed(3))
+    }
   }
 
   const { error } = await supabase
@@ -257,6 +263,7 @@ export async function submitCashHandover(
       .from('orders')
       .select('id, assigned_driver_id, total_bhd, status, payments(method)')
       .in('id', orderIds)
+    // tip_bhd not in generated types yet — cast via unknown
 
     // Ensure all requested IDs were actually found
     const fetchedIds = new Set((orders ?? []).map(o => o.id))
@@ -275,8 +282,11 @@ export async function submitCashHandover(
       return { success: false, error: 'Unauthorized orders in handover' }
     }
 
-    // Sum from DB — ignore any totalCash sent by the client.
-    totalCash = (orders ?? []).reduce((s, o) => s + Number(o.total_bhd), 0)
+    // Sum from DB — include tip_bhd if present (migration 040); ignore client values.
+    totalCash = (orders ?? []).reduce(
+      (s, o) => s + Number(o.total_bhd) + Number((o as Record<string, unknown>).tip_bhd ?? 0),
+      0,
+    )
   }
 
   // Use service client for atomicity — bypasses RLS so the link-table insert

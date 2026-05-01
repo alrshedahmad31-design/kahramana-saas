@@ -107,7 +107,7 @@ export default function DriverDashboard({
         picked_up_at, arrived_at, delivered_at,
         total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
-        cash_settled_at, cash_settlement_id,
+        cash_settled_at, cash_settlement_id, tip_bhd,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
         payments(method)
       `)
@@ -178,9 +178,9 @@ export default function DriverDashboard({
     if (!result.success) setIsOnline((v) => !v) // revert on DB error
   }
 
-  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery'): Promise<string | null> {
+  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery', tipBhd?: number): Promise<string | null> {
     setOrders((prev) => prev.filter((o) => o.id !== orderId))
-    const result = await driverBumpOrder(orderId, currentStatus)
+    const result = await driverBumpOrder(orderId, currentStatus, tipBhd)
     if (!result.success) {
       fetchOrders()
       return result.error

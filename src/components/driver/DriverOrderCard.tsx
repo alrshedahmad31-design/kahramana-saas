@@ -21,7 +21,7 @@ interface Props {
   isRTL:         boolean
   branchMapsUrl: string | null
   variant?:      'active' | 'completed'
-  onAction?:     (id: string, status: DriverActiveStatus) => Promise<string | null>
+  onAction?:     (id: string, status: DriverActiveStatus, tipBhd?: number) => Promise<string | null>
   onArrive?:     (id: string) => Promise<string | null>
 }
 
@@ -125,8 +125,9 @@ export default function DriverOrderCard({
   const [busy,          setBusy]          = useState(false)
   const [actionError,   setActionError]   = useState<string | null>(null)
   const [itemsExpanded, setItemsExpanded] = useState(() => order.status === 'ready')
-  const [showIssue,     setShowIssue]     = useState(false)
+  const [showIssue,      setShowIssue]      = useState(false)
   const [confirmDeliver, setConfirmDeliver] = useState(false)
+  const [tipBhd,         setTipBhd]        = useState(0)
 
   const isCompleted = variant === 'completed'
   const isReady     = order.status === 'ready'
@@ -246,7 +247,7 @@ export default function DriverOrderCard({
     setBusy(true)
     setConfirmDeliver(false)
     setActionError(null)
-    const error = await onAction(order.id, 'out_for_delivery')
+    const error = await onAction(order.id, 'out_for_delivery', isCash && tipBhd > 0 ? tipBhd : undefined)
     if (error) setActionError(error)
     setBusy(false)
   }
@@ -420,17 +421,37 @@ export default function DriverOrderCard({
                 <>
                   {/* Cash confirmation prompt */}
                   {confirmDeliver && isCash && (
-                    <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2.5">
-                      <p className={`text-sm font-bold text-red-400 mb-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2.5 flex flex-col gap-2.5">
+                      <p className={`text-sm font-bold text-red-400 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                         {isRTL
                           ? `تأكيد: هل استلمت ${Number(order.total_bhd).toFixed(3)} BD نقداً؟`
                           : `Confirm: did you collect ${Number(order.total_bhd).toFixed(3)} BD cash?`
                         }
                       </p>
+                      {/* Optional tip input */}
+                      <div>
+                        <label className={`block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                          {isRTL ? 'إكرامية إضافية؟ (اختياري)' : 'Extra tip? (optional)'}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            step="0.100"
+                            min="0"
+                            max="50"
+                            value={tipBhd || ''}
+                            onChange={e => setTipBhd(Math.max(0, Number(e.target.value) || 0))}
+                            placeholder="0.000"
+                            className="flex-1 rounded-lg bg-brand-surface border border-brand-border px-3 py-1.5 font-satoshi text-sm text-brand-text tabular-nums placeholder:text-brand-muted/40 focus:outline-none focus:border-brand-gold/60"
+                            dir="ltr"
+                          />
+                          <span className="font-satoshi text-xs text-brand-muted shrink-0">BD</span>
+                        </div>
+                      </div>
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => setConfirmDeliver(false)}
+                          onClick={() => { setConfirmDeliver(false); setTipBhd(0) }}
                           className={`flex-1 rounded-xl py-2 border border-brand-border text-brand-muted text-sm font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
                         >
                           {isRTL ? 'إلغاء' : 'Cancel'}
