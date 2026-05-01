@@ -122,3 +122,98 @@ export type DriverOrder = OrderRow & {
 // Re-narrow `audit_logs.action` for safer call sites — the column is a generic
 // `string` in Postgres but only ever holds one of three values in practice.
 export type TypedAuditLogRow = Omit<AuditLogRow, 'action'> & { action: AuditLogAction };
+
+// ── Inventory types (migration 035 — not yet in auto-gen types.ts) ──────────
+
+export type IngredientUnit = 'g'|'kg'|'ml'|'l'|'unit'|'tbsp'|'tsp'|'oz'|'lb'|'piece'|'portion'|'bottle'|'can'|'bag'|'box'
+export type AbcClass = 'A'|'B'|'C'
+export type InventoryMovementType = 'reservation'|'consumption'|'release'|'purchase'|'count_adjust'|'waste'|'transfer_in'|'transfer_out'|'prep_production'|'prep_consumption'|'catering_reserve'|'catering_release'|'opening_balance'|'adjustment'
+export type StorageTemp = 'frozen'|'chilled'|'ambient'|'dry'
+export type PrepStorageTemp = 'frozen'|'chilled'|'ambient'
+export type IngredientCategory = 'protein'|'grain'|'vegetable'|'dairy'|'seafood'|'spice'|'oil'|'beverage'|'sauce'|'packaging'|'cleaning'|'disposable'|'other'
+export type PrepUnit = 'g'|'kg'|'ml'|'l'|'unit'|'portion'|'batch'
+export type AllergenType = 'gluten'|'dairy'|'eggs'|'nuts'|'peanuts'|'soy'|'fish'|'shellfish'|'sesame'|'mustard'|'celery'|'lupin'|'molluscs'|'sulphites'
+export type AlertSeverity = 'info'|'warning'|'critical'
+export type ParDayType = 'default'|'weekend'|'ramadan'|'event'|'holiday'
+
+export interface IngredientRow {
+  id: string; name_ar: string; name_en: string; unit: IngredientUnit
+  purchase_unit: string|null; purchase_unit_factor: number|null
+  cost_per_unit: number; ideal_cost_pct: number|null; default_yield_factor: number
+  category: IngredientCategory|null; abc_class: AbcClass; barcode: string|null
+  reorder_point: number|null; max_stock_level: number|null; reorder_qty: number|null
+  shelf_life_days: number|null; storage_temp: StorageTemp|null; supplier_id: string|null
+  is_active: boolean; notes: string|null; created_at: string; updated_at: string
+}
+
+export interface SupplierRow {
+  id: string; name_ar: string; name_en: string|null; phone: string|null
+  email: string|null; is_active: boolean; created_at: string
+}
+
+export interface PrepItemRow {
+  id: string; name_ar: string; name_en: string; unit: PrepUnit; batch_yield_qty: number
+  shelf_life_hours: number|null; storage_temp: PrepStorageTemp|null
+  is_active: boolean; notes: string|null; created_at: string
+}
+
+export interface PrepItemIngredientRow {
+  id: string; prep_item_id: string; ingredient_id: string; quantity: number; yield_factor: number|null
+}
+
+export interface RecipeRow {
+  id: string; menu_item_slug: string; ingredient_id: string|null; prep_item_id: string|null
+  quantity: number; is_optional: boolean; variant_key: string|null; yield_factor: number|null
+  notes: string|null; updated_by: string|null; updated_at: string
+}
+
+export interface InventoryStockRow {
+  id: string; branch_id: string; ingredient_id: string; on_hand: number
+  reserved: number; catering_reserved: number; reorder_point: number|null
+  max_stock_level: number|null; last_movement_at: string|null
+  last_count_at: string|null; created_at: string
+}
+
+export interface InventoryMovementRow {
+  id: string; branch_id: string; ingredient_id: string|null; prep_item_id: string|null
+  movement_type: InventoryMovementType; quantity: number; unit_cost: number|null
+  order_id: string|null; performed_by: string|null; performed_at: string; notes: string|null
+}
+
+export interface InventoryAlertRow {
+  id: string; branch_id: string|null; ingredient_id: string|null; alert_type: string
+  severity: AlertSeverity; message: string; metadata: Record<string,unknown>
+  is_read: boolean; created_at: string
+}
+
+export interface SupplierPriceHistoryRow {
+  id: string; ingredient_id: string; supplier_id: string; unit_cost: number
+  purchase_order_id: string|null; effective_at: string
+}
+
+export interface ParLevelRow {
+  id: string; branch_id: string; ingredient_id: string; day_type: ParDayType
+  par_qty: number; reorder_qty: number
+}
+
+export interface LowStockAlert {
+  ingredient_id: string; name_ar: string; name_en: string; abc_class: AbcClass
+  on_hand: number; available: number; par_qty: number|null; reorder_point: number|null
+  days_to_out: number|null; nearest_expiry: string|null; suggested_order: number|null
+}
+
+export interface ExpiryReportRow {
+  ingredient_id: string; name_ar: string; name_en: string; lot_id: string
+  lot_number: string|null; quantity_remaining: number; expires_at: string
+  days_remaining: number; stock_value_bhd: number
+}
+
+export interface DishCogsRow {
+  slug: string; name_ar: string; name_en: string; selling_price: number|null
+  cost_bhd: number; profit_bhd: number; margin_pct: number|null
+}
+
+export interface InventoryValuationRow {
+  branch_id: string; branch_name: string; category: string|null
+  ingredient_count: number; total_value_bhd: number; reserved_value_bhd: number
+}

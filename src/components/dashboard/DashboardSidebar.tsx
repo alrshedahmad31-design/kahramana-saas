@@ -132,6 +132,26 @@ function InventoryImportIcon() {
   )
 }
 
+function InventoryIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+    </svg>
+  )
+}
+
+function ChevronDownIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+      aria-hidden="true"
+      className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  )
+}
+
 function HamburgerIcon() {
   return (
     <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -161,6 +181,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname()
 
   const [open, setOpen] = useState(false)
+  const [inventoryOpen, setInventoryOpen] = useState(false)
 
   const prefix = locale === 'en' ? '/en' : ''
 
@@ -207,9 +228,23 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     settings:        t('settings'),
   }
 
+  const INVENTORY_SUB_ITEMS = [
+    { key: 'inv-overview',   href: `${prefix}/dashboard/inventory`,            label: isAr ? 'نظرة عامة' : 'Overview' },
+    { key: 'inv-ingredients',href: `${prefix}/dashboard/inventory/ingredients`,label: isAr ? 'المكونات' : 'Ingredients' },
+    { key: 'inv-prep',       href: `${prefix}/dashboard/inventory/prep-items`, label: isAr ? 'Prep Items' : 'Prep Items' },
+    { key: 'inv-recipes',    href: `${prefix}/dashboard/inventory/recipes`,    label: isAr ? 'الوصفات' : 'Recipes' },
+    { key: 'inv-stock',      href: `${prefix}/dashboard/inventory/stock`,      label: isAr ? 'المخزون' : 'Stock' },
+    { key: 'inv-par',        href: `${prefix}/dashboard/inventory/par-levels`, label: isAr ? 'مستويات Par' : 'Par Levels' },
+    { key: 'inv-import',     href: `${prefix}/dashboard/inventory/import`,     label: isAr ? 'استيراد' : 'Import' },
+  ]
+
+  const isInInventory = pathname.startsWith(`${prefix}/dashboard/inventory`)
+
   const NavLinks = () => (
     <nav className="flex flex-col gap-1">
       {visible.map((item) => {
+        // Skip the inventoryImport item — it lives inside the collapsible group now
+        if (item.key === 'inventoryImport') return null
         const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
         return (
           <a
@@ -229,6 +264,50 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
           </a>
         )
       })}
+
+      {/* Inventory collapsible group */}
+      {canAccessSection(userRole, 'inventory') && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setInventoryOpen((v) => !v)}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 w-full
+              font-satoshi text-sm font-medium transition-colors duration-150
+              min-h-[44px]
+              ${isInInventory
+                ? 'bg-brand-gold/10 text-brand-gold'
+                : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+              }`}
+          >
+            <InventoryIcon />
+            <span className="flex-1 text-start">{isAr ? 'المخزون' : 'Inventory'}</span>
+            <ChevronDownIcon open={inventoryOpen || isInInventory} />
+          </button>
+
+          {(inventoryOpen || isInInventory) && (
+            <div className="ms-6 mt-0.5 flex flex-col gap-0.5 border-s border-brand-border ps-3">
+              {INVENTORY_SUB_ITEMS.map((sub) => {
+                const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/')
+                return (
+                  <a
+                    key={sub.key}
+                    href={sub.href}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center rounded-lg px-3 py-2 font-satoshi text-sm
+                      font-medium transition-colors duration-150 min-h-[40px]
+                      ${isSubActive
+                        ? 'text-brand-gold bg-brand-gold/10'
+                        : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+                      }`}
+                  >
+                    {sub.label}
+                  </a>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </nav>
   )
 
