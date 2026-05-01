@@ -171,11 +171,12 @@ export async function toggleDriverAvailability(): Promise<DriverActionResult> {
 //   1. Role is exactly 'driver'
 //   2. No duplicate handover for this driver + shift date
 //   3. Every orderID must be assigned to this driver AND be a cash order
+//   4. total_cash is computed server-side from the fetched orders — the client
+//      payload is NEVER trusted (prevents tampered totals from DevTools).
 
 export async function submitCashHandover(
-  orderIds:  string[],
-  totalCash: number,
-): Promise<DriverActionResult> {
+  orderIds: string[],
+): Promise<DriverActionResult & { totalCash?: number }> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
     return { success: false, error: 'Unauthorized' }
@@ -196,11 +197,14 @@ export async function submitCashHandover(
     return { success: false, error: 'Handover already submitted for today' }
   }
 
-  // Validate that every supplied order is assigned to this driver and is a cash order
+  // Authoritative total — recomputed from DB. Even if client sends garbage,
+  // server is the only source of truth.
+  let totalCash = 0
+
   if (orderIds.length > 0) {
     const { data: orders } = await supabase
       .from('orders')
-      .select('id, assigned_driver_id, payments(method)')
+      .select('id, assigned_driver_id, total_bhd, status, payments(method)')
       .in('id', orderIds)
 
     // Ensure all requested IDs were actually found
@@ -208,14 +212,20 @@ export async function submitCashHandover(
     const missing    = orderIds.filter(id => !fetchedIds.has(id))
     if (missing.length > 0) return { success: false, error: 'Invalid order IDs' }
 
-    // Reject any order not owned by this driver or not a cash order.
+    // Reject any order not owned by this driver, not delivered, or not a cash order.
     // payments is a one-to-one embed so TS infers a single object, not an array.
     const invalid = (orders ?? []).filter(
-      o => o.assigned_driver_id !== user.id || o.payments?.method !== 'cash',
+      o =>
+        o.assigned_driver_id !== user.id ||
+        o.status             !== 'delivered' ||
+        o.payments?.method   !== 'cash',
     )
     if (invalid.length > 0) {
       return { success: false, error: 'Unauthorized orders in handover' }
     }
+
+    // Sum from DB — ignore any totalCash sent by the client.
+    totalCash = (orders ?? []).reduce((s, o) => s + Number(o.total_bhd), 0)
   }
 
   const handover: DriverCashHandoverInsert = {
@@ -230,7 +240,7 @@ export async function submitCashHandover(
     .insert(handover)
 
   if (error) return { success: false, error: error.message }
-  return { success: true }
+  return { success: true, totalCash }
 }
 
 // ── Submit driver issue report ────────────────────────────────────────────────

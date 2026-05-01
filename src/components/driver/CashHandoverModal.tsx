@@ -23,12 +23,10 @@ export default function CashHandoverModal({ deliveredOrders, isRTL, onClose, onC
     if (loading || done) return
     setLoading(true)
     setError(null)
-    const result = await submitCashHandover(
-      cashOrders.map(o => o.id),
-      totalCash,
-    )
+    // Server recomputes the total from DB — no client-supplied amount is trusted.
+    const result = await submitCashHandover(cashOrders.map(o => o.id))
     setLoading(false)
-    if ('error' in result) {
+    if (!result.success) {
       setError(result.error)
       return
     }

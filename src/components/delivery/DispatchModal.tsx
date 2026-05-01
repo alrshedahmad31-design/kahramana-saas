@@ -3,7 +3,7 @@
 import { useState }          from 'react'
 import { motion }            from 'framer-motion'
 import { X, Check, MapPin }  from 'lucide-react'
-import { createClient }      from '@/lib/supabase/client'
+import { assignDriverToOrder } from '@/app/[locale]/dashboard/delivery/actions'
 import { DV, DV_STATUS, DRIVER_STATUS } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 
@@ -15,8 +15,28 @@ interface Props {
   isAr:    boolean
 }
 
+function translateDispatchError(err: string, isAr: boolean): string {
+  switch (err) {
+    case 'Unauthorized':
+      return isAr ? 'غير مصرح لك بتعيين السائقين' : 'You are not authorized to dispatch drivers'
+    case 'Order not found':
+      return isAr ? 'الطلب غير موجود' : 'Order not found'
+    case 'Order is not ready for dispatch':
+      return isAr ? 'الطلب غير جاهز للتوصيل' : 'Order is not ready for dispatch'
+    case 'Driver not found':
+      return isAr ? 'السائق غير موجود' : 'Driver not found'
+    case 'Invalid driver':
+      return isAr ? 'السائق غير صالح أو غير نشط' : 'Driver is not valid or not active'
+    case 'Driver does not serve this branch':
+      return isAr ? 'السائق لا يخدم هذا الفرع' : 'Driver does not serve this branch'
+    case 'Order is no longer available for dispatch':
+      return isAr ? 'تم تعيين سائق آخر لهذا الطلب للتو' : 'Another dispatcher already assigned this order'
+    default:
+      return isAr ? 'فشل التعيين — حاول مجدداً' : 'Dispatch failed — please try again'
+  }
+}
+
 export default function DispatchModal({ order, drivers, orders: _orders, onClose, isAr }: Props) {
-  const supabase       = createClient()
   const [selected, setSelected] = useState<string | null>(null)
   const [loading,  setLoading]  = useState(false)
   const [done,     setDone]     = useState(false)
@@ -33,16 +53,12 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
     }
     setError(null)
     setLoading(true)
-    const now = new Date().toISOString()
-    await supabase
-      .from('orders')
-      .update({
-        assigned_driver_id: selected,
-        status:             'out_for_delivery',
-        picked_up_at:       now,
-      })
-      .eq('id', order.id)
+    const result = await assignDriverToOrder(order.id, selected)
     setLoading(false)
+    if (!result.success) {
+      setError(translateDispatchError(result.error, isAr))
+      return
+    }
     setDone(true)
     setTimeout(onClose, 1000)
   }

@@ -1,48 +1,84 @@
-# LAST-SESSION.md — Session 32
-> Date: 2026-05-01 | Status: `6_bugs_fixed_migration_033_live` | Branch: `master @ f8ff21c`
+# LAST-SESSION.md — Session 33
+> Date: 2026-05-01 | Status: `driver_ux_upgrade_complete_migration_034_pending` | Branch: `master`
 
 ---
 
 ## ما تم في هذه الجلسة
 
-### إصلاح 6 أخطاء حرجة — Commit `cd1f476` ✅
+### 1. Language Toggle — لوحة التحكم ✅
 
-#### خطأ 1: "وصلت للزبون" يعطي رسالة خطأ
-- **السبب**: `markDriverArrived` كان يستخدم `createClient()` فقط بدون التحقق المسبق من ملكية الطلب
-- **الإصلاح**: إضافة SELECT للتحقق من الملكية أولاً + استخدام `createServiceClient()` للتحديث الفعلي
-- الملف: `src/app/[locale]/driver/actions.ts`
+**الملفات:**
+- `src/components/dashboard/LanguageToggle.tsx` — مكوّن جديد لتبديل اللغة
+- `src/components/dashboard/DashboardSidebar.tsx` — إضافة `<LanguageToggle />` في footer
 
-#### خطأ 2: طلبات الاستلام تظهر كتوصيل عادي
-- **السبب**: `order_type` لم يكن موجوداً في SELECT أو في واجهة OrderCardData
-- **الإصلاح**: إضافة `order_type` لـ `OrderCardData`، كلا استعلامَي SELECT، وشارة خضراء "استلام/Pickup" في `KanbanOrderCard`
-- **تنبيه**: يحتاج Migration 033 مُطبَّقاً أولاً
-
-#### خطأ 3: لوحة الطلبات لا تتحدث تلقائياً
-- **السبب**: `OrdersClient` يعتمد على Realtime فقط — لا يوجد polling احتياطي
-- **الإصلاح**: إضافة `setInterval(fetchOrders, 5_000)` في `OrdersClient`
-- الملف: `src/components/orders/OrdersClient.tsx`
-
-#### خطأ 4: تعيين السائق يحذف الطلب من KDS
-- **السبب**: `DispatchModal.handleAssign()` كان يضبط `status='out_for_delivery'` بغض النظر عن الحالة الحالية
-- **الإصلاح**: حارس `if (order.status !== 'ready')` مع رسالة خطأ ثنائية اللغة
-- الملف: `src/components/delivery/DispatchModal.tsx`
-
-#### خطأ 5 + 6: شارة الدفع مفقودة + "تسليم النقد" لا يظهر
-- **السبب الجذري**: `DriverOrder.payments` مُعرَّف كـ `array []` لكن Supabase يُعيده كـ `object` واحد (علاقة one-to-one) — كل استدعاء `payments?.[0]` يُعيد `undefined`
-- **الإصلاح**: تصحيح النوع إلى `{ method: PaymentMethod } | null` + إصلاح 5 مواقع استخدام:
-  - `custom-types.ts`: تصحيح التعريف
-  - `DriverOrderCard.tsx`: `payments?.[0]` → `payments`
-  - `DriverDashboard.tsx`: `payments?.[0]?.method` → `payments?.method`
-  - `DriverCashSummary.tsx`: موقعان
-  - `CashHandoverModal.tsx`: موقع واحد
+**التفاصيل:**
+- يستخدم `useRouter` + `usePathname` من `@/i18n/navigation` (next-intl)
+- `router.push(pathname, { locale: isAr ? 'en' : 'ar' })` — تبديل بدون reload
+- يظهر "English" في الواجهة العربية و"عربي" في الإنجليزية
+- `min-h-[44px]` touch target، تصميم مطابق لأزرار الـ sidebar
 
 ---
 
-### Migration 033 مُطبَّقة على الإنتاج ✅ — Commit `f8ff21c`
-- `delivery/page.tsx`: إضافة `order_type` للـ SELECT
-- `.neq('order_type', 'pickup')`: إخفاء طلبات الاستلام من لوحة التوصيل
-- mapping: `order_type` مُضافة لـ `DeliveryOrder`
-- `phase-state.json`: `migration_status = ALL 33 APPLIED`
+### 2. Middleware Locale Verification ✅
+
+قراءة فقط — `src/middleware.ts` صحيح بالفعل:
+- `loginUrl()` → `/en/login` أو `/login`
+- `dashboardUrl()` → `/en/dashboard` أو `/dashboard`
+- `driverUrl` → `/en/driver` أو `/driver`
+- لا تغييرات مطلوبة
+
+---
+
+### 3. Driver Screen Full UX Upgrade ✅
+
+#### الملفات المضافة/المعدّلة:
+
+| الملف | التغيير |
+|-------|---------|
+| `src/components/driver/DriverOrderCard.tsx` | إعادة كتابة كاملة |
+| `src/components/driver/IssueReportModal.tsx` | مكوّن جديد |
+| `src/app/[locale]/driver/actions.ts` | إضافة `submitDriverIssue` |
+| `supabase/migrations/034_driver_order_issues.sql` | migration جديدة |
+| `src/lib/supabase/types.ts` | إضافة `driver_order_issues` |
+| `src/lib/supabase/custom-types.ts` | إضافة `DriverOrderIssueInsert` |
+
+#### تفاصيل DriverOrderCard.tsx:
+- **Stepper 4 خطوات**: جاهز → استُلم → وصل → تم (مدفوع بـ `arrived_at` وليس status enum)
+- **"الخطوة التالية" card**: بطاقة ذهبية تعرض الخطوة القادمة فوق CTA
+- **تأكيد النقد**: dialog داخلية قبل التسليم النهائي للطلبات النقدية
+- **بطاقة الاستلام + التوصيل**: منفصلتان مع نقاط ملوّنة (ذهبي/أخضر)
+- **عرض النقد**: `text-2xl` مع "المبلغ المطلوب تحصيله"
+- **زر الإبلاغ عن مشكلة**: في أسفل البطاقة → يفتح IssueReportModal
+- **شارة الحالة**: تعرض "وصل للزبون" عند `arrived_at !== null`
+
+#### تفاصيل IssueReportModal.tsx:
+- Bottom sheet من أسفل الشاشة
+- 7 أسباب في grid عمودين
+- textarea للملاحظات (300 حرف)
+- حالة نجاح مع checkmark + إغلاق تلقائي بعد 1.4 ثانية
+
+#### تفاصيل submitDriverIssue (actions.ts):
+- سلسلة أمان: auth → role check → reason validation → order fetch → branch guard → ownership guard
+- `driver_id` دائماً من الـ server — لا يمكن تزويرها
+- `createServiceClient()` للإدراج
+
+#### migration 034:
+- جدول `driver_order_issues`: id, order_id, driver_id, reason, notes, created_at
+- RLS: السائق يُدرج فقط (بـ `driver_id = auth.uid()`)؛ القراءة: ذاتية للسائق + branch managers + owners/GMs
+- indexes على order_id و driver_id
+
+---
+
+## نتائج التحقق (Phase Gate)
+
+| الفحص | النتيجة |
+|-------|---------|
+| `npx tsc --noEmit` | ✅ نجح (بعد إضافة types) |
+| RTL violations | ✅ لا مخالفات |
+| Forbidden fonts | ✅ لا مخالفات (setInterval false-positive تم التأكيد) |
+| Forbidden colors | ✅ لا مخالفات |
+| Raw hex colors | ✅ لا مخالفات |
+| `npm run build` | ✅ نجح — 785 صفحة، 0 أخطاء |
 
 ---
 
@@ -50,28 +86,27 @@
 
 | العنصر | الحالة |
 |--------|--------|
-| Git | master @ `f8ff21c` — جاهز للدفع |
+| Git | master — uncommitted changes |
 | TypeScript | 0 أخطاء ✅ |
-| Build | نجح ✅ |
-| Migration 029–033 | مُطبَّقة على الإنتاج ✅ |
-| Checkout | يعمل ✅ |
-| Delivery Kanban | يُخفي طلبات الاستلام ✅ |
-| Driver payments | مُصلَّح (single object) ✅ |
+| Build | نجح — 785 صفحة ✅ |
+| Migration 034 | **مكتوبة — لم تُطبَّق على الإنتاج بعد** |
+| Driver UX | مُحدَّثة — 4-step stepper + issue reporting |
+| Language Toggle | مُضاف للـ sidebar ✅ |
 
 ---
 
 ## الخطوات المطلوبة من أحمد
 
-1. **اختبار Checkout**: تأكيد نجاح طلب جديد من الموقع
-2. **اختبار الكانبان**: تأكيد ظهور شارة "استلام" للطلبات pickup
-3. **اختبار السائق**: تحقق من ظهور شارة الدفع وزر "تسليم النقد" بعد تسليم طلب نقدي
-4. **`./update-context.sh "session 32: 6 critical bugs fixed + migration 033 applied, delivery kanban filters pickup orders"`**
+1. **تطبيق Migration 034**: افتح Supabase SQL Editor وشغّل محتوى `supabase/migrations/034_driver_order_issues.sql`
+2. **Commit وDeploy**: `git add -A && git commit -m "feat: driver ux upgrade + language toggle + migration 034"`
+3. **اختبار السائق**: تأكيد عمل الـ stepper + زر الإبلاغ عن مشكلة على الجهاز المحمول
+4. **`./update-context.sh "session 33: driver ux upgrade (4-step stepper, issue reporting), language toggle, migration 034 pending"`**
 
 ---
 
 ## قرارات مهمة
 
-- `payments` join في Supabase **أحادي العلاقة** → always single object, never array
-- `DispatchModal` يجب أن يُرفض إذا الطلب ليس `ready` — منع تخطي مراحل KDS
-- `OrdersClient` يحتاج polling احتياطي (5 ثوانٍ) — Realtime ليس موثوقاً 100% وحده
-- `markDriverArrived` الآن يتحقق مسبقاً (SELECT guard) قبل التحديث
+- **"وصل للزبون"** مدفوع بـ `arrived_at timestamp` وليس بقيمة في enum الحالة — لا تغيير لـ DB schema
+- **IssueReportModal** تستورد `submitDriverIssue` مباشرة — لا تغيير لواجهة `DriverDashboard` أو الصفحة الأم
+- **Cash confirmation** تظهر فقط عند: `isOnRoad && hasArrived && isCash` — ثلاثة شروط معاً
+- **driver_order_issues** أُضيف يدوياً لـ `types.ts` بدلاً من regenerate — migration 034 لم تُطبَّق على Supabase prod بعد

@@ -1,6 +1,6 @@
 {
   "project": "kahramana-baghdad",
-  "last_updated": "2026-05-01 (session 29 — payments dashboard, RBAC ui, audit fixes, hero poster)",
+  "last_updated": "2026-05-01 (session 34 — driver flow security hardening: cash handover server-recompute, dispatch server action, audit logging)",
   "current_phase": 7,
   "next_phase": 8,
   "overall_status": "production_seo_activated",
@@ -14,18 +14,22 @@
     "build_pages": 781,
     "git_tag": "v1.5-enterprise-coupons",
     "pending_db_migrations": [],
-    "migration_status": "ALL 33 APPLIED — including 033_order_type_and_driver_earnings_fix on 2026-05-01",
+    "migration_status": "ALL APPLIED — through 034_driver_order_issues.sql",
     "applied_db_migrations": [
       "019_report_audit_log.sql — applied 2026-04-29",
       "020_restaurant_profile.sql — applied 2026-04-29",
       "022_staff_complete.sql — applied 2026-04-29",
       "023_settings_schema.sql — applied 2026-04-29",
       "025_delivery_notes_columns.sql — applied 2026-04-29",
-      "028_security_lockdown.sql — applied 2026-04-30 (9 new RLS policies, 7 permissive removed)"
+      "028_security_lockdown.sql — applied 2026-04-30 (9 new RLS policies, 7 permissive removed)",
+      "033_order_type_and_driver_earnings_fix.sql — applied 2026-05-01 (re-applied, no-op)",
+      "034_driver_order_issues.sql — applied 2026-05-01 (driver issue reporting table + RLS)"
     ],
     "settings_page": "deployed",
     "git_remote": "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-    "last_git_commit": "bb167f8 — feat(payments): add payments dashboard page with stats, filters, table",
+    "last_git_commit": "f8ff21c — feat: activate delivery kanban order_type filtering (migration 033 confirmed)",
+    "session_33_pending_commit": "driver ux upgrade (4-step stepper, issue reporting), language toggle, migration 034",
+    "session_34_pending_commit": "driver flow security hardening: cash handover server-recompute, dispatch server action with audit, migration 034 applied",
     "vercel_push_pending": false,
     "supabase_key_rotation_required": false,
     "driver_page_fix": "verified on production",
