@@ -463,6 +463,7 @@
     "items": "الأصناف",
     "total": "الإجمالي",
     "notes": "ملاحظات",
+    "deliveryAddress": "عنوان التوصيل",
     "createdAt": "وقت الطلب",
     "status": "الحالة",
     "actions": "الإجراءات",

@@ -25,13 +25,19 @@ const itemSchema = z.object({
 })
 
 const orderSchema = z.object({
-  customer_name:    z.string().max(120).nullable(),
-  customer_phone:   z.string().max(20).nullable(),
-  branch_id:        z.string().min(1).max(50),
-  status:           z.literal('new'),
-  notes:            z.string().max(500).nullable(),
-  source:           z.string().max(50),
-  whatsapp_sent_at: z.null(),
+  customer_name:       z.string().max(120).nullable(),
+  customer_phone:      z.string().max(20).nullable(),
+  branch_id:           z.string().min(1).max(50),
+  status:              z.literal('new'),
+  notes:               z.string().max(500).nullable(),
+  customer_notes:      z.string().max(500).nullable(),
+  delivery_address:    z.string().max(1000).nullable(),
+  delivery_building:   z.string().max(120).nullable(),
+  delivery_street:     z.string().max(120).nullable(),
+  delivery_lat:        z.number().nullable(),
+  delivery_lng:        z.number().nullable(),
+  source:              z.string().max(50),
+  whatsapp_sent_at:    z.null(),
 })
 
 const checkoutSchema = z.object({
@@ -44,13 +50,19 @@ const checkoutSchema = z.object({
 type TypedSupabase = Awaited<ReturnType<typeof createServiceClient>>
 
 interface OrderBase {
-  customer_name:    string | null
-  customer_phone:   string | null
-  branch_id:        string
-  status:           'new'
-  notes:            string | null
-  source:           string
-  whatsapp_sent_at: null
+  customer_name:       string | null
+  customer_phone:      string | null
+  branch_id:           string
+  status:              'new'
+  notes:               string | null
+  customer_notes:      string | null
+  delivery_address:    string | null
+  delivery_building:   string | null
+  delivery_street:     string | null
+  delivery_lat:        number | null
+  delivery_lng:        number | null
+  source:              string
+  whatsapp_sent_at:    null
 }
 
 interface ItemBase {

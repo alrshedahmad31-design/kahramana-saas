@@ -21,6 +21,11 @@ export interface OrderCardData {
   status:          OrderStatus
   total_bhd:       number
   created_at:      string
+  notes?:          string | null
+  customer_notes?: string | null
+  delivery_address?:  string | null
+  delivery_building?: string | null
+  delivery_street?:   string | null
   order_items:     OrderCardItem[]
 }
 
@@ -39,6 +44,8 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
   const shortId     = order.id.slice(-8).toUpperCase()
   const previewItems = order.order_items.slice(0, 2)
   const extraCount  = order.order_items.length - 2
+  const address     = formatOrderAddress(order)
+  const customerNote = order.customer_notes ?? order.notes ?? null
 
   const formattedDate = new Date(order.created_at).toLocaleString('en-BH', {
     month: 'short', day: 'numeric',
@@ -90,6 +97,22 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
             </span>
           </div>
         </div>
+        {address && (
+          <div className="flex items-start gap-1.5">
+            <AddressIcon />
+            <span className={`text-xs text-brand-muted leading-relaxed line-clamp-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+              {address}
+            </span>
+          </div>
+        )}
+        {customerNote && (
+          <div className="flex items-start gap-1.5 rounded-lg border border-brand-gold/20 bg-brand-gold/5 px-2 py-1.5">
+            <NoteIcon />
+            <span className={`text-xs text-brand-text leading-relaxed line-clamp-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+              {customerNote}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Items preview */}
@@ -161,6 +184,12 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
+function formatOrderAddress(order: OrderCardData): string | null {
+  if (order.delivery_address) return order.delivery_address
+  const parts = [order.delivery_building, order.delivery_street].filter(Boolean)
+  return parts.length > 0 ? parts.join(', ') : null
+}
+
 function UserIcon() {
   return (
     <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0" aria-hidden="true">
@@ -197,6 +226,23 @@ function ClockIcon() {
   return (
     <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function AddressIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0 mt-0.5" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+    </svg>
+  )
+}
+
+function NoteIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-gold shrink-0 mt-0.5" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5m7-9.75v11.5A2.25 2.25 0 0117.75 18H7.5L3 21.75V4.25A2.25 2.25 0 015.25 2h12.5A2.25 2.25 0 0120 4.25z" />
     </svg>
   )
 }

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useLocale } from 'next-intl'
 import { formatDistanceToNow } from 'date-fns'
 import { ar as arLocale } from 'date-fns/locale'
-import { createClient } from '@/lib/supabase/client'
+import { updateOrderStatus } from '@/app/[locale]/dashboard/orders/actions'
 import { buildCustomerContactLink } from '@/lib/whatsapp'
 import { ALLOWED_TRANSITIONS } from '@/lib/auth/permissions'
 import { BRANCHES } from '@/constants/contact'
@@ -62,10 +62,10 @@ interface Props {
 export default function KanbanOrderCard({ order, userRole: _userRole, onStatusChange, onViewDetails }: Props) {
   const locale   = useLocale()
   const isAr     = locale === 'ar'
-  const supabase = useMemo(() => createClient(), [])
   const [pending, startTransition] = useTransition()
   const [timeAgo,  setTimeAgo]  = useState('')
   const [elapsed,  setElapsed]  = useState(0) // minutes since order placed
+  const [error,    setError]    = useState<string | null>(null)
 
   useEffect(() => {
     const update = () => {
@@ -88,13 +88,14 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
 
   const handleAdvance = () => {
     if (!nextStatus || !canAdvance) return
+    setError(null)
     startTransition(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: nextStatus })
-        .eq('id', order.id)
-      if (!error) onStatusChange(order.id, nextStatus)
+      const result = await updateOrderStatus(order.id, nextStatus)
+      if (result.success) {
+        onStatusChange(order.id, nextStatus)
+      } else {
+        setError(result.error)
+      }
     })
   }
 
@@ -106,6 +107,8 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
   const extraCount = order.order_items.length - 3
   const waLink     = order.customer_phone ? buildCustomerContactLink(order.customer_phone) : null
   const font       = isAr ? 'font-almarai' : 'font-satoshi'
+  const address    = formatOrderAddress(order)
+  const customerNote = order.customer_notes ?? order.notes ?? null
 
   return (
     <article
@@ -141,6 +144,16 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
         {branch && (
           <p className={`text-[10px] text-brand-muted/60 ${font}`}>
             {isAr ? branch.nameAr : branch.nameEn}
+          </p>
+        )}
+        {address && (
+          <p className={`text-[11px] text-brand-muted leading-relaxed line-clamp-2 ${font}`}>
+            {address}
+          </p>
+        )}
+        {customerNote && (
+          <p className={`rounded-md border border-brand-gold/20 bg-brand-gold/5 px-2 py-1 text-[11px] text-brand-text leading-relaxed line-clamp-2 ${font}`}>
+            {customerNote}
           </p>
         )}
       </div>
@@ -194,6 +207,9 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
               : (isAr ? ADVANCE_AR[order.status] : ADVANCE_EN[order.status])}
           </button>
         )}
+        {error && (
+          <p className={`text-xs text-brand-error ${font}`}>{error}</p>
+        )}
 
         {/* Secondary: View / Call / WhatsApp */}
         <div className={`grid gap-1.5 ${[waLink, order.customer_phone].filter(Boolean).length === 2 ? 'grid-cols-3' : 'grid-cols-2'}`}>
@@ -235,6 +251,12 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
+
+function formatOrderAddress(order: OrderCardData): string | null {
+  if (order.delivery_address) return order.delivery_address
+  const parts = [order.delivery_building, order.delivery_street].filter(Boolean)
+  return parts.length > 0 ? parts.join(', ') : null
+}
 
 function EyeIcon() {
   return (

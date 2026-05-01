@@ -19,6 +19,7 @@ export default async function KDSPage({ params }: Props) {
   if (!canAccessKDS(user)) redirect(`/${locale}/dashboard`)
 
   const supabase = await createServiceClient()
+  const isGlobalKitchenViewer = user.role === 'owner' || user.role === 'general_manager'
 
   let query = supabase
     .from('orders')
@@ -29,7 +30,7 @@ export default async function KDSPage({ params }: Props) {
     .in('status', ['accepted', 'preparing', 'ready'])
     .order('created_at', { ascending: true })
 
-  if (user.branch_id) {
+  if (!isGlobalKitchenViewer && user.branch_id) {
     query = query.eq('branch_id', user.branch_id)
   }
 
@@ -38,9 +39,10 @@ export default async function KDSPage({ params }: Props) {
   return (
     <div className="h-[calc(100dvh-4rem)] overflow-hidden">
       <KDSBoard
-        initialOrders={(data ?? []) as unknown as KDSOrder[]}
+        initialOrders={(data ?? []) as KDSOrder[]}
         locale={locale}
-        branchId={user.branch_id ?? null}
+        branchId={isGlobalKitchenViewer ? null : user.branch_id ?? null}
+        userRole={user.role}
       />
     </div>
   )

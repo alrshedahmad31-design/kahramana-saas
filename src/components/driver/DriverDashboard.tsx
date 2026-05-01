@@ -51,11 +51,9 @@ export default function DriverDashboard({
   const [clock,           setClock]           = useState(formatClock)
   const [showHandover,    setShowHandover]    = useState(false)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q = supabase
       .from('orders')
       .select(`
@@ -89,14 +87,13 @@ export default function DriverDashboard({
     )
 
     setOrders(data as DriverOrder[])
-  }, [supabase, branchId])
+  }, [supabase, branchId, mutedRef])
 
   const fetchCompleted = useCallback(async () => {
     if (!driverId) return
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await supabase
       .from('orders')
       .select(`

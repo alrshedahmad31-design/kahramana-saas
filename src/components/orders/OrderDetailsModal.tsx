@@ -62,6 +62,8 @@ export default function OrderDetailsModal({ orderId, isRTL, userRole, onClose, o
   const shortId  = order?.id.slice(-8).toUpperCase() ?? '…'
   const itemsSubtotal = order?.order_items.reduce((s, i) => s + Number(i.item_total_bhd), 0) ?? 0
   const couponDiscount = Number(order?.coupon_discount_bhd ?? 0)
+  const address = order ? formatOrderAddress(order) : null
+  const customerNote = order?.customer_notes ?? order?.notes ?? null
 
   const formattedDate = order
     ? new Date(order.created_at).toLocaleString(isRTL ? 'ar-BH' : 'en-BH', {
@@ -140,11 +142,21 @@ export default function OrderDetailsModal({ orderId, isRTL, userRole, onClose, o
                   <InfoRow label={t('createdAt')} isRTL={isRTL}>
                     <span className="font-satoshi tabular-nums text-xs">{formattedDate}</span>
                   </InfoRow>
-                  {order.notes && (
+                  {address && (
                     <div className="col-span-2">
+                      <dt className="font-satoshi text-xs text-brand-muted uppercase tracking-wider mb-1">
+                        {t('deliveryAddress')}
+                      </dt>
+                      <dd className={`font-satoshi text-sm text-brand-text leading-relaxed ${isRTL ? 'font-almarai' : ''}`}>
+                        {address}
+                      </dd>
+                    </div>
+                  )}
+                  {customerNote && (
+                    <div className="col-span-2 rounded-lg border border-brand-gold/20 bg-brand-gold/5 px-3 py-2">
                       <dt className="font-satoshi text-xs text-brand-muted uppercase tracking-wider mb-1">{t('notes')}</dt>
                       <dd className={`font-satoshi text-sm text-brand-text leading-relaxed ${isRTL ? 'font-almarai' : ''}`}>
-                        {order.notes}
+                        {customerNote}
                       </dd>
                     </div>
                   )}
@@ -280,6 +292,12 @@ function InfoRow({ label, children, isRTL }: { label: string; children: React.Re
       <dd className="font-satoshi font-medium text-sm text-brand-text">{children}</dd>
     </div>
   )
+}
+
+function formatOrderAddress(order: OrderDetails): string | null {
+  if (order.delivery_address) return order.delivery_address
+  const parts = [order.delivery_building, order.delivery_street].filter(Boolean)
+  return parts.length > 0 ? parts.join(', ') : null
 }
 
 function ModalSkeleton() {

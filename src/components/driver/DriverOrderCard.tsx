@@ -7,6 +7,7 @@ import {
   resolveExpectedAt, fmtDistance, fmtETA, mapsNavUrl,
 }                                                             from '@/lib/utils/delivery'
 import { mapsDirectionsUrl }                                  from '@/lib/utils/distance'
+import { buildCustomerContactLink }                           from '@/lib/whatsapp'
 import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
 import type { BranchId }                                      from '@/constants/contact'
 
@@ -249,7 +250,7 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
                   </span>
                 </a>
                 <a
-                  href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}`}
+                  href={buildCustomerContactLink(order.customer_phone)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-green-500/10 border border-green-500/30 text-green-500 hover:bg-green-500/20 transition-colors duration-150 min-h-[40px]"

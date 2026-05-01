@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { advanceOrderStatus } from '@/app/[locale]/dashboard/kds/actions'
 import { playBell } from '@/lib/audio/bells'
 import KDSColumn from './KDSColumn'
-import type { KDSOrder } from '@/lib/supabase/custom-types'
+import type { KDSOrder, StaffRole } from '@/lib/supabase/custom-types'
 import { BRANCH_LIST } from '@/constants/contact'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'
@@ -16,6 +16,7 @@ interface Props {
   initialOrders: KDSOrder[]
   locale:        string
   branchId:      string | null
+  userRole:      StaffRole | null
 }
 
 function formatClock(): string {
@@ -36,9 +37,10 @@ const STATIONS: { id: StationFilter; labelEn: string; labelAr: string; icon: str
   { id: 'drinks',   labelEn: 'Drinks',   labelAr: 'المشروبات', icon: '🥤' },
 ]
 
-export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
+export default function KDSBoard({ initialOrders, locale, branchId, userRole }: Props) {
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const canSwitchBranches = userRole === 'owner' || userRole === 'general_manager'
 
   const [orders,         setOrders]         = useState<KDSOrder[]>(initialOrders)
   const [muted,          setMuted]          = useState(false)
@@ -53,11 +55,9 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
   const mutedRef      = useRef(muted)
   useEffect(() => { mutedRef.current = muted }, [muted])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q = supabase
       .from('orders')
       .select(`
@@ -106,8 +106,13 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
   useEffect(() => {
     const channel = supabase
       .channel('kds-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
-      .subscribe()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
+        console.info('KDS realtime event:', payload)
+        await fetchOrders()
+      })
+      .subscribe((status) => {
+        console.info('KDS realtime subscription:', status)
+      })
     return () => { void supabase.removeChannel(channel) }
   }, [supabase, fetchOrders])
 
@@ -130,7 +135,7 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
     if (!muted && currentStatus === 'preparing') playBell('ready')
   }
 
-  // Branch filter (client-side) — only active when GM/Owner has no assigned branch
+  // Branch filter (client-side) — global roles can switch branches.
   const filteredOrders = viewBranch
     ? orders.filter((o) => o.branch_id === viewBranch)
     : orders
@@ -161,7 +166,7 @@ export default function KDSBoard({ initialOrders, locale, branchId }: Props) {
 
         {/* Center: branch filter (GM/Owner only) + station filter */}
         <div className="flex items-center gap-2 overflow-x-auto">
-          {!branchId && (
+          {canSwitchBranches && (
             <select
               value={viewBranch ?? ''}
               onChange={(e) => setViewBranch(e.target.value || null)}

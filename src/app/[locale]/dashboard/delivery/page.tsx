@@ -22,13 +22,16 @@ export default async function DeliveryPage({ params }: Props) {
 
   const supabase = await createClient()
   const today    = new Date().toISOString().split('T')[0]
+  const branchScope = user.role === 'owner' || user.role === 'general_manager'
+    ? null
+    : user.branch_id ?? null
 
   // Active delivery orders
-  const { data: ordersRaw } = await supabase
+  let activeOrdersQuery = supabase
     .from('orders')
     .select(`
       id, status, customer_name, customer_phone,
-      branch_id, notes, source, total_bhd, created_at, updated_at,
+      branch_id, notes, customer_notes, source, total_bhd, created_at, updated_at,
       assigned_driver_id, delivery_address, expected_delivery_time,
       delivery_lat, delivery_lng,
       order_items(id)
@@ -36,19 +39,28 @@ export default async function DeliveryPage({ params }: Props) {
     .in('status', ['accepted', 'preparing', 'ready', 'out_for_delivery'])
     .order('created_at', { ascending: true })
 
+  if (branchScope) activeOrdersQuery = activeOrdersQuery.eq('branch_id', branchScope)
+  const { data: ordersRaw } = await activeOrdersQuery
+
   // Completed today (for metrics + per-driver count + on-time rate)
-  const { data: completedRaw } = await supabase
+  let completedQuery = supabase
     .from('orders')
     .select('id, total_bhd, created_at, updated_at, assigned_driver_id, expected_delivery_time')
     .in('status', ['delivered', 'completed'])
     .gte('created_at', today)
 
+  if (branchScope) completedQuery = completedQuery.eq('branch_id', branchScope)
+  const { data: completedRaw } = await completedQuery
+
   // Drivers (staff with role='driver', active)
-  const { data: driversRaw } = await supabase
+  let driversQuery = supabase
     .from('staff_basic')
     .select('id, name, phone, branch_id, availability_status')
     .eq('role', 'driver')
     .eq('is_active', true)
+
+  if (branchScope) driversQuery = driversQuery.eq('branch_id', branchScope)
+  const { data: driversRaw } = await driversQuery
 
   // Latest driver locations
   const { data: locationsRaw } = await supabase
@@ -118,7 +130,7 @@ export default async function DeliveryPage({ params }: Props) {
       driver_phone:            driver?.phone ?? null,
       items_count:             Array.isArray(o.order_items) ? o.order_items.length : 0,
       total_bhd:               o.total_bhd,
-      notes:                   o.notes,
+      notes:                   o.customer_notes ?? o.notes,
       source:                  o.source,
       created_at:              o.created_at,
       updated_at:              o.updated_at,
@@ -166,7 +178,7 @@ export default async function DeliveryPage({ params }: Props) {
           on_time_rate:       onTimeRate,
         }}
         locale={locale}
-        branchId={user.branch_id}
+        branchId={branchScope}
       />
     </div>
   )

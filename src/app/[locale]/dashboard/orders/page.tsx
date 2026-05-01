@@ -18,7 +18,7 @@ export default async function OrdersPage() {
     supabase
       .from('orders')
       .select(
-        'id, customer_name, customer_phone, branch_id, status, total_bhd, created_at, updated_at, order_items(name_ar, name_en, quantity, selected_size, selected_variant)',
+        'id, customer_name, customer_phone, branch_id, status, total_bhd, created_at, updated_at, notes, customer_notes, delivery_address, delivery_building, delivery_street, order_items(name_ar, name_en, quantity, selected_size, selected_variant)',
         { count: 'exact' },
       )
       .gte('created_at', todayIso)
@@ -31,7 +31,7 @@ export default async function OrdersPage() {
   ])
 
   const initialOrders: OrderCardData[] =
-    (ordersResult.data ?? []) as unknown as OrderCardData[]
+    (ordersResult.data ?? []) as OrderCardData[]
 
   const initialTotalCount = ordersResult.count ?? 0
 

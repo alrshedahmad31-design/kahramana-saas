@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
-import { createClient } from '@/lib/supabase/client'
+import { updateOrderStatus } from '@/app/[locale]/dashboard/orders/actions'
 import { ALLOWED_TRANSITIONS, CAN_CANCEL } from '@/lib/auth/permissions'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 
@@ -37,14 +37,10 @@ export default function OrderStatusSelect({
   async function handleChange(next: OrderStatus) {
     setError(null)
     startTrans(async () => {
-      const supabase = createClient()
-      const { error: dbError } = await supabase
-        .from('orders')
-        .update({ status: next })
-        .eq('id', orderId)
+      const result = await updateOrderStatus(orderId, next)
 
-      if (dbError) {
-        setError(dbError.message)
+      if (!result.success) {
+        setError(result.error)
         return
       }
 

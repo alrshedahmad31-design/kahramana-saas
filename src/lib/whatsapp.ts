@@ -44,6 +44,7 @@ export interface CheckoutMessageOptions {
   address?:       string  // formatted delivery address or Maps link
   notes?:         string
   orderNumber?:   string  // short ID shown to customer, e.g. last 8 chars of UUID
+  trackingUrl?:   string
 }
 
 export function formatCheckoutMessage(
@@ -82,6 +83,9 @@ export function formatCheckoutMessage(
   if (options.notes) {
     lines.push('', `ملاحظات: ${options.notes}`)
   }
+  if (options.trackingUrl) {
+    lines.push('', 'تتبع طلبك:', options.trackingUrl)
+  }
 
   return lines.join('\n')
 }
@@ -111,4 +115,11 @@ export function buildWhatsAppCheckoutLink(
 
 export function buildCustomerContactLink(customerPhone: string, message?: string): string {
   return buildWaLinkForPhone(customerPhone, message)
+}
+
+export function buildOrderTrackingUrl(orderId: string, locale: string): string {
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/+$/, '')
+  const localePrefix = locale === 'en' ? '/en' : ''
+  const path = `${localePrefix}/order/${orderId}`
+  return siteUrl ? `${siteUrl}${path}` : path
 }

@@ -137,7 +137,7 @@ export default function OrdersClient({
     let q = supabase
       .from('orders')
       .select(
-        'id, customer_name, customer_phone, branch_id, status, total_bhd, created_at, updated_at, order_items(name_ar, name_en, quantity, selected_size, selected_variant)',
+        'id, customer_name, customer_phone, branch_id, status, total_bhd, created_at, updated_at, notes, customer_notes, delivery_address, delivery_building, delivery_street, order_items(name_ar, name_en, quantity, selected_size, selected_variant)',
         { count: 'exact' },
       )
       .order('created_at', { ascending: false })
@@ -158,7 +158,7 @@ export default function OrdersClient({
 
     const [{ data, count }, { data: totals }] = await Promise.all([q, tq])
 
-    setOrders((data ?? []) as unknown as OrderCardData[])
+    setOrders((data ?? []) as OrderCardData[])
     setTotalCount(count ?? 0)
     setFilteredTotal(
       ((totals ?? []) as { total_bhd: number }[]).reduce((s, r) => s + Number(r.total_bhd), 0)
@@ -179,11 +179,14 @@ export default function OrdersClient({
   useEffect(() => {
     const channel = supabase
       .channel('orders-dashboard-v2')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
-        bellAlert('new')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
+        console.info('Order realtime event:', payload)
+        if (payload.eventType === 'INSERT') bellAlert('new')
+        await fetchOrders()
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.info('Orders realtime subscription:', status)
+      })
     return () => { supabase.removeChannel(channel) }
   // bellAlert is stable (useCallback with empty deps) — intentionally omitted
   // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -463,6 +463,7 @@
     "items": "Items",
     "total": "Total",
     "notes": "Notes",
+    "deliveryAddress": "Delivery Address",
     "createdAt": "Ordered At",
     "status": "Status",
     "actions": "Actions",

@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { MapPin, Navigation, Loader2 } from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/lib/cart'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
-import { buildWhatsAppCheckoutLink } from '@/lib/whatsapp'
+import { buildOrderTrackingUrl, buildWhatsAppCheckoutLink } from '@/lib/whatsapp'
 import CinematicButton from '@/components/ui/CinematicButton'
 import TierBadge from '@/components/loyalty/TierBadge'
 import CouponInput from '@/components/checkout/CouponInput'
@@ -189,17 +189,24 @@ export default function CheckoutForm({ customerProfile }: Props) {
     }
 
     const values = parsed.data!
+    const deliveryAddress = buildAddressString() ?? null
     setLoading(true)
 
     const result = await createOrderWithPoints({
       order: {
-        customer_name:    values.customerName  ?? null,
-        customer_phone:   values.customerPhone ?? null,
-        branch_id:        values.branchId,
-        status:           'new',
-        notes:            values.notes ?? null,
-        source:           'direct',
-        whatsapp_sent_at: null,
+        customer_name:       values.customerName  ?? null,
+        customer_phone:      values.customerPhone ?? null,
+        branch_id:           values.branchId,
+        status:              'new',
+        notes:               values.notes ?? null,
+        customer_notes:      values.notes ?? null,
+        delivery_address:    deliveryAddress,
+        delivery_building:   addressMode === 'manual' ? manualAddr.building.trim() || null : null,
+        delivery_street:     addressMode === 'manual' ? manualAddr.road.trim() || null : null,
+        delivery_lat:        addressMode === 'location' ? gpsCoords?.lat ?? null : null,
+        delivery_lng:        addressMode === 'location' ? gpsCoords?.lng ?? null : null,
+        source:              'direct',
+        whatsapp_sent_at:    null,
       },
       items: items.map((item) => ({
         menu_item_slug:   item.itemId,
@@ -219,7 +226,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       throw new Error(result.error ?? 'Order creation failed')
     }
 
-    return { orderId: result.orderId, values }
+    return { orderId: result.orderId, values, deliveryAddress }
   }
 
   // ── Submit via WhatsApp ────────────────────────────────────────────────────
@@ -238,9 +245,10 @@ export default function CheckoutForm({ customerProfile }: Props) {
       const waLink = buildWhatsAppCheckoutLink(items, values.branchId, {
         customerName:  values.customerName,
         customerPhone: values.customerPhone,
-        address:       buildAddressString(),
+        address:       res.deliveryAddress ?? undefined,
         notes:         values.notes,
         orderNumber:   shortOrderId,
+        trackingUrl:   buildOrderTrackingUrl(orderId, locale),
       })
 
       window.open(waLink, '_blank', 'noopener,noreferrer')
