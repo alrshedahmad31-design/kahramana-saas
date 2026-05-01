@@ -20,25 +20,26 @@ export type DeliveryStatus =
 export type DriverStatus = 'available' | 'delivering' | 'busy' | 'returning' | 'offline'
 
 export type DeliveryOrder = {
-  id:               string
-  order_number:     string | undefined
-  status:           DeliveryStatus
-  customer_name:    string | null
-  customer_phone:   string | null
-  customer_address: string | null
-  customer_location:{ lat: number; lng: number } | null
-  branch_id:        string
-  driver_id:        string | null
-  driver_name?:     string | null
-  driver_phone?:    string | null
-  items_count:      number
-  total_bhd:        number
-  notes:            string | null
-  source:           string
-  created_at:       string
-  updated_at:       string
-  eta_minutes?:     number | null
-  items?:           OrderItem[]
+  id:                      string
+  order_number:            string | undefined
+  status:                  DeliveryStatus
+  customer_name:           string | null
+  customer_phone:          string | null
+  customer_address:        string | null
+  customer_location:       { lat: number; lng: number } | null
+  branch_id:               string
+  driver_id:               string | null
+  driver_name?:            string | null
+  driver_phone?:           string | null
+  items_count:             number
+  total_bhd:               number
+  notes:                   string | null
+  source:                  string
+  created_at:              string
+  updated_at:              string
+  expected_delivery_time?: string | null
+  eta_minutes?:            number | null
+  items?:                  OrderItem[]
 }
 
 export type Driver = {
@@ -61,6 +62,9 @@ export type DeliveryMetrics = {
   late_count:         number
   revenue_delta:      number
   orders_delta:       number
+  drivers_available:  number
+  drivers_total:      number
+  on_time_rate:       number   // 0–100 integer
 }
 
 export type ViewMode = 'map' | 'list' | 'kanban'

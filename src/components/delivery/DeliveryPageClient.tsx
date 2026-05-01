@@ -6,6 +6,7 @@ import { CSS_VARS }        from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver, DeliveryMetrics, ViewMode } from '@/lib/delivery/types'
 import DeliveryHeader      from './DeliveryHeader'
 import MetricsStrip        from './MetricsStrip'
+import DeliveryKanban      from './DeliveryKanban'
 import MapView             from './MapView'
 import OrderListPanel      from './OrderListPanel'
 import DriverFleetPanel    from './DriverFleetPanel'
@@ -31,7 +32,7 @@ export default function DeliveryPageClient({
   const [orders,       setOrders]       = useState<DeliveryOrder[]>(initialOrders)
   const [drivers,      setDrivers]      = useState<Driver[]>(initialDrivers)
   const [metrics,      setMetrics]      = useState<DeliveryMetrics>(initialMetrics)
-  const [view,         setView]         = useState<ViewMode>('map')
+  const [view,         setView]         = useState<ViewMode>('kanban')
   const [selectedId,   setSelectedId]   = useState<string | null>(null)
   const [showDrawer,   setShowDrawer]   = useState(false)
   const [showDispatch, setShowDispatch] = useState(false)
@@ -46,38 +47,42 @@ export default function DeliveryPageClient({
 
   // ── Realtime: orders ────────────────────────────────────────────────────────
   const refreshOrders = useCallback(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await supabase
       .from('orders')
       .select(`
         id, status, customer_name, customer_phone,
         branch_id, notes, source, total_bhd, created_at, updated_at,
-        assigned_driver_id, order_items(id)
+        assigned_driver_id, delivery_address, expected_delivery_time,
+        delivery_lat, delivery_lng, order_items(id)
       `)
       .in('status', ACTIVE_STATUSES as never[])
       .order('created_at', { ascending: true })
 
     if (!data) return
     const nowMs = Date.now()
-    setOrders(data.map((o) => ({
-      id:               o.id,
-      order_number:     undefined,
-      status:           o.status as DeliveryOrder['status'],
-      customer_name:    o.customer_name,
-      customer_phone:   o.customer_phone,
-      customer_address: null,
-      customer_location:null,
-      branch_id:        o.branch_id,
-      driver_id:        o.assigned_driver_id,
-      driver_name:      null,
-      driver_phone:     null,
-      items_count:      Array.isArray(o.order_items) ? o.order_items.length : 0,
-      total_bhd:        o.total_bhd,
-      notes:            o.notes,
-      source:           o.source,
-      created_at:       o.created_at,
-      updated_at:       o.updated_at,
-      eta_minutes:      null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setOrders(data.map((o: any) => ({
+      id:                     o.id,
+      order_number:           undefined,
+      status:                 o.status as DeliveryOrder['status'],
+      customer_name:          o.customer_name,
+      customer_phone:         o.customer_phone,
+      customer_address:       o.delivery_address ?? null,
+      customer_location:      o.delivery_lat != null && o.delivery_lng != null
+                                ? { lat: o.delivery_lat, lng: o.delivery_lng }
+                                : null,
+      branch_id:              o.branch_id,
+      driver_id:              o.assigned_driver_id,
+      driver_name:            null,
+      driver_phone:           null,
+      items_count:            Array.isArray(o.order_items) ? o.order_items.length : 0,
+      total_bhd:              o.total_bhd,
+      notes:                  o.notes,
+      source:                 o.source,
+      created_at:             o.created_at,
+      updated_at:             o.updated_at,
+      expected_delivery_time: o.expected_delivery_time ?? null,
+      eta_minutes:            null,
     })))
 
     // Toast on new order
@@ -98,7 +103,13 @@ export default function DeliveryPageClient({
     const lateCount  = data.filter((o) =>
       (nowMs - new Date(o.created_at).getTime()) / 60_000 > 45
     ).length
-    setMetrics(prev => ({ ...prev, orders_total: data.length, in_transit: inTransit, late_count: lateCount }))
+    setMetrics(prev => ({
+      ...prev,
+      orders_total: data.length,
+      in_transit:   inTransit,
+      late_count:   lateCount,
+      // drivers_available / drivers_total / on_time_rate stay from server render
+    }))
   }, [supabase])
 
   useEffect(() => {
@@ -205,7 +216,13 @@ export default function DeliveryPageClient({
         )}
 
         {view === 'kanban' && (
-          <KanbanView orders={orders} onSelect={openOrder} isAr={isAr} />
+          <DeliveryKanban
+            orders={orders}
+            drivers={drivers}
+            isAr={isAr}
+            onSelect={openOrder}
+            onDispatch={openDispatch}
+          />
         )}
       </div>
 
@@ -241,83 +258,3 @@ export default function DeliveryPageClient({
   )
 }
 
-// ── Inline Kanban (5 columns) ─────────────────────────────────────────────────
-
-import { DV, STATUS_BORDER } from '@/lib/delivery/tokens'
-
-const KANBAN_COLS: { status: string; label: string }[] = [
-  { status: 'accepted',         label: 'جديد'          },
-  { status: 'preparing',        label: 'قيد التحضير'   },
-  { status: 'ready',            label: 'جاهز'          },
-  { status: 'out_for_delivery', label: 'يُوصَّل'        },
-  { status: 'delivered',        label: 'مكتمل'         },
-]
-
-function KanbanView({ orders, onSelect, isAr }: {
-  orders: DeliveryOrder[]; onSelect: (id: string) => void; isAr: boolean
-}) {
-  return (
-    <div style={{
-      flex: 1, display: 'flex', gap: '1px',
-      background: DV.border, overflow: 'auto', padding: '1rem 1.5rem',
-    }}>
-      {KANBAN_COLS.map(col => {
-        const colOrders = orders.filter(o => o.status === col.status)
-        return (
-          <div key={col.status} style={{
-            flex: '0 0 220px', background: DV.bgSurface,
-            borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: 0,
-          }}>
-            <div style={{
-              padding: '10px 12px', borderBottom: `1px solid ${DV.border}`,
-              borderTop: `3px solid ${STATUS_BORDER[col.status] ?? DV.amber}`,
-              borderRadius: '8px 8px 0 0',
-            }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: DV.text }}>
-                {col.label}
-              </span>
-              <span style={{
-                marginInlineStart: '8px', fontSize: '11px', fontWeight: 600,
-                color: DV.muted,
-              }}>
-                ({colOrders.length})
-              </span>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {colOrders.map(o => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => onSelect(o.id)}
-                  style={{
-                    background: DV.bgCard, border: `1px solid ${DV.border}`,
-                    borderRight: `3px solid ${STATUS_BORDER[o.status] ?? DV.amber}`,
-                    borderRadius: '8px', padding: '10px', textAlign: isAr ? 'right' : 'left',
-                    cursor: 'pointer', transition: 'border-color 0.2s', width: '100%',
-                  }}
-                >
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: DV.amber }}>
-                    #{o.order_number}
-                  </div>
-                  <div style={{ fontSize: '12px', color: DV.muted, marginTop: '2px' }}>
-                    {o.customer_name ?? '—'}
-                  </div>
-                  {o.driver_name && (
-                    <div style={{ fontSize: '11px', color: DV.text, marginTop: '4px', opacity: 0.7 }}>
-                      {o.driver_name}
-                    </div>
-                  )}
-                </button>
-              ))}
-              {colOrders.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '24px 0', color: DV.muted, fontSize: '12px' }}>
-                  لا يوجد
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}

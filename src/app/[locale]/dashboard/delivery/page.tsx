@@ -29,16 +29,17 @@ export default async function DeliveryPage({ params }: Props) {
     .select(`
       id, status, customer_name, customer_phone,
       branch_id, notes, source, total_bhd, created_at, updated_at,
-      assigned_driver_id,
+      assigned_driver_id, delivery_address, expected_delivery_time,
+      delivery_lat, delivery_lng,
       order_items(id)
     `)
     .in('status', ['accepted', 'preparing', 'ready', 'out_for_delivery'])
     .order('created_at', { ascending: true })
 
-  // Completed today (for metrics + per-driver count)
+  // Completed today (for metrics + per-driver count + on-time rate)
   const { data: completedRaw } = await supabase
     .from('orders')
-    .select('id, total_bhd, created_at, assigned_driver_id')
+    .select('id, total_bhd, created_at, updated_at, assigned_driver_id, expected_delivery_time')
     .in('status', ['delivered', 'completed'])
     .gte('created_at', today)
 
@@ -96,29 +97,45 @@ export default async function DeliveryPage({ params }: Props) {
       status:           o.status as DeliveryOrder['status'],
       customer_name:    o.customer_name,
       customer_phone:   o.customer_phone,
-      customer_address: null,
-      customer_location:null,
-      branch_id:        o.branch_id,
-      driver_id:        o.assigned_driver_id,
-      driver_name:      driver?.name ?? null,
-      driver_phone:     driver?.phone ?? null,
-      items_count:      Array.isArray(o.order_items) ? o.order_items.length : 0,
-      total_bhd:        o.total_bhd,
-      notes:            o.notes,
-      source:           o.source,
-      created_at:       o.created_at,
-      updated_at:       o.updated_at,
+      customer_address:        o.delivery_address ?? null,
+      customer_location:       o.delivery_lat != null && o.delivery_lng != null
+                                 ? { lat: o.delivery_lat, lng: o.delivery_lng }
+                                 : null,
+      branch_id:               o.branch_id,
+      driver_id:               o.assigned_driver_id,
+      driver_name:             driver?.name ?? null,
+      driver_phone:            driver?.phone ?? null,
+      items_count:             Array.isArray(o.order_items) ? o.order_items.length : 0,
+      total_bhd:               o.total_bhd,
+      notes:                   o.notes,
+      source:                  o.source,
+      created_at:              o.created_at,
+      updated_at:              o.updated_at,
+      expected_delivery_time:  o.expected_delivery_time ?? null,
     }
   })
 
-  const completed = completedRaw ?? []
-  const revenueToday  = completed.reduce((s, o) => s + (Number(o.total_bhd) || 0), 0)
-  const inTransit     = orders.filter(o => o.status === 'out_for_delivery').length
-  const nowMs         = Date.now()
-  const lateCount     = orders.filter(o => {
+  const completed       = completedRaw ?? []
+  const revenueToday    = completed.reduce((s, o) => s + (Number(o.total_bhd) || 0), 0)
+  const inTransit       = orders.filter(o => o.status === 'out_for_delivery').length
+  const nowMs           = Date.now()
+  const lateCount       = orders.filter(o => {
     const ageMin = (nowMs - new Date(o.created_at).getTime()) / 60_000
     return ageMin > 45
   }).length
+  const driversAvailable = drivers.filter(d => d.status === 'available').length
+  const driversTotal     = drivers.length
+
+  // On-time rate: delivered within expected window (fallback: ≤45 min)
+  const onTimeCount = completed.filter(o => {
+    const exp = o.expected_delivery_time
+      ? new Date(o.expected_delivery_time).getTime()
+      : new Date(o.created_at).getTime() + 45 * 60_000
+    return new Date(o.updated_at).getTime() <= exp
+  }).length
+  const onTimeRate = completed.length > 0
+    ? Math.round(onTimeCount / completed.length * 100)
+    : 0
 
   return (
     <div>
@@ -126,13 +143,16 @@ export default async function DeliveryPage({ params }: Props) {
         initialOrders={orders}
         initialDrivers={drivers}
         initialMetrics={{
-          revenue_today:   revenueToday,
-          orders_total:    orders.length,
-          in_transit:      inTransit,
-          completed_today: completed.length,
-          late_count:      lateCount,
-          revenue_delta:   0,
-          orders_delta:    0,
+          revenue_today:      revenueToday,
+          orders_total:       orders.length,
+          in_transit:         inTransit,
+          completed_today:    completed.length,
+          late_count:         lateCount,
+          revenue_delta:      0,
+          orders_delta:       0,
+          drivers_available:  driversAvailable,
+          drivers_total:      driversTotal,
+          on_time_rate:       onTimeRate,
         }}
         locale={locale}
         branchId={user.branch_id}

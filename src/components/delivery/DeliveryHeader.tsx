@@ -12,10 +12,10 @@ interface Props {
   isAr:         boolean
 }
 
-const VIEW_BTNS: { id: ViewMode; icon: React.ReactNode; label: string }[] = [
-  { id: 'map',    icon: <Map size={15} />,        label: 'خريطة'  },
-  { id: 'list',   icon: <List size={15} />,       label: 'قائمة'  },
-  { id: 'kanban', icon: <LayoutGrid size={15} />, label: 'كانبان' },
+const VIEW_BTNS: { id: ViewMode; icon: React.ReactNode; labelAr: string; labelEn: string }[] = [
+  { id: 'kanban', icon: <LayoutGrid size={15} />, labelAr: 'كانبان', labelEn: 'Kanban' },
+  { id: 'map',    icon: <Map size={15} />,        labelAr: 'خريطة',  labelEn: 'Map'    },
+  { id: 'list',   icon: <List size={15} />,       labelAr: 'قائمة',  labelEn: 'List'   },
 ]
 
 const FILTER_OPTIONS = {
@@ -95,7 +95,7 @@ function FilterDropdown({ label: _label, options }: { label: string; options: st
   )
 }
 
-export default function DeliveryHeader({ view, onViewChange, onAssign, isAr: _isAr }: Props) {
+export default function DeliveryHeader({ view, onViewChange, onAssign, isAr }: Props) {
   return (
     <header style={{
       padding:        '12px 20px',
@@ -108,13 +108,13 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isAr: _is
     }}>
       {/* Title */}
       <h1 style={{
-        fontSize:   '20px',
-        fontWeight: 700,
-        color:      DV.text,
+        fontSize:        '18px',
+        fontWeight:      700,
+        color:           DV.text,
         marginInlineEnd: 'auto',
-        whiteSpace: 'nowrap',
+        whiteSpace:      'nowrap',
       }}>
-        التوصيل
+        {isAr ? 'لوحة التوصيل' : 'Delivery Board'}
       </h1>
 
       {/* View toggle */}
@@ -148,16 +148,16 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isAr: _is
             }}
           >
             {btn.icon}
-            {btn.label}
+            {isAr ? btn.labelAr : btn.labelEn}
           </button>
         ))}
       </div>
 
-      {/* Filters */}
-      <FilterDropdown label="اليوم"         options={FILTER_OPTIONS.period} />
-      <FilterDropdown label="كل الفروع"     options={FILTER_OPTIONS.branch} />
-      <FilterDropdown label="كل السائقين"   options={FILTER_OPTIONS.driver} />
-      <FilterDropdown label="كل الحالات"    options={FILTER_OPTIONS.status} />
+      {/* Filters (period/branch stay Arabic — these are local context labels) */}
+      <FilterDropdown label="اليوم"       options={FILTER_OPTIONS.period} />
+      <FilterDropdown label="كل الفروع"   options={FILTER_OPTIONS.branch} />
+      <FilterDropdown label="كل السائقين" options={FILTER_OPTIONS.driver} />
+      <FilterDropdown label="كل الحالات"  options={FILTER_OPTIONS.status} />
 
       {/* Assign button */}
       <button
@@ -183,7 +183,7 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isAr: _is
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = DV.amber }}
       >
         <UserPlus size={15} />
-        تعيين سائق
+        {isAr ? 'تعيين سائق' : 'Assign Driver'}
       </button>
     </header>
   )
