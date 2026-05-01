@@ -97,7 +97,9 @@
       "Bash(Get-ChildItem \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\supabase\\\\migrations\" -File)",
       "Bash(Select-Object Name)",
       "Bash(Sort-Object Name)",
-      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\" -Directory)"
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\" -Directory)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(npx supabase --version 2>&1)"
     ]
   }
 }

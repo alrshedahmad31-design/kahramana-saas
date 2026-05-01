@@ -1,6 +1,6 @@
 {
   "project": "kahramana-baghdad",
-  "last_updated": "2026-05-01 (session 34 — driver flow security hardening: cash handover server-recompute, dispatch server action, audit logging)",
+  "last_updated": "2026-05-01 (session 34 — inventory core migration 035 written, dry-run passed, pending production apply)",
   "current_phase": 7,
   "next_phase": 8,
   "overall_status": "production_seo_activated",
@@ -13,8 +13,8 @@
     "database": "supabase_production",
     "build_pages": 785,
     "git_tag": "v1.5-enterprise-coupons",
-    "pending_db_migrations": [],
-    "migration_status": "ALL APPLIED — through 034_driver_order_issues.sql",
+    "pending_db_migrations": ["035_inventory_core.sql — WRITTEN, dry-run passed, NOT YET applied to production"],
+    "migration_status": "034 APPLIED — 035_inventory_core.sql WRITTEN, pending production apply",
     "applied_db_migrations": [
       "019_report_audit_log.sql — applied 2026-04-29",
       "020_restaurant_profile.sql — applied 2026-04-29",
