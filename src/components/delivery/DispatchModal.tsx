@@ -25,6 +25,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
 
   async function handleAssign() {
     if (!selected || !order) return
+    if (order.order_type === 'pickup') return
     setLoading(true)
     const now = new Date().toISOString()
     await supabase

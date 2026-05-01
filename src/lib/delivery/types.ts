@@ -23,6 +23,7 @@ export type DeliveryOrder = {
   id:                      string
   order_number:            string | undefined
   status:                  DeliveryStatus
+  order_type?:             'delivery' | 'pickup' | null
   customer_name:           string | null
   customer_phone:          string | null
   customer_address:        string | null
