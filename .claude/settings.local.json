@@ -86,7 +86,11 @@
       "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\forgot-password\")",
       "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\set-password\")",
       "Bash(grep \"^\\\\s*[a-z_]*: {$\" src/lib/supabase/types.ts)",
-      "Bash(grep -nE \"^      [a-z_]+: \\\\{$\" src/lib/supabase/types.ts)"
+      "Bash(grep -nE \"^      [a-z_]+: \\\\{$\" src/lib/supabase/types.ts)",
+      "Bash(ls src/components/layout/BranchCard.tsx src/components/layout/NewsletterSignup.tsx src/components/layout/SocialLinks.tsx)",
+      "Bash(ls src/app/[locale]/actions/)",
+      "Bash(git reset *)",
+      "Bash(npm i *)"
     ]
   }
 }
