@@ -2,12 +2,7 @@
   {
     "category": {
       "ar": "مشاوي كهرمانة الفاخرة",
-      "en": "Kahramana Signature Grills",
-      "description": {
-        "ar": "١٤ صنفاً من اللحوم الطازجة التي تُشوى باحترافية على الفحم الحي، لتمنحك طعم المشاوي العراقية الأصيلة ونكهة الشواء الفريدة. نختار القطع بعناية ونوازن التتبيلة مع حرارة الفحم للحصول على عصارة مثالية، مع خيارات متعددة للأحجام تناسب الفرد والعائلة.",
-        "en": "14 charcoal-grilled selections prepared from fresh meats, delivering authentic Iraqi grill flavor and a distinctive smoky finish. We choose cuts carefully and balance seasoning with live charcoal heat for perfect juiciness, with multiple portion sizes designed for individuals, sharing, and families."
-      }
-    },
+      "en": "Kahramana Signature Grills"},
     "items": [
       {
         "id": "grills-kahramana-mix",
@@ -308,12 +303,7 @@
   {
     "category": {
       "ar": "روائع المطبخ العراقي",
-      "en": "Iraqi Culinary Masterpieces",
-      "description": {
-        "ar": "٢٥ طبقاً تمثل قلب المطبخ العراقي، على رأسها المسكوف المشوي على حطب المشمش، القوزي الملكي المطهو ببطء، والدولمة البغدادية. نركز على النكهات التراثية والتقديم الأصيل، مع خيارات متنوعة تناسب المشاركة والولائم العائلية.",
-        "en": "25 dishes representing the heart of Iraqi cuisine—led by wood-fired Masgouf, slow-cooked royal Quzi, and Baghdadi Dolma. Heritage flavors, authentic presentation, and a variety of hearty plates ideal for sharing and family feasts."
-      }
-    },
+      "en": "Iraqi Culinary Masterpieces"},
     "items": [
       {
         "id": "mains-masgouf",
@@ -887,12 +877,7 @@
   {
     "category": {
       "ar": "المرق البغدادي الأصيل",
-      "en": "Authentic Baghdadi Stews",
-      "description": {
-        "ar": "أصالة المرق العراقي؛ أطباق دافئة مطبوخة ببطء حتى الامتزاج الكامل للنكهات، تقدم مع أرز البسمتي العطري.",
-        "en": "The heart of Iraqi cuisine; slowly simmered stews with perfectly balanced flavors, served with aromatic basmati rice."
-      }
-    },
+      "en": "Authentic Baghdadi Stews"},
     "items": [
       {
         "id": "stews-bamih",
@@ -989,12 +974,7 @@
   {
     "category": {
       "ar": "المقبلات الباردة (مازات)",
-      "en": "Cold Appetizers (Mezza)",
-      "description": {
-        "ar": "تفتتح شهيتك بألوان الطبيعة؛ تشكيلة من المقبلات الباردة المحضرة يومياً بزيت الزيتون البكر والأعشاب الطازجة.",
-        "en": "A vibrant start to your meal; a selection of cold appetizers prepared daily with extra virgin olive oil and fresh herbs."
-      }
-    },
+      "en": "Cold Appetizers (Mezza)"},
     "items": [
       {
         "id": "cold-apps-mix-appetizer",
@@ -1125,12 +1105,7 @@
   {
     "category": {
       "ar": "المقبلات الحارة (مازات)",
-      "en": "Hot Appetizers (Mezza)",
-      "description": {
-        "ar": "دفء الضيافة في كل صنف؛ مقبلات ساخنة تمزج بين القرمشة والنكهات الغنية المستوحاة من الأصالة.",
-        "en": "The warmth of hospitality in every bite; hot appetizers blending crunch and rich, authentic flavors."
-      }
-    },
+      "en": "Hot Appetizers (Mezza)"},
     "items": [
       {
         "id": "hot-apps-dolma",
@@ -1270,12 +1245,7 @@
   {
     "category": {
       "ar": "ركن الفتات الفاخر",
-      "en": "Luxury Fatteh Corner",
-      "description": {
-        "ar": "سيمفونية القرمشة؛ طبقات من الخبز المحمص المغطى بصلصات اللبن والطحينة الغنية، مع ورق العنب أو الباذنجان المتبل.",
-        "en": "A symphony of crunch; layers of toasted bread topped with rich yogurt and tahini sauces, featuring stuffed vine leaves or seasoned eggplant."
-      }
-    },
+      "en": "Luxury Fatteh Corner"},
     "items": [
       {
         "id": "breakfast-fattat-vine-leaves",
@@ -1327,12 +1297,7 @@
   {
     "category": {
       "ar": "نضارة البساتين (سلطات)",
-      "en": "Garden Freshness (Salads)",
-      "description": {
-        "ar": "مقبلات خضراء منعشة متبلة بزيت الزيتون والليمون ودبس الرمان، الإضافة المثالية لموازنة الأطباق الدسمة.",
-        "en": "Crisp green appetizers seasoned with olive oil, lemon, and pomegranate molasses, the perfect balance to rich main courses."
-      }
-    },
+      "en": "Garden Freshness (Salads)"},
     "items": [
       {
         "id": "salad-tabbouleh",
@@ -1429,12 +1394,7 @@
   {
     "category": {
       "ar": "دفء المائدة (الشوربات)",
-      "en": "Table Warmth (Soups)",
-      "description": {
-        "ar": "شوربات تقليدية تُطهى ببطء لاستخلاص النكهات العميقة، من العدس الذهبي إلى كبة الحامض البغدادية الشهيرة.",
-        "en": "Traditional soups slow-simmered to extract deep flavors, from golden lentils to the famous Baghdadi Sour Kubba."
-      }
-    },
+      "en": "Table Warmth (Soups)"},
     "items": [
       {
         "id": "soup-sour-kubba",

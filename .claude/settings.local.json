@@ -99,7 +99,8 @@
       "Bash(Sort-Object Name)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\" -Directory)",
       "PowerShell(Get-Content *)",
-      "PowerShell(npx supabase --version 2>&1)"
+      "PowerShell(npx supabase --version 2>&1)",
+      "Bash(Remove-Item *)"
     ]
   }
 }

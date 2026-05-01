@@ -1,104 +1,83 @@
-# LAST-SESSION.md — Session 36
-> Date: 2026-05-01 | Status: `migrations_applied` | Branch: `master @ 38d3449`
+# LAST-SESSION.md — Session 37
+> Date: 2026-05-01 | Status: `inventory_excel_import_built` | Branch: `master`
 
 ---
 
 ## ما تم في هذه الجلسة
 
-تطبيق الـ migrations 035–040 على قاعدة البيانات الإنتاجية بعد إصلاح **3 أخطاء PostgreSQL** منعت تشغيل `supabase db push`.
+بناء **نظام استيراد/تصدير Excel للمخزون** (Inventory Excel Import System) كاملاً.
 
 ---
 
-## الأخطاء المُصلحة (قبل نجاح الـ push)
+## الملفات المُنشأة
 
-### خطأ 1 — `CREATE POLICY IF NOT EXISTS` غير صالح
-PostgreSQL لا يدعم `IF NOT EXISTS` مع `CREATE POLICY` (على عكس `CREATE TABLE`).
+### Library files
+- `src/lib/inventory/excel-template.ts` — مولّد نموذج Excel بـ 6 أوراق مع dropdowns وأمثلة وألوان
+- `src/lib/inventory/excel-parser.ts` — محلّل ملفات .xlsx مع التحقق من صحة البيانات وإرجاع errors/warnings
+- `src/lib/inventory/export.ts` — تصدير البيانات الحالية من DB إلى نفس نموذج 6 أوراق
 
-**الملفات:** `035_inventory_core.sql` (40 policy) و `036_multiple_cash_handovers.sql` (4 policies)
+### API Routes
+- `src/app/api/inventory/template/route.ts` — GET /api/inventory/template → تنزيل .xlsx
+- `src/app/api/inventory/export/route.ts` — GET /api/inventory/export → تصدير البيانات
 
-**الإصلاح:** تحويل كل `CREATE POLICY IF NOT EXISTS "name" ON table` إلى:
-```sql
-DROP POLICY IF EXISTS "name" ON table;
-CREATE POLICY "name" ON table ...;
+### Dashboard
+- `src/app/[locale]/dashboard/inventory/import/actions.ts` — Server Action مع mode=analyze|import
+- `src/app/[locale]/dashboard/inventory/import/page.tsx` — Server Component (auth: owner + general_manager فقط)
+- `src/components/inventory/ImportDropzone.tsx` — Client Component (drag-and-drop + تحليل + تأكيد)
+- `src/components/inventory/ImportPreview.tsx` — عرض نتائج التحليل مع errors/warnings
+
+### Updates
+- `src/lib/auth/rbac-ui.ts` — إضافة `inventory_import` section (owner + general_manager)
+- `src/components/dashboard/DashboardSidebar.tsx` — إضافة "استيراد البيانات" مع UploadIcon
+- `src/data/menu.json` — إصلاح trailing commas في JSON (خطأ قديم كسر الـ build)
+
+---
+
+## قرارات تقنية
+
+1. **ExcelJS.Buffer** — ExcelJS يُعرّف `interface Buffer extends ArrayBuffer {}` بدون أعضاء إضافية، لذا `as ArrayBuffer` كافٍ للتوافق مع `BodyInit`
+2. **dataValidations** — ExcelJS 4.4.0 لا يُظهر `ws.dataValidations` في الـ types، استُخدم `cell.dataValidation` بدلاً منه للـ rows 2–100
+3. **Parser parameter** — تغيير من `Buffer` إلى `ArrayBuffer` لتجنب تعارض types بين Node.js وExcelJS
+4. **buildIngredientRecord** — يُرجع `TablesInsert<'ingredients'>` مباشرةً لتوافق Supabase strict types
+5. **Import flow** — mode='analyze' للمعاينة، mode='import' للتنفيذ الفعلي (نفس server action، نفس الملف)
+
+---
+
+## تسلسل الاستيراد (عند mode='import')
+
+```
+a. Upsert suppliers (by name_ar) → build supplier name→id map
+b. Upsert ingredients (fetch existing → split insert/update) → build ingredient name→id map
+c. DELETE + INSERT ingredient_allergens
+d. Upsert prep_items (same pattern)
+e. DELETE + INSERT prep_item_ingredients (by prep_item_id)
+f. Upsert recipes (onConflict: menu_item_slug,ingredient_id,prep_item_id,variant_key)
+g. Upsert inventory_stock (onConflict: branch_id,ingredient_id)
+h. Insert inventory_lots (for rows with lot_number or expiry_date)
+i. Insert inventory_movements type='opening_balance'
+j. Upsert par_levels (onConflict: branch_id,ingredient_id,day_type)
+k. RPC: rpc_update_abc_classification()
 ```
 
-### خطأ 2 — SQLSTATE 55P04 (unsafe new enum value)
-`inventory_manager` أُضيف إلى `staff_role` ENUM في نفس transaction التي استخدمته في الـ policies.
-
-**الإصلاح:** تغيير `auth_user_role() IN ('owner','inventory_manager',...)` إلى `auth_user_role()::text IN (...)` في جميع policies — cast إلى text يتجنب قراءة enum literal الجديد في نفس الـ transaction.
-
-### خطأ 3 — `$$` متداخلة داخل `DO $$` (SQLSTATE 42601)
-3 استدعاءات `cron.schedule()` استخدمت `$$` كمحدد للـ SQL string الداخلية، بينما الـ `DO` block الخارجية تستخدم `$$` أيضاً.
-
-**الإصلاح:** تغيير المحددات الداخلية إلى `$sql$...$sql$`.
-
 ---
 
-## بعد نجاح Push
+## نتائج Phase Gates
 
-### إعادة توليد الـ Types
-```bash
-npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts
 ```
-- 19/19 جدول جديد موجود في الـ types ✓
-- الأعمدة الجديدة: `tip_bhd`, `cash_settled_at`, `cash_settlement_id`, `actual_received`, `discrepancy` ✓
-- `inventory_manager` في ENUM ✓
-
-### إصلاح TypeScript (6 أخطاء)
-`inventory_manager` لم يكن موجوداً في الـ `Record<StaffRole, ...>` الكاملة في 4 ملفات:
-- `src/lib/auth/rbac.ts` — أُضيف إلى `ROLE_RANK` (rank: 4) و `ASSIGNABLE_BY`
-- `src/app/clock/page.tsx` — أُضيف إلى `ROLE_LABEL`
-- `src/components/staff/StaffCardGrid.tsx` — أُضيف إلى `ROLE_BADGE`
-- `src/components/staff/StaffOverview.tsx` — أُضيف إلى `ROLE_LABEL_EN` و `ROLE_LABEL_AR` (مدير المخزون)
-
----
-
-## حالة النظام عند الإغلاق
-
-| العنصر | الحالة |
-|--------|--------|
-| Git | `master @ 38d3449` — **محلي فقط، لم يُدفع بعد** |
-| TypeScript | 0 أخطاء ✅ |
-| Build | ✅ Compiled successfully — 785 pages |
-| Migrations 035–040 | **مُطبّقة على الإنتاج** ✅ |
-| Types | مُجدَّدة من الـ production schema ✅ |
-
----
-
-## الخطوات المطلوبة من أحمد
-
-### 1. Git push
-```bash
-git push
+✅ TypeScript: 0 errors
+✅ RTL violations: none
+✅ Forbidden fonts: none (false positives من setInterval/afterInteractive — pre-existing)
+✅ Forbidden colors: none
+✅ Currency violations: none
+✅ Hardcoded phones: none
+✅ Raw hex colors (app/components): none
+✅ Build: SUCCESS — /ar/dashboard/inventory/import + /en/dashboard/inventory/import
 ```
-Vercel سيعيد النشر تلقائياً بعد دفع جميع الـ commits (session 35 + 36).
-
-### 2. اختبار على الإنتاج
-- **Cash delivery + tip**: السائق يختار "نقد" → يدخل إكرامية → تظهر في handover modal بلون أخضر
-- **Arrived guard**: السائق يضغط "تم التسليم" بدون "وصلت" → رسالة خطأ `يجب تسجيل الوصول أولاً`
-- **Cash Reconciliation**: المدير يفتح `/dashboard/delivery/cash-reconciliation` → يدخل مبلغ مع فرق > 0.500 BD → حقل الملاحظات مطلوب
-- **Staff page**: badge لـ `inventory_manager` يظهر صحيح
 
 ---
 
-## قرارات مهمة (Session 36)
+## ما هو التالي
 
-- **`::text` cast على RLS policies**: حل دائم — يعمل على بيئات جديدة (enum لا يوجد بعد) وعلى بيئات محدّثة (enum جديد في نفس الـ transaction). أبطأ قليلاً من مقارنة enum لكن مقبول تماماً لـ RLS checks.
-- **`$sql$` للـ cron SQL strings**: معيار للمستقبل — أي `cron.schedule()` داخل `DO $$` يجب أن يستخدم `$sql$` أو `$body$` للـ SQL المدمج.
-- **Supabase migration naming**: يرفض أي اسم لا يبدأ بأرقام فقط قبل الـ underscore الأول (مثل `034b_` مرفوض).
-
----
-
-## Outstanding Follow-ups
-
-- 🔵 Git push (أحمد)
-- 🔵 Production testing (أحمد)
-- 🟢 Architecture: dead `returning` driver status، payments embed cardinality، realtime channel scoping — لم تُجدول
-- Manager hours dashboard على `/dashboard/staff/[id]` — out-of-scope follow-up من HANDOFF
-- Phase 3 (Inventory UI): الـ migrations مطبّقة → يمكن البدء في بناء الـ UI عند جاهزية البيانات (recipes + suppliers)
-
----
-
-## الجلسة السابقة (35) — للمرجع
-
-تنفيذ 8 إصلاحات driver phase-2 (Fix #5, #6, #10, #19, Y1, Y2, Y3, Y4) — كلها committed وجاهزة للإنتاج.
+- اختبار: تحميل النموذج → ملء 3-5 صفوف → رفع → التحقق من DB
+- تفعيل: يتطلب chef recipes لملء ورقة الوصفات
+- المرحلة التالية: Phase 3 الكاملة (Inventory Dashboard) حين تتوفر بيانات الشيف

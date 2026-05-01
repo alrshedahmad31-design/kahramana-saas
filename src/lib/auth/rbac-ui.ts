@@ -17,20 +17,22 @@ export type DashboardSection =
   | 'reports'
   | 'schedule'
   | 'settings'
+  | 'inventory_import'
 
 const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
-  home:      null,  // unrestricted — dashboard overview for all staff
-  orders:    ['owner', 'general_manager', 'branch_manager', 'cashier'],
-  driver:    ['owner', 'general_manager', 'branch_manager', 'driver'],
-  kds:       ['owner', 'general_manager', 'branch_manager', 'kitchen'],
-  delivery:  ['owner', 'general_manager', 'branch_manager'],
-  staff:     ['owner', 'general_manager', 'branch_manager'],
-  coupons:   ['owner', 'general_manager', 'branch_manager', 'marketing'],
-  analytics: ['owner', 'general_manager', 'branch_manager'],
-  payments:  ['owner', 'general_manager', 'branch_manager'],
-  reports:   ['owner', 'general_manager'],
-  schedule:  ['owner', 'general_manager', 'branch_manager'],
-  settings:  ['owner', 'general_manager'],
+  home:             null,  // unrestricted — dashboard overview for all staff
+  orders:           ['owner', 'general_manager', 'branch_manager', 'cashier'],
+  driver:           ['owner', 'general_manager', 'branch_manager', 'driver'],
+  kds:              ['owner', 'general_manager', 'branch_manager', 'kitchen'],
+  delivery:         ['owner', 'general_manager', 'branch_manager'],
+  staff:            ['owner', 'general_manager', 'branch_manager'],
+  coupons:          ['owner', 'general_manager', 'branch_manager', 'marketing'],
+  analytics:        ['owner', 'general_manager', 'branch_manager'],
+  payments:         ['owner', 'general_manager', 'branch_manager'],
+  reports:          ['owner', 'general_manager'],
+  schedule:         ['owner', 'general_manager', 'branch_manager'],
+  settings:         ['owner', 'general_manager'],
+  inventory_import: ['owner', 'general_manager'],
 }
 
 export function canAccessSection(

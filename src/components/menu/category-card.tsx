@@ -37,9 +37,6 @@ export default function CategoryCard({
           </p>
         )}
       </div>
-      <p className="mt-4 font-satoshi text-xs font-bold uppercase tracking-wide text-brand-gold">
-        {itemCountLabel}
-      </p>
     </Link>
   )
 }
