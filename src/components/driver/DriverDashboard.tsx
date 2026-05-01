@@ -136,22 +136,28 @@ export default function DriverDashboard({
     return () => { void supabase.removeChannel(channel) }
   }, [supabase, fetchOrders, fetchCompleted])
 
-  // GPS — auto-starts when online
+  // GPS — only tracks while driver has an active out_for_delivery order
   useEffect(() => {
     if (!isOnline || !('geolocation' in navigator)) return
 
     const activeOrder = orders.find((o) => o.status === 'out_for_delivery')
+    if (!activeOrder) return  // no active delivery → don't drain battery
+
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         postDriverLocation({
           driver_id:  driverId,
-          order_id:   activeOrder?.id ?? null,
+          order_id:   activeOrder.id,
           lat:        pos.coords.latitude,
           lng:        pos.coords.longitude,
           accuracy_m: pos.coords.accuracy ?? null,
         })
       },
-      () => { /* silent — no GPS error banner needed */ },
+      (err) => {
+        if (err.code !== err.PERMISSION_DENIED) {
+          console.warn('GPS error:', err.message)
+        }
+      },
       { enableHighAccuracy: true, maximumAge: 30_000 },
     )
     return () => navigator.geolocation.clearWatch(watchId)
