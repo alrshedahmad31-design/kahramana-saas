@@ -90,7 +90,10 @@
       "Bash(ls src/components/layout/BranchCard.tsx src/components/layout/NewsletterSignup.tsx src/components/layout/SocialLinks.tsx)",
       "Bash(ls src/app/[locale]/actions/)",
       "Bash(git reset *)",
-      "Bash(npm i *)"
+      "Bash(npm i *)",
+      "Bash(supabase --version)",
+      "Bash(supabase db *)",
+      "Bash(supabase gen *)"
     ]
   }
 }
