@@ -26,10 +26,14 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
   async function handleAssign() {
     if (!selected || !order) return
     setLoading(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const now = new Date().toISOString()
     await supabase
       .from('orders')
-      .update({ assigned_driver_id: selected, status: 'out_for_delivery' })
+      .update({
+        assigned_driver_id: selected,
+        status:             'out_for_delivery',
+        picked_up_at:       now,
+      })
       .eq('id', order.id)
     setLoading(false)
     setDone(true)

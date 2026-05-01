@@ -29,6 +29,7 @@ const orderSchema = z.object({
   customer_phone:      z.string().max(20).nullable(),
   branch_id:           z.string().min(1).max(50),
   status:              z.literal('new'),
+  order_type:          z.enum(['delivery', 'pickup']),
   notes:               z.string().max(500).nullable(),
   customer_notes:      z.string().max(500).nullable(),
   delivery_address:    z.string().max(1000).nullable(),
@@ -54,6 +55,7 @@ interface OrderBase {
   customer_phone:      string | null
   branch_id:           string
   status:              'new'
+  order_type:          'delivery' | 'pickup'
   notes:               string | null
   customer_notes:      string | null
   delivery_address:    string | null

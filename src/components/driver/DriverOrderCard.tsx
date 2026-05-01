@@ -20,6 +20,7 @@ interface Props {
   branchMapsUrl: string | null
   variant?:      'active' | 'completed'
   onAction?:     (id: string, status: DriverActiveStatus) => Promise<string | null>
+  onArrive?:     (id: string) => Promise<string | null>
 }
 
 // ── Urgency config ─────────────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ function formatTime(iso: string): string {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant = 'active', onAction }: Props) {
+export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive }: Props) {
   const [elapsed,       setElapsed]       = useState(() => formatElapsed(order.created_at))
   const [busy,          setBusy]          = useState(false)
   const [actionError,   setActionError]   = useState<string | null>(null)
@@ -165,6 +166,15 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
     setBusy(true)
     setActionError(null)
     const error = await onAction(order.id, order.status as DriverActiveStatus)
+    if (error) setActionError(error)
+    setBusy(false)
+  }
+
+  async function handleArrive() {
+    if (busy || !onArrive) return
+    setBusy(true)
+    setActionError(null)
+    const error = await onArrive(order.id)
     if (error) setActionError(error)
     setBusy(false)
   }
@@ -479,29 +489,57 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
         {/* ── Action button ────────────────────────────────────────────────────── */}
         {!isCompleted && (
           <>
-            <button
-              type="button"
-              onClick={handleAction}
-              disabled={busy}
-              className={`
-                w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
-                transition-all duration-150 active:scale-[0.98]
-                disabled:opacity-50 disabled:cursor-not-allowed
-                ${busy
-                  ? 'bg-brand-surface-2 text-brand-muted'
-                  : isReady
-                    ? 'bg-brand-gold text-brand-black'
-                    : 'bg-brand-success text-brand-black'
-                }
-              `}
-            >
-              {busy
-                ? '…'
-                : isRTL
-                  ? (isReady ? 'استلمت الطلب ✓' : 'تم التسليم ✓')
-                  : (isReady ? 'PICKED UP ✓' : 'DELIVERED ✓')
-              }
-            </button>
+            {/* Step 1: ready → picked up */}
+            {isReady && (
+              <button
+                type="button"
+                onClick={handleAction}
+                disabled={busy}
+                className={`
+                  w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
+                  transition-all duration-150 active:scale-[0.98]
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-gold text-brand-black'}
+                `}
+              >
+                {busy ? '…' : (isRTL ? 'استلمت الطلب ✓' : 'PICKED UP ✓')}
+              </button>
+            )}
+
+            {/* Step 2: on road, not arrived yet → arrived at customer */}
+            {isOnRoad && !order.arrived_at && onArrive && (
+              <button
+                type="button"
+                onClick={handleArrive}
+                disabled={busy}
+                className={`
+                  w-full min-h-[56px] rounded-2xl font-satoshi font-black text-lg
+                  transition-all duration-150 active:scale-[0.98]
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-blue-500/20 border-2 border-blue-500/60 text-blue-400'}
+                `}
+              >
+                {busy ? '…' : (isRTL ? 'وصلت للزبون 📍' : 'ARRIVED 📍')}
+              </button>
+            )}
+
+            {/* Step 3: arrived → delivered */}
+            {isOnRoad && (order.arrived_at || !onArrive) && (
+              <button
+                type="button"
+                onClick={handleAction}
+                disabled={busy}
+                className={`
+                  w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
+                  transition-all duration-150 active:scale-[0.98]
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-success text-brand-black'}
+                `}
+              >
+                {busy ? '…' : (isRTL ? 'تم التسليم ✓' : 'DELIVERED ✓')}
+              </button>
+            )}
+
             {actionError && (
               <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 bg-red-500/15 border border-red-500/30">
                 <span className="text-red-400 text-base leading-none shrink-0">⚠️</span>

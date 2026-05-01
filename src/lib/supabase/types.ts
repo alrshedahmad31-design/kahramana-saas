@@ -879,6 +879,7 @@ export type Database = {
           expected_delivery_time: string | null
           id: string
           notes: string | null
+          order_type: string
           picked_up_at: string | null
           restaurant_location: Json | null
           source: string
@@ -913,6 +914,7 @@ export type Database = {
           expected_delivery_time?: string | null
           id?: string
           notes?: string | null
+          order_type?: string
           picked_up_at?: string | null
           restaurant_location?: Json | null
           source?: string
@@ -947,6 +949,7 @@ export type Database = {
           expected_delivery_time?: string | null
           id?: string
           notes?: string | null
+          order_type?: string
           picked_up_at?: string | null
           restaurant_location?: Json | null
           source?: string

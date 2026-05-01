@@ -52,15 +52,49 @@ export async function driverBumpOrder(
   const nextStatus = currentStatus === 'ready' ? 'out_for_delivery' : 'delivered'
   const now        = new Date().toISOString()
 
-  type OrderUpdate = { status: typeof nextStatus; updated_at: string; assigned_driver_id?: string }
+  type OrderUpdate = {
+    status:             typeof nextStatus
+    updated_at:         string
+    assigned_driver_id?: string
+    picked_up_at?:      string
+    delivered_at?:      string
+  }
   const orderUpdate: OrderUpdate = { status: nextStatus, updated_at: now }
-  if (currentStatus === 'ready') orderUpdate.assigned_driver_id = user.id
+  if (currentStatus === 'ready') {
+    orderUpdate.assigned_driver_id = user.id
+    orderUpdate.picked_up_at       = now
+  }
+  if (currentStatus === 'out_for_delivery') {
+    orderUpdate.delivered_at = now
+  }
 
   const { error } = await supabase
     .from('orders')
     .update(orderUpdate)
     .eq('id', orderId)
     .eq('status', currentStatus)   // optimistic-concurrency guard
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+// ── Mark driver arrived at customer location ──────────────────────────────────
+// Sets arrived_at without changing order status — used for the intermediate
+// "I arrived" step before confirming delivery.
+
+export async function markDriverArrived(orderId: string): Promise<DriverActionResult> {
+  const user = await getSession()
+  if (!user || user.role !== 'driver') return { success: false, error: 'Unauthorized' }
+
+  const supabase = await createClient()
+  const now      = new Date().toISOString()
+
+  const { error } = await supabase
+    .from('orders')
+    .update({ arrived_at: now, updated_at: now })
+    .eq('id', orderId)
+    .eq('status', 'out_for_delivery')
+    .eq('assigned_driver_id', user.id)
 
   if (error) return { success: false, error: error.message }
   return { success: true }

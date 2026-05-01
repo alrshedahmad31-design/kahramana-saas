@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { driverBumpOrder, postDriverLocation, toggleDriverAvailability } from '@/app/[locale]/driver/actions'
+import { driverBumpOrder, markDriverArrived, postDriverLocation, toggleDriverAvailability } from '@/app/[locale]/driver/actions'
 import { useAudioAlert } from '@/hooks/useAudioAlert'
 import { playBell } from '@/lib/audio/bells'
 import DriverHeader from './DriverHeader'
@@ -178,6 +178,18 @@ export default function DriverDashboard({
     return null
   }
 
+  async function handleArrive(orderId: string): Promise<string | null> {
+    setOrders((prev) => prev.map((o) =>
+      o.id === orderId ? { ...o, arrived_at: new Date().toISOString() } : o
+    ))
+    const result = await markDriverArrived(orderId)
+    if (!result.success) {
+      fetchOrders()
+      return result.error
+    }
+    return null
+  }
+
   const activeOrders    = orders.filter((o) => o.status === 'out_for_delivery')
   const availableOrders = orders.filter((o) => o.status === 'ready')
   const totalRevenue    = completedOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
@@ -247,6 +259,7 @@ export default function DriverDashboard({
                     isRTL={isAr}
                     branchMapsUrl={branchMapsUrl}
                     onAction={handleAction}
+                    onArrive={handleArrive}
                   />
                 ))}
               </div>

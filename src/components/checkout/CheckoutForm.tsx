@@ -23,7 +23,8 @@ import {
   Send,
   Map,
   Building,
-  FileText
+  FileText,
+  Package,
 } from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/lib/cart'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
@@ -163,6 +164,9 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const [loading,     setLoading]     = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  // ── Order type state (delivery / pickup) ─────────────────────────────────
+  const [orderType, setOrderType] = useState<'delivery' | 'pickup' | null>(null)
+
   // ── Address state ─────────────────────────────────────────────────────────
   const [addressMode, setAddressMode] = useState<AddressMode>(null)
   const [manualAddr, setManualAddr]   = useState<ManualAddress>({ building: '', villa: '', road: '', block: '' })
@@ -225,6 +229,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
   }
 
   function validateAddress(): boolean {
+    if (orderType === 'pickup') return true
     if (addressMode === 'location' && gpsCoords) return true
     if (addressMode === 'manual') {
       const { road, block } = manualAddr
@@ -242,7 +247,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
       newErrors.branchId = isAr ? 'الرجاء اختيار الفرع' : 'Please select a branch'
     }
 
-    if (!validateAddress()) {
+    if (!orderType) {
+      newErrors.address = isAr
+        ? 'الرجاء اختيار طريقة الاستلام (توصيل أو استلام من الفرع)'
+        : 'Please select delivery or pickup'
+    } else if (!validateAddress()) {
       newErrors.address = isAr
         ? 'الرجاء إدخال العنوان أو مشاركة موقعك'
         : 'Please enter your address or share your location'
@@ -277,19 +286,21 @@ export default function CheckoutForm({ customerProfile }: Props) {
     const deliveryAddress = buildAddressString() ?? null
     setLoading(true)
 
+    const isPickup = orderType === 'pickup'
     const result = await createOrderWithPoints({
       order: {
         customer_name:       values.customerName  ?? null,
         customer_phone:      values.customerPhone ?? null,
         branch_id:           values.branchId,
         status:              'new',
+        order_type:          orderType ?? 'delivery',
         notes:               values.notes ?? null,
         customer_notes:      values.notes ?? null,
-        delivery_address:    deliveryAddress,
-        delivery_building:   addressMode === 'manual' ? manualAddr.building.trim() || null : null,
-        delivery_street:     addressMode === 'manual' ? manualAddr.road.trim() || null : null,
-        delivery_lat:        addressMode === 'location' ? gpsCoords?.lat ?? null : null,
-        delivery_lng:        addressMode === 'location' ? gpsCoords?.lng ?? null : null,
+        delivery_address:    isPickup ? null : deliveryAddress,
+        delivery_building:   !isPickup && addressMode === 'manual' ? manualAddr.building.trim() || null : null,
+        delivery_street:     !isPickup && addressMode === 'manual' ? manualAddr.road.trim() || null : null,
+        delivery_lat:        !isPickup && addressMode === 'location' ? gpsCoords?.lat ?? null : null,
+        delivery_lng:        !isPickup && addressMode === 'location' ? gpsCoords?.lng ?? null : null,
         source:              'direct',
         whatsapp_sent_at:    null,
       },
@@ -531,6 +542,60 @@ export default function CheckoutForm({ customerProfile }: Props) {
         icon={Truck}
       />
       <SectionCard className="p-4 sm:p-5">
+        {/* Delivery / Pickup selector */}
+        <div className="flex gap-2 mb-5">
+          <button
+            type="button"
+            onClick={() => {
+              setOrderType('delivery')
+              setErrors(p => { const n = { ...p }; delete n.address; return n })
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all font-bold text-sm
+              ${orderType === 'delivery'
+                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
+              ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
+          >
+            <Truck size={16} className={orderType === 'delivery' ? 'text-brand-gold' : 'text-brand-muted'} />
+            {isAr ? 'توصيل' : 'Delivery'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOrderType('pickup')
+              setAddressMode(null)
+              setErrors(p => { const n = { ...p }; delete n.address; return n })
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all font-bold text-sm
+              ${orderType === 'pickup'
+                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
+              ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
+          >
+            <Package size={16} className={orderType === 'pickup' ? 'text-brand-gold' : 'text-brand-muted'} />
+            {isAr ? 'استلام من الفرع' : 'Branch Pickup'}
+          </button>
+        </div>
+
+        {/* Pickup confirmation banner */}
+        {orderType === 'pickup' && (
+          <div className="rounded-xl border border-brand-success/30 bg-brand-success/5 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-brand-success/20 flex items-center justify-center shrink-0">
+              <Package size={20} className="text-brand-success" />
+            </div>
+            <div>
+              <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                {isAr ? 'سيكون طلبك جاهزاً للاستلام من الفرع' : 'Your order will be ready for pickup at the branch'}
+              </p>
+              <p className={`text-[11px] text-brand-muted mt-0.5 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                {isAr ? 'سنتصل بك عند جاهزية الطلب' : "We'll contact you when it's ready"}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Address input — delivery only */}
+        {orderType === 'delivery' && (<>
         {/* Mode Switcher */}
         <div className="flex gap-2 mb-5">
           <button
@@ -631,6 +696,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
             </p>
           </div>
         )}
+
+        </>)}
 
         {errors.address && (
           <p className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-2 bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
