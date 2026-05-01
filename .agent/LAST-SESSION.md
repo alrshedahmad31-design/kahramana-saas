@@ -1,16 +1,14 @@
-# LAST-SESSION.md — Session 31
-> Date: 2026-05-01 | Status: `pickup_option_security_mobile_hardened` | Branch: `master @ 36aef07`
+# LAST-SESSION.md — Session 32
+> Date: 2026-05-01 | Status: `6_critical_bugs_fixed` | Branch: `master @ cd1f476`
 
 ---
 
-## ⚠️ حرج — يجب تطبيق Migration 033 على الإنتاج فوراً
+## ⚠️ حرج — يجب تطبيق Migration 033 على الإنتاج
 
-**كل طلب جديد على الموقع يفشل الآن** بسبب عمود `order_type` غير الموجود في قاعدة البيانات الإنتاجية.
-
-تطبيق Migration 033 في Supabase Dashboard → SQL Editor:
+**كل طلب جديد على الموقع يفشل.** عمود `order_type` غير موجود في الإنتاج.
 
 ```sql
--- supabase/migrations/033_order_type_and_driver_earnings_fix.sql
+-- Supabase Dashboard → SQL Editor
 ALTER TABLE orders
   ADD COLUMN IF NOT EXISTS order_type TEXT NOT NULL DEFAULT 'delivery'
   CHECK (order_type IN ('delivery', 'pickup'));
@@ -21,55 +19,40 @@ ALTER TABLE driver_earnings
   FOREIGN KEY (driver_id) REFERENCES staff_basic(id) ON DELETE CASCADE;
 ```
 
-**بعد تطبيق Migration 033:** أضف `order_type` إلى SELECT في `delivery/page.tsx`:
-- `.select('id, status, order_type, ...')` 
-- `.neq('order_type', 'pickup')` (لإخفاء طلبات الاستلام من لوحة التوصيل)
-- تعيين `order_type: (o.order_type as ...) ?? 'delivery'` في mapping
-
 ---
 
 ## ما تم في هذه الجلسة
 
-### 1. خيار الاستلام من الفرع في CheckoutForm ✅
-- أزرار Delivery / Branch Pickup في الخطوة 3
-- `setOrderType('delivery' | 'pickup')` — حالة في FormData
-- بانر تأكيد عند اختيار "استلام من الفرع"
-- حقول العنوان مخفية عند `orderType === 'pickup'`
-- `checkout/actions.ts`: `order_type` مُرسَل في INSERT (زودة schema + validation)
-- Commit: `02dc0e2`
+### إصلاح 6 أخطاء حرجة — Commit `cd1f476` ✅
 
-### 2. خطوة "وصلت للزبون" في واجهة السائق ✅
-- `markDriverArrived(orderId)` في `driver/actions.ts` — يضبط `arrived_at + updated_at`
-- `handleArrive()` في `DriverDashboard.tsx` مع optimistic update
-- `onArrive` prop في `DriverOrderCard.tsx` — ثلاث خطوات:
-  1. "استلمت الطلب" (ready → out_for_delivery)
-  2. "وصلت للزبون 📍" (يضبط arrived_at)
-  3. "تم التسليم" (out_for_delivery → delivered)
-- Commit: `02dc0e2`
+#### خطأ 1: "وصلت للزبون" يعطي رسالة خطأ
+- **السبب**: `markDriverArrived` كان يستخدم `createClient()` فقط بدون التحقق المسبق من ملكية الطلب
+- **الإصلاح**: إضافة SELECT للتحقق من الملكية أولاً + استخدام `createServiceClient()` للتحديث الفعلي
+- الملف: `src/app/[locale]/driver/actions.ts`
 
-### 3. إصلاحات أمنية ✅
-- **Analytics URL bypass**: `branch_manager` لا يستطيع تجاوز فلتر الفرع عبر URL param
-- **Branch dropdown**: يُخفى من الموظفين غير الـ global (لا تسرب أسماء الفروع)
-- **QuickActionsPanel**: يُخفى الرابط حسب صلاحية RBAC للدور
-- **Orders server-side filtering**: إضافة `eq('branch_id', userBranchId)` على الخادم + في `OrdersClient.fetchOrders`
-- Commit: `511cc97`
+#### خطأ 2: طلبات الاستلام تظهر كتوصيل عادي
+- **السبب**: `order_type` لم يكن موجوداً في SELECT أو في واجهة OrderCardData
+- **الإصلاح**: إضافة `order_type` لـ `OrderCardData`، كلا استعلامَي SELECT، وشارة خضراء "استلام/Pickup" في `KanbanOrderCard`
+- **تنبيه**: يحتاج Migration 033 مُطبَّقاً أولاً
 
-### 4. تحسينات الموبايل ✅
-- **Orders**: جدول → بطاقات stacked على شاشات صغيرة (`sm:hidden / hidden sm:block`)
-- **Touch targets**: أزرار mute + pagination + view toggle رُفعت لـ ≥44px
-- **KDS**: `overflow-x-auto` wrapper + `min-w-[540px]` للحفاظ على عرض الأعمدة
-- Commit: `511cc97`
+#### خطأ 3: لوحة الطلبات لا تتحدث تلقائياً
+- **السبب**: `OrdersClient` يعتمد على Realtime فقط — لا يوجد polling احتياطي
+- **الإصلاح**: إضافة `setInterval(fetchOrders, 5_000)` في `OrdersClient`
+- الملف: `src/components/orders/OrdersClient.tsx`
 
-### 5. رسالة race condition للسائق ✅
-- عندما يحاول سائق استلام طلب أُخذ من سائق آخر:
-  - `'Unexpected order state'` → "استُلم هذا الطلب من قِبل سائق آخر"
-  - غيرها → "فشل تحديث الطلب — حاول مجدداً"
-- Commit: `511cc97`
+#### خطأ 4: تعيين السائق يحذف الطلب من KDS
+- **السبب**: `DispatchModal.handleAssign()` كان يضبط `status='out_for_delivery'` بغض النظر عن الحالة الحالية
+- **الإصلاح**: حارس `if (order.status !== 'ready')` مع رسالة خطأ ثنائية اللغة
+- الملف: `src/components/delivery/DispatchModal.tsx`
 
-### 6. DispatchModal — guard طلبات الاستلام ✅
-- `handleAssign()` يرجع مبكراً إذا `order.order_type === 'pickup'`
-- `DeliveryOrder` type أُضيف إليه `order_type?: 'delivery' | 'pickup' | null`
-- الـ SELECT في `delivery/page.tsx` **ينتظر Migration 033** قبل إضافة `order_type`
+#### خطأ 5 + 6: شارة الدفع مفقودة + "تسليم النقد" لا يظهر
+- **السبب الجذري**: `DriverOrder.payments` مُعرَّف كـ `array []` لكن Supabase يُعيده كـ `object` واحد (علاقة one-to-one) — كل استدعاء `payments?.[0]` يُعيد `undefined`
+- **الإصلاح**: تصحيح النوع إلى `{ method: PaymentMethod } | null` + إصلاح 5 مواقع استخدام:
+  - `custom-types.ts`: تصحيح التعريف
+  - `DriverOrderCard.tsx`: `payments?.[0]` → `payments`
+  - `DriverDashboard.tsx`: `payments?.[0]?.method` → `payments?.method`
+  - `DriverCashSummary.tsx`: موقعان
+  - `CashHandoverModal.tsx`: موقع واحد
 
 ---
 
@@ -77,27 +60,27 @@ ALTER TABLE driver_earnings
 
 | العنصر | الحالة |
 |--------|--------|
-| Git | master @ `36aef07` — مدفوع لـ origin ✅ |
-| Vercel | auto-deploy يعمل |
+| Git | master @ `cd1f476` |
+| TypeScript | 0 أخطاء ✅ |
+| Build | نجح بدون أخطاء ✅ |
+| **Migration 033** | **⚠️ غير مُطبَّقة في الإنتاج — Checkout معطَّل** |
 | Migration 031 | مُطبَّقة ✅ |
 | Migration 032 | مُطبَّقة ✅ |
-| **Migration 033** | **⚠️ غير مُطبَّقة — يجب التطبيق فوراً** |
-| Checkout | ❌ معطَّل حتى تُطبَّق Migration 033 |
 
 ---
 
-## ما يحتاجه أحمد يدوياً
+## الخطوات المطلوبة من أحمد
 
 1. **🔴 أولاً وفوراً**: تطبيق Migration 033 في Supabase Dashboard (SQL أعلاه)
-2. **بعد Migration 033**: إضافة `order_type` لـ SELECT + `.neq('order_type','pickup')` في `delivery/page.tsx`
-3. **اختبار Checkout**: تأكيد نجاح طلب جديد بعد تطبيق Migration 033
-4. **`./update-context.sh "session 31: pickup toggle, security hardening, mobile UX, driver arrived step"`**
+2. **بعد Migration 033**: تأكد أن الطلبات الجديدة تعمل + شارة "استلام" تظهر في الكانبان
+3. **اختبار السائق**: تحقق من ظهور "💵 تسليم النقد" في لوحة السائق بعد تسليم طلب نقدي
+4. **`./update-context.sh "session 32: 6 critical bugs fixed — payments type, dispatch guard, polling, markDriverArrived"`**
 
 ---
 
 ## قرارات مهمة
 
-- طلبات الاستلام لا تظهر في لوحة التوصيل (عند تطبيق Migration 033 + إضافة order_type للـ SELECT)
-- السائق محظور من dispatch طلبات الاستلام (DispatchModal guard)
-- "First Checker" role مؤجَّل — يحتاج DB migration لتعديل enum + مناقشة صلاحيات
-- GPS tracking متعدد الطلبات مؤجَّل — مشروع منفصل
+- `payments` join في Supabase **أحادي العلاقة** → always single object, never array
+- `DispatchModal` يجب أن يُرفض إذا الطلب ليس `ready` — منع تخطي مراحل KDS
+- `OrdersClient` يحتاج polling احتياطي (5 ثوانٍ) — Realtime ليس موثوقاً 100% وحده
+- `markDriverArrived` الآن يتحقق مسبقاً (SELECT guard) قبل التحديث
