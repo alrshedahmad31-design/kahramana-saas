@@ -1,5 +1,36 @@
-# LAST-SESSION.md — Session 37
-> Date: 2026-05-01 | Status: `inventory_excel_import_built` | Branch: `master`
+# LAST-SESSION.md — Session 40
+> Date: 2026-05-01 | Status: `phase_5_reports_complete` | Branch: `master`
+
+---
+
+## What Was Done
+Phase 5 — Inventory Reports & Intelligence verified and shipped.
+
+**Commit:** `653ef48` — feat(inventory): Phase 5 — Reports & Intelligence (11 reports + Excel export)
+
+**30 files added:**
+- `src/app/[locale]/dashboard/inventory/reports/page.tsx` — hub with 11 report cards
+- `reports/actions.ts` — ExcelJS server action (base64), ABC classification update
+- 11 report pages: cogs, variance, waste, valuation, menu-engineering, vendor, dead-stock, expiry, price-history, abc-analysis, food-cost
+- Each page has a co-located client component for charts (Recharts)
+- `src/components/inventory/reports/` — 4 shared components: StatCard, EmptyReport, ReportHeader, ExportButton
+- Updated DashboardSidebar (inv-reports nav item) + rbac-ui.ts (inventory_reports section)
+
+**Phase gates:** All 9 passed — tsc 0 errors, clean build, no RTL/font/color/hex violations
+
+**Also fixed in session (from previous context):**
+- `rpc_expiry_report` param was `p_days` → fixed to `p_days_ahead`
+- RecipeEditor yield_factor inputs had `min="0.001" max="1"` → fixed to `min="1"` (DB constraint: yield_factor >= 1.000)
+
+## What's Next
+The full inventory system (Phases 3+4+5 in our sessions) is now complete. Phase 3 in phase-state.json is "done."
+
+Next session should focus on Phase 7 (Analytics & Reporting Dashboard) or any user-requested work.
+
+## Decisions Made
+- `v_dish_cogs` has no `category` column — food-cost category breakdown was skipped (reported item count only)
+- Variance report: "auto-refresh every hour by pg_cron" — no manual refresh button (would need new migration)
+- VendorPerformanceRow, DeadStockRow, VarianceRow defined inline in their pages (not in custom-types.ts)
 
 ---
 
