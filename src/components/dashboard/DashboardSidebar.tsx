@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 import { canAccessSection, type DashboardSection } from '@/lib/auth/rbac-ui'
+import LanguageToggle from '@/components/dashboard/LanguageToggle'
 
 interface NavItem {
   key: string
@@ -304,10 +305,11 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
           <NavLinks />
         </div>
 
-        {/* Footer: user info + logout */}
+        {/* Footer: user info + language toggle + logout */}
         <div className="shrink-0 pb-2 px-0">
           <UserInfo />
-          <div className="px-3 pt-1">
+          <div className="px-3 pt-1 flex flex-col gap-0.5">
+            <LanguageToggle />
             <LogoutButton />
           </div>
         </div>
