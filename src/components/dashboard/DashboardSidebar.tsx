@@ -230,6 +230,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
 
   const INVENTORY_SUB_ITEMS = [
     { key: 'inv-overview',   href: `${prefix}/dashboard/inventory`,            label: isAr ? 'نظرة عامة' : 'Overview' },
+    { key: 'inv-reports',    href: `${prefix}/dashboard/inventory/reports`,    label: isAr ? 'التقارير' : 'Reports' },
     { key: 'inv-ingredients',href: `${prefix}/dashboard/inventory/ingredients`,label: isAr ? 'المكونات' : 'Ingredients' },
     { key: 'inv-prep',       href: `${prefix}/dashboard/inventory/prep-items`, label: isAr ? 'Prep Items' : 'Prep Items' },
     { key: 'inv-recipes',    href: `${prefix}/dashboard/inventory/recipes`,    label: isAr ? 'الوصفات' : 'Recipes' },
