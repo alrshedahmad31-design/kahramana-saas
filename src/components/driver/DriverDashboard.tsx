@@ -10,6 +10,7 @@ import DriverOrderCard from './DriverOrderCard'
 import DriverPerformanceDashboard from './DriverPerformanceDashboard'
 import DriverCashSummary from './DriverCashSummary'
 import CashHandoverModal from './CashHandoverModal'
+import CashHandoverReminderBanner from './CashHandoverReminderBanner'
 import { resolveExpectedAt, getUrgencyLevel } from '@/lib/utils/delivery'
 import type { DriverOrder } from '@/lib/supabase/custom-types'
 
@@ -48,8 +49,9 @@ export default function DriverDashboard({
   useEffect(() => { isOnlineRef.current = isOnline }, [isOnline])
   // Track known ready-order IDs to detect new pickups
   const prevReadyIdsRef = useRef(new Set(initialOrders.filter(o => o.status === 'ready').map(o => o.id)))
-  const [clock,           setClock]           = useState(formatClock)
-  const [showHandover,    setShowHandover]    = useState(false)
+  const [clock,              setClock]              = useState(formatClock)
+  const [showHandover,       setShowHandover]       = useState(false)
+  const [reminderDismissed,  setReminderDismissed]  = useState(false)
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -209,6 +211,11 @@ export default function DriverDashboard({
   const hasSettledCash = completedOrders.some(
     o => o.payments?.method === 'cash' && o.cash_settled_at,
   )
+  const unsettledTotal       = unsettledCashOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
+  const shouldRemindHandover = !reminderDismissed && (
+    unsettledCashOrders.length >= 4 ||
+    (!isOnline && unsettledCashOrders.length > 0)
+  )
 
   const avgDeliveryMins = completedOrders.length > 0
     ? Math.round(
@@ -244,6 +251,17 @@ export default function DriverDashboard({
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="p-4 pb-10 flex flex-col gap-6">
+
+          {/* Cash handover reminder banner */}
+          {shouldRemindHandover && (
+            <CashHandoverReminderBanner
+              unsettledCount={unsettledCashOrders.length}
+              unsettledTotal={unsettledTotal}
+              onOpenHandover={() => setShowHandover(true)}
+              onDismiss={() => setReminderDismissed(true)}
+              isRTL={isAr}
+            />
+          )}
 
           {/* Performance stats — only when deliveries exist */}
           <DriverPerformanceDashboard
