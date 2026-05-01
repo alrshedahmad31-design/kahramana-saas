@@ -9,7 +9,7 @@ export function playBell(type: BellType = 'new'): void {
     const gain = ctx.createGain()
     gain.connect(ctx.destination)
 
-    const beep = (freq: number, start: number, dur: number, vol = 0.35) => {
+    const beep = (freq: number, start: number, dur: number, vol = 0.6) => {
       const osc = ctx.createOscillator()
       osc.connect(gain)
       osc.type = 'sine'
@@ -22,16 +22,17 @@ export function playBell(type: BellType = 'new'): void {
 
     if (type === 'urgent') {
       // Fast triple beep — escalating pitch
-      beep(440, 0,    0.12, 0.5)
-      beep(660, 0.15, 0.12, 0.5)
-      beep(880, 0.30, 0.20, 0.5)
+      beep(440, 0,    0.15, 0.8)
+      beep(660, 0.18, 0.15, 0.8)
+      beep(880, 0.36, 0.25, 0.8)
     } else if (type === 'ready') {
       // Rising two-tone chime
-      beep(660, 0,    0.25)
-      beep(880, 0.28, 0.35)
+      beep(660, 0,    0.3,  0.6)
+      beep(880, 0.32, 0.45, 0.7)
     } else {
-      // Single warm bell for new order
-      beep(880, 0, 0.55)
+      // Double bell for new order — more noticeable in loud kitchen
+      beep(880, 0,    0.55, 0.7)
+      beep(880, 0.65, 0.40, 0.5)
     }
   } catch { /* no user gesture yet — silent */ }
 }

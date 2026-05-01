@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { advanceOrderStatus } from '@/app/[locale]/dashboard/kds/actions'
 import { playBell } from '@/lib/audio/bells'
+import { useKitchenAlert } from '@/hooks/useKitchenAlert'
 import KDSColumn from './KDSColumn'
 import type { KDSOrder, StaffRole } from '@/lib/supabase/custom-types'
 import { BRANCH_LIST } from '@/constants/contact'
@@ -55,6 +56,8 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
   const mutedRef      = useRef(muted)
   useEffect(() => { mutedRef.current = muted }, [muted])
 
+  const { startAlert, stopAlert, isAlerting } = useKitchenAlert(mutedRef)
+
   const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
@@ -77,11 +80,11 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
     const incoming = data as KDSOrder[]
 
     if (!mutedRef.current) {
-      // Sound: new accepted orders
+      // Sound: new accepted orders — start looping alert
       const newAccepted = incoming.filter(
         (o) => o.status === 'accepted' && !knownIds.current.has(o.id),
       )
-      if (newAccepted.length > 0) playBell('new')
+      if (newAccepted.length > 0) startAlert()
 
       // Sound: orders that just became ready
       const newReady = incoming.filter(
@@ -94,7 +97,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
     prevReadyIds.current = new Set(incoming.filter(o => o.status === 'ready').map(o => o.id))
 
     setOrders(incoming)
-  }, [supabase, branchId])
+  }, [supabase, branchId, startAlert])
 
   useEffect(() => { fetchOrders() }, [fetchOrders])
 
@@ -121,6 +124,11 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
     const id = setInterval(() => setClock(formatClock()), 1_000)
     return () => clearInterval(id)
   }, [])
+
+  // Stop looping alert once no accepted orders remain
+  useEffect(() => {
+    if (orders.filter((o) => o.status === 'accepted').length === 0) stopAlert()
+  }, [orders, stopAlert])
 
   async function handleAdvance(orderId: string, currentStatus: ActiveStatus) {
     setOrders((prev) => {
@@ -160,6 +168,11 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
           {total > 0 && (
             <span className="bg-brand-error text-white font-satoshi font-black text-sm rounded-full w-7 h-7 flex items-center justify-center tabular-nums animate-pulse">
               {total}
+            </span>
+          )}
+          {isAlerting && (
+            <span className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 bg-brand-error/15 border border-brand-error/40 text-brand-error font-satoshi font-bold text-xs animate-pulse">
+              🔔 {isAr ? 'طلب جديد!' : 'New order!'}
             </span>
           )}
         </div>
