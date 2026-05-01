@@ -111,6 +111,7 @@ export type KDSOrder = Omit<OrderRow, 'status'> & {
 export type DriverOrder = OrderRow & {
   order_items: Pick<OrderItemRow, 'name_ar' | 'name_en' | 'quantity' | 'selected_size' | 'selected_variant'>[];
   payments?: { method: PaymentMethod } | null;
+  cash_settlement?: Array<{ handover_id: string }> | null;
 };
 
 // Re-narrow `audit_logs.action` for safer call sites — the column is a generic

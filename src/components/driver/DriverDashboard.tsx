@@ -105,14 +105,15 @@ export default function DriverDashboard({
         total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
-        payments(method)
+        payments(method),
+        cash_settlement:driver_cash_handover_orders(handover_id)
       `)
       .eq('status', 'delivered')
       .eq('assigned_driver_id', driverId)
       .gte('updated_at', todayStart.toISOString())
       .order('updated_at', { ascending: false })
 
-    if (data) setCompletedOrders(data as DriverOrder[])
+    if (data) setCompletedOrders(data as unknown as DriverOrder[])
   }, [supabase, driverId])
 
   useEffect(() => { fetchOrders(); fetchCompleted() }, [fetchOrders, fetchCompleted])
@@ -193,6 +194,15 @@ export default function DriverDashboard({
   const activeOrders    = orders.filter((o) => o.status === 'out_for_delivery')
   const availableOrders = orders.filter((o) => o.status === 'ready')
   const totalRevenue    = completedOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
+
+  // Cash orders that haven't been included in any handover yet
+  const unsettledCashOrders = completedOrders.filter(
+    o => o.payments?.method === 'cash' && !o.cash_settlement?.length,
+  )
+  // True when at least one cash order is already settled (partial scenario)
+  const hasSettledCash = completedOrders.some(
+    o => o.payments?.method === 'cash' && o.cash_settlement?.length,
+  )
 
   const avgDeliveryMins = completedOrders.length > 0
     ? Math.round(
@@ -306,7 +316,7 @@ export default function DriverDashboard({
                 dotColor="bg-brand-muted"
                 pulse={false}
               />
-              {completedOrders.some(o => o.payments?.method === 'cash') && (
+              {unsettledCashOrders.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setShowHandover(true)}
@@ -360,7 +370,8 @@ export default function DriverDashboard({
       {/* Cash handover modal */}
       {showHandover && (
         <CashHandoverModal
-          deliveredOrders={completedOrders}
+          cashOrders={unsettledCashOrders}
+          isPartial={hasSettledCash}
           isRTL={isAr}
           onClose={() => setShowHandover(false)}
           onConfirmed={() => setShowHandover(false)}

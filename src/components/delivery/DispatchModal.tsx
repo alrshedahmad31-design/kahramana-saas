@@ -217,12 +217,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
           gap:          '8px',
         }}>
           {error && (
-            <div style={{
-              padding: '8px 12px', borderRadius: '8px',
-              background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
-              color: '#ef4444', fontSize: '12px', fontWeight: 600,
-              fontFamily: 'IBM Plex Sans Arabic, sans-serif',
-            }}>
+            <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold font-almarai">
               ⚠️ {error}
             </div>
           )}

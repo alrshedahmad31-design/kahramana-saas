@@ -182,27 +182,13 @@ export async function submitCashHandover(
     return { success: false, error: 'Unauthorized' }
   }
 
-  const supabase = await createClient()
-  const today    = new Date().toISOString().split('T')[0]
-
-  // Prevent duplicate submission for the same shift date
-  const { data: existing } = await supabase
-    .from('driver_cash_handovers')
-    .select('id')
-    .eq('driver_id', user.id)
-    .eq('shift_date', today)
-    .maybeSingle()
-
-  if (existing) {
-    return { success: false, error: 'Handover already submitted for today' }
-  }
-
   // Authoritative total — recomputed from DB. Even if client sends garbage,
   // server is the only source of truth.
   let totalCash = 0
 
   if (orderIds.length > 0) {
-    const { data: orders } = await supabase
+    const anon = await createClient()
+    const { data: orders } = await anon
       .from('orders')
       .select('id, assigned_driver_id, total_bhd, status, payments(method)')
       .in('id', orderIds)
@@ -228,6 +214,11 @@ export async function submitCashHandover(
     totalCash = (orders ?? []).reduce((s, o) => s + Number(o.total_bhd), 0)
   }
 
+  // Use service client for atomicity — bypasses RLS so the link-table insert
+  // and the rollback delete both succeed without permission edge cases.
+  const service = await createServiceClient()
+  const today   = new Date().toISOString().split('T')[0]
+
   const handover: DriverCashHandoverInsert = {
     driver_id:  user.id,
     shift_date: today,
@@ -235,11 +226,33 @@ export async function submitCashHandover(
     order_ids:  orderIds,
   }
 
-  const { error } = await supabase
+  const { data: row, error: hErr } = await service
     .from('driver_cash_handovers')
     .insert(handover)
+    .select('id')
+    .single()
 
-  if (error) return { success: false, error: error.message }
+  if (hErr || !row) return { success: false, error: hErr?.message ?? 'Insert failed' }
+
+  // Link each order to this handover — UNIQUE(order_id) on the link table
+  // prevents the same order from appearing in two handovers (23505 error).
+  if (orderIds.length > 0) {
+    const links = orderIds.map(oid => ({ handover_id: row.id, order_id: oid }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: linkErr } = await (service as any)
+      .from('driver_cash_handover_orders')
+      .insert(links)
+
+    if (linkErr) {
+      // Rollback the parent row so it doesn't appear as an empty phantom handover.
+      await service.from('driver_cash_handovers').delete().eq('id', row.id)
+      if (linkErr.code === '23505') {
+        return { success: false, error: 'Some orders are already settled in another handover' }
+      }
+      return { success: false, error: linkErr.message }
+    }
+  }
+
   return { success: true, totalCash }
 }
 

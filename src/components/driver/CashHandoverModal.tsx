@@ -5,15 +5,15 @@ import { submitCashHandover } from '@/app/[locale]/driver/actions'
 import type { DriverOrder } from '@/lib/supabase/custom-types'
 
 interface Props {
-  deliveredOrders: DriverOrder[]
-  isRTL:           boolean
-  onClose:         () => void
-  onConfirmed:     () => void
+  cashOrders:  DriverOrder[]
+  isPartial?:  boolean
+  isRTL:       boolean
+  onClose:     () => void
+  onConfirmed: () => void
 }
 
-export default function CashHandoverModal({ deliveredOrders, isRTL, onClose, onConfirmed }: Props) {
-  const cashOrders = deliveredOrders.filter(o => o.payments?.method === 'cash')
-  const totalCash  = cashOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
+export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClose, onConfirmed }: Props) {
+  const totalCash = cashOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
 
   const [loading,  setLoading]  = useState(false)
   const [done,     setDone]     = useState(false)
@@ -48,7 +48,10 @@ export default function CashHandoverModal({ deliveredOrders, isRTL, onClose, onC
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-brand-border">
           <h2 className={`font-black text-base text-brand-text ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
-            {isRTL ? 'تسليم النقد' : 'Cash Handover'}
+            {isRTL
+              ? (isPartial ? 'تسليم نقد جزئي' : 'تسليم النقد')
+              : (isPartial ? 'Partial Cash Handover' : 'Cash Handover')
+            }
           </h2>
           <button
             type="button"
