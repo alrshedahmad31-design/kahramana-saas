@@ -62,7 +62,7 @@ export default async function DriverPage({ params }: Props) {
     .eq('assigned_driver_id', user.id)
     .order('created_at', { ascending: true })
 
-  const [{ data: readyRaw }, { data: inTransitRaw }, { data: completedRaw }] =
+  const [{ data: readyRaw }, { data: inTransitRaw }, { data: completedRaw }, { data: timeEntriesRaw }] =
     await Promise.all([
       readyQ,
       transitQ,
@@ -73,7 +73,19 @@ export default async function DriverPage({ params }: Props) {
         .eq('assigned_driver_id', user.id)
         .gte('updated_at', todayStart.toISOString())
         .order('updated_at', { ascending: false }),
+      supabase
+        .from('time_entries')
+        .select('clock_in, clock_out, total_hours')
+        .eq('staff_id', user.id)
+        .gte('clock_in', todayStart.toISOString()),
     ])
+
+  // Sum closed entries + elapsed time for any currently open entry
+  const nowMs = Date.now()
+  const hoursToday = (timeEntriesRaw ?? []).reduce((sum, e) => {
+    if (e.clock_out) return sum + Number(e.total_hours ?? 0)
+    return sum + (nowMs - new Date(e.clock_in).getTime()) / 3_600_000
+  }, 0)
 
   const orders: DriverOrder[] = [
     ...((readyRaw     ?? []) as DriverOrder[]),
@@ -94,6 +106,7 @@ export default async function DriverPage({ params }: Props) {
       locale={locale}
       completedCount={completed.length}
       initialIsOnline={initialIsOnline}
+      initialHoursToday={hoursToday}
     />
   )
 }

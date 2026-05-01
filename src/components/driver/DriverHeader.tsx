@@ -8,11 +8,12 @@ interface Props {
   completedToday:    number
   totalRevenue?:     number
   avgDeliveryMins?:  number
+  hoursToday?:       number
   isRTL:             boolean
   clock:             string
 }
 
-export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute, completedToday, totalRevenue, avgDeliveryMins, isRTL, clock }: Props) {
+export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute, completedToday, totalRevenue, avgDeliveryMins, hoursToday, isRTL, clock }: Props) {
   return (
     <header className="shrink-0 border-b border-brand-border bg-brand-surface">
       {/* Main row */}
@@ -91,6 +92,16 @@ export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute
                 <span className={`text-xs text-brand-muted/70 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                   {isRTL ? 'د متوسط' : 'min avg'}
                 </span>
+              </div>
+            </>
+          )}
+
+          {hoursToday !== undefined && hoursToday > 0 && (
+            <>
+              <span className="w-px h-4 bg-brand-border shrink-0" />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <ClockMiniIcon />
+                <span className="font-satoshi font-black text-sm text-brand-muted tabular-nums">{hoursToday.toFixed(1)}h</span>
               </div>
             </>
           )}

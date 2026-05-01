@@ -23,6 +23,7 @@ interface Props {
   locale:                 string
   completedCount:         number
   initialIsOnline:        boolean
+  initialHoursToday:      number
 }
 
 function formatClock(): string {
@@ -35,7 +36,7 @@ function formatClock(): string {
 }
 
 export default function DriverDashboard({
-  initialOrders, initialCompletedOrders, branchId, branchMapsUrl, driverId, locale, completedCount: _completedCount, initialIsOnline,
+  initialOrders, initialCompletedOrders, branchId, branchMapsUrl, driverId, locale, completedCount: _completedCount, initialIsOnline, initialHoursToday,
 }: Props) {
   const isAr = locale === 'ar'
 
@@ -245,6 +246,7 @@ export default function DriverDashboard({
         completedToday={completedOrders.length}
         totalRevenue={totalRevenue}
         avgDeliveryMins={avgDeliveryMins}
+        hoursToday={initialHoursToday}
         isRTL={isAr}
         clock={clock}
       />

@@ -181,6 +181,52 @@ export async function toggleDriverAvailability(): Promise<DriverActionResult> {
     .eq('id', user.id)
 
   if (error) return { success: false, error: error.message }
+
+  // Mirror availability changes to time_entries for shift hours tracking.
+  const service = await createServiceClient()
+  const now     = new Date().toISOString()
+
+  if (next === 'online') {
+    // Close any orphaned open entry from a previous session first.
+    const { data: orphan } = await service
+      .from('time_entries')
+      .select('id, clock_in')
+      .eq('staff_id', user.id)
+      .is('clock_out', null)
+      .order('clock_in', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (orphan) {
+      const hours = (Date.now() - new Date(orphan.clock_in).getTime()) / 3_600_000
+      await service
+        .from('time_entries')
+        .update({ clock_out: now, total_hours: Number(hours.toFixed(2)) })
+        .eq('id', orphan.id)
+    }
+
+    // Open a new time entry for this shift.
+    await service.from('time_entries').insert({ staff_id: user.id, clock_in: now })
+  } else {
+    // Clock-out: close the most recent open entry.
+    const { data: open } = await service
+      .from('time_entries')
+      .select('id, clock_in')
+      .eq('staff_id', user.id)
+      .is('clock_out', null)
+      .order('clock_in', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (open) {
+      const hours = (Date.now() - new Date(open.clock_in).getTime()) / 3_600_000
+      await service
+        .from('time_entries')
+        .update({ clock_out: now, total_hours: Number(hours.toFixed(2)) })
+        .eq('id', open.id)
+    }
+  }
+
   return { success: true }
 }
 
