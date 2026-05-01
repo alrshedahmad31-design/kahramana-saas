@@ -93,7 +93,10 @@
       "Bash(npm i *)",
       "Bash(supabase --version)",
       "Bash(supabase db *)",
-      "Bash(supabase gen *)"
+      "Bash(supabase gen *)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\supabase\\\\migrations\" -File)",
+      "Bash(Select-Object Name)",
+      "Bash(Sort-Object Name)"
     ]
   }
 }
