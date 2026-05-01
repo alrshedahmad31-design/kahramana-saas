@@ -12,16 +12,22 @@ interface Props {
   searchParams: Promise<Record<string, string | undefined>>
 }
 
+export type ReconciliationStatus = 'pending' | 'verified' | 'discrepancy' | 'disputed'
+
 export type CashHandoverRow = {
-  id:          string
-  driver_id:   string
-  driver_name: string
-  shift_date:  string
-  total_cash:  number
-  order_ids:   string[]
-  handed_at:   string
-  verified:    boolean
-  notes:       string | null
+  id:                    string
+  driver_id:             string
+  driver_name:           string
+  shift_date:            string
+  total_cash:            number
+  order_ids:             string[]
+  handed_at:             string
+  verified:              boolean
+  notes:                 string | null
+  reconciliation_status: ReconciliationStatus
+  actual_received:       number | null
+  discrepancy:           number | null
+  manager_notes:         string | null
 }
 
 export default async function CashReconciliationPage({ params, searchParams: _searchParams }: Props) {
@@ -46,6 +52,7 @@ export default async function CashReconciliationPage({ params, searchParams: _se
     .from('driver_cash_handovers')
     .select(`
       id, driver_id, shift_date, total_cash, order_ids, handed_at, verified, notes,
+      reconciliation_status, actual_received, discrepancy, manager_notes,
       staff_basic!driver_id(name)
     `)
     .order('handed_at', { ascending: false })
@@ -60,17 +67,25 @@ export default async function CashReconciliationPage({ params, searchParams: _se
     handed_at: string
     verified: boolean
     notes: string | null
+    reconciliation_status: string | null
+    actual_received: number | null
+    discrepancy: number | null
+    manager_notes: string | null
     staff_basic: { name: string } | null
   }) => ({
-    id:          r.id,
-    driver_id:   r.driver_id,
-    driver_name: r.staff_basic?.name ?? r.driver_id.slice(0, 8),
-    shift_date:  r.shift_date,
-    total_cash:  Number(r.total_cash),
-    order_ids:   r.order_ids ?? [],
-    handed_at:   r.handed_at,
-    verified:    r.verified,
-    notes:       r.notes,
+    id:                    r.id,
+    driver_id:             r.driver_id,
+    driver_name:           r.staff_basic?.name ?? r.driver_id.slice(0, 8),
+    shift_date:            r.shift_date,
+    total_cash:            Number(r.total_cash),
+    order_ids:             r.order_ids ?? [],
+    handed_at:             r.handed_at,
+    verified:              r.verified,
+    notes:                 r.notes,
+    reconciliation_status: (r.reconciliation_status ?? 'pending') as ReconciliationStatus,
+    actual_received:       r.actual_received != null ? Number(r.actual_received) : null,
+    discrepancy:           r.discrepancy != null ? Number(r.discrepancy) : null,
+    manager_notes:         r.manager_notes,
   }))
 
   return (
