@@ -121,9 +121,16 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
 
       {/* Header row */}
       <div className="flex items-center justify-between gap-2 px-4 pt-3.5 pb-2">
-        <span className="font-satoshi font-black text-base text-brand-text tabular-nums tracking-tight">
-          #{shortId}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-satoshi font-black text-base text-brand-text tabular-nums tracking-tight">
+            #{shortId}
+          </span>
+          {order.order_type === 'pickup' && (
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded bg-brand-success/20 text-brand-success border border-brand-success/30 ${font}`}>
+              {isAr ? 'استلام' : 'Pickup'}
+            </span>
+          )}
+        </div>
         <span className={`text-[10px] tabular-nums ${elapsed >= 20 ? 'text-brand-error font-black' : 'text-brand-muted'} ${font}`}>
           ⏱ {timeAgo}
         </span>

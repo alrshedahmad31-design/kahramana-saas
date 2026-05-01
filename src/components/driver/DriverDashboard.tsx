@@ -306,7 +306,7 @@ export default function DriverDashboard({
                 dotColor="bg-brand-muted"
                 pulse={false}
               />
-              {completedOrders.some(o => o.payments?.[0]?.method === 'cash') && (
+              {completedOrders.some(o => o.payments?.method === 'cash') && (
                 <button
                   type="button"
                   onClick={() => setShowHandover(true)}

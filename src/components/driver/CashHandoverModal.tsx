@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function CashHandoverModal({ deliveredOrders, isRTL, onClose, onConfirmed }: Props) {
-  const cashOrders = deliveredOrders.filter(o => o.payments?.[0]?.method === 'cash')
+  const cashOrders = deliveredOrders.filter(o => o.payments?.method === 'cash')
   const totalCash  = cashOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
 
   const [loading,  setLoading]  = useState(false)

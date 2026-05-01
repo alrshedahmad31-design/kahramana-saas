@@ -8,8 +8,8 @@ interface Props {
 }
 
 export default function DriverCashSummary({ orders, isRTL }: Props) {
-  const cashOrders    = orders.filter(o => o.payments?.[0]?.method === 'cash')
-  const prepaidOrders = orders.filter(o => o.payments?.[0]?.method && o.payments[0].method !== 'cash')
+  const cashOrders    = orders.filter(o => o.payments?.method === 'cash')
+  const prepaidOrders = orders.filter(o => o.payments?.method && o.payments.method !== 'cash')
 
   const cashTotal    = cashOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
   const prepaidTotal = prepaidOrders.reduce((s, o) => s + Number(o.total_bhd), 0)

@@ -101,7 +101,7 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
   const branchAddr = branch ? (isRTL ? branch.addressAr : branch.addressEn) : null
 
   // Payment
-  const paymentEntry = order.payments?.[0]
+  const paymentEntry = order.payments
   const paymentInfo  = paymentEntry ? PAYMENT_LABEL[paymentEntry.method] : null
 
   // Address & notes

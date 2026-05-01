@@ -86,14 +86,26 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
   const user = await getSession()
   if (!user || user.role !== 'driver') return { success: false, error: 'Unauthorized' }
 
+  // Verify the order is in the right state and belongs to this driver
   const supabase = await createClient()
-  const now      = new Date().toISOString()
+  const { data: order, error: fetchError } = await supabase
+    .from('orders')
+    .select('id, status, assigned_driver_id')
+    .eq('id', orderId)
+    .single()
 
-  const { error } = await supabase
+  if (fetchError || !order) return { success: false, error: 'Order not found' }
+  if (order.status !== 'out_for_delivery') return { success: false, error: 'Unexpected order state' }
+  if (order.assigned_driver_id !== user.id) return { success: false, error: 'Unauthorized' }
+
+  // Use service client so RLS edge cases don't silently drop the update
+  const service = await createServiceClient()
+  const now     = new Date().toISOString()
+
+  const { error } = await service
     .from('orders')
     .update({ arrived_at: now, updated_at: now })
     .eq('id', orderId)
-    .eq('status', 'out_for_delivery')
     .eq('assigned_driver_id', user.id)
 
   if (error) return { success: false, error: error.message }

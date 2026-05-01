@@ -20,12 +20,18 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
   const [selected, setSelected] = useState<string | null>(null)
   const [loading,  setLoading]  = useState(false)
   const [done,     setDone]     = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
 
   const available = drivers.filter(d => d.status === 'available' || d.status === 'returning')
 
   async function handleAssign() {
     if (!selected || !order) return
     if (order.order_type === 'pickup') return
+    if (order.status !== 'ready') {
+      setError(isAr ? 'الطلب غير جاهز — انتظر حتى يصبح جاهزاً' : 'Order not ready — wait until it reaches "Ready" status')
+      return
+    }
+    setError(null)
     setLoading(true)
     const now = new Date().toISOString()
     await supabase
@@ -191,8 +197,20 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
           padding:      '14px 20px',
           borderTop:    `1px solid ${DV.border}`,
           display:      'flex',
+          flexDirection:'column',
           gap:          '8px',
         }}>
+          {error && (
+            <div style={{
+              padding: '8px 12px', borderRadius: '8px',
+              background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)',
+              color: '#ef4444', fontSize: '12px', fontWeight: 600,
+              fontFamily: 'IBM Plex Sans Arabic, sans-serif',
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '8px' }}>
           <button
             type="button"
             onClick={onClose}
@@ -241,6 +259,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
               'تأكيد التعيين'
             )}
           </button>
+          </div>
         </div>
       </motion.div>
     </div>

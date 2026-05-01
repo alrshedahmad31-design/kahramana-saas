@@ -139,7 +139,7 @@ export default function OrdersClient({
     let q = supabase
       .from('orders')
       .select(
-        'id, customer_name, customer_phone, branch_id, status, total_bhd, created_at, updated_at, notes, customer_notes, delivery_address, delivery_building, delivery_street, order_items(name_ar, name_en, quantity, selected_size, selected_variant)',
+        'id, customer_name, customer_phone, branch_id, status, order_type, total_bhd, created_at, updated_at, notes, customer_notes, delivery_address, delivery_building, delivery_street, order_items(name_ar, name_en, quantity, selected_size, selected_variant)',
         { count: 'exact' },
       )
       .order('created_at', { ascending: false })
@@ -178,6 +178,12 @@ export default function OrdersClient({
       return
     }
     fetchOrders()
+  }, [fetchOrders])
+
+  // Polling fallback — ensures updates even when realtime fails
+  useEffect(() => {
+    const id = setInterval(fetchOrders, 5_000)
+    return () => clearInterval(id)
   }, [fetchOrders])
 
   // Realtime subscription — always active regardless of initial data

@@ -21,6 +21,7 @@ export interface OrderCardData {
   status:          OrderStatus
   total_bhd:       number
   created_at:      string
+  order_type?:     string | null
   notes?:          string | null
   customer_notes?: string | null
   delivery_address?:  string | null
