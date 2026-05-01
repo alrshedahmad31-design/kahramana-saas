@@ -14,7 +14,7 @@
     "build_pages": 781,
     "git_tag": "v1.5-enterprise-coupons",
     "pending_db_migrations": [],
-    "migration_status": "ALL 28 APPLIED — including 028_security_lockdown on 2026-04-30",
+    "migration_status": "ALL 33 APPLIED — including 033_order_type_and_driver_earnings_fix on 2026-05-01",
     "applied_db_migrations": [
       "019_report_audit_log.sql — applied 2026-04-29",
       "020_restaurant_profile.sql — applied 2026-04-29",

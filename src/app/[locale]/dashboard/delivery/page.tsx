@@ -30,13 +30,14 @@ export default async function DeliveryPage({ params }: Props) {
   let activeOrdersQuery = supabase
     .from('orders')
     .select(`
-      id, status, customer_name, customer_phone,
+      id, status, order_type, customer_name, customer_phone,
       branch_id, notes, customer_notes, source, total_bhd, created_at, updated_at,
       assigned_driver_id, delivery_address, expected_delivery_time,
       delivery_lat, delivery_lng,
       order_items(id)
     `)
     .in('status', ['accepted', 'preparing', 'ready', 'out_for_delivery'])
+    .neq('order_type', 'pickup')
     .order('created_at', { ascending: true })
 
   if (branchScope) activeOrdersQuery = activeOrdersQuery.eq('branch_id', branchScope)
@@ -118,6 +119,7 @@ export default async function DeliveryPage({ params }: Props) {
       id:               o.id,
       order_number:     o.id.slice(0, 8).toUpperCase(),
       status:           o.status as DeliveryOrder['status'],
+      order_type:       (o.order_type as DeliveryOrder['order_type']) ?? 'delivery',
       customer_name:    o.customer_name,
       customer_phone:   o.customer_phone,
       customer_address:        o.delivery_address ?? null,
