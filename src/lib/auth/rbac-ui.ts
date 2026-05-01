@@ -21,6 +21,10 @@ export type DashboardSection =
   | 'inventory'
   | 'inventory_ingredients'
   | 'inventory_recipes'
+  | 'inventory_waste'
+  | 'inventory_count'
+  | 'inventory_purchases'
+  | 'inventory_transfers'
 
 const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   home:             null,  // unrestricted — dashboard overview for all staff
@@ -39,6 +43,10 @@ const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   inventory:              ['owner', 'general_manager', 'branch_manager', 'inventory_manager'],
   inventory_ingredients:  ['owner', 'general_manager', 'branch_manager', 'inventory_manager', 'kitchen'],
   inventory_recipes:      ['owner', 'general_manager', 'branch_manager', 'inventory_manager', 'kitchen'],
+  inventory_waste:        ['owner', 'general_manager', 'branch_manager', 'kitchen', 'inventory_manager'],
+  inventory_count:        ['owner', 'general_manager', 'branch_manager', 'inventory_manager'],
+  inventory_purchases:    ['owner', 'general_manager', 'branch_manager', 'inventory_manager'],
+  inventory_transfers:    ['owner', 'general_manager', 'branch_manager', 'inventory_manager'],
 }
 
 export function canAccessSection(

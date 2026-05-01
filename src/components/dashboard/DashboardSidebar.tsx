@@ -235,6 +235,10 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     { key: 'inv-recipes',    href: `${prefix}/dashboard/inventory/recipes`,    label: isAr ? 'الوصفات' : 'Recipes' },
     { key: 'inv-stock',      href: `${prefix}/dashboard/inventory/stock`,      label: isAr ? 'المخزون' : 'Stock' },
     { key: 'inv-par',        href: `${prefix}/dashboard/inventory/par-levels`, label: isAr ? 'مستويات Par' : 'Par Levels' },
+    { key: 'inv-waste',     href: `${prefix}/dashboard/inventory/waste`,     label: isAr ? 'الهدر' : 'Waste' },
+    { key: 'inv-count',     href: `${prefix}/dashboard/inventory/count`,     label: isAr ? 'الجرد' : 'Count' },
+    { key: 'inv-purchases', href: `${prefix}/dashboard/inventory/purchases`, label: isAr ? 'المشتريات' : 'Purchases' },
+    { key: 'inv-transfers', href: `${prefix}/dashboard/inventory/transfers`, label: isAr ? 'التحويلات' : 'Transfers' },
     { key: 'inv-import',     href: `${prefix}/dashboard/inventory/import`,     label: isAr ? 'استيراد' : 'Import' },
   ]
 
