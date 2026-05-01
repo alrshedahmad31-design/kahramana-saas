@@ -95,6 +95,15 @@ function LogoutIcon() {
   )
 }
 
+function PaymentsIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M1 10h22" />
+    </svg>
+  )
+}
+
 function ScheduleIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -146,6 +155,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     { key: 'staff',     href: `${prefix}/dashboard/staff`,      icon: <StaffIcon />,     section: 'staff' },
     { key: 'coupons',   href: `${prefix}/dashboard/coupons`,    icon: <CouponsIcon />,   section: 'coupons' },
     { key: 'analytics', href: `${prefix}/dashboard/analytics`,  icon: <AnalyticsIcon />, section: 'analytics' },
+    { key: 'payments',  href: `${prefix}/dashboard/payments`,   icon: <PaymentsIcon />,  section: 'payments' },
     { key: 'reports',   href: `${prefix}/dashboard/reports`,    icon: <ReportsIcon />,   section: 'reports' },
     { key: 'schedule',  href: `${prefix}/dashboard/schedule`,   icon: <ScheduleIcon />,  section: 'schedule' },
     { key: 'settings',  href: `${prefix}/dashboard/settings`,   icon: <SettingsIcon />,  section: 'settings' },
@@ -170,6 +180,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     staff:     t('staff'),
     coupons:   t('coupons'),
     analytics: t('analytics'),
+    payments:  t('payments'),
     reports:   t('reports'),
     schedule:  t('schedule'),
     settings:  t('settings'),

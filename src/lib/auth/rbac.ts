@@ -193,3 +193,9 @@ export function canManageSettings(user: AuthUser): boolean {
   if (!user.role) return false
   return isGlobalAdmin(user)
 }
+
+// Payment records: branch_manager and above
+export function canAccessPayments(user: AuthUser): boolean {
+  if (!user.role) return false
+  return rankOf(user.role) >= rankOf('branch_manager')
+}

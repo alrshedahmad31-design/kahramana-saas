@@ -12,6 +12,7 @@ export type DashboardSection =
   | 'staff'
   | 'coupons'
   | 'analytics'
+  | 'payments'
   | 'reports'
   | 'schedule'
   | 'settings'
@@ -24,6 +25,7 @@ const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   staff:     ['owner', 'general_manager', 'branch_manager'],
   coupons:   ['owner', 'general_manager', 'branch_manager', 'marketing'],
   analytics: ['owner', 'general_manager', 'branch_manager'],
+  payments:  ['owner', 'general_manager', 'branch_manager'],
   reports:   ['owner', 'general_manager'],
   schedule:  ['owner', 'general_manager', 'branch_manager'],
   settings:  ['owner', 'general_manager'],
