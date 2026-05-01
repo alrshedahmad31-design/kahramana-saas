@@ -1,8 +1,19 @@
 import Link from 'next/link'
+import {
+  canAccessAnalytics,
+  canManageCoupons,
+  canAccessStaffPage,
+  canManageSchedule,
+  canAccessReports,
+  canAccessKDS,
+} from '@/lib/auth/rbac'
+import type { StaffRole } from '@/lib/supabase/custom-types'
+import type { AuthUser } from '@/lib/auth/session'
 
 interface Props {
-  prefix: string
-  isRTL:  boolean
+  prefix:   string
+  isRTL:    boolean
+  userRole: StaffRole | null
 }
 
 interface Action {
@@ -13,52 +24,67 @@ interface Action {
   accent?: boolean
 }
 
-export default function QuickActionsPanel({ prefix, isRTL }: Props) {
-  const actions: Action[] = [
+function stubUser(role: StaffRole | null): AuthUser {
+  return { id: '', email: '', role, branch_id: null, name: null }
+}
+
+export default function QuickActionsPanel({ prefix, isRTL, userRole }: Props) {
+  const u = stubUser(userRole)
+
+  const allActions: (Action & { show: boolean })[] = [
     {
       labelEn: 'View Orders',
       labelAr: 'الطلبات',
-      href: `${prefix}/dashboard/orders`,
-      icon: <OrdersIcon />,
-      accent: true,
+      href:    `${prefix}/dashboard/orders`,
+      icon:    <OrdersIcon />,
+      accent:  true,
+      show:    true, // every dashboard user can view orders
     },
     {
       labelEn: 'Kitchen Display',
       labelAr: 'شاشة المطبخ',
-      href: `${prefix}/dashboard/kds`,
-      icon: <KDSIcon />,
+      href:    `${prefix}/dashboard/kds`,
+      icon:    <KDSIcon />,
+      show:    canAccessKDS(u),
     },
     {
       labelEn: 'Analytics',
       labelAr: 'التحليلات',
-      href: `${prefix}/dashboard/analytics`,
-      icon: <AnalyticsIcon />,
+      href:    `${prefix}/dashboard/analytics`,
+      icon:    <AnalyticsIcon />,
+      show:    canAccessAnalytics(u),
     },
     {
       labelEn: 'Coupons',
       labelAr: 'الكوبونات',
-      href: `${prefix}/dashboard/coupons`,
-      icon: <CouponIcon />,
+      href:    `${prefix}/dashboard/coupons`,
+      icon:    <CouponIcon />,
+      show:    canManageCoupons(u),
     },
     {
       labelEn: 'Staff',
       labelAr: 'الموظفون',
-      href: `${prefix}/dashboard/staff`,
-      icon: <StaffIcon />,
+      href:    `${prefix}/dashboard/staff`,
+      icon:    <StaffIcon />,
+      show:    canAccessStaffPage(u),
     },
     {
       labelEn: 'Schedule',
       labelAr: 'الجدول',
-      href: `${prefix}/dashboard/schedule`,
-      icon: <ScheduleIcon />,
+      href:    `${prefix}/dashboard/schedule`,
+      icon:    <ScheduleIcon />,
+      show:    canManageSchedule(u),
     },
     {
       labelEn: 'Reports',
       labelAr: 'التقارير',
-      href: `${prefix}/dashboard/reports`,
-      icon: <ReportsIcon />,
+      href:    `${prefix}/dashboard/reports`,
+      icon:    <ReportsIcon />,
+      show:    canAccessReports(u),
     },
   ]
+
+  const actions = allActions.filter((a) => a.show)
 
   return (
     <div className="bg-brand-surface border border-brand-border rounded-xl p-5">

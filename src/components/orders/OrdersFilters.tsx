@@ -15,13 +15,14 @@ export type StatusFilter =
 export type DateFilter   = 'all' | 'today' | 'yesterday' | 'last7' | 'last30'
 
 interface Props {
-  search:       string
-  statusFilter: StatusFilter
-  branchFilter: string
-  dateFilter:   DateFilter
-  totalCount:   number
+  search:        string
+  statusFilter:  StatusFilter
+  branchFilter:  string
+  dateFilter:    DateFilter
+  totalCount:    number
   filteredTotal: number
-  isRTL:        boolean
+  isRTL:         boolean
+  userBranchId:  string | null
   onSearch:        (v: string) => void
   onStatusChange:  (v: StatusFilter) => void
   onBranchChange:  (v: string) => void
@@ -49,7 +50,7 @@ const DATE_OPTIONS: { key: DateFilter; labelEn: string; labelAr: string }[] = [
 
 export default function OrdersFilters({
   search, statusFilter, branchFilter, dateFilter,
-  totalCount, filteredTotal, isRTL,
+  totalCount, filteredTotal, isRTL, userBranchId,
   onSearch, onStatusChange, onBranchChange, onDateChange,
 }: Props) {
   const t = useTranslations('dashboard')
@@ -102,23 +103,25 @@ export default function OrdersFilters({
           <ChevronIcon />
         </div>
 
-        {/* Branch */}
-        <div className="relative">
-          <select
-            value={branchFilter}
-            onChange={(e) => onBranchChange(e.target.value)}
-            className={selectCls}
-            dir={isRTL ? 'rtl' : 'ltr'}
-          >
-            <option value="all">{t('allBranches')}</option>
-            {BRANCH_LIST.map((b) => (
-              <option key={b.id} value={b.id}>
-                {isRTL ? b.nameAr : b.nameEn}
-              </option>
-            ))}
-          </select>
-          <ChevronIcon />
-        </div>
+        {/* Branch — only shown to global admins who can switch branches */}
+        {!userBranchId && (
+          <div className="relative">
+            <select
+              value={branchFilter}
+              onChange={(e) => onBranchChange(e.target.value)}
+              className={selectCls}
+              dir={isRTL ? 'rtl' : 'ltr'}
+            >
+              <option value="all">{t('allBranches')}</option>
+              {BRANCH_LIST.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {isRTL ? b.nameAr : b.nameEn}
+                </option>
+              ))}
+            </select>
+            <ChevronIcon />
+          </div>
+        )}
 
         {/* Date */}
         <div className="relative">

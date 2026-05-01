@@ -40,7 +40,7 @@ export default async function DashboardHomePage({ params }: Props) {
       <div className="grid grid-cols-1 xl:grid-cols-[240px_1fr_272px] gap-5">
 
         {/* ── Column 1: Quick Actions ─────────────────────────────────────────── */}
-        <QuickActionsPanel prefix={prefix} isRTL={isAr} />
+        <QuickActionsPanel prefix={prefix} isRTL={isAr} userRole={user.role} />
 
         {/* ── Column 2: Live Orders + Top Sellers ─────────────────────────────── */}
         <div className="flex flex-col gap-5">

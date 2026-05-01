@@ -46,9 +46,11 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
   if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
   if (!canAccessAnalytics(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
-  const range    = buildDateRange(sp.range ?? '7d', sp.from, sp.to)
-  const prev     = buildPrevRange(range)
-  const branchId = canAccessAnalytics(user) && sp.branch ? sp.branch : (user.branch_id ?? undefined)
+  const range        = buildDateRange(sp.range ?? '7d', sp.from, sp.to)
+  const prev         = buildPrevRange(range)
+  // Only owner/GM may switch branches via URL param; branch_manager is always locked to their own branch
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  const branchId      = isGlobalAdmin && sp.branch ? sp.branch : (user.branch_id ?? undefined)
 
   const [metrics, dailySales, topItems, hourly, branches, secondary] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),

@@ -90,6 +90,7 @@ type ViewMode = 'card' | 'table' | 'kanban'
 
 interface Props {
   userRole:             StaffRole | null
+  userBranchId:         string | null
   initialOrders:        OrderCardData[]
   initialTotalCount:    number
   initialFilteredTotal: number
@@ -97,6 +98,7 @@ interface Props {
 
 export default function OrdersClient({
   userRole,
+  userBranchId,
   initialOrders,
   initialTotalCount,
   initialFilteredTotal,
@@ -143,18 +145,21 @@ export default function OrdersClient({
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1)
 
-    if (statuses)               q = q.in('status', statuses)
-    if (branchFilter !== 'all') q = q.eq('branch_id', branchFilter)
-    if (search.trim())          q = q.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%,id.ilike.%${search.trim()}%`)
-    if (range?.from)            q = q.gte('created_at', range.from)
-    if (range?.to)              q = q.lt('created_at', range.to)
+    // Branch: userBranchId locks scope; global admins use the dropdown filter
+    const activeBranch = userBranchId ?? (branchFilter !== 'all' ? branchFilter : null)
+
+    if (statuses)      q = q.in('status', statuses)
+    if (activeBranch)  q = q.eq('branch_id', activeBranch)
+    if (search.trim()) q = q.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%,id.ilike.%${search.trim()}%`)
+    if (range?.from)   q = q.gte('created_at', range.from)
+    if (range?.to)     q = q.lt('created_at', range.to)
 
     let tq = supabase.from('orders').select('total_bhd')
-    if (statuses)               tq = tq.in('status', statuses)
-    if (branchFilter !== 'all') tq = tq.eq('branch_id', branchFilter)
-    if (search.trim())          tq = tq.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%`)
-    if (range?.from)            tq = tq.gte('created_at', range.from)
-    if (range?.to)              tq = tq.lt('created_at', range.to)
+    if (statuses)      tq = tq.in('status', statuses)
+    if (activeBranch)  tq = tq.eq('branch_id', activeBranch)
+    if (search.trim()) tq = tq.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%`)
+    if (range?.from)   tq = tq.gte('created_at', range.from)
+    if (range?.to)     tq = tq.lt('created_at', range.to)
 
     const [{ data, count }, { data: totals }] = await Promise.all([q, tq])
 
@@ -227,7 +232,7 @@ export default function OrdersClient({
             type="button"
             onClick={toggleMute}
             title={isMuted ? (isAr ? 'تشغيل الصوت' : 'Unmute') : (isAr ? 'كتم الصوت' : 'Mute')}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors duration-150 ${
+            className={`w-11 h-11 flex items-center justify-center rounded-lg border transition-colors duration-150 ${
               isMuted
                 ? 'bg-brand-surface-2 text-brand-muted border-brand-border'
                 : 'bg-brand-surface-2 text-brand-gold border-brand-gold/40 hover:border-brand-gold'
@@ -265,6 +270,7 @@ export default function OrdersClient({
         totalCount={totalCount}
         filteredTotal={filteredTotal}
         isRTL={isAr}
+        userBranchId={userBranchId}
         onSearch={handleFilterChange(setSearch)}
         onStatusChange={handleFilterChange(setStatusFilter)}
         onBranchChange={handleFilterChange(setBranchFilter)}
@@ -340,7 +346,50 @@ export default function OrdersClient({
       {/* ── TABLE VIEW ── */}
       {view === 'table' && !loading && orders.length > 0 && (
         <div className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
+
+          {/* Mobile: stacked row-cards (hidden on sm+) */}
+          <div className="sm:hidden divide-y divide-brand-border">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="px-4 py-3 flex items-start justify-between gap-3 active:bg-brand-surface-2 cursor-pointer"
+                onClick={() => setSelectedId(order.id)}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className={`font-medium text-sm text-brand-text truncate ${font}`}>
+                    {order.customer_name ?? t('customerGuest')}
+                  </p>
+                  <p className="font-satoshi text-xs text-brand-muted tabular-nums">
+                    #{order.id.slice(-8).toUpperCase()}
+                    {order.customer_phone && <span dir="ltr"> · {order.customer_phone}</span>}
+                  </p>
+                  <p className="font-satoshi text-xs text-brand-muted/70 tabular-nums mt-0.5">
+                    {new Date(order.created_at).toLocaleString('en-BH', {
+                      month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <span className="font-satoshi font-bold text-sm text-brand-gold tabular-nums">
+                    {Number(order.total_bhd).toFixed(3)} {tC('currency')}
+                  </span>
+                  <StatusBadge status={order.status} label={tS(order.status)} />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <OrderStatusSelect
+                      orderId={order.id}
+                      currentStatus={order.status}
+                      userRole={userRole}
+                      onStatusChange={(next) => handleStatusChange(order.id, next)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: full table (hidden on mobile) */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-border">
@@ -406,14 +455,14 @@ export default function OrdersClient({
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-brand-border">
               <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}
-                className="px-3 py-1.5 rounded-lg border border-brand-border font-satoshi text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 min-h-[36px]">
+                className="px-3 py-2 rounded-lg border border-brand-border font-satoshi text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 min-h-[44px]">
                 {t('pagination.previous')}
               </button>
               <span className="font-satoshi text-sm text-brand-muted">
                 {t('pagination.page', { current: page, total: totalPages })}
               </span>
               <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-                className="px-3 py-1.5 rounded-lg border border-brand-border font-satoshi text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 min-h-[36px]">
+                className="px-3 py-2 rounded-lg border border-brand-border font-satoshi text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 min-h-[44px]">
                 {t('pagination.next')}
               </button>
             </div>
@@ -493,7 +542,7 @@ function ViewToggleButton({ active, onClick, children }: {
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-satoshi text-sm font-medium transition-colors duration-150 min-h-[36px]
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-satoshi text-sm font-medium transition-colors duration-150 min-h-[44px]
         ${active ? 'bg-brand-gold text-brand-black' : 'text-brand-muted hover:text-brand-text'}`}
     >
       {children}

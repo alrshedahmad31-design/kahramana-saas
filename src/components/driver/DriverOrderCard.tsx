@@ -544,7 +544,10 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
               <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 bg-red-500/15 border border-red-500/30">
                 <span className="text-red-400 text-base leading-none shrink-0">⚠️</span>
                 <span className={`text-sm text-red-400 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'فشل تحديث الطلب — حاول مجدداً' : 'Failed to update order — try again'}
+                  {actionError === 'Unexpected order state'
+                    ? (isRTL ? 'استُلم هذا الطلب من قِبل سائق آخر' : 'Another driver already took this order')
+                    : (isRTL ? 'فشل تحديث الطلب — حاول مجدداً' : 'Failed to update order — try again')
+                  }
                 </span>
               </div>
             )}

@@ -226,7 +226,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
             type="button"
             onClick={() => setMuted((m) => !m)}
             title={muted ? (isAr ? 'تشغيل' : 'Unmute') : (isAr ? 'كتم' : 'Mute')}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
+            className="w-11 h-11 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
           >
             {muted ? <MuteOnIcon /> : <MuteOffIcon />}
           </button>
@@ -236,7 +236,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
             type="button"
             onClick={() => setFullscreen((f) => !f)}
             title={fullscreen ? 'Exit' : 'Fullscreen'}
-            className="w-10 h-10 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
+            className="w-11 h-11 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
           >
             {fullscreen ? <ShrinkIcon /> : <ExpandIcon />}
           </button>
@@ -244,10 +244,13 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
       </header>
 
       {/* ── Three kanban columns ──────────────────────────────────────────── */}
-      <div className={`flex-1 min-h-0 grid grid-cols-3 ${isAr ? 'divide-x-reverse' : ''} divide-x divide-brand-border`}>
-        <KDSColumn status="accepted"  orders={accepted}  isRTL={isAr} onAdvance={handleAdvance} />
-        <KDSColumn status="preparing" orders={preparing} isRTL={isAr} onAdvance={handleAdvance} />
-        <KDSColumn status="ready"     orders={ready}     isRTL={isAr} onAdvance={handleAdvance} />
+      {/* On mobile: horizontal scroll with min-width so each column stays readable */}
+      <div className="flex-1 min-h-0 overflow-x-auto">
+        <div className={`h-full grid grid-cols-3 min-w-[540px] ${isAr ? 'divide-x-reverse' : ''} divide-x divide-brand-border`}>
+          <KDSColumn status="accepted"  orders={accepted}  isRTL={isAr} onAdvance={handleAdvance} />
+          <KDSColumn status="preparing" orders={preparing} isRTL={isAr} onAdvance={handleAdvance} />
+          <KDSColumn status="ready"     orders={ready}     isRTL={isAr} onAdvance={handleAdvance} />
+        </div>
       </div>
 
       {/* ── Empty state ───────────────────────────────────────────────────── */}
