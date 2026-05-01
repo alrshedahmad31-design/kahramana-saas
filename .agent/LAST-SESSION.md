@@ -1,23 +1,5 @@
 # LAST-SESSION.md — Session 32
-> Date: 2026-05-01 | Status: `6_critical_bugs_fixed` | Branch: `master @ cd1f476`
-
----
-
-## ⚠️ حرج — يجب تطبيق Migration 033 على الإنتاج
-
-**كل طلب جديد على الموقع يفشل.** عمود `order_type` غير موجود في الإنتاج.
-
-```sql
--- Supabase Dashboard → SQL Editor
-ALTER TABLE orders
-  ADD COLUMN IF NOT EXISTS order_type TEXT NOT NULL DEFAULT 'delivery'
-  CHECK (order_type IN ('delivery', 'pickup'));
-CREATE INDEX IF NOT EXISTS idx_orders_order_type ON orders(order_type);
-ALTER TABLE driver_earnings DROP CONSTRAINT IF EXISTS driver_earnings_driver_id_fkey;
-ALTER TABLE driver_earnings
-  ADD CONSTRAINT driver_earnings_driver_id_fkey
-  FOREIGN KEY (driver_id) REFERENCES staff_basic(id) ON DELETE CASCADE;
-```
+> Date: 2026-05-01 | Status: `6_bugs_fixed_migration_033_live` | Branch: `master @ f8ff21c`
 
 ---
 
@@ -56,25 +38,34 @@ ALTER TABLE driver_earnings
 
 ---
 
+### Migration 033 مُطبَّقة على الإنتاج ✅ — Commit `f8ff21c`
+- `delivery/page.tsx`: إضافة `order_type` للـ SELECT
+- `.neq('order_type', 'pickup')`: إخفاء طلبات الاستلام من لوحة التوصيل
+- mapping: `order_type` مُضافة لـ `DeliveryOrder`
+- `phase-state.json`: `migration_status = ALL 33 APPLIED`
+
+---
+
 ## حالة النظام عند الإغلاق
 
 | العنصر | الحالة |
 |--------|--------|
-| Git | master @ `cd1f476` |
+| Git | master @ `f8ff21c` — جاهز للدفع |
 | TypeScript | 0 أخطاء ✅ |
-| Build | نجح بدون أخطاء ✅ |
-| **Migration 033** | **⚠️ غير مُطبَّقة في الإنتاج — Checkout معطَّل** |
-| Migration 031 | مُطبَّقة ✅ |
-| Migration 032 | مُطبَّقة ✅ |
+| Build | نجح ✅ |
+| Migration 029–033 | مُطبَّقة على الإنتاج ✅ |
+| Checkout | يعمل ✅ |
+| Delivery Kanban | يُخفي طلبات الاستلام ✅ |
+| Driver payments | مُصلَّح (single object) ✅ |
 
 ---
 
 ## الخطوات المطلوبة من أحمد
 
-1. **🔴 أولاً وفوراً**: تطبيق Migration 033 في Supabase Dashboard (SQL أعلاه)
-2. **بعد Migration 033**: تأكد أن الطلبات الجديدة تعمل + شارة "استلام" تظهر في الكانبان
-3. **اختبار السائق**: تحقق من ظهور "💵 تسليم النقد" في لوحة السائق بعد تسليم طلب نقدي
-4. **`./update-context.sh "session 32: 6 critical bugs fixed — payments type, dispatch guard, polling, markDriverArrived"`**
+1. **اختبار Checkout**: تأكيد نجاح طلب جديد من الموقع
+2. **اختبار الكانبان**: تأكيد ظهور شارة "استلام" للطلبات pickup
+3. **اختبار السائق**: تحقق من ظهور شارة الدفع وزر "تسليم النقد" بعد تسليم طلب نقدي
+4. **`./update-context.sh "session 32: 6 critical bugs fixed + migration 033 applied, delivery kanban filters pickup orders"`**
 
 ---
 
