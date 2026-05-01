@@ -473,7 +473,9 @@ export default function DriverOrderCard({
                   <span className={`text-sm text-red-400 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                     {actionError === 'Unexpected order state'
                       ? (isRTL ? 'استُلم هذا الطلب من قِبل سائق آخر' : 'Another driver already took this order')
-                      : (isRTL ? 'فشل تحديث الطلب — حاول مجدداً' : 'Failed to update order — try again')
+                      : actionError === 'Must mark as arrived before delivering'
+                        ? (isRTL ? 'يجب تأكيد الوصول للزبون قبل التسليم' : 'Confirm arrival before delivery')
+                        : (isRTL ? 'فشل تحديث الطلب — حاول مجدداً' : 'Failed to update order — try again')
                     }
                   </span>
                 </div>

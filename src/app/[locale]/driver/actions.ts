@@ -28,7 +28,7 @@ export async function driverBumpOrder(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, status, branch_id, assigned_driver_id')
+    .select('id, status, branch_id, assigned_driver_id, arrived_at')
     .eq('id', orderId)
     .single()
 
@@ -47,6 +47,11 @@ export async function driverBumpOrder(
   // Ownership guard: when delivering, the order must already be assigned to this driver
   if (currentStatus === 'out_for_delivery' && order.assigned_driver_id !== user.id) {
     return { success: false, error: 'Unauthorized' }
+  }
+
+  // Arrival guard: driver must mark arrived before confirming delivery
+  if (currentStatus === 'out_for_delivery' && !order.arrived_at) {
+    return { success: false, error: 'Must mark as arrived before delivering' }
   }
 
   const nextStatus = currentStatus === 'ready' ? 'out_for_delivery' : 'delivered'
