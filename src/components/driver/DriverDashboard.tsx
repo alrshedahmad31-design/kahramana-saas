@@ -104,9 +104,9 @@ export default function DriverDashboard({
         picked_up_at, arrived_at, delivered_at,
         total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
+        cash_settled_at, cash_settlement_id,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
-        payments(method),
-        cash_settlement:driver_cash_handover_orders(handover_id)
+        payments(method)
       `)
       .eq('status', 'delivered')
       .eq('assigned_driver_id', driverId)
@@ -195,13 +195,13 @@ export default function DriverDashboard({
   const availableOrders = orders.filter((o) => o.status === 'ready')
   const totalRevenue    = completedOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
 
-  // Cash orders that haven't been included in any handover yet
+  // Cash orders that haven't been included in any handover yet (uses migration 037 column)
   const unsettledCashOrders = completedOrders.filter(
-    o => o.payments?.method === 'cash' && !o.cash_settlement?.length,
+    o => o.payments?.method === 'cash' && !o.cash_settled_at,
   )
   // True when at least one cash order is already settled (partial scenario)
   const hasSettledCash = completedOrders.some(
-    o => o.payments?.method === 'cash' && o.cash_settlement?.length,
+    o => o.payments?.method === 'cash' && o.cash_settled_at,
   )
 
   const avgDeliveryMins = completedOrders.length > 0

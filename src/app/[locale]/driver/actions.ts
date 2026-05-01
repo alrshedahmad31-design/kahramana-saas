@@ -258,6 +258,18 @@ export async function submitCashHandover(
     }
   }
 
+  // Stamp cash_settled_at + cash_settlement_id on each settled order (migration 037)
+  if (orderIds.length > 0) {
+    const now = new Date().toISOString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (service as any)
+      .from('orders')
+      .update({ cash_settled_at: now, cash_settlement_id: row.id })
+      .in('id', orderIds)
+      .eq('assigned_driver_id', user.id)
+      .is('cash_settled_at', null)
+  }
+
   return { success: true, totalCash }
 }
 
