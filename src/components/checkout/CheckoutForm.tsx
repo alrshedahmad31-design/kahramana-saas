@@ -5,7 +5,24 @@ import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { z } from 'zod'
-import { MapPin, Navigation, Loader2 } from 'lucide-react'
+import {
+  MapPin,
+  Navigation,
+  Loader2,
+  User,
+  Phone,
+  Truck,
+  Notebook,
+  Tag,
+  ShoppingCart,
+  CheckCircle,
+  Plus,
+  Minus,
+  Trash2,
+  Store,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/lib/cart'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import { buildOrderTrackingUrl, buildWhatsAppCheckoutLink } from '@/lib/whatsapp'
@@ -16,6 +33,43 @@ import { pointsToCredit, formatPoints, MIN_REDEMPTION } from '@/lib/loyalty/calc
 import { createOrderWithPoints } from '@/app/[locale]/checkout/actions'
 import type { CustomerProfileRow } from '@/lib/supabase/custom-types'
 import type { AppliedCoupon } from '@/components/checkout/CouponInput'
+import { tokens } from '@/lib/design-tokens'
+
+// ── Components ───────────────────────────────────────────────────────────────
+
+function StepHeader({
+  number,
+  title,
+  icon: Icon,
+  isAr
+}: {
+  number: string
+  title: string
+  icon: any
+  isAr: boolean
+}) {
+  return (
+    <div className={`flex items-center gap-3 mb-4 px-1 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-gold text-brand-black font-bold text-sm shrink-0">
+        {number}
+      </div>
+      <div className={`flex items-center gap-2 flex-1 ${isAr ? 'justify-start flex-row-reverse' : 'justify-start'}`}>
+        <Icon size={18} className="text-brand-gold" />
+        <h2 className={`text-sm sm:text-base font-bold text-brand-text uppercase tracking-wider ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+          {title}
+        </h2>
+      </div>
+    </div>
+  )
+}
+
+function SectionCard({ children, className = '' }: { children: React.ReactNode, className?: string }) {
+  return (
+    <div className={`bg-brand-surface border border-brand-border rounded-2xl p-5 mb-6 shadow-sm ${className}`}>
+      {children}
+    </div>
+  )
+}
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -307,27 +361,29 @@ export default function CheckoutForm({ customerProfile }: Props) {
     <form
       onSubmit={handleWASubmit}
       dir={isAr ? 'rtl' : 'ltr'}
-      className="max-w-2xl mx-auto px-4 sm:px-6 pt-6 pb-16"
+      className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-24"
     >
-      <h1
-        className={`text-2xl sm:text-3xl font-black text-brand-text mb-8
-          ${isAr ? 'font-cairo text-end' : 'font-editorial text-start'}`}
-      >
-        {t('title')}
-      </h1>
-
-      {/* ── Branch selector (required) ────────────────────────────────── */}
-      <fieldset className="mb-6">
-        <legend className={`text-xs font-bold text-brand-muted mb-1 block uppercase tracking-wide
-          ${isAr ? 'font-almarai w-full text-end' : 'font-satoshi w-full text-start'}`}>
-          {isAr ? 'اختر الفرع الأقرب إليك' : 'Select Your Nearest Branch'}
-          <span className="ms-1 text-brand-error">*</span>
-        </legend>
-        <p className={`text-[11px] text-brand-muted/60 mb-3
-          ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-          {isAr ? 'إجباري — لم يتم اختيار فرع' : 'Required — no branch selected'}
-          {selectedBranch && ` ✓`}
+      {/* Header */}
+      <div className={`mb-10 ${isAr ? 'text-end' : 'text-start'}`}>
+        <h1
+          className={`text-3xl sm:text-4xl font-black text-brand-text mb-2
+            ${isAr ? 'font-cairo' : 'font-editorial'}`}
+        >
+          {t('title')}
+        </h1>
+        <p className={`text-brand-muted text-sm sm:text-base ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+          {t('subtitle')}
         </p>
+      </div>
+
+      {/* STEP 1: Branch Selection */}
+      <StepHeader
+        number="1"
+        title={t('steps.branch')}
+        icon={Store}
+        isAr={isAr}
+      />
+      <SectionCard>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {BRANCH_LIST.filter(b => b.status === 'active').map((branch) => (
             <button
@@ -337,229 +393,413 @@ export default function CheckoutForm({ customerProfile }: Props) {
                 setSelectedBranch(branch.id)
                 setErrors((prev) => { const n = { ...prev }; delete n.branchId; return n })
               }}
-              className={`rounded-lg border ps-4 pe-4 py-4 text-sm font-bold text-start
-                         transition-colors duration-150 w-full
-                         ${isAr ? 'font-cairo text-end' : 'font-satoshi text-start'}
+              className={`relative rounded-xl border p-4 text-start transition-all duration-200 group
                          ${selectedBranch === branch.id
-                           ? 'border-brand-gold bg-brand-gold/10 text-brand-text'
-                           : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/50'
+                           ? 'border-brand-gold bg-brand-gold/10'
+                           : 'border-brand-border bg-brand-surface-2 hover:border-brand-gold/40'
                          }`}
             >
-              <span className="block font-bold">
-                {isAr ? branch.nameAr : branch.nameEn}
-              </span>
-              <span className={`text-xs font-normal mt-0.5 block
-                ${selectedBranch === branch.id ? 'text-brand-gold' : 'text-brand-muted'}`}>
+              <div className={`flex justify-between items-start mb-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <Store size={16} className={selectedBranch === branch.id ? 'text-brand-gold' : 'text-brand-muted'} />
+                  <span className={`font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+                    {isAr ? branch.nameAr : branch.nameEn}
+                  </span>
+                </div>
+                {selectedBranch === branch.id && (
+                  <CheckCircle size={16} className="text-brand-gold" />
+                )}
+              </div>
+              <p className={`text-xs ${selectedBranch === branch.id ? 'text-brand-gold' : 'text-brand-muted'} ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
                 {isAr ? branch.hours.ar : branch.hours.en}
-              </span>
+              </p>
+              <p className={`text-[10px] mt-1 text-brand-muted/60 ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                {isAr ? 'متاح للاستلام والتوصيل' : 'Available for pickup & delivery'}
+              </p>
             </button>
           ))}
         </div>
         {errors.branchId && (
-          <p className="mt-1.5 text-xs text-brand-error font-almarai">{errors.branchId}</p>
+          <p className="mt-3 text-xs text-brand-error font-almarai flex items-center gap-1">
+            <span className="shrink-0">⚠</span> {errors.branchId}
+          </p>
         )}
-      </fieldset>
+      </SectionCard>
 
-      {/* ── Customer details ──────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 mb-6">
-        {/* Name — required */}
-        <div>
-          <label
-            htmlFor="checkout-name"
-            className={`text-xs font-bold text-brand-muted mb-1.5 block uppercase tracking-wide
-              ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}
-          >
-            {t('name')} <span className="text-brand-error">*</span>
-          </label>
-          <input
-            id="checkout-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t('namePlaceholder')}
-            autoComplete="name"
-            dir={isAr ? 'rtl' : 'ltr'}
-            className={`w-full bg-brand-surface-2 border rounded-lg
-                       ps-4 pe-4 py-3 min-h-[48px]
-                       text-brand-text text-base placeholder:text-brand-muted
-                       focus:border-brand-gold focus:outline-none transition-colors duration-150
-                       ${isAr ? 'font-almarai' : 'font-satoshi'}
-                       ${errors.customerName ? 'border-brand-error' : 'border-brand-border'}`}
-          />
-          {errors.customerName && (
-            <p className="mt-1 text-xs text-brand-error font-almarai">{errors.customerName}</p>
-          )}
-        </div>
-
-        {/* Phone — required */}
-        <div>
-          <label
-            htmlFor="checkout-phone"
-            className={`text-xs font-bold text-brand-muted mb-1.5 block uppercase tracking-wide
-              ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}
-          >
-            {t('phone')} <span className="text-brand-error">*</span>
-          </label>
-          <input
-            id="checkout-phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder={isAr ? '3XXXXXXX أو +97336XXXXXX' : '3XXXXXXX or +97336XXXXXX'}
-            autoComplete="tel"
-            dir="ltr"
-            className={`w-full bg-brand-surface-2 border rounded-lg
-                       ps-4 pe-4 py-3 min-h-[48px]
-                       text-brand-text text-base font-satoshi
-                       placeholder:text-brand-muted
-                       focus:border-brand-gold focus:outline-none transition-colors duration-150
-                       ${errors.customerPhone ? 'border-brand-error' : 'border-brand-border'}`}
-          />
-          <p className={`mt-1 text-xs text-brand-muted
-            ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-            {t('phoneHint')}
-          </p>
-          {errors.customerPhone && (
-            <p className="mt-1 text-xs text-brand-error font-almarai">{errors.customerPhone}</p>
-          )}
-        </div>
-
-        {/* Address — required (dual mode) */}
-        <div>
-          <label className={`text-xs font-bold text-brand-muted mb-1.5 block uppercase tracking-wide
-            ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-            {isAr ? 'عنوان التوصيل' : 'Delivery Address'} <span className="text-brand-error">*</span>
-          </label>
-          <p className={`text-[11px] text-brand-muted/60 mb-3
-            ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-            {isAr ? 'اختر أحد الطريقتين' : 'Choose one method'}
-          </p>
-
-          {/* Mode toggle */}
-          <div className="flex gap-2 mb-3">
-            <button
-              type="button"
-              onClick={() => setAddressMode(addressMode === 'manual' ? null : 'manual')}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg border py-2.5 text-xs font-bold transition-colors
-                ${addressMode === 'manual'
-                  ? 'border-brand-gold bg-brand-gold/10 text-brand-text'
-                  : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
-                ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+      {/* STEP 2: Customer Information */}
+      <StepHeader
+        number="2"
+        title={t('steps.customer')}
+        icon={User}
+        isAr={isAr}
+      />
+      <SectionCard>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Name */}
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="checkout-name"
+              className={`text-xs font-bold text-brand-muted uppercase tracking-wide flex items-center gap-1.5
+                ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
             >
-              <MapPin size={14} />
-              {isAr ? 'كتابة يدوية' : 'Manual entry'}
-            </button>
-            <button
-              type="button"
-              onClick={requestLocation}
-              disabled={gpsLoading}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg border py-2.5 text-xs font-bold transition-colors
-                ${addressMode === 'location' && gpsCoords
-                  ? 'border-brand-gold bg-brand-gold/10 text-brand-text'
-                  : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
-                ${isAr ? 'font-almarai' : 'font-satoshi'}`}
-            >
-              {gpsLoading
-                ? <Loader2 size={14} className="animate-spin" />
-                : <Navigation size={14} />}
-              {isAr ? 'مشاركة موقعي' : 'Share location'}
-            </button>
+              <User size={12} className="text-brand-gold/70" />
+              {t('name')} <span className="text-brand-error">*</span>
+            </label>
+            <input
+              id="checkout-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('namePlaceholder')}
+              className={`w-full bg-brand-surface-2 border rounded-xl ps-4 pe-4 py-3 min-h-[48px]
+                         text-brand-text text-sm sm:text-base placeholder:text-brand-muted/40
+                         focus:border-brand-gold focus:outline-none transition-all duration-200
+                         ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}
+                         ${errors.customerName ? 'border-brand-error' : 'border-brand-border'}`}
+            />
+            {errors.customerName && (
+              <p className="text-[11px] text-brand-error font-almarai">{errors.customerName}</p>
+            )}
           </div>
 
-          {/* GPS result */}
-          {addressMode === 'location' && gpsCoords && (
-            <div className={`rounded-lg border border-brand-gold/30 bg-brand-gold/5 px-3 py-2 text-xs text-brand-gold
-              ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-              ✓ {isAr ? 'تم تحديد موقعك' : 'Location captured'}
-              {' '}({gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)})
-            </div>
-          )}
-          {gpsError && (
-            <p className="text-xs text-brand-error font-almarai mt-1">{gpsError}</p>
-          )}
-
-          {/* Manual fields */}
-          {addressMode === 'manual' && (
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              {([
-                ['building', isAr ? 'رقم المبنى' : 'Building No.'],
-                ['villa',    isAr ? 'فيلا / شقة' : 'Villa / Apt'],
-                ['road',     isAr ? 'طريق' : 'Road'],
-                ['block',    isAr ? 'مجمع' : 'Block'],
-              ] as [keyof ManualAddress, string][]).map(([field, label]) => (
-                <div key={field}>
-                  <label className={`text-[10px] text-brand-muted/60 mb-1 block ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}>
-                    {label}
-                  </label>
-                  <input
-                    type="text"
-                    value={manualAddr[field]}
-                    onChange={(e) => setManualAddr((prev) => ({ ...prev, [field]: e.target.value }))}
-                    dir={isAr ? 'rtl' : 'ltr'}
-                    className={`w-full bg-brand-surface-2 border border-brand-border rounded-lg px-3 py-2 text-sm text-brand-text placeholder:text-brand-muted/40 focus:border-brand-gold focus:outline-none transition-colors ${isAr ? 'font-almarai' : 'font-satoshi'}`}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {errors.address && (
-            <p className="mt-1.5 text-xs text-brand-error font-almarai">{errors.address}</p>
-          )}
+          {/* Phone */}
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="checkout-phone"
+              className={`text-xs font-bold text-brand-muted uppercase tracking-wide flex items-center gap-1.5
+                ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
+            >
+              <Phone size={12} className="text-brand-gold/70" />
+              {t('phone')} <span className="text-brand-error">*</span>
+            </label>
+            <input
+              id="checkout-phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder={t('phonePlaceholder')}
+              dir="ltr"
+              className={`w-full bg-brand-surface-2 border rounded-xl ps-4 pe-4 py-3 min-h-[48px]
+                         text-brand-text text-sm sm:text-base font-satoshi placeholder:text-brand-muted/40
+                         focus:border-brand-gold focus:outline-none transition-all duration-200
+                         ${errors.customerPhone ? 'border-brand-error' : 'border-brand-border'}`}
+            />
+            {errors.customerPhone ? (
+              <p className="text-[11px] text-brand-error font-almarai">{errors.customerPhone}</p>
+            ) : (
+              <p className={`text-[10px] text-brand-muted/60 ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                {t('phoneHint')}
+              </p>
+            )}
+          </div>
         </div>
+      </SectionCard>
 
-        {/* Order notes — optional */}
-        <div>
-          <label
-            htmlFor="checkout-notes"
-            className={`text-xs font-bold text-brand-muted mb-1.5 block uppercase tracking-wide
-              ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}
-          >
-            {t('notes')}
-            <span className="ms-1 font-normal normal-case text-brand-muted/60">
-              ({tCommon('optional')})
-            </span>
-          </label>
-          <textarea
-            id="checkout-notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder={t('notesPlaceholder')}
-            rows={3}
-            dir={isAr ? 'rtl' : 'ltr'}
-            className={`w-full bg-brand-surface-2 border rounded-lg
-                       ps-4 pe-4 py-3 min-h-[80px] resize-none
-                       text-brand-text text-base placeholder:text-brand-muted
-                       focus:border-brand-gold focus:outline-none transition-colors duration-150
-                       ${isAr ? 'font-almarai' : 'font-satoshi'}
-                       ${errors.notes ? 'border-brand-error' : 'border-brand-border'}`}
-          />
-          {errors.notes && (
-            <p className="mt-1 text-xs text-brand-error font-almarai">{errors.notes}</p>
-          )}
-        </div>
-      </div>
-
-      {/* ── Coupon input ──────────────────────────────────────────────── */}
-      <CouponInput
-        customerId={customerProfile?.id ?? null}
-        orderTotal={subtotal}
-        appliedCoupon={appliedCoupon}
-        onApply={setAppliedCoupon}
-        onRemove={() => setAppliedCoupon(null)}
+      {/* STEP 3: Delivery Method & Address */}
+      <StepHeader
+        number="3"
+        title={t('steps.address')}
+        icon={Truck}
+        isAr={isAr}
       />
+      <SectionCard>
+        {/* Mode Switcher */}
+        <div className="flex p-1 bg-brand-surface-2 border border-brand-border rounded-xl mb-5">
+          <button
+            type="button"
+            onClick={() => setAddressMode('manual')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all
+              ${addressMode === 'manual'
+                ? 'bg-brand-gold text-brand-black shadow-sm'
+                : 'text-brand-muted hover:text-brand-text'}
+              ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+          >
+            <MapPin size={14} />
+            {t('address.manual')}
+          </button>
+          <button
+            type="button"
+            onClick={requestLocation}
+            disabled={gpsLoading}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all
+              ${addressMode === 'location'
+                ? 'bg-brand-gold text-brand-black shadow-sm'
+                : 'text-brand-muted hover:text-brand-text'}
+              ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+          >
+            {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+            {t('address.gps')}
+          </button>
+        </div>
 
-      {/* ── Points redemption panel ───────────────────────────────────── */}
+        {/* GPS Result UI */}
+        {addressMode === 'location' && (
+          <div className={`space-y-3 ${isAr ? 'text-end' : 'text-start'}`}>
+            {gpsCoords ? (
+              <div className="rounded-xl border border-brand-success/30 bg-brand-success/5 p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-brand-success/20 flex items-center justify-center shrink-0">
+                  <CheckCircle size={20} className="text-brand-success" />
+                </div>
+                <div>
+                  <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                    {isAr ? 'تم تحديد الموقع بنجاح' : 'Location captured successfully'}
+                  </p>
+                  <p className="text-[11px] text-brand-muted font-satoshi tabular-nums">
+                    {gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}
+                  </p>
+                </div>
+              </div>
+            ) : !gpsError ? (
+              <p className={`text-sm text-brand-muted italic py-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                {isAr ? 'بانتظار تحديد موقعك...' : 'Waiting for GPS signal...'}
+              </p>
+            ) : null}
+            {gpsError && (
+              <p className="text-xs text-brand-error font-almarai px-2">⚠ {gpsError}</p>
+            )}
+            <p className={`text-[11px] text-brand-muted/70 px-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? 'سيقوم السائق باستخدام هذا الموقع للوصول إليك.' : 'The driver will use this location to reach you.'}
+            </p>
+          </div>
+        )}
+
+        {/* Manual Address Fields */}
+        {addressMode === 'manual' && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className={`text-[11px] font-bold text-brand-muted uppercase ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}>
+                  {t('address.area')} <span className="text-brand-error">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={manualAddr.block} // Reusing block field as Area/General for better UX
+                  onChange={(e) => setManualAddr(prev => ({ ...prev, block: e.target.value }))}
+                  placeholder={t('address.areaPlaceholder')}
+                  className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted/40 focus:border-brand-gold focus:outline-none transition-all ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className={`text-[11px] font-bold text-brand-muted uppercase ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}>
+                  {t('address.building')} <span className="text-brand-error">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={manualAddr.building}
+                  onChange={(e) => setManualAddr(prev => ({ ...prev, building: e.target.value }))}
+                  placeholder={t('address.buildingPlaceholder')}
+                  className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted/40 focus:border-brand-gold focus:outline-none transition-all ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className={`text-[11px] font-bold text-brand-muted uppercase ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}>
+                {t('address.directions')}
+              </label>
+              <input
+                type="text"
+                value={manualAddr.road} // Reusing road field for Directions
+                onChange={(e) => setManualAddr(prev => ({ ...prev, road: e.target.value }))}
+                placeholder={t('address.directionsPlaceholder')}
+                className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted/40 focus:border-brand-gold focus:outline-none transition-all ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}
+              />
+            </div>
+          </div>
+        )}
+
+        {errors.address && (
+          <p className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-1">
+            <span className="shrink-0">⚠</span> {errors.address}
+          </p>
+        )}
+      </SectionCard>
+
+      {/* STEP 4: Notes */}
+      <StepHeader
+        number="4"
+        title={t('steps.notes')}
+        icon={Notebook}
+        isAr={isAr}
+      />
+      <SectionCard>
+        <textarea
+          id="checkout-notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder={t('notesPlaceholder')}
+          rows={3}
+          className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl
+                     ps-4 pe-4 py-3 min-h-[100px] resize-none
+                     text-brand-text text-sm sm:text-base placeholder:text-brand-muted/40
+                     focus:border-brand-gold focus:outline-none transition-all duration-200
+                     ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}
+        />
+      </SectionCard>
+
+      {/* STEP 5: Coupon Code */}
+      <StepHeader
+        number="5"
+        title={t('steps.coupon')}
+        icon={Tag}
+        isAr={isAr}
+      />
+      <SectionCard className="p-0">
+        <CouponInput
+          customerId={customerProfile?.id ?? null}
+          orderTotal={subtotal}
+          appliedCoupon={appliedCoupon}
+          onApply={setAppliedCoupon}
+          onRemove={() => setAppliedCoupon(null)}
+        />
+      </SectionCard>
+
+      {/* STEP 6: Order Summary */}
+      <StepHeader
+        number="6"
+        title={t('steps.summary')}
+        icon={ShoppingCart}
+        isAr={isAr}
+      />
+      <SectionCard className="p-0 overflow-hidden">
+        <div className="divide-y divide-brand-border">
+          {items.map((item) => (
+            <div key={item.cartKey} className={`flex items-start gap-4 p-4 ${isAr ? 'flex-row-reverse text-end' : 'flex-row text-start'}`}>
+              {/* Product Image */}
+              <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-brand-border bg-brand-black">
+                {item.imageUrl ? (
+                  <Image
+                    src={item.imageUrl}
+                    alt={isAr ? item.nameAr : item.nameEn}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-brand-muted/20">
+                    <ShoppingCart size={24} />
+                  </div>
+                )}
+              </div>
+
+              {/* Product Details */}
+              <div className="flex-1 min-w-0 py-0.5">
+                <div className={`flex justify-between items-start gap-2 mb-1 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <h3 className={`text-sm sm:text-base font-bold text-brand-text truncate ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+                    {isAr ? item.nameAr : item.nameEn}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => useCartStore.getState().removeItem(item.cartKey)}
+                    className="text-brand-error/60 hover:text-brand-error transition-colors p-1"
+                    aria-label="Remove item"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                {(item.selectedSize || item.selectedVariant) && (
+                  <p className={`text-[11px] text-brand-muted mb-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                    {[item.selectedSize, item.selectedVariant].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+
+                {/* Quantity Controls & Price */}
+                <div className={`flex items-center justify-between mt-auto ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className="flex items-center bg-brand-surface-2 border border-brand-border rounded-lg overflow-hidden h-8">
+                    <button
+                      type="button"
+                      onClick={() => useCartStore.getState().updateQuantity(item.cartKey, item.quantity - 1)}
+                      className="px-2 h-full hover:bg-brand-gold/10 text-brand-muted hover:text-brand-gold transition-colors"
+                    >
+                      <Minus size={12} />
+                    </button>
+                    <span className="w-8 text-center text-xs font-bold text-brand-text font-satoshi tabular-nums">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => useCartStore.getState().updateQuantity(item.cartKey, item.quantity + 1)}
+                      className="px-2 h-full hover:bg-brand-gold/10 text-brand-muted hover:text-brand-gold transition-colors"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                  <div className="font-satoshi font-bold text-brand-gold text-sm tabular-nums">
+                    {(item.priceBhd * item.quantity).toFixed(3)}
+                    <span className="text-[10px] text-brand-muted ms-1 font-normal">{tCommon('currency')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Totals Breakdown */}
+        <div className="bg-brand-surface-2 p-5 space-y-3">
+          <div className={`flex justify-between items-center text-sm ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+            <span className={`text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? 'المجموع الفرعي' : 'Subtotal'}
+            </span>
+            <span className="font-satoshi text-brand-text tabular-nums">
+              {subtotal.toFixed(3)} {tCommon('currency')}
+            </span>
+          </div>
+
+          {couponDiscount > 0 && (
+            <div className={`flex justify-between items-center text-sm ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                <Tag size={12} className="text-brand-success" />
+                <span className={`text-brand-success ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? `خصم الكوبون (${appliedCoupon?.code})` : `Coupon Discount (${appliedCoupon?.code})`}
+                </span>
+              </div>
+              <span className="font-satoshi text-brand-success tabular-nums">
+                -{couponDiscount.toFixed(3)} {tCommon('currency')}
+              </span>
+            </div>
+          )}
+
+          {pointsDiscount > 0 && (
+            <div className={`flex justify-between items-center text-sm ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                <CheckCircle size={12} className="text-brand-success" />
+                <span className={`text-brand-success ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? 'خصم نقاط الولاء' : 'Loyalty Points Discount'}
+                </span>
+              </div>
+              <span className="font-satoshi text-brand-success tabular-nums">
+                -{pointsDiscount.toFixed(3)} {tCommon('currency')}
+              </span>
+            </div>
+          )}
+
+          <div className={`flex justify-between items-center pt-3 border-t border-brand-border/50 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+            <span className={`text-base font-black text-brand-text ${isAr ? 'font-cairo' : 'font-editorial'}`}>
+              {t('total')}
+            </span>
+            <div className="text-end">
+              <span className="font-satoshi font-black text-brand-gold text-2xl tabular-nums">
+                {finalTotal.toFixed(3)}
+              </span>
+              <span className="text-xs text-brand-muted ms-1 font-satoshi uppercase">{tCommon('currency')}</span>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Points Redemption (only if available) */}
       {customerProfile && canRedeem && (
-        <div className="bg-brand-surface border border-brand-border rounded-xl mb-6 p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <TierBadge tier={customerProfile.loyalty_tier} size="sm" locale={locale} />
-              <div>
+        <div className="bg-brand-surface-2 border border-brand-gold/20 rounded-2xl p-4 mb-8">
+          <div className={`flex items-center justify-between gap-4 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+            <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className="w-10 h-10 rounded-full bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20">
+                <TierBadge tier={customerProfile.loyalty_tier} size="sm" locale={locale} />
+              </div>
+              <div className={isAr ? 'text-end' : 'text-start'}>
                 <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
                   {formatPoints(availablePoints)} {tL('points')}
                 </p>
-                <p className={`text-xs text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                <p className={`text-[11px] text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
                   ≈ {pointsToCredit(availablePoints).toFixed(3)} {tCommon('currency')}
                 </p>
               </div>
@@ -569,162 +809,72 @@ export default function CheckoutForm({ customerProfile }: Props) {
               role="switch"
               aria-checked={usePoints}
               onClick={() => setUsePoints(!usePoints)}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full
-                         transition-colors duration-200
-                         ${usePoints
-                           ? 'bg-brand-gold'
-                           : 'bg-brand-surface-2 border border-brand-border'}`}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-all duration-300
+                         ${usePoints ? 'bg-brand-gold' : 'bg-brand-border'}`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white
-                           shadow-sm transition-transform duration-200
-                           ${usePoints ? 'translate-x-6' : 'translate-x-1'}`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-brand-text shadow-sm transition-transform duration-300
+                           ${usePoints ? (isAr ? '-translate-x-6' : 'translate-x-6') : (isAr ? '-translate-x-1' : 'translate-x-1')}`}
               />
             </button>
           </div>
-          {usePoints && (
-            <p className={`mt-3 text-xs text-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? 'خصم النقاط:' : 'Points discount:'}{' '}
-              {pointsToCredit(availablePoints).toFixed(3)} {tCommon('currency')}
-            </p>
-          )}
         </div>
       )}
 
-      {/* ── Order summary ─────────────────────────────────────────────── */}
-      <div className="bg-brand-surface-2 border border-brand-border rounded-xl mb-6 overflow-hidden">
-        <div className="px-4 py-3 border-b border-brand-border">
-          <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide
-            ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-            {t('orderSummary')}
-          </h2>
+      {/* STEP 7: Complete Your Order */}
+      <StepHeader
+        number="7"
+        title={t('steps.complete')}
+        icon={CheckCircle}
+        isAr={isAr}
+      />
+      <div className="space-y-4">
+        {submitError && (
+          <div className="rounded-xl border border-brand-error/50 bg-brand-error/10 px-4 py-3 text-sm text-brand-error font-almarai text-center">
+            ⚠ {submitError}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <CinematicButton
+            type="submit"
+            disabled={loading}
+            isRTL={isAr}
+            className="w-full py-4 text-base font-bold rounded-xl"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 size={18} className="animate-spin" />
+                {t('processing')}
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                {t('placeOrder')}
+              </span>
+            )}
+          </CinematicButton>
+
+          <CinematicButton
+            type="button"
+            disabled={loading}
+            isRTL={isAr}
+            onClick={handlePaymentSubmit}
+            variant="secondary" // Assuming variant exists or I'll customize className
+            className="w-full py-4 text-base font-bold rounded-xl border border-brand-gold text-brand-gold bg-transparent hover:bg-brand-gold/5"
+          >
+            {t('payNow')}
+          </CinematicButton>
         </div>
 
-        <div className="divide-y divide-brand-border">
-          {items.map((item) => (
-            <div key={item.cartKey} className="flex items-start gap-3 px-4 py-3 text-start">
-              {item.imageUrl && (
-                <div className="relative w-10 h-10 rounded-md overflow-hidden shrink-0 border border-brand-border">
-                  <Image
-                    src={item.imageUrl}
-                    alt={isAr ? item.nameAr : item.nameEn}
-                    fill
-                    className="object-cover"
-                    sizes="40px"
-                  />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold text-brand-text line-clamp-1
-                  ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-                  {isAr ? item.nameAr : item.nameEn}
-                </p>
-                {(item.selectedSize || item.selectedVariant) && (
-                  <p className="font-almarai text-xs text-brand-muted mt-0.5">
-                    {[item.selectedSize, item.selectedVariant].filter(Boolean).join(' · ')}
-                  </p>
-                )}
-                {item.notes && (
-                  <p className={`text-[11px] text-brand-gold/70 mt-0.5 italic
-                    ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                    ↳ {item.notes}
-                  </p>
-                )}
-              </div>
-              <div className={`text-sm font-satoshi tabular-nums shrink-0 ${isAr ? 'text-start' : 'text-end'}`}>
-                <span className="text-brand-gold font-medium">
-                  {(item.priceBhd * item.quantity).toFixed(3)}
-                </span>
-                <span className="text-brand-muted ms-1">{tCommon('currency')}</span>
-                {item.quantity > 1 && (
-                  <span className="text-brand-muted text-xs ms-1">×{item.quantity}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {(pointsDiscount > 0 || couponDiscount > 0) && (
-          <div className="px-4 py-2 border-t border-brand-border flex items-center justify-between">
-            <span className={`text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? 'المجموع الفرعي' : 'Subtotal'}
-            </span>
-            <span className="font-satoshi text-brand-muted tabular-nums text-sm">
-              {subtotal.toFixed(3)} {tCommon('currency')}
-            </span>
-          </div>
-        )}
-
-        {couponDiscount > 0 && (
-          <div className="px-4 py-2 border-t border-brand-border flex items-center justify-between">
-            <span className={`text-sm text-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? `كوبون ${appliedCoupon?.code}` : `Coupon ${appliedCoupon?.code}`}
-            </span>
-            <span className="font-satoshi text-brand-gold tabular-nums text-sm">
-              -{couponDiscount.toFixed(3)} {tCommon('currency')}
-            </span>
-          </div>
-        )}
-
-        {pointsDiscount > 0 && (
-          <div className="px-4 py-2 border-t border-brand-border flex items-center justify-between">
-            <span className={`text-sm text-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? 'خصم النقاط' : 'Points discount'}
-            </span>
-            <span className="font-satoshi text-brand-gold tabular-nums text-sm">
-              -{pointsDiscount.toFixed(3)} {tCommon('currency')}
-            </span>
-          </div>
-        )}
-
-        <div className="px-4 py-3 border-t border-brand-border flex items-center justify-between">
-          <span className={`text-sm font-bold text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {t('total')}
-          </span>
-          <span className="font-satoshi font-bold text-brand-text text-lg tabular-nums">
-            {finalTotal.toFixed(3)} {tCommon('currency')}
-          </span>
+        <div className={`text-center space-y-2 mt-4`}>
+          <p className={`text-[11px] text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+            {t('paymentNote')}
+          </p>
+          <p className={`text-[11px] text-brand-muted opacity-60 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+            {t('terms')}
+          </p>
         </div>
       </div>
-
-      {/* ── Payment note ──────────────────────────────────────────────── */}
-      <p className={`text-xs text-brand-muted mb-6 ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-        {t('paymentNote')}
-      </p>
-
-      {/* ── Submit error ──────────────────────────────────────────────── */}
-      {submitError && (
-        <div className="mb-4 rounded-lg border border-brand-error/50 bg-brand-error/10 px-4 py-3 text-sm text-brand-error font-almarai">
-          {submitError}
-        </div>
-      )}
-
-      {/* ── Submit buttons ─────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <CinematicButton
-          type="submit"
-          disabled={loading}
-          isRTL={isAr}
-          className="flex-1 py-4 text-base font-bold rounded-full"
-        >
-          {loading ? t('processing') : (isAr ? 'إرسال عبر واتساب' : 'Send via WhatsApp')}
-        </CinematicButton>
-
-        <CinematicButton
-          type="button"
-          disabled={loading}
-          isRTL={isAr}
-          onClick={handlePaymentSubmit}
-          className="flex-1 py-4 text-base font-bold rounded-full"
-        >
-          {isAr ? 'الدفع' : 'Pay Now'}
-        </CinematicButton>
-      </div>
-
-      {/* Terms */}
-      <p className={`mt-3 text-xs text-brand-muted text-center ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-        {t('terms')}
-      </p>
     </form>
   )
 }
