@@ -72,6 +72,7 @@ export type PaymentUpdate            = TablesUpdate<'payments'>;
 export type DriverLocationInsert     = TablesInsert<'driver_locations'>;
 export type DriverCashHandoverInsert = TablesInsert<'driver_cash_handovers'>;
 export type DriverCashHandoverUpdate = TablesUpdate<'driver_cash_handovers'>;
+export type DriverOrderIssueInsert   = TablesInsert<'driver_order_issues'>;
 export type ShiftInsert              = TablesInsert<'shifts'>;
 export type ShiftUpdate              = TablesUpdate<'shifts'>;
 export type LeaveRequestInsert       = TablesInsert<'leave_requests'>;

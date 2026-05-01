@@ -232,3 +232,62 @@ export async function submitCashHandover(
   if (error) return { success: false, error: error.message }
   return { success: true }
 }
+
+// ── Submit driver issue report ────────────────────────────────────────────────
+//
+// Security checks:
+//   1. Role is exactly 'driver'
+//   2. Order exists and is in the driver's branch
+//   3. driver_id is always overwritten server-side — payload cannot spoof another driver
+//   4. Reason must be non-empty
+
+export async function submitDriverIssue(
+  orderId: string,
+  reason:  string,
+  notes?:  string,
+): Promise<DriverActionResult> {
+  const user = await getSession()
+  if (!user || user.role !== 'driver') {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  if (!reason.trim()) {
+    return { success: false, error: 'Reason is required' }
+  }
+
+  const supabase = await createClient()
+
+  const { data: order, error: fetchError } = await supabase
+    .from('orders')
+    .select('id, branch_id, assigned_driver_id, status')
+    .eq('id', orderId)
+    .single()
+
+  if (fetchError || !order) return { success: false, error: 'Order not found' }
+
+  // Branch guard
+  if (user.branch_id && order.branch_id !== user.branch_id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  // Ownership guard: must be assigned to this driver or be a ready order in their branch
+  const isOwnedByDriver = order.assigned_driver_id === user.id
+  const isClaimable     = order.status === 'ready'
+  if (!isOwnedByDriver && !isClaimable) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const service = await createServiceClient()
+
+  const { error } = await service
+    .from('driver_order_issues')
+    .insert({
+      order_id:  orderId,
+      driver_id: user.id,
+      reason:    reason.trim(),
+      notes:     notes?.trim() ?? null,
+    })
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}

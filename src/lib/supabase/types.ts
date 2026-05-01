@@ -639,6 +639,48 @@ export type Database = {
           },
         ]
       }
+      driver_order_issues: {
+        Row: {
+          created_at: string
+          driver_id: string
+          id: string
+          notes: string | null
+          order_id: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_order_issues_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_order_issues_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jetski_test: {
         Row: {
           id: number

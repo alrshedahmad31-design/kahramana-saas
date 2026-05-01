@@ -8,11 +8,13 @@ import {
 }                                                             from '@/lib/utils/delivery'
 import { mapsDirectionsUrl }                                  from '@/lib/utils/distance'
 import { buildCustomerContactLink }                           from '@/lib/whatsapp'
+import IssueReportModal                                       from '@/components/driver/IssueReportModal'
 import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
 import type { BranchId }                                      from '@/constants/contact'
 
 type DriverActiveStatus = 'ready' | 'out_for_delivery'
 type Urgency            = 'critical' | 'urgent' | 'normal'
+type StepStatus         = 'done' | 'current' | 'upcoming'
 
 interface Props {
   order:         DriverOrder
@@ -62,6 +64,43 @@ const PAYMENT_LABEL: Record<string, { en: string; ar: string; icon: string }> = 
   tap_knet:   { en: 'KNET',       ar: 'كي-نت',  icon: '💳' },
 }
 
+// ── Progress step derivation ───────────────────────────────────────────────────
+//
+// 4 steps: Ready → Picked Up → Arrived → Delivered
+// Current step = first step that is NOT yet done.
+
+interface StepDef {
+  labelAr: string
+  labelEn: string
+  status:  StepStatus
+}
+
+function deriveSteps(order: DriverOrder): StepDef[] {
+  const isDelivered = order.status === 'delivered'
+  const isOnRoad    = order.status === 'out_for_delivery'
+  const hasArrived  = !!order.arrived_at
+
+  // step 1: always done if we can see this order
+  const s1: StepStatus = 'done'
+  // step 2: done once picked up (out_for_delivery sets picked_up_at)
+  const s2: StepStatus = (isOnRoad || isDelivered) ? 'done' : isOnRoad ? 'current' : 'upcoming'
+  // step 3: done when arrived_at is set or delivered
+  const s3Raw = (hasArrived || isDelivered) ? 'done' : (isOnRoad && !hasArrived) ? 'current' : 'upcoming'
+  // step 4: done when delivered
+  const s4Raw: StepStatus = isDelivered ? 'done' : (isOnRoad && hasArrived) ? 'current' : 'upcoming'
+
+  // Resolve: when step 2 is 'done', step 3 should be 'current' if not yet done
+  const s3: StepStatus = s3Raw
+  const s4: StepStatus = s4Raw
+
+  return [
+    { labelAr: 'جاهز',   labelEn: 'Ready',    status: s1 },
+    { labelAr: 'استُلم', labelEn: 'Picked',   status: s2 === 'upcoming' && order.status === 'out_for_delivery' ? 'done' : order.status === 'ready' ? 'upcoming' : s2 },
+    { labelAr: 'وصل',    labelEn: 'Arrived',  status: s3 },
+    { labelAr: 'تم',     labelEn: 'Done',     status: s4 },
+  ]
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatElapsed(createdAt: string): string {
@@ -71,23 +110,31 @@ function formatElapsed(createdAt: string): string {
 }
 
 function formatTime(iso: string): string {
-  const d    = new Date(iso)
-  const h    = String(d.getHours() % 12 || 12).padStart(2, '0')
-  const m    = String(d.getMinutes()).padStart(2, '0')
+  const d = new Date(iso)
+  const h = String(d.getHours() % 12 || 12).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
   return `${h}:${m} ${d.getHours() >= 12 ? 'PM' : 'AM'}`
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive }: Props) {
+export default function DriverOrderCard({
+  order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive,
+}: Props) {
   const [elapsed,       setElapsed]       = useState(() => formatElapsed(order.created_at))
   const [busy,          setBusy]          = useState(false)
   const [actionError,   setActionError]   = useState<string | null>(null)
   const [itemsExpanded, setItemsExpanded] = useState(() => order.status === 'ready')
+  const [showIssue,     setShowIssue]     = useState(false)
+  const [confirmDeliver, setConfirmDeliver] = useState(false)
 
   const isCompleted = variant === 'completed'
   const isReady     = order.status === 'ready'
   const isOnRoad    = order.status === 'out_for_delivery'
+  const hasArrived  = !!order.arrived_at
+  const isCash      = order.payments?.method === 'cash'
+
+  const orderRef = order.id.slice(-4).toUpperCase()
 
   useEffect(() => {
     if (isCompleted) return
@@ -101,16 +148,13 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
   const branchAddr = branch ? (isRTL ? branch.addressAr : branch.addressEn) : null
 
   // Payment
-  const paymentEntry = order.payments
-  const paymentInfo  = paymentEntry ? PAYMENT_LABEL[paymentEntry.method] : null
+  const paymentInfo = order.payments ? PAYMENT_LABEL[order.payments.method] : null
 
-  // Address & notes
+  // Address parsing (keep existing logic)
   const rawAddr = order.delivery_address
   const deliveryAddrText: string | null = (() => {
     if (!rawAddr) return order.notes ?? null
-    // GPS mode stores a Google Maps URL — skip it; navigation button handles it
     if (rawAddr.startsWith('http')) return null
-    // Expand Bahrain abbreviation format: م = block/building, ش = road
     if (/[مش]\d/.test(rawAddr)) {
       let blockSeen = false
       return rawAddr
@@ -130,15 +174,15 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
     }
     return rawAddr
   })()
-  const customerNotes    = order.customer_notes ?? order.delivery_instructions ?? null
+  const customerNotes = order.customer_notes ?? order.delivery_instructions ?? null
 
   // Urgency
-  const expectedAt    = resolveExpectedAt(order.created_at, order.expected_delivery_time)
+  const expectedAt = resolveExpectedAt(order.created_at, order.expected_delivery_time)
   const urgency: Urgency = isCompleted ? 'normal' : getUrgencyLevel(expectedAt)
   const minsRemaining = Math.round((expectedAt.getTime() - Date.now()) / 60_000)
-  const uc            = URGENCY_CFG[urgency]
+  const uc = URGENCY_CFG[urgency]
 
-  // Navigation URLs (always travelmode=driving)
+  // Navigation URLs
   const branchNavUrl = branch?.latitude != null && branch?.longitude != null
     ? mapsNavUrl(branch.latitude, branch.longitude)
     : branchMapsUrl
@@ -149,10 +193,10 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
       ? mapsDirectionsUrl(deliveryAddrText)
       : null
 
-  // Distance + ETA (branch → customer)
+  // Distance + ETA
   const deliveryDist =
     branch?.latitude != null && branch?.longitude != null &&
-    order.delivery_lat  != null && order.delivery_lng  != null
+    order.delivery_lat != null && order.delivery_lng != null
       ? calculateDistance(
           { lat: branch.latitude,    lng: branch.longitude },
           { lat: order.delivery_lat, lng: order.delivery_lng },
@@ -161,11 +205,24 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
 
   const etaMins = deliveryDist != null ? calculateETA(deliveryDist) : null
 
-  async function handleAction() {
-    if (busy || (!isReady && !isOnRoad) || !onAction) return
+  // Progress steps
+  const steps = deriveSteps(order)
+
+  // Next-action label
+  const nextActionLabel: string = (() => {
+    if (isReady)           return isRTL ? 'استلم الطلب من الفرع' : 'Pick up the order from branch'
+    if (isOnRoad && !hasArrived) return isRTL ? 'أكد وصولك للزبون' : 'Confirm you arrived at customer'
+    if (isOnRoad && hasArrived)  return isRTL ? 'سلّم الطلب وأكد التسليم' : 'Hand over the order and confirm delivery'
+    return isRTL ? 'تم التسليم' : 'Delivered'
+  })()
+
+  // ── Action handlers ────────────────────────────────────────────────────────
+
+  async function handlePickup() {
+    if (busy || !onAction) return
     setBusy(true)
     setActionError(null)
-    const error = await onAction(order.id, order.status as DriverActiveStatus)
+    const error = await onAction(order.id, 'ready')
     if (error) setActionError(error)
     setBusy(false)
   }
@@ -179,382 +236,538 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
     setBusy(false)
   }
 
+  async function handleDeliver() {
+    if (busy || !onAction) return
+    // Ask for confirmation on cash orders if not yet confirmed
+    if (isCash && !confirmDeliver) {
+      setConfirmDeliver(true)
+      return
+    }
+    setBusy(true)
+    setConfirmDeliver(false)
+    setActionError(null)
+    const error = await onAction(order.id, 'out_for_delivery')
+    if (error) setActionError(error)
+    setBusy(false)
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className={`
-      flex flex-col rounded-2xl border-2 bg-brand-surface overflow-hidden
-      transition-all duration-300
-      ${isCompleted ? 'border-brand-border opacity-70' : uc.cardBorder}
-    `}>
+    <>
+      <div className={`
+        flex flex-col rounded-2xl border-2 bg-brand-surface overflow-hidden
+        transition-all duration-300
+        ${isCompleted ? 'border-brand-border opacity-70' : uc.cardBorder}
+      `}>
 
-      {/* ── Urgency banner ──────────────────────────────────────────────────── */}
-      {!isCompleted && urgency !== 'normal' && (
-        <div className={`flex items-center justify-between px-4 py-2 ${uc.bannerCls} ${uc.pulse ? 'animate-pulse' : ''}`}>
-          <div className="flex items-center gap-2">
-            <AlarmIcon />
-            <span className={`font-black text-xs uppercase tracking-widest ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {isRTL ? uc.labelAr : uc.labelEn}
-            </span>
-          </div>
-          <span className="font-satoshi font-black text-xs tabular-nums">
-            {minsRemaining > 0
-              ? (isRTL ? `${minsRemaining} د متبقي` : `${minsRemaining} min left`)
-              : (isRTL ? 'تأخر!' : 'LATE!')}
-          </span>
-        </div>
-      )}
-
-      {/* ── Card header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-brand-border/60">
-        <div className="flex items-center gap-2.5">
-          <span className="font-satoshi font-black text-2xl text-brand-text tabular-nums leading-none">
-            #{order.id.slice(-4).toUpperCase()}
-          </span>
-          <span className="font-satoshi text-sm text-brand-muted tabular-nums">
-            {isCompleted ? formatTime(order.updated_at) : elapsed}
-          </span>
-        </div>
-
-        {isCompleted ? (
-          <span className="flex items-center gap-1.5 text-xs font-satoshi font-black rounded-lg px-3 py-1.5 bg-brand-surface-2 text-brand-muted border border-brand-border">
-            <CheckIcon />
-            {isRTL ? 'تم التسليم' : 'Delivered'}
-          </span>
-        ) : (
-          <span className={`
-            text-xs font-satoshi font-black rounded-lg px-3 py-1.5
-            ${isOnRoad
-              ? 'bg-brand-success/20 text-brand-success border border-brand-success/30'
-              : 'bg-brand-gold/20 text-brand-gold border border-brand-gold/30'
-            }
-          `}>
-            {isRTL
-              ? (isOnRoad ? 'قيد التوصيل' : 'جاهز للاستلام')
-              : (isOnRoad ? 'On Route' : 'Ready')
-            }
-          </span>
-        )}
-      </div>
-
-      <div className="px-4 py-3 flex flex-col gap-3">
-
-        {/* ── Payment method badge ─────────────────────────────────────────────── */}
-        {!isCompleted && paymentInfo && (
-          paymentInfo.en === 'Cash' ? (
-            <div className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 border bg-red-500/15 border-red-500/40 ${uc.pulse ? 'animate-pulse' : ''}`}>
-              <span className="text-base leading-none">💵</span>
-              <span className={`font-black text-sm text-red-400 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                {isRTL ? `نقداً — اجمع ${Number(order.total_bhd).toFixed(3)} BD` : `CASH — Collect ${Number(order.total_bhd).toFixed(3)} BD`}
+        {/* ── Urgency banner ────────────────────────────────────────────────── */}
+        {!isCompleted && urgency !== 'normal' && (
+          <div className={`flex items-center justify-between px-4 py-2 ${uc.bannerCls} ${uc.pulse ? 'animate-pulse' : ''}`}>
+            <div className="flex items-center gap-2">
+              <AlarmIcon />
+              <span className={`font-black text-xs uppercase tracking-widest ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? uc.labelAr : uc.labelEn}
               </span>
             </div>
+            <span className="font-satoshi font-black text-xs tabular-nums">
+              {minsRemaining > 0
+                ? (isRTL ? `${minsRemaining} د متبقي` : `${minsRemaining} min left`)
+                : (isRTL ? 'تأخر!' : 'LATE!')}
+            </span>
+          </div>
+        )}
+
+        {/* ── Card header ───────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-brand-border/60">
+          <div className="flex items-center gap-2.5">
+            <span className="font-satoshi font-black text-2xl text-brand-text tabular-nums leading-none">
+              #{orderRef}
+            </span>
+            <span className="font-satoshi text-sm text-brand-muted tabular-nums">
+              {isCompleted ? formatTime(order.updated_at) : elapsed}
+            </span>
+          </div>
+
+          {isCompleted ? (
+            <span className="flex items-center gap-1.5 text-xs font-satoshi font-black rounded-lg px-3 py-1.5 bg-brand-surface-2 text-brand-muted border border-brand-border">
+              <CheckSmallIcon />
+              {isRTL ? 'تم التسليم' : 'Delivered'}
+            </span>
           ) : (
+            <span className={`
+              text-xs font-satoshi font-black rounded-lg px-3 py-1.5
+              ${isOnRoad
+                ? 'bg-brand-success/20 text-brand-success border border-brand-success/30'
+                : 'bg-brand-gold/20 text-brand-gold border border-brand-gold/30'
+              }
+            `}>
+              {isRTL
+                ? (isOnRoad ? (hasArrived ? 'وصل للزبون' : 'جاري التوصيل') : 'جاهز للاستلام')
+                : (isOnRoad ? (hasArrived ? 'Arrived'    : 'On Route')      : 'Ready')
+              }
+            </span>
+          )}
+        </div>
+
+        {/* ── Progress stepper (active orders only) ─────────────────────────── */}
+        {!isCompleted && (
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center gap-0">
+              {steps.map((step, idx) => (
+                <div key={idx} className="flex items-center flex-1">
+                  {/* Step circle */}
+                  <div className="flex flex-col items-center gap-1 shrink-0">
+                    <div className={`
+                      w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300
+                      ${step.status === 'done'
+                        ? 'bg-brand-gold border-2 border-brand-gold'
+                        : step.status === 'current'
+                          ? 'bg-brand-surface-2 border-2 border-brand-gold ring-2 ring-brand-gold/25'
+                          : 'bg-brand-surface-2 border-2 border-brand-border'
+                      }
+                    `}>
+                      {step.status === 'done' ? (
+                        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="text-brand-black" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      ) : step.status === 'current' ? (
+                        <div className="w-2.5 h-2.5 rounded-full bg-brand-gold" />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-brand-border/60" />
+                      )}
+                    </div>
+                    <span className={`
+                      text-[10px] font-bold text-center leading-tight tabular-nums whitespace-nowrap
+                      ${step.status === 'done'    ? 'text-brand-gold'  : ''}
+                      ${step.status === 'current' ? 'text-brand-gold'  : ''}
+                      ${step.status === 'upcoming'? 'text-brand-muted/50' : ''}
+                      ${isRTL ? 'font-almarai' : 'font-satoshi'}
+                    `}>
+                      {isRTL ? step.labelAr : step.labelEn}
+                    </span>
+                  </div>
+
+                  {/* Connector line (not after last step) */}
+                  {idx < steps.length - 1 && (
+                    <div className={`flex-1 h-0.5 mb-4 mx-1 rounded-full transition-colors duration-300 ${
+                      steps[idx + 1].status !== 'upcoming' || step.status === 'done'
+                        ? 'bg-brand-gold/60'
+                        : 'bg-brand-border/40'
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="px-4 pb-4 flex flex-col gap-3">
+
+          {/* ── Next action card (active orders only) ─────────────────────────── */}
+          {!isCompleted && (isReady || isOnRoad) && (
+            <div className="rounded-2xl border border-brand-gold/20 bg-brand-gold/5 px-4 py-3">
+              <p className={`text-xs font-bold text-brand-gold uppercase tracking-wider mb-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? 'الخطوة التالية' : 'Next Step'}
+              </p>
+              <p className={`text-sm font-bold text-brand-text mb-3 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {nextActionLabel}
+              </p>
+
+              {/* ── CTA buttons ──────────────────────────────────────────────── */}
+
+              {/* Step 1: ready → pick up */}
+              {isReady && (
+                <button
+                  type="button"
+                  onClick={handlePickup}
+                  disabled={busy}
+                  className={`
+                    w-full min-h-[60px] rounded-2xl font-black text-lg
+                    transition-all duration-150 active:scale-[0.98]
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    ${isRTL ? 'font-cairo' : 'font-satoshi'}
+                    ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-gold text-brand-black'}
+                  `}
+                >
+                  {busy ? '…' : (isRTL ? 'استلمت الطلب ✓' : 'PICKED UP ✓')}
+                </button>
+              )}
+
+              {/* Step 2: on road, not arrived yet → arrived at customer */}
+              {isOnRoad && !hasArrived && onArrive && (
+                <button
+                  type="button"
+                  onClick={handleArrive}
+                  disabled={busy}
+                  className={`
+                    w-full min-h-[60px] rounded-2xl font-black text-lg
+                    transition-all duration-150 active:scale-[0.98]
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    ${isRTL ? 'font-cairo' : 'font-satoshi'}
+                    ${busy
+                      ? 'bg-brand-surface-2 text-brand-muted'
+                      : 'bg-blue-500/20 border-2 border-blue-500/60 text-blue-400'
+                    }
+                  `}
+                >
+                  {busy ? '…' : (isRTL ? 'وصلت للزبون 📍' : 'ARRIVED 📍')}
+                </button>
+              )}
+
+              {/* Step 3: arrived (or no arrive step) → deliver */}
+              {isOnRoad && (hasArrived || !onArrive) && (
+                <>
+                  {/* Cash confirmation prompt */}
+                  {confirmDeliver && isCash && (
+                    <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2.5">
+                      <p className={`text-sm font-bold text-red-400 mb-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {isRTL
+                          ? `تأكيد: هل استلمت ${Number(order.total_bhd).toFixed(3)} BD نقداً؟`
+                          : `Confirm: did you collect ${Number(order.total_bhd).toFixed(3)} BD cash?`
+                        }
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeliver(false)}
+                          className={`flex-1 rounded-xl py-2 border border-brand-border text-brand-muted text-sm font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+                        >
+                          {isRTL ? 'إلغاء' : 'Cancel'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeliver}
+                          disabled={busy}
+                          className={`flex-[2] rounded-xl py-2 bg-brand-success text-brand-black text-sm font-black ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                        >
+                          {busy ? '…' : (isRTL ? 'نعم، تم التسليم ✓' : 'Yes, Delivered ✓')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!confirmDeliver && (
+                    <button
+                      type="button"
+                      onClick={handleDeliver}
+                      disabled={busy}
+                      className={`
+                        w-full min-h-[60px] rounded-2xl font-black text-lg
+                        transition-all duration-150 active:scale-[0.98]
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        ${isRTL ? 'font-cairo' : 'font-satoshi'}
+                        ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-success text-brand-black'}
+                      `}
+                    >
+                      {busy ? '…' : (isRTL ? 'تم تسليم الطلب ✓' : 'DELIVERED ✓')}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Action error */}
+              {actionError && (
+                <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2.5 bg-red-500/15 border border-red-500/30">
+                  <span className="text-red-400 text-base leading-none shrink-0">⚠️</span>
+                  <span className={`text-sm text-red-400 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {actionError === 'Unexpected order state'
+                      ? (isRTL ? 'استُلم هذا الطلب من قِبل سائق آخر' : 'Another driver already took this order')
+                      : (isRTL ? 'فشل تحديث الطلب — حاول مجدداً' : 'Failed to update order — try again')
+                    }
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Payment alert — cash (active orders only) ──────────────────────── */}
+          {!isCompleted && paymentInfo?.en === 'Cash' && (
+            <div className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 border bg-red-500/15 border-red-500/40 ${uc.pulse ? 'animate-pulse' : ''}`}>
+              <span className="text-base leading-none">💵</span>
+              <div>
+                <p className={`font-black text-xs text-red-400 uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isRTL ? 'المبلغ المطلوب تحصيله' : 'Cash to collect'}
+                </p>
+                <p className="font-satoshi font-black text-2xl text-red-300 tabular-nums leading-tight">
+                  {Number(order.total_bhd).toFixed(3)}
+                  <span className="text-sm font-medium text-red-400 ms-1">BD</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Prepaid badge (active orders only) ────────────────────────────── */}
+          {!isCompleted && paymentInfo && paymentInfo.en !== 'Cash' && (
             <div className="flex items-center justify-center gap-2 rounded-xl px-3 py-2 border bg-brand-success/10 border-brand-success/25">
               <span className="text-sm leading-none">{paymentInfo.icon}</span>
               <span className={`font-bold text-xs text-brand-success ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                {isRTL ? `مدفوع — ${paymentInfo.ar}` : `PAID — ${paymentInfo.en}`}
+                {isRTL ? `مدفوع مسبقًا — ${paymentInfo.ar}` : `Pre-paid — ${paymentInfo.en}`}
               </span>
             </div>
-          )
-        )}
+          )}
 
-        {/* ── Customer row ────────────────────────────────────────────────────── */}
-        {(order.customer_name || order.customer_phone) && (
-          <div className="flex items-center justify-between gap-2 rounded-xl bg-brand-surface-2 border border-brand-border px-3 py-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <PersonIcon />
-              <div className="min-w-0">
-                {order.customer_name && (
-                  <p className={`font-bold text-sm text-brand-text truncate ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                    {order.customer_name}
-                  </p>
-                )}
+          {/* ── Customer card ──────────────────────────────────────────────────── */}
+          {(order.customer_name || order.customer_phone) && (
+            <div className="rounded-xl bg-brand-surface-2 border border-brand-border overflow-hidden">
+              <p className={`px-3 pt-2.5 pb-1 text-xs font-bold text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? 'العميل' : 'Customer'}
+              </p>
+              <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <PersonIcon />
+                  <div className="min-w-0">
+                    {order.customer_name && (
+                      <p className={`font-bold text-sm text-brand-text truncate ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {order.customer_name}
+                      </p>
+                    )}
+                    {order.customer_phone && (
+                      <p className="font-satoshi text-xs text-brand-muted tabular-nums" dir="ltr">
+                        {order.customer_phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 {order.customer_phone && (
-                  <p className="font-satoshi text-xs text-brand-muted tabular-nums" dir="ltr">
-                    {order.customer_phone}
-                  </p>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <a
+                      href={`tel:${order.customer_phone}`}
+                      className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150 min-h-[44px]"
+                      aria-label={isRTL ? 'اتصل بالعميل' : 'Call customer'}
+                    >
+                      <PhoneIcon />
+                      <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {isRTL ? 'اتصال' : 'Call'}
+                      </span>
+                    </a>
+                    <a
+                      href={buildCustomerContactLink(order.customer_phone)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-green-500/10 border border-green-500/30 text-green-500 hover:bg-green-500/20 transition-colors duration-150 min-h-[44px]"
+                      aria-label={isRTL ? 'واتساب العميل' : 'WhatsApp customer'}
+                    >
+                      <WhatsAppSmallIcon />
+                      <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {isRTL ? 'واتساب' : 'WA'}
+                      </span>
+                    </a>
+                  </div>
                 )}
               </div>
             </div>
-            {order.customer_phone && (
-              <div className="flex items-center gap-1.5 shrink-0">
-                <a
-                  href={`tel:${order.customer_phone}`}
-                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150 min-h-[40px]"
-                  aria-label={isRTL ? 'اتصل بالعميل' : 'Call customer'}
-                >
-                  <PhoneIcon />
-                  <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                    {isRTL ? 'اتصال' : 'Call'}
-                  </span>
-                </a>
-                <a
-                  href={buildCustomerContactLink(order.customer_phone)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-green-500/10 border border-green-500/30 text-green-500 hover:bg-green-500/20 transition-colors duration-150 min-h-[40px]"
-                  aria-label={isRTL ? 'واتساب العميل' : 'WhatsApp customer'}
-                >
-                  <WhatsAppSmallIcon />
-                  <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                    {isRTL ? 'واتساب' : 'WA'}
-                  </span>
-                </a>
-              </div>
-            )}
-          </div>
-        )}
+          )}
 
-        {/* ── Connected route (active orders only) ────────────────────────────── */}
-        {!isCompleted && (
-          <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
-            {/* Pickup row */}
-            <div className="flex items-start gap-3 px-3 pt-3">
-              <div className="flex flex-col items-center shrink-0 mt-0.5">
-                <div className="w-3 h-3 rounded-full bg-brand-gold ring-2 ring-brand-gold/25 shrink-0" />
-                {(deliveryAddrText != null) && (
-                  <div className="w-px bg-brand-border/50 flex-1 min-h-[28px] mt-1" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0 pb-2">
-                <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+          {/* ── Pickup card (active orders only) ──────────────────────────────── */}
+          {!isCompleted && (
+            <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
+                <div className="w-2.5 h-2.5 rounded-full bg-brand-gold shrink-0" />
+                <p className={`text-xs font-bold text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                   {isRTL ? 'الاستلام' : 'Pickup'}
                 </p>
-                <p className={`font-bold text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>{branchName}</p>
-                {branchAddr && (
-                  <p className="font-satoshi text-xs text-brand-muted/70 mt-0.5">{branchAddr}</p>
-                )}
               </div>
-              {branchNavUrl && (
-                <a
-                  href={branchNavUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 self-center flex items-center gap-1.5 rounded-lg px-3 py-2 min-h-[36px] border border-brand-gold/30 bg-brand-gold/10 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150"
-                >
-                  <MapIcon />
-                  <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                    {isRTL ? 'ابحث' : 'Go'}
-                  </span>
-                </a>
-              )}
-            </div>
-
-            {/* Distance + ETA pills */}
-            {deliveryDist != null && (
-              <div className="flex items-center gap-2 ps-8 pb-2">
-                <span className="flex items-center gap-1 rounded-md border border-brand-border bg-brand-black/30 px-2 py-0.5">
-                  <RouteIcon />
-                  <span className="font-satoshi text-xs text-brand-muted tabular-nums">
-                    {fmtDistance(deliveryDist, isRTL)}
-                  </span>
-                </span>
-                {etaMins != null && (
-                  <span className="flex items-center gap-1 rounded-md border border-brand-border bg-brand-black/30 px-2 py-0.5">
-                    <ClockTinyIcon />
-                    <span className={`text-xs text-brand-muted tabular-nums ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                      {fmtETA(etaMins, isRTL)}
-                    </span>
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Delivery row */}
-            {deliveryAddrText && (
-              <div className="flex items-start gap-3 px-3 pb-3">
-                <div className="shrink-0 mt-0.5">
-                  <div className="w-3 h-3 rounded-full bg-brand-success ring-2 ring-brand-success/25" />
-                </div>
+              <div className="flex items-start gap-3 px-3 pb-2.5">
                 <div className="flex-1 min-w-0">
-                  <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider mb-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                    {isRTL ? 'التوصيل' : 'Delivery'}
+                  <p className={`font-bold text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {branchName}
                   </p>
-                  <p className={`text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                    {deliveryAddrText}
-                  </p>
+                  {branchAddr && (
+                    <p className="font-satoshi text-xs text-brand-muted/70 mt-0.5">{branchAddr}</p>
+                  )}
+                </div>
+                {branchNavUrl && (
+                  <a
+                    href={branchNavUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 min-h-[44px] border border-brand-gold/30 bg-brand-gold/10 text-brand-gold hover:bg-brand-gold/20 transition-colors duration-150"
+                  >
+                    <MapIcon />
+                    <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                      {isRTL ? 'خريطة الفرع' : 'Map'}
+                    </span>
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Delivery card (active orders, when address available) ──────────── */}
+          {!isCompleted && (deliveryAddrText || customerNavUrl) && (
+            <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
+              <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
+                <div className="w-2.5 h-2.5 rounded-full bg-brand-success shrink-0" />
+                <p className={`text-xs font-bold text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isRTL ? 'التوصيل' : 'Delivery'}
+                </p>
+                {/* Distance + ETA pills */}
+                {deliveryDist != null && (
+                  <div className="flex items-center gap-1.5 ms-auto">
+                    <span className="flex items-center gap-1 rounded-md border border-brand-border bg-brand-black/30 px-1.5 py-0.5">
+                      <RouteIcon />
+                      <span className="font-satoshi text-xs text-brand-muted tabular-nums">
+                        {fmtDistance(deliveryDist, isRTL)}
+                      </span>
+                    </span>
+                    {etaMins != null && (
+                      <span className="flex items-center gap-1 rounded-md border border-brand-border bg-brand-black/30 px-1.5 py-0.5">
+                        <ClockTinyIcon />
+                        <span className={`text-xs text-brand-muted tabular-nums ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                          {fmtETA(etaMins, isRTL)}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-start gap-3 px-3 pb-2.5">
+                <div className="flex-1 min-w-0">
+                  {deliveryAddrText && (
+                    <p className={`text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                      {deliveryAddrText}
+                    </p>
+                  )}
+                  {customerNotes && (
+                    <p className={`text-xs text-brand-muted/80 mt-1 leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                      {customerNotes}
+                    </p>
+                  )}
                 </div>
                 {customerNavUrl && (
                   <a
                     href={customerNavUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 self-center flex items-center gap-1.5 rounded-lg px-3 py-2 min-h-[36px] border border-brand-success/30 bg-brand-success/10 text-brand-success hover:bg-brand-success/20 transition-colors duration-150"
+                    className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 min-h-[44px] border border-brand-success/30 bg-brand-success/10 text-brand-success hover:bg-brand-success/20 transition-colors duration-150"
                   >
                     <MapIcon />
                     <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                      {isRTL ? 'ابحث' : 'Go'}
+                      {isRTL ? 'خريطة العميل' : 'Map'}
                     </span>
                   </a>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ── Completed: delivered address summary ──────────────────────────── */}
+          {isCompleted && deliveryAddrText && (
+            <div className="rounded-xl border border-brand-border bg-brand-surface-2 px-3 py-2.5">
+              <div className="flex items-center gap-2 mb-1">
+                <PinIcon className="text-brand-muted" />
+                <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isRTL ? 'العنوان' : 'Delivered to'}
+                </p>
+              </div>
+              <p className={`text-sm text-brand-text/80 ps-5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {deliveryAddrText}
+              </p>
+            </div>
+          )}
+
+          {/* ── Items — collapsible ────────────────────────────────────────────── */}
+          {order.order_items.length > 0 && (
+            <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setItemsExpanded(v => !v)}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-start"
+              >
+                <div className="flex items-center gap-2">
+                  <BoxIcon />
+                  <span className={`font-bold text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {isRTL ? 'الأصناف' : 'Items'}
+                  </span>
+                  <span className="min-w-[22px] h-[22px] rounded-full bg-brand-gold/20 border border-brand-gold/30 text-brand-gold font-satoshi font-black text-xs flex items-center justify-center tabular-nums">
+                    {order.order_items.reduce((s, i) => s + i.quantity, 0)}
+                  </span>
+                </div>
+                <ChevronIcon expanded={itemsExpanded} />
+              </button>
+
+              {itemsExpanded && (
+                <div className="border-t border-brand-border/60 px-3 pb-3 pt-2 flex flex-col gap-2">
+                  {order.order_items.map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 rounded-lg bg-brand-black/20 px-3 py-2">
+                      <span className="font-satoshi font-black text-base text-brand-gold tabular-nums leading-none shrink-0 pt-0.5">
+                        ×{item.quantity}
+                      </span>
+                      <div className="min-w-0">
+                        <p className={`font-bold text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                          {isRTL ? item.name_ar : item.name_en}
+                        </p>
+                        {(item.selected_size || item.selected_variant) && (
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {item.selected_size && (
+                              <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
+                                {item.selected_size}
+                              </span>
+                            )}
+                            {item.selected_variant && (
+                              <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
+                                {item.selected_variant}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Total row ──────────────────────────────────────────────────────── */}
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-brand-surface-2 border border-brand-border px-3 py-2.5">
+            <span className="font-satoshi font-black text-2xl text-brand-gold tabular-nums">
+              {Number(order.total_bhd).toFixed(3)}
+              <span className="text-sm font-medium text-brand-muted ms-1">BD</span>
+            </span>
+            {paymentInfo && (
+              <span className="flex items-center gap-1.5 font-satoshi text-sm text-brand-muted">
+                <span>{paymentInfo.icon}</span>
+                <span className={isRTL ? 'font-almarai' : ''}>
+                  {isRTL ? paymentInfo.ar : paymentInfo.en}
+                </span>
+              </span>
             )}
           </div>
-        )}
 
-        {/* ── Completed address summary ────────────────────────────────────────── */}
-        {isCompleted && deliveryAddrText && (
-          <div className="rounded-xl border border-brand-border bg-brand-surface-2 px-3 py-2.5">
-            <div className="flex items-center gap-2 mb-1">
-              <PinIcon className="text-brand-muted" />
-              <p className={`font-bold text-xs text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                {isRTL ? 'العنوان' : 'Delivered to'}
-              </p>
-            </div>
-            <p className={`text-sm text-brand-text/80 ps-5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {deliveryAddrText}
-            </p>
-          </div>
-        )}
-
-        {/* ── Customer instructions ────────────────────────────────────────────── */}
-        {!isCompleted && customerNotes && (
-          <div className="rounded-xl border border-brand-gold/20 bg-brand-gold/5 px-3 py-2.5">
-            <div className="flex items-start gap-2">
-              <SpeechIcon />
-              <p className={`text-sm text-brand-text/90 leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                &ldquo;{customerNotes}&rdquo;
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ── Items — collapsible ──────────────────────────────────────────────── */}
-        {order.order_items.length > 0 && (
-          <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
+          {/* ── Issue report button (active orders only) ───────────────────────── */}
+          {!isCompleted && (
             <button
               type="button"
-              onClick={() => setItemsExpanded(v => !v)}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-start"
+              onClick={() => setShowIssue(true)}
+              className={`
+                w-full min-h-[44px] rounded-xl border border-brand-border
+                flex items-center justify-center gap-2
+                text-brand-muted hover:text-brand-error hover:border-brand-error/40
+                transition-colors duration-150
+              `}
             >
-              <div className="flex items-center gap-2">
-                <BoxIcon />
-                <span className={`font-bold text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isRTL ? 'الأصناف' : 'Items'}
-                </span>
-                <span className="min-w-[22px] h-[22px] rounded-full bg-brand-gold/20 border border-brand-gold/30 text-brand-gold font-satoshi font-black text-xs flex items-center justify-center tabular-nums">
-                  {order.order_items.reduce((s, i) => s + i.quantity, 0)}
-                </span>
-              </div>
-              <ChevronIcon expanded={itemsExpanded} />
-            </button>
-
-            {itemsExpanded && (
-              <div className="border-t border-brand-border/60 px-3 pb-3 pt-2 flex flex-col gap-2">
-                {order.order_items.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 rounded-lg bg-brand-black/20 px-3 py-2">
-                    <span className="font-satoshi font-black text-base text-brand-gold tabular-nums leading-none shrink-0 pt-0.5">
-                      ×{item.quantity}
-                    </span>
-                    <div className="min-w-0">
-                      <p className={`font-bold text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                        {isRTL ? item.name_ar : item.name_en}
-                      </p>
-                      {(item.selected_size || item.selected_variant) && (
-                        <div className="flex flex-wrap gap-1 mt-0.5">
-                          {item.selected_size && (
-                            <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
-                              {item.selected_size}
-                            </span>
-                          )}
-                          {item.selected_variant && (
-                            <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
-                              {item.selected_variant}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Total + Payment ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-brand-surface-2 border border-brand-border px-3 py-2.5">
-          <span className="font-satoshi font-black text-2xl text-brand-gold tabular-nums">
-            {Number(order.total_bhd).toFixed(3)}
-            <span className="text-sm font-medium text-brand-muted ms-1">BD</span>
-          </span>
-          {paymentInfo && (
-            <span className="flex items-center gap-1.5 font-satoshi text-sm text-brand-muted">
-              <span>{paymentInfo.icon}</span>
-              <span className={isRTL ? 'font-almarai' : ''}>
-                {isRTL ? paymentInfo.ar : paymentInfo.en}
+              <WarningIcon />
+              <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? 'مشكلة في الطلب' : 'Report an Issue'}
               </span>
-            </span>
+            </button>
           )}
+
         </div>
-
-        {/* ── Action button ────────────────────────────────────────────────────── */}
-        {!isCompleted && (
-          <>
-            {/* Step 1: ready → picked up */}
-            {isReady && (
-              <button
-                type="button"
-                onClick={handleAction}
-                disabled={busy}
-                className={`
-                  w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
-                  transition-all duration-150 active:scale-[0.98]
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-gold text-brand-black'}
-                `}
-              >
-                {busy ? '…' : (isRTL ? 'استلمت الطلب ✓' : 'PICKED UP ✓')}
-              </button>
-            )}
-
-            {/* Step 2: on road, not arrived yet → arrived at customer */}
-            {isOnRoad && !order.arrived_at && onArrive && (
-              <button
-                type="button"
-                onClick={handleArrive}
-                disabled={busy}
-                className={`
-                  w-full min-h-[56px] rounded-2xl font-satoshi font-black text-lg
-                  transition-all duration-150 active:scale-[0.98]
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-blue-500/20 border-2 border-blue-500/60 text-blue-400'}
-                `}
-              >
-                {busy ? '…' : (isRTL ? 'وصلت للزبون 📍' : 'ARRIVED 📍')}
-              </button>
-            )}
-
-            {/* Step 3: arrived → delivered */}
-            {isOnRoad && (order.arrived_at || !onArrive) && (
-              <button
-                type="button"
-                onClick={handleAction}
-                disabled={busy}
-                className={`
-                  w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
-                  transition-all duration-150 active:scale-[0.98]
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-success text-brand-black'}
-                `}
-              >
-                {busy ? '…' : (isRTL ? 'تم التسليم ✓' : 'DELIVERED ✓')}
-              </button>
-            )}
-
-            {actionError && (
-              <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 bg-red-500/15 border border-red-500/30">
-                <span className="text-red-400 text-base leading-none shrink-0">⚠️</span>
-                <span className={`text-sm text-red-400 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                  {actionError === 'Unexpected order state'
-                    ? (isRTL ? 'استُلم هذا الطلب من قِبل سائق آخر' : 'Another driver already took this order')
-                    : (isRTL ? 'فشل تحديث الطلب — حاول مجدداً' : 'Failed to update order — try again')
-                  }
-                </span>
-              </div>
-            )}
-          </>
-        )}
       </div>
-    </div>
+
+      {/* ── Issue modal ─────────────────────────────────────────────────────── */}
+      {showIssue && (
+        <IssueReportModal
+          orderId={order.id}
+          orderRef={orderRef}
+          isRTL={isRTL}
+          onClose={() => setShowIssue(false)}
+        />
+      )}
+    </>
   )
 }
 
@@ -568,7 +781,7 @@ function AlarmIcon() {
   )
 }
 
-function CheckIcon() {
+function CheckSmallIcon() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -617,14 +830,6 @@ function PinIcon({ className }: { className?: string }) {
   )
 }
 
-function SpeechIcon() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-gold mt-0.5 shrink-0" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-    </svg>
-  )
-}
-
 function BoxIcon() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted shrink-0" aria-hidden="true">
@@ -657,6 +862,14 @@ function ClockTinyIcon() {
   return (
     <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-brand-muted" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+    </svg>
+  )
+}
+
+function WarningIcon() {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
     </svg>
   )
 }
