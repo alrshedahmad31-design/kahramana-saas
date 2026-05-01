@@ -21,7 +21,12 @@ import {
   Trash2,
   Store,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Edit,
+  Send,
+  Map,
+  Building,
+  FileText
 } from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/lib/cart'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
@@ -40,22 +45,20 @@ import { tokens } from '@/lib/design-tokens'
 function StepHeader({
   number,
   title,
-  icon: Icon,
-  isAr
+  icon: Icon
 }: {
   number: string
   title: string
   icon: any
-  isAr: boolean
 }) {
   return (
-    <div className={`flex items-center gap-3 mb-4 px-1 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className="flex items-center gap-3 mb-4 px-1">
       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-gold text-brand-black font-bold text-sm shrink-0">
         {number}
       </div>
-      <div className={`flex items-center gap-2 flex-1 ${isAr ? 'justify-start flex-row-reverse' : 'justify-start'}`}>
+      <div className="flex items-center gap-2 flex-1">
         <Icon size={18} className="text-brand-gold" />
-        <h2 className={`text-sm sm:text-base font-bold text-brand-text uppercase tracking-wider ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+        <h2 className="text-sm sm:text-base font-bold text-brand-text uppercase tracking-wider font-cairo sm:font-satoshi">
           {title}
         </h2>
       </div>
@@ -67,6 +70,38 @@ function SectionCard({ children, className = '' }: { children: React.ReactNode, 
   return (
     <div className={`bg-brand-surface border border-brand-border rounded-2xl p-5 mb-6 shadow-sm ${className}`}>
       {children}
+    </div>
+  )
+}
+
+function AddressRow({
+  icon: Icon,
+  label,
+  value,
+  onChange,
+  placeholder
+}: {
+  icon: any
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+}) {
+  return (
+    <div className="flex items-stretch border border-brand-border rounded-xl mb-2 min-h-[56px] overflow-hidden">
+      <div className="flex items-center gap-3 px-4 shrink-0 min-w-[160px] sm:min-w-[180px] bg-brand-surface-2/30 border-e border-brand-border">
+        <Icon size={18} className="text-brand-gold shrink-0" />
+        <span className="text-[11px] sm:text-xs font-bold text-brand-gold tracking-wider">
+          {label}
+        </span>
+      </div>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1 bg-transparent px-4 py-3 text-sm text-brand-text placeholder:text-brand-muted/30 focus:outline-none"
+      />
     </div>
   )
 }
@@ -381,7 +416,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
         number="1"
         title={t('steps.branch')}
         icon={Store}
-        isAr={isAr}
       />
       <SectionCard>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -431,7 +465,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
         number="2"
         title={t('steps.customer')}
         icon={User}
-        isAr={isAr}
       />
       <SectionCard>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -500,37 +533,67 @@ export default function CheckoutForm({ customerProfile }: Props) {
         number="3"
         title={t('steps.address')}
         icon={Truck}
-        isAr={isAr}
       />
-      <SectionCard>
+      <SectionCard className="p-4 sm:p-5">
         {/* Mode Switcher */}
-        <div className="flex p-1 bg-brand-surface-2 border border-brand-border rounded-xl mb-5">
+        <div className="flex gap-2 mb-5">
           <button
             type="button"
             onClick={() => setAddressMode('manual')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all font-bold text-sm
               ${addressMode === 'manual'
-                ? 'bg-brand-gold text-brand-black shadow-sm'
-                : 'text-brand-muted hover:text-brand-text'}
-              ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
+              ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
           >
-            <MapPin size={14} />
+            <Edit size={16} className={addressMode === 'manual' ? 'text-brand-gold' : 'text-brand-muted'} />
             {t('address.manual')}
           </button>
           <button
             type="button"
             onClick={requestLocation}
             disabled={gpsLoading}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all font-bold text-sm
               ${addressMode === 'location'
-                ? 'bg-brand-gold text-brand-black shadow-sm'
-                : 'text-brand-muted hover:text-brand-text'}
-              ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
+              ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
           >
-            {gpsLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+            {gpsLoading ? (
+              <Loader2 size={16} className="animate-spin text-brand-gold" />
+            ) : (
+              <Send size={16} className={addressMode === 'location' ? 'text-brand-gold' : 'text-brand-muted'} />
+            )}
             {t('address.gps')}
           </button>
         </div>
+
+        {/* Manual Address Fields */}
+        {addressMode === 'manual' && (
+          <div className="space-y-0">
+            <AddressRow
+              icon={Map}
+              label={t('address.area')}
+              value={manualAddr.block}
+              onChange={(v) => setManualAddr(p => ({ ...p, block: v }))}
+              placeholder={t('address.areaPlaceholder')}
+            />
+            <AddressRow
+              icon={Building}
+              label={t('address.building')}
+              value={manualAddr.building}
+              onChange={(v) => setManualAddr(p => ({ ...p, building: v }))}
+              placeholder={t('address.buildingPlaceholder')}
+            />
+            <AddressRow
+              icon={FileText}
+              label={t('address.directions')}
+              value={manualAddr.road}
+              onChange={(v) => setManualAddr(p => ({ ...p, road: v }))}
+              placeholder={t('address.directionsPlaceholder')}
+            />
+          </div>
+        )}
 
         {/* GPS Result UI */}
         {addressMode === 'location' && (
@@ -550,66 +613,32 @@ export default function CheckoutForm({ customerProfile }: Props) {
                 </div>
               </div>
             ) : !gpsError ? (
-              <p className={`text-sm text-brand-muted italic py-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {isAr ? 'بانتظار تحديد موقعك...' : 'Waiting for GPS signal...'}
-              </p>
+              <div className="rounded-xl border border-brand-border bg-brand-surface-2 p-6 flex flex-col items-center justify-center text-center gap-3">
+                <Loader2 size={32} className="animate-spin text-brand-gold opacity-50" />
+                <p className={`text-sm text-brand-muted italic ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? 'بانتظار تحديد موقعك عبر الأقمار الصناعية...' : 'Waiting for GPS satellite signal...'}
+                </p>
+              </div>
             ) : null}
             {gpsError && (
-              <p className="text-xs text-brand-error font-almarai px-2">⚠ {gpsError}</p>
+              <div className="rounded-xl border border-brand-error/30 bg-brand-error/5 p-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-brand-error/20 flex items-center justify-center shrink-0">
+                  <span className="text-brand-error font-bold">!</span>
+                </div>
+                <p className="text-xs text-brand-error font-almarai">
+                  {gpsError}
+                </p>
+              </div>
             )}
-            <p className={`text-[11px] text-brand-muted/70 px-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? 'سيقوم السائق باستخدام هذا الموقع للوصول إليك.' : 'The driver will use this location to reach you.'}
+            <p className={`text-[11px] text-brand-muted/70 px-2 mt-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? 'سيقوم السائق باستخدام هذا الموقع للوصول إليك بدقة.' : 'The driver will use this location to reach you accurately.'}
             </p>
           </div>
         )}
 
-        {/* Manual Address Fields */}
-        {addressMode === 'manual' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className={`text-[11px] font-bold text-brand-muted uppercase ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}>
-                  {t('address.area')} <span className="text-brand-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={manualAddr.block} // Reusing block field as Area/General for better UX
-                  onChange={(e) => setManualAddr(prev => ({ ...prev, block: e.target.value }))}
-                  placeholder={t('address.areaPlaceholder')}
-                  className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted/40 focus:border-brand-gold focus:outline-none transition-all ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className={`text-[11px] font-bold text-brand-muted uppercase ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}>
-                  {t('address.building')} <span className="text-brand-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={manualAddr.building}
-                  onChange={(e) => setManualAddr(prev => ({ ...prev, building: e.target.value }))}
-                  placeholder={t('address.buildingPlaceholder')}
-                  className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted/40 focus:border-brand-gold focus:outline-none transition-all ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className={`text-[11px] font-bold text-brand-muted uppercase ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}>
-                {t('address.directions')}
-              </label>
-              <input
-                type="text"
-                value={manualAddr.road} // Reusing road field for Directions
-                onChange={(e) => setManualAddr(prev => ({ ...prev, road: e.target.value }))}
-                placeholder={t('address.directionsPlaceholder')}
-                className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted/40 focus:border-brand-gold focus:outline-none transition-all ${isAr ? 'font-almarai text-end' : 'font-satoshi'}`}
-              />
-            </div>
-          </div>
-        )}
-
         {errors.address && (
-          <p className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-1">
-            <span className="shrink-0">⚠</span> {errors.address}
+          <p className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-2 bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
+            <span className="shrink-0 text-lg">⚠</span> {errors.address}
           </p>
         )}
       </SectionCard>
@@ -619,7 +648,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
         number="4"
         title={t('steps.notes')}
         icon={Notebook}
-        isAr={isAr}
       />
       <SectionCard>
         <textarea
@@ -641,7 +669,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
         number="5"
         title={t('steps.coupon')}
         icon={Tag}
-        isAr={isAr}
       />
       <SectionCard className="p-0">
         <CouponInput
@@ -658,7 +685,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
         number="6"
         title={t('steps.summary')}
         icon={ShoppingCart}
-        isAr={isAr}
       />
       <SectionCard className="p-0 overflow-hidden">
         <div className="divide-y divide-brand-border">

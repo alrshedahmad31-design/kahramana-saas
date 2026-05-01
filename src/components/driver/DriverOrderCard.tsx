@@ -19,7 +19,7 @@ interface Props {
   isRTL:         boolean
   branchMapsUrl: string | null
   variant?:      'active' | 'completed'
-  onAction?:     (id: string, status: DriverActiveStatus) => Promise<void>
+  onAction?:     (id: string, status: DriverActiveStatus) => Promise<string | null>
 }
 
 // ── Urgency config ─────────────────────────────────────────────────────────────
@@ -81,6 +81,7 @@ function formatTime(iso: string): string {
 export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant = 'active', onAction }: Props) {
   const [elapsed,       setElapsed]       = useState(() => formatElapsed(order.created_at))
   const [busy,          setBusy]          = useState(false)
+  const [actionError,   setActionError]   = useState<string | null>(null)
   const [itemsExpanded, setItemsExpanded] = useState(() => order.status === 'ready')
 
   const isCompleted = variant === 'completed'
@@ -103,7 +104,31 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
   const paymentInfo  = paymentEntry ? PAYMENT_LABEL[paymentEntry.method] : null
 
   // Address & notes
-  const deliveryAddrText = order.delivery_address ?? order.notes ?? null
+  const rawAddr = order.delivery_address
+  const deliveryAddrText: string | null = (() => {
+    if (!rawAddr) return order.notes ?? null
+    // GPS mode stores a Google Maps URL — skip it; navigation button handles it
+    if (rawAddr.startsWith('http')) return null
+    // Expand Bahrain abbreviation format: م = block/building, ش = road
+    if (/[مش]\d/.test(rawAddr)) {
+      let blockSeen = false
+      return rawAddr
+        .split(/،\s*/)
+        .filter(Boolean)
+        .map((p) => {
+          if (/^م\d/.test(p)) {
+            const n = p.replace(/^م/, '')
+            if (!blockSeen) { blockSeen = true; return isRTL ? `بلوك ${n}` : `Block ${n}` }
+            return isRTL ? `مبنى ${n}` : `Building ${n}`
+          }
+          if (/^ش\d/.test(p)) return isRTL ? `طريق ${p.replace(/^ش/, '')}` : `Road ${p.replace(/^ش/, '')}`
+          if (/^\d+$/.test(p)) return isRTL ? `شقة ${p}` : `Flat ${p}`
+          return p
+        })
+        .join(isRTL ? '، ' : ', ')
+    }
+    return rawAddr
+  })()
   const customerNotes    = order.customer_notes ?? order.delivery_instructions ?? null
 
   // Urgency
@@ -138,7 +163,9 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
   async function handleAction() {
     if (busy || (!isReady && !isOnRoad) || !onAction) return
     setBusy(true)
-    await onAction(order.id, order.status as DriverActiveStatus)
+    setActionError(null)
+    const error = await onAction(order.id, order.status as DriverActiveStatus)
+    if (error) setActionError(error)
     setBusy(false)
   }
 
@@ -354,7 +381,7 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
         )}
 
         {/* ── Completed address summary ────────────────────────────────────────── */}
-        {isCompleted && (order.notes ?? order.delivery_address) && (
+        {isCompleted && deliveryAddrText && (
           <div className="rounded-xl border border-brand-border bg-brand-surface-2 px-3 py-2.5">
             <div className="flex items-center gap-2 mb-1">
               <PinIcon className="text-brand-muted" />
@@ -363,7 +390,7 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
               </p>
             </div>
             <p className={`text-sm text-brand-text/80 ps-5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {order.delivery_address ?? order.notes}
+              {deliveryAddrText}
             </p>
           </div>
         )}
@@ -451,29 +478,39 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
 
         {/* ── Action button ────────────────────────────────────────────────────── */}
         {!isCompleted && (
-          <button
-            type="button"
-            onClick={handleAction}
-            disabled={busy}
-            className={`
-              w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
-              transition-all duration-150 active:scale-[0.98]
-              disabled:opacity-50 disabled:cursor-not-allowed
-              ${busy
-                ? 'bg-brand-surface-2 text-brand-muted'
-                : isReady
-                  ? 'bg-brand-gold text-brand-black'
-                  : 'bg-brand-success text-brand-black'
+          <>
+            <button
+              type="button"
+              onClick={handleAction}
+              disabled={busy}
+              className={`
+                w-full min-h-[64px] rounded-2xl font-satoshi font-black text-xl
+                transition-all duration-150 active:scale-[0.98]
+                disabled:opacity-50 disabled:cursor-not-allowed
+                ${busy
+                  ? 'bg-brand-surface-2 text-brand-muted'
+                  : isReady
+                    ? 'bg-brand-gold text-brand-black'
+                    : 'bg-brand-success text-brand-black'
+                }
+              `}
+            >
+              {busy
+                ? '…'
+                : isRTL
+                  ? (isReady ? 'استلمت الطلب ✓' : 'تم التسليم ✓')
+                  : (isReady ? 'PICKED UP ✓' : 'DELIVERED ✓')
               }
-            `}
-          >
-            {busy
-              ? '…'
-              : isRTL
-                ? (isReady ? 'استلمت الطلب ✓' : 'تم التسليم ✓')
-                : (isReady ? 'PICKED UP ✓' : 'DELIVERED ✓')
-            }
-          </button>
+            </button>
+            {actionError && (
+              <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 bg-red-500/15 border border-red-500/30">
+                <span className="text-red-400 text-base leading-none shrink-0">⚠️</span>
+                <span className={`text-sm text-red-400 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isRTL ? 'فشل تحديث الطلب — حاول مجدداً' : 'Failed to update order — try again'}
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

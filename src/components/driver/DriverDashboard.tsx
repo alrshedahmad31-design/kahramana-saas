@@ -168,10 +168,14 @@ export default function DriverDashboard({
     if (!result.success) setIsOnline((v) => !v) // revert on DB error
   }
 
-  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery') {
+  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery'): Promise<string | null> {
     setOrders((prev) => prev.filter((o) => o.id !== orderId))
     const result = await driverBumpOrder(orderId, currentStatus)
-    if (!result.success) fetchOrders()
+    if (!result.success) {
+      fetchOrders()
+      return result.error
+    }
+    return null
   }
 
   const activeOrders    = orders.filter((o) => o.status === 'out_for_delivery')
