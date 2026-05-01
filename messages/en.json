@@ -494,6 +494,7 @@
       "logout": "Sign Out",
       "kds": "Kitchen Display",
       "driver": "Deliveries",
+      "delivery": "Delivery Board",
       "coupons": "Coupons",
       "analytics": "Analytics",
       "payments": "Payments",
@@ -927,7 +928,14 @@
     "backToDashboard": "Dashboard",
     "completedToday": "Completed Today",
     "noCompleted": "No deliveries completed yet today",
-    "deliveredAt": "Delivered at"
+    "deliveredAt": "Delivered at",
+    "cashToCollect": "Cash — Collect",
+    "prepaid": "Pre-paid",
+    "cashHandover": "Cash Handover",
+    "totalCashCollected": "Total Cash Collected",
+    "confirmHandover": "Confirm Handed to Restaurant",
+    "handedSuccessfully": "Cash handed successfully",
+    "noCashOrders": "No cash orders today"
   },
   "loyalty": {
     "totalOrders": "Total Orders",

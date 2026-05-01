@@ -199,6 +199,25 @@ export default function DriverOrderCard({ order, isRTL, branchMapsUrl, variant =
 
       <div className="px-4 py-3 flex flex-col gap-3">
 
+        {/* ── Payment method badge ─────────────────────────────────────────────── */}
+        {!isCompleted && paymentInfo && (
+          paymentInfo.en === 'Cash' ? (
+            <div className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 border bg-red-500/15 border-red-500/40 ${uc.pulse ? 'animate-pulse' : ''}`}>
+              <span className="text-base leading-none">💵</span>
+              <span className={`font-black text-sm text-red-400 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? `نقداً — اجمع ${Number(order.total_bhd).toFixed(3)} BD` : `CASH — Collect ${Number(order.total_bhd).toFixed(3)} BD`}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 rounded-xl px-3 py-2 border bg-brand-success/10 border-brand-success/25">
+              <span className="text-sm leading-none">{paymentInfo.icon}</span>
+              <span className={`font-bold text-xs text-brand-success ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? `مدفوع — ${paymentInfo.ar}` : `PAID — ${paymentInfo.en}`}
+              </span>
+            </div>
+          )
+        )}
+
         {/* ── Customer row ────────────────────────────────────────────────────── */}
         {(order.customer_name || order.customer_phone) && (
           <div className="flex items-center justify-between gap-2 rounded-xl bg-brand-surface-2 border border-brand-border px-3 py-2.5">

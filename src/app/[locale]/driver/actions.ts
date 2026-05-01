@@ -58,3 +58,30 @@ export async function postDriverLocation(
   if (error) return { success: false, error: error.message }
   return { success: true }
 }
+
+// ── Submit end-of-shift cash handover ─────────────────────────────────────────
+
+export async function submitCashHandover(
+  orderIds:  string[],
+  totalCash: number,
+): Promise<DriverActionResult> {
+  const user = await getSession()
+  if (!user || !canAccessDriver(user)) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = await createClient() as any
+
+  const { error } = await supabase
+    .from('driver_cash_handovers')
+    .insert({
+      driver_id:  user.id,
+      shift_date: new Date().toISOString().split('T')[0],
+      total_cash: totalCash,
+      order_ids:  orderIds,
+    })
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}

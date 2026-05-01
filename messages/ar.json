@@ -494,6 +494,7 @@
       "logout": "تسجيل الخروج",
       "kds": "شاشة المطبخ",
       "driver": "التوصيل",
+      "delivery": "لوحة التوصيل",
       "coupons": "الكوبونات",
       "analytics": "التحليلات",
       "payments": "المدفوعات",
@@ -927,7 +928,14 @@
     "backToDashboard": "لوحة التحكم",
     "completedToday": "مُسلَّمة اليوم",
     "noCompleted": "لم يتم تسليم أي طلبات بعد اليوم",
-    "deliveredAt": "تم التسليم في"
+    "deliveredAt": "تم التسليم في",
+    "cashToCollect": "نقداً — اجمع",
+    "prepaid": "مدفوع مسبقاً",
+    "cashHandover": "تسليم النقد",
+    "totalCashCollected": "إجمالي النقد المحصّل",
+    "confirmHandover": "تأكيد التسليم للمطعم",
+    "handedSuccessfully": "تم تسليم النقد بنجاح",
+    "noCashOrders": "لا توجد طلبات نقدية اليوم"
   },
   "loyalty": {
     "totalOrders": "إجمالي الطلبات",

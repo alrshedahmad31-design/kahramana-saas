@@ -6,6 +6,8 @@ import { driverBumpOrder, postDriverLocation } from '@/app/[locale]/driver/actio
 import DriverHeader from './DriverHeader'
 import DriverOrderCard from './DriverOrderCard'
 import DriverPerformanceDashboard from './DriverPerformanceDashboard'
+import DriverCashSummary from './DriverCashSummary'
+import CashHandoverModal from './CashHandoverModal'
 import { resolveExpectedAt, getUrgencyLevel } from '@/lib/utils/delivery'
 import type { DriverOrder } from '@/lib/supabase/custom-types'
 
@@ -37,6 +39,7 @@ export default function DriverDashboard({
   const [completedOrders, setCompletedOrders] = useState<DriverOrder[]>(initialCompletedOrders)
   const [isOnline,        setIsOnline]        = useState(true)
   const [clock,           setClock]           = useState(formatClock)
+  const [showHandover,    setShowHandover]    = useState(false)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = useMemo(() => createClient(), [])
@@ -191,6 +194,9 @@ export default function DriverDashboard({
             isRTL={isAr}
           />
 
+          {/* Cash collection summary */}
+          <DriverCashSummary orders={orders} isRTL={isAr} />
+
           {/* Active deliveries */}
           {activeOrders.length > 0 && (
             <section>
@@ -247,13 +253,27 @@ export default function DriverDashboard({
 
           {/* Completed today */}
           <section>
-            <SectionLabel
-              title={isAr ? 'مُسلَّمة اليوم' : 'Completed Today'}
-              count={completedOrders.length}
-              color="text-brand-muted"
-              dotColor="bg-brand-muted"
-              pulse={false}
-            />
+            <div className="flex items-center justify-between gap-3">
+              <SectionLabel
+                title={isAr ? 'مُسلَّمة اليوم' : 'Completed Today'}
+                count={completedOrders.length}
+                color="text-brand-muted"
+                dotColor="bg-brand-muted"
+                pulse={false}
+              />
+              {completedOrders.some(o => o.payments?.[0]?.method === 'cash') && (
+                <button
+                  type="button"
+                  onClick={() => setShowHandover(true)}
+                  className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25 transition-colors duration-150"
+                >
+                  <span className="text-sm leading-none">💵</span>
+                  <span className={`font-bold text-xs ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                    {isAr ? 'تسليم النقد' : 'Cash Handover'}
+                  </span>
+                </button>
+              )}
+            </div>
             {completedOrders.length === 0 ? (
               <div className="mt-3 flex items-center justify-center py-8 rounded-xl border border-brand-border bg-brand-surface">
                 <p className="font-satoshi text-sm text-brand-muted/40">
@@ -291,6 +311,16 @@ export default function DriverDashboard({
           )}
         </div>
       </div>
+
+      {/* Cash handover modal */}
+      {showHandover && (
+        <CashHandoverModal
+          deliveredOrders={completedOrders}
+          isRTL={isAr}
+          onClose={() => setShowHandover(false)}
+          onConfirmed={() => setShowHandover(false)}
+        />
+      )}
     </div>
   )
 }
