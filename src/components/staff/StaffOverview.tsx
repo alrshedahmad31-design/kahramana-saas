@@ -12,27 +12,29 @@ interface Props {
 }
 
 const ROLE_LABEL_EN: Record<StaffRole, string> = {
-  owner:           'Owner',
-  general_manager: 'General Manager',
-  branch_manager:  'Branch Manager',
-  cashier:         'Cashier',
-  kitchen:         'Kitchen',
-  driver:          'Driver',
-  inventory:       'Inventory',
-  marketing:       'Marketing',
-  support:         'Support',
+  owner:             'Owner',
+  general_manager:   'General Manager',
+  branch_manager:    'Branch Manager',
+  cashier:           'Cashier',
+  kitchen:           'Kitchen',
+  driver:            'Driver',
+  inventory:         'Inventory',
+  inventory_manager: 'Inventory Manager',
+  marketing:         'Marketing',
+  support:           'Support',
 }
 
 const ROLE_LABEL_AR: Record<StaffRole, string> = {
-  owner:           'المالك',
-  general_manager: 'مدير عام',
-  branch_manager:  'مدير فرع',
-  cashier:         'كاشير',
-  kitchen:         'مطبخ',
-  driver:          'سائق',
-  inventory:       'مخزون',
-  marketing:       'تسويق',
-  support:         'دعم',
+  owner:             'المالك',
+  general_manager:   'مدير عام',
+  branch_manager:    'مدير فرع',
+  cashier:           'كاشير',
+  kitchen:           'مطبخ',
+  driver:            'سائق',
+  inventory:         'مخزون',
+  inventory_manager: 'مدير المخزون',
+  marketing:         'تسويق',
+  support:           'دعم',
 }
 
 const EMP_LABEL: Record<EmploymentType, { en: string; ar: string }> = {

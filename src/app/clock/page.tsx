@@ -6,15 +6,16 @@ import { BRANCHES } from '@/constants/contact'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 
 const ROLE_LABEL: Record<StaffRole, string> = {
-  owner:           'Owner',
-  general_manager: 'General Manager',
-  branch_manager:  'Branch Manager',
-  cashier:         'Cashier',
-  kitchen:         'Kitchen',
-  driver:          'Driver',
-  inventory:       'Inventory',
-  marketing:       'Marketing',
-  support:         'Support',
+  owner:             'Owner',
+  general_manager:   'General Manager',
+  branch_manager:    'Branch Manager',
+  cashier:           'Cashier',
+  kitchen:           'Kitchen',
+  driver:            'Driver',
+  inventory:         'Inventory',
+  inventory_manager: 'Inventory Manager',
+  marketing:         'Marketing',
+  support:           'Support',
 }
 
 function formatClock(): string {

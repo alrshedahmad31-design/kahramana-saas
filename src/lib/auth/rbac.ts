@@ -5,15 +5,16 @@ import { ALLOWED_TRANSITIONS, CAN_CANCEL } from './permissions'
 // ── Role hierarchy ────────────────────────────────────────────────────────────
 
 export const ROLE_RANK: Record<StaffRole, number> = {
-  owner:           9,
-  general_manager: 8,
-  branch_manager:  7,
-  cashier:         3,
-  kitchen:         3,
-  driver:          2,
-  inventory:       2,
-  marketing:       1,
-  support:         1,
+  owner:             9,
+  general_manager:   8,
+  branch_manager:    7,
+  cashier:           3,
+  kitchen:           3,
+  driver:            2,
+  inventory:         2,
+  inventory_manager: 4,
+  marketing:         1,
+  support:           1,
 }
 
 function rankOf(role: StaffRole | null | undefined): number {
@@ -114,19 +115,20 @@ export function canManageStaff(
 const ASSIGNABLE_BY: Record<StaffRole, StaffRole[]> = {
   owner: [
     'general_manager', 'branch_manager',
-    'cashier', 'kitchen', 'driver', 'inventory', 'marketing', 'support',
+    'cashier', 'kitchen', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support',
   ],
   general_manager: [
     'branch_manager',
-    'cashier', 'kitchen', 'driver', 'inventory', 'marketing', 'support',
+    'cashier', 'kitchen', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support',
   ],
-  branch_manager: ['cashier', 'kitchen', 'driver', 'inventory', 'marketing', 'support'],
-  cashier:        [],
-  kitchen:        [],
-  driver:         [],
-  inventory:      [],
-  marketing:      [],
-  support:        [],
+  branch_manager:    ['cashier', 'kitchen', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support'],
+  cashier:           [],
+  kitchen:           [],
+  driver:            [],
+  inventory:         [],
+  inventory_manager: [],
+  marketing:         [],
+  support:           [],
 }
 
 export function canAssignRole(user: AuthUser, targetRole: StaffRole): boolean {

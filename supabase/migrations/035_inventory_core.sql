@@ -480,6 +480,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_platform_dedup
   ON orders(order_source, platform_order_id)
   WHERE platform_order_id IS NOT NULL;
 
+-- Extend staff_role ENUM for inventory access control.
+-- Policies in Section 8 use auth_user_role()::text to avoid SQLSTATE 55P04
+-- (PostgreSQL disallows using a newly added enum value in the same transaction).
 ALTER TYPE staff_role ADD VALUE IF NOT EXISTS 'inventory_manager';
 
 -- ── 4. INDEXES ────────────────────────────────────────────────────────────────
@@ -1681,216 +1684,256 @@ GROUP BY b.id, b.name_en, i.category;
 -- ── 8. RLS POLICIES ───────────────────────────────────────────────────────────
 
 -- ingredients
-CREATE POLICY IF NOT EXISTS "ingredients_select_authenticated"
+DROP POLICY IF EXISTS "ingredients_select_authenticated" ON ingredients;
+CREATE POLICY "ingredients_select_authenticated"
   ON ingredients FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "ingredients_all_managers"
+DROP POLICY IF EXISTS "ingredients_all_managers" ON ingredients;
+CREATE POLICY "ingredients_all_managers"
   ON ingredients FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'));
 
 -- ingredient_allergens
-CREATE POLICY IF NOT EXISTS "allergens_select_authenticated"
+DROP POLICY IF EXISTS "allergens_select_authenticated" ON ingredient_allergens;
+CREATE POLICY "allergens_select_authenticated"
   ON ingredient_allergens FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "allergens_all_managers"
+DROP POLICY IF EXISTS "allergens_all_managers" ON ingredient_allergens;
+CREATE POLICY "allergens_all_managers"
   ON ingredient_allergens FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'));
 
 -- recipes
-CREATE POLICY IF NOT EXISTS "recipes_select_authenticated"
+DROP POLICY IF EXISTS "recipes_select_authenticated" ON recipes;
+CREATE POLICY "recipes_select_authenticated"
   ON recipes FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "recipes_all_managers"
+DROP POLICY IF EXISTS "recipes_all_managers" ON recipes;
+CREATE POLICY "recipes_all_managers"
   ON recipes FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','kitchen'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','kitchen'));
+  USING (auth_user_role()::text IN ('owner','general_manager','kitchen'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','kitchen'));
 
 -- prep_items
-CREATE POLICY IF NOT EXISTS "prep_items_select_authenticated"
+DROP POLICY IF EXISTS "prep_items_select_authenticated" ON prep_items;
+CREATE POLICY "prep_items_select_authenticated"
   ON prep_items FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "prep_items_all_managers"
+DROP POLICY IF EXISTS "prep_items_all_managers" ON prep_items;
+CREATE POLICY "prep_items_all_managers"
   ON prep_items FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'));
 
 -- prep_item_ingredients
-CREATE POLICY IF NOT EXISTS "prep_item_ingredients_select_authenticated"
+DROP POLICY IF EXISTS "prep_item_ingredients_select_authenticated" ON prep_item_ingredients;
+CREATE POLICY "prep_item_ingredients_select_authenticated"
   ON prep_item_ingredients FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "prep_item_ingredients_all_managers"
+DROP POLICY IF EXISTS "prep_item_ingredients_all_managers" ON prep_item_ingredients;
+CREATE POLICY "prep_item_ingredients_all_managers"
   ON prep_item_ingredients FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','kitchen','inventory_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','kitchen','inventory_manager'));
 
 -- inventory_stock (branch isolated)
-CREATE POLICY IF NOT EXISTS "stock_select_branch_isolated"
+DROP POLICY IF EXISTS "stock_select_branch_isolated" ON inventory_stock;
+CREATE POLICY "stock_select_branch_isolated"
   ON inventory_stock FOR SELECT TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
-CREATE POLICY IF NOT EXISTS "stock_insert_authenticated"
+DROP POLICY IF EXISTS "stock_insert_authenticated" ON inventory_stock;
+CREATE POLICY "stock_insert_authenticated"
   ON inventory_stock FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "stock_update_authenticated"
+DROP POLICY IF EXISTS "stock_update_authenticated" ON inventory_stock;
+CREATE POLICY "stock_update_authenticated"
   ON inventory_stock FOR UPDATE TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
 -- inventory_lots
-CREATE POLICY IF NOT EXISTS "lots_select_branch_isolated"
+DROP POLICY IF EXISTS "lots_select_branch_isolated" ON inventory_lots;
+CREATE POLICY "lots_select_branch_isolated"
   ON inventory_lots FOR SELECT TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
-CREATE POLICY IF NOT EXISTS "lots_insert_authenticated"
+DROP POLICY IF EXISTS "lots_insert_authenticated" ON inventory_lots;
+CREATE POLICY "lots_insert_authenticated"
   ON inventory_lots FOR INSERT TO authenticated WITH CHECK (true);
 
 -- inventory_movements (append-only)
-CREATE POLICY IF NOT EXISTS "movements_select_branch_isolated"
+DROP POLICY IF EXISTS "movements_select_branch_isolated" ON inventory_movements;
+CREATE POLICY "movements_select_branch_isolated"
   ON inventory_movements FOR SELECT TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
-CREATE POLICY IF NOT EXISTS "movements_insert_authenticated"
+DROP POLICY IF EXISTS "movements_insert_authenticated" ON inventory_movements;
+CREATE POLICY "movements_insert_authenticated"
   ON inventory_movements FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "movements_no_update"
+DROP POLICY IF EXISTS "movements_no_update" ON inventory_movements;
+CREATE POLICY "movements_no_update"
   ON inventory_movements FOR UPDATE TO authenticated USING (false);
 
-CREATE POLICY IF NOT EXISTS "movements_no_delete"
+DROP POLICY IF EXISTS "movements_no_delete" ON inventory_movements;
+CREATE POLICY "movements_no_delete"
   ON inventory_movements FOR DELETE TO authenticated USING (false);
 
 -- waste_log
-CREATE POLICY IF NOT EXISTS "waste_log_select_branch_isolated"
+DROP POLICY IF EXISTS "waste_log_select_branch_isolated" ON waste_log;
+CREATE POLICY "waste_log_select_branch_isolated"
   ON waste_log FOR SELECT TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
-CREATE POLICY IF NOT EXISTS "waste_log_insert_managers"
+DROP POLICY IF EXISTS "waste_log_insert_managers" ON waste_log;
+CREATE POLICY "waste_log_insert_managers"
   ON waste_log FOR INSERT TO authenticated
   WITH CHECK (
-    auth_user_role() IN ('owner','general_manager','branch_manager','kitchen','inventory_manager')
+    auth_user_role()::text IN ('owner','general_manager','branch_manager','kitchen','inventory_manager')
   );
 
-CREATE POLICY IF NOT EXISTS "waste_log_update_managers"
+DROP POLICY IF EXISTS "waste_log_update_managers" ON waste_log;
+CREATE POLICY "waste_log_update_managers"
   ON waste_log FOR UPDATE TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager','branch_manager')
+    auth_user_role()::text IN ('owner','general_manager','branch_manager')
     OR branch_id = auth_user_branch_id()
   );
 
 -- purchase_orders
-CREATE POLICY IF NOT EXISTS "po_select_branch_isolated"
+DROP POLICY IF EXISTS "po_select_branch_isolated" ON purchase_orders;
+CREATE POLICY "po_select_branch_isolated"
   ON purchase_orders FOR SELECT TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
-CREATE POLICY IF NOT EXISTS "po_all_managers"
+DROP POLICY IF EXISTS "po_all_managers" ON purchase_orders;
+CREATE POLICY "po_all_managers"
   ON purchase_orders FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','branch_manager','inventory_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','branch_manager','inventory_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','branch_manager','inventory_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','branch_manager','inventory_manager'));
 
 -- purchase_order_items
-CREATE POLICY IF NOT EXISTS "poi_all_authenticated"
+DROP POLICY IF EXISTS "poi_all_authenticated" ON purchase_order_items;
+CREATE POLICY "poi_all_authenticated"
   ON purchase_order_items FOR ALL TO authenticated
   USING (true) WITH CHECK (true);
 
 -- suppliers
-CREATE POLICY IF NOT EXISTS "suppliers_select_authenticated"
+DROP POLICY IF EXISTS "suppliers_select_authenticated" ON suppliers;
+CREATE POLICY "suppliers_select_authenticated"
   ON suppliers FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "suppliers_all_managers"
+DROP POLICY IF EXISTS "suppliers_all_managers" ON suppliers;
+CREATE POLICY "suppliers_all_managers"
   ON suppliers FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager'));
 
 -- supplier_price_history
-CREATE POLICY IF NOT EXISTS "sph_select_authenticated"
+DROP POLICY IF EXISTS "sph_select_authenticated" ON supplier_price_history;
+CREATE POLICY "sph_select_authenticated"
   ON supplier_price_history FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "sph_insert_authenticated"
+DROP POLICY IF EXISTS "sph_insert_authenticated" ON supplier_price_history;
+CREATE POLICY "sph_insert_authenticated"
   ON supplier_price_history FOR INSERT TO authenticated WITH CHECK (true);
 
 -- inventory_alerts
-CREATE POLICY IF NOT EXISTS "alerts_select_branch_isolated"
+DROP POLICY IF EXISTS "alerts_select_branch_isolated" ON inventory_alerts;
+CREATE POLICY "alerts_select_branch_isolated"
   ON inventory_alerts FOR SELECT TO authenticated
   USING (
     branch_id IS NULL
-    OR auth_user_role() IN ('owner','general_manager')
+    OR auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
-CREATE POLICY IF NOT EXISTS "alerts_update_branch_isolated"
+DROP POLICY IF EXISTS "alerts_update_branch_isolated" ON inventory_alerts;
+CREATE POLICY "alerts_update_branch_isolated"
   ON inventory_alerts FOR UPDATE TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
 -- par_levels
-CREATE POLICY IF NOT EXISTS "par_levels_select_authenticated"
+DROP POLICY IF EXISTS "par_levels_select_authenticated" ON par_levels;
+CREATE POLICY "par_levels_select_authenticated"
   ON par_levels FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "par_levels_all_managers"
+DROP POLICY IF EXISTS "par_levels_all_managers" ON par_levels;
+CREATE POLICY "par_levels_all_managers"
   ON par_levels FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','branch_manager','inventory_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','branch_manager','inventory_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','branch_manager','inventory_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','branch_manager','inventory_manager'));
 
 -- unit_conversions
-CREATE POLICY IF NOT EXISTS "unit_conversions_select_authenticated"
+DROP POLICY IF EXISTS "unit_conversions_select_authenticated" ON unit_conversions;
+CREATE POLICY "unit_conversions_select_authenticated"
   ON unit_conversions FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY IF NOT EXISTS "unit_conversions_all_managers"
+DROP POLICY IF EXISTS "unit_conversions_all_managers" ON unit_conversions;
+CREATE POLICY "unit_conversions_all_managers"
   ON unit_conversions FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager'));
 
 -- inventory_counts
-CREATE POLICY IF NOT EXISTS "counts_select_branch_isolated"
+DROP POLICY IF EXISTS "counts_select_branch_isolated" ON inventory_counts;
+CREATE POLICY "counts_select_branch_isolated"
   ON inventory_counts FOR SELECT TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager')
+    auth_user_role()::text IN ('owner','general_manager')
     OR branch_id = auth_user_branch_id()
   );
 
-CREATE POLICY IF NOT EXISTS "counts_insert_managers"
+DROP POLICY IF EXISTS "counts_insert_managers" ON inventory_counts;
+CREATE POLICY "counts_insert_managers"
   ON inventory_counts FOR INSERT TO authenticated
   WITH CHECK (
-    auth_user_role() IN ('owner','general_manager','branch_manager','inventory_manager')
+    auth_user_role()::text IN ('owner','general_manager','branch_manager','inventory_manager')
   );
 
-CREATE POLICY IF NOT EXISTS "counts_update_managers"
+DROP POLICY IF EXISTS "counts_update_managers" ON inventory_counts;
+CREATE POLICY "counts_update_managers"
   ON inventory_counts FOR UPDATE TO authenticated
   USING (
-    auth_user_role() IN ('owner','general_manager','branch_manager')
+    auth_user_role()::text IN ('owner','general_manager','branch_manager')
   );
 
 -- inventory_transfers
-CREATE POLICY IF NOT EXISTS "transfers_all_managers"
+DROP POLICY IF EXISTS "transfers_all_managers" ON inventory_transfers;
+CREATE POLICY "transfers_all_managers"
   ON inventory_transfers FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','branch_manager','inventory_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','branch_manager','inventory_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','branch_manager','inventory_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','branch_manager','inventory_manager'));
 
 -- delivery_platform_mappings
-CREATE POLICY IF NOT EXISTS "dpm_all_managers"
+DROP POLICY IF EXISTS "dpm_all_managers" ON delivery_platform_mappings;
+CREATE POLICY "dpm_all_managers"
   ON delivery_platform_mappings FOR ALL TO authenticated
-  USING (auth_user_role() IN ('owner','general_manager','branch_manager'))
-  WITH CHECK (auth_user_role() IN ('owner','general_manager','branch_manager'));
+  USING (auth_user_role()::text IN ('owner','general_manager','branch_manager'))
+  WITH CHECK (auth_user_role()::text IN ('owner','general_manager','branch_manager'));
 
 -- service_role bypass policies for all new tables
 DO $$
@@ -1959,7 +2002,7 @@ BEGIN
     PERFORM cron.schedule(
       'check-expiry-alerts',
       '0 6 * * *',
-      $$
+      $sql$
       INSERT INTO inventory_alerts (branch_id, ingredient_id, alert_type, severity, message, metadata)
       SELECT
         l.branch_id,
@@ -1979,7 +2022,7 @@ BEGIN
             AND a.alert_type = 'expiring_soon'
             AND a.created_at >= NOW() - INTERVAL '24 hours'
         )
-      $$
+      $sql$
     );
   END IF;
 
@@ -2006,7 +2049,7 @@ BEGIN
     PERFORM cron.schedule(
       'check-overstock',
       '0 8 * * *',
-      $$
+      $sql$
       INSERT INTO inventory_alerts (branch_id, ingredient_id, alert_type, severity, message, metadata)
       SELECT
         s.branch_id,
@@ -2027,7 +2070,7 @@ BEGIN
             AND a.alert_type = 'overstock'
             AND a.created_at >= NOW() - INTERVAL '24 hours'
         )
-      $$
+      $sql$
     );
   END IF;
 
@@ -2036,7 +2079,7 @@ BEGIN
     PERFORM cron.schedule(
       'check-dead-stock',
       '0 9 * * 1',
-      $$
+      $sql$
       INSERT INTO inventory_alerts (branch_id, ingredient_id, alert_type, severity, message, metadata)
       SELECT
         s.branch_id,
@@ -2061,7 +2104,7 @@ BEGIN
             AND a.alert_type = 'dead_stock'
             AND a.created_at >= NOW() - INTERVAL '24 hours'
         )
-      $$
+      $sql$
     );
   END IF;
 END;

@@ -16,7 +16,8 @@ CREATE INDEX IF NOT EXISTS idx_dcho_order    ON driver_cash_handover_orders(orde
 ALTER TABLE driver_cash_handover_orders ENABLE ROW LEVEL SECURITY;
 
 -- Driver: read own handover order links
-CREATE POLICY IF NOT EXISTS "dcho_select_own"
+DROP POLICY IF EXISTS "dcho_select_own" ON driver_cash_handover_orders;
+CREATE POLICY "dcho_select_own"
   ON driver_cash_handover_orders FOR SELECT TO authenticated
   USING (
     EXISTS (
@@ -27,7 +28,8 @@ CREATE POLICY IF NOT EXISTS "dcho_select_own"
   );
 
 -- Manager: read all
-CREATE POLICY IF NOT EXISTS "dcho_select_manager"
+DROP POLICY IF EXISTS "dcho_select_manager" ON driver_cash_handover_orders;
+CREATE POLICY "dcho_select_manager"
   ON driver_cash_handover_orders FOR SELECT TO authenticated
   USING (
     EXISTS (
@@ -39,7 +41,8 @@ CREATE POLICY IF NOT EXISTS "dcho_select_manager"
   );
 
 -- Driver: insert (server enforces handover ownership)
-CREATE POLICY IF NOT EXISTS "dcho_insert_own"
+DROP POLICY IF EXISTS "dcho_insert_own" ON driver_cash_handover_orders;
+CREATE POLICY "dcho_insert_own"
   ON driver_cash_handover_orders FOR INSERT TO authenticated
   WITH CHECK (
     EXISTS (
@@ -50,7 +53,8 @@ CREATE POLICY IF NOT EXISTS "dcho_insert_own"
   );
 
 -- Service role bypass
-CREATE POLICY IF NOT EXISTS "service_all_dcho"
+DROP POLICY IF EXISTS "service_all_dcho" ON driver_cash_handover_orders;
+CREATE POLICY "service_all_dcho"
   ON driver_cash_handover_orders FOR ALL TO service_role
   USING (true) WITH CHECK (true);
 

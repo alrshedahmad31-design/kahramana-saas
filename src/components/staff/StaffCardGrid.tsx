@@ -19,15 +19,16 @@ interface Props {
 }
 
 const ROLE_BADGE: Record<StaffRole, { bg: string; text: string }> = {
-  owner:           { bg: 'bg-brand-gold/20',    text: 'text-brand-gold'    },
-  general_manager: { bg: 'bg-brand-gold/10',    text: 'text-brand-gold'    },
-  branch_manager:  { bg: 'bg-brand-success/20', text: 'text-brand-success' },
-  cashier:         { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
-  kitchen:         { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
-  driver:          { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
-  inventory:       { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
-  marketing:       { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
-  support:         { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  owner:             { bg: 'bg-brand-gold/20',    text: 'text-brand-gold'    },
+  general_manager:   { bg: 'bg-brand-gold/10',    text: 'text-brand-gold'    },
+  branch_manager:    { bg: 'bg-brand-success/20', text: 'text-brand-success' },
+  cashier:           { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  kitchen:           { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  driver:            { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  inventory:         { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  inventory_manager: { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  marketing:         { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  support:           { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
 }
 
 const EMPLOYMENT_LABELS: Record<string, { ar: string; en: string }> = {

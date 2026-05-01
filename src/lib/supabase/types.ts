@@ -56,6 +56,13 @@ export type Database = {
             referencedRelation: "branches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "audit_logs_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
         ]
       }
       branches: {
@@ -136,6 +143,13 @@ export type Database = {
             referencedRelation: "branches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "business_hours_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
         ]
       }
       contact_messages: {
@@ -176,6 +190,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_messages_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
           },
         ]
       }
@@ -492,42 +513,129 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_platform_mappings: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          menu_item_slug: string
+          platform: string
+          platform_item_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          menu_item_slug: string
+          platform: string
+          platform_item_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          menu_item_slug?: string
+          platform?: string
+          platform_item_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_platform_mappings_menu_item_slug_fkey"
+            columns: ["menu_item_slug"]
+            isOneToOne: false
+            referencedRelation: "menu_items_sync"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "delivery_platform_mappings_menu_item_slug_fkey"
+            columns: ["menu_item_slug"]
+            isOneToOne: false
+            referencedRelation: "v_dish_cogs"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      driver_cash_handover_orders: {
+        Row: {
+          handover_id: string
+          order_id: string
+        }
+        Insert: {
+          handover_id: string
+          order_id: string
+        }
+        Update: {
+          handover_id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_cash_handover_orders_handover_id_fkey"
+            columns: ["handover_id"]
+            isOneToOne: false
+            referencedRelation: "driver_cash_handovers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_cash_handover_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_cash_handovers: {
         Row: {
+          actual_received: number | null
           created_at: string
+          discrepancy: number | null
           driver_id: string
           handed_at: string
           id: string
+          manager_notes: string | null
           notes: string | null
           order_ids: string[]
           received_by: string | null
+          reconciliation_status: string
           shift_date: string
           total_cash: number
           verified: boolean
+          verified_at: string | null
         }
         Insert: {
+          actual_received?: number | null
           created_at?: string
+          discrepancy?: number | null
           driver_id: string
           handed_at?: string
           id?: string
+          manager_notes?: string | null
           notes?: string | null
           order_ids?: string[]
           received_by?: string | null
+          reconciliation_status?: string
           shift_date: string
           total_cash: number
           verified?: boolean
+          verified_at?: string | null
         }
         Update: {
+          actual_received?: number | null
           created_at?: string
+          discrepancy?: number | null
           driver_id?: string
           handed_at?: string
           id?: string
+          manager_notes?: string | null
           notes?: string | null
           order_ids?: string[]
           received_by?: string | null
+          reconciliation_status?: string
           shift_date?: string
           total_cash?: number
           verified?: boolean
+          verified_at?: string | null
         }
         Relationships: [
           {
@@ -677,6 +785,698 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingredient_allergens: {
+        Row: {
+          allergen: string
+          ingredient_id: string
+        }
+        Insert: {
+          allergen: string
+          ingredient_id: string
+        }
+        Update: {
+          allergen?: string
+          ingredient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_allergens_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredient_allergens_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+        ]
+      }
+      ingredients: {
+        Row: {
+          abc_class: Database["public"]["Enums"]["abc_class"] | null
+          barcode: string | null
+          category: string | null
+          cost_per_unit: number
+          created_at: string | null
+          default_yield_factor: number
+          id: string
+          ideal_cost_pct: number | null
+          is_active: boolean | null
+          max_stock_level: number | null
+          name_ar: string
+          name_en: string
+          notes: string | null
+          purchase_unit: string | null
+          purchase_unit_factor: number | null
+          reorder_point: number | null
+          reorder_qty: number | null
+          shelf_life_days: number | null
+          storage_temp: string | null
+          supplier_id: string | null
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          abc_class?: Database["public"]["Enums"]["abc_class"] | null
+          barcode?: string | null
+          category?: string | null
+          cost_per_unit?: number
+          created_at?: string | null
+          default_yield_factor?: number
+          id?: string
+          ideal_cost_pct?: number | null
+          is_active?: boolean | null
+          max_stock_level?: number | null
+          name_ar: string
+          name_en: string
+          notes?: string | null
+          purchase_unit?: string | null
+          purchase_unit_factor?: number | null
+          reorder_point?: number | null
+          reorder_qty?: number | null
+          shelf_life_days?: number | null
+          storage_temp?: string | null
+          supplier_id?: string | null
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          abc_class?: Database["public"]["Enums"]["abc_class"] | null
+          barcode?: string | null
+          category?: string | null
+          cost_per_unit?: number
+          created_at?: string | null
+          default_yield_factor?: number
+          id?: string
+          ideal_cost_pct?: number | null
+          is_active?: boolean | null
+          max_stock_level?: number | null
+          name_ar?: string
+          name_en?: string
+          notes?: string | null
+          purchase_unit?: string | null
+          purchase_unit_factor?: number | null
+          reorder_point?: number | null
+          reorder_qty?: number | null
+          shelf_life_days?: number | null
+          storage_temp?: string | null
+          supplier_id?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredients_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredients_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "v_vendor_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_alerts: {
+        Row: {
+          alert_type: string
+          branch_id: string | null
+          created_at: string | null
+          id: string
+          ingredient_id: string | null
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          severity: string | null
+        }
+        Insert: {
+          alert_type: string
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          ingredient_id?: string | null
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          severity?: string | null
+        }
+        Update: {
+          alert_type?: string
+          branch_id?: string | null
+          created_at?: string | null
+          id?: string
+          ingredient_id?: string | null
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          severity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_alerts_ingredient"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_alerts_ingredient"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_alerts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
+      }
+      inventory_counts: {
+        Row: {
+          actual_qty: number
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          count_session: string | null
+          counted_at: string | null
+          counted_by: string
+          id: string
+          ingredient_id: string
+          lot_id: string | null
+          notes: string | null
+          system_qty: number
+          variance: number | null
+          variance_pct: number | null
+          verified_by: string | null
+        }
+        Insert: {
+          actual_qty: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          count_session?: string | null
+          counted_at?: string | null
+          counted_by: string
+          id?: string
+          ingredient_id: string
+          lot_id?: string | null
+          notes?: string | null
+          system_qty: number
+          variance?: number | null
+          variance_pct?: number | null
+          verified_by?: string | null
+        }
+        Update: {
+          actual_qty?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          count_session?: string | null
+          counted_at?: string | null
+          counted_by?: string
+          id?: string
+          ingredient_id?: string
+          lot_id?: string | null
+          notes?: string | null
+          system_qty?: number
+          variance?: number | null
+          variance_pct?: number | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_counts_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_counted_by_fkey"
+            columns: ["counted_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_lots: {
+        Row: {
+          branch_id: string
+          expires_at: string | null
+          id: string
+          ingredient_id: string
+          is_exhausted: boolean | null
+          lot_number: string | null
+          purchase_order_id: string | null
+          quantity_received: number
+          quantity_remaining: number
+          received_at: string | null
+          unit_cost: number
+        }
+        Insert: {
+          branch_id: string
+          expires_at?: string | null
+          id?: string
+          ingredient_id: string
+          is_exhausted?: boolean | null
+          lot_number?: string | null
+          purchase_order_id?: string | null
+          quantity_received: number
+          quantity_remaining: number
+          received_at?: string | null
+          unit_cost: number
+        }
+        Update: {
+          branch_id?: string
+          expires_at?: string | null
+          id?: string
+          ingredient_id?: string
+          is_exhausted?: boolean | null
+          lot_number?: string | null
+          purchase_order_id?: string | null
+          quantity_received?: number
+          quantity_remaining?: number
+          received_at?: string | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_lots_purchase_order"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_lots_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_lots_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "inventory_lots_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_lots_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+        ]
+      }
+      inventory_movements: {
+        Row: {
+          branch_id: string
+          catering_order_id: string | null
+          id: string
+          ingredient_id: string | null
+          lot_id: string | null
+          movement_type: Database["public"]["Enums"]["inventory_movement_type"]
+          notes: string | null
+          order_id: string | null
+          order_item_id: string | null
+          performed_at: string | null
+          performed_by: string | null
+          prep_batch_id: string | null
+          prep_item_id: string | null
+          purchase_order_id: string | null
+          quantity: number
+          unit_cost: number | null
+          waste_log_id: string | null
+        }
+        Insert: {
+          branch_id: string
+          catering_order_id?: string | null
+          id?: string
+          ingredient_id?: string | null
+          lot_id?: string | null
+          movement_type: Database["public"]["Enums"]["inventory_movement_type"]
+          notes?: string | null
+          order_id?: string | null
+          order_item_id?: string | null
+          performed_at?: string | null
+          performed_by?: string | null
+          prep_batch_id?: string | null
+          prep_item_id?: string | null
+          purchase_order_id?: string | null
+          quantity: number
+          unit_cost?: number | null
+          waste_log_id?: string | null
+        }
+        Update: {
+          branch_id?: string
+          catering_order_id?: string | null
+          id?: string
+          ingredient_id?: string | null
+          lot_id?: string | null
+          movement_type?: Database["public"]["Enums"]["inventory_movement_type"]
+          notes?: string | null
+          order_id?: string | null
+          order_item_id?: string | null
+          performed_at?: string | null
+          performed_by?: string | null
+          prep_batch_id?: string | null
+          prep_item_id?: string | null
+          purchase_order_id?: string | null
+          quantity?: number
+          unit_cost?: number | null
+          waste_log_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_movements_purchase_order"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_movements_waste_log"
+            columns: ["waste_log_id"]
+            isOneToOne: false
+            referencedRelation: "waste_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_prep_item_id_fkey"
+            columns: ["prep_item_id"]
+            isOneToOne: false
+            referencedRelation: "prep_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_stock: {
+        Row: {
+          branch_id: string
+          catering_reserved: number
+          created_at: string | null
+          id: string
+          ingredient_id: string
+          last_count_at: string | null
+          last_movement_at: string | null
+          max_stock_level: number | null
+          on_hand: number
+          reorder_point: number | null
+          reserved: number
+        }
+        Insert: {
+          branch_id: string
+          catering_reserved?: number
+          created_at?: string | null
+          id?: string
+          ingredient_id: string
+          last_count_at?: string | null
+          last_movement_at?: string | null
+          max_stock_level?: number | null
+          on_hand?: number
+          reorder_point?: number | null
+          reserved?: number
+        }
+        Update: {
+          branch_id?: string
+          catering_reserved?: number
+          created_at?: string | null
+          id?: string
+          ingredient_id?: string
+          last_count_at?: string | null
+          last_movement_at?: string | null
+          max_stock_level?: number | null
+          on_hand?: number
+          reorder_point?: number | null
+          reserved?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_stock_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_stock_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "inventory_stock_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_stock_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+        ]
+      }
+      inventory_transfers: {
+        Row: {
+          from_branch_id: string
+          id: string
+          ingredient_id: string
+          lot_id: string | null
+          notes: string | null
+          quantity: number
+          received_at: string | null
+          received_by: string | null
+          status: string | null
+          to_branch_id: string
+          transferred_at: string | null
+          transferred_by: string
+        }
+        Insert: {
+          from_branch_id: string
+          id?: string
+          ingredient_id: string
+          lot_id?: string | null
+          notes?: string | null
+          quantity: number
+          received_at?: string | null
+          received_by?: string | null
+          status?: string | null
+          to_branch_id: string
+          transferred_at?: string | null
+          transferred_by: string
+        }
+        Update: {
+          from_branch_id?: string
+          id?: string
+          ingredient_id?: string
+          lot_id?: string | null
+          notes?: string | null
+          quantity?: number
+          received_at?: string | null
+          received_by?: string | null
+          status?: string | null
+          to_branch_id?: string
+          transferred_at?: string | null
+          transferred_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transfers_from_branch_id_fkey"
+            columns: ["from_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_from_branch_id_fkey"
+            columns: ["from_branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_to_branch_id_fkey"
+            columns: ["to_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_to_branch_id_fkey"
+            columns: ["to_branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "inventory_transfers_transferred_by_fkey"
+            columns: ["transferred_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -899,6 +1699,8 @@ export type Database = {
           arrived_at: string | null
           assigned_driver_id: string | null
           branch_id: string
+          cash_settled_at: string | null
+          cash_settlement_id: string | null
           coupon_discount_bhd: number | null
           coupon_id: string | null
           created_at: string
@@ -921,11 +1723,14 @@ export type Database = {
           expected_delivery_time: string | null
           id: string
           notes: string | null
-          order_type: string
+          order_source: string
+          order_type: string | null
           picked_up_at: string | null
+          platform_order_id: string | null
           restaurant_location: Json | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
+          tip_bhd: number
           total_bhd: number
           updated_at: string
           whatsapp_sent_at: string | null
@@ -934,6 +1739,8 @@ export type Database = {
           arrived_at?: string | null
           assigned_driver_id?: string | null
           branch_id: string
+          cash_settled_at?: string | null
+          cash_settlement_id?: string | null
           coupon_discount_bhd?: number | null
           coupon_id?: string | null
           created_at?: string
@@ -956,11 +1763,14 @@ export type Database = {
           expected_delivery_time?: string | null
           id?: string
           notes?: string | null
-          order_type?: string
+          order_source?: string
+          order_type?: string | null
           picked_up_at?: string | null
+          platform_order_id?: string | null
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
+          tip_bhd?: number
           total_bhd: number
           updated_at?: string
           whatsapp_sent_at?: string | null
@@ -969,6 +1779,8 @@ export type Database = {
           arrived_at?: string | null
           assigned_driver_id?: string | null
           branch_id?: string
+          cash_settled_at?: string | null
+          cash_settlement_id?: string | null
           coupon_discount_bhd?: number | null
           coupon_id?: string | null
           created_at?: string
@@ -991,11 +1803,14 @@ export type Database = {
           expected_delivery_time?: string | null
           id?: string
           notes?: string | null
-          order_type?: string
+          order_source?: string
+          order_type?: string | null
           picked_up_at?: string | null
+          platform_order_id?: string | null
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
+          tip_bhd?: number
           total_bhd?: number
           updated_at?: string
           whatsapp_sent_at?: string | null
@@ -1016,11 +1831,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "orders_cash_settlement_id_fkey"
+            columns: ["cash_settlement_id"]
+            isOneToOne: false
+            referencedRelation: "driver_cash_handovers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_coupon_id_fkey"
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "coupons"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      par_levels: {
+        Row: {
+          branch_id: string
+          day_type: string | null
+          id: string
+          ingredient_id: string
+          par_qty: number
+          reorder_qty: number
+        }
+        Insert: {
+          branch_id: string
+          day_type?: string | null
+          id?: string
+          ingredient_id: string
+          par_qty: number
+          reorder_qty: number
+        }
+        Update: {
+          branch_id?: string
+          day_type?: string | null
+          id?: string
+          ingredient_id?: string
+          par_qty?: number
+          reorder_qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "par_levels_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "par_levels_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "par_levels_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "par_levels_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
           },
         ]
       }
@@ -1157,6 +2042,321 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prep_item_ingredients: {
+        Row: {
+          id: string
+          ingredient_id: string
+          prep_item_id: string
+          quantity: number
+          yield_factor: number | null
+        }
+        Insert: {
+          id?: string
+          ingredient_id: string
+          prep_item_id: string
+          quantity: number
+          yield_factor?: number | null
+        }
+        Update: {
+          id?: string
+          ingredient_id?: string
+          prep_item_id?: string
+          quantity?: number
+          yield_factor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prep_item_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prep_item_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "prep_item_ingredients_prep_item_id_fkey"
+            columns: ["prep_item_id"]
+            isOneToOne: false
+            referencedRelation: "prep_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prep_items: {
+        Row: {
+          batch_yield_qty: number
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name_ar: string
+          name_en: string
+          notes: string | null
+          shelf_life_hours: number | null
+          storage_temp: string | null
+          unit: string
+        }
+        Insert: {
+          batch_yield_qty: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_ar: string
+          name_en: string
+          notes?: string | null
+          shelf_life_hours?: number | null
+          storage_temp?: string | null
+          unit: string
+        }
+        Update: {
+          batch_yield_qty?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name_ar?: string
+          name_en?: string
+          notes?: string | null
+          shelf_life_hours?: number | null
+          storage_temp?: string | null
+          unit?: string
+        }
+        Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          created_at: string | null
+          discrepancy_note: string | null
+          expiry_date: string | null
+          id: string
+          ingredient_id: string
+          lot_number: string | null
+          purchase_order_id: string
+          quality_rating: number | null
+          quantity_ordered: number
+          quantity_received: number
+          quantity_variance: number | null
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string | null
+          discrepancy_note?: string | null
+          expiry_date?: string | null
+          id?: string
+          ingredient_id: string
+          lot_number?: string | null
+          purchase_order_id: string
+          quality_rating?: number | null
+          quantity_ordered: number
+          quantity_received?: number
+          quantity_variance?: number | null
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string | null
+          discrepancy_note?: string | null
+          expiry_date?: string | null
+          id?: string
+          ingredient_id?: string
+          lot_number?: string | null
+          purchase_order_id?: string
+          quality_rating?: number | null
+          quantity_ordered?: number
+          quantity_received?: number
+          quantity_variance?: number | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          branch_id: string
+          created_at: string | null
+          created_by: string
+          expected_at: string | null
+          id: string
+          is_auto_generated: boolean | null
+          notes: string | null
+          received_at: string | null
+          status: string | null
+          supplier_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string | null
+          created_by: string
+          expected_at?: string | null
+          id?: string
+          is_auto_generated?: boolean | null
+          notes?: string | null
+          received_at?: string | null
+          status?: string | null
+          supplier_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string | null
+          created_by?: string
+          expected_at?: string | null
+          id?: string
+          is_auto_generated?: boolean | null
+          notes?: string | null
+          received_at?: string | null
+          status?: string | null
+          supplier_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "v_vendor_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          id: string
+          ingredient_id: string | null
+          is_optional: boolean | null
+          menu_item_slug: string
+          notes: string | null
+          prep_item_id: string | null
+          quantity: number
+          updated_at: string | null
+          updated_by: string | null
+          variant_key: string | null
+          yield_factor: number | null
+        }
+        Insert: {
+          id?: string
+          ingredient_id?: string | null
+          is_optional?: boolean | null
+          menu_item_slug: string
+          notes?: string | null
+          prep_item_id?: string | null
+          quantity: number
+          updated_at?: string | null
+          updated_by?: string | null
+          variant_key?: string | null
+          yield_factor?: number | null
+        }
+        Update: {
+          id?: string
+          ingredient_id?: string | null
+          is_optional?: boolean | null
+          menu_item_slug?: string
+          notes?: string | null
+          prep_item_id?: string | null
+          quantity?: number
+          updated_at?: string | null
+          updated_by?: string | null
+          variant_key?: string | null
+          yield_factor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "recipes_menu_item_slug_fkey"
+            columns: ["menu_item_slug"]
+            isOneToOne: false
+            referencedRelation: "menu_items_sync"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "recipes_menu_item_slug_fkey"
+            columns: ["menu_item_slug"]
+            isOneToOne: false
+            referencedRelation: "v_dish_cogs"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "recipes_prep_item_id_fkey"
+            columns: ["prep_item_id"]
+            isOneToOne: false
+            referencedRelation: "prep_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
             referencedColumns: ["id"]
           },
         ]
@@ -1373,6 +2573,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "shifts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
             foreignKeyName: "shifts_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -1459,6 +2666,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_basic_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
           },
         ]
       }
@@ -1639,6 +2853,117 @@ export type Database = {
           },
         ]
       }
+      supplier_price_history: {
+        Row: {
+          effective_at: string | null
+          id: string
+          ingredient_id: string
+          purchase_order_id: string | null
+          supplier_id: string
+          unit_cost: number
+        }
+        Insert: {
+          effective_at?: string | null
+          id?: string
+          ingredient_id: string
+          purchase_order_id?: string | null
+          supplier_id: string
+          unit_cost: number
+        }
+        Update: {
+          effective_at?: string | null
+          id?: string
+          ingredient_id?: string
+          purchase_order_id?: string | null
+          supplier_id?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_sph_purchase_order"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "v_vendor_performance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          lead_time_days: number | null
+          min_order_bhd: number | null
+          name_ar: string
+          name_en: string | null
+          notes: string | null
+          payment_terms: string | null
+          phone: string | null
+          reliability_pct: number | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_time_days?: number | null
+          min_order_bhd?: number | null
+          name_ar: string
+          name_en?: string | null
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          reliability_pct?: number | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_time_days?: number | null
+          min_order_bhd?: number | null
+          name_ar?: string
+          name_en?: string | null
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          reliability_pct?: number | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string
@@ -1727,6 +3052,45 @@ export type Database = {
           },
         ]
       }
+      unit_conversions: {
+        Row: {
+          factor: number
+          from_unit: string
+          id: string
+          ingredient_id: string | null
+          to_unit: string
+        }
+        Insert: {
+          factor: number
+          from_unit: string
+          id?: string
+          ingredient_id?: string | null
+          to_unit: string
+        }
+        Update: {
+          factor?: number
+          from_unit?: string
+          id?: string
+          ingredient_id?: string | null
+          to_unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_conversions_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unit_conversions_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           date_format: string
@@ -1756,6 +3120,116 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      waste_log: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          cost_bhd: number | null
+          escalated_at: string | null
+          escalation_level: number | null
+          id: string
+          ingredient_id: string
+          notes: string | null
+          photo_url: string | null
+          quantity: number
+          reason: string
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_note: string | null
+          reported_at: string | null
+          reported_by: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          cost_bhd?: number | null
+          escalated_at?: string | null
+          escalation_level?: number | null
+          id?: string
+          ingredient_id: string
+          notes?: string | null
+          photo_url?: string | null
+          quantity: number
+          reason: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_note?: string | null
+          reported_at?: string | null
+          reported_by: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          cost_bhd?: number | null
+          escalated_at?: string | null
+          escalation_level?: number | null
+          id?: string
+          ingredient_id?: string
+          notes?: string | null
+          photo_url?: string | null
+          quantity?: number
+          reason?: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_note?: string | null
+          reported_at?: string | null
+          reported_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waste_log_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_log_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_log_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "waste_log_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_log_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "mv_variance_report"
+            referencedColumns: ["ingredient_id"]
+          },
+          {
+            foreignKeyName: "waste_log_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_log_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -1787,6 +3261,13 @@ export type Database = {
             referencedRelation: "branches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
         ]
       }
       hourly_order_distribution: {
@@ -1795,6 +3276,21 @@ export type Database = {
           hour_of_day: number | null
           order_count: number | null
           total_revenue_bhd: number | null
+        }
+        Relationships: []
+      }
+      mv_variance_report: {
+        Row: {
+          abc_class: Database["public"]["Enums"]["abc_class"] | null
+          actual_usage: number | null
+          branch_id: string | null
+          ingredient_id: string | null
+          name_ar: string | null
+          name_en: string | null
+          theoretical_usage: number | null
+          variance: number | null
+          variance_cost_bhd: number | null
+          variance_pct: number | null
         }
         Relationships: []
       }
@@ -1809,6 +3305,43 @@ export type Database = {
         }
         Relationships: []
       }
+      v_dish_cogs: {
+        Row: {
+          cost_bhd: number | null
+          margin_pct: number | null
+          name_ar: string | null
+          name_en: string | null
+          profit_bhd: number | null
+          selling_price: number | null
+          slug: string | null
+        }
+        Relationships: []
+      }
+      v_inventory_valuation: {
+        Row: {
+          branch_id: string | null
+          branch_name: string | null
+          category: string | null
+          ingredient_count: number | null
+          reserved_value_bhd: number | null
+          total_value_bhd: number | null
+        }
+        Relationships: []
+      }
+      v_vendor_performance: {
+        Row: {
+          avg_delay_days: number | null
+          avg_quality_rating: number | null
+          cancelled_orders: number | null
+          delivery_accuracy_pct: number | null
+          id: string | null
+          name_ar: string | null
+          name_en: string | null
+          total_orders: number | null
+          total_spent_bhd: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       auth_user_branch_id: { Args: never; Returns: string }
@@ -1820,14 +3353,128 @@ export type Database = {
         Args: { p_orders: number; p_spent: number }
         Returns: Database["public"]["Enums"]["loyalty_tier"]
       }
+      cleanup_driver_locations: { Args: never; Returns: undefined }
+      fn_check_price_spike: {
+        Args: {
+          p_branch_id: string
+          p_ingredient_id: string
+          p_new_cost: number
+        }
+        Returns: undefined
+      }
       increment_coupon_usage: {
         Args: { p_coupon_id: string }
         Returns: undefined
       }
       refresh_analytics_views: { Args: never; Returns: undefined }
+      rpc_auto_generate_pos: { Args: never; Returns: undefined }
+      rpc_check_stock_for_cart: {
+        Args: { p_branch_id: string; p_items: Json }
+        Returns: {
+          available: boolean
+          menu_item_slug: string
+          shortage_available: number
+          shortage_ingredient: string
+          shortage_required: number
+        }[]
+      }
+      rpc_dead_stock_report: {
+        Args: { p_branch_id: string; p_days_no_move?: number }
+        Returns: {
+          days_inactive: number
+          ingredient_id: string
+          last_movement_at: string
+          name_ar: string
+          name_en: string
+          on_hand: number
+          stock_value_bhd: number
+        }[]
+      }
+      rpc_escalate_waste_approvals: { Args: never; Returns: undefined }
+      rpc_expiry_report: {
+        Args: { p_branch_id: string; p_days_ahead?: number }
+        Returns: {
+          days_remaining: number
+          expires_at: string
+          ingredient_id: string
+          lot_id: string
+          lot_number: string
+          name_ar: string
+          name_en: string
+          quantity_remaining: number
+          stock_value_bhd: number
+        }[]
+      }
+      rpc_inventory_count_submit: {
+        Args: { p_approved_by: string; p_count_id: string }
+        Returns: undefined
+      }
+      rpc_low_stock_alerts: {
+        Args: { p_branch_id: string }
+        Returns: {
+          abc_class: Database["public"]["Enums"]["abc_class"]
+          available: number
+          days_to_out: number
+          ingredient_id: string
+          name_ar: string
+          name_en: string
+          nearest_expiry: string
+          on_hand: number
+          par_qty: number
+          reorder_point: number
+          suggested_order: number
+        }[]
+      }
+      rpc_menu_engineering: {
+        Args: { p_branch_id: string; p_period_days?: number }
+        Returns: {
+          category: string
+          cost_bhd: number
+          ideal_cost_pct: number
+          is_above_ideal_cost: boolean
+          margin_pct: number
+          menu_item_slug: string
+          name_ar: string
+          name_en: string
+          profit_bhd: number
+          revenue_bhd: number
+          total_sold: number
+        }[]
+      }
+      rpc_receive_purchase_order: {
+        Args: { p_lines: Json; p_po_id: string; p_received_by: string }
+        Returns: undefined
+      }
+      rpc_transfer_stock: {
+        Args: {
+          p_from_branch: string
+          p_ingredient: string
+          p_quantity: number
+          p_staff_id: string
+          p_to_branch: string
+        }
+        Returns: undefined
+      }
+      rpc_update_abc_classification: { Args: never; Returns: undefined }
     }
     Enums: {
+      abc_class: "A" | "B" | "C"
       coupon_type: "percentage" | "fixed_amount"
+      inventory_movement_type:
+        | "reservation"
+        | "consumption"
+        | "release"
+        | "purchase"
+        | "count_adjust"
+        | "waste"
+        | "transfer_in"
+        | "transfer_out"
+        | "prep_production"
+        | "prep_consumption"
+        | "catering_reserve"
+        | "catering_release"
+        | "opening_balance"
+        | "adjustment"
       kds_station:
         | "grill"
         | "fry"
@@ -1864,6 +3511,7 @@ export type Database = {
         | "inventory"
         | "marketing"
         | "support"
+        | "inventory_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1991,7 +3639,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      abc_class: ["A", "B", "C"],
       coupon_type: ["percentage", "fixed_amount"],
+      inventory_movement_type: [
+        "reservation",
+        "consumption",
+        "release",
+        "purchase",
+        "count_adjust",
+        "waste",
+        "transfer_in",
+        "transfer_out",
+        "prep_production",
+        "prep_consumption",
+        "catering_reserve",
+        "catering_release",
+        "opening_balance",
+        "adjustment",
+      ],
       kds_station: ["grill", "fry", "salads", "desserts", "drinks", "packing"],
       loyalty_tier: ["bronze", "silver", "gold", "platinum"],
       order_status: [
@@ -2024,6 +3689,7 @@ export const Constants = {
         "inventory",
         "marketing",
         "support",
+        "inventory_manager",
       ],
     },
   },
