@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl'
 import { BRANCH_LIST } from '@/constants/contact'
-import type { OrderStatus } from '@/lib/supabase/custom-types'
 
 export type StatusFilter =
   | 'all'

@@ -32,7 +32,7 @@ interface Props {
   isGlobalAdmin: boolean
 }
 
-export default function PaymentFilters({ isAr, isGlobalAdmin }: Props) {
+export default function PaymentFilters({ isAr, isGlobalAdmin: _isGlobalAdmin }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()

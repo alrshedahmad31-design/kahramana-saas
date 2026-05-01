@@ -29,7 +29,7 @@ function formatClock(): string {
 }
 
 export default function DriverDashboard({
-  initialOrders, initialCompletedOrders, branchId, branchMapsUrl, driverId, locale, completedCount,
+  initialOrders, initialCompletedOrders, branchId, branchMapsUrl, driverId, locale, completedCount: _completedCount,
 }: Props) {
   const isAr = locale === 'ar'
 

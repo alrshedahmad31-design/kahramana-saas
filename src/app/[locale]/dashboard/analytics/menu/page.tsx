@@ -31,7 +31,7 @@ export default async function MenuAnalyticsPage({ params, searchParams }: Props)
   const prev     = buildPrevRange(range)
   const branchId = user.branch_id ?? undefined
 
-  const [metrics, menuItems, topItemsPeriod] = await Promise.all([
+  const [_metrics, menuItems, topItemsPeriod] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getMenuItemPerformance(60),
     getTopItems(range.from, range.to, 10, branchId),

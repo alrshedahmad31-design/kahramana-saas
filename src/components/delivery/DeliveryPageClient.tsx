@@ -243,7 +243,7 @@ export default function DeliveryPageClient({
 
 // ── Inline Kanban (5 columns) ─────────────────────────────────────────────────
 
-import { DV, STATUS_BORDER, STATUS_LABEL } from '@/lib/delivery/tokens'
+import { DV, STATUS_BORDER } from '@/lib/delivery/tokens'
 
 const KANBAN_COLS: { status: string; label: string }[] = [
   { status: 'accepted',         label: 'جديد'          },

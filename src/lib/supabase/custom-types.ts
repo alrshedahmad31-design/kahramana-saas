@@ -3,7 +3,7 @@
 //   npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts
 // Anything in this file survives that regeneration.
 
-import type { Database, Tables, TablesInsert, TablesUpdate, Enums, Json } from './types';
+import type { Tables, TablesInsert, TablesUpdate, Enums } from './types';
 
 export type { Database, Tables, TablesInsert, TablesUpdate, Enums, Json } from './types';
 

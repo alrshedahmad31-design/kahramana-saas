@@ -65,7 +65,7 @@ function formatDate(iso: string, isAr: boolean): string {
   return d.toLocaleDateString(isAr ? 'ar-BH' : 'en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
 }
 
-export default function PaymentsTable({ payments, totalCount, page, pageSize, locale, isAr, prefix }: Props) {
+export default function PaymentsTable({ payments, totalCount, page, pageSize, locale: _locale, isAr, prefix }: Props) {
   const currency = isAr ? 'د.ب' : 'BD'
   const totalPages = Math.ceil(totalCount / pageSize)
   const orderPrefix = `${prefix}/dashboard/orders`

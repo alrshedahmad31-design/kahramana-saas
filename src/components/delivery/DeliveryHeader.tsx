@@ -25,7 +25,7 @@ const FILTER_OPTIONS = {
   status:  ['كل الحالات', 'جديد', 'قيد التحضير', 'جاهز', 'يُوصَّل', 'مكتمل'],
 }
 
-function FilterDropdown({ label, options }: { label: string; options: string[] }) {
+function FilterDropdown({ label: _label, options }: { label: string; options: string[] }) {
   const [open, setOpen] = useState(false)
   const [sel,  setSel]  = useState(options[0])
 

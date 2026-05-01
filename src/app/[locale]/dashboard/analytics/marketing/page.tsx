@@ -30,7 +30,7 @@ export default async function MarketingAnalyticsPage({ params, searchParams }: P
   const prev     = buildPrevRange(range)
   const branchId = user.branch_id ?? undefined
 
-  const [metrics, coupons, sources] = await Promise.all([
+  const [_metrics, coupons, sources] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getCouponAnalytics(),
     getOrderSourceBreakdown(),

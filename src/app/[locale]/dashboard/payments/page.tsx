@@ -118,8 +118,8 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
 
 function PageShell({
   isAr,
-  prefix,
-  isGlobalAdmin,
+  prefix: _prefix,
+  isGlobalAdmin: _isGlobalAdmin,
   children,
 }: {
   isAr: boolean

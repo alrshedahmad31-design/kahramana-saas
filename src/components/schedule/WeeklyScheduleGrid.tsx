@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import { createShift, deleteShift } from '@/app/[locale]/dashboard/schedule/actions'
 import { formatTimeRange }          from '@/lib/staff/calculations'
-import { BRANCHES }                 from '@/constants/contact'
 import type { ShiftWithStaff, StaffBasicRow, ShiftStatus } from '@/lib/supabase/custom-types'
 
 interface Props {
