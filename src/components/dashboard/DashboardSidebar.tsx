@@ -5,12 +5,13 @@ import { useTranslations, useLocale } from 'next-intl'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { StaffRole } from '@/lib/supabase/custom-types'
+import { canAccessSection, type DashboardSection } from '@/lib/auth/rbac-ui'
 
 interface NavItem {
   key: string
   href: string
   icon: React.ReactNode
-  roles?: StaffRole[]
+  section?: DashboardSection
 }
 
 function OrdersIcon() {
@@ -94,6 +95,17 @@ function LogoutIcon() {
   )
 }
 
+function ScheduleIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )
+}
+
 function HamburgerIcon() {
   return (
     <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -127,54 +139,20 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
   const prefix = locale === 'en' ? '/en' : ''
 
   const NAV_ITEMS: NavItem[] = [
-    { key: 'home',   href: `${prefix}/dashboard`,        icon: <HomeIcon /> },
-    { key: 'orders', href: `${prefix}/dashboard/orders`, icon: <OrdersIcon /> },
-    {
-      key: 'driver',
-      href: `${prefix}/driver`,
-      icon: <DriverIcon />,
-      roles: ['owner', 'general_manager', 'branch_manager', 'driver'],
-    },
-    {
-      key: 'kds',
-      href: `${prefix}/dashboard/kds`,
-      icon: <KDSIcon />,
-      roles: ['owner', 'general_manager', 'branch_manager', 'kitchen'],
-    },
-    {
-      key: 'staff',
-      href: `${prefix}/dashboard/staff`,
-      icon: <StaffIcon />,
-      roles: ['owner', 'general_manager', 'branch_manager'],
-    },
-    {
-      key: 'coupons',
-      href: `${prefix}/dashboard/coupons`,
-      icon: <CouponsIcon />,
-      roles: ['owner', 'general_manager', 'branch_manager', 'marketing'],
-    },
-    {
-      key: 'analytics',
-      href: `${prefix}/dashboard/analytics`,
-      icon: <AnalyticsIcon />,
-      roles: ['owner', 'general_manager', 'branch_manager'],
-    },
-    {
-      key: 'reports',
-      href: `${prefix}/dashboard/reports`,
-      icon: <ReportsIcon />,
-      roles: ['owner', 'general_manager'],
-    },
-    {
-      key: 'settings',
-      href: `${prefix}/dashboard/settings`,
-      icon: <SettingsIcon />,
-      roles: ['owner', 'general_manager', 'branch_manager'],
-    },
+    { key: 'home',      href: `${prefix}/dashboard`,            icon: <HomeIcon />,      section: 'home' },
+    { key: 'orders',    href: `${prefix}/dashboard/orders`,     icon: <OrdersIcon />,    section: 'orders' },
+    { key: 'driver',    href: `${prefix}/driver`,               icon: <DriverIcon />,    section: 'driver' },
+    { key: 'kds',       href: `${prefix}/dashboard/kds`,        icon: <KDSIcon />,       section: 'kds' },
+    { key: 'staff',     href: `${prefix}/dashboard/staff`,      icon: <StaffIcon />,     section: 'staff' },
+    { key: 'coupons',   href: `${prefix}/dashboard/coupons`,    icon: <CouponsIcon />,   section: 'coupons' },
+    { key: 'analytics', href: `${prefix}/dashboard/analytics`,  icon: <AnalyticsIcon />, section: 'analytics' },
+    { key: 'reports',   href: `${prefix}/dashboard/reports`,    icon: <ReportsIcon />,   section: 'reports' },
+    { key: 'schedule',  href: `${prefix}/dashboard/schedule`,   icon: <ScheduleIcon />,  section: 'schedule' },
+    { key: 'settings',  href: `${prefix}/dashboard/settings`,   icon: <SettingsIcon />,  section: 'settings' },
   ]
 
   const visible = NAV_ITEMS.filter(
-    (item) => !item.roles || (userRole && item.roles.includes(userRole)),
+    (item) => !item.section || canAccessSection(userRole, item.section),
   )
 
   async function handleLogout() {
@@ -193,6 +171,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     coupons:   t('coupons'),
     analytics: t('analytics'),
     reports:   t('reports'),
+    schedule:  t('schedule'),
     settings:  t('settings'),
   }
 

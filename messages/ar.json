@@ -496,7 +496,8 @@
       "driver": "التوصيل",
       "coupons": "الكوبونات",
       "analytics": "التحليلات",
-      "reports": "التقارير"
+      "reports": "التقارير",
+      "schedule": "الجدول الزمني"
     },
     "stats": {
       "todayOrders": "طلبات اليوم",

@@ -496,7 +496,8 @@
       "driver": "Deliveries",
       "coupons": "Coupons",
       "analytics": "Analytics",
-      "reports": "Reports"
+      "reports": "Reports",
+      "schedule": "Schedule"
     },
     "stats": {
       "todayOrders": "Today's Orders",
