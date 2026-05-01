@@ -99,6 +99,8 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
+const EXCLUDED_CATEGORY_SLUGS: string[] = []
+
 function getRawCategories(): MenuCategory[] {
   return menuData as MenuCategory[]
 }

@@ -100,7 +100,13 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\" -Directory)",
       "PowerShell(Get-Content *)",
       "PowerShell(npx supabase --version 2>&1)",
-      "Bash(Remove-Item *)"
+      "Bash(Remove-Item *)",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/ingredients/new\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/ingredients/[id]\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/prep-items/new\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/prep-items/[id]\")",
+      "Bash(powershell -Command '\\(Get-Content '\\\\''__TRACKED_VAR__'\\\\''\\) -replace '\\\\''bg-amber-500/10 text-amber-400'\\\\'', '\\\\''bg-brand-gold/10 text-brand-gold'\\\\'' -replace '\\\\''bg-yellow-500/10 text-yellow-400'\\\\'', '\\\\''bg-brand-gold/10 text-brand-gold'\\\\'' -replace '\\\\''text-amber-400'\\\\'', '\\\\''text-brand-gold'\\\\'' -replace '\\\\''bg-amber-500/5'\\\\'', '\\\\''bg-brand-gold/5'\\\\'' -replace '\\\\''text-yellow-400'\\\\'', '\\\\''text-brand-gold'\\\\'' | Set-Content '\\\\''__TRACKED_VAR__'\\\\''')",
+      "Bash(powershell *)"
     ]
   }
 }

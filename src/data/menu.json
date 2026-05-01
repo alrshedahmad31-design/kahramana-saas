@@ -2,7 +2,8 @@
   {
     "category": {
       "ar": "مشاوي كهرمانة الفاخرة",
-      "en": "Kahramana Signature Grills"},
+      "en": "Kahramana Signature Grills"
+    },
     "items": [
       {
         "id": "grills-kahramana-mix",
@@ -303,7 +304,8 @@
   {
     "category": {
       "ar": "روائع المطبخ العراقي",
-      "en": "Iraqi Culinary Masterpieces"},
+      "en": "Iraqi Culinary Masterpieces"
+    },
     "items": [
       {
         "id": "mains-masgouf",
@@ -877,7 +879,8 @@
   {
     "category": {
       "ar": "المرق البغدادي الأصيل",
-      "en": "Authentic Baghdadi Stews"},
+      "en": "Authentic Baghdadi Stews"
+    },
     "items": [
       {
         "id": "stews-bamih",
@@ -974,7 +977,8 @@
   {
     "category": {
       "ar": "المقبلات الباردة (مازات)",
-      "en": "Cold Appetizers (Mezza)"},
+      "en": "Cold Appetizers (Mezza)"
+    },
     "items": [
       {
         "id": "cold-apps-mix-appetizer",
@@ -1105,7 +1109,8 @@
   {
     "category": {
       "ar": "المقبلات الحارة (مازات)",
-      "en": "Hot Appetizers (Mezza)"},
+      "en": "Hot Appetizers (Mezza)"
+    },
     "items": [
       {
         "id": "hot-apps-dolma",
@@ -1245,7 +1250,8 @@
   {
     "category": {
       "ar": "ركن الفتات الفاخر",
-      "en": "Luxury Fatteh Corner"},
+      "en": "Luxury Fatteh Corner"
+    },
     "items": [
       {
         "id": "breakfast-fattat-vine-leaves",
@@ -1297,7 +1303,8 @@
   {
     "category": {
       "ar": "نضارة البساتين (سلطات)",
-      "en": "Garden Freshness (Salads)"},
+      "en": "Garden Freshness (Salads)"
+    },
     "items": [
       {
         "id": "salad-tabbouleh",
@@ -1394,7 +1401,8 @@
   {
     "category": {
       "ar": "دفء المائدة (الشوربات)",
-      "en": "Table Warmth (Soups)"},
+      "en": "Table Warmth (Soups)"
+    },
     "items": [
       {
         "id": "soup-sour-kubba",
