@@ -46,7 +46,7 @@ export default async function DeliveryPage({ params }: Props) {
   // Drivers (staff with role='driver', active)
   const { data: driversRaw } = await supabase
     .from('staff_basic')
-    .select('id, name, phone, branch_id')
+    .select('id, name, phone, branch_id, availability_status')
     .eq('role', 'driver')
     .eq('is_active', true)
 
@@ -78,16 +78,27 @@ export default async function DeliveryPage({ params }: Props) {
     }
   }
 
-  const drivers: Driver[] = (driversRaw ?? []).map((d) => ({
-    id:               d.id,
-    name:             d.name,
-    phone:            d.phone,
-    status:           driverOrderMap.has(d.id) ? 'delivering' : 'available',
-    location:         locationMap.get(d.id) ?? null,
-    current_order_id: driverOrderMap.get(d.id) ?? null,
-    completed_today:  driverCompletedMap.get(d.id) ?? 0,
-    branch_id:        d.branch_id,
-  }))
+  const drivers: Driver[] = (driversRaw ?? []).map((d) => {
+    const avail = d.availability_status ?? 'offline'
+    let status: Driver['status']
+    if (avail === 'offline') {
+      status = 'offline'
+    } else if (driverOrderMap.has(d.id)) {
+      status = 'delivering'
+    } else {
+      status = 'available'
+    }
+    return {
+      id:               d.id,
+      name:             d.name,
+      phone:            d.phone,
+      status,
+      location:         locationMap.get(d.id) ?? null,
+      current_order_id: driverOrderMap.get(d.id) ?? null,
+      completed_today:  driverCompletedMap.get(d.id) ?? 0,
+      branch_id:        d.branch_id,
+    }
+  })
 
   const orders: DeliveryOrder[] = (ordersRaw ?? []).map((o) => {
     const driver = drivers.find(d => d.id === o.assigned_driver_id)

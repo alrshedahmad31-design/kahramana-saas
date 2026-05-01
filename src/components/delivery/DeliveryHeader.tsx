@@ -6,10 +6,12 @@ import { DV }                             from '@/lib/delivery/tokens'
 import type { ViewMode }                  from '@/lib/delivery/types'
 
 interface Props {
-  view:         ViewMode
-  onViewChange: (v: ViewMode) => void
-  onAssign:     () => void
-  isAr:         boolean
+  view:          ViewMode
+  onViewChange:  (v: ViewMode) => void
+  onAssign:      () => void
+  isMuted:       boolean
+  onToggleMute:  () => void
+  isAr:          boolean
 }
 
 const VIEW_BTNS: { id: ViewMode; icon: React.ReactNode; labelAr: string; labelEn: string }[] = [
@@ -95,7 +97,7 @@ function FilterDropdown({ label: _label, options }: { label: string; options: st
   )
 }
 
-export default function DeliveryHeader({ view, onViewChange, onAssign, isAr }: Props) {
+export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, onToggleMute, isAr }: Props) {
   return (
     <header style={{
       padding:        '12px 20px',
@@ -159,6 +161,29 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isAr }: P
       <FilterDropdown label="كل السائقين" options={FILTER_OPTIONS.driver} />
       <FilterDropdown label="كل الحالات"  options={FILTER_OPTIONS.status} />
 
+      {/* Mute toggle */}
+      <button
+        type="button"
+        onClick={onToggleMute}
+        title={isMuted ? (isAr ? 'تشغيل الصوت' : 'Unmute') : (isAr ? 'كتم الصوت' : 'Mute')}
+        style={{
+          width:        '34px',
+          height:       '34px',
+          display:      'flex',
+          alignItems:   'center',
+          justifyContent:'center',
+          background:   isMuted ? DV.bgCard : `${DV.amber}15`,
+          border:       `1px solid ${isMuted ? DV.border : `${DV.amber}40`}`,
+          borderRadius: '8px',
+          color:        isMuted ? DV.muted : DV.amber,
+          cursor:       'pointer',
+          flexShrink:   0,
+          transition:   'all 0.15s',
+        }}
+      >
+        {isMuted ? <MuteOnSvg /> : <MuteOffSvg />}
+      </button>
+
       {/* Assign button */}
       <button
         type="button"
@@ -186,5 +211,21 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isAr }: P
         {isAr ? 'تعيين سائق' : 'Assign Driver'}
       </button>
     </header>
+  )
+}
+
+function MuteOffSvg() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H5v4h3l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
+    </svg>
+  )
+}
+
+function MuteOnSvg() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l-4-4m0 4l4-4" />
+    </svg>
   )
 }

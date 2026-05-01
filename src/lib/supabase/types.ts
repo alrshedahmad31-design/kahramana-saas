@@ -1346,6 +1346,7 @@ export type Database = {
       staff_basic: {
         Row: {
           address: string | null
+          availability_status: string | null
           branch_id: string | null
           clock_pin: string | null
           created_at: string
@@ -1366,6 +1367,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          availability_status?: string | null
           branch_id?: string | null
           clock_pin?: string | null
           created_at?: string
@@ -1386,6 +1388,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          availability_status?: string | null
           branch_id?: string | null
           clock_pin?: string | null
           created_at?: string

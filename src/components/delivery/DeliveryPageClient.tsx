@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient }    from '@/lib/supabase/client'
 import { CSS_VARS }        from '@/lib/delivery/tokens'
+import { useAudioAlert }   from '@/hooks/useAudioAlert'
+import { playBell }        from '@/lib/audio/bells'
 import type { DeliveryOrder, Driver, DeliveryMetrics, ViewMode } from '@/lib/delivery/types'
 import DeliveryHeader      from './DeliveryHeader'
 import MetricsStrip        from './MetricsStrip'
@@ -28,6 +30,8 @@ export default function DeliveryPageClient({
 }: Props) {
   const supabase = useMemo(() => createClient(), [])
   const isAr     = locale === 'ar'
+
+  const { isMuted, toggleMute, mutedRef } = useAudioAlert()
 
   const [orders,       setOrders]       = useState<DeliveryOrder[]>(initialOrders)
   const [drivers,      setDrivers]      = useState<Driver[]>(initialDrivers)
@@ -85,17 +89,9 @@ export default function DeliveryPageClient({
       eta_minutes:            null,
     })))
 
-    // Toast on new order
-    if (data.length > prevCountRef.current) {
-      try {
-        const ctx = new AudioContext()
-        const osc = ctx.createOscillator(); const g = ctx.createGain()
-        osc.connect(g); g.connect(ctx.destination)
-        osc.type = 'sine'; osc.frequency.value = 880
-        g.gain.setValueAtTime(0.4, ctx.currentTime)
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
-        osc.start(); osc.stop(ctx.currentTime + 0.6)
-      } catch { /* silent */ }
+    // Bell on new order
+    if (data.length > prevCountRef.current && !mutedRef.current) {
+      playBell('new')
     }
     prevCountRef.current = data.length
 
@@ -134,6 +130,43 @@ export default function DeliveryPageClient({
     return () => { supabase.removeChannel(ch) }
   }, [supabase])
 
+  // ── Realtime: driver availability (staff_basic online/offline toggle) ───────
+  useEffect(() => {
+    const ch = supabase.channel('delivery-driver-status')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'staff_basic' },
+        (payload) => {
+          const updated = payload.new as {
+            id: string
+            role: string
+            availability_status: string | null
+          }
+          if (updated.role !== 'driver') return
+          const avail = updated.availability_status ?? 'offline'
+          setDrivers(prev => prev.map(d => {
+            if (d.id !== updated.id) return d
+            const status: Driver['status'] =
+              avail === 'offline'       ? 'offline'    :
+              d.current_order_id != null ? 'delivering' :
+              'available'
+            return { ...d, status }
+          }))
+        },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [supabase])
+
+  // ── Keep metrics.drivers_available in sync with live driver state ───────────
+  useEffect(() => {
+    setMetrics(prev => ({
+      ...prev,
+      drivers_available: drivers.filter(d => d.status === 'available').length,
+      drivers_total:     drivers.length,
+    }))
+  }, [drivers])
+
   function openOrder(id: string) {
     setSelectedId(id)
     setShowDrawer(true)
@@ -162,6 +195,8 @@ export default function DeliveryPageClient({
         view={view}
         onViewChange={setView}
         onAssign={() => openDispatch()}
+        isMuted={isMuted}
+        onToggleMute={toggleMute}
         isAr={isAr}
       />
 

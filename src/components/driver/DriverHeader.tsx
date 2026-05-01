@@ -3,6 +3,8 @@
 interface Props {
   isOnline:          boolean
   onToggle:          () => void
+  isMuted:           boolean
+  onToggleMute:      () => void
   completedToday:    number
   totalRevenue?:     number
   avgDeliveryMins?:  number
@@ -10,7 +12,7 @@ interface Props {
   clock:             string
 }
 
-export default function DriverHeader({ isOnline, onToggle, completedToday, totalRevenue, avgDeliveryMins, isRTL, clock }: Props) {
+export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute, completedToday, totalRevenue, avgDeliveryMins, isRTL, clock }: Props) {
   return (
     <header className="shrink-0 border-b border-brand-border bg-brand-surface">
       {/* Main row */}
@@ -24,6 +26,20 @@ export default function DriverHeader({ isOnline, onToggle, completedToday, total
 
         <div className="flex items-center gap-2">
           <span className="font-satoshi text-sm text-brand-muted tabular-nums hidden sm:block">{clock}</span>
+
+          {/* Mute toggle */}
+          <button
+            type="button"
+            onClick={onToggleMute}
+            title={isMuted ? (isRTL ? 'تشغيل الصوت' : 'Unmute') : (isRTL ? 'كتم الصوت' : 'Mute')}
+            className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors duration-150 ${
+              isMuted
+                ? 'bg-brand-surface-2 text-brand-muted border-brand-border'
+                : 'bg-brand-surface-2 text-brand-gold border-brand-gold/40 hover:border-brand-gold'
+            }`}
+          >
+            {isMuted ? <MuteOnIcon /> : <MuteOffIcon />}
+          </button>
 
           <button
             type="button"
@@ -93,6 +109,22 @@ export default function DriverHeader({ isOnline, onToggle, completedToday, total
         </div>
       )}
     </header>
+  )
+}
+
+function MuteOffIcon() {
+  return (
+    <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H5v4h3l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
+    </svg>
+  )
+}
+
+function MuteOnIcon() {
+  return (
+    <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l-4-4m0 4l4-4" />
+    </svg>
   )
 }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { useAudioAlert } from '@/hooks/useAudioAlert'
 import StatusBadge from '@/components/dashboard/StatusBadge'
 import OrderStatusSelect from '@/components/dashboard/OrderStatusSelect'
 import OrderStatsBar from '@/components/dashboard/OrderStatsBar'
@@ -106,6 +107,8 @@ export default function OrdersClient({
   const locale = useLocale()
   const isAr   = locale === 'ar'
 
+  const { isMuted, toggleMute, alert: bellAlert } = useAudioAlert()
+
   const [orders,        setOrders]        = useState<OrderCardData[]>(initialOrders)
   const [loading,       setLoading]       = useState(initialOrders.length === 0)
   const [totalCount,    setTotalCount]    = useState(initialTotalCount)
@@ -177,8 +180,13 @@ export default function OrdersClient({
     const channel = supabase
       .channel('orders-dashboard-v2')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+        bellAlert('new')
+      })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
+  // bellAlert is stable (useCallback with empty deps) — intentionally omitted
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, fetchOrders])
 
   function handleStatusChange(orderId: string, next: OrderStatus) {
@@ -210,7 +218,22 @@ export default function OrdersClient({
             {t('orders')}
           </h1>
         </div>
-        <div className="flex items-center gap-1 rounded-lg border border-brand-border bg-brand-surface p-1 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Mute toggle */}
+          <button
+            type="button"
+            onClick={toggleMute}
+            title={isMuted ? (isAr ? 'تشغيل الصوت' : 'Unmute') : (isAr ? 'كتم الصوت' : 'Mute')}
+            className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-colors duration-150 ${
+              isMuted
+                ? 'bg-brand-surface-2 text-brand-muted border-brand-border'
+                : 'bg-brand-surface-2 text-brand-gold border-brand-gold/40 hover:border-brand-gold'
+            }`}
+          >
+            {isMuted ? <MuteOnIcon /> : <MuteOffIcon />}
+          </button>
+
+        <div className="flex items-center gap-1 rounded-lg border border-brand-border bg-brand-surface p-1">
           <ViewToggleButton active={view === 'kanban'} onClick={() => setView('kanban')}>
             <KanbanIcon />
             <span className="hidden sm:inline">{isAr ? 'كانبان' : 'Kanban'}</span>
@@ -224,6 +247,7 @@ export default function OrdersClient({
             <span className="hidden sm:inline">{t('viewTable')}</span>
           </ViewToggleButton>
         </div>
+        </div>{/* end flex gap-2 wrapper */}
       </div>
 
       {/* Stats bar */}
@@ -426,6 +450,22 @@ export default function OrdersClient({
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────────────
+
+function MuteOffIcon() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H5v4h3l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
+    </svg>
+  )
+}
+
+function MuteOnIcon() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l-4-4m0 4l4-4" />
+    </svg>
+  )
+}
 
 function KanbanSkeleton() {
   return (

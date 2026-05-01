@@ -25,6 +25,13 @@ export default async function DriverPage({ params }: Props) {
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
 
+  const { data: staffRow } = await supabase
+    .from('staff_basic')
+    .select('availability_status')
+    .eq('id', user.id)
+    .single()
+  const initialIsOnline = (staffRow?.availability_status ?? 'online') === 'online'
+
   const ORDER_SELECT = `
     id, customer_name, customer_phone, branch_id, status,
     notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
@@ -86,6 +93,7 @@ export default async function DriverPage({ params }: Props) {
       driverId={user.id}
       locale={locale}
       completedCount={completed.length}
+      initialIsOnline={initialIsOnline}
     />
   )
 }

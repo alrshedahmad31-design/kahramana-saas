@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { driverBumpOrder, postDriverLocation } from '@/app/[locale]/driver/actions'
+import { driverBumpOrder, postDriverLocation, toggleDriverAvailability } from '@/app/[locale]/driver/actions'
+import { useAudioAlert } from '@/hooks/useAudioAlert'
+import { playBell } from '@/lib/audio/bells'
 import DriverHeader from './DriverHeader'
 import DriverOrderCard from './DriverOrderCard'
 import DriverPerformanceDashboard from './DriverPerformanceDashboard'
@@ -19,6 +21,7 @@ interface Props {
   driverId:               string
   locale:                 string
   completedCount:         number
+  initialIsOnline:        boolean
 }
 
 function formatClock(): string {
@@ -31,13 +34,20 @@ function formatClock(): string {
 }
 
 export default function DriverDashboard({
-  initialOrders, initialCompletedOrders, branchId, branchMapsUrl, driverId, locale, completedCount: _completedCount,
+  initialOrders, initialCompletedOrders, branchId, branchMapsUrl, driverId, locale, completedCount: _completedCount, initialIsOnline,
 }: Props) {
   const isAr = locale === 'ar'
 
   const [orders,          setOrders]          = useState<DriverOrder[]>(initialOrders)
   const [completedOrders, setCompletedOrders] = useState<DriverOrder[]>(initialCompletedOrders)
-  const [isOnline,        setIsOnline]        = useState(true)
+  const [isOnline,        setIsOnline]        = useState(initialIsOnline)
+
+  const { isMuted, toggleMute, mutedRef } = useAudioAlert()
+  // Track online state in a ref so fetchOrders callback (useCallback) can read it
+  const isOnlineRef = useRef(initialIsOnline)
+  useEffect(() => { isOnlineRef.current = isOnline }, [isOnline])
+  // Track known ready-order IDs to detect new pickups
+  const prevReadyIdsRef = useRef(new Set(initialOrders.filter(o => o.status === 'ready').map(o => o.id)))
   const [clock,           setClock]           = useState(formatClock)
   const [showHandover,    setShowHandover]    = useState(false)
 
@@ -65,7 +75,20 @@ export default function DriverDashboard({
     if (branchId) q = q.eq('branch_id', branchId)
 
     const { data } = await q
-    if (data) setOrders(data as DriverOrder[])
+    if (!data) return
+
+    // Alert when new 'ready' orders appear and driver is online + not muted
+    if (isOnlineRef.current && !mutedRef.current) {
+      const newReady = data.filter(
+        (o) => o.status === 'ready' && !prevReadyIdsRef.current.has(o.id),
+      )
+      if (newReady.length > 0) playBell('ready')
+    }
+    prevReadyIdsRef.current = new Set(
+      data.filter((o) => o.status === 'ready').map((o) => o.id),
+    )
+
+    setOrders(data as DriverOrder[])
   }, [supabase, branchId])
 
   const fetchCompleted = useCallback(async () => {
@@ -142,6 +165,12 @@ export default function DriverDashboard({
     return () => clearInterval(id)
   }, [])
 
+  async function handleAvailabilityToggle() {
+    setIsOnline((v) => !v) // optimistic
+    const result = await toggleDriverAvailability()
+    if (!result.success) setIsOnline((v) => !v) // revert on DB error
+  }
+
   async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery') {
     setOrders((prev) => prev.filter((o) => o.id !== orderId))
     const result = await driverBumpOrder(orderId, currentStatus)
@@ -174,7 +203,9 @@ export default function DriverDashboard({
     <div className="flex flex-col h-full bg-brand-black" dir={isAr ? 'rtl' : 'ltr'}>
       <DriverHeader
         isOnline={isOnline}
-        onToggle={() => setIsOnline((v) => !v)}
+        onToggle={handleAvailabilityToggle}
+        isMuted={isMuted}
+        onToggleMute={toggleMute}
         completedToday={completedOrders.length}
         totalRevenue={totalRevenue}
         avgDeliveryMins={avgDeliveryMins}

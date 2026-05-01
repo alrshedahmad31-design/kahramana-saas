@@ -88,6 +88,37 @@ export async function postDriverLocation(
   return { success: true }
 }
 
+// ── Toggle driver availability (online ↔ offline) ─────────────────────────────
+// Driver self-service check-in / check-out. Persisted to staff_basic.availability_status
+// so the dispatch board reflects accurate availability without a page refresh.
+
+export async function toggleDriverAvailability(): Promise<DriverActionResult> {
+  const user = await getSession()
+  if (!user || user.role !== 'driver') {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const supabase = await createClient()
+
+  const { data: current, error: fetchErr } = await supabase
+    .from('staff_basic')
+    .select('availability_status')
+    .eq('id', user.id)
+    .single()
+
+  if (fetchErr || !current) return { success: false, error: 'Driver record not found' }
+
+  const next = current.availability_status === 'online' ? 'offline' : 'online'
+
+  const { error } = await supabase
+    .from('staff_basic')
+    .update({ availability_status: next })
+    .eq('id', user.id)
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
 // ── Submit end-of-shift cash handover ─────────────────────────────────────────
 //
 // Security checks:
