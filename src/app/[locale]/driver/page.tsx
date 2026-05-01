@@ -1,9 +1,10 @@
-import { redirect }    from 'next/navigation'
-import { getSession }  from '@/lib/auth/session'
-import { createClient } from '@/lib/supabase/server'
-import { BRANCHES }    from '@/constants/contact'
-import type { BranchId } from '@/constants/contact'
-import DriverDashboard from '@/components/driver/DriverDashboard'
+import { redirect }       from 'next/navigation'
+import { getSession }     from '@/lib/auth/session'
+import { canAccessDriver } from '@/lib/auth/rbac'
+import { createClient }   from '@/lib/supabase/server'
+import { BRANCHES }       from '@/constants/contact'
+import type { BranchId }  from '@/constants/contact'
+import DriverDashboard    from '@/components/driver/DriverDashboard'
 import type { DriverOrder } from '@/lib/supabase/custom-types'
 
 interface Props {
@@ -14,6 +15,11 @@ export default async function DriverPage({ params }: Props) {
   const { locale } = await params
   const user = await getSession()
   if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+
+  // Only drivers (and supervising managers) may access this page.
+  if (!canAccessDriver(user)) {
+    redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
+  }
 
   const supabase   = await createClient()
   const todayStart = new Date()
@@ -31,29 +37,41 @@ export default async function DriverPage({ params }: Props) {
     payments(method)
   `
 
-  // Active orders for this branch (ready = at restaurant, out_for_delivery = en route)
+  // "ready" orders are visible to all branch drivers (eligible for pickup).
+  // "out_for_delivery" orders are scoped to this driver only — showing another
+  // driver's in-transit order leaks assignment data and clutters the UI.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let activeQ = supabase
+  let readyQ = (supabase as any)
     .from('orders')
     .select(ORDER_SELECT)
-    .in('status', ['ready', 'out_for_delivery'])
+    .eq('status', 'ready')
+    .order('created_at', { ascending: true })
+  if (user.branch_id) readyQ = readyQ.eq('branch_id', user.branch_id)
+
+  const transitQ = supabase
+    .from('orders')
+    .select(ORDER_SELECT)
+    .eq('status', 'out_for_delivery')
+    .eq('assigned_driver_id', user.id)
     .order('created_at', { ascending: true })
 
-  if (user.branch_id) activeQ = activeQ.eq('branch_id', user.branch_id)
+  const [{ data: readyRaw }, { data: inTransitRaw }, { data: completedRaw }] =
+    await Promise.all([
+      readyQ,
+      transitQ,
+      supabase
+        .from('orders')
+        .select(ORDER_SELECT)
+        .eq('status', 'delivered')
+        .eq('assigned_driver_id', user.id)
+        .gte('updated_at', todayStart.toISOString())
+        .order('updated_at', { ascending: false }),
+    ])
 
-  const { data: activeRaw } = await activeQ
-
-  // Completed today by this driver
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: completedRaw } = await supabase
-    .from('orders')
-    .select(ORDER_SELECT)
-    .eq('status', 'delivered')
-    .eq('assigned_driver_id', user.id)
-    .gte('updated_at', todayStart.toISOString())
-    .order('updated_at', { ascending: false })
-
-  const orders:    DriverOrder[] = (activeRaw    ?? []) as DriverOrder[]
+  const orders: DriverOrder[] = [
+    ...((readyRaw     ?? []) as DriverOrder[]),
+    ...((inTransitRaw ?? []) as DriverOrder[]),
+  ]
   const completed: DriverOrder[] = (completedRaw ?? []) as DriverOrder[]
 
   const branch        = user.branch_id ? (BRANCHES[user.branch_id as BranchId] ?? null) : null

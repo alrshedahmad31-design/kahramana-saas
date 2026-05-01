@@ -165,14 +165,25 @@ export default async function middleware(request: NextRequest) {
         // If on /login and no profile, stay there (prevents loop)
       } else {
         // Logged in AND has valid staff profile
-        if (isLogin) {
+        const role = staffRow.role as StaffRole
+
+        // Drivers belong on /driver, not /dashboard.
+        // Redirect them unconditionally from all dashboard routes and from /login.
+        if (role === 'driver') {
+          const driverUrl = new URL(locale === 'en' ? '/en/driver' : '/driver', request.url)
+          if (isDashboard || isLogin) {
+            const response = NextResponse.redirect(driverUrl)
+            supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+            return response
+          }
+        } else if (isLogin) {
+          // Non-driver staff on /login while authenticated → send to dashboard
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
           return response
         }
 
-        // Dashboard specific RBAC
-        const role = staffRow.role as StaffRole
+        // Dashboard specific RBAC (non-driver roles)
         if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))

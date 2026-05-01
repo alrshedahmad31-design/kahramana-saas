@@ -21,6 +21,12 @@ export default async function DashboardLayout({ children, params }: Props) {
     redirect(locale === 'en' ? '/en/login' : '/login')
   }
 
+  // Defense-in-depth: drivers must never land on any dashboard route.
+  // Middleware redirects first; this layout is the last line of defense.
+  if (user.role === 'driver') {
+    redirect(locale === 'en' ? '/en/driver' : '/driver')
+  }
+
   return (
     <div className="-mt-20 md:-mt-24 min-h-screen bg-brand-black flex" dir={isAr ? 'rtl' : 'ltr'}>
       <DashboardSidebar userName={user.name} userRole={user.role} />
