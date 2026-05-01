@@ -5,9 +5,8 @@ import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { z } from 'zod'
+import type { LucideIcon } from 'lucide-react'
 import {
-  MapPin,
-  Navigation,
   Loader2,
   User,
   Phone,
@@ -20,8 +19,6 @@ import {
   Minus,
   Trash2,
   Store,
-  ChevronLeft,
-  ChevronRight,
   Edit,
   Send,
   Map,
@@ -38,7 +35,6 @@ import { pointsToCredit, formatPoints, MIN_REDEMPTION } from '@/lib/loyalty/calc
 import { createOrderWithPoints } from '@/app/[locale]/checkout/actions'
 import type { CustomerProfileRow } from '@/lib/supabase/custom-types'
 import type { AppliedCoupon } from '@/components/checkout/CouponInput'
-import { tokens } from '@/lib/design-tokens'
 
 // ── Components ───────────────────────────────────────────────────────────────
 
@@ -49,7 +45,7 @@ function StepHeader({
 }: {
   number: string
   title: string
-  icon: any
+  icon: LucideIcon
 }) {
   return (
     <div className="flex items-center gap-3 mb-4 px-1">
@@ -81,7 +77,7 @@ function AddressRow({
   onChange,
   placeholder
 }: {
-  icon: any
+  icon: LucideIcon
   label: string
   value: string
   onChange: (v: string) => void
@@ -852,7 +848,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
         number="7"
         title={t('steps.complete')}
         icon={CheckCircle}
-        isAr={isAr}
       />
       <div className="space-y-4">
         {submitError && (
