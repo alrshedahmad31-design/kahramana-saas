@@ -1,71 +1,55 @@
-# LAST-SESSION.md — Session 35
-> Date: 2026-05-01 | Status: `driver_phase2_complete` | Branch: `master @ 9fbd574`
+# LAST-SESSION.md — Session 36
+> Date: 2026-05-01 | Status: `migrations_applied` | Branch: `master @ 38d3449`
 
 ---
 
 ## ما تم في هذه الجلسة
 
-تنفيذ **جميع الإصلاحات الـ 8** من `HANDOFF-DRIVER-PHASE-2.md` بالترتيب الصارم، كل fix في commit مستقل مع phase-gate 9 فحوصات كاملة.
+تطبيق الـ migrations 035–040 على قاعدة البيانات الإنتاجية بعد إصلاح **3 أخطاء PostgreSQL** منعت تشغيل `supabase db push`.
 
 ---
 
-## الإصلاحات المنجزة (8 commits)
+## الأخطاء المُصلحة (قبل نجاح الـ push)
 
-### 🟠 Fix #5 — Multiple cash handovers per shift ✅
-- Migration `036_multiple_cash_handovers.sql`: جدول `driver_cash_handover_orders` مع `UNIQUE(order_id)` لمنع تكرار الطلب في أكثر من handover.
-- `submitCashHandover`: إزالة guard الـ shift_date، تبديل لـ `createServiceClient()`، إدراج في link table، rollback على 23505.
-- `DriverDashboard`: join جديد لـ `driver_cash_handover_orders`، حساب `unsettledCashOrders`.
-- `CashHandoverModal`: prop `cashOrders` بدل `deliveredOrders`، prop `isPartial` لعنوان جزئي/نهائي.
-- تصحيح: hex color `#ef4444` في `DispatchModal.tsx` → Tailwind.
+### خطأ 1 — `CREATE POLICY IF NOT EXISTS` غير صالح
+PostgreSQL لا يدعم `IF NOT EXISTS` مع `CREATE POLICY` (على عكس `CREATE TABLE`).
 
-### 🟠 Fix #6 — Enforce arrived_at before delivered ✅
-- `driverBumpOrder`: إضافة `arrived_at` للـ select + guard يرفض delivered إذا كان `arrived_at IS NULL`.
-- `DriverOrderCard`: ترجمة الخطأ الجديد `'Must mark as arrived before delivering'` AR/EN.
+**الملفات:** `035_inventory_core.sql` (40 policy) و `036_multiple_cash_handovers.sql` (4 policies)
 
-### 🟠 Fix #10 — Link orders.cash_settled_at ↔ handover ✅
-- Migration `037_orders_cash_settlement.sql`: `orders.cash_settled_at` + `orders.cash_settlement_id` مع partial index + backfill.
-- `submitCashHandover`: يكتب `cash_settled_at + cash_settlement_id` على الطلبات بعد نجاح الـ link insert.
-- `DriverDashboard`: استبدال join بعمود مباشر، `custom-types.ts` محدّث.
+**الإصلاح:** تحويل كل `CREATE POLICY IF NOT EXISTS "name" ON table` إلى:
+```sql
+DROP POLICY IF EXISTS "name" ON table;
+CREATE POLICY "name" ON table ...;
+```
 
-### 🟠 Fix #19 — Cash reconciliation discrepancy workflow ✅
-- Migration `038_cash_reconciliation_discrepancy.sql`: `actual_received`, `discrepancy` (GENERATED), `reconciliation_status`, `manager_notes`, `verified_at`.
-- `reconcileCashHandover`: tolerance ±0.500 BD، notes مطلوبة للفروقات الكبيرة، audit log.
-- `disputeCashHandover`: للمدير لرفع الحالة لـ 'disputed'.
-- `CashReconciliationClient`: إعادة كتابة كاملة — input للمبلغ، delta real-time، 4-tab filter، 3 stats cards.
+### خطأ 2 — SQLSTATE 55P04 (unsafe new enum value)
+`inventory_manager` أُضيف إلى `staff_role` ENUM في نفس transaction التي استخدمته في الـ policies.
 
-### 🟡 Fix Y1 — GPS only when active delivery + retention cleanup ✅
-- `DriverDashboard`: GPS effect يشترط `activeOrder` (out_for_delivery) — يوفر البطارية عند الراحة.
-- `postDriverLocation`: rate limit 15s server-side (silent throttle).
-- Migration `039_driver_locations_retention.sql`: cleanup function + pg_cron job لحذف locations > 7 أيام.
+**الإصلاح:** تغيير `auth_user_role() IN ('owner','inventory_manager',...)` إلى `auth_user_role()::text IN (...)` في جميع policies — cast إلى text يتجنب قراءة enum literal الجديد في نفس الـ transaction.
 
-### 🟡 Fix Y2 — Cash handover reminder banner ✅
-- `CashHandoverReminderBanner.tsx`: component جديد، pulsing red banner مع count + total + dismiss.
-- `DriverDashboard`: يظهر عند ≥4 طلبات نقدية unsettled أو عند الـ offline مع أي طلب نقدي.
+### خطأ 3 — `$$` متداخلة داخل `DO $$` (SQLSTATE 42601)
+3 استدعاءات `cron.schedule()` استخدمت `$$` كمحدد للـ SQL string الداخلية، بينما الـ `DO` block الخارجية تستخدم `$$` أيضاً.
 
-### 🟡 Fix Y3 — Driver shift hours tracking ✅
-- `toggleDriverAvailability`: يكتب في `time_entries` عند online/offline، يغلق entries المفتوحة orphaned.
-- `driver/page.tsx`: fetch `time_entries` للـ hoursToday، تمريره لـ DriverDashboard.
-- `DriverHeader`: عرض `hoursToday` في performance bar.
-
-### 🟡 Fix Y4 — Tips support on cash deliveries ✅
-- Migration `040_tips.sql`: `orders.tip_bhd NUMERIC(10,3) NOT NULL DEFAULT 0`.
-- `driverBumpOrder`: optional `tipBhd` parameter، يكتب في DB مع guard 50 BD.
-- `DriverOrderCard`: حقل tip اختياري في dialog تأكيد النقد.
-- `CashHandoverModal`: يجمع `total_bhd + tip_bhd`، يعرض tip بلون أخضر.
-- `submitCashHandover`: يشمل `tip_bhd` في الـ total الموثوق.
+**الإصلاح:** تغيير المحددات الداخلية إلى `$sql$...$sql$`.
 
 ---
 
-## الـ Migrations المكتوبة (غير مطبّقة على الإنتاج)
+## بعد نجاح Push
 
-| # | الملف | الوصف |
-|---|-------|-------|
-| 035 | `035_inventory_core.sql` | نظام المخزون الكامل (من session 34) |
-| 036 | `036_multiple_cash_handovers.sql` | link table لـ cash handover orders |
-| 037 | `037_orders_cash_settlement.sql` | cash_settled_at + cash_settlement_id على orders |
-| 038 | `038_cash_reconciliation_discrepancy.sql` | discrepancy workflow على driver_cash_handovers |
-| 039 | `039_driver_locations_retention.sql` | cleanup function + pg_cron |
-| 040 | `040_tips.sql` | tip_bhd على orders |
+### إعادة توليد الـ Types
+```bash
+npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts
+```
+- 19/19 جدول جديد موجود في الـ types ✓
+- الأعمدة الجديدة: `tip_bhd`, `cash_settled_at`, `cash_settlement_id`, `actual_received`, `discrepancy` ✓
+- `inventory_manager` في ENUM ✓
+
+### إصلاح TypeScript (6 أخطاء)
+`inventory_manager` لم يكن موجوداً في الـ `Record<StaffRole, ...>` الكاملة في 4 ملفات:
+- `src/lib/auth/rbac.ts` — أُضيف إلى `ROLE_RANK` (rank: 4) و `ASSIGNABLE_BY`
+- `src/app/clock/page.tsx` — أُضيف إلى `ROLE_LABEL`
+- `src/components/staff/StaffCardGrid.tsx` — أُضيف إلى `ROLE_BADGE`
+- `src/components/staff/StaffOverview.tsx` — أُضيف إلى `ROLE_LABEL_EN` و `ROLE_LABEL_AR` (مدير المخزون)
 
 ---
 
@@ -73,56 +57,48 @@
 
 | العنصر | الحالة |
 |--------|--------|
-| Git | `master @ 9fbd574` — محلي فقط، لم يُدفع بعد |
+| Git | `master @ 38d3449` — **محلي فقط، لم يُدفع بعد** |
 | TypeScript | 0 أخطاء ✅ |
-| Build | ✅ Compiled successfully |
-| Phase-gate | 9/9 PASS ✅ |
-| Migration 035 (inventory) | مكتوبة، dry-run ✅، **لم تُطبَّق** |
-| Migrations 036–040 (driver phase 2) | مكتوبة، **لم تُطبَّق** |
-| HANDOFF-DRIVER-PHASE-2.md | **مكتمل 100%** — يمكن حذفه أو الاحتفاظ به للمرجع |
+| Build | ✅ Compiled successfully — 785 pages |
+| Migrations 035–040 | **مُطبّقة على الإنتاج** ✅ |
+| Types | مُجدَّدة من الـ production schema ✅ |
 
 ---
 
 ## الخطوات المطلوبة من أحمد
 
-1. **Git push**:
-   ```bash
-   git push
-   ```
-   Vercel سيعيد النشر تلقائياً.
+### 1. Git push
+```bash
+git push
+```
+Vercel سيعيد النشر تلقائياً بعد دفع جميع الـ commits (session 35 + 36).
 
-2. **تطبيق الـ migrations على الإنتاج بالترتيب**:
-   ```bash
-   supabase db push
-   ```
-   سيطبّق 035 → 036 → 037 → 038 → 039 → 040 بالترتيب.
-
-3. **اختبار على الإنتاج**:
-   - السائق يسلّم نقد → تسليم جزئي → تسليم ثانٍ → كلاهما ينجح.
-   - السائق يضغط "تم التسليم" بدون "وصلت" → رسالة خطأ.
-   - المدير يفتح Cash Reconciliation → يدخل مبلغ مع فرق > 0.500 → notes مطلوبة.
-   - السائق يضيف إكرامية عند التسليم → يظهر في handover modal.
+### 2. اختبار على الإنتاج
+- **Cash delivery + tip**: السائق يختار "نقد" → يدخل إكرامية → تظهر في handover modal بلون أخضر
+- **Arrived guard**: السائق يضغط "تم التسليم" بدون "وصلت" → رسالة خطأ `يجب تسجيل الوصول أولاً`
+- **Cash Reconciliation**: المدير يفتح `/dashboard/delivery/cash-reconciliation` → يدخل مبلغ مع فرق > 0.500 BD → حقل الملاحظات مطلوب
+- **Staff page**: badge لـ `inventory_manager` يظهر صحيح
 
 ---
 
-## قرارات مهمة (Session 35)
+## قرارات مهمة (Session 36)
 
-- **Migration numbers 036–040**: HANDOFF استخدم 035–039 placeholders، لكن 035 محجوز للـ inventory → تم تصحيح الأرقام لـ 036–040.
-- **`as any` casts**: استُخدمت لجداول 036, 037, 038 الجديدة غير الموجودة في generated types — ستزول عند regenerate types بعد apply الـ migrations.
-- **`hoursToday` كـ server-side prop**: يُحسب عند تحميل الصفحة فقط؛ لا يتحدّث live خلال الجلسة — مقبول للبيانات المستخدمة للإشارة لا للمحاسبة الدقيقة.
-- **dispatchModal hex fix**: تصحيح `#ef4444` pre-existing في Fix #5 لأنه كُشف بواسطة phase-gate check.
+- **`::text` cast على RLS policies**: حل دائم — يعمل على بيئات جديدة (enum لا يوجد بعد) وعلى بيئات محدّثة (enum جديد في نفس الـ transaction). أبطأ قليلاً من مقارنة enum لكن مقبول تماماً لـ RLS checks.
+- **`$sql$` للـ cron SQL strings**: معيار للمستقبل — أي `cron.schedule()` داخل `DO $$` يجب أن يستخدم `$sql$` أو `$body$` للـ SQL المدمج.
+- **Supabase migration naming**: يرفض أي اسم لا يبدأ بأرقام فقط قبل الـ underscore الأول (مثل `034b_` مرفوض).
 
 ---
 
 ## Outstanding Follow-ups
 
-- 🟢 Architecture: dead `returning` driver status، payments embed cardinality، realtime channel scoping — لم تُجدول.
-- Manager hours dashboard على `/dashboard/staff/[id]` — مقترح من HANDOFF كـ out-of-scope follow-up.
-- Inventory migration 035 — تطبيق على production عند جاهزية المخزون.
-- Regenerate Supabase types بعد apply الـ migrations: `npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts`
+- 🔵 Git push (أحمد)
+- 🔵 Production testing (أحمد)
+- 🟢 Architecture: dead `returning` driver status، payments embed cardinality، realtime channel scoping — لم تُجدول
+- Manager hours dashboard على `/dashboard/staff/[id]` — out-of-scope follow-up من HANDOFF
+- Phase 3 (Inventory UI): الـ migrations مطبّقة → يمكن البدء في بناء الـ UI عند جاهزية البيانات (recipes + suppliers)
 
 ---
 
-## الجلسة السابقة (34) — للمرجع
+## الجلسة السابقة (35) — للمرجع
 
-شاهد session 34 في الملف الأقدم للتفاصيل الكاملة عن Driver Security Hardening وInventory Core Migration.
+تنفيذ 8 إصلاحات driver phase-2 (Fix #5, #6, #10, #19, Y1, Y2, Y3, Y4) — كلها committed وجاهزة للإنتاج.
