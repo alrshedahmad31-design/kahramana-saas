@@ -2,7 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
-import type { DriverLocationInsert } from '@/lib/supabase/custom-types'
+import type { DriverLocationInsert, DriverCashHandoverInsert } from '@/lib/supabase/custom-types'
 
 export type DriverActionResult = { success: true } | { success: false; error: string }
 
@@ -104,13 +104,11 @@ export async function submitCashHandover(
     return { success: false, error: 'Unauthorized' }
   }
 
-  const supabase    = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabaseAny = supabase as any
-  const today       = new Date().toISOString().split('T')[0]
+  const supabase = await createClient()
+  const today    = new Date().toISOString().split('T')[0]
 
   // Prevent duplicate submission for the same shift date
-  const { data: existing } = await supabaseAny
+  const { data: existing } = await supabase
     .from('driver_cash_handovers')
     .select('id')
     .eq('driver_id', user.id)
@@ -129,31 +127,30 @@ export async function submitCashHandover(
       .in('id', orderIds)
 
     // Ensure all requested IDs were actually found
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fetchedIds = new Set((orders ?? []).map((o: any) => o.id as string))
+    const fetchedIds = new Set((orders ?? []).map(o => o.id))
     const missing    = orderIds.filter(id => !fetchedIds.has(id))
     if (missing.length > 0) return { success: false, error: 'Invalid order IDs' }
 
-    // Reject any order not owned by this driver or not a cash order
+    // Reject any order not owned by this driver or not a cash order.
+    // payments is a one-to-one embed so TS infers a single object, not an array.
     const invalid = (orders ?? []).filter(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (o: any) =>
-        o.assigned_driver_id !== user.id ||
-        o.payments?.[0]?.method !== 'cash',
+      o => o.assigned_driver_id !== user.id || o.payments?.method !== 'cash',
     )
     if (invalid.length > 0) {
       return { success: false, error: 'Unauthorized orders in handover' }
     }
   }
 
-  const { error } = await supabaseAny
+  const handover: DriverCashHandoverInsert = {
+    driver_id:  user.id,
+    shift_date: today,
+    total_cash: totalCash,
+    order_ids:  orderIds,
+  }
+
+  const { error } = await supabase
     .from('driver_cash_handovers')
-    .insert({
-      driver_id:  user.id,
-      shift_date: today,
-      total_cash: totalCash,
-      order_ids:  orderIds,
-    })
+    .insert(handover)
 
   if (error) return { success: false, error: error.message }
   return { success: true }

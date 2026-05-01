@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       audit_logs: {
@@ -516,6 +491,60 @@ export type Database = {
           phone?: string | null
         }
         Relationships: []
+      }
+      driver_cash_handovers: {
+        Row: {
+          created_at: string
+          driver_id: string
+          handed_at: string
+          id: string
+          notes: string | null
+          order_ids: string[]
+          received_by: string | null
+          shift_date: string
+          total_cash: number
+          verified: boolean
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          handed_at?: string
+          id?: string
+          notes?: string | null
+          order_ids?: string[]
+          received_by?: string | null
+          shift_date: string
+          total_cash: number
+          verified?: boolean
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          handed_at?: string
+          id?: string
+          notes?: string | null
+          order_ids?: string[]
+          received_by?: string | null
+          shift_date?: string
+          total_cash?: number
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_cash_handovers_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_cash_handovers_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       driver_earnings: {
         Row: {
@@ -1912,9 +1941,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       coupon_type: ["percentage", "fixed_amount"],
