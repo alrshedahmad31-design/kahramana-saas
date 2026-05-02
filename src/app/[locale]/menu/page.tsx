@@ -1,14 +1,8 @@
 import type { Metadata } from 'next'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { headers } from 'next/headers'
-import {
-  getAllMenuItems,
-  getMenuCategories,
-  type LocaleCode,
-} from '@/lib/menu'
-import dynamic from 'next/dynamic'
-const MenuExperience = dynamic(() => import('@/components/menu/menu-experience'), { ssr: true })
-import MenuHero from '@/components/menu/menu-hero'
+import { getMenuData, getFeaturedSlugs, type LocaleCode } from '@/lib/menu'
+import MenuPageClient from '@/components/menu/MenuPageClient'
 import { buildMenuBreadcrumb } from '@/lib/seo/schemas'
 import { SITE_URL } from '@/constants/contact'
 
@@ -33,13 +27,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function MenuPage() {
   const locale = (await getLocale()) as LocaleCode
-  const isRTL = locale === 'ar'
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  const t = await getTranslations({ locale, namespace: 'menu' })
+  
+  const [categories, featuredSlugs] = await Promise.all([
+    getMenuData(locale),
+    getFeaturedSlugs(),
+  ])
 
-  const categories = getMenuCategories()
-  const items = getAllMenuItems()
-
+  // Structured Data
   const menuSchema = {
     '@context': 'https://schema.org',
     '@type': 'Menu',
@@ -49,15 +44,15 @@ export default async function MenuPage() {
     isPartOf: { '@id': `${SITE_URL}/#organization` },
     hasMenuSection: categories.map((c) => ({
       '@type': 'MenuSection',
-      name: locale === 'ar' ? c.name.ar : c.name.en,
-      url:  `${SITE_URL}/${locale === 'en' ? 'en/' : ''}menu/${c.slug}`,
+      name: c.nameAR,
+      url: `${SITE_URL}/${locale === 'en' ? 'en/' : ''}menu#section-${c.id}`,
     })),
   }
 
   const breadcrumb = buildMenuBreadcrumb(locale)
 
   return (
-    <main className="min-h-screen bg-brand-black">
+    <>
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -70,16 +65,7 @@ export default async function MenuPage() {
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
-      <MenuHero
-        eyebrow={t('heroEyebrow')}
-        title={t('heroTitle')}
-        description={t('heroDescription')}
-        itemCountLabel={t('heroItemCount', { count: items.length })}
-        categoryCountLabel={t('heroCategoryCount', { count: categories.length })}
-        imageAlt={t('heroImageAlt')}
-        isRTL={isRTL}
-      />
-      <MenuExperience categories={categories} items={items} isRTL={isRTL} />
-    </main>
+      <MenuPageClient categories={categories} locale={locale} featuredSlugs={featuredSlugs} />
+    </>
   )
 }

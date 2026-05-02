@@ -16,7 +16,7 @@ interface ItemSelectionContextType {
   setQuantity: (quantity: number | ((prev: number) => number)) => void
 }
 
-const ItemSelectionContext = createContext<ItemSelectionContextType | undefined>(undefined)
+export const ItemSelectionContext = createContext<ItemSelectionContextType | undefined>(undefined)
 
 export function ItemSelectionProvider({
   children,

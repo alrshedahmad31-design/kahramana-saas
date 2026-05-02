@@ -1,4 +1,5 @@
 import menuData from '@/data/menu.json'
+import featuredSlugsData from '@/data/featured.json'
 
 export type LocaleCode = 'ar' | 'en'
 
@@ -81,6 +82,13 @@ export interface NormalizedMenuItem extends MenuItem {
   hasMultiplePrices: boolean
   pricingKind: 'single' | 'sizes' | 'variants' | 'sizes_variants' | 'unpriced'
   image: string
+}
+
+export interface CategoryWithItems {
+  id: string
+  nameAR: string
+  nameEN?: string
+  items: NormalizedMenuItem[]
 }
 
 export interface MenuPriceSelection {
@@ -280,4 +288,19 @@ export function getCategorySlugs(): string[] {
 
 export function getItemSlugs(): string[] {
   return getAllMenuItems().map((item) => item.slug)
+}
+
+export async function getFeaturedSlugs(): Promise<string[]> {
+  // To swap for Supabase: return (await supabase.from('featured_items').select('id')).data?.map(r => r.id) ?? []
+  return featuredSlugsData
+}
+
+export async function getMenuData(locale: string = 'ar'): Promise<CategoryWithItems[]> {
+  const categories = getRawCategories()
+  return categories.map((cat) => ({
+    id: slugify(cat.category.en),
+    nameAR: cat.category.ar,
+    nameEN: cat.category.en,
+    items: cat.items.map((item) => normalizeMenuItem(item, cat)),
+  }))
 }

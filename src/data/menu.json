@@ -1,8 +1,8 @@
 [
   {
     "category": {
-      "ar": "مشاوي كهرمانة الفاخرة",
-      "en": "Kahramana Signature Grills"
+      "ar": "مختارات كهرمانة للتوقيع",
+      "en": "Kahramana Signature Selection"
     },
     "items": [
       {
@@ -303,8 +303,8 @@
   },
   {
     "category": {
-      "ar": "روائع المطبخ العراقي",
-      "en": "Iraqi Culinary Masterpieces"
+      "ar": "روائع المائدة البغدادية",
+      "en": "Baghdadi Culinary Masterpieces"
     },
     "items": [
       {
@@ -878,106 +878,8 @@
   },
   {
     "category": {
-      "ar": "المرق البغدادي الأصيل",
-      "en": "Authentic Baghdadi Stews"
-    },
-    "items": [
-      {
-        "id": "stews-bamih",
-        "name": {
-          "ar": "مرق البامية العراقي",
-          "en": "Iraqi Okra Stew"
-        },
-        "description": {
-          "ar": "مرق البامية العراقي الكلاسيكي؛ يُحضر ببطء في صلصة طماطم غنية ولاذعة قليلاً، مع الثوم ومزيج من البهارات، لتكتسب البامية قواماً يذوب في المرق.",
-          "en": "The quintessential Iraqi okra stew, meticulously slow-cooked in a rich, slightly tangy tomato sauce deeply infused with garlic and a warming blend of traditional spices."
-        },
-        "variants": [
-          {
-            "label": {
-              "ar": "مع اللحم",
-              "en": "With Meat"
-            },
-            "price_bhd": 3.5
-          },
-          {
-            "label": {
-              "ar": "سادة",
-              "en": "Plain"
-            },
-            "price_bhd": 1
-          }
-        ],
-        "image_url": "/assets/gallery/okra-stew.webp",
-        "available": true,
-        "ingredients": []
-      },
-      {
-        "id": "stews-white-beans",
-        "name": {
-          "ar": "مرق الفاصولياء البيضاء",
-          "en": "White Bean Stew"
-        },
-        "description": {
-          "ar": "مرق يجسد الدفء المنزلي؛ فاصولياء بيضاء طرية تُطهى ببطء في قاعدة طماطم غنية بالثوم، البصل، والتوابل الدافئة.",
-          "en": "A deeply comforting, hearty Iraqi stew featuring exceptionally tender white beans slowly simmered in a rich, vibrant tomato base infused with garlic and warm spices."
-        },
-        "variants": [
-          {
-            "label": {
-              "ar": "مع اللحم",
-              "en": "With Meat"
-            },
-            "price_bhd": 3.5
-          },
-          {
-            "label": {
-              "ar": "سادة",
-              "en": "Plain"
-            },
-            "price_bhd": 1
-          }
-        ],
-        "image_url": "/assets/gallery/white-bean-stew.webp",
-        "available": true,
-        "ingredients": []
-      },
-      {
-        "id": "stews-tabsi",
-        "name": {
-          "ar": "تبسي الباذنجان",
-          "en": "Eggplant Tabsi Stew"
-        },
-        "description": {
-          "ar": "طاجن الباذنجان العراقي بنسخة المرق المريحة للروح؛ طبقات من الباذنجان، الفليفلة، الطماطم، والبطاطس، تُطهى ببطء مع الثوم وصلصة الطماطم العطرية.",
-          "en": "A soul-warming stew version of the classic Iraqi eggplant casserole. Beautifully layered eggplant, capsicum, tomatoes, and potatoes delicately simmered in a highly aromatic garlic-tomato base."
-        },
-        "variants": [
-          {
-            "label": {
-              "ar": "مع اللحم",
-              "en": "With Meat"
-            },
-            "price_bhd": 3.5
-          },
-          {
-            "label": {
-              "ar": "سادة",
-              "en": "Plain"
-            },
-            "price_bhd": 1
-          }
-        ],
-        "image_url": "/assets/gallery/tepsi-eggplant-stew.webp",
-        "available": true,
-        "ingredients": []
-      }
-    ]
-  },
-  {
-    "category": {
-      "ar": "المقبلات الباردة (مازات)",
-      "en": "Cold Appetizers (Mezza)"
+      "ar": "بستان المقبلات الباردة",
+      "en": "The Cold Mezza Garden"
     },
     "items": [
       {
@@ -1108,8 +1010,8 @@
   },
   {
     "category": {
-      "ar": "المقبلات الحارة (مازات)",
-      "en": "Hot Appetizers (Mezza)"
+      "ar": "بستان المقبلات الساخنة",
+      "en": "The Hot Mezza Garden"
     },
     "items": [
       {
@@ -1249,61 +1151,8 @@
   },
   {
     "category": {
-      "ar": "ركن الفتات الفاخر",
-      "en": "Luxury Fatteh Corner"
-    },
-    "items": [
-      {
-        "id": "breakfast-fattat-vine-leaves",
-        "name": {
-          "ar": "فتة ورق عنب ملكية",
-          "en": "Royal Vine Leaves Fatteh"
-        },
-        "description": {
-          "ar": "طبقات من الخبز المقرمش يعلوها ورق العنب المحشي، وتُغمر بصلصة اللبن الكريمية وتُزين بحبات الرمان، لطبق غني يفيض بالنكهات.",
-          "en": "Layers of crispy toasted bread topped with savory stuffed vine leaves, generously draped in a creamy yogurt sauce, and finished with fresh pomegranate seeds."
-        },
-        "price_bhd": 3,
-        "image_url": "/assets/gallery/vine-leaves-fatta.webp",
-        "available": true,
-        "ingredients": []
-      },
-      {
-        "id": "breakfast-fattat-eggplant-chickpeas",
-        "name": {
-          "ar": "فتة باذنجان وحمص",
-          "en": "Eggplant & Chickpea Fatteh"
-        },
-        "description": {
-          "ar": "حمص كريمي ومكعبات باذنجان مقلية تتداخل مع طبقات الخبز المحمص، اللبن، وحبات الرمان، لطبق دافئ يرضي الذائقة.",
-          "en": "Creamy chickpeas and fried eggplant cubes arranged over layers of toasted bread and yogurt, garnished with pomegranate seeds for a deeply comforting dish."
-        },
-        "price_bhd": 3,
-        "image_url": "/assets/gallery/eggplant-chickpea-fatta.webp",
-        "available": true,
-        "ingredients": []
-      },
-      {
-        "id": "breakfast-fattat-falafel",
-        "name": {
-          "ar": "فتة فلافل مميزة",
-          "en": "Special Falafel Fatteh"
-        },
-        "description": {
-          "ar": "قطع الفلافل المقرمشة تُقدم فوق طبقة من الخبز المحمص المغموس بصلصة العمبة، وتُغطى بمزيج غني من اللبن والطحينة لتوازن مثالي.",
-          "en": "Crispy falafel pieces layered over toasted bread soaked in tangy amba sauce, beautifully topped with a rich yogurt and tahini blend for the perfect textural balance."
-        },
-        "price_bhd": 3,
-        "image_url": "/assets/gallery/falafel-fatta.webp",
-        "available": true,
-        "ingredients": []
-      }
-    ]
-  },
-  {
-    "category": {
-      "ar": "نضارة البساتين (سلطات)",
-      "en": "Garden Freshness (Salads)"
+      "ar": "سلطات نضارة البساتين",
+      "en": "Garden Fresh Salads"
     },
     "items": [
       {
@@ -1400,8 +1249,8 @@
   },
   {
     "category": {
-      "ar": "دفء المائدة (الشوربات)",
-      "en": "Table Warmth (Soups)"
+      "ar": "شوربات دافئة",
+      "en": "Warm & Comforting Soups"
     },
     "items": [
       {
@@ -1468,8 +1317,159 @@
   },
   {
     "category": {
-      "ar": "مخبوزات التنور البغدادية",
-      "en": "Baghdadi Tandoor Pastries",
+      "ar": "بيت المرق الأصيل",
+      "en": "The Authentic Stew House"
+    },
+    "items": [
+      {
+        "id": "stews-bamih",
+        "name": {
+          "ar": "مرق البامية العراقي",
+          "en": "Iraqi Okra Stew"
+        },
+        "description": {
+          "ar": "مرق البامية العراقي الكلاسيكي؛ يُحضر ببطء في صلصة طماطم غنية ولاذعة قليلاً، مع الثوم ومزيج من البهارات، لتكتسب البامية قواماً يذوب في المرق.",
+          "en": "The quintessential Iraqi okra stew, meticulously slow-cooked in a rich, slightly tangy tomato sauce deeply infused with garlic and a warming blend of traditional spices."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع اللحم",
+              "en": "With Meat"
+            },
+            "price_bhd": 3.5
+          },
+          {
+            "label": {
+              "ar": "سادة",
+              "en": "Plain"
+            },
+            "price_bhd": 1
+          }
+        ],
+        "image_url": "/assets/gallery/okra-stew.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "stews-white-beans",
+        "name": {
+          "ar": "مرق الفاصولياء البيضاء",
+          "en": "White Bean Stew"
+        },
+        "description": {
+          "ar": "مرق يجسد الدفء المنزلي؛ فاصولياء بيضاء طرية تُطهى ببطء في قاعدة طماطم غنية بالثوم، البصل، والتوابل الدافئة.",
+          "en": "A deeply comforting, hearty Iraqi stew featuring exceptionally tender white beans slowly simmered in a rich, vibrant tomato base infused with garlic and warm spices."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع اللحم",
+              "en": "With Meat"
+            },
+            "price_bhd": 3.5
+          },
+          {
+            "label": {
+              "ar": "سادة",
+              "en": "Plain"
+            },
+            "price_bhd": 1
+          }
+        ],
+        "image_url": "/assets/gallery/white-bean-stew.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "stews-tabsi",
+        "name": {
+          "ar": "تبسي الباذنجان",
+          "en": "Eggplant Tabsi Stew"
+        },
+        "description": {
+          "ar": "طاجن الباذنجان العراقي بنسخة المرق المريحة للروح؛ طبقات من الباذنجان، الفليفلة، الطماطم، والبطاطس، تُطهى ببطء مع الثوم وصلصة الطماطم العطرية.",
+          "en": "A soul-warming stew version of the classic Iraqi eggplant casserole. Beautifully layered eggplant, capsicum, tomatoes, and potatoes delicately simmered in a highly aromatic garlic-tomato base."
+        },
+        "variants": [
+          {
+            "label": {
+              "ar": "مع اللحم",
+              "en": "With Meat"
+            },
+            "price_bhd": 3.5
+          },
+          {
+            "label": {
+              "ar": "سادة",
+              "en": "Plain"
+            },
+            "price_bhd": 1
+          }
+        ],
+        "image_url": "/assets/gallery/tepsi-eggplant-stew.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "مجموعة الفتات الفاخرة",
+      "en": "The Fatteh Collection"
+    },
+    "items": [
+      {
+        "id": "breakfast-fattat-vine-leaves",
+        "name": {
+          "ar": "فتة ورق عنب ملكية",
+          "en": "Royal Vine Leaves Fatteh"
+        },
+        "description": {
+          "ar": "طبقات من الخبز المقرمش يعلوها ورق العنب المحشي، وتُغمر بصلصة اللبن الكريمية وتُزين بحبات الرمان، لطبق غني يفيض بالنكهات.",
+          "en": "Layers of crispy toasted bread topped with savory stuffed vine leaves, generously draped in a creamy yogurt sauce, and finished with fresh pomegranate seeds."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/vine-leaves-fatta.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-fattat-eggplant-chickpeas",
+        "name": {
+          "ar": "فتة باذنجان وحمص",
+          "en": "Eggplant & Chickpea Fatteh"
+        },
+        "description": {
+          "ar": "حمص كريمي ومكعبات باذنجان مقلية تتداخل مع طبقات الخبز المحمص، اللبن، وحبات الرمان، لطبق دافئ يرضي الذائقة.",
+          "en": "Creamy chickpeas and fried eggplant cubes arranged over layers of toasted bread and yogurt, garnished with pomegranate seeds for a deeply comforting dish."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/eggplant-chickpea-fatta.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "breakfast-fattat-falafel",
+        "name": {
+          "ar": "فتة فلافل مميزة",
+          "en": "Special Falafel Fatteh"
+        },
+        "description": {
+          "ar": "قطع الفلافل المقرمشة تُقدم فوق طبقة من الخبز المحمص المغموس بصلصة العمبة، وتُغطى بمزيج غني من اللبن والطحينة لتوازن مثالي.",
+          "en": "Crispy falafel pieces layered over toasted bread soaked in tangy amba sauce, beautifully topped with a rich yogurt and tahini blend for the perfect textural balance."
+        },
+        "price_bhd": 3,
+        "image_url": "/assets/gallery/falafel-fatta.webp",
+        "available": true,
+        "ingredients": []
+      }
+    ]
+  },
+  {
+    "category": {
+      "ar": "مختارات التنور البغدادية",
+      "en": "Baghdadi Tandoor Selection",
       "description": {
         "ar": "مخبوزات التنور والفرن؛ فطائر طرية تُحضر يدوياً يومياً، من اللحم بعجين البغدادي إلى المناقيش العطرة بالزعتر واللبنة.",
         "en": "Tandoor and oven specialties; handmade dough baked daily, from Baghdadi Lahm bil Ajeen to aromatic Zaatar and Labneh manakish."
@@ -1870,8 +1870,8 @@
   },
   {
     "category": {
-      "ar": "ركن الشاورما العراقية (الكص)",
-      "en": "Iraqi Shawarma (Kaas)",
+      "ar": "أجنحة الشاورما العراقية (الكص)",
+      "en": "The Shawarma Suite (Kaas)",
       "description": {
         "ar": "١٢ صنفاً من الشاورما العراقية المميزة، تُحضّر يومياً بتتبيلة البهارات البغدادية الأصيلة وتُشوى ببطء لتشبع حواسك.",
         "en": "12 Iraqi shawarma favorites prepared daily with authentic Baghdadi spices and slow-roasted for deep, satisfying flavor."
@@ -2067,8 +2067,8 @@
   },
   {
     "category": {
-      "ar": "ركن البيتزا الإيطالية بلمسة كهرمانة",
-      "en": "Italian Pizza with a Kahramana Touch",
+      "ar": "بيتزا الفرن الحجري",
+      "en": "Artisan Stone-Oven Pizza",
       "description": {
         "ar": "حين تلتقي العجينة الهشة بلمسة كهرمانة؛ بيتزا محضرة يدوياً بمواد طازجة وتشكيلة متنوعة ترضي جميع الأذواق.",
         "en": "Where fine dough meets the Kahramana touch; handmade pizzas prepared with fresh ingredients and a diverse selection to satisfy all tastes."
@@ -2286,8 +2286,8 @@
   },
   {
     "category": {
-      "ar": "السندويشات البغدادية",
-      "en": "Baghdadi Sandwiches",
+      "ar": "سندويشات بغدادية",
+      "en": "Traditional Sandwiches",
       "description": {
         "ar": "وجبات سريعة بطعم الأصالة؛ سندويشات متنوعة في خبز التنور الساخن، مثالية للأكل أثناء التنقل أو كوجبة خفيفة.",
         "en": "Quick bites with an authentic taste; varied sandwiches in warm tandoor bread, perfect for on-the-go or a light meal."
@@ -2515,8 +2515,8 @@
   },
   {
     "category": {
-      "ar": "الفطور البغدادي العريق",
-      "en": "Classic Baghdadi Breakfast",
+      "ar": "الفطور البغدادي التراثي",
+      "en": "The Heritage Breakfast",
       "description": {
         "ar": "نقدم فطوراً بغدادياً عريقاً يضم ٢٣ صنفاً متنوعاً، يجمع بين النكهات الأصيلة والتحضير التقليدي لتبدأ يومك بعبق الرافدين.",
         "en": "We serve a classic Baghdadi breakfast with 23 varieties, combining authentic flavors and traditional preparation."
@@ -2872,8 +2872,8 @@
   },
   {
     "category": {
-      "ar": "ختامها مسك (الحلويات الفاخرة)",
-      "en": "Luxury Desserts Finale",
+      "ar": "ختامها مسك (الحلويات)",
+      "en": "The Sweet Finale",
       "description": {
         "ar": "استمتع بتشكيلة من الحلويات الشرقية الكلاسيكية لتكتمل تجربة الضيافة العراقية الفاخرة.",
         "en": "Enjoy a selection of classic Middle Eastern desserts to complete your luxury Iraqi hospitality experience."
@@ -2914,8 +2914,8 @@
   },
   {
     "category": {
-      "ar": "عصائر كهرمانة المنعشة",
-      "en": "Kahramana Fresh Signature Juices",
+      "ar": "عصائر كهرمانة الطبيعية",
+      "en": "Fresh Signature Juices",
       "description": {
         "ar": "انتعاش الطبيعة في كل رشفة؛ عصائر طازجة 100٪ تُعصر عند الطلب من ثمار الفواكه المختارة بعناية.",
         "en": "Nature's refreshment in every sip; 100% fresh juices squeezed to order from carefully selected fruits."
@@ -3091,8 +3091,8 @@
   },
   {
     "category": {
-      "ar": "ركن الشاي والقهوة الأصيلة",
-      "en": "Traditional Tea & Coffee Corner",
+      "ar": "ركن الشاي والقهوة العريق",
+      "en": "The Heritage Tea & Coffee",
       "description": {
         "ar": "شاي عراقي مخدر على الأصول وقهوة عربية معطرة بالهيل تليق بضيافتنا.",
         "en": "Authentic Iraqi tea and traditional Arabic coffee infused with cardamom worthy of our hospitality."

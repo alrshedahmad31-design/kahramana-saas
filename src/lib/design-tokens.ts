@@ -5,19 +5,19 @@
 
 export const tokens = {
   color: {
-    black:     '#110b05', // page background ONLY — never for text
-    surface:   '#2d180b', // card backgrounds — first level
-    surface2:  '#3a1a08', // nested cards, input fields, dropdowns
-    gold:      '#d19f51', // primary accent — CTAs, highlights, active borders
-    goldLight: '#dfc9aa', // hover states ONLY — never the default color
-    goldDark:  '#a8771c', // pressed/active states, decorative borders
-    text:      '#f4ecd8', // all primary text on dark backgrounds
-    muted:     '#dfc9aa', // secondary text, placeholders, disabled labels
-    border:    '#743417', // dividers, card borders, input outlines
-    error:     '#C0392B', // errors, out-of-stock badges, destructive actions
-    success:   '#27AE60', // confirmations, available status, checkmarks
-    qrInk:     '#110b05', // QR-code foreground — paper-themed printables
-    qrPaper:   '#f4ecd8', // QR-code background — paper-themed printables
+    black:      '#0A0A0A', // page background ONLY
+    surface:    '#141210', // card backgrounds
+    surface2:   '#1C1A16', // inputs, dropdowns, nested
+    gold:       '#C8922A', // CTAs, active states, accents
+    goldLight:  '#E8B86D', // hover states ONLY
+    goldDark:   '#A67C00', // pressed states
+    text:       '#F5F5F5', // primary text
+    muted:      '#6B6560', // secondary text, captions
+    border:     '#2A2A2A', // dividers, card borders
+    error:      '#C0392B', // out-of-stock, errors
+    success:    '#27AE60', // available, confirmations
+    qrInk:      '#0A0A0A',
+    qrPaper:    '#F5F5F5',
   },
   font: {
     arHeading: 'Cairo',         // Arabic headings — weight 800 ONLY

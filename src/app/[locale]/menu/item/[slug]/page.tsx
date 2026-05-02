@@ -127,12 +127,7 @@ export default async function MenuItemPage({ params }: Props) {
       <RelatedItems
         items={relatedItems}
         title={t('relatedTitle')}
-        emptyTitle={t('searchNoResults')}
-        emptyHint={t('searchNoResultsHint')}
-        outOfStockLabel={t('outOfStock')}
-        fromLabel={t('priceFrom')}
-        currency={tCommon('currency')}
-        isRTL={isRTL}
+        locale={locale}
       />
     </main>
   )

@@ -113,19 +113,15 @@ export default async function MenuCategoryPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <MenuHero
-        eyebrow={t('categoryEyebrow')}
-        title={isRTL ? category.name.ar : category.name.en}
-        description={
+        locale={locale}
+        titleOverride={isRTL ? category.name.ar : category.name.en}
+        descriptionOverride={
           category.description
             ? isRTL
               ? category.description.ar
               : category.description.en
             : t('categoryFallbackDescription')
         }
-        itemCountLabel={t('heroItemCount', { count: categoryItems.length })}
-        categoryCountLabel={t('categorySingleLabel')}
-        imageAlt={t('heroImageAlt')}
-        isRTL={isRTL}
       />
       <MenuExperience
         categories={getMenuCategories()}

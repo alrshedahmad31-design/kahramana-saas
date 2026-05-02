@@ -1,27 +1,34 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useContext } from 'react'
 import { useTranslations } from 'next-intl'
 import { ShoppingBag, Minus, Plus } from 'lucide-react'
 import { useCartStore } from '@/lib/cart'
-import type { MenuVariantOption } from '@/lib/menu'
-import { useItemSelection } from '@/components/menu/item-selection-provider'
+import type { MenuVariantOption, NormalizedMenuItem } from '@/lib/menu'
+import { resolveMenuItemPrice } from '@/lib/menu'
+import { ItemSelectionContext } from '@/components/menu/item-selection-provider'
 import ItemSizeSelector from '@/components/menu/item-size-selector'
 import ItemVariantSelector from '@/components/menu/item-variant-selector'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Props {
   isRTL: boolean
+  item?: NormalizedMenuItem
+  size?: 'sm' | 'lg'
+  disabled?: boolean
 }
 
-export default function AddToCartButton({ isRTL }: Props) {
+export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', disabled }: Props) {
   const t = useTranslations('menu')
   const tCart = useTranslations('cart')
   const tCommon = useTranslations('common')
   const addItem = useCartStore((state) => state.addItem)
   
+  // Try to get from context, fallback to prop
+  const context = useContext(ItemSelectionContext)
+  const item = propItem || context?.item
+  
   const {
-    item,
     selectedSize,
     selectedVariant,
     quantity,
@@ -30,7 +37,18 @@ export default function AddToCartButton({ isRTL }: Props) {
     setSelectedSize,
     setSelectedVariant,
     setQuantity
-  } = useItemSelection()
+  } = context || {
+    selectedSize: undefined,
+    selectedVariant: undefined,
+    quantity: 1,
+    computedPrice: propItem ? resolveMenuItemPrice(propItem) : 0,
+    lineTotal: propItem ? resolveMenuItemPrice(propItem) : 0,
+    setSelectedSize: () => {},
+    setSelectedVariant: () => {},
+    setQuantity: () => {}
+  }
+
+  if (!item) return null
 
   const variantAr = useMemo(() => {
     if (!item.variants || !selectedVariant) return undefined
@@ -38,6 +56,8 @@ export default function AddToCartButton({ isRTL }: Props) {
   }, [item.variants, selectedVariant])
 
   function handleAdd() {
+    if (!item) return
+
     addItem({
       itemId: item.id,
       nameAr: item.name.ar,
@@ -48,6 +68,31 @@ export default function AddToCartButton({ isRTL }: Props) {
       selectedVariant: variantAr,
       quantity,
     })
+  }
+
+  // Compact variant for grid cards
+  if (size === 'sm') {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleAdd()
+        }}
+        disabled={disabled}
+        className="
+          flex h-10 w-10 items-center justify-center rounded-xl
+          border border-brand-gold/20 bg-brand-gold/5 text-brand-gold
+          transition-all duration-300 hover:bg-brand-gold hover:text-brand-black
+          hover:shadow-[0_0_15px_rgba(200,146,42,0.3)] disabled:opacity-50
+          disabled:cursor-not-allowed active:scale-95
+        "
+        aria-label={t('addToCart')}
+      >
+        <Plus size={20} />
+      </button>
+    )
   }
 
   return (
@@ -119,7 +164,8 @@ export default function AddToCartButton({ isRTL }: Props) {
         <button
           type="button"
           onClick={handleAdd}
-          className={`group relative flex min-h-[56px] flex-1 items-center justify-center gap-3 overflow-hidden rounded-2xl bg-brand-gold px-8 text-lg font-black text-brand-black transition-all duration-300 hover:shadow-[0_8px_25px_rgba(200,146,42,0.4)] active:scale-[0.98] ${
+          disabled={disabled}
+          className={`group relative flex min-h-[56px] flex-1 items-center justify-center gap-3 overflow-hidden rounded-2xl bg-brand-gold px-8 text-lg font-black text-brand-black transition-all duration-300 hover:shadow-[0_8px_25px_rgba(200,146,42,0.4)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
             isRTL ? 'font-almarai' : 'font-satoshi'
           }`}
         >

@@ -117,12 +117,7 @@ export default function MenuExperience({
 
         <MenuGrid
           items={filteredItems}
-          emptyTitle={t('searchNoResults')}
-          emptyHint={t('searchNoResultsHint')}
-          outOfStockLabel={t('outOfStock')}
-          fromLabel={t('priceFrom')}
-          currency={tCommon('currency')}
-          isRTL={isRTL}
+          locale={isRTL ? 'ar' : 'en'}
         />
       </div>
     </section>

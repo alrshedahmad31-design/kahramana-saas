@@ -1,73 +1,88 @@
+'use client'
+
 import Image from 'next/image'
+import { motion } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface MenuHeroProps {
-  eyebrow: string
-  title: string
-  description: string
-  itemCountLabel: string
-  categoryCountLabel: string
-  imageAlt: string
-  isRTL: boolean
+  locale: string
+  titleOverride?: string
+  descriptionOverride?: string
 }
 
-export default function MenuHero({
-  eyebrow,
-  title,
-  description,
-  itemCountLabel,
-  categoryCountLabel,
-  imageAlt,
-  isRTL,
-}: MenuHeroProps) {
-  return (
-    <section
-      dir={isRTL ? 'rtl' : 'ltr'}
-      className="relative isolate overflow-hidden bg-brand-black"
-    >
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/assets/hero/hero-menu.webp"
-          alt={imageAlt}
-          fill
-          priority
-          className="object-cover opacity-45"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-black/60 via-brand-black/85 to-brand-black" />
-      </div>
+export default function MenuHero({ locale, titleOverride, descriptionOverride }: MenuHeroProps) {
+  const t = useTranslations('menu')
+  const isRTL = locale === 'ar'
 
-      <div className="mx-auto flex min-h-[420px] max-w-7xl flex-col justify-end ps-4 pe-4 pt-24 pb-10 sm:ps-6 sm:pe-6 lg:min-h-[520px]">
-        <div className="max-w-3xl">
-          <p
-            className={`mb-4 text-xs font-bold uppercase tracking-[0.22em] text-brand-gold text-start ${
-              isRTL ? 'font-almarai' : 'font-satoshi'
-            }`}
-          >
-            {eyebrow}
-          </p>
-          <h1
-            className={`text-balance text-4xl font-black leading-tight text-brand-text sm:text-6xl text-start ${
-              isRTL ? 'font-cairo' : 'font-editorial'
-            }`}
-          >
-            {title}
-          </h1>
-          <p
-            className={`mt-5 max-w-2xl text-base leading-8 text-brand-muted sm:text-lg text-start ${
-              isRTL ? 'font-almarai' : 'font-satoshi'
-            }`}
-          >
-            {description}
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <span className="rounded-lg border border-brand-border bg-brand-surface/80 ps-4 pe-4 pt-3 pb-3 font-satoshi text-sm font-bold tabular-nums text-brand-text">
-              {itemCountLabel}
-            </span>
-            <span className="rounded-lg border border-brand-border bg-brand-surface/80 ps-4 pe-4 pt-3 pb-3 font-satoshi text-sm font-bold tabular-nums text-brand-text">
-              {categoryCountLabel}
-            </span>
-          </div>
-        </div>
+  return (
+    <section className="relative h-[55vh] md:h-[60vh] lg:h-[65vh] w-full overflow-hidden bg-brand-black">
+      {/* Background Image */}
+      <Image
+        src="/assets/hero/hero-menu.webp"
+        alt="Kahramana Baghdad Menu"
+        fill
+        priority
+        className="object-cover object-[center_30%] opacity-60"
+        sizes="100vw"
+      />
+
+      {/* Overlay Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/60 to-transparent" />
+
+      {/* Content Container */}
+      <div className="relative h-full flex flex-col items-center justify-center text-center px-6 pt-12">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="font-almarai text-brand-muted text-xs tracking-[0.2em] uppercase mb-4"
+        >
+          {isRTL ? 'اكتشف نكهات بغداد' : 'Discover the flavors of Baghdad'}
+        </motion.p>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="font-cairo font-black text-brand-text text-[clamp(2.5rem,6vw,4rem)] leading-tight"
+        >
+          {titleOverride || (isRTL ? 'قائمة كهرمانة' : 'Kahramana Menu')}
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="font-almarai text-brand-muted text-base max-w-md mx-auto mt-4 leading-relaxed"
+        >
+          {descriptionOverride || (isRTL 
+            ? 'أطباق عراقية أصيلة بحرص لتقديم تجربة لا تُنسى' 
+            : 'Authentic Iraqi dishes carefully prepared to provide an unforgettable experience')}
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.8 }}
+          className="mt-8 flex items-center gap-2 font-satoshi tabular-nums text-brand-gold text-sm"
+        >
+          <span>168 {isRTL ? 'صنف' : 'Items'}</span>
+          <span className="text-brand-muted">·</span>
+          <span>16 {isRTL ? 'تصنيف' : 'Categories'}</span>
+        </motion.div>
+
+        {/* Scroll Cue */}
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-8 start-1/2 -translate-x-1/2 text-brand-gold cursor-pointer"
+          onClick={() => {
+            document.getElementById('menu-content')?.scrollIntoView({ behavior: 'smooth' })
+          }}
+        >
+          <ChevronDown size={32} strokeWidth={1.5} />
+        </motion.div>
       </div>
     </section>
   )
