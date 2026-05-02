@@ -1,106 +1,149 @@
 'use client'
 
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { useTranslations } from 'next-intl'
+import { useRef } from 'react'
 
 export default function FounderSection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.founder')
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start end', 'end start']
+  })
+
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -50])
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, 50])
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.3
+      }
+    }
+  }
+
+  const itemFadeUp = {
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.21, 0.47, 0.32, 0.98] } }
+  }
 
   return (
-    <section className="relative py-24 sm:py-32 overflow-hidden bg-brand-black">
-      {/* Background Decorative Element */}
-      <div 
-        className="absolute top-1/2 -translate-y-1/2 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-gold/10 to-transparent" 
-        aria-hidden="true"
-      />
+    <section 
+      ref={containerRef}
+      className="relative py-32 md:py-48 overflow-hidden bg-[#0A0A0A]"
+    >
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#C8922A]/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[#C8922A]/5 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="max-w-7xl mx-auto px-6 sm:px-16 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
           
-          {/* Founder Image Container */}
+          {/* Left/Right: Founder Image Column */}
           <motion.div 
-            initial={{ opacity: 0, x: isRTL ? 50 : -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-            className="relative"
+            style={{ y: y1 }}
+            className="lg:col-span-5 relative"
           >
-            <div className="relative aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-[2rem] border border-brand-gold/20 group">
+            <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden rounded-[2.5rem] border border-white/10 group shadow-2xl">
               <Image
                 src="/assets/founder/founder.webp"
                 alt={t('title')}
                 fill
                 className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                priority
               />
               {/* Cinematic Lighting Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent opacity-60" />
-              <div className="absolute inset-0 ring-1 ring-inset ring-brand-gold/20 rounded-[2rem]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60" />
+              <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[2.5rem]" />
             </div>
 
-            {/* Signature Floating Effect */}
+            {/* Float Badge */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.8, x: isRTL ? -20 : 20 }}
+              whileInView={{ opacity: 1, scale: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="absolute -bottom-6 -end-6 bg-brand-surface/80 backdrop-blur-xl border border-brand-gold/20 p-6 rounded-2xl shadow-2xl"
+              transition={{ delay: 0.8, duration: 0.8 }}
+              className={`absolute -bottom-8 ${isRTL ? '-left-8' : '-right-8'} bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-3xl hidden md:block`}
             >
-              <Image
-                src="/assets/founder/founder-signature.webp"
-                alt="Signature"
-                width={140}
-                height={60}
-                className="object-contain brightness-125 contrast-125"
-              />
-              <p className={`text-[10px] uppercase tracking-widest text-brand-gold mt-2 text-center font-bold`}>
-                {t('role')}
+              <p className="text-[#C8922A] text-xs font-bold tracking-[0.3em] uppercase mb-1">
+                {isRTL ? t('signature') : t('signature')}
+              </p>
+              <div className="w-12 h-px bg-[#C8922A]/30 mb-3" />
+              <p className="text-white/40 text-[10px] tracking-widest uppercase">
+                {isRTL ? 'تراث عراقي' : 'Iraqi Heritage'}
               </p>
             </motion.div>
           </motion.div>
 
-          {/* Founder Text Content */}
-          <div className={`${isRTL ? 'lg:pe-12' : 'lg:ps-12'}`}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <p className="font-satoshi text-brand-gold text-xs font-bold tracking-[0.3em] uppercase mb-4">
+          {/* Right/Left: Content Column */}
+          <motion.div 
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            style={{ y: y2 }}
+            className={`lg:col-span-7 flex flex-col pt-8 ${isRTL ? 'lg:pr-12' : 'lg:pl-12'}`}
+          >
+            {/* Header Area */}
+            <motion.div variants={itemFadeUp} className="mb-12">
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-4 leading-tight tracking-tight">
                 {t('eyebrow')}
-              </p>
-              <h2 className={`text-4xl sm:text-5xl font-bold text-brand-text mb-8 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
-                {t('title')}
               </h2>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative p-8 bg-brand-surface/40 backdrop-blur-sm rounded-[2rem] border border-white/5 mb-8"
+            {/* Description Paragraphs */}
+            <div className="space-y-8 mb-16">
+              <motion.p 
+                variants={itemFadeUp}
+                className="text-xl md:text-2xl text-gray-300 leading-relaxed font-light text-justify"
+              >
+                {t('p1')}
+              </motion.p>
+              <motion.p 
+                variants={itemFadeUp}
+                className="text-lg md:text-xl text-gray-400 leading-relaxed text-justify"
+              >
+                {t('p2')}
+              </motion.p>
+              <motion.p 
+                variants={itemFadeUp}
+                className="text-lg md:text-xl text-gray-400 leading-relaxed text-justify"
+              >
+                {t('p3')}
+              </motion.p>
+            </div>
+
+            {/* Quote Block */}
+            <motion.div 
+              variants={itemFadeUp}
+              className="relative p-10 md:p-14 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md rounded-[3rem] border border-white/10 overflow-hidden group hover:border-[#C8922A]/30 transition-colors duration-500"
             >
-              <div className="absolute top-4 end-4 text-6xl text-brand-gold/20 font-serif leading-none">
+              <div className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-7xl text-[#C8922A]/10 font-serif pointer-events-none group-hover:text-[#C8922A]/20 transition-colors duration-500`}>
                 &ldquo;
               </div>
-              <p className={`text-xl sm:text-2xl text-brand-text/90 italic leading-relaxed ${isRTL ? 'font-almarai' : 'font-editorial italic'}`}>
+              <p className="text-2xl md:text-3xl text-white leading-snug font-medium italic mb-10 relative z-10">
                 {t('quote')}
               </p>
+              
+              <div className="flex flex-col border-t border-white/10 pt-8 relative z-10">
+                <span className="text-lg md:text-xl font-bold text-[#C8922A] mb-1">
+                  {t('signature')}
+                </span>
+                <span className="text-sm text-gray-500 uppercase tracking-widest">
+                  {t('role')}
+                </span>
+              </div>
             </motion.div>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1, delay: 0.4 }}
-              className={`text-lg text-brand-muted leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
-            >
-              {t('vision')}
-            </motion.p>
-          </div>
+          </motion.div>
 
         </div>
       </div>

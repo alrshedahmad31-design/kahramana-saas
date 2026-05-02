@@ -11,11 +11,11 @@ interface EngineeringOfHeritageSectionProps {
 }
 
 const HOTSPOTS = [
-  { id: 'face', top: '35%', left: '50%' },
-  { id: 'vessel', top: '65%', left: '50%' },
-  { id: 'hands', top: '75%', left: '50%' },
-  { id: 'ornament', top: '50%', left: '20%' },
-  { id: 'frame', top: '10%', left: '50%' },
+  { id: 'face', top: '42%', left: '71.5%' },
+  { id: 'vessel', top: '58%', left: '71.5%' },
+  { id: 'hands', top: '75%', left: '73%' },
+  { id: 'ornament', top: '45%', left: '65%' },
+  { id: 'frame', top: '32%', left: '73%' },
 ];
 
 export function EngineeringOfHeritageSection({ isRTL }: EngineeringOfHeritageSectionProps) {
@@ -28,86 +28,94 @@ export function EngineeringOfHeritageSection({ isRTL }: EngineeringOfHeritageSec
     offset: ['start end', 'end start'],
   });
 
-  const opacityFade = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-  const scaleUp = useTransform(scrollYProgress, [0, 0.2], [0.95, 1]);
+  const opacityFade = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
+  const scaleUp = useTransform(scrollYProgress, [0, 0.15], [0.98, 1]);
 
   return (
     <section 
       ref={containerRef}
       className="relative w-full py-24 md:py-32 bg-[#0A0A0A] text-white overflow-hidden"
     >
-      {/* Background Subtle Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A] via-[#1a1510] to-[#0A0A0A] opacity-50 pointer-events-none" />
+      {/* Background Deep Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A] via-[#15120e] to-[#0A0A0A] opacity-60 pointer-events-none" />
 
       <motion.div 
         style={{ opacity: opacityFade, scale: scaleUp }}
-        className="container mx-auto px-4 relative z-10"
+        className="w-full relative z-10"
       >
-        {/* Intro */}
-        <div className="max-w-3xl mx-auto text-center mb-20">
-          <span className="block text-[#C8922A] tracking-widest uppercase text-sm mb-4 font-medium">
+        {/* Header Section */}
+        <div className="max-w-4xl mx-auto text-center px-4 mb-16 md:mb-24">
+          <motion.span 
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="block text-[#C8922A] tracking-[0.4em] uppercase text-xs md:text-sm mb-6 font-bold"
+          >
             {t('eyebrow')}
-          </span>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+          </motion.span>
+          <h2 className="text-5xl md:text-7xl font-bold mb-8 text-white tracking-tight">
             {t('title')}
           </h2>
-          <p className="text-xl text-gray-300 mb-6 leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed font-light">
             {t('intro')}
           </p>
-          <p className="text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto">
+          <div className="w-32 h-px bg-[#C8922A]/40 mx-auto mb-8" />
+          <p className="text-lg text-gray-400 leading-relaxed max-w-3xl mx-auto">
             {t('paragraph')}
           </p>
         </div>
 
-        {/* Blueprint Interactive */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-32">
-          {/* Left: Interactive Image */}
-          <div className="relative w-full max-w-md mx-auto aspect-[3/4] group">
-            {/* The Blueprint Image */}
+        {/* Blueprint - Maximum Scale Interaction */}
+        <div className="flex flex-col items-center mb-40 px-4 md:px-8">
+          <div className="relative w-full max-w-[1600px] aspect-[16/9] md:aspect-[21/9] group mb-12 bg-black/40 rounded-[2.5rem] border border-white/10 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)]">
             <Image
               src="/assets/brand/kahramana-baghdad-brand-heritage-emblem.webp"
               alt={t('altTexts.blueprint')}
               fill
-              className="object-contain drop-shadow-[0_0_30px_rgba(200,146,42,0.15)]"
+              className="object-contain p-4 md:p-12 drop-shadow-[0_0_60px_rgba(200,146,42,0.15)] transition-all duration-1000 group-hover:scale-[1.03]"
               priority
             />
             
-            {/* Hotspots */}
-            {HOTSPOTS.map((spot) => (
-              <button
-                key={spot.id}
-                onClick={() => setActiveHotspot(spot.id)}
-                className="absolute flex items-center justify-center w-10 h-10 -translate-x-1/2 -translate-y-1/2 group-hover:opacity-100 transition-opacity"
-                style={{ top: spot.top, left: spot.left }}
-                aria-label={t(`hotspots.${spot.id}.label`)}
-              >
-                <div className={`relative flex items-center justify-center w-6 h-6 rounded-full border-2 border-[#C8922A] bg-[#0A0A0A]/80 backdrop-blur-sm transition-all duration-300 ${activeHotspot === spot.id ? 'scale-125 bg-[#C8922A] text-[#0A0A0A]' : 'hover:scale-110 hover:bg-[#C8922A] hover:text-[#0A0A0A] text-[#C8922A]'}`}>
-                  {activeHotspot === spot.id ? (
-                    <motion.div layoutId="activePulse" className="absolute inset-0 rounded-full border border-[#C8922A] animate-ping opacity-50" />
-                  ) : null}
-                  <span className="sr-only">{t(`hotspots.${spot.id}.label`)}</span>
-                  <div className={`w-2 h-2 rounded-full ${activeHotspot === spot.id ? 'bg-[#0A0A0A]' : 'bg-[#C8922A]'}`} />
-                </div>
-              </button>
-            ))}
+            {/* Interactive Points Layer */}
+            <div className="absolute inset-0 z-20">
+              {HOTSPOTS.map((spot) => (
+                <button
+                  key={spot.id}
+                  onClick={() => setActiveHotspot(spot.id)}
+                  onMouseEnter={() => setActiveHotspot(spot.id)}
+                  className="absolute flex items-center justify-center w-10 h-10 md:w-14 md:h-14 -translate-x-1/2 -translate-y-1/2 transition-all duration-500"
+                  style={{ top: spot.top, left: spot.left }}
+                  aria-label={t(`hotspots.${spot.id}.label`)}
+                >
+                  <div className={`relative flex items-center justify-center w-full h-full rounded-full transition-all duration-500 ${activeHotspot === spot.id ? 'bg-[#C8922A]/20 scale-125' : 'bg-transparent hover:bg-[#C8922A]/10'}`}>
+                    <div className={`w-3.5 h-3.5 md:w-5 md:h-5 rounded-full border-2 border-[#C8922A] transition-all duration-300 ${activeHotspot === spot.id ? 'bg-[#C8922A] scale-110 shadow-[0_0_20px_#C8922A]' : 'bg-[#0A0A0A] shadow-xl'}`} />
+                    {activeHotspot === spot.id && (
+                      <motion.div layoutId="blueprintPulse" className="absolute inset-0 rounded-full border border-[#C8922A] animate-ping opacity-40" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Visual Scan Effect */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-[#C8922A]/5 to-transparent w-full h-full -translate-x-full animate-[scan_8s_linear_infinite]" />
           </div>
 
-          {/* Right: Active Info */}
-          <div className="flex flex-col justify-center min-h-[250px]">
+          {/* Dynamic Information Display */}
+          <div className="w-full max-w-5xl min-h-[220px] flex items-center justify-center relative px-4">
             <AnimatePresence mode="wait">
               {activeHotspot ? (
                 <motion.div
                   key={activeHotspot}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4 }}
-                  className="bg-white/5 border border-white/10 p-8 rounded-2xl backdrop-blur-md"
+                  initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -30 }}
+                  transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                  className="bg-gradient-to-br from-white/10 to-white/[0.02] border border-white/20 p-10 md:p-14 rounded-[3rem] backdrop-blur-2xl text-center w-full shadow-2xl"
                 >
-                  <h3 className="text-2xl font-bold text-[#C8922A] mb-4">
+                  <h3 className="text-3xl md:text-4xl font-bold text-[#C8922A] mb-6 tracking-tight">
                     {t(`hotspots.${activeHotspot}.label`)}
                   </h3>
-                  <p className="text-lg text-gray-300 leading-relaxed">
+                  <p className="text-xl md:text-2xl text-gray-200 leading-relaxed font-light max-w-3xl mx-auto">
                     {t(`hotspots.${activeHotspot}.description`)}
                   </p>
                 </motion.div>
@@ -116,79 +124,94 @@ export function EngineeringOfHeritageSection({ isRTL }: EngineeringOfHeritageSec
                   key="empty"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex flex-col items-center justify-center text-center p-8 border border-dashed border-white/20 rounded-2xl h-full"
+                  className="text-center group"
                 >
-                  <Info className="w-8 h-8 text-[#C8922A]/50 mb-4" />
-                  <p className="text-gray-400">
-                    {isRTL ? 'انقر على النقاط في المخطط الهندسي لاكتشاف التفاصيل' : 'Click on the points in the blueprint to discover details'}
-                  </p>
+                  <div className="inline-flex items-center gap-4 px-10 py-5 bg-white/5 border border-white/10 rounded-full text-gray-400 text-base md:text-lg hover:bg-white/10 transition-colors cursor-default">
+                    <Info className="w-6 h-6 text-[#C8922A] animate-bounce" />
+                    <span>{isRTL ? 'انقر على النقاط الذهبية لاستكشاف أسرار التصميم' : 'Click on the golden points to explore design secrets'}</span>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
 
-        {/* Concept to Table (Blueprint vs Reality) */}
-        <div className="mb-32">
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <h3 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+        {/* Concept to Reality - Comparison Section */}
+        <div className="mb-40 px-4 md:px-8">
+          <div className="max-w-4xl mx-auto text-center mb-20 px-4">
+            <h3 className="text-4xl md:text-6xl font-bold mb-10 text-white tracking-tight">
               {t('conceptToTable.title')}
             </h3>
-            <p className="text-lg text-gray-400 leading-relaxed mb-8">
+            <p className="text-xl md:text-2xl text-gray-400 leading-relaxed mb-12 font-light">
               {t('conceptToTable.paragraph')}
             </p>
-            <p className="text-xl text-[#C8922A] font-medium italic">
-              &quot;{t('conceptToTable.shortStatement')}&quot;
-            </p>
+            <div className="inline-block px-10 py-6 bg-[#C8922A]/10 border-s-4 border-[#C8922A] rounded-2xl">
+              <p className="text-2xl md:text-3xl text-[#C8922A] font-medium italic">
+                &quot;{t('conceptToTable.shortStatement')}&quot;
+              </p>
+            </div>
           </div>
           
-          <div className="relative w-full aspect-video rounded-3xl overflow-hidden group border border-white/10">
-            {/* Reality Image (Base) */}
+          <div className="relative w-full max-w-[1600px] mx-auto aspect-[16/8] md:aspect-[21/9] rounded-[3.5rem] overflow-hidden group border border-white/10 shadow-3xl">
             <Image
               src="/assets/gallery/kahramana-mixed-grill.webp"
               alt={t('altTexts.reality')}
               fill
-              className="object-cover transition-transform duration-1000 group-hover:scale-105"
+              className="object-cover transition-transform duration-[3000ms] group-hover:scale-110"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent z-10 opacity-90" />
             
-            {/* Overlay Gradient for readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/80 via-transparent to-transparent z-10" />
-            
-            {/* Blueprint Overlay (Fades out on hover) */}
-            <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-sm transition-all duration-700 group-hover:opacity-0 group-hover:backdrop-blur-none flex flex-col items-center justify-center z-20">
-               <div className="relative w-64 h-64 md:w-96 md:h-96 opacity-60">
+            {/* The Blueprint Overlay Reveal */}
+            <div className="absolute inset-0 bg-[#0A0A0A]/95 backdrop-blur-xl transition-all duration-1000 group-hover:opacity-0 group-hover:backdrop-blur-none flex flex-col items-center justify-center z-20">
+               <div className="relative w-4/5 h-4/5 max-w-4xl opacity-50 group-hover:scale-110 transition-transform duration-1000">
                  <Image
                     src="/assets/brand/kahramana-baghdad-brand-heritage-emblem.webp"
-                    alt="Emblem"
+                    alt="Immersion"
                     fill
                     className="object-contain"
                  />
                </div>
-               <span className="absolute bottom-8 text-[#C8922A] tracking-widest text-sm md:text-base uppercase">
-                 {isRTL ? 'مرر لرؤية الواقع' : 'Hover to reveal reality'}
-               </span>
+               <div className="absolute bottom-16 flex flex-col items-center gap-6">
+                  <div className="w-px h-16 bg-gradient-to-b from-transparent to-[#C8922A] animate-pulse" />
+                  <span className="text-[#C8922A] tracking-[0.5em] text-sm md:text-base uppercase font-bold">
+                    {isRTL ? 'مرر الماوس لتجسيد المخطط في الواقع' : 'Hover to materialize reality'}
+                  </span>
+               </div>
             </div>
           </div>
         </div>
 
-        {/* Closing Lamassu / Seal */}
-        <div className="text-center max-w-2xl mx-auto flex flex-col items-center">
-           <div className="w-16 h-16 border border-[#C8922A]/50 rounded-full flex items-center justify-center mb-6 relative overflow-hidden">
-             <div className="w-8 h-8 bg-[#C8922A] rotate-45 opacity-20" />
+        {/* Heritage Footer Seal */}
+        <div className="text-center max-w-3xl mx-auto border-t border-white/5 pt-32 px-4">
+           <div className="mb-12 opacity-40 hover:opacity-100 transition-all duration-1000">
+              <Image 
+                src="/assets/brand/kahramana-baghdad-brand-heritage-emblem.webp" 
+                alt="Emblem Seal" 
+                width={120} 
+                height={120} 
+                className="mx-auto drop-shadow-[0_0_30px_rgba(200,146,42,0.2)]"
+              />
            </div>
-           <h4 className="text-2xl font-bold text-white mb-2">{t('closing.title')}</h4>
-           <p className="text-lg text-[#C8922A] mb-8">{t('closing.line')}</p>
+           <h4 className="text-4xl font-bold text-white mb-6 tracking-tight">{t('closing.title')}</h4>
+           <p className="text-2xl text-[#C8922A] mb-16 font-light">{t('closing.line')}</p>
            
-           <div className="mt-8 border-t border-white/10 pt-8">
-             <span className="block text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold">
+           <div className="bg-gradient-to-b from-white/5 to-transparent p-12 rounded-[3rem] border border-white/5 shadow-2xl">
+             <span className="block text-xs text-[#C8922A] tracking-[0.4em] uppercase mb-6 font-bold">
                {t('closing.lamassuLabel')}
              </span>
-             <p className="text-sm text-gray-400">
+             <p className="text-lg text-gray-500 max-w-md mx-auto leading-relaxed font-light">
                {t('closing.lamassuDescription')}
              </p>
            </div>
         </div>
       </motion.div>
+
+      <style jsx>{`
+        @keyframes scan {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </section>
   );
 }

@@ -818,15 +818,19 @@
   "story": {
     "hero": {
       "eyebrow": "Our Story",
-      "title": "From Baghdad to Bahrain",
+      "title": "From Mesopotamia to the Pearl of the Gulf",
       "desc": "A journey of flavors, heritage, and the passion to bring authentic Iraqi cuisine to the world."
     },
     "founder": {
-      "eyebrow": "The Founder",
-      "title": "A Vision Born in Baghdad",
-      "quote": "Every dish we serve carries the soul of Baghdad — its history, its warmth, and its love for good food.",
-      "role": "Founder & Executive Chef",
-      "vision": "We didn't just open a restaurant. We built a bridge between two cultures, connected by the universal language of food."
+      "eyebrow": "Founder's Vision",
+      "title": "Eng. Asaad Al-Jubouri",
+      "name_ar": "المهندس أسعد الجبوري",
+      "p1": "Engineer Asaad Al-Jubouri carries a deep passion for detail — the same passion that accompanied him from the world of engineering to the world of taste. For him, food was never merely a business — it was a sincere act of transporting the culture and generosity of Baghdad to Bahrain.",
+      "p2": "With the mindset of an engineer who believes that quality is built, not encountered by chance, he designed 'Kahramana Baghdad' to be more than just a restaurant: a space where Iraqi authenticity meets modern taste and refined Bahraini hospitality.",
+      "p3": "Today, Al-Jubouri stands behind every detail presented to the guest — from the selection of ingredients to the style of presentation — ensuring that every visit is a true reflection of his passion, vision, and respect for his guests' taste.",
+      "quote": "I didn't just build a restaurant; I transported the flavor of Baghdad to Bahrain.",
+      "signature": "Eng. Asaad Al-Jubouri",
+      "role": "Founder — Kahramana Baghdad"
     },
     "narrative": {
       "eyebrow": "The Journey",
