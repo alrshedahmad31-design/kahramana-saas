@@ -105,6 +105,7 @@ export type KDSOrder = Omit<OrderRow, 'status'> & {
     quantity: number;
     selected_size: string | null;
     selected_variant: string | null;
+    menu_item_slug: string | null;
   }>;
 };
 

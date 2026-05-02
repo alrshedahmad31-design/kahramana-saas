@@ -1,7 +1,7 @@
 {
   "project": "kahramana-baghdad",
-  "last_updated": "2026-05-01 (session 40 — Phase 5 inventory reports complete: 11 reports + Excel export, 30 files, build clean)",
-  "current_phase": 7,
+  "last_updated": "2026-05-02 (session 41 — Phase 6 Dashboard Integration complete: 14 files, 845 pages, build clean)",
+  "current_phase": 8,
   "next_phase": 8,
   "overall_status": "production_seo_activated",
   "deployment": {
@@ -386,6 +386,50 @@
       "deliverables_pending": [],
       "blockers": [],
       "notes": "Sprint 7A complete 2026-04-28. Full analytics dashboard integrated."
+    },
+    "6b": {
+      "name": "Dashboard Integration — Inventory Widgets",
+      "status": "done",
+      "prerequisite": "phase_5_inventory_reports_done",
+      "started_at": "2026-05-02",
+      "completed_at": "2026-05-02",
+      "deliverables_verified": true,
+      "deliverables_completed": [
+        "src/components/inventory/LowStockWidget.tsx — enhanced with pulsing dot + 'عرض الكل' link",
+        "src/components/inventory/ExpiryCalendarWidget.tsx — NEW: expired/today/week counts + top 3 urgent",
+        "src/components/inventory/WasteEscalationWidget.tsx — NEW: pending waste by escalation level",
+        "src/components/inventory/StockValueWidget.tsx — NEW: total stock value + 14-day recharts trend",
+        "src/components/inventory/InventoryAlertsListener.tsx — NEW: realtime Supabase alerts toast",
+        "src/components/inventory/BranchContext.tsx — NEW: client context provider for branch selection",
+        "src/components/inventory/InventoryWidgetsSection.tsx — NEW: server component fetching all widget data",
+        "src/components/inventory/InventoryWidgetsSkeleton.tsx — NEW: loading skeleton",
+        "src/components/inventory/InventoryBreadcrumb.tsx — NEW: breadcrumb nav",
+        "src/app/[locale]/dashboard/inventory/layout.tsx — NEW: BranchProvider + InventoryAlertsListener",
+        "src/app/[locale]/dashboard/page.tsx — UPDATED: inventory section with Suspense",
+        "src/app/[locale]/dashboard/layout.tsx — UPDATED: InventoryAlertsListener for inventory roles",
+        "src/app/[locale]/dashboard/reports/page.tsx — UPDATED: inventory summary section",
+        "src/app/[locale]/dashboard/kds/page.tsx — UPDATED: stock dots via slugStockMap",
+        "src/components/kds/KDSBoard.tsx — UPDATED: slugStockMap prop thread",
+        "src/components/kds/KDSColumn.tsx — UPDATED: slugStockMap prop thread",
+        "src/components/kds/KDSOrderCard.tsx — UPDATED: StockDot component per item",
+        "src/app/[locale]/checkout/actions.ts — UPDATED: non-blocking rpc_check_stock_for_cart",
+        "src/components/checkout/CheckoutForm.tsx — UPDATED: stock warning banner",
+        "src/lib/supabase/custom-types.ts — UPDATED: menu_item_slug added to KDSOrder.order_items"
+      ],
+      "deliverables_pending": [],
+      "blockers": [],
+      "phase_gate_results": {
+        "tsc_noEmit": "PASS — 0 errors",
+        "rtl_violations": "PASS",
+        "forbidden_fonts": "PASS",
+        "forbidden_colors": "PASS",
+        "currency_display": "PASS",
+        "hardcoded_phones": "PASS",
+        "raw_hex_colors": "PASS",
+        "i18n_completeness": "WARN — manual check only",
+        "npm_run_build": "PASS — 845 pages, 0 errors"
+      },
+      "notes": "Phase 6b complete 2026-05-02 (session 41). Dashboard integration: 4 new inventory widgets, realtime alerts, Suspense loading, non-blocking checkout stock check, KDS stock dots, reports inventory summary. All roles respected (inventory section hidden from kitchen/cashier/driver/marketing on home)."
     },
     "7b": {
       "name": "Deliverect & POS Integration (original Phase 7)",

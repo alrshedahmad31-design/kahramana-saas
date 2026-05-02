@@ -4,12 +4,14 @@ import type { KDSOrder } from '@/lib/supabase/custom-types'
 import KDSOrderCard from './KDSOrderCard'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'
+type StockStatus  = 'ok' | 'low' | 'unmapped'
 
 interface Props {
-  status:    ActiveStatus
-  orders:    KDSOrder[]
-  isRTL:     boolean
-  onAdvance: (orderId: string, status: ActiveStatus) => Promise<void>
+  status:       ActiveStatus
+  orders:       KDSOrder[]
+  isRTL:        boolean
+  onAdvance:    (orderId: string, status: ActiveStatus) => Promise<void>
+  slugStockMap?: Record<string, StockStatus>
 }
 
 const CONFIG: Record<ActiveStatus, {
@@ -43,7 +45,7 @@ const CONFIG: Record<ActiveStatus, {
   },
 }
 
-export default function KDSColumn({ status, orders, isRTL, onAdvance }: Props) {
+export default function KDSColumn({ status, orders, isRTL, onAdvance, slugStockMap = {} }: Props) {
   const cfg  = CONFIG[status]
   const font = isRTL ? 'font-almarai' : 'font-satoshi'
 
@@ -85,6 +87,7 @@ export default function KDSColumn({ status, orders, isRTL, onAdvance }: Props) {
               order={order}
               isRTL={isRTL}
               onAdvance={onAdvance}
+              slugStockMap={slugStockMap}
             />
           ))
         )}

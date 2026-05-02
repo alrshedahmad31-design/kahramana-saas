@@ -216,7 +216,7 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
               {isAr ? 'عرض الكل' : 'View All'}
             </Link>
           </div>
-          <LowStockWidget items={lowStockItems.slice(0, 5)} locale={locale} />
+          <LowStockWidget items={lowStockItems.slice(0, 5)} locale={locale} prefix={prefix} />
         </div>
       )}
 

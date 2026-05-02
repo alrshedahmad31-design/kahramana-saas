@@ -161,8 +161,9 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const [phone,       setPhone]       = useState('')
   const [notes,       setNotes]       = useState('')
   const [errors,      setErrors]      = useState<Partial<Record<keyof CheckoutValues | 'address', string>>>({})
-  const [loading,     setLoading]     = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [loading,       setLoading]       = useState(false)
+  const [submitError,   setSubmitError]   = useState<string | null>(null)
+  const [stockWarnings, setStockWarnings] = useState<string[]>([])
 
   // ── Order type state (delivery / pickup) ─────────────────────────────────
   const [orderType, setOrderType] = useState<'delivery' | 'pickup' | null>(null)
@@ -320,6 +321,10 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
     if (result.error || !result.orderId) {
       throw new Error(result.error ?? 'Order creation failed')
+    }
+
+    if (result.stock_warnings && result.stock_warnings.length > 0) {
+      setStockWarnings(result.stock_warnings.map(w => w.name_ar))
     }
 
     return { orderId: result.orderId, values, deliveryAddress }
@@ -917,6 +922,12 @@ export default function CheckoutForm({ customerProfile }: Props) {
         icon={CheckCircle}
       />
       <div className="space-y-4">
+        {stockWarnings.length > 0 && (
+          <div className="rounded-xl border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm text-brand-gold font-almarai">
+            ⚠️ {isAr ? 'بعض الأصناف قد تكون غير متوفرة — سنتواصل معك للتأكيد' : 'Some items may be unavailable — we will contact you to confirm'}
+          </div>
+        )}
+
         {submitError && (
           <div className="rounded-xl border border-brand-error/50 bg-brand-error/10 px-4 py-3 text-sm text-brand-error font-almarai text-center">
             ⚠ {submitError}

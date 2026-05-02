@@ -13,11 +13,14 @@ type ActiveStatus = 'accepted' | 'preparing' | 'ready'
 
 type StationFilter = 'all' | 'grill' | 'fry' | 'salads' | 'desserts' | 'drinks'
 
+type StockStatus = 'ok' | 'low' | 'unmapped'
+
 interface Props {
   initialOrders: KDSOrder[]
   locale:        string
   branchId:      string | null
   userRole:      StaffRole | null
+  slugStockMap?: Record<string, StockStatus>
 }
 
 function formatClock(): string {
@@ -38,7 +41,7 @@ const STATIONS: { id: StationFilter; labelEn: string; labelAr: string; icon: str
   { id: 'drinks',   labelEn: 'Drinks',   labelAr: 'المشروبات', icon: '🥤' },
 ]
 
-export default function KDSBoard({ initialOrders, locale, branchId, userRole }: Props) {
+export default function KDSBoard({ initialOrders, locale, branchId, userRole, slugStockMap = {} }: Props) {
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
   const canSwitchBranches = userRole === 'owner' || userRole === 'general_manager'
@@ -247,9 +250,9 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole }: 
       {/* On mobile: horizontal scroll with min-width so each column stays readable */}
       <div className="flex-1 min-h-0 overflow-x-auto">
         <div className={`h-full grid grid-cols-3 min-w-[540px] ${isAr ? 'divide-x-reverse' : ''} divide-x divide-brand-border`}>
-          <KDSColumn status="accepted"  orders={accepted}  isRTL={isAr} onAdvance={handleAdvance} />
-          <KDSColumn status="preparing" orders={preparing} isRTL={isAr} onAdvance={handleAdvance} />
-          <KDSColumn status="ready"     orders={ready}     isRTL={isAr} onAdvance={handleAdvance} />
+          <KDSColumn status="accepted"  orders={accepted}  isRTL={isAr} onAdvance={handleAdvance} slugStockMap={slugStockMap} />
+          <KDSColumn status="preparing" orders={preparing} isRTL={isAr} onAdvance={handleAdvance} slugStockMap={slugStockMap} />
+          <KDSColumn status="ready"     orders={ready}     isRTL={isAr} onAdvance={handleAdvance} slugStockMap={slugStockMap} />
         </div>
       </div>
 

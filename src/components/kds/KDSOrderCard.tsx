@@ -5,11 +5,29 @@ import type { KDSOrder } from '@/lib/supabase/custom-types'
 import { getAgeStatus, formatElapsed } from '@/lib/kds/priorities'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'
+type StockStatus  = 'ok' | 'low' | 'unmapped'
 
 interface Props {
-  order:     KDSOrder
-  isRTL:     boolean
-  onAdvance: (orderId: string, status: ActiveStatus) => Promise<void>
+  order:        KDSOrder
+  isRTL:        boolean
+  onAdvance:    (orderId: string, status: ActiveStatus) => Promise<void>
+  slugStockMap?: Record<string, StockStatus>
+}
+
+function StockDot({ status }: { status: StockStatus | undefined }) {
+  if (!status) return null
+  const styles = {
+    ok:       'bg-green-500',
+    low:      'bg-brand-gold',
+    unmapped: 'bg-brand-muted/40',
+  }
+  const titles = { ok: 'مخزون كافٍ', low: 'مخزون منخفض', unmapped: 'لا توجد وصفة' }
+  return (
+    <span
+      className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ms-1.5 ${styles[status]}`}
+      title={titles[status]}
+    />
+  )
 }
 
 const AGE_BORDER: Record<ReturnType<typeof getAgeStatus>, string> = {
@@ -36,7 +54,7 @@ const BTN: Record<ActiveStatus, { en: string; ar: string; cls: string }> = {
   ready:     { en: 'Complete',   ar: 'تم',             cls: 'bg-brand-surface-2 text-brand-muted border border-brand-border' },
 }
 
-export default function KDSOrderCard({ order, isRTL, onAdvance }: Props) {
+export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {} }: Props) {
   const [elapsed,   setElapsed]   = useState(() => formatElapsed(order.created_at))
   const [ageStatus, setAgeStatus] = useState(() => getAgeStatus(order.created_at))
   const [bumping,   setBumping]   = useState(false)
@@ -126,8 +144,9 @@ export default function KDSOrderCard({ order, isRTL, onAdvance }: Props) {
 
             {/* Name + modifiers */}
             <div className="flex-1 min-w-0 pt-1">
-              <div className="font-cairo font-black text-2xl text-brand-text leading-tight">
+              <div className="font-cairo font-black text-2xl text-brand-text leading-tight flex items-center gap-1.5">
                 {item.name_ar}
+                <StockDot status={item.menu_item_slug ? slugStockMap[item.menu_item_slug] : undefined} />
               </div>
               <div className={`font-satoshi text-lg text-brand-muted mt-0.5 leading-tight`}>
                 {item.name_en}

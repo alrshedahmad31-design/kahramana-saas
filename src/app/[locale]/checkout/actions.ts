@@ -89,10 +89,17 @@ interface CheckoutPayload {
   coupon?:        CouponPayload
 }
 
+interface StockWarning {
+  menu_item_slug:     string
+  name_ar:            string
+  shortage_ingredient: string | null
+}
+
 interface CheckoutResult {
-  orderId:    string
-  finalTotal: number
-  error?:     string
+  orderId:       string
+  finalTotal:    number
+  error?:        string
+  stock_warnings?: StockWarning[]
 }
 
 function isBranchId(value: string): value is BranchId {
@@ -216,6 +223,41 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
   try {
     const { order: orderData, items, pointsToRedeem, coupon } = parsed.data
 
+    const supabase = await createServiceClient()
+
+    // ── Non-blocking stock check ──────────────────────────────────────────────
+    // Never blocks order creation — recipes may not be mapped yet for all items.
+    const stockWarnings: StockWarning[] = []
+    try {
+      const { data: stockRows } = await supabase.rpc('rpc_check_stock_for_cart', {
+        p_branch_id: orderData.branch_id,
+        p_items: items.map(i => ({ slug: i.menu_item_slug, quantity: i.quantity })),
+      })
+      for (const row of (stockRows ?? []) as unknown as Array<{ menu_item_slug: string; name_ar: string; available: boolean; shortage_ingredient: string | null }>) {
+        if (!row.available) {
+          if (!row.shortage_ingredient) {
+            // Recipe not mapped — log info alert, no user warning
+            supabase
+              .from('inventory_alerts')
+              .insert({
+                branch_id:     orderData.branch_id,
+                ingredient_id: null,
+                alert_type:    'unmapped_item',
+                severity:      'info',
+                message:       `لا توجد وصفة للصنف: ${row.name_ar}`,
+                metadata:      { slug: row.menu_item_slug },
+              })
+              .then(() => {})
+          } else {
+            stockWarnings.push({ menu_item_slug: row.menu_item_slug, name_ar: row.name_ar, shortage_ingredient: row.shortage_ingredient })
+          }
+        }
+      }
+    } catch {
+      // Stock check failure is non-fatal — continue to order creation
+      console.warn('[checkout] stock check RPC failed — proceeding without stock validation')
+    }
+
     // Any flow involving loyalty redemption or a coupon requires a verified
     // customer session — we cannot trust a client-supplied couponId / points
     // amount without knowing who is redeeming.
@@ -225,8 +267,6 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
         return { orderId: '', finalTotal: 0, error: 'Login required to use points or coupons' }
       }
     }
-
-    const supabase = await createServiceClient()
 
   const branchResult = await ensureCheckoutBranch(supabase, orderData.branch_id)
   if ('error' in branchResult) {
@@ -311,7 +351,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       await recordCouponUsage(supabase, resolvedCouponId, customer.id, order.id, serverCouponDiscount)
     }
 
-    return { orderId: order.id, finalTotal }
+    return { orderId: order.id, finalTotal, stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined }
   }
 
   // ── Standard path (coupon only, no points) ────────────────────────────────
@@ -344,7 +384,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     await recordCouponUsage(supabase, resolvedCouponId, customer?.id ?? null, order.id, serverCouponDiscount)
   }
 
-  return { orderId: order.id, finalTotal }
+  return { orderId: order.id, finalTotal, stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined }
 } catch (err) {
   return {
     orderId: '',
