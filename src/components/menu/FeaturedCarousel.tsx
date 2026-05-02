@@ -1,11 +1,11 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { Flame, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
 import type { NormalizedMenuItem } from '@/lib/menu'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 
 interface FeaturedCarouselProps {
   items: NormalizedMenuItem[]
@@ -18,7 +18,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
 
-  const checkScroll = () => {
+  const checkScroll = useCallback(() => {
     if (!scrollRef.current) return
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
     const absScrollLeft = Math.abs(scrollLeft)
@@ -30,7 +30,8 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
       setCanScrollLeft(absScrollLeft > 10)
       setCanScrollRight(absScrollLeft < scrollWidth - clientWidth - 10)
     }
-  }
+  }, [isRTL])
+
 
   useEffect(() => {
     checkScroll()
@@ -41,7 +42,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
       el?.removeEventListener('scroll', checkScroll)
       window.removeEventListener('resize', checkScroll)
     }
-  }, [items])
+  }, [items, isRTL, checkScroll])
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return

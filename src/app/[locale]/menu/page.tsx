@@ -30,7 +30,7 @@ export default async function MenuPage() {
   const nonce = (await headers()).get('x-nonce') ?? undefined
   
   const [categories, featuredSlugs] = await Promise.all([
-    getMenuData(locale),
+    getMenuData(),
     getFeaturedSlugs(),
   ])
 

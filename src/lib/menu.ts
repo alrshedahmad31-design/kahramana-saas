@@ -107,7 +107,7 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-const EXCLUDED_CATEGORY_SLUGS: string[] = []
+// const EXCLUDED_CATEGORY_SLUGS: string[] = []
 
 function getRawCategories(): MenuCategory[] {
   return menuData as MenuCategory[]
@@ -295,7 +295,7 @@ export async function getFeaturedSlugs(): Promise<string[]> {
   return featuredSlugsData
 }
 
-export async function getMenuData(locale: string = 'ar'): Promise<CategoryWithItems[]> {
+export async function getMenuData(): Promise<CategoryWithItems[]> {
   const categories = getRawCategories()
   return categories.map((cat) => ({
     id: slugify(cat.category.en),

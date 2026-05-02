@@ -3,7 +3,6 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import { useTranslations } from 'next-intl'
 
 interface MenuHeroProps {
   locale: string
@@ -12,8 +11,8 @@ interface MenuHeroProps {
 }
 
 export default function MenuHero({ locale, titleOverride, descriptionOverride }: MenuHeroProps) {
-  const t = useTranslations('menu')
   const isRTL = locale === 'ar'
+
 
   return (
     <section className="relative h-[55vh] md:h-[60vh] lg:h-[65vh] w-full overflow-hidden bg-brand-black">

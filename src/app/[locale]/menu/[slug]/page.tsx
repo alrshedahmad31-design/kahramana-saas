@@ -5,7 +5,6 @@ import { headers } from 'next/headers'
 import {
   getCategorySlugs,
   getAllMenuItems,
-  getItemsByCategory,
   getItemSlugs,
   getMenuCategories,
   getMenuCategoryBySlug,
@@ -96,7 +95,7 @@ export default async function MenuCategoryPage({ params }: Props) {
   const isRTL = locale === 'ar'
   const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations({ locale, namespace: 'menu' })
-  const categoryItems = getItemsByCategory(slug)
+
 
   const breadcrumb = buildCategoryBreadcrumb(
     locale,

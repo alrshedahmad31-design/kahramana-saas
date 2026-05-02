@@ -3,6 +3,7 @@
 // Phase 7+: replace with Benefit Pay API dynamic payment link
 
 import QRCode from 'qrcode'
+import { colors } from '@/lib/design-tokens'
 
 export function buildQRReference(orderId: string, amountBHD: number): string {
   const short = orderId.slice(-8).toUpperCase()
@@ -19,8 +20,9 @@ export async function generateStaticQR(
     margin:               2,
     errorCorrectionLevel: 'M',
     color: {
-      dark:  '#0A0A0A',
-      light: '#F5F0E8',
+      dark:  colors.qrInk,
+      light: colors.qrPaper,
     },
   })
 }
+

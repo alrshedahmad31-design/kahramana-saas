@@ -23,11 +23,11 @@ export default function MenuExperience({
   isRTL,
 }: MenuExperienceProps) {
   const t = useTranslations('menu')
-  const tCommon = useTranslations('common')
 
   const [activeCategory, setActiveCategory] = useState(initialCategory)
   const [search, setSearch] = useState('')
   const [availableOnly, setAvailableOnly] = useState(false)
+
 
   const filteredItems = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
@@ -84,9 +84,6 @@ export default function MenuExperience({
                 <CategoryCard
                   key={category.slug}
                   category={category}
-                  itemCountLabel={t('categoryItemCount', {
-                    count: category.itemCount,
-                  })}
                   isRTL={isRTL}
                 />
               ))}

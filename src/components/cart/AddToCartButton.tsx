@@ -48,12 +48,12 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
     setQuantity: () => {}
   }
 
-  if (!item) return null
-
   const variantAr = useMemo(() => {
-    if (!item.variants || !selectedVariant) return undefined
+    if (!item?.variants || !selectedVariant) return undefined
     return item.variants.find((v: MenuVariantOption) => v.label.en === selectedVariant)?.label.ar ?? selectedVariant
-  }, [item.variants, selectedVariant])
+  }, [item?.variants, selectedVariant])
+
+  if (!item) return null
 
   function handleAdd() {
     if (!item) return

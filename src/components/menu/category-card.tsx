@@ -3,13 +3,11 @@ import type { NormalizedMenuCategory } from '@/lib/menu'
 
 interface CategoryCardProps {
   category: NormalizedMenuCategory
-  itemCountLabel: string
   isRTL: boolean
 }
 
 export default function CategoryCard({
   category,
-  itemCountLabel,
   isRTL,
 }: CategoryCardProps) {
   return (

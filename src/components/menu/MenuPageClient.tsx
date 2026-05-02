@@ -19,7 +19,6 @@ interface MenuPageClientProps {
 
 export default function MenuPageClient({ categories, locale, featuredSlugs }: MenuPageClientProps) {
   const [activeCategory, setActiveCategory] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
@@ -28,23 +27,6 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
     () => categories.flatMap(c => c.items).filter(i => featuredSlugs.includes(i.id)),
     [categories, featuredSlugs]
   )
-
-  // ── FILTERING LOGIC ──
-  const filteredData = useMemo(() => {
-    if (!searchQuery) return categories
-    const query = searchQuery.toLowerCase().trim()
-    return categories
-      .map(cat => ({
-        ...cat,
-        items: cat.items.filter(item =>
-          item.name.ar.toLowerCase().includes(query) ||
-          item.name.en.toLowerCase().includes(query) ||
-          item.description?.ar?.toLowerCase().includes(query) ||
-          item.description?.en?.toLowerCase().includes(query)
-        )
-      }))
-      .filter(cat => cat.items.length > 0)
-  }, [categories, searchQuery])
 
   // ── SCROLL TRACKING ──
   useEffect(() => {
@@ -73,7 +55,8 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
       observerRef.current?.disconnect()
       window.removeEventListener('scroll', handleScroll)
     }
-  }, [filteredData])
+  }, [categories])
+
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -83,7 +66,7 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
     <main className="bg-brand-black min-h-screen text-brand-text">
       <MenuHero locale={locale} />
 
-      {featuredItems.length >= 3 && !searchQuery && (
+      {featuredItems.length >= 3 && (
         <FeaturedCarousel items={featuredItems} locale={locale} />
       )}
 
@@ -96,8 +79,8 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
         />
 
         <div className="max-w-7xl mx-auto pb-24">
-          {filteredData.length > 0 ? (
-            filteredData.map((cat) => (
+          {categories.length > 0 ? (
+            categories.map((cat) => (
               <MenuSection
                 key={cat.id}
                 id={`section-${cat.id}`}
@@ -106,10 +89,11 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
               />
             ))
           ) : (
-            <EmptyState query={searchQuery} locale={locale} />
+            <EmptyState locale={locale} />
           )}
         </div>
       </div>
+
 
       <MobileSearchOverlay
         isOpen={isSearchOpen}
