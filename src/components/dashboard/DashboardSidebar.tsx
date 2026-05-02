@@ -240,6 +240,8 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     { key: 'inv-count',     href: `${prefix}/dashboard/inventory/count`,     label: isAr ? 'الجرد' : 'Count' },
     { key: 'inv-purchases', href: `${prefix}/dashboard/inventory/purchases`, label: isAr ? 'المشتريات' : 'Purchases' },
     { key: 'inv-transfers', href: `${prefix}/dashboard/inventory/transfers`, label: isAr ? 'التحويلات' : 'Transfers' },
+    { key: 'inv-catering',  href: `${prefix}/dashboard/inventory/catering`,   label: isAr ? 'التقديم الخارجي' : 'Catering' },
+    { key: 'inv-budget',    href: `${prefix}/dashboard/inventory/budget`,     label: isAr ? 'الميزانية' : 'Budget' },
     { key: 'inv-import',     href: `${prefix}/dashboard/inventory/import`,     label: isAr ? 'استيراد' : 'Import' },
   ]
 

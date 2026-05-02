@@ -152,6 +152,180 @@ export type Database = {
           },
         ]
       }
+      catering_orders: {
+        Row: {
+          branch_id: string
+          client_email: string | null
+          client_name: string
+          client_phone: string
+          created_at: string
+          created_by: string | null
+          deposit_bhd: number
+          deposit_paid: boolean
+          event_date: string
+          event_time: string | null
+          guest_count: number
+          id: string
+          ingredients_snapshot: Json | null
+          linked_po_id: string | null
+          notes: string | null
+          package_id: string | null
+          price_per_person_bhd: number
+          status: string
+          subtotal_bhd: number
+          updated_at: string
+          venue_address: string | null
+          venue_name: string | null
+        }
+        Insert: {
+          branch_id: string
+          client_email?: string | null
+          client_name: string
+          client_phone: string
+          created_at?: string
+          created_by?: string | null
+          deposit_bhd?: number
+          deposit_paid?: boolean
+          event_date: string
+          event_time?: string | null
+          guest_count: number
+          id?: string
+          ingredients_snapshot?: Json | null
+          linked_po_id?: string | null
+          notes?: string | null
+          package_id?: string | null
+          price_per_person_bhd?: number
+          status?: string
+          subtotal_bhd?: number
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Update: {
+          branch_id?: string
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          created_by?: string | null
+          deposit_bhd?: number
+          deposit_paid?: boolean
+          event_date?: string
+          event_time?: string | null
+          guest_count?: number
+          id?: string
+          ingredients_snapshot?: Json | null
+          linked_po_id?: string | null
+          notes?: string | null
+          package_id?: string | null
+          price_per_person_bhd?: number
+          status?: string
+          subtotal_bhd?: number
+          updated_at?: string
+          venue_address?: string | null
+          venue_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "catering_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_orders_linked_po_id_fkey"
+            columns: ["linked_po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_orders_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "catering_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catering_packages: {
+        Row: {
+          branch_id: string
+          created_at: string
+          description_ar: string | null
+          description_en: string | null
+          id: string
+          is_active: boolean
+          items: Json
+          max_guests: number | null
+          min_guests: number
+          name_ar: string
+          name_en: string
+          price_per_person_bhd: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          id?: string
+          is_active?: boolean
+          items?: Json
+          max_guests?: number | null
+          min_guests?: number
+          name_ar: string
+          name_en: string
+          price_per_person_bhd: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          id?: string
+          is_active?: boolean
+          items?: Json
+          max_guests?: number | null
+          min_guests?: number
+          name_ar?: string
+          name_en?: string
+          price_per_person_bhd?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_packages_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_packages_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
+      }
       contact_messages: {
         Row: {
           branch_id: string | null
@@ -974,6 +1148,67 @@ export type Database = {
           },
         ]
       }
+      inventory_budgets: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string | null
+          food_cost_target_pct: number
+          id: string
+          month: number
+          purchase_budget_bhd: number
+          updated_at: string
+          waste_budget_bhd: number
+          year: number
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by?: string | null
+          food_cost_target_pct?: number
+          id?: string
+          month: number
+          purchase_budget_bhd?: number
+          updated_at?: string
+          waste_budget_bhd?: number
+          year: number
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string | null
+          food_cost_target_pct?: number
+          id?: string
+          month?: number
+          purchase_budget_bhd?: number
+          updated_at?: string
+          waste_budget_bhd?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_budgets_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_budgets_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "inventory_budgets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_counts: {
         Row: {
           actual_qty: number
@@ -1222,6 +1457,13 @@ export type Database = {
           waste_log_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_movements_catering_order"
+            columns: ["catering_order_id"]
+            isOneToOne: false
+            referencedRelation: "catering_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_movements_purchase_order"
             columns: ["purchase_order_id"]
@@ -3368,6 +3610,52 @@ export type Database = {
       }
       refresh_analytics_views: { Args: never; Returns: undefined }
       rpc_auto_generate_pos: { Args: never; Returns: undefined }
+      rpc_budget_trend: {
+        Args: { p_branch_id: string; p_year: number }
+        Returns: {
+          actual_cogs_bhd: number
+          actual_food_cost_pct: number
+          actual_revenue_bhd: number
+          actual_spend_bhd: number
+          actual_waste_bhd: number
+          branch_id: string
+          food_cost_target_pct: number
+          month: number
+          purchase_budget_bhd: number
+          spend_pct_used: number
+          spend_variance_bhd: number
+          waste_budget_bhd: number
+          waste_variance_bhd: number
+          year: number
+        }[]
+      }
+      rpc_budget_vs_actual: {
+        Args: { p_branch_id: string; p_month: number; p_year: number }
+        Returns: {
+          actual_cogs_bhd: number
+          actual_food_cost_pct: number
+          actual_revenue_bhd: number
+          actual_spend_bhd: number
+          actual_waste_bhd: number
+          branch_id: string
+          food_cost_target_pct: number
+          month: number
+          purchase_budget_bhd: number
+          spend_pct_used: number
+          spend_variance_bhd: number
+          waste_budget_bhd: number
+          waste_variance_bhd: number
+          year: number
+        }[]
+      }
+      rpc_catering_calc_ingredients: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
+      rpc_catering_confirm: {
+        Args: { p_order_id: string; p_supplier_id?: string }
+        Returns: string
+      }
       rpc_check_stock_for_cart: {
         Args: { p_branch_id: string; p_items: Json }
         Returns: {

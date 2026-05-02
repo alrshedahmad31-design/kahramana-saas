@@ -191,6 +191,8 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
           { href: `${prefix}/dashboard/inventory/prep-items`, label: isAr ? 'Prep Items' : 'Prep Items' },
           { href: `${prefix}/dashboard/inventory/recipes`, label: isAr ? 'الوصفات' : 'Recipes' },
           { href: `${prefix}/dashboard/inventory/stock`, label: isAr ? 'المخزون' : 'Stock Levels' },
+          { href: `${prefix}/dashboard/inventory/catering`, label: isAr ? 'التقديم الخارجي' : 'Catering' },
+          { href: `${prefix}/dashboard/inventory/budget`, label: isAr ? 'الميزانية' : 'Budget' },
         ].map((link) => (
           <Link
             key={link.href}

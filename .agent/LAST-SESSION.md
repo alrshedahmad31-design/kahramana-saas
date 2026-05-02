@@ -1,46 +1,61 @@
-# LAST-SESSION.md — Session 41
-> Date: 2026-05-02 | Status: `phase_6b_dashboard_integration_complete` | Branch: `master`
+# LAST-SESSION.md — Session 42
+> Date: 2026-05-02 | Status: `phase_7_catering_budget_complete` | Branch: `master`
 
 ---
 
 ## Phase Completed
-**Phase 6b: Dashboard Integration — Inventory Widgets**
+**Phase 7: Catering Module + Budget Module**
 
 ## What Was Built
 
-### New Components (9 files)
-- `LowStockWidget.tsx` — Enhanced: pulsing red dot, max 5 rows, ABC badges, "عرض الكل" link
-- `ExpiryCalendarWidget.tsx` — Expired/Today/Week counts + top 3 urgent items with color dots
-- `WasteEscalationWidget.tsx` — Pending waste by escalation level + pulsing critical badge
-- `StockValueWidget.tsx` — Total stock value + 14-day recharts AreaChart trend
-- `InventoryAlertsListener.tsx` — Supabase Realtime → color-coded auto-dismiss toasts
-- `BranchContext.tsx` — Client context (owner/GM switch, others locked; localStorage persist)
-- `InventoryWidgetsSection.tsx` — Server Component with parallel data fetch + 2×2 grid
-- `InventoryWidgetsSkeleton.tsx` — Suspense fallback skeleton
-- `InventoryBreadcrumb.tsx` — Breadcrumb navigation
+### Migration (1)
+- `supabase/migrations/041_catering_and_budget.sql` — 3 tables (catering_packages, catering_orders, inventory_budgets), 4 RPCs (rpc_catering_calc_ingredients, rpc_catering_confirm, rpc_budget_vs_actual, rpc_budget_trend), RLS policies, deferred FK wire-up
 
-### New Layout (1)
-- `src/app/[locale]/dashboard/inventory/layout.tsx` — BranchProvider + alerts listener
+### Server Actions (2)
+- `src/app/[locale]/dashboard/inventory/catering/actions.ts` — 5 actions: createCateringOrder, updateCateringStatus, confirmCateringOrder, calcCateringIngredients, deleteCateringOrder, upsertCateringPackage. Fixed `as any` cast pattern for tables not in generated types.
+- `src/app/[locale]/dashboard/inventory/budget/actions.ts` — upsertBudget (upsert with onConflict branch_id,year,month)
 
-### Updated Files (11)
-- `dashboard/page.tsx` — Suspense inventory section (role-gated: owner/GM/BM/inv_manager)
-- `dashboard/layout.tsx` — InventoryAlertsListener for inventory-access roles
-- `dashboard/reports/page.tsx` — Inventory summary: food cost %, waste, top 3 cost drivers
-- `dashboard/kds/page.tsx` — slugStockMap built from low stock + recipes → passed to KDSBoard
-- `KDSBoard/Column/OrderCard` — Optional slugStockMap thread → StockDot per item
-- `checkout/actions.ts` — Non-blocking rpc_check_stock_for_cart + inventory_alerts logging
-- `CheckoutForm.tsx` — Yellow warning banner if stock_warnings returned
-- `custom-types.ts` — menu_item_slug added to KDSOrder.order_items
+### Pages (4)
+- `src/app/[locale]/dashboard/inventory/catering/page.tsx` — Order list with KPI strip, calendar, status stepper, ingredients drawer
+- `src/app/[locale]/dashboard/inventory/catering/packages/page.tsx` — Package grid (read-only list)
+- `src/app/[locale]/dashboard/inventory/budget/page.tsx` — Budget dashboard: KPIs, progress bars, 12-month trend chart, set form
+- `src/app/[locale]/dashboard/inventory/budget/actions.ts` — see above
+
+### Catering Components (4)
+- `src/components/inventory/catering/CateringStatusStepper.tsx` — status timeline with cancelled branch
+- `src/components/inventory/catering/CateringOrderForm.tsx` — 3-step client form
+- `src/components/inventory/catering/CateringIngredientsDrawer.tsx` — toggle panel with recalculate button
+- `src/components/inventory/catering/CateringCalendar.tsx` — upcoming events list linked to order detail
+
+### Budget Components (4)
+- `src/components/inventory/budget/BudgetProgressBar.tsx` — animated progress bar
+- `src/components/inventory/budget/BudgetAlertBanner.tsx` — shows only when over budget
+- `src/components/inventory/budget/BudgetTrendChart.tsx` — Recharts AreaChart (uses design-tokens colors)
+- `src/components/inventory/budget/BudgetSetForm.tsx` — client form calling upsertBudget
+
+### Updated Files (3)
+- `DashboardSidebar.tsx` — added `inv-catering` + `inv-budget` sub-items
+- `inventory/page.tsx` — added catering + budget quick links
+- `rbac-ui.ts` — already had inventory_catering + inventory_budget sections (from prior session)
 
 ## Phase Gate Results
-All 9 checks PASS. Build: 845 pages, 0 errors.
+- tsc --noEmit: 0 errors ✅
+- RTL violations: 0 ✅
+- Hex colors: 0 (BudgetTrendChart uses design-tokens) ✅
+- Forbidden fonts: 0 ✅
+- Forbidden colors: 0 ✅
+- Currency BHD: 0 ✅
+- Build: 851 pages, 0 errors ✅ (was 845, +6 new pages)
 
 ## Key Decisions
-- Checkout stock check is NON-BLOCKING — recipes may not be mapped yet
-- InventoryWidgetsSection is a Server Component wrapped in Suspense so dashboard home remains fast
-- Realtime alerts subscribed at layout level, not just inventory pages
+- Tables not in generated types (catering_orders, catering_packages, inventory_budgets) use `const db: any = createServiceClient()` pattern to bypass TS overload errors
+- RPCs not in generated types (rpc_catering_confirm, rpc_catering_calc_ingredients) use same `(db as any).rpc(...)` pattern
+- catering/page.tsx does NOT embed a new-order form — the "+New Order" button links to /catering/new (stub route, not built yet)
+- Budget page lets BM read+write budget for their branch; owner/GM can switch branches
 
 ## What's Next
-- Test with real data after chef populates recipes (RPC calls will return real shortages)
-- Phase 7b (Deliverect/POS) locked — awaiting contract
-- Phase 8 (AI Analytics) needs 6 months of production data
+1. **Ahmed must apply migration 041 to production** — apply `supabase/migrations/041_catering_and_budget.sql` via Supabase dashboard or CLI
+2. Build /catering/new page (uses existing CateringOrderForm component)
+3. Build package CRUD (/catering/packages/new, /catering/packages/[id])
+4. Phase 7b (Deliverect/POS) — locked, awaiting contract
+5. Phase 8 (AI Analytics) — locked, needs 6 months production data

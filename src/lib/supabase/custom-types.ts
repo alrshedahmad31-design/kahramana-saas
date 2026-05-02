@@ -218,3 +218,55 @@ export interface InventoryValuationRow {
   branch_id: string; branch_name: string; category: string|null
   ingredient_count: number; total_value_bhd: number; reserved_value_bhd: number
 }
+
+// ── Catering types (migration 041) ──────────────────────────────────────────
+
+export interface CateringPackageItem {
+  menu_item_slug: string
+  qty_per_person: number
+  name_ar: string
+  name_en: string
+}
+
+export interface CateringPackageRow {
+  id: string; branch_id: string; name_ar: string; name_en: string
+  description_ar: string|null; description_en: string|null
+  min_guests: number; max_guests: number|null; price_per_person_bhd: number
+  items: CateringPackageItem[]; is_active: boolean
+  created_at: string; updated_at: string
+}
+
+export type CateringOrderStatus = 'draft'|'quoted'|'confirmed'|'prep_started'|'delivered'|'invoiced'|'cancelled'
+
+export interface CateringIngredientSnapshot {
+  ingredient_id: string; name_ar: string; name_en: string
+  qty_needed: number; unit: string
+}
+
+export interface CateringOrderRow {
+  id: string; branch_id: string; package_id: string|null
+  event_date: string; event_time: string|null
+  venue_name: string|null; venue_address: string|null
+  guest_count: number; client_name: string; client_phone: string; client_email: string|null
+  price_per_person_bhd: number; subtotal_bhd: number; deposit_bhd: number; deposit_paid: boolean
+  status: CateringOrderStatus
+  ingredients_snapshot: CateringIngredientSnapshot[]|null
+  linked_po_id: string|null; notes: string|null
+  created_by: string|null; created_at: string; updated_at: string
+}
+
+// ── Budget types (migration 041) ─────────────────────────────────────────────
+
+export interface InventoryBudgetRow {
+  id: string; branch_id: string; year: number; month: number
+  purchase_budget_bhd: number; food_cost_target_pct: number; waste_budget_bhd: number
+  created_by: string|null; created_at: string; updated_at: string
+}
+
+export interface BudgetVsActual {
+  branch_id: string; year: number; month: number
+  purchase_budget_bhd: number; food_cost_target_pct: number; waste_budget_bhd: number
+  actual_spend_bhd: number; actual_waste_bhd: number; actual_revenue_bhd: number
+  actual_cogs_bhd: number; actual_food_cost_pct: number
+  spend_variance_bhd: number; spend_pct_used: number|null; waste_variance_bhd: number
+}

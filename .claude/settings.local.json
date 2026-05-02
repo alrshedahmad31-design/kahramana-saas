@@ -112,7 +112,12 @@
       "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\dashboard\\\\inventory\\\\purchases\\\\new\")",
       "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\dashboard\\\\inventory\\\\purchases\\\\auto\")",
       "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\dashboard\\\\inventory\\\\purchases\\\\suppliers\")",
-      "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\dashboard\\\\inventory\\\\purchases\\\\[id]\")"
+      "Bash(mkdir -p \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\dashboard\\\\inventory\\\\purchases\\\\[id]\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/cogs\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/variance\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/waste\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/valuation\")",
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/menu-engineering\")"
     ]
   }
 }
