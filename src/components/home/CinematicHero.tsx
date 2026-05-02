@@ -15,77 +15,44 @@ export default function CinematicHero() {
   const isRTL = locale === 'ar'
   const t = useTranslations('home.hero')
   const containerRef = useRef<HTMLDivElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
+    if (!containerRef.current) return;
+    
     const ctx = gsap.context(() => {
-      // Parallax only on desktop where video is visible
-      if (window.innerWidth >= 768) {
-        gsap.to(videoRef.current, {
-          y: '20%',
-          ease: 'none',
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: 'top top',
-            end: 'bottom top',
-            scrub: true,
-          },
-        })
-      }
-
-      // Staggered text reveals
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 1.2 } })
+      const tl = gsap.timeline({ 
+        defaults: { ease: 'power3.out', duration: 1.2 } 
+      });
       
-      tl.from('.hero-eyebrow', { opacity: 0, y: 20, delay: 0.5 })
-        .from('.hero-title-part-1', { opacity: 0, y: 40, stagger: 0.1 }, '-=0.8')
-        .from('.hero-title-part-2', { opacity: 0, scale: 0.95, filter: 'blur(10px)' }, '-=0.6')
-        .from('.hero-cta', { opacity: 0, y: 20, stagger: 0.1 }, '-=0.8')
-    }, containerRef)
+      tl.from('.hero-eyebrow', { opacity: 0, y: 20, delay: 0.5 });
+      tl.from('.hero-title-part-1', { opacity: 0, y: 40, stagger: 0.1 }, '-=0.8');
+      tl.from('.hero-title-part-2', { opacity: 0, scale: 0.95, filter: 'blur(10px)' }, '-=0.6');
+      tl.from('.hero-cta', { opacity: 0, y: 20, stagger: 0.1 }, '-=0.8');
+    }, containerRef.current || undefined);
 
-    return () => ctx.revert()
-  }, [])
+    return () => ctx.revert();
+  }, []);
 
-  const waMessage = locale === 'ar' 
-    ? `مرحباً، أود التواصل بخصوص...` 
-    : `Hello, I'd like to get in touch...`
-  const waLink = `${DEFAULT_BRANCH.waLink}?text=${encodeURIComponent(waMessage)}`
+  const waLink = `${DEFAULT_BRANCH.waLink}?text=${encodeURIComponent(t('waMessage'))}`
 
   return (
     <section 
       ref={containerRef}
       className="relative h-[100dvh] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16"
     >
-      {/* Background Media */}
       <div className="absolute inset-0 z-0">
-        {/* Mobile: static poster only — no video download */}
-        <div className="block md:hidden absolute inset-0">
-          <Image
-            src="/assets/hero/hero-poster.webp"
-            alt=""
-            fill
-            priority
-            className="object-cover scale-110"
-            sizes="100vw"
-          />
-        </div>
-        {/* Desktop: cinematic video */}
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="hidden md:block absolute inset-0 w-full h-full object-cover scale-110"
-          poster="/assets/hero/hero-poster.webp"
-        >
-          <source src="/assets/hero/hero-menu.mp4" type="video/mp4" />
-        </video>
-        {/* Gradient Overlay */}
+        <Image
+          src="/assets/hero/hero-poster.webp"
+          alt=""
+          fill
+          priority
+          className="object-cover scale-110"
+          sizes="100vw"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto text-start">
         <p className="hero-eyebrow font-satoshi text-brand-gold text-xs sm:text-sm font-bold tracking-[0.3em] uppercase mb-6 opacity-80">
           {t('eyebrow')}
@@ -110,7 +77,7 @@ export default function CinematicHero() {
           </span>
         </h1>
 
-        <div className={`hero-cta flex flex-wrap gap-4 justify-start`}>
+        <div className="hero-cta flex flex-wrap gap-4 justify-start">
           <CinematicButton
             href="/menu"
             isRTL={isRTL}
@@ -130,19 +97,12 @@ export default function CinematicHero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-50">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-brand-gold vertical-text">
+        <span className="text-[10px] font-bold tracking-widest uppercase text-brand-gold [writing-mode:vertical-rl]">
           {t('scrollDown')}
         </span>
         <div className="w-px h-12 bg-gradient-to-b from-brand-gold to-transparent" />
       </div>
-
-      <style jsx>{`
-        .vertical-text {
-          writing-mode: vertical-rl;
-        }
-      `}</style>
     </section>
   )
 }

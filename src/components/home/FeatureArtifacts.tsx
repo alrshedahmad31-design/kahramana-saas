@@ -56,7 +56,7 @@ export default function FeatureArtifacts() {
             </h3>
           </div>
 
-          <div className="flex-1 bg-black/40 rounded-xl p-4 font-mono text-[10px] sm:text-xs text-brand-gold overflow-hidden relative">
+          <div className="flex-1 bg-brand-black/40 rounded-xl p-4 font-mono text-[10px] sm:text-xs text-brand-gold overflow-hidden relative">
              <div className="absolute top-2 end-4 flex gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
                 <span className="text-[8px] uppercase opacity-50 tracking-tighter">{t('telemetry.liveFeed')}</span>

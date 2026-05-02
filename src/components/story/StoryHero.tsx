@@ -29,7 +29,7 @@ export default function StoryHero({ isRTL }: { isRTL: boolean }) {
         className="absolute inset-0 z-0"
       >
         <Image
-          src="/assets/hero/hero-poster.webp" // Using existing asset
+          src="/assets/brand/kahramana-baghdad-brand-heritage-emblem.webp" // Updated heritage emblem image
           alt="Kahramana Baghdad"
           fill
           sizes="100vw"

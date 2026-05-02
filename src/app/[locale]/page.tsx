@@ -78,7 +78,7 @@ export default async function HomePage() {
            <CinematicButton
              href="/menu"
              isRTL={isRTL}
-             className="px-12 py-5 text-xl font-bold rounded-full"
+             className="px-12 py-5 text-xl font-bold rounded-2xl"
            >
               {t('home.cta.button')}
            </CinematicButton>

@@ -11,10 +11,11 @@ interface Props {
   eyebrow: string
   title: string
   description: string
+  imageAlt: string
   isAr: boolean
 }
 
-export default function ContactHero({ eyebrow, title, description, isAr }: Props) {
+export default function ContactHero({ eyebrow, title, description, imageAlt, isAr }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const heroTextRef = useRef<HTMLDivElement>(null)
   const bgRef = useRef<HTMLDivElement>(null)
@@ -53,7 +54,7 @@ export default function ContactHero({ eyebrow, title, description, isAr }: Props
         duration: 0.8,
         ease: 'power3.out',
       }, '-=0.6')
-    }, containerRef)
+    }, containerRef.current || undefined)
 
     return () => ctx.revert()
   }, [])
@@ -68,13 +69,13 @@ export default function ContactHero({ eyebrow, title, description, isAr }: Props
         <div className="absolute inset-0 bg-brand-black/70 z-10" />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-brand-black z-20" />
         
-        {/* Placeholder for a luxury pattern or high-end food shot */}
         <div className="relative w-full h-[120%] -top-[10%]">
            <Image
-            src="/assets/catering/corporate.webp"
-            alt="Kahramana Contact"
+            src="/assets/hero/hero-contact.webp"
+            alt={imageAlt}
             fill
-            className="object-cover opacity-50 grayscale contrast-125"
+            sizes="100vw"
+            className="object-cover opacity-60 contrast-125"
             priority
           />
         </div>

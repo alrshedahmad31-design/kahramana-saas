@@ -118,7 +118,7 @@ export default function LoginForm() {
         type="submit"
         disabled={loading || !email || !password}
         isRTL={isAr}
-        className="w-full py-4 font-bold rounded-full"
+        className="w-full py-4 font-bold rounded-2xl"
       >
         {loading ? t('signingIn') : t('login')}
       </CinematicButton>

@@ -46,7 +46,7 @@ export default function BranchHero({ branchName, description, branchId, isAr }: 
         .from('.branch-eyebrow', { opacity: 0, y: 20 }, '-=0.8')
         .from('.branch-title', { opacity: 0, y: 30, scale: 0.98 }, '-=0.8')
         .from('.branch-desc', { opacity: 0, y: 20 }, '-=0.8')
-    }, containerRef)
+    }, containerRef.current || undefined)
 
     return () => ctx.revert()
   }, [isAr])

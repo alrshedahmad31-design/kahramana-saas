@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { Flame, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import type { NormalizedMenuItem } from '@/lib/menu'
 import { useRef, useState, useEffect, useCallback } from 'react'
 
@@ -14,6 +15,7 @@ interface FeaturedCarouselProps {
 
 export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProps) {
   const isRTL = locale === 'ar'
+  const tCommon = useTranslations('common')
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -166,7 +168,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
                       {item.fromPrice.toFixed(3)}
                     </span>
                     <span className="block font-almarai text-brand-muted text-[10px] uppercase font-bold tracking-wider">
-                      BHD
+                      {tCommon('currency')}
                     </span>
                   </div>
                 </div>

@@ -98,6 +98,130 @@ export interface MenuPriceSelection {
 
 const FALLBACK_MENU_IMAGE = '/assets/hero/hero-menu.webp'
 
+const CATEGORY_PRESENTATION: Record<
+  string,
+  {
+    order: number
+    name: {
+      ar: string
+      en: string
+    }
+  }
+> = {
+  'kahramana-signature-selection': {
+    order: 10,
+    name: {
+      ar: 'مختارات كهرمانة',
+      en: 'Kahramana Selections',
+    },
+  },
+  'the-heritage-breakfast': {
+    order: 20,
+    name: {
+      ar: 'الفطور البغدادي',
+      en: 'Baghdadi Breakfast',
+    },
+  },
+  'the-cold-mezza-garden': {
+    order: 30,
+    name: {
+      ar: 'المقبلات الباردة',
+      en: 'Cold Mezza',
+    },
+  },
+  'the-hot-mezza-garden': {
+    order: 40,
+    name: {
+      ar: 'المقبلات الساخنة',
+      en: 'Hot Mezza',
+    },
+  },
+  'garden-fresh-salads': {
+    order: 50,
+    name: {
+      ar: 'السلطات',
+      en: 'Salads',
+    },
+  },
+  'warm-and-comforting-soups': {
+    order: 60,
+    name: {
+      ar: 'الشوربات',
+      en: 'Soups',
+    },
+  },
+  'baghdadi-culinary-masterpieces': {
+    order: 70,
+    name: {
+      ar: 'الأطباق الرئيسية',
+      en: 'Main Courses',
+    },
+  },
+  'the-authentic-stew-house': {
+    order: 80,
+    name: {
+      ar: 'المرق العراقي',
+      en: 'Iraqi Stews',
+    },
+  },
+  'the-fatteh-collection': {
+    order: 90,
+    name: {
+      ar: 'الفتّة',
+      en: 'Fatteh',
+    },
+  },
+  'baghdadi-tandoor-selection': {
+    order: 100,
+    name: {
+      ar: 'المشويات والتنور',
+      en: 'Grills & Tandoor',
+    },
+  },
+  'the-shawarma-suite-kaas': {
+    order: 110,
+    name: {
+      ar: 'الشاورما العراقية',
+      en: 'Iraqi Shawarma',
+    },
+  },
+  'artisan-stone-oven-pizza': {
+    order: 120,
+    name: {
+      ar: 'بيتزا كهرمانة',
+      en: 'Kahramana Pizza',
+    },
+  },
+  'traditional-sandwiches': {
+    order: 130,
+    name: {
+      ar: 'السندويتشات',
+      en: 'Sandwiches',
+    },
+  },
+  'the-sweet-finale': {
+    order: 140,
+    name: {
+      ar: 'الحلويات',
+      en: 'Desserts',
+    },
+  },
+  'fresh-signature-juices': {
+    order: 150,
+    name: {
+      ar: 'العصائر الطازجة',
+      en: 'Fresh Juices',
+    },
+  },
+  'the-heritage-tea-and-coffee': {
+    order: 160,
+    name: {
+      ar: 'الشاي والقهوة',
+      en: 'Tea & Coffee',
+    },
+  },
+}
+
 function slugify(value: string): string {
   return value
     .trim()
@@ -111,6 +235,24 @@ function slugify(value: string): string {
 
 function getRawCategories(): MenuCategory[] {
   return menuData as MenuCategory[]
+}
+
+function getCategoryPresentation(category: MenuCategory) {
+  const slug = slugify(category.category.en)
+  return CATEGORY_PRESENTATION[slug] ?? {
+    order: Number.MAX_SAFE_INTEGER,
+    name: {
+      ar: category.category.ar,
+      en: category.category.en,
+    },
+  }
+}
+
+function getSortedRawCategories(): MenuCategory[] {
+  return [...getRawCategories()].sort(
+    (first, second) =>
+      getCategoryPresentation(first).order - getCategoryPresentation(second).order,
+  )
 }
 
 function getPriceValues(item: MenuItem): number[] {
@@ -181,6 +323,7 @@ export function normalizeMenuItem(
   category: MenuCategory,
 ): NormalizedMenuItem {
   const categorySlug = slugify(category.category.en)
+  const categoryPresentation = getCategoryPresentation(category)
   const priceValues = getPriceValues(item)
   const hasSizes = Boolean(item.sizes && Object.keys(item.sizes).length > 0)
   const hasVariants = Boolean(item.variants && item.variants.length > 0)
@@ -189,10 +332,7 @@ export function normalizeMenuItem(
     ...item,
     slug: item.id,
     categorySlug,
-    categoryName: {
-      ar: category.category.ar,
-      en: category.category.en,
-    },
+    categoryName: categoryPresentation.name,
     fromPrice: priceValues.length > 0 ? Math.min(...priceValues) : 0,
     hasMultiplePrices:
       priceValues.length > 1 && new Set(priceValues.map((price) => price.toFixed(3))).size > 1,
@@ -211,19 +351,20 @@ export function normalizeMenuItem(
 }
 
 export function getMenuCategories(): NormalizedMenuCategory[] {
-  return getRawCategories().map((category) => ({
-    slug: slugify(category.category.en),
-    name: {
-      ar: category.category.ar,
-      en: category.category.en,
-    },
-    description: category.category.description,
-    itemCount: category.items.length,
-  }))
+  return getSortedRawCategories().map((category) => {
+    const categoryPresentation = getCategoryPresentation(category)
+
+    return {
+      slug: slugify(category.category.en),
+      name: categoryPresentation.name,
+      description: category.category.description,
+      itemCount: category.items.length,
+    }
+  })
 }
 
 export function getAllMenuItems(): NormalizedMenuItem[] {
-  return getRawCategories().flatMap((category) =>
+  return getSortedRawCategories().flatMap((category) =>
     category.items.map((item) => normalizeMenuItem(item, category)),
   )
 }
@@ -296,11 +437,11 @@ export async function getFeaturedSlugs(): Promise<string[]> {
 }
 
 export async function getMenuData(): Promise<CategoryWithItems[]> {
-  const categories = getRawCategories()
+  const categories = getSortedRawCategories()
   return categories.map((cat) => ({
     id: slugify(cat.category.en),
-    nameAR: cat.category.ar,
-    nameEN: cat.category.en,
+    nameAR: getCategoryPresentation(cat).name.ar,
+    nameEN: getCategoryPresentation(cat).name.en,
     items: cat.items.map((item) => normalizeMenuItem(item, cat)),
   }))
 }

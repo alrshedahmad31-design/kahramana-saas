@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
                 type="submit"
                 disabled={loading || !email}
                 isRTL={isAr}
-                className="w-full py-4 font-bold rounded-full"
+                className="w-full py-4 font-bold rounded-2xl"
               >
                 {loading ? t('submitting') : t('submit')}
               </CinematicButton>

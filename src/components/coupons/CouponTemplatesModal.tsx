@@ -26,7 +26,7 @@ export default function CouponTemplatesModal({ onSelect, onClose }: Props) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-black/60 backdrop-blur-sm p-4">
       <div
         dir={isAr ? 'rtl' : 'ltr'}
         className="bg-brand-surface-2 border border-brand-border rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl"

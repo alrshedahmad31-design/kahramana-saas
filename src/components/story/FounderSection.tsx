@@ -37,12 +37,12 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
   return (
     <section 
       ref={containerRef}
-      className="relative py-32 md:py-48 overflow-hidden bg-[#0A0A0A]"
+      className="relative py-32 md:py-48 overflow-hidden bg-brand-black"
     >
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#C8922A]/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[#C8922A]/5 rounded-full blur-[100px]" />
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-brand-gold/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-brand-gold/5 rounded-full blur-[100px]" />
       </div>
 
       <div className="max-w-7xl mx-auto px-6 sm:px-16 relative z-10">
@@ -63,7 +63,7 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
                 priority
               />
               {/* Cinematic Lighting Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-60" />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent opacity-60" />
               <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[2.5rem]" />
             </div>
 
@@ -75,10 +75,10 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               transition={{ delay: 0.8, duration: 0.8 }}
               className={`absolute -bottom-8 ${isRTL ? '-left-8' : '-right-8'} bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-3xl hidden md:block`}
             >
-              <p className="text-[#C8922A] text-xs font-bold tracking-[0.3em] uppercase mb-1">
+              <p className="text-brand-gold text-xs font-bold tracking-[0.3em] uppercase mb-1">
                 {isRTL ? t('signature') : t('signature')}
               </p>
-              <div className="w-12 h-px bg-[#C8922A]/30 mb-3" />
+              <div className="w-12 h-px bg-brand-gold/30 mb-3" />
               <p className="text-white/40 text-[10px] tracking-widest uppercase">
                 {isRTL ? 'تراث عراقي' : 'Iraqi Heritage'}
               </p>
@@ -92,7 +92,7 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
             whileInView="show"
             viewport={{ once: true, margin: "-100px" }}
             style={{ y: y2 }}
-            className={`lg:col-span-7 flex flex-col pt-8 ${isRTL ? 'lg:pr-12' : 'lg:pl-12'}`}
+            className={`lg:col-span-7 flex flex-col pt-8 ${isRTL ? 'lg:pe-12' : 'lg:ps-12'}`}
           >
             {/* Header Area */}
             <SectionHeader 
@@ -104,19 +104,19 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
             <div className="space-y-8 mb-16">
               <motion.p 
                 variants={itemFadeUp}
-                className="text-xl md:text-2xl text-gray-300 leading-relaxed font-light text-justify"
+                className="text-xl md:text-2xl text-brand-text leading-relaxed font-light text-justify"
               >
                 {t('p1')}
               </motion.p>
               <motion.p 
                 variants={itemFadeUp}
-                className="text-lg md:text-xl text-gray-400 leading-relaxed text-justify"
+                className="text-lg md:text-xl text-brand-muted leading-relaxed text-justify"
               >
                 {t('p2')}
               </motion.p>
               <motion.p 
                 variants={itemFadeUp}
-                className="text-lg md:text-xl text-gray-400 leading-relaxed text-justify"
+                className="text-lg md:text-xl text-brand-muted leading-relaxed text-justify"
               >
                 {t('p3')}
               </motion.p>
@@ -125,9 +125,9 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
             {/* Quote Block */}
             <motion.div 
               variants={itemFadeUp}
-              className="relative p-10 md:p-14 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md rounded-[3rem] border border-white/10 overflow-hidden group hover:border-[#C8922A]/30 transition-colors duration-500"
+              className="relative p-10 md:p-14 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md rounded-[3rem] border border-white/10 overflow-hidden group hover:border-brand-gold/30 transition-colors duration-500"
             >
-              <div className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-7xl text-[#C8922A]/10 font-serif pointer-events-none group-hover:text-[#C8922A]/20 transition-colors duration-500`}>
+              <div className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-7xl text-brand-gold/10 font-serif pointer-events-none group-hover:text-brand-gold/20 transition-colors duration-500`}>
                 &ldquo;
               </div>
               <p className="text-2xl md:text-3xl text-white leading-snug font-medium italic mb-10 relative z-10">
@@ -137,10 +137,10 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               <div className="flex flex-col border-t border-white/10 pt-8 relative z-10">
                 <div className={`flex flex-col ${isRTL ? 'items-start' : 'items-start'} gap-4`}>
                   <div className="flex flex-col">
-                    <span className="text-lg md:text-xl font-bold text-[#C8922A] mb-1">
+                    <span className="text-lg md:text-xl font-bold text-brand-gold mb-1">
                       {t('signature')}
                     </span>
-                    <span className="text-sm text-gray-500 uppercase tracking-widest">
+                    <span className="text-sm text-brand-muted uppercase tracking-widest">
                       {t('role')}
                     </span>
                   </div>

@@ -14,7 +14,7 @@ const PROTOCOLS = [
   {
     id: '01',
     color: PROTOCOL_COLORS.step1,
-    image: '/assets/protocol/step-01-source.png'
+    image: '/assets/protocol/authenticity.webp'
   },
   {
     id: '02',
@@ -63,7 +63,7 @@ export default function ProtocolStack() {
             })
         })
       })
-    }, containerRef)
+    }, containerRef.current || undefined)
 
     return () => ctx.revert()
   }, [])

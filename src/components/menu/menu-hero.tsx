@@ -13,18 +13,31 @@ interface MenuHeroProps {
 export default function MenuHero({ locale, titleOverride, descriptionOverride }: MenuHeroProps) {
   const isRTL = locale === 'ar'
 
-
   return (
     <section className="relative h-[55vh] md:h-[60vh] lg:h-[65vh] w-full overflow-hidden bg-brand-black">
-      {/* Background Image */}
-      <Image
-        src="/assets/hero/hero-menu.webp"
-        alt="Kahramana Baghdad Menu"
-        fill
-        priority
-        className="object-cover object-[center_30%] opacity-60"
-        sizes="100vw"
-      />
+      {/* Background Media */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover object-[center_30%] opacity-60"
+        poster="/assets/hero/hero-menu.webp"
+      >
+        <source src="/assets/hero/hero-menu.mp4" type="video/mp4" />
+      </video>
+
+      {/* Fallback Image (hidden when video plays or for older browsers) */}
+      <div className="absolute inset-0 z-[-1]">
+        <Image
+          src="/assets/hero/hero-menu.webp"
+          alt="Kahramana Baghdad Menu"
+          fill
+          priority
+          className="object-cover object-[center_30%] opacity-60"
+          sizes="100vw"
+        />
+      </div>
 
       {/* Overlay Gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/60 to-transparent" />

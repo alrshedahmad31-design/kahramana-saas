@@ -63,6 +63,7 @@ export default async function ContactPage({
         eyebrow={t('heroEyebrow')}
         title={t('heroTitle')}
         description={t('heroDescription')}
+        imageAlt={t('heroImageAlt')}
         isAr={isRTL}
       />
 

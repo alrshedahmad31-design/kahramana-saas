@@ -142,7 +142,7 @@ export default function SetPasswordPage() {
                 type="submit"
                 disabled={loading || !password || !confirmPassword}
                 isRTL={isAr}
-                className="w-full py-4 font-bold rounded-full"
+                className="w-full py-4 font-bold rounded-2xl"
               >
                 {loading ? t('submitting') : t('submit')}
               </CinematicButton>
