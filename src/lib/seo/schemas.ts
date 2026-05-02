@@ -16,6 +16,7 @@ import {
   GENERAL_CONTACT,
   type Branch,
 } from '@/constants/contact'
+import type { CategoryWithItems } from '@/lib/menu'
 
 // Resolved at module load from NEXT_PUBLIC_SITE_URL → preview vs prod domain
 const SITE = GENERAL_CONTACT.website
@@ -120,6 +121,51 @@ export function buildPlannedBranchSchema(branch: Branch, locale: Locale) {
   }
 }
 
+// ── WebSite Schema for Search Box ───────────────────────────────────────────
+export function buildWebSiteSchema(locale: Locale) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${SITE}/#website`,
+    url: SITE,
+    name: 'كهرمانة بغداد',
+    alternateName: 'Kahramana Baghdad',
+    inLanguage: locale === 'ar' ? 'ar-BH' : 'en-BH',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${SITE}/${locale === 'en' ? 'en/' : ''}menu?q={search_term_string}`
+      },
+      'query-input': 'required name=search_term_string'
+    }
+  }
+}
+
+// ── SiteNavigationElement for better Sitelinks ──────────────────────────────
+export function buildNavigationSchema(locale: Locale) {
+  const prefix = locale === 'en' ? '/en' : ''
+  const navItems = [
+    { name: localized(locale, 'المنيو', 'Menu'), url: `${prefix}/menu` },
+    { name: localized(locale, 'الفروع', 'Branches'), url: `${prefix}/branches` },
+    { name: localized(locale, 'من نحن', 'About Us'), url: `${prefix}/about` },
+    { name: localized(locale, 'المناسبات', 'Catering'), url: `${prefix}/catering` },
+    { name: localized(locale, 'تواصل معنا', 'Contact'), url: `${prefix}/contact` },
+  ]
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: localized(locale, 'قائمة التنقل', 'Main Navigation'),
+    itemListElement: navItems.map((item, i) => ({
+      '@type': 'SiteNavigationElement',
+      position: i + 1,
+      name: item.name,
+      url: `${SITE}${item.url}`
+    }))
+  }
+}
+
 // ── Organization / Restaurant root for the homepage ────────────────────────
 
 export function buildOrganizationSchema(locale: Locale) {
@@ -139,8 +185,14 @@ export function buildOrganizationSchema(locale: Locale) {
     '@id': `${SITE}/#organization`,
     name: 'كهرمانة بغداد',
     alternateName: 'Kahramana Baghdad',
+    description: localized(
+      locale,
+      'سفير المذاق البغدادي في البحرين. نقدم أشهى الأطباق العراقية الأصيلة والمشاوي على الفحم منذ عام ٢٠١٨.',
+      'Ambassador of Baghdadi taste in Bahrain. Serving authentic Iraqi cuisine and charcoal grills since 2018.'
+    ),
     url: SITE,
     telephone: primaryBranch.phone,
+    foundingDate: '2018',
     address: {
       '@type': 'PostalAddress',
       streetAddress:   localized(locale, primaryBranch.addressAr,  primaryBranch.addressEn),
@@ -339,6 +391,7 @@ export function buildHomepageFAQ(locale: Locale): FAQ[] {
   const riffa   = BRANCHES.riffa
   const qallali = BRANCHES.qallali
 
+  // These should ideally match the keys in messages/{locale}.json home.faq.items
   if (locale === 'ar') {
     return [
       {
@@ -347,24 +400,22 @@ export function buildHomepageFAQ(locale: Locale): FAQ[] {
           `لمطعم كهرمانة بغداد فرعان نشطان في البحرين: ${riffa.nameAr} في ${riffa.cityAr}، و${qallali.nameAr} في ${qallali.cityAr}، إضافة إلى فرع البديع قيد الافتتاح قريباً.`,
       },
       {
+        question: 'ما الذي يجعل كهرمانة أفضل مطعم عراقي في البحرين؟',
+        answer: 'التزامنا بالتراث العراقي، واستخدام تقنيات الشواء التقليدية على الفحم، والوصفات المتوارثة من أجيال من الطهاة البغداديين، يجعلنا الوجهة الأولى للمذاق العراقي الأصيل في الرفاع وقلالي.'
+      },
+      {
+        question: 'هل يقدم المطعم المسكوف العراقي الأصيل؟',
+        answer: 'نعم، نحن نتخصص في سمك المسكوف العراقي الأصيل المحضر بالطريقة التقليدية لضمان نكهة بغداد المدخنة في قلب البحرين.'
+      },
+      {
         question: 'كيف يمكنني الطلب من كهرمانة بغداد؟',
         answer:
           'يمكنك الطلب من خلال موقعنا الإلكتروني، أو عبر واتساب مع الفرع الأقرب إليك، أو من تطبيقي طلبات وكيتا في البحرين.',
       },
       {
-        question: 'ما نوع الطعام الذي يقدمه كهرمانة بغداد؟',
-        answer:
-          'نتخصص في المطبخ العراقي الأصيل: مشاوي الفحم، مسكوف، قوزي، دولمة، تشريب، ومجموعة من الأطباق العراقية التقليدية.',
-      },
-      {
         question: 'هل يقدم كهرمانة بغداد خدمة تموين المناسبات؟',
         answer:
-          'نعم، يقدم كهرمانة بغداد خدمة تموين المناسبات والأعراس في البحرين. يمكنك التواصل معنا عبر صفحة التموين لطلب عرض سعر مخصص.',
-      },
-      {
-        question: 'ما هي أوقات عمل كهرمانة بغداد؟',
-        answer:
-          `${riffa.nameAr}: ${riffa.hours.ar}. ${qallali.nameAr}: ${qallali.hours.ar}.`,
+          'نعم، يقدم كهرمانة بغداد خدمات تموين فاخرة للأعراس، والفعاليات، والولائم الخاصة في جميع أنحاء البحرين مع التركيز على الضيافة العراقية الفاخرة.',
       },
     ]
   }
@@ -376,24 +427,84 @@ export function buildHomepageFAQ(locale: Locale): FAQ[] {
         `Kahramana Baghdad has two active branches in Bahrain: ${riffa.nameEn} in ${riffa.cityEn}, and ${qallali.nameEn} in ${qallali.cityEn}, with an Al-Budayi branch coming soon.`,
     },
     {
+      question: 'What makes Kahramana the best Iraqi restaurant in Bahrain?',
+      answer: 'Our commitment to heritage, using traditional charcoal grilling techniques and recipes passed down by generations of Baghdadi chefs, makes us the destination for authentic Iraqi taste in Riffa and Qallali.'
+    },
+    {
+      question: 'Do you serve authentic Iraqi Masgouf?',
+      answer: 'Yes, we specialize in authentic Iraqi Masgouf fish, prepared using traditional techniques to ensure the smoky flavor of Baghdad in the heart of Bahrain.'
+    },
+    {
       question: 'How can I order from Kahramana Baghdad?',
       answer:
         'You can order through our website, via WhatsApp directly with the branch nearest to you, or through Talabat and Keeta in Bahrain.',
     },
     {
-      question: 'What kind of food does Kahramana Baghdad serve?',
+      question: 'Does Kahramana Baghdad offer catering for weddings in Bahrain?',
       answer:
-        'We specialise in authentic Iraqi cuisine: charcoal grills, masgouf, quzi, dolma, tashreeb, and a curated selection of traditional Iraqi dishes.',
-    },
-    {
-      question: 'Does Kahramana Baghdad offer catering?',
-      answer:
-        'Yes, Kahramana Baghdad offers catering for events and weddings in Bahrain. Visit the Catering page to request a custom quote.',
-    },
-    {
-      question: 'What are Kahramana Baghdad opening hours?',
-      answer:
-        `${riffa.nameEn}: ${riffa.hours.en}. ${qallali.nameEn}: ${qallali.hours.en}.`,
+        'Yes, Kahramana Baghdad offers premium catering services for weddings, corporate events, and private feasts across Bahrain with a focus on luxury Iraqi hospitality.',
     },
   ]
 }
+
+// ── Menu-specific Schemas ──────────────────────────────────────────────────
+
+/**
+ * Builds a comprehensive Menu schema with sections and top items.
+ */
+export function buildFullMenuSchema(categories: CategoryWithItems[], locale: Locale) {
+  const SITE = GENERAL_CONTACT.website
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Menu',
+    '@id': `${SITE}/${locale === 'en' ? 'en/' : ''}menu#menu`,
+    name: localized(locale, 'منيو كهرمانة بغداد', 'Kahramana Baghdad Menu'),
+    description: localized(
+      locale,
+      'تصفح قائمتنا الكاملة من الأطباق العراقية الأصيلة، المشاوي على الفحم، والحلويات البغدادية.',
+      'Browse our full menu of authentic Iraqi dishes, charcoal grills, and Baghdadi desserts.'
+    ),
+    url: `${SITE}/${locale === 'en' ? 'en/' : ''}menu`,
+    inLanguage: localized(locale, 'ar-BH', 'en-BH'),
+    isPartOf: { '@id': `${SITE}/#organization` },
+    hasMenuSection: categories.map((cat) => ({
+      '@type': 'MenuSection',
+      name: localized(locale, cat.nameAR, cat.nameEN ?? cat.nameAR),
+      hasMenuItem: cat.items.slice(0, 8).map((item) => ({
+        '@type': 'MenuItem',
+        name: localized(locale, item.name.ar, item.name.en),
+        description: localized(locale, item.description?.ar, item.description?.en),
+        offers: {
+          '@type': 'Offer',
+          price: item.fromPrice,
+          priceCurrency: 'BHD',
+          availability: item.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+        },
+        image: item.image
+      }))
+    }))
+  }
+}
+
+/**
+ * Builds a WebPage schema specifically for the Menu page.
+ */
+export function buildMenuWebPageSchema(locale: Locale) {
+  const SITE = GENERAL_CONTACT.website
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${SITE}/${locale === 'en' ? 'en/' : ''}menu#webpage`,
+    url: `${SITE}/${locale === 'en' ? 'en/' : ''}menu`,
+    name: localized(locale, 'قائمة الطعام - كهرمانة بغداد', 'Menu - Kahramana Baghdad'),
+    description: localized(
+      locale,
+      'اكتشف المذاق العراقي الأصيل في البحرين. تصفح قائمتنا الكاملة من المشاوي والمسكوف والقوزي.',
+      'Discover authentic Iraqi taste in Bahrain. Browse our full menu of grills, masgouf, and quzi.'
+    ),
+    breadcrumb: { '@id': `${SITE}/${locale === 'en' ? 'en/' : ''}menu#breadcrumb` },
+    about: { '@id': `${SITE}/#organization` },
+    isPartOf: { '@id': `${SITE}/#website` }
+  }
+}
+

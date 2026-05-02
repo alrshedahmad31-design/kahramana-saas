@@ -110,6 +110,7 @@ export default function FeatureArtifacts() {
 }
 
 function MenuShuffler({ isRTL }: { isRTL: boolean }) {
+  const locale = useLocale()
   const [index, setIndex] = useState(0)
   const items = [
     { name: 'Quzi', nameAr: 'قوزي شيف', image: '/assets/gallery/slow-cooked-lamb-quzi.webp' },
@@ -136,9 +137,10 @@ function MenuShuffler({ isRTL }: { isRTL: boolean }) {
           {/* Real Food Image */}
           <Image
             src={items[index].image}
-            alt={items[index].name}
+            alt={locale === 'ar' ? items[index].nameAr : items[index].name}
             fill
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 768px) 176px, 176px"
+            quality={75}
             className="object-cover"
           />
           

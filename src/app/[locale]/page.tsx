@@ -11,6 +11,8 @@ import {
   buildOrganizationSchema,
   buildFAQSchema,
   buildHomepageFAQ,
+  buildWebSiteSchema,
+  buildNavigationSchema,
 } from '@/lib/seo/schemas'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
@@ -49,6 +51,18 @@ export default async function HomePage() {
         suppressHydrationWarning
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildWebSiteSchema(locale)) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildNavigationSchema(locale)) }}
       />
       <script
         type="application/ld+json"

@@ -38,7 +38,25 @@
       "orderNow": "Menu",
       "branches": "Contact Us",
       "waMessage": "Hello, I'd like to get in touch...",
-      "scrollDown": "Discover More"
+      "scrollDown": "Discover More",
+      "visualAlt": "Cinematic presentation of authentic Iraqi Masgouf and Charcoal Grills at Kahramana Baghdad Bahrain"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": {
+        "bestIraqi": {
+          "q": "What makes Kahramana the best Iraqi restaurant in Bahrain?",
+          "a": "Our commitment to heritage, using traditional charcoal grilling techniques and recipes passed down by generations of Baghdadi chefs, makes us the destination for authentic Iraqi taste in Riffa and Qallali."
+        },
+        "masgouf": {
+          "q": "Do you serve authentic Iraqi Masgouf?",
+          "a": "Yes, we specialize in authentic Iraqi Masgouf fish, prepared using traditional techniques to ensure the smoky flavor of Baghdad in the heart of Bahrain."
+        },
+        "catering": {
+          "q": "Does Kahramana provide catering for weddings in Bahrain?",
+          "a": "Yes, Kahramana Baghdad offers premium catering services for weddings, corporate events, and private feasts across Bahrain with a focus on luxury Iraqi hospitality."
+        }
+      }
     },
     "features": {
       "vault": {
@@ -349,14 +367,14 @@
     "homeLabel": "Home",
     "unavailableDetail": "This item is currently unavailable",
     "relatedTitle": "Related Items",
-    "seoTitle": "Kahramana Baghdad Menu — Iraqi Restaurant in Bahrain",
-    "seoDescription": "Browse the full Kahramana Baghdad menu: charcoal grills, masgouf, quzi, tashreeb, dolma, and authentic Iraqi dishes in Bahrain.",
+    "seoTitle": "Full Iraqi Menu & Prices — Kahramana Baghdad | Bahrain",
+    "seoDescription": "Explore the authentic Kahramana Baghdad menu. Featuring Iraqi Masgouf, Charcoal Grills, Quzi, and Traditional Dishes. View prices and order for delivery in Riffa, Qallali and across Bahrain.",
     "heroEyebrow": "Discover the Flavors of Baghdad",
     "heroTitle": "Our Menu",
-    "heroDescription": "Authentic Iraqi cuisine prepared with care to deliver an unforgettable dining experience",
+    "heroDescription": "Authentic Iraqi cuisine and Baghdadi hospitality, prepared using traditional techniques for a premium dining experience in Bahrain.",
     "heroItemCount": "{count, plural, one {# dish} other {# dishes}}",
     "heroCategoryCount": "{count, plural, one {# category} other {# categories}}",
-    "heroImageAlt": "Kahramana Baghdad menu dishes",
+    "heroImageAlt": "Cinematic display of Kahramana Baghdad authentic Iraqi menu and traditional hospitality",
     "categoryEyebrow": "Category",
     "categorySingleLabel": "1 category",
     "categorySeoTitle": "{category} — Kahramana Baghdad Menu | Iraqi Restaurant Bahrain",
@@ -700,8 +718,8 @@
     }
   },
   "seo": {
-    "homeTitle": "Kahramana Baghdad — Ambassador of Baghdad Flavour in Bahrain | Riffa & Qallali",
-    "homeDescription": "Kahramana Baghdad: ambassador of Baghdad flavour in Bahrain. Charcoal grills, masgouf, quzi, and dolma. Riffa and Qallali branches with delivery; Al-Budayi branch coming soon.",
+    "homeTitle": "Kahramana Baghdad — Best Iraqi Restaurant in Bahrain | Riffa & Qallali",
+    "homeDescription": "Experience authentic Iraqi food in Bahrain at Kahramana Baghdad. Specializing in traditional Masgouf, Charcoal Grills, and Baghdadi hospitality in Riffa and Qallali. Order online or book your table.",
     "contactTitle": "Contact Kahramana Baghdad | Iraqi Restaurant Bahrain",
     "contactDescription": "Call our Riffa or Qallali branch, or message us on WhatsApp for delivery orders and enquiries in Bahrain.",
     "aboutTitle": "Our Story — Kahramana Baghdad | Iraqi Restaurant Bahrain",

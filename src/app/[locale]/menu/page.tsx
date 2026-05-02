@@ -3,8 +3,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { headers } from 'next/headers'
 import { getMenuData, getFeaturedSlugs, type LocaleCode } from '@/lib/menu'
 import MenuPageClient from '@/components/menu/MenuPageClient'
-import { buildMenuBreadcrumb } from '@/lib/seo/schemas'
-import { SITE_URL } from '@/constants/contact'
+import { buildMenuBreadcrumb, buildFullMenuSchema, buildMenuWebPageSchema } from '@/lib/seo/schemas'
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as LocaleCode
@@ -35,20 +34,8 @@ export default async function MenuPage() {
   ])
 
   // Structured Data
-  const menuSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Menu',
-    name: locale === 'ar' ? 'منيو كهرمانة بغداد' : 'Kahramana Baghdad Menu',
-    inLanguage: locale === 'ar' ? 'ar-BH' : 'en-BH',
-    url: `${SITE_URL}/${locale === 'en' ? 'en/' : ''}menu`,
-    isPartOf: { '@id': `${SITE_URL}/#organization` },
-    hasMenuSection: categories.map((c) => ({
-      '@type': 'MenuSection',
-      name: c.nameAR,
-      url: `${SITE_URL}/${locale === 'en' ? 'en/' : ''}menu#section-${c.id}`,
-    })),
-  }
-
+  const fullMenuSchema = buildFullMenuSchema(categories, locale)
+  const webPageSchema = buildMenuWebPageSchema(locale)
   const breadcrumb = buildMenuBreadcrumb(locale)
 
   return (
@@ -57,7 +44,13 @@ export default async function MenuPage() {
         type="application/ld+json"
         suppressHydrationWarning
         nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(fullMenuSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
       />
       <script
         type="application/ld+json"

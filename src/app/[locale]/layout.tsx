@@ -123,6 +123,14 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
       dir={isRTL ? 'rtl' : 'ltr'}
       className={fontVariables}
     >
+      <head>
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+        )}
+        {process.env.NEXT_PUBLIC_CLARITY_ID && (
+          <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
+        )}
+      </head>
       <body className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col">
         <NextIntlClientProvider messages={messages}>
           <Header />

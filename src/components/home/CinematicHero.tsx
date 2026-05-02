@@ -43,9 +43,10 @@ export default function CinematicHero() {
       <div className="absolute inset-0 z-0">
         <Image
           src="/assets/hero/hero-poster.webp"
-          alt=""
+          alt={t('visualAlt')}
           fill
           priority
+          fetchPriority="high"
           className="object-cover scale-110"
           sizes="100vw"
         />

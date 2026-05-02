@@ -42,6 +42,7 @@ export default function MenuItemCard({
             src={item.image ?? '/images/placeholder/dish.jpg'}
             alt={isRTL ? item.name.ar : item.name.en}
             fill
+            priority={index < 8}
             className="
               object-cover
               transition-transform duration-[400ms]

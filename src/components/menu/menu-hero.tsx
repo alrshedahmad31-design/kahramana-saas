@@ -31,9 +31,10 @@ export default function MenuHero({ locale, titleOverride, descriptionOverride }:
       <div className="absolute inset-0 z-[-1]">
         <Image
           src="/assets/hero/hero-menu.webp"
-          alt="Kahramana Baghdad Menu"
+          alt={isRTL ? 'قائمة كهرمانة بغداد - أطباق عراقية أصيلة' : 'Kahramana Baghdad Menu - Authentic Iraqi Dishes'}
           fill
           priority
+          fetchPriority="high"
           className="object-cover object-[center_30%] opacity-60"
           sizes="100vw"
         />
