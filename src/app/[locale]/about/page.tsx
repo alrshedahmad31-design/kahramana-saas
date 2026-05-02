@@ -7,6 +7,7 @@ import StoryHero from '@/components/story/StoryHero'
 import FounderSection from '@/components/story/FounderSection'
 import NarrativeSection from '@/components/story/NarrativeSection'
 import PhilosophySection from '@/components/story/PhilosophySection'
+import { EngineeringOfHeritageSection } from '@/components/about/EngineeringOfHeritageSection'
 import ProtocolSection from '@/components/story/ProtocolSection'
 import ValuesSection from '@/components/story/ValuesSection'
 import MilestonesSection from '@/components/story/MilestonesSection'
@@ -68,6 +69,9 @@ export default async function AboutPage() {
 
       {/* Taste Philosophy */}
       <PhilosophySection isRTL={isAr} />
+
+      {/* Engineering of Heritage */}
+      <EngineeringOfHeritageSection isRTL={isAr} />
 
       {/* Protocol Stack */}
       <ProtocolSection isRTL={isAr} />

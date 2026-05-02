@@ -912,6 +912,49 @@
       "title": "Ready to Experience Baghdad?",
       "desc": "Visit us at either of our branches or order online via WhatsApp.",
       "button": "Order Now"
+    },
+    "engineeringOfHeritage": {
+      "eyebrow": "From Emblem to Table",
+      "title": "The Engineering of Heritage",
+      "intro": "At Kahramana Baghdad, the experience is not shaped by food alone. It is built from Baghdad’s memory, generosity, and unforgettable details.",
+      "paragraph": "Every line in the emblem, every ornament on the vessel, and every golden detail in the identity carries meaning. It is the story of Iraqi hospitality transformed into design, and heritage turned into an experience.",
+      "hotspots": {
+        "face": {
+          "label": "The Face of Welcome",
+          "description": "A calm expression that reflects the grace of Baghdadi hospitality — a presence that does not need to be loud to be remembered."
+        },
+        "vessel": {
+          "label": "The Vessel of Generosity",
+          "description": "The vessel is more than an ornament. It is a symbol of giving, hospitality, and welcoming every guest with dignity."
+        },
+        "hands": {
+          "label": "The Gesture of Care",
+          "description": "The hands represent the heart of the experience: food offered with care, not as a passing meal, but as a gesture of respect."
+        },
+        "ornament": {
+          "label": "The Ornament of Memory",
+          "description": "Inspired by the spirit of Mesopotamia, the ornaments connect the present to the past and give the identity a depth beyond decoration."
+        },
+        "frame": {
+          "label": "The Frame of the Story",
+          "description": "The oval frame holds the story in balance, as if heritage itself is preserved with care and presented with quiet confidence."
+        }
+      },
+      "conceptToTable": {
+        "title": "From Concept to Table",
+        "paragraph": "Just as the emblem begins with measured lines and becomes a clear identity, our experience begins with detail: the choice of ingredients, respect for the recipe, the way food is served, and the feeling that remains after the final bite.",
+        "shortStatement": "We do not only prepare the meal. We design the experience before it reaches the table."
+      },
+      "closing": {
+        "title": "Kahramana Baghdad",
+        "line": "Iraqi hospitality, composed with the spirit of Baghdad.",
+        "lamassuLabel": "Seal of Heritage",
+        "lamassuDescription": "A detail inspired by Mesopotamian heritage, appearing as a quiet mark of the story’s depth."
+      },
+      "altTexts": {
+        "blueprint": "A luxury engineering blueprint of the Kahramana Baghdad emblem, reflecting Iraqi heritage and Baghdadi hospitality",
+        "reality": "Details from the Kahramana Baghdad experience, where Iraqi heritage meets refined hospitality"
+      }
     }
   },
   "kds": {

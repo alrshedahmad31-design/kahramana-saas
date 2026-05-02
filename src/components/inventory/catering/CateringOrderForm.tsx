@@ -2,10 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createCateringOrder } from '@/app/[locale]/dashboard/inventory/catering/actions'
-import type { CateringPackageRow } from '@/lib/supabase/custom-types'
+import { createCateringOrder, updateCateringOrder } from '@/app/[locale]/dashboard/inventory/catering/actions'
+import type { CateringOrderRow, CateringPackageRow } from '@/lib/supabase/custom-types'
 
 interface Props {
+  mode:      'create' | 'edit'
+  order?:    CateringOrderRow
   branchId:  string
   packages:  Pick<CateringPackageRow, 'id' | 'name_ar' | 'name_en' | 'min_guests' | 'max_guests' | 'price_per_person_bhd'>[]
   prefix:    string
@@ -15,29 +17,29 @@ interface Props {
 
 type Step = 1 | 2 | 3
 
-export default function CateringOrderForm({ branchId, packages, prefix, isAr = true, onCancel }: Props) {
+export default function CateringOrderForm({ mode, order, branchId, packages, prefix, isAr = true, onCancel }: Props) {
   const router = useRouter()
   const [step, setStep]         = useState<Step>(1)
   const [error, setError]       = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   // Step 1: Client info
-  const [clientName,  setClientName]  = useState('')
-  const [clientPhone, setClientPhone] = useState('')
-  const [clientEmail, setClientEmail] = useState('')
+  const [clientName,  setClientName]  = useState(order?.client_name ?? '')
+  const [clientPhone, setClientPhone] = useState(order?.client_phone ?? '')
+  const [clientEmail, setClientEmail] = useState(order?.client_email ?? '')
 
   // Step 2: Event details
-  const [eventDate,     setEventDate]     = useState('')
-  const [eventTime,     setEventTime]     = useState('')
-  const [venueName,     setVenueName]     = useState('')
-  const [venueAddress,  setVenueAddress]  = useState('')
+  const [eventDate,     setEventDate]     = useState(order?.event_date ?? '')
+  const [eventTime,     setEventTime]     = useState(order?.event_time ?? '')
+  const [venueName,     setVenueName]     = useState(order?.venue_name ?? '')
+  const [venueAddress,  setVenueAddress]  = useState(order?.venue_address ?? '')
 
   // Step 3: Package & pricing
-  const [packageId,    setPackageId]    = useState('')
-  const [guestCount,   setGuestCount]   = useState(10)
-  const [pricePerPerson, setPricePerPerson] = useState(0)
-  const [depositBhd,   setDepositBhd]   = useState(0)
-  const [notes,        setNotes]        = useState('')
+  const [packageId,    setPackageId]    = useState(order?.package_id ?? '')
+  const [guestCount,   setGuestCount]   = useState(order?.guest_count ?? 10)
+  const [pricePerPerson, setPricePerPerson] = useState(Number(order?.price_per_person_bhd ?? 0))
+  const [depositBhd,   setDepositBhd]   = useState(Number(order?.deposit_bhd ?? 0))
+  const [notes,        setNotes]        = useState(order?.notes ?? '')
 
   function handlePackageChange(pkgId: string) {
     setPackageId(pkgId)
@@ -50,8 +52,7 @@ export default function CateringOrderForm({ branchId, packages, prefix, isAr = t
   function handleSubmit() {
     setError(null)
     startTransition(async () => {
-      const result = await createCateringOrder({
-        branch_id:            branchId,
+      const payload = {
         package_id:           packageId || null,
         event_date:           eventDate,
         event_time:           eventTime || null,
@@ -64,9 +65,19 @@ export default function CateringOrderForm({ branchId, packages, prefix, isAr = t
         price_per_person_bhd: pricePerPerson,
         deposit_bhd:          depositBhd,
         notes:                notes || null,
-      })
-      if (result.error) {
-        setError(result.error)
+      }
+
+      let resultError: string | undefined
+      if (mode === 'edit' && order) {
+        const result = await updateCateringOrder(order.id, payload)
+        resultError = result.error
+      } else {
+        const result = await createCateringOrder({ branch_id: branchId, ...payload })
+        resultError = result.error
+      }
+
+      if (resultError) {
+        setError(resultError)
       } else {
         router.push(`${prefix}/dashboard/inventory/catering`)
       }
@@ -215,7 +226,11 @@ export default function CateringOrderForm({ branchId, packages, prefix, isAr = t
               disabled={isPending || guestCount < 1}
               className="rounded-lg bg-brand-gold px-4 py-2 font-satoshi text-sm font-bold text-brand-black hover:bg-brand-goldLight disabled:opacity-50 transition-colors"
             >
-              {isPending ? (isAr ? 'جارٍ الحفظ...' : 'Saving...') : (isAr ? 'حفظ الطلب' : 'Save Order')}
+              {isPending
+                ? (isAr ? 'جارٍ الحفظ...' : 'Saving...')
+                : mode === 'edit'
+                ? (isAr ? 'حفظ التغييرات' : 'Save Changes')
+                : (isAr ? 'حفظ الطلب' : 'Save Order')}
             </button>
           )}
         </div>

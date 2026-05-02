@@ -7,7 +7,7 @@ import {
   requireDashboardRole,
 } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
-import type { CateringOrderStatus, CateringPackageItem } from '@/lib/supabase/custom-types'
+import type { CateringOrderRow, CateringOrderStatus, CateringPackageItem, CateringPackageRow } from '@/lib/supabase/custom-types'
 
 // ── Role guards ───────────────────────────────────────────────────────────────
 
@@ -307,6 +307,129 @@ export async function deleteCateringOrder(
   if (error) return { error: error.message }
 
   revalidateCatering()
+  return {}
+}
+
+// ── Read helpers (called from server pages) ───────────────────────────────────
+
+export async function getCateringOrder(
+  id: string,
+): Promise<{ order?: CateringOrderRow; error?: string }> {
+  const { error: authError } = await requireCateringRole()
+  if (authError) return { error: authError ?? 'Unauthorized' }
+
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('catering_orders')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error || !data) return { error: 'الطلب غير موجود' }
+  return { order: data as unknown as CateringOrderRow }
+}
+
+export async function getCateringPackage(
+  id: string,
+): Promise<{ package?: CateringPackageRow; error?: string }> {
+  const { error: authError } = await requireCateringRole()
+  if (authError) return { error: authError ?? 'Unauthorized' }
+
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('catering_packages')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error || !data) return { error: 'الباقة غير موجودة' }
+  return { package: data as unknown as CateringPackageRow }
+}
+
+export async function getMenuItemsForSelector(): Promise<{
+  items?: { slug: string; name_ar: string; name_en: string }[]
+  error?: string
+}> {
+  const { error: authError } = await requireCateringRole()
+  if (authError) return { error: authError ?? 'Unauthorized' }
+
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('menu_items_sync')
+    .select('slug, name_ar, name_en')
+    .order('name_ar')
+
+  if (error) return { error: error.message }
+  return { items: data ?? [] }
+}
+
+// ── Update catering order ─────────────────────────────────────────────────────
+
+const UpdateOrderSchema = z.object({
+  id:                   z.string().uuid(),
+  package_id:           z.string().uuid().nullable().optional(),
+  event_date:           z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'event_date must be YYYY-MM-DD'),
+  event_time:           z.string().nullable().optional(),
+  venue_name:           z.string().nullable().optional(),
+  venue_address:        z.string().nullable().optional(),
+  guest_count:          z.number().int().min(1, 'يجب أن يكون عدد الضيوف 1 على الأقل'),
+  client_name:          z.string().min(1, 'اسم العميل مطلوب'),
+  client_phone:         z.string().min(1, 'رقم الهاتف مطلوب'),
+  client_email:         z.string().email().nullable().optional(),
+  price_per_person_bhd: z.number().min(0).default(0),
+  deposit_bhd:          z.number().min(0).default(0),
+  deposit_paid:         z.boolean().optional(),
+  notes:                z.string().nullable().optional(),
+})
+
+export async function updateCateringOrder(
+  orderId: string,
+  formData: {
+    package_id?:          string | null
+    event_date:           string
+    event_time?:          string | null
+    venue_name?:          string | null
+    venue_address?:       string | null
+    guest_count:          number
+    client_name:          string
+    client_phone:         string
+    client_email?:        string | null
+    price_per_person_bhd?: number
+    deposit_bhd?:         number
+    deposit_paid?:        boolean
+    notes?:               string | null
+  },
+): Promise<{ error?: string }> {
+  const { session, error: authError } = await requireCateringRole()
+  if (authError || !session) return { error: authError ?? 'Unauthorized' }
+
+  const parsed = UpdateOrderSchema.safeParse({ id: orderId, ...formData })
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة' }
+  }
+
+  const scope = await fetchCateringOrderBranch(parsed.data.id)
+  if (scope.error) return { error: scope.error }
+  try {
+    assertInventoryWriteAccess(session, scope.branchId)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  const { id, ...rest } = parsed.data
+  const subtotal_bhd = rest.price_per_person_bhd * rest.guest_count
+
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('catering_orders')
+    .update({ ...rest, subtotal_bhd, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  revalidateCatering()
+  revalidatePath(`/ar/dashboard/inventory/catering/${id}`)
+  revalidatePath(`/en/dashboard/inventory/catering/${id}`)
   return {}
 }
 
