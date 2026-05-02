@@ -2,6 +2,7 @@
 
 import { Search } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import type { CategoryWithItems } from '@/lib/menu'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -60,10 +61,12 @@ export default function StickyFilterBar({
     }
   }
 
+  const t = useTranslations('menu')
+
   return (
     <nav
       role="tablist"
-      aria-label={isRTL ? 'تصفية القائمة' : 'Filter menu'}
+      aria-label={t('filter.ariaLabel')}
       className="sticky top-20 md:top-24 z-40 h-[64px] flex items-center
                  bg-brand-black/90 backdrop-blur-xl border-b border-brand-surface2/50"
     >
@@ -99,7 +102,7 @@ export default function StickyFilterBar({
                 : 'text-brand-muted hover:text-brand-text'
             }`}
           >
-            {isRTL ? 'الكل' : 'All'}
+            {t('allCategories')}
             {activeCategory === 'all' && (
               <motion.div 
                 layoutId="active-tab"
@@ -120,7 +123,7 @@ export default function StickyFilterBar({
                   : 'text-brand-muted hover:text-brand-text'
               }`}
             >
-              {isRTL ? cat.nameAR : cat.nameEN}
+              {t(`categoryNames.${cat.id}` as Parameters<typeof t>[0])}
               {activeCategory === cat.id && (
                 <motion.div 
                   layoutId="active-tab"
@@ -153,7 +156,7 @@ export default function StickyFilterBar({
           className="w-10 h-10 flex items-center justify-center
                      text-brand-muted hover:text-brand-gold
                      transition-all duration-[250ms] rounded-full hover:bg-brand-surface2"
-          aria-label={isRTL ? 'بحث في القائمة' : 'Search Menu'}
+          aria-label={t('filter.search')}
         >
           <Search size={20} />
         </button>

@@ -387,7 +387,39 @@
     "resultsCount": "{count}",
     "resultsLabel": "عرض {count} من {total}",
     "clearSearch": "مسح البحث",
-    "itemCountSuffix": " صنف"
+    "itemCountSuffix": " صنف",
+    "categories_intro": {
+      "title": "أفضل المأكولات العراقية في البحرين",
+      "description": "تذوق أصالة المطبخ البغدادي مع أكثر من 168 صنفاً مختاراً بعناية. من المسكوف العراقي الشهير والمشاوي المشكلة إلى القوزي والفطور البغدادي، نقدم لكم تجربة طعام فريدة في فروعنا بالرفاع وقلالي. كهرمانة بغداد هي وجهتكم الأولى للأكل العراقي الأصيل في مملكة البحرين."
+    },
+    "filter": {
+      "ariaLabel": "تصفية القائمة",
+      "search": "بحث في القائمة"
+    },
+    "sections": {
+      "items": "صنف"
+    },
+    "empty": "لا توجد نتائج",
+    "noMatches": "لا يوجد طبق يطابق \"{query}\"",
+    "tryAnother": "جرّب تصنيفاً آخر أو ابحث عن كلمة أخرى",
+    "categoryNames": {
+      "kahramana-signature-selection": "مختارات كهرمانة",
+      "the-heritage-breakfast": "الفطور البغدادي",
+      "the-cold-mezza-garden": "المقبلات الباردة",
+      "the-hot-mezza-garden": "المقبلات الساخنة",
+      "garden-fresh-salads": "السلطات",
+      "warm-and-comforting-soups": "الشوربات",
+      "baghdadi-culinary-masterpieces": "الأطباق الرئيسية",
+      "the-authentic-stew-house": "المرق العراقي",
+      "the-fatteh-collection": "الفتّة",
+      "baghdadi-tandoor-selection": "المشويات والتنور",
+      "the-shawarma-suite-kaas": "الشاورما العراقية",
+      "artisan-stone-oven-pizza": "بيتزا كهرمانة",
+      "traditional-sandwiches": "السندويتشات",
+      "the-sweet-finale": "الحلويات",
+      "fresh-signature-juices": "العصائر الطازجة",
+      "the-heritage-tea-and-coffee": "الشاي والقهوة"
+    }
   },
   "cart": {
     "title": "سلة الطلبات",
@@ -797,7 +829,7 @@
       "m2": {
         "year": "2021",
         "title": "عائلة أكبر",
-        "desc": "يفتح فرعنا الثاني في المحرق، ليقرّب نكهات بغداد من مجتمعات أوسع."
+        "desc": "يفتح فرعنا الثاني في قلالي، محافظة المحرق، ليقرّب نكهات بغداد من مجتمعات أوسع."
       },
       "m3": {
         "year": "2024",

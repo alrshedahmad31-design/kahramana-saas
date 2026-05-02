@@ -15,8 +15,7 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import ConditionalFooter from '@/components/layout/ConditionalFooter'
 import { CookieBanner } from '@/components/layout/CookieBanner'
-import dynamic from 'next/dynamic'
-const CartDrawer = dynamic(() => import('@/components/cart/CartDrawer'))
+import CartDrawer from '@/components/cart/CartDrawerDynamic'
 import '../globals.css'
 
 // ── Arabic fonts via next/font/google (self-host when files available) ────────
@@ -111,7 +110,7 @@ export async function generateMetadata(
       canonical: `${BASE}/${locale}`,
     },
     openGraph: {
-      type: "restaurant.restaurant" as "website",
+      type: "website",
       locale: isAr ? "ar_BH" : "en_BH",
       alternateLocale: isAr ? "en_BH" : "ar_BH",
       siteName: isAr ? "كهرمانة بغداد" : "Kahramana Baghdad",
@@ -227,7 +226,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         <link rel="dns-prefetch" href="https://wa.me" />
       </head>
       <body className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col">
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <Header />
           <main className="flex-1 pt-20 md:pt-24">
             {children}

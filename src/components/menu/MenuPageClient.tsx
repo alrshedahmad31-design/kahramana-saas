@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import type { CategoryWithItems } from '@/lib/menu'
 import MenuHero from './menu-hero'
 import StickyFilterBar from './StickyFilterBar'
@@ -64,19 +65,19 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const t = useTranslations('menu')
+
   return (
     <main className="bg-brand-black min-h-screen text-brand-text">
-      <MenuHero locale={locale} />
+      <MenuHero />
 
       {/* SEO-Rich Intro Section (Phase 6) */}
       <section className="max-w-4xl mx-auto px-6 py-12 text-center">
         <h2 className={`text-2xl md:text-3xl font-black text-brand-text mb-4 ${isAr ? 'font-cairo' : 'font-editorial'}`}>
-          {isAr ? 'أفضل المأكولات العراقية في البحرين' : 'Best Iraqi Cuisine in Bahrain'}
+          {t('categories_intro.title')}
         </h2>
         <p className={`text-brand-muted leading-relaxed ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-          {isAr 
-            ? 'تذوق أصالة المطبخ البغدادي مع أكثر من 168 صنفاً مختاراً بعناية. من المسكوف العراقي الشهير والمشاوي المشكلة إلى القوزي والفطور البغدادي، نقدم لكم تجربة طعام فريدة في فروعنا بالرفاع وقلالي. كهرمانة بغداد هي وجهتكم الأولى للأكل العراقي الأصيل في مملكة البحرين.'
-            : 'Experience the authenticity of Baghdadi cuisine with over 168 carefully selected items. From the famous Iraqi Masgouf and mixed grills to Quzi and Baghdadi breakfast, we offer a unique dining experience at our Riffa and Qalali branches. Kahramana Baghdad is your premier destination for authentic Iraqi food in the Kingdom of Bahrain.'}
+          {t('categories_intro.description')}
         </p>
       </section>
 

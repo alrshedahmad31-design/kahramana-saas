@@ -112,7 +112,6 @@ export default async function MenuCategoryPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <MenuHero
-        locale={locale}
         titleOverride={isRTL ? category.name.ar : category.name.en}
         descriptionOverride={
           category.description

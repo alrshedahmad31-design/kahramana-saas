@@ -123,7 +123,11 @@
       "WebFetch(domain:kahramana.vercel.app)",
       "Bash(grep -rn \"ssr: false\" src/ --include=\"*.tsx\" --include=\"*.ts\")",
       "Bash(grep -rn \"Muharraq\" src/app/ --include=\"*.tsx\")",
-      "Bash(grep -rn \"index: false\" src/ --include=\"*.tsx\" --include=\"*.ts\")"
+      "Bash(grep -rn \"index: false\" src/ --include=\"*.tsx\" --include=\"*.ts\")",
+      "Bash(grep -rn \"cityAr.*المحرق\" src/constants/contact.ts)",
+      "Bash(grep -n \"governorate\" src/constants/contact.ts)",
+      "Bash(grep -n \"قلالي\\\\|Qallali\" src/components/story/BranchesSection.tsx)",
+      "Bash(grep -n \"97317131\" src/constants/contact.ts)"
     ]
   }
 }

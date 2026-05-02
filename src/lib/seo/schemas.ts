@@ -73,7 +73,9 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
       '@type': 'PostalAddress',
       streetAddress:    localized(locale, branch.addressAr, branch.addressEn),
       addressLocality:  localized(locale, branch.cityAr,    branch.cityEn),
-      addressRegion:    localized(locale, branch.cityAr,    branch.cityEn),
+      addressRegion:    branch.governorateEn
+        ? localized(locale, branch.governorateAr ?? branch.cityAr, branch.governorateEn)
+        : localized(locale, branch.cityAr, branch.cityEn),
       addressCountry:   'BH',
     },
     hasMap: branch.mapsUrl ?? undefined,
@@ -197,7 +199,9 @@ export function buildOrganizationSchema(locale: Locale) {
       '@type': 'PostalAddress',
       streetAddress:   localized(locale, primaryBranch.addressAr,  primaryBranch.addressEn),
       addressLocality: localized(locale, primaryBranch.cityAr,     primaryBranch.cityEn),
-      addressRegion:   localized(locale, primaryBranch.cityAr,     primaryBranch.cityEn),
+      addressRegion:   primaryBranch.governorateEn
+        ? localized(locale, primaryBranch.governorateAr ?? primaryBranch.cityAr, primaryBranch.governorateEn)
+        : localized(locale, primaryBranch.cityAr, primaryBranch.cityEn),
       addressCountry:  'BH',
     },
     logo: `${SITE}/assets/brand/logo.svg`,

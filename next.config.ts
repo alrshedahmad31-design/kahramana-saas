@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next'
 import createNextIntlPlugin from 'next-intl/plugin'
 
-const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
+const withNextIntl = createNextIntlPlugin()
 
 // CSP is injected per-request with a nonce in src/middleware.ts
 const securityHeaders = [
@@ -44,12 +44,6 @@ const nextConfig: NextConfig = {
         has: [{ type: 'host', value: 'www.kahramanat.com' }],
         destination: 'https://kahramanat.com/:path*',
         permanent: true,
-      },
-      // Root → default locale (Arabic)
-      {
-        source: '/',
-        destination: '/ar',
-        permanent: false,
       },
     ]
   },

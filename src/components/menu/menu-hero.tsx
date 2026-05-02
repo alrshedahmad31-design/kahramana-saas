@@ -1,17 +1,16 @@
 'use client'
-
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface MenuHeroProps {
-  locale: string
   titleOverride?: string
   descriptionOverride?: string
 }
 
-export default function MenuHero({ locale, titleOverride, descriptionOverride }: MenuHeroProps) {
-  const isRTL = locale === 'ar'
+export default function MenuHero({ titleOverride, descriptionOverride }: MenuHeroProps) {
+  const t = useTranslations('menu')
 
   return (
     <section className="relative h-[55vh] md:h-[60vh] lg:h-[65vh] w-full overflow-hidden bg-brand-black">
@@ -23,6 +22,7 @@ export default function MenuHero({ locale, titleOverride, descriptionOverride }:
         playsInline
         className="absolute inset-0 w-full h-full object-cover object-[center_30%] opacity-60"
         poster="/assets/hero/hero-menu.webp"
+        aria-label={t('heroImageAlt')}
       >
         <source src="/assets/hero/hero-menu.mp4" type="video/mp4" />
       </video>
@@ -31,7 +31,7 @@ export default function MenuHero({ locale, titleOverride, descriptionOverride }:
       <div className="absolute inset-0 z-[-1]">
         <Image
           src="/assets/hero/hero-menu.webp"
-          alt={isRTL ? 'قائمة كهرمانة بغداد - أطباق عراقية أصيلة' : 'Kahramana Baghdad Menu - Authentic Iraqi Dishes'}
+          alt={t('heroImageAlt')}
           fill
           priority
           fetchPriority="high"
@@ -51,7 +51,7 @@ export default function MenuHero({ locale, titleOverride, descriptionOverride }:
           transition={{ duration: 0.6, delay: 0.1 }}
           className="font-almarai text-brand-muted text-xs tracking-[0.2em] uppercase mb-4"
         >
-          {isRTL ? 'اكتشف نكهات بغداد' : 'Discover the flavors of Baghdad'}
+          {t('heroEyebrow')}
         </motion.p>
 
         <motion.h1
@@ -60,7 +60,7 @@ export default function MenuHero({ locale, titleOverride, descriptionOverride }:
           transition={{ duration: 0.6, delay: 0.2 }}
           className="font-cairo font-black text-brand-text text-[clamp(2.5rem,6vw,4rem)] leading-tight"
         >
-          {titleOverride || (isRTL ? 'قائمة كهرمانة' : 'Kahramana Menu')}
+          {titleOverride || t('heroTitle')}
         </motion.h1>
 
         <motion.p
@@ -69,9 +69,7 @@ export default function MenuHero({ locale, titleOverride, descriptionOverride }:
           transition={{ duration: 0.6, delay: 0.3 }}
           className="font-almarai text-brand-muted text-base max-w-md mx-auto mt-4 leading-relaxed"
         >
-          {descriptionOverride || (isRTL 
-            ? 'أطباق عراقية أصيلة بحرص لتقديم تجربة لا تُنسى' 
-            : 'Authentic Iraqi dishes carefully prepared to provide an unforgettable experience')}
+          {descriptionOverride || t('heroDescription')}
         </motion.p>
 
         <motion.div
@@ -80,9 +78,9 @@ export default function MenuHero({ locale, titleOverride, descriptionOverride }:
           transition={{ duration: 1, delay: 0.8 }}
           className="mt-8 flex items-center gap-2 font-satoshi tabular-nums text-brand-gold text-sm"
         >
-          <span>168 {isRTL ? 'صنف' : 'Items'}</span>
+          <span>{t('heroItemCount', { count: 168 })}</span>
           <span className="text-brand-muted">·</span>
-          <span>16 {isRTL ? 'تصنيف' : 'Categories'}</span>
+          <span>{t('heroCategoryCount', { count: 16 })}</span>
         </motion.div>
 
         {/* Scroll Cue */}

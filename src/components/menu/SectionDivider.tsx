@@ -1,4 +1,5 @@
 'use client'
+import { useTranslations } from 'next-intl'
 
 interface SectionDividerProps {
   title: string
@@ -8,6 +9,7 @@ interface SectionDividerProps {
 
 export function SectionDivider({ title, count, locale }: SectionDividerProps) {
   const isRTL = locale === 'ar'
+  const t = useTranslations('menu')
   
   return (
     <div className="ps-4 pe-4 pt-10 pb-4" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -19,7 +21,7 @@ export function SectionDivider({ title, count, locale }: SectionDividerProps) {
           </h2>
         </div>
         <span className="font-satoshi text-brand-muted text-sm tabular-nums">
-          {count} {isRTL ? 'صنف' : 'Items'}
+          {count} {t('sections.items')}
         </span>
       </div>
       <div className="border-b border-brand-surface-2" />

@@ -387,7 +387,39 @@
     "resultsCount": "{count}",
     "resultsLabel": "Showing {count} of {total}",
     "clearSearch": "Clear search",
-    "itemCountSuffix": " items"
+    "itemCountSuffix": " items",
+    "categories_intro": {
+      "title": "Best Iraqi Cuisine in Bahrain",
+      "description": "Experience the authenticity of Baghdadi cuisine with over 168 carefully selected items. From the famous Iraqi Masgouf and mixed grills to Quzi and Baghdadi breakfast, we offer a unique dining experience at our Riffa and Qalali branches. Kahramana Baghdad is your premier destination for authentic Iraqi food in the Kingdom of Bahrain."
+    },
+    "filter": {
+      "ariaLabel": "Filter menu",
+      "search": "Search Menu"
+    },
+    "sections": {
+      "items": "Items"
+    },
+    "empty": "No results found",
+    "noMatches": "No dishes match \"{query}\"",
+    "tryAnother": "Try another category or search for something else",
+    "categoryNames": {
+      "kahramana-signature-selection": "Kahramana Selections",
+      "the-heritage-breakfast": "Baghdadi Breakfast",
+      "the-cold-mezza-garden": "Cold Mezza",
+      "the-hot-mezza-garden": "Hot Mezza",
+      "garden-fresh-salads": "Salads",
+      "warm-and-comforting-soups": "Soups",
+      "baghdadi-culinary-masterpieces": "Main Courses",
+      "the-authentic-stew-house": "Iraqi Stews",
+      "the-fatteh-collection": "Fatteh",
+      "baghdadi-tandoor-selection": "Grills & Tandoor",
+      "the-shawarma-suite-kaas": "Iraqi Shawarma",
+      "artisan-stone-oven-pizza": "Kahramana Pizza",
+      "traditional-sandwiches": "Sandwiches",
+      "the-sweet-finale": "Desserts",
+      "fresh-signature-juices": "Fresh Juices",
+      "the-heritage-tea-and-coffee": "Tea & Coffee"
+    }
   },
   "cart": {
     "title": "Your Cart",
@@ -797,7 +829,7 @@
       "m2": {
         "year": "2021",
         "title": "Growing Family",
-        "desc": "Our second branch opens in Muharraq, bringing the flavors of Baghdad closer to more communities."
+        "desc": "Our second branch opens in Qallali, Muharraq, bringing the flavors of Baghdad closer to more communities."
       },
       "m3": {
         "year": "2024",

@@ -1,66 +1,106 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 46
+**Session ID**: 47
 **Date**: 2026-05-02
-**Focus**: Hero Media Optimization — Video Relocation, Static Poster LCP, GSAP Build Fixes, i18n Encoding Hardening
+**Focus**: SEO / GEO / AEO Pre-Launch Fixes + Branch Data Consistency
 
 ---
 
 ## Accomplishments
 
-### 1. Hero Video Relocation
-- **Homepage (`/`)**: Removed cinematic background video (`hero-menu.mp4`) and replaced it with a high-performance static poster image (`hero-poster.webp`).
-- **Menu Page (`/menu`)**: Relocated the cinematic background video to the menu hero section to create an immersive start to the ordering flow.
-- **Optimization**: Significant LCP improvement for the homepage by moving away from heavy video loads on the entry page.
+### 1. Hero SSR Fix
+- Removed `'use client'` from `HeroWrapper.tsx` — now a proper Server Component.
+- `ssr: true` was already set in the dynamic import (no `ssr: false` existed).
+- H1 is definitively in the SSR HTML before JS runs.
 
-### 2. GSAP Stability & Build Fixes
-- **Ref Standardisation**: Updated all GSAP-powered components to use `containerRef.current || undefined` in `gsap.context()` scopes.
-- **Components Fixed**: `CinematicHero.tsx`, `ProtocolStack.tsx`, `ContactHero.tsx`, `BranchHero.tsx`.
-- **Error Resolution**: Fixed "Expression expected" and "white screen" issues caused by inconsistent ref access in the Turbopack dev server.
+### 2. Branch Data — Single Source of Truth
+- Added `governorateAr?: string` and `governorateEn?: string` fields to `Branch` interface in `src/constants/contact.ts`.
+- **Qallali:** Fixed `cityAr: 'المحرق'` → `cityAr: 'قلالي'` (was inconsistent with `cityEn: 'Qallali'`).
+- Added `governorateAr: 'محافظة المحرق', governorateEn: 'Muharraq Governorate'` for Qallali.
+- Added `governorateAr: 'المحافظة الجنوبية', governorateEn: 'Southern Governorate'` for Riffa.
+- Fixed `src/lib/constants/branches.ts:30` — was hardcoding `city_en: 'Muharraq'` instead of using the central source.
 
-### 3. i18n & Encoding Hardening
-- **Translation Migration**: Moved all hardcoded Arabic strings from `CinematicHero.tsx` to `messages/ar.json` and `messages/en.json`.
-- **Encoding Fix**: Resolved syntax errors triggered by the bundler when encountering raw non-ASCII characters in certain GSAP/React contexts.
-- **WhatsApp Link**: Dynamic WhatsApp link generation now uses `DEFAULT_BRANCH.waLink` and translated messages.
+### 3. Schema Accuracy
+- Updated `schemas.ts → buildBranchLocalBusiness`: `addressRegion` now uses `branch.governorateEn/Ar` when available (Muharraq Governorate / Southern Governorate) instead of incorrectly reusing the city name.
+- Updated `buildOrganizationSchema` with the same addressRegion logic.
+- `RestaurantSchema.tsx` was already correctly using `BRANCH_LIST` for phones — no change needed.
 
-### 4. Verification & QA
-- **Build Verification**: `npm run build` completed successfully (845+ pages, 0 errors, 0 warnings).
-- **Type Safety**: `tsc --noEmit` confirmed 0 TypeScript errors after refactoring.
-- **RTL Audit**: Zero violations of directional classes (`pl-`, `pr-`, `ml-`, `mr-`) in new code.
-- **Design Tokens**: Verified zero raw hex colors in components; all use design tokens.
+### 4. Branch Naming Consistency
+- **BranchesSection.tsx**: Fixed confusing title `'المحرق — قلالي'` / `'qallali — Qallali'` → `'قلالي — محافظة المحرق'` / `'Qallali — Muharraq'`.
+- **terms/page.tsx**: Fixed "الرفاع والمحرق" → "الرفاع وقلالي" and "Riffa and Muharraq" → "Riffa and Qallali".
+- **messages/ar.json**: Milestone text "في المحرق" → "في قلالي، محافظة المحرق".
+- **messages/en.json**: Milestone text "in Muharraq" → "in Qallali, Muharraq".
+
+### 5. Legal Pages — SEO noindex
+- `privacy/page.tsx`: Added `robots: { index: false, follow: true }` + correct canonical `${SITE_URL}/${locale}/privacy` + full-URL alternates.
+- `terms/page.tsx`: Same treatment.
+
+### 6. Hreflang Deduplication
+- Removed duplicate `languages` block from `layout.tsx → generateMetadata()`.
+- The layout's metadata was generating wrong root-only hreflang (`/ar`, `/en`) that conflicted with path-aware JSX `<link>` tags.
+- JSX links remain and correctly generate page-specific hreflang.
+
+### 7. llms.txt Expansion
+- Expanded from 25 lines to ~115 lines.
+- Added: branch data with phones, pages table, menu categories, contact info, AI instructions, and a "Branch Naming Clarification" section explaining Qallali (commercial) vs Muharraq (governorate).
+
+### 8. Sitemap — No Changes Needed
+- Already correct: `filter(b => b.status === 'active')` excludes Al-Badi', legal pages at priority 0.20.
 
 ---
 
 ## Modified Files
 
-**Modified:**
-- `messages/ar.json` — Added `waMessage` to `home.hero`.
-- `messages/en.json` — Added `waMessage` to `home.hero`.
-- `src/components/home/CinematicHero.tsx` — Full refactor (video → poster, GSAP stable, i18n).
-- `src/components/menu/menu-hero.tsx` — Added background video + poster fallback.
-- `src/components/home/ProtocolStack.tsx` — Fixed GSAP scope ref.
-- `src/components/contact/ContactHero.tsx` — Fixed GSAP scope ref.
-- `src/components/branches/BranchHero.tsx` — Fixed GSAP scope ref.
-- `.agent/phase-state.json` — Updated session status.
+- `src/constants/contact.ts` — Added governorateAr/En, fixed qallali cityAr
+- `src/lib/constants/branches.ts` — city_en now uses CONTACT_BRANCHES.qallali.cityEn
+- `src/lib/seo/schemas.ts` — addressRegion uses governorate fields
+- `src/components/home/HeroWrapper.tsx` — removed 'use client'
+- `src/components/story/BranchesSection.tsx` — fixed Qallali card title
+- `src/app/[locale]/terms/page.tsx` — robots noindex, canonical, branch name fix
+- `src/app/[locale]/privacy/page.tsx` — robots noindex, canonical, alternates fix
+- `src/app/[locale]/layout.tsx` — removed wrong languages from generateMetadata alternates
+- `messages/en.json` — milestone text fix
+- `messages/ar.json` — milestone text fix
+- `public/llms.txt` — expanded with structured content
 
 ---
 
 ## Decisions Made
 
-1. **Static Poster for Home Hero**: Prioritized LCP and mobile performance over cinematic video for the main landing page, moving the video to the menu page where the user is already "engaged".
-2. **`containerRef.current || undefined`**: Adopted this pattern globally for GSAP contexts to ensure stability in the Next.js Turbopack dev environment.
-3. **i18n for all Hero Text**: Decided to fully translate the hero section to prevent any potential character encoding issues in the build pipeline.
+1. **Commercial branch name is final: "فرع قلالي / Qallali Branch"** — applied across all files.
+2. **Muharraq = administrative governorate only** — allowed in `addressRegion` and address text only.
+3. **governorateAr/En fields added** to Branch interface so Schema can distinguish city vs. governorate cleanly.
+4. **Al-Badi'** remains `status: 'planned'` — not included in active branch schemas or sitemap.
+5. **BranchesSection card** shows `'قلالي — محافظة المحرق'` (branch name first, governorate as context).
 
 ---
 
 ## Pending / Next Steps
 
-1. **Commit & Push**: All changes are verified locally and build-clean.
-2. **Visual Verification**: Final manual walkthrough of the mobile layout on a real device to confirm video autoplay behavior in the menu page.
-3. **WhatsApp Link Test**: Click the "Contact Us" button in the hero to ensure the WhatsApp message encodes correctly in both locales.
+1. **Open Question**: Is `'قلالي — محافظة المحرق'` the preferred BranchCard format, or should it be just `'قلالي'`?
+2. **Commit & Push**: All changes verified locally. `npm run build` clean (856 pages, 0 errors).
+3. **Google Search Console**: Submit sitemap after deployment to trigger re-crawl.
+4. **Schema Testing**: Run updated JSON-LD through Google Rich Results Test post-deploy.
 
 ---
 
 ## Blockers
 
-- None.
+- None. Build is clean.
+
+---
+
+## Verification Results
+
+| Check | Result |
+|-------|--------|
+| `npm run build` | ✅ 856 pages, 0 errors |
+| `npx tsc --noEmit` | ✅ Clean |
+| "Muharraq Branch" anywhere | ✅ Zero |
+| "فرع المحرق" anywhere | ✅ Zero |
+| Riffa phone | ✅ +97317131413 (unique) |
+| Qallali phone | ✅ +97317131213 (unique) |
+| Al-Badi' status | ✅ planned (not active) |
+| Legal pages noindex | ✅ privacy + terms |
+| Duplicate hreflang | ✅ Eliminated |
+| llms.txt | ✅ Expanded with AI instructions |

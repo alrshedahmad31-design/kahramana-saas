@@ -18,8 +18,12 @@ export interface Branch {
   nameEn: string
   addressAr: string
   addressEn: string
+  /** Commercial district / area name — use for display and schema:addressLocality */
   cityAr: string
   cityEn: string
+  /** Administrative governorate — use for schema:addressRegion only */
+  governorateAr?: string
+  governorateEn?: string
   phone: string
   whatsapp: string
   waLink: string
@@ -48,6 +52,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     addressEn: 'Al-Hijiyat Area, Riffa, Bahrain',
     cityAr: 'الرفاع',
     cityEn: 'Riffa',
+    governorateAr: 'المحافظة الجنوبية',
+    governorateEn: 'Southern Governorate',
     phone: '+97317131413',
     whatsapp: '+97317131413',
     waLink: 'https://wa.me/97317131413',
@@ -71,8 +77,10 @@ export const BRANCHES: Record<BranchId, Branch> = {
     nameEn: 'Qallali Branch',
     addressAr: 'الشارع الرئيسي، قلالي، البحرين',
     addressEn: 'Main Street, Qallali, Bahrain',
-    cityAr: 'المحرق',
+    cityAr: 'قلالي',
     cityEn: 'Qallali',
+    governorateAr: 'محافظة المحرق',
+    governorateEn: 'Muharraq Governorate',
     phone: '+97317131213',
     whatsapp: '+97317131213',
     waLink: 'https://wa.me/97317131213',

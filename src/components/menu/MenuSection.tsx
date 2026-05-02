@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import type { CategoryWithItems } from '@/lib/menu'
 import { SectionDivider } from './SectionDivider'
 import MenuGrid from './menu-grid'
@@ -11,6 +12,7 @@ interface MenuSectionProps {
 }
 
 export default function MenuSection({ category, locale, id }: MenuSectionProps) {
+  const t = useTranslations('menu')
   if (category.items.length === 0) return null
 
   return (
@@ -21,7 +23,7 @@ export default function MenuSection({ category, locale, id }: MenuSectionProps) 
       className="scroll-mt-[136px] pt-2 pb-8"
     >
       <SectionDivider 
-        title={category.nameAR} 
+        title={t(`categoryNames.${category.id}` as Parameters<typeof t>[0])} 
         count={category.items.length} 
         locale={locale} 
       />
