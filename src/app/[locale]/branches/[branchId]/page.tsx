@@ -25,6 +25,8 @@ export function generateStaticParams() {
 
 type Props = { params: Promise<{ locale: string; branchId: string }> }
 
+import { SITE_URL } from '@/constants/contact'
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, branchId } = await params
   const branch = BRANCHES[branchId as BranchId]
@@ -32,28 +34,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const isAr  = locale === 'ar'
   const name  = isAr ? branch.nameAr  : branch.nameEn
+  const BASE  = SITE_URL
+  const url   = `${BASE}/${locale}/branches/${branchId}`
+
   const title = isAr
-    ? `${name} — كهرمانة بغداد | ساعات العمل، الموقع، الطلب`
-    : `${name} — Kahramana Baghdad | Hours, Location & Order`
+    ? `${name} — كهرمانة بغداد | ساعات العمل والموقع والطلب في البحرين`
+    : `${name} — Kahramana Baghdad | Hours, Location & Ordering in Bahrain`
   const description = isAr
-    ? `${name}: ${branch.addressAr}. أوقات العمل: ${branch.hours.ar}. اطلب عبر واتساب أو تصفح المنيو.`
-    : `${name}: ${branch.addressEn}. Hours: ${branch.hours.en}. Order via WhatsApp or browse the menu.`
+    ? `${name} مطعم كهرمانة بغداد في ${branch.cityAr}: ${branch.addressAr}. أوقات العمل: ${branch.hours.ar}. تواصل معنا واطلب الآن.`
+    : `${name} Kahramana Baghdad Restaurant in ${branch.cityEn}: ${branch.addressEn}. Hours: ${branch.hours.en}. Contact us and order now.`
 
   return {
     title,
     description,
     alternates: {
-      canonical: isAr ? `/branches/${branchId}` : `/en/branches/${branchId}`,
+      canonical: url,
       languages: {
-        'x-default': `/branches/${branchId}`,
-        ar:          `/branches/${branchId}`,
-        en:          `/en/branches/${branchId}`,
+        'ar': `${BASE}/ar/branches/${branchId}`,
+        'en': `${BASE}/en/branches/${branchId}`,
+        'x-default': `${BASE}/ar/branches/${branchId}`,
       },
     },
     openGraph: {
       title,
       description,
-      images: [{ url: `/images/branches/${branchId}.jpg`, width: 1200, height: 630 }],
+      url,
+      images: [{ url: `${BASE}/assets/hero/hero-branches.webp`, width: 1200, height: 630 }],
     },
   }
 }

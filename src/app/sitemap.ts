@@ -1,129 +1,88 @@
 import type { MetadataRoute } from 'next'
-import { GENERAL_CONTACT, BRANCH_LIST } from '@/constants/contact'
-import { getCategorySlugs, getItemSlugs } from '@/lib/menu'
+import { BRANCH_LIST, SITE_URL } from '@/constants/contact'
+import { getMenuCategories, getAllMenuItems } from '@/lib/menu'
 
-const BASE_URL = GENERAL_CONTACT.website
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function url(path: string): string {
-  return `${BASE_URL}${path}`
-}
-
-function alternates(arPath: string, enPath: string) {
-  return {
-    languages: {
-      'x-default': url(arPath),
-      ar:          url(arPath),
-      en:          url(enPath),
-    },
-  }
-}
-
-// ── Sitemap ───────────────────────────────────────────────────────────────────
+const BASE_URL = SITE_URL
+const LOCALES = ['ar', 'en'] as const
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()
 
-  // ── Static pages ──────────────────────────────────────────────────────────
-
-  const staticPages: MetadataRoute.Sitemap = [
-    {
-      url:             url('/'),
-      lastModified:    now,
-      changeFrequency: 'weekly',
-      priority:        1.0,
-      alternates:      alternates('/', '/en'),
-    },
-    {
-      url:             url('/menu'),
-      lastModified:    now,
-      changeFrequency: 'weekly',
-      priority:        0.9,
-      alternates:      alternates('/menu', '/en/menu'),
-    },
-    {
-      url:             url('/about'),
-      lastModified:    now,
-      changeFrequency: 'monthly',
-      priority:        0.6,
-      alternates:      alternates('/about', '/en/about'),
-    },
-    {
-      url:             url('/branches'),
-      lastModified:    now,
-      changeFrequency: 'monthly',
-      priority:        0.7,
-      alternates:      alternates('/branches', '/en/branches'),
-    },
-    {
-      url:             url('/contact'),
-      lastModified:    now,
-      changeFrequency: 'yearly',
-      priority:        0.5,
-      alternates:      alternates('/contact', '/en/contact'),
-    },
-    {
-      url:             url('/catering'),
-      lastModified:    now,
-      changeFrequency: 'monthly',
-      priority:        0.7,
-      alternates:      alternates('/catering', '/en/catering'),
-    },
-    {
-      url:             url('/privacy'),
-      lastModified:    now,
-      changeFrequency: 'yearly',
-      priority:        0.2,
-      alternates:      alternates('/privacy', '/en/privacy'),
-    },
-    {
-      url:             url('/terms'),
-      lastModified:    now,
-      changeFrequency: 'yearly',
-      priority:        0.2,
-      alternates:      alternates('/terms', '/en/terms'),
-    },
-    {
-      url:             url('/refund-policy'),
-      lastModified:    now,
-      changeFrequency: 'yearly',
-      priority:        0.2,
-      alternates:      alternates('/refund-policy', '/en/refund-policy'),
-    },
+  const staticRoutes = [
+    { path: '',          priority: 1.0,  changeFrequency: 'weekly' as const },
+    { path: '/menu',     priority: 0.95, changeFrequency: 'weekly' as const },
+    { path: '/branches', priority: 0.85, changeFrequency: 'monthly' as const },
+    { path: '/about',    priority: 0.75, changeFrequency: 'monthly' as const },
+    { path: '/contact',  priority: 0.75, changeFrequency: 'monthly' as const },
+    { path: '/catering', priority: 0.80, changeFrequency: 'monthly' as const },
+    { path: '/privacy',  priority: 0.20, changeFrequency: 'yearly' as const },
+    { path: '/terms',    priority: 0.20, changeFrequency: 'yearly' as const },
+    { path: '/refund-policy', priority: 0.20, changeFrequency: 'yearly' as const },
   ]
 
-  // ── Individual branch pages ───────────────────────────────────────────────
-
-  const branchPages: MetadataRoute.Sitemap = BRANCH_LIST
-    .filter((b) => b.status === 'active')
-    .map((b) => ({
-      url:             url(`/branches/${b.id}`),
-      lastModified:    now,
-      changeFrequency: 'monthly' as const,
-      priority:        0.8,
-      alternates:      alternates(`/branches/${b.id}`, `/en/branches/${b.id}`),
+  const staticUrls: MetadataRoute.Sitemap = LOCALES.flatMap((locale) =>
+    staticRoutes.map(({ path, priority, changeFrequency }) => ({
+      url: `${BASE_URL}/${locale}${path}`,
+      lastModified: now,
+      changeFrequency,
+      priority,
+      alternates: {
+        languages: {
+          ar: `${BASE_URL}/ar${path}`,
+          en: `${BASE_URL}/en${path}`,
+        },
+      },
     }))
+  )
 
-  // ── Menu category pages ───────────────────────────────────────────────────
+  const branchUrls: MetadataRoute.Sitemap = BRANCH_LIST
+    .filter((b) => b.status === 'active')
+    .flatMap((branch) =>
+      LOCALES.map((locale) => ({
+        url: `${BASE_URL}/${locale}/branches/${branch.id}`,
+        lastModified: now,
+        changeFrequency: 'monthly' as const,
+        priority: 0.85,
+        alternates: {
+          languages: {
+            ar: `${BASE_URL}/ar/branches/${branch.id}`,
+            en: `${BASE_URL}/en/branches/${branch.id}`,
+          },
+        },
+      }))
+    )
 
-  const categoryPages: MetadataRoute.Sitemap = getCategorySlugs().map((slug) => ({
-    url:             url(`/menu/${slug}`),
-    lastModified:    now,
-    changeFrequency: 'weekly' as const,
-    priority:        0.8,
-    alternates:      alternates(`/menu/${slug}`, `/en/menu/${slug}`),
-  }))
+  const categories = getMenuCategories()
+  const categoryUrls: MetadataRoute.Sitemap = categories.flatMap((cat) =>
+    LOCALES.map((locale) => ({
+      url: `${BASE_URL}/${locale}/menu/${cat.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+      alternates: {
+        languages: {
+          ar: `${BASE_URL}/ar/menu/${cat.slug}`,
+          en: `${BASE_URL}/en/menu/${cat.slug}`,
+        },
+      },
+    }))
+  )
 
-  // ── Dish detail pages — canonical at /menu/item/{slug} ───────────────────
+  const items = getAllMenuItems()
+  const itemUrls: MetadataRoute.Sitemap = items.flatMap((item) =>
+    LOCALES.map((locale) => ({
+      url: `${BASE_URL}/${locale}/menu/item/${item.slug}`,
+      lastModified: now, // Ideally we'd have updatedAt per item
+      changeFrequency: 'monthly' as const,
+      priority: 0.80,
+      alternates: {
+        languages: {
+          ar: `${BASE_URL}/ar/menu/item/${item.slug}`,
+          en: `${BASE_URL}/en/menu/item/${item.slug}`,
+        },
+      },
+    }))
+  )
 
-  const dishPages: MetadataRoute.Sitemap = getItemSlugs().map((slug) => ({
-    url:             url(`/menu/item/${slug}`),
-    lastModified:    now,
-    changeFrequency: 'monthly' as const,
-    priority:        0.7,
-    alternates:      alternates(`/menu/item/${slug}`, `/en/menu/item/${slug}`),
-  }))
-
-  return [...staticPages, ...branchPages, ...categoryPages, ...dishPages]
+  return [...staticUrls, ...branchUrls, ...categoryUrls, ...itemUrls]
 }

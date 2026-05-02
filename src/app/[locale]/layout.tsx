@@ -56,29 +56,111 @@ const satoshi = localFont({
 
 // ── Metadata — global fallback; each page defines its own canonical/hreflang ──
 
-export const metadata: Metadata = {
-  title: {
-    template: '%s | Kahramana Baghdad',
-    default:  'Kahramana Baghdad',
-  },
-  metadataBase: new URL(SITE_URL),
-  openGraph: {
-    siteName: 'Kahramana Baghdad',
-    type:     'website',
-    images:   [{ url: '/assets/brand/og-image.webp', width: 1200, height: 630 }],
-  },
-  twitter: {
-    card:   'summary_large_image',
-    site:   '@kahramanat_b',
-    images: ['/assets/brand/og-image.webp'],
-  },
-  icons: {
-    icon:  '/assets/favicon/favicon.ico',
-    apple: '/assets/favicon/apple-touch-icon.png',
-  },
-  verification: {
-    other: { 'msvalidate.01': 'B17AC8B01413ADA36191E083B8C09562' },
-  },
+import { RestaurantSchema } from '@/components/schema/RestaurantSchema'
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ locale: string }> }
+): Promise<Metadata> {
+  const { locale } = await params;
+  const isAr = locale === "ar";
+  const BASE = SITE_URL;
+
+  return {
+    metadataBase: new URL(BASE),
+    title: {
+      default: isAr
+        ? "كهرمانة بغداد | مطعم عراقي أصيل في البحرين"
+        : "Kahramana Baghdad | Authentic Iraqi Restaurant in Bahrain",
+      template: isAr
+        ? "%s | كهرمانة بغداد — مطعم عراقي البحرين"
+        : "%s | Kahramana Baghdad — Iraqi Restaurant Bahrain"
+    },
+    description: isAr
+      ? "كهرمانة بغداد — سفير المذاق البغدادي في البحرين. أكثر من 168 طبقاً عراقياً أصيلاً: مسكوف، مشاوي، قوزي، فطور بغدادي، شاورما عراقية. فروع الرفاع وقلالي."
+      : "Kahramana Baghdad — Bahrain's authentic Iraqi restaurant. 168+ dishes: Masgouf, grills, Quzi, Baghdadi breakfast, Iraqi shawarma. Branches in Riffa and Qalali.",
+    keywords: isAr
+      ? [
+          "مطعم عراقي البحرين", "كهرمانة بغداد", "مسكوف البحرين",
+          "مشاوي عراقية", "قوزي عراقي", "فطور بغدادي", "شاورما عراقية",
+          "مطاعم البحرين", "مطعم الرفاع", "مطعم قلالي",
+          "أكل عراقي البحرين", "مطبخ عراقي", "دولمة بغدادية",
+          "كباب عراقي", "أفضل مطاعم البحرين", "وجبات البحرين"
+        ]
+      : [
+          "Iraqi restaurant Bahrain", "Kahramana Baghdad", "Masgouf Bahrain",
+          "Iraqi grills Bahrain", "Iraqi Quzi", "Baghdadi breakfast",
+          "Iraqi shawarma", "restaurants Bahrain", "Riffa restaurant",
+          "Qalali restaurant", "Iraqi food Bahrain", "best restaurant Bahrain",
+          "Middle Eastern food Bahrain", "halal restaurant Bahrain",
+          "food delivery Bahrain", "Bahrain dining"
+        ],
+    authors: [{ name: "Kahramana Baghdad", url: BASE }],
+    creator: "Kahramana Baghdad",
+    publisher: "Kahramana Baghdad",
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
+    alternates: {
+      canonical: `${BASE}/${locale}`,
+      languages: {
+        "ar": `${BASE}/ar`,
+        "en": `${BASE}/en`,
+        "ar-BH": `${BASE}/ar`,
+        "en-BH": `${BASE}/en`,
+        "x-default": `${BASE}/ar`,
+      },
+    },
+    openGraph: {
+      type: "website",
+      locale: isAr ? "ar_BH" : "en_BH",
+      alternateLocale: isAr ? "en_BH" : "ar_BH",
+      siteName: isAr ? "كهرمانة بغداد" : "Kahramana Baghdad",
+      title: isAr
+        ? "كهرمانة بغداد | مطعم عراقي أصيل في البحرين"
+        : "Kahramana Baghdad | Authentic Iraqi Restaurant in Bahrain",
+      description: isAr
+        ? "168 طبقاً عراقياً أصيلاً في البحرين — مسكوف، مشاوي، قوزي، فطور بغدادي"
+        : "168 authentic Iraqi dishes in Bahrain — Masgouf, grills, Quzi, Baghdadi breakfast",
+      url: `${BASE}/${locale}`,
+      images: [
+        {
+          url: `${BASE}/assets/hero/hero-menu.webp`,
+          width: 1200,
+          height: 630,
+          alt: isAr
+            ? "مطعم كهرمانة بغداد — أشهى الأطباق العراقية في البحرين"
+            : "Kahramana Baghdad — Authentic Iraqi Food in Bahrain",
+          type: "image/webp",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: isAr
+        ? "كهرمانة بغداد | مطعم عراقي البحرين"
+        : "Kahramana Baghdad | Iraqi Restaurant Bahrain",
+      description: isAr
+        ? "168 طبقاً عراقياً أصيلاً — فروع الرفاع وقلالي"
+        : "168 authentic Iraqi dishes — Riffa & Qalali branches",
+      images: [`${BASE}/assets/hero/hero-menu.webp`],
+    },
+    icons: {
+      icon:  '/assets/favicon/favicon.ico',
+      apple: '/assets/favicon/apple-touch-icon.png',
+    },
+    verification: {
+      google: "google-site-verification-placeholder", // Replace when code available
+      other: { 'msvalidate.01': 'B17AC8B01413ADA36191E083B8C09562' },
+    },
+  };
 }
 
 export function generateStaticParams() {
@@ -130,6 +212,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         {process.env.NEXT_PUBLIC_CLARITY_ID && (
           <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
         )}
+        {/* Preload logo */}
+        <link rel="preload" href="/assets/logo.svg" as="image" type="image/svg+xml" />
+        {/* Preconnect to image CDN */}
+        <link rel="preconnect" href={SITE_URL} />
+        {/* DNS prefetch for WhatsApp */}
+        <link rel="dns-prefetch" href="https://wa.me" />
       </head>
       <body className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col">
         <NextIntlClientProvider messages={messages}>
@@ -142,6 +230,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
           </ConditionalFooter>
           <CartDrawer />
           <CookieBanner />
+          <RestaurantSchema />
         </NextIntlClientProvider>
 
         {process.env.NEXT_PUBLIC_GA_ID && (

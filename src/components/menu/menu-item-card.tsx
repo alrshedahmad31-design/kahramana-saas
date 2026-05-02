@@ -40,7 +40,10 @@ export default function MenuItemCard({
         <div className="relative aspect-[4/3] overflow-hidden">
           <Image
             src={item.image ?? '/images/placeholder/dish.jpg'}
-            alt={isRTL ? item.name.ar : item.name.en}
+            alt={isRTL 
+              ? `${item.name.ar} — مطعم كهرمانة بغداد العراقي في البحرين` 
+              : `${item.name.en} — Kahramana Baghdad Iraqi Restaurant in Bahrain`
+            }
             fill
             priority={index < 8}
             className="

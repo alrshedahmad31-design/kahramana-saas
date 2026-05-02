@@ -6,6 +6,7 @@ import MenuHero from './menu-hero'
 import StickyFilterBar from './StickyFilterBar'
 import { MobileSearchOverlay } from './MobileSearchOverlay'
 import FeaturedCarousel from './FeaturedCarousel'
+import TopOrderHighlights from './TopOrderHighlights'
 import MenuSection from './MenuSection'
 import { EmptyState } from './EmptyState'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -67,7 +68,10 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
       <MenuHero locale={locale} />
 
       {featuredItems.length >= 3 && (
-        <FeaturedCarousel items={featuredItems} locale={locale} />
+        <>
+          <FeaturedCarousel items={featuredItems} locale={locale} />
+          <TopOrderHighlights items={featuredItems} locale={locale} />
+        </>
       )}
 
       <div id="menu-content">

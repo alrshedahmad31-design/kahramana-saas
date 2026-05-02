@@ -117,7 +117,9 @@
       "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/variance\")",
       "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/waste\")",
       "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/valuation\")",
-      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/menu-engineering\")"
+      "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/menu-engineering\")",
+      "Bash(bash claude-seo/install.sh)",
+      "PowerShell(python --version; python3 --version 2>$null; where.exe python 2>$null)"
     ]
   }
 }

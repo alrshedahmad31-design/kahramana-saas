@@ -17,15 +17,24 @@ import {
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
+import { SITE_URL } from '@/constants/contact'
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
   const t      = await getTranslations({ locale, namespace: 'seo' })
+  const BASE   = SITE_URL
+  const url    = `${BASE}/${locale}`
+
   return {
-    title:       t('homeTitle'),
+    title: t('homeTitle'),
     description: t('homeDescription'),
     alternates: {
-      canonical: locale === 'en' ? '/en' : '/',
-      languages: { 'x-default': '/', ar: '/', en: '/en' },
+      canonical: url,
+      languages: {
+        'ar': `${BASE}/ar`,
+        'en': `${BASE}/en`,
+        'x-default': `${BASE}/ar`,
+      },
     },
   }
 }

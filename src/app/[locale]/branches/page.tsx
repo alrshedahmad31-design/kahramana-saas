@@ -10,21 +10,30 @@ import {
   buildFAQSchema,
 } from '@/lib/seo/schemas'
 
+import { SITE_URL } from '@/constants/contact'
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'branches.seo' })
+  const BASE = SITE_URL
+  const url = `${BASE}/${locale}/branches`
 
   return {
     title: t('title'),
     description: t('description'),
+    alternates: {
+      canonical: url,
+      languages: {
+        'ar': `${BASE}/ar/branches`,
+        'en': `${BASE}/en/branches`,
+        'x-default': `${BASE}/ar/branches`,
+      },
+    },
     openGraph: {
       title: t('title'),
       description: t('description'),
-      images: [{ url: '/assets/hero/hero-branches.webp', width: 1200, height: 630 }],
-    },
-    alternates: {
-      canonical: locale === 'en' ? '/en/branches' : '/branches',
-      languages: { 'x-default': '/branches', ar: '/branches', en: '/en/branches' },
+      url,
+      images: [{ url: `${BASE}/assets/hero/hero-branches.webp`, width: 1200, height: 630 }],
     },
   }
 }

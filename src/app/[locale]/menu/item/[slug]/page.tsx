@@ -11,7 +11,9 @@ import {
 import dynamic from 'next/dynamic'
 const ItemDetailHero = dynamic(() => import('@/components/menu/item-detail-hero'), { ssr: true })
 import RelatedItems from '@/components/menu/related-items'
-import { buildDishSchema, buildDishBreadcrumb } from '@/lib/seo/schemas'
+
+import { MenuItemSchema } from '@/components/schema/MenuItemSchema'
+import { SITE_URL } from '@/constants/contact'
 
 type Props = {
   params: Promise<{
@@ -27,41 +29,56 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params
   const item = getMenuItemBySlug(slug)
-  if (!item) return {}
+  const isAr = locale === 'ar'
+  const BASE = SITE_URL
+  const url = `${BASE}/${locale}/menu/item/${slug}`
 
-  const dishName     = locale === 'ar' ? item.name.ar    : item.name.en
-  const categoryName = locale === 'ar' ? item.categoryName.ar : item.categoryName.en
-  const baseDescription = item.description
-    ? locale === 'ar' ? item.description.ar : item.description.en
-    : undefined
+  if (!item) return { title: "Not Found" }
 
-  // Topical-authority titles: dish + category + brand + region
-  const title = locale === 'ar'
-    ? `${dishName} — كهرمانة بغداد | مطعم عراقي البحرين`
-    : `${dishName} — Kahramana Baghdad | Iraqi Restaurant Bahrain`
-
-  const description = baseDescription
-    ?? (locale === 'ar'
-      ? `${dishName} من ${categoryName} في كهرمانة بغداد — مطعم عراقي أصيل في البحرين. اطلب الآن من الرفاع أو قلالي.`
-      : `${dishName} from ${categoryName} at Kahramana Baghdad — authentic Iraqi restaurant in Bahrain. Order now from Riffa or Qallali.`)
+  const name = isAr ? item.name.ar : item.name.en
+  const description = isAr ? item.description?.ar : item.description?.en
+  const category = isAr ? item.categoryName.ar : item.categoryName.en
+  const priceText = item.fromPrice
+    ? isAr
+      ? `${item.hasMultiplePrices ? "من " : ""}${item.fromPrice.toFixed(3)} دينار بحريني`
+      : `${item.hasMultiplePrices ? "From " : ""}${item.fromPrice.toFixed(3)} BHD`
+    : ""
 
   return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      images: [{ url: item.image }],
-      type: 'article',
-      locale: locale === 'ar' ? 'ar_BH' : 'en_BH',
-    },
+    title: isAr
+      ? `${name} | كهرمانة بغداد — مطعم عراقي البحرين`
+      : `${name} | Kahramana Baghdad — Iraqi Restaurant Bahrain`,
+    description: isAr
+      ? `${description || name} — ${priceText}. ${category} في مطعم كهرمانة بغداد العراقي، البحرين.`
+      : `${description || name} — ${priceText}. ${category} at Kahramana Baghdad Iraqi Restaurant, Bahrain.`,
     alternates: {
-      canonical: locale === 'en' ? `/en/menu/item/${slug}` : `/menu/item/${slug}`,
+      canonical: url,
       languages: {
-        'x-default': `/menu/item/${slug}`,
-        ar:          `/menu/item/${slug}`,
-        en:          `/en/menu/item/${slug}`,
+        "ar": `${BASE}/ar/menu/item/${slug}`,
+        "en": `${BASE}/en/menu/item/${slug}`,
+        "x-default": `${BASE}/ar/menu/item/${slug}`,
       },
+    },
+    openGraph: {
+      title: isAr
+        ? `${name} — كهرمانة بغداد | مطعم عراقي البحرين`
+        : `${name} — Kahramana Baghdad | Iraqi Restaurant Bahrain`,
+      description: isAr
+        ? `${(description || name).substring(0, 120)}... ${priceText}`
+        : `${(description || name).substring(0, 120)}... ${priceText}`,
+      url,
+      images: [
+        {
+          url: item.image.startsWith("http")
+            ? item.image
+            : `${BASE}${item.image}`,
+          width: 1200,
+          height: 630,
+          alt: isAr
+            ? `${name} — مطعم كهرمانة بغداد العراقي في البحرين`
+            : `${name} — Kahramana Baghdad Iraqi Restaurant Bahrain`,
+        },
+      ],
     },
   }
 }
@@ -72,46 +89,26 @@ export default async function MenuItemPage({ params }: Props) {
   if (!item) notFound()
 
   const isRTL = locale === 'ar'
-  const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations({ locale, namespace: 'menu' })
   const tCommon = await getTranslations({ locale, namespace: 'common' })
   const relatedItems = getRelatedItems(item.slug, 3)
 
-  const dishSchema = buildDishSchema(
-    {
-      slug:           item.slug,
-      nameAr:         item.name.ar,
-      nameEn:         item.name.en,
-      descriptionAr:  item.description?.ar,
-      descriptionEn:  item.description?.en,
-      imageUrl:       item.image,
-      fromPrice:      item.fromPrice,
-      available:      item.available,
-    },
-    locale,
-  )
-
-  const breadcrumb = buildDishBreadcrumb(
-    locale,
-    locale === 'ar' ? item.categoryName.ar : item.categoryName.en,
-    item.categorySlug,
-    locale === 'ar' ? item.name.ar : item.name.en,
-    item.slug,
-  )
-
   return (
     <main className="min-h-screen bg-brand-black">
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(dishSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      <MenuItemSchema
+        nameAr={item.name.ar}
+        nameEn={item.name.en}
+        descriptionAr={item.description?.ar || ''}
+        descriptionEn={item.description?.en || ''}
+        price={item.fromPrice}
+        priceFrom={item.hasMultiplePrices}
+        imageUrl={item.image}
+        categoryNameAr={item.categoryName.ar}
+        categoryNameEn={item.categoryName.en}
+        categorySlug={item.categorySlug}
+        slug={item.slug}
+        isAvailable={item.available}
+        locale={locale as "ar" | "en"}
       />
       <ItemDetailHero
         item={item}
