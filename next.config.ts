@@ -19,18 +19,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        // Static assets: immutable cache (content-hashed filenames)
+        source: '/_next/static/(.*)',
         headers: [
-          ...securityHeaders,
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          // Cache static assets aggressively for PageSpeed
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       {
-        source: '/((?!_next/static|_next/image|favicon).*)',
+        // All other routes: security headers + daily revalidation for HTML
+        source: '/((?!_next/static).*)',
         headers: [
+          ...securityHeaders,
           { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=43200' },
         ],
       },
@@ -45,6 +44,12 @@ const nextConfig: NextConfig = {
         has: [{ type: 'host', value: 'www.kahramanat.com' }],
         destination: 'https://kahramanat.com/:path*',
         permanent: true,
+      },
+      // Root → default locale (Arabic)
+      {
+        source: '/',
+        destination: '/ar',
+        permanent: false,
       },
     ]
   },

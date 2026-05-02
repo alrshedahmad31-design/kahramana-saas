@@ -17,8 +17,8 @@ export async function generateMetadata(
 
   return {
     title: isAr
-      ? "قائمة كهرمانة بغداد | 168 طبقاً عراقياً أصيلاً في البحرين"
-      : "Kahramana Baghdad Menu | 168 Authentic Iraqi Dishes in Bahrain",
+      ? "قائمة الطعام"
+      : "Our Menu",
     description: isAr
       ? "استكشف قائمة كهرمانة بغداد الكاملة: مشاوي على الفحم، مسكوف عراقي، قوزي، فطور بغدادي، دولمة، شاورما عراقية، وأكثر من 168 طبقاً. مطعم عراقي أصيل في الرفاع وقلالي، البحرين."
       : "Explore Kahramana Baghdad's full menu: charcoal grills, Iraqi Masgouf, Quzi, Baghdadi breakfast, Dolma, Iraqi shawarma, and 168+ dishes. Authentic Iraqi restaurant in Riffa and Qalali, Bahrain.",

@@ -157,7 +157,6 @@ export async function generateMetadata(
       apple: '/assets/favicon/apple-touch-icon.png',
     },
     verification: {
-      google: "google-site-verification-placeholder", // Replace when code available
       other: { 'msvalidate.01': 'B17AC8B01413ADA36191E083B8C09562' },
     },
   };

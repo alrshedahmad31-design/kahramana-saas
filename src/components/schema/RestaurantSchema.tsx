@@ -15,7 +15,7 @@ export function RestaurantSchema() {
         "alternateName": ["Kahramana Baghdad", "Kahramana", "كهرمانة"],
         "description": "مطعم عراقي أصيل في البحرين يقدم أشهى الأطباق البغدادية من مسكوف ومشاوي وقوزي وفطور عراقي وشاورما عراقية. Iraqi restaurant in Bahrain serving authentic Baghdadi cuisine.",
         "url": SITE_URL,
-        "telephone": GENERAL_CONTACT.email ? undefined : "+97317131413", // Fallback phone
+        "telephone": "+97317131413",
         "email": GENERAL_CONTACT.email,
         "logo": {
           "@type": "ImageObject",
@@ -51,7 +51,8 @@ export function RestaurantSchema() {
           GENERAL_CONTACT.instagram,
           GENERAL_CONTACT.tiktok,
           GENERAL_CONTACT.facebook,
-          "https://wa.me/97317131413"
+          "https://wa.me/97317131413",
+          "https://www.talabat.com/ar/bahrain/kahramanat-baghdad-restaurant"
         ],
         "keywords": "مطعم عراقي البحرين, Iraqi restaurant Bahrain, مسكوف البحرين, مشاوي البحرين, قوزي, فطور بغدادي, شاورما عراقية, مطعم كهرمانة, Kahramana Baghdad Bahrain, food Bahrain, restaurant Bahrain"
       },
@@ -63,8 +64,8 @@ export function RestaurantSchema() {
         "name": "كهرمانة بغداد — فرع الرفاع",
         "alternateName": "Kahramana Baghdad Riffa Branch",
         "parentOrganization": { "@id": `${SITE_URL}/#restaurant` },
-        "url": `${SITE_URL}/branches/riffa`,
-        "telephone": riffa.phone,
+        "url": `${SITE_URL}/ar/branches/riffa`,
+        "telephone": "+97317131413",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": riffa.addressEn,
@@ -99,8 +100,8 @@ export function RestaurantSchema() {
         "name": "كهرمانة بغداد — فرع قلالي",
         "alternateName": "Kahramana Baghdad Qallali Branch",
         "parentOrganization": { "@id": `${SITE_URL}/#restaurant` },
-        "url": `${SITE_URL}/branches/qallali`,
-        "telephone": qallali.phone,
+        "url": `${SITE_URL}/ar/branches/qallali`,
+        "telephone": "+97317131413",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": qallali.addressEn,

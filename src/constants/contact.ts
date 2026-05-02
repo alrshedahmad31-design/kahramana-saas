@@ -72,7 +72,7 @@ export const BRANCHES: Record<BranchId, Branch> = {
     addressAr: 'الشارع الرئيسي، قلالي، البحرين',
     addressEn: 'Main Street, Qallali, Bahrain',
     cityAr: 'المحرق',
-    cityEn: 'qallali',
+    cityEn: 'Qallali',
     phone: '+97317131213',
     whatsapp: '+97317131213',
     waLink: 'https://wa.me/97317131213',
@@ -135,7 +135,7 @@ export const WHATSAPP_BASE_URL = 'https://wa.me'
  * in Vercel env and redeploy. No source change needed.
  */
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kahramana.vercel.app'
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kahramanat.com'
 ).replace(/\/$/, '')
 
 export const GENERAL_CONTACT = {
