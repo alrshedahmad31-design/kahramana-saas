@@ -12,9 +12,6 @@ interface PageProps {
 
 export const dynamic = 'force-dynamic'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnySupabase = any
-
 export default async function CateringPackagesPage({ params }: PageProps) {
   const { locale } = await params
   const isAr  = locale !== 'en'
@@ -26,13 +23,13 @@ export default async function CateringPackagesPage({ params }: PageProps) {
     redirect(`${prefix}/dashboard`)
   }
 
-  const db: AnySupabase = createServiceClient()
-  const { data } = await db
+  const supabase = createServiceClient()
+  const { data } = await supabase
     .from('catering_packages')
     .select('*')
     .order('name_ar')
 
-  const packages = (data ?? []) as CateringPackageRow[]
+  const packages = (data ?? []) as unknown as CateringPackageRow[]
 
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-6">

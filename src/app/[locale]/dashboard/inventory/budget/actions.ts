@@ -24,9 +24,6 @@ const UpsertBudgetSchema = z.object({
   waste_budget_bhd:     z.number().min(0),
 })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnySupabase = any
-
 export async function upsertBudget(data: {
   branch_id:            string
   year:                 number
@@ -43,8 +40,8 @@ export async function upsertBudget(data: {
     return { error: parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة' }
   }
 
-  const db: AnySupabase = createServiceClient()
-  const { error } = await db
+  const supabase = createServiceClient()
+  const { error } = await supabase
     .from('inventory_budgets')
     .upsert(
       { ...parsed.data, created_by: session.id, updated_at: new Date().toISOString() },

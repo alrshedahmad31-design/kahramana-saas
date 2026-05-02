@@ -16,8 +16,6 @@ interface PageProps {
 
 export const dynamic = 'force-dynamic'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnySupabase = any
 
 const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -41,10 +39,10 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
   const year      = qYear  ? parseInt(qYear)  : now.getFullYear()
   const month     = qMonth ? parseInt(qMonth) : now.getMonth() + 1
 
-  const db: AnySupabase = createServiceClient()
+  const supabase = createServiceClient()
 
   // Fetch branches
-  const { data: branches } = await db
+  const { data: branches } = await supabase
     .from('branches')
     .select('id, name_ar, name_en')
     .eq('is_active', true)
@@ -65,9 +63,9 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
 
   // Parallel fetch: current month vs actual + full year trend
   const [vsActualRes, trendRes, budgetRowRes] = await Promise.all([
-    db.rpc('rpc_budget_vs_actual', { p_branch_id: activeBranchId, p_year: year, p_month: month }),
-    db.rpc('rpc_budget_trend',     { p_branch_id: activeBranchId, p_year: year }),
-    db.from('inventory_budgets')
+    supabase.rpc('rpc_budget_vs_actual', { p_branch_id: activeBranchId, p_year: year, p_month: month }),
+    supabase.rpc('rpc_budget_trend',     { p_branch_id: activeBranchId, p_year: year }),
+    supabase.from('inventory_budgets')
       .select('*')
       .eq('branch_id', activeBranchId)
       .eq('year', year)

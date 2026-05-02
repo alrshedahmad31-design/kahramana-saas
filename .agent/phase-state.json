@@ -14,7 +14,7 @@
     "build_pages": 785,
     "git_tag": "v1.5-enterprise-coupons",
     "pending_db_migrations": [],
-    "migration_status": "041 WRITTEN (catering + budget) — pending Ahmed applying to production",
+    "migration_status": "041 APPLIED — catering_packages, catering_orders, inventory_budgets + 4 RPCs live in production",
     "applied_db_migrations": [
       "019_report_audit_log.sql — applied 2026-04-29",
       "020_restaurant_profile.sql — applied 2026-04-29",

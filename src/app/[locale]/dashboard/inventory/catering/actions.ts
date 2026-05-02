@@ -77,9 +77,6 @@ const UpsertPackageSchema = z.object({
   is_active:            z.boolean().default(true),
 })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnySupabase = any
-
 // ── Actions ───────────────────────────────────────────────────────────────────
 
 export async function createCateringOrder(formData: {
@@ -110,8 +107,8 @@ export async function createCateringOrder(formData: {
   const data = parsed.data
   const subtotal_bhd = data.price_per_person_bhd * data.guest_count
 
-  const db: AnySupabase = createServiceClient()
-  const { data: order, error } = await db
+  const supabase = createServiceClient()
+  const { data: order, error } = await supabase
     .from('catering_orders')
     .insert({
       branch_id:            data.branch_id,
@@ -128,7 +125,7 @@ export async function createCateringOrder(formData: {
       subtotal_bhd,
       deposit_bhd:          data.deposit_bhd,
       deposit_paid:         data.deposit_paid,
-      status:               'draft',
+      status:               'draft' as const,
       notes:                data.notes ?? null,
       created_by:           session.id,
     })
@@ -138,7 +135,7 @@ export async function createCateringOrder(formData: {
   if (error || !order) return { error: error?.message ?? 'فشل في إنشاء طلب التقديم' }
 
   revalidateCatering()
-  return { orderId: (order as { id: string }).id }
+  return { orderId: order.id }
 }
 
 export async function updateCateringStatus(
@@ -153,8 +150,8 @@ export async function updateCateringStatus(
     return { error: parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة' }
   }
 
-  const db: AnySupabase = createServiceClient()
-  const { error } = await db
+  const supabase = createServiceClient()
+  const { error } = await supabase
     .from('catering_orders')
     .update({ status: parsed.data.newStatus, updated_at: new Date().toISOString() })
     .eq('id', parsed.data.orderId)
@@ -177,10 +174,10 @@ export async function confirmCateringOrder(
     return { poId: null, error: parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة' }
   }
 
-  const db: AnySupabase = createServiceClient()
-  const { data, error } = await db.rpc('rpc_catering_confirm', {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase.rpc('rpc_catering_confirm', {
     p_order_id:    parsed.data.orderId,
-    p_supplier_id: parsed.data.supplierId ?? null,
+    p_supplier_id: parsed.data.supplierId ?? undefined,
   })
 
   if (error) return { poId: null, error: error.message }
@@ -189,7 +186,7 @@ export async function confirmCateringOrder(
   revalidatePath('/ar/dashboard/inventory/purchases')
   revalidatePath('/en/dashboard/inventory/purchases')
 
-  return { poId: (data as string | null) ?? null }
+  return { poId: data ?? null }
 }
 
 export async function calcCateringIngredients(
@@ -198,8 +195,8 @@ export async function calcCateringIngredients(
   const { session, error: authError } = await requireCateringRole()
   if (authError || !session) return { error: authError ?? 'Unauthorized' }
 
-  const db: AnySupabase = createServiceClient()
-  const { data, error } = await db.rpc('rpc_catering_calc_ingredients', {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase.rpc('rpc_catering_calc_ingredients', {
     p_order_id: orderId,
   })
 
@@ -220,9 +217,9 @@ export async function deleteCateringOrder(
     return { error: parsed.error.errors[0]?.message ?? 'معرّف الطلب غير صحيح' }
   }
 
-  const db: AnySupabase = createServiceClient()
+  const supabase = createServiceClient()
 
-  const { data: order, error: fetchError } = await db
+  const { data: order, error: fetchError } = await supabase
     .from('catering_orders')
     .select('id, status')
     .eq('id', parsed.data.orderId)
@@ -230,11 +227,11 @@ export async function deleteCateringOrder(
 
   if (fetchError || !order) return { error: fetchError?.message ?? 'طلب التقديم غير موجود' }
 
-  if (!['draft', 'cancelled'].includes((order as { status: string }).status)) {
+  if (!['draft', 'cancelled'].includes(order.status)) {
     return { error: 'لا يمكن حذف الطلبات إلا إذا كانت في حالة مسودة أو ملغاة' }
   }
 
-  const { error } = await db
+  const { error } = await supabase
     .from('catering_orders')
     .delete()
     .eq('id', parsed.data.orderId)
@@ -269,10 +266,10 @@ export async function upsertCateringPackage(data: {
   const { id, ...rest } = parsed.data
   const payload = { ...rest, updated_at: new Date().toISOString() }
 
-  const db: AnySupabase = createServiceClient()
+  const supabase = createServiceClient()
 
   if (id) {
-    const { error } = await db
+    const { error } = await supabase
       .from('catering_packages')
       .update(payload)
       .eq('id', id)
@@ -283,7 +280,7 @@ export async function upsertCateringPackage(data: {
     return { packageId: id }
   }
 
-  const { data: pkg, error } = await db
+  const { data: pkg, error } = await supabase
     .from('catering_packages')
     .insert(payload)
     .select('id')
@@ -292,5 +289,5 @@ export async function upsertCateringPackage(data: {
   if (error || !pkg) return { error: error?.message ?? 'فشل في حفظ الباقة' }
 
   revalidateCatering()
-  return { packageId: (pkg as { id: string }).id }
+  return { packageId: pkg.id }
 }

@@ -16,9 +16,6 @@ interface PageProps {
 
 export const dynamic = 'force-dynamic'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnySupabase = any
-
 export default async function CateringPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   const { branch } = await searchParams
@@ -32,10 +29,10 @@ export default async function CateringPage({ params, searchParams }: PageProps) 
   }
 
   const isGlobal = user.role === 'owner' || user.role === 'general_manager'
-  const db: AnySupabase = createServiceClient()
+  const supabase = createServiceClient()
 
   // Fetch branches
-  const { data: branches } = await db
+  const { data: branches } = await supabase
     .from('branches')
     .select('id, name_ar, name_en')
     .eq('is_active', true)
@@ -47,12 +44,12 @@ export default async function CateringPage({ params, searchParams }: PageProps) 
   // Fetch orders
   const ordersRes = await (
     activeBranchId
-      ? db.from('catering_orders')
+      ? supabase.from('catering_orders')
           .select('*')
           .eq('branch_id', activeBranchId)
           .order('event_date', { ascending: true })
       : isGlobal
-      ? db.from('catering_orders')
+      ? supabase.from('catering_orders')
           .select('*')
           .order('event_date', { ascending: true })
       : Promise.resolve({ data: [], error: null })
