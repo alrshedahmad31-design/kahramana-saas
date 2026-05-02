@@ -1,6 +1,7 @@
 'use server'
 
 import { createServiceClient } from '@/lib/supabase/server'
+import { getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 import { parseInventoryExcel } from '@/lib/inventory/excel-parser'
 import type { ImportError, ImportWarning, ParsedIngredient } from '@/lib/inventory/excel-parser'
 import type { TablesInsert } from '@/lib/supabase/custom-types'
@@ -31,6 +32,13 @@ export async function importInventoryExcel(formData: FormData): Promise<ImportAc
     ingredients: 0, suppliers: 0, allergens: 0, prepItems: 0,
     prepIngredients: 0, recipes: 0, openingStock: 0, lots: 0,
     movements: 0, parLevels: 0,
+  }
+
+  let session
+  try {
+    session = await requireDashboardRole(['owner', 'general_manager'])
+  } catch (error) {
+    return { success: false, imported: false, summary: blank, errors: [{ sheet: '-', row: 0, column: '-', message: getDashboardGuardErrorMessage(error) }], warnings: [] }
   }
 
   const file = formData.get('file') as File | null
@@ -300,6 +308,28 @@ export async function importInventoryExcel(formData: FormData): Promise<ImportAc
 
   // Trigger ABC classification update
   await db.rpc('rpc_update_abc_classification')
+
+  const auditSummary: Record<string, number> = {
+    ingredients: summary.ingredients,
+    suppliers: summary.suppliers,
+    allergens: summary.allergens,
+    prepItems: summary.prepItems,
+    prepIngredients: summary.prepIngredients,
+    recipes: summary.recipes,
+    openingStock: summary.openingStock,
+    lots: summary.lots,
+    movements: summary.movements,
+    parLevels: summary.parLevels,
+  }
+
+  await db.from('audit_logs').insert({
+    table_name: 'inventory_import',
+    record_id: session.id,
+    action: 'INSERT',
+    user_id: session.id,
+    actor_role: session.role,
+    changes: { summary: auditSummary, mode: 'import' },
+  })
 
   return { success: true, imported: true, summary, errors: [], warnings }
 }

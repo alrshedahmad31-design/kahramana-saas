@@ -1,12 +1,25 @@
-import { requireAuth }  from '@/lib/auth/session'
+import { redirect } from 'next/navigation'
+import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { createClient } from '@/lib/supabase/server'
-import OrdersClient     from '@/components/orders/OrdersClient'
+import OrdersClient from '@/components/orders/OrdersClient'
 import type { OrderCardData } from '@/components/orders/OrderCard'
 
 const PAGE_SIZE = 20
 
-export default async function OrdersPage() {
-  const user     = await requireAuth()
+interface OrdersPageProps {
+  params: Promise<{ locale: string }>
+}
+
+export default async function OrdersPage({ params }: OrdersPageProps) {
+  const { locale } = await params
+  const prefix = locale === 'en' ? '/en' : ''
+  let user
+  try {
+    user = await requireDashboardSection('orders')
+  } catch {
+    redirect(`${prefix}/dashboard`)
+  }
+
   const supabase = await createClient()
 
   // Non-global users are locked to their own branch — enforced here and repeated in OrdersClient

@@ -1,20 +1,20 @@
 'use server'
 
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
-
-const ALLOWED_WRITE_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager'] as const
 
 export async function recordOpeningBalance(
   branchId: string,
   ingredientId: string,
   quantity: number
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  if (!ALLOWED_WRITE_ROLES.includes(session.role as typeof ALLOWED_WRITE_ROLES[number])) {
-    return { error: 'Forbidden' }
+  let session
+  try {
+    session = await requireDashboardSession()
+    assertInventoryWriteAccess(session, branchId)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
 
   if (quantity < 0) return { error: 'الكمية يجب أن تكون أكبر من أو تساوي صفر' }

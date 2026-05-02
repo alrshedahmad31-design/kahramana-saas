@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
-import { canManageStaff, canAssignRole, canDeactivateStaff, ROLE_RANK } from '@/lib/auth/rbac'
+import { assertCanManageTargetStaff, getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
+import { canManageStaff, canDeactivateStaff } from '@/lib/auth/rbac'
 import type { StaffRole, StaffBasicRow, EmploymentType, TablesUpdate, Json } from '@/lib/supabase/custom-types'
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -47,9 +47,13 @@ export type CreateStaffInput = {
 export type ActionResult = { success: true } | { success: false; error: string }
 
 export async function createStaff(input: CreateStaffInput): Promise<ActionResult> {
-  const caller = await getSession()
-  if (!caller) return { success: false, error: 'Unauthorized' }
-  if (!canAssignRole(caller, input.role)) return { success: false, error: 'Insufficient permissions' }
+  let caller
+  try {
+    caller = await requireDashboardSession()
+    assertCanManageTargetStaff(caller, input.role, input.branch_id)
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
 
   const service = await createServiceClient()
   // auth.admin is available at runtime when using the service role key.
@@ -109,8 +113,12 @@ export type UpdateStaffInput = {
 }
 
 export async function updateStaff(input: UpdateStaffInput): Promise<ActionResult> {
-  const caller = await getSession()
-  if (!caller) return { success: false, error: 'Unauthorized' }
+  let caller
+  try {
+    caller = await requireDashboardSession()
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
 
   // Fetch current record to run permission checks
   const supabase = await createClient()
@@ -124,7 +132,11 @@ export async function updateStaff(input: UpdateStaffInput): Promise<ActionResult
   const target = current as Pick<StaffBasicRow, 'id' | 'role' | 'branch_id' | 'is_active'>
 
   if (!canManageStaff(caller, target)) return { success: false, error: 'Insufficient permissions' }
-  if (!canAssignRole(caller, input.role)) return { success: false, error: 'Cannot assign that role' }
+  try {
+    assertCanManageTargetStaff(caller, input.role, input.branch_id)
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
 
   const service = await createServiceClient()
   const { error } = await service
@@ -179,9 +191,13 @@ type AuthAdmin = {
 }
 
 export async function createStaffFull(input: CreateStaffFullInput): Promise<CreateStaffFullResult> {
-  const caller = await getSession()
-  if (!caller) return { success: false, error: 'Unauthorized' }
-  if (!canAssignRole(caller, input.role)) return { success: false, error: 'Insufficient permissions' }
+  let caller
+  try {
+    caller = await requireDashboardSession()
+    assertCanManageTargetStaff(caller, input.role, input.branch_id)
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
 
   if (input.clock_pin && !/^\d{4}$/.test(input.clock_pin)) {
     return { success: false, error: 'PIN must be exactly 4 digits' }
@@ -259,13 +275,27 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
 // ── resendStaffInvitation ─────────────────────────────────────────────────────
 
 export async function resendStaffInvitation(staffId: string): Promise<ActionResult> {
-  const caller = await getSession()
-  if (!caller) return { success: false, error: 'Unauthorized' }
-  if ((ROLE_RANK[caller.role!] ?? 0) < ROLE_RANK['branch_manager']) {
-    return { success: false, error: 'Insufficient permissions' }
+  let caller
+  try {
+    caller = await requireDashboardSession()
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
   }
 
   const service = createServiceClient()
+  const { data: staff, error: staffError } = await service
+    .from('staff_basic')
+    .select('id, role, branch_id')
+    .eq('id', staffId)
+    .single()
+
+  if (staffError || !staff) return { success: false, error: 'Staff member not found' }
+
+  const target = staff as Pick<StaffBasicRow, 'id' | 'role' | 'branch_id'>
+  if (!canManageStaff(caller, target)) {
+    return { success: false, error: 'Insufficient permissions' }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const authAdmin = (service.auth as any).admin as AuthAdmin
 
@@ -287,8 +317,12 @@ export async function toggleStaffActive(
   activate: boolean,
   locale:   string,
 ): Promise<ActionResult> {
-  const caller = await getSession()
-  if (!caller) return { success: false, error: 'Unauthorized' }
+  let caller
+  try {
+    caller = await requireDashboardSession()
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
 
   const supabase = await createClient()
   const { data: current } = await supabase

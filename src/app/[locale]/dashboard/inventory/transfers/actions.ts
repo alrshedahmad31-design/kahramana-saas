@@ -1,16 +1,9 @@
 'use server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
 export async function createTransfer(formData: FormData): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager', 'inventory_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
-
-  const supabase = createServiceClient()
-
   const from_branch_id = formData.get('from_branch_id') as string
   const to_branch_id   = formData.get('to_branch_id') as string
   const ingredient_id  = formData.get('ingredient_id') as string
@@ -24,6 +17,16 @@ export async function createTransfer(formData: FormData): Promise<{ error?: stri
     return { error: 'لا يمكن التحويل للفرع نفسه' }
   }
 
+  let session
+  try {
+    session = await requireDashboardSession()
+    assertInventoryWriteAccess(session, from_branch_id)
+    assertInventoryWriteAccess(session, to_branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  const supabase = createServiceClient()
   const now = new Date().toISOString()
 
   const { error: insertErr } = await supabase.from('inventory_transfers').insert({

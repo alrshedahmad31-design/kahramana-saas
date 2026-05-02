@@ -1,6 +1,6 @@
 'use server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { assertBranchScope, assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardRole, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
 const WASTE_REASONS = [
@@ -10,13 +10,6 @@ const WASTE_REASONS = [
 type WasteReason = typeof WASTE_REASONS[number]
 
 export async function createWasteLog(formData: FormData): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager', 'kitchen', 'inventory_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
-
-  const supabase = createServiceClient()
-
   const ingredient_id = formData.get('ingredient_id') as string
   const quantity      = Number(formData.get('quantity'))
   const reason        = formData.get('reason') as WasteReason
@@ -24,6 +17,16 @@ export async function createWasteLog(formData: FormData): Promise<{ error?: stri
   const notes         = formData.get('notes') as string | null
   const photo_url     = formData.get('photo_url') as string | null
   const cost_bhd      = Number(formData.get('cost_bhd') || 0)
+
+  let session
+  try {
+    session = await requireDashboardSession()
+    assertInventoryWriteAccess(session, branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  const supabase = createServiceClient()
 
   if (!ingredient_id || !quantity || !reason || !branch_id) {
     return { error: 'الحقول المطلوبة: الفرع، المكوّن، الكمية، السبب' }
@@ -48,12 +51,27 @@ export async function createWasteLog(formData: FormData): Promise<{ error?: stri
 }
 
 export async function approveWaste(id: string): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
-
+  let session
+  try {
+    session = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
   const supabase = createServiceClient()
+  const { data: waste, error: fetchError } = await supabase
+    .from('waste_log')
+    .select('branch_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !waste) return { error: 'Waste log not found' }
+
+  try {
+    assertBranchScope(session, waste.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   const { error } = await supabase
     .from('waste_log')
     .update({
@@ -70,12 +88,27 @@ export async function approveWaste(id: string): Promise<{ error?: string }> {
 }
 
 export async function rejectWaste(id: string, rejection_note: string): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
-
+  let session
+  try {
+    session = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
   const supabase = createServiceClient()
+  const { data: waste, error: fetchError } = await supabase
+    .from('waste_log')
+    .select('branch_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !waste) return { error: 'Waste log not found' }
+
+  try {
+    assertBranchScope(session, waste.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   const { error } = await supabase
     .from('waste_log')
     .update({

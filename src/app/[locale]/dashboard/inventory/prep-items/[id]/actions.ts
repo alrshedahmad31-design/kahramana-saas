@@ -1,16 +1,14 @@
 'use server'
 
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
-const ALLOWED_WRITE_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager', 'kitchen'] as const
-
 export async function upsertPrepItem(formData: FormData): Promise<{ error?: string; id?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  if (!ALLOWED_WRITE_ROLES.includes(session.role as typeof ALLOWED_WRITE_ROLES[number])) {
-    return { error: 'Forbidden' }
+  try {
+    await requireDashboardRole(['owner', 'general_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
 
   const supabase = createServiceClient()
@@ -63,10 +61,10 @@ export async function savePrepItemIngredients(
   prepItemId: string,
   rows: PrepIngredientInput[]
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  if (!ALLOWED_WRITE_ROLES.includes(session.role as typeof ALLOWED_WRITE_ROLES[number])) {
-    return { error: 'Forbidden' }
+  try {
+    await requireDashboardRole(['owner', 'general_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
 
   const supabase = createServiceClient()

@@ -1,23 +1,36 @@
 'use server'
 
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession }           from '@/lib/auth/session'
+import { assertBranchScope, getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 
-const MANAGER_ROLES = new Set(['owner', 'general_manager', 'branch_manager'])
 const TOLERANCE_BD  = 0.5   // discrepancies ≤ 0.500 BD → auto-verified
 
 export type ReconcileResult =
   | { success: true; status: 'verified' | 'discrepancy' }
   | { error: string }
 
+type HandoverScopeRow = {
+  id: string
+  total_cash: number
+  reconciliation_status: string
+  staff_basic: { branch_id: string | null } | { branch_id: string | null }[] | null
+}
+
+function joinedStaffBranch(row: HandoverScopeRow): string | null {
+  const staff = Array.isArray(row.staff_basic) ? row.staff_basic[0] : row.staff_basic
+  return staff?.branch_id ?? null
+}
+
 export async function reconcileCashHandover(input: {
   handoverId:     string
   actualReceived: number
   notes?:         string
 }): Promise<ReconcileResult> {
-  const user = await getSession()
-  if (!user || !MANAGER_ROLES.has(user.role ?? '')) {
-    return { error: 'Unauthorized' }
+  let user
+  try {
+    user = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
 
   const { handoverId, actualReceived, notes } = input
@@ -32,11 +45,17 @@ export async function reconcileCashHandover(input: {
 
   const { data: handover, error: fetchErr } = await db
     .from('driver_cash_handovers')
-    .select('id, total_cash, reconciliation_status')
+    .select('id, total_cash, reconciliation_status, staff_basic!driver_id(branch_id)')
     .eq('id', handoverId)
     .single()
 
   if (fetchErr || !handover) return { error: 'Handover not found' }
+  try {
+    assertBranchScope(user, joinedStaffBranch(handover as HandoverScopeRow))
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   if (handover.reconciliation_status !== 'pending') {
     return { error: 'Handover already reconciled' }
   }
@@ -88,9 +107,11 @@ export async function disputeCashHandover(
   handoverId: string,
   notes:      string,
 ): Promise<{ success: true } | { error: string }> {
-  const user = await getSession()
-  if (!user || !MANAGER_ROLES.has(user.role ?? '')) {
-    return { error: 'Unauthorized' }
+  let user
+  try {
+    user = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
 
   if (!notes.trim()) return { error: 'Notes are required to dispute a handover' }
@@ -98,6 +119,19 @@ export async function disputeCashHandover(
   const service = await createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = service as any
+
+  const { data: handover, error: fetchErr } = await db
+    .from('driver_cash_handovers')
+    .select('id, reconciliation_status, staff_basic!driver_id(branch_id)')
+    .eq('id', handoverId)
+    .single()
+
+  if (fetchErr || !handover) return { error: 'Handover not found' }
+  try {
+    assertBranchScope(user, joinedStaffBranch(handover as HandoverScopeRow))
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
 
   const { error } = await db
     .from('driver_cash_handovers')

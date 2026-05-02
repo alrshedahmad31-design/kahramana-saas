@@ -1,11 +1,9 @@
 import { redirect }   from 'next/navigation'
-import { getSession }  from '@/lib/auth/session'
+import { requireDashboardRole } from '@/lib/auth/dashboard-guards'
 import { createClient } from '@/lib/supabase/server'
 import CashReconciliationClient from '@/components/delivery/CashReconciliationClient'
 
 export const dynamic = 'force-dynamic'
-
-const MANAGER_ROLES = new Set(['owner', 'general_manager', 'branch_manager'])
 
 interface Props {
   params:       Promise<{ locale: string }>
@@ -35,9 +33,10 @@ export default async function CashReconciliationPage({ params, searchParams: _se
   const isAr       = locale === 'ar'
   const prefix     = locale === 'en' ? '/en' : ''
 
-  const user = await getSession()
-  if (!user) redirect(`${prefix}/login`)
-  if (!MANAGER_ROLES.has(user.role ?? '')) {
+  let user
+  try {
+    user = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+  } catch {
     redirect(`${prefix}/dashboard`)
   }
 
@@ -48,7 +47,19 @@ export default async function CashReconciliationPage({ params, searchParams: _se
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = supabase as any
 
-  const { data: raw } = await db
+  let scopedDriverIds: string[] | null = null
+  if (user.role === 'branch_manager') {
+    if (!user.branch_id) redirect(`${prefix}/dashboard`)
+    const { data: drivers } = await db
+      .from('staff_basic')
+      .select('id')
+      .eq('role', 'driver')
+      .eq('branch_id', user.branch_id)
+
+    scopedDriverIds = (drivers ?? []).map((driver: { id: string }) => driver.id)
+  }
+
+  let query = db
     .from('driver_cash_handovers')
     .select(`
       id, driver_id, shift_date, total_cash, order_ids, handed_at, verified, notes,
@@ -57,6 +68,16 @@ export default async function CashReconciliationPage({ params, searchParams: _se
     `)
     .order('handed_at', { ascending: false })
     .limit(100)
+
+  if (scopedDriverIds) {
+    if (scopedDriverIds.length === 0) {
+      query = query.eq('driver_id', '00000000-0000-0000-0000-000000000000')
+    } else {
+      query = query.in('driver_id', scopedDriverIds)
+    }
+  }
+
+  const { data: raw } = await query
 
   const handovers: CashHandoverRow[] = (raw ?? []).map((r: {
     id: string

@@ -1,19 +1,12 @@
 'use server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import {
+  assertInventoryWriteAccess,
+  getDashboardGuardErrorMessage,
+  requireDashboardSession,
+} from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
-
-const BUDGET_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager'] as const
-
-async function requireBudgetRole() {
-  const session = await getSession()
-  if (!session) return { session: null, error: 'Unauthorized' } as const
-  if (!(BUDGET_ROLES as readonly string[]).includes(session.role ?? '')) {
-    return { session: null, error: 'Forbidden' } as const
-  }
-  return { session, error: null } as const
-}
 
 const UpsertBudgetSchema = z.object({
   branch_id:            z.string().min(1),
@@ -32,12 +25,17 @@ export async function upsertBudget(data: {
   food_cost_target_pct: number
   waste_budget_bhd:     number
 }): Promise<{ error?: string }> {
-  const { session, error: authError } = await requireBudgetRole()
-  if (authError || !session) return { error: authError ?? 'Unauthorized' }
-
   const parsed = UpsertBudgetSchema.safeParse(data)
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة' }
+  }
+
+  let session
+  try {
+    session = await requireDashboardSession()
+    assertInventoryWriteAccess(session, parsed.data.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
 
   const supabase = createServiceClient()

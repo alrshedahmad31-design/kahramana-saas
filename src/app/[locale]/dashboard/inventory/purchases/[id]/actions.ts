@@ -1,6 +1,6 @@
 'use server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
 interface ReceiveLine {
@@ -16,12 +16,27 @@ export async function receivePurchaseOrder(
   poId: string,
   lines: ReceiveLine[],
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager', 'inventory_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
-
+  let session
+  try {
+    session = await requireDashboardSession()
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
   const supabase = createServiceClient()
+  const { data: po, error: fetchError } = await supabase
+    .from('purchase_orders')
+    .select('branch_id')
+    .eq('id', poId)
+    .single()
+
+  if (fetchError || !po) return { error: 'Purchase order not found' }
+
+  try {
+    assertInventoryWriteAccess(session, po.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   // Cast to unknown first to satisfy Supabase Json constraint for RPC params
   const { error } = await supabase.rpc('rpc_receive_purchase_order', {
     p_po_id:       poId,

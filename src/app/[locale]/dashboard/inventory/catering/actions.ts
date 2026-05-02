@@ -1,7 +1,11 @@
 'use server'
 import { z } from 'zod'
-import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import {
+  assertInventoryWriteAccess,
+  getDashboardGuardErrorMessage,
+  requireDashboardRole,
+} from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 import type { CateringOrderStatus, CateringPackageItem } from '@/lib/supabase/custom-types'
 
@@ -10,17 +14,47 @@ import type { CateringOrderStatus, CateringPackageItem } from '@/lib/supabase/cu
 const CATERING_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager'] as const
 
 async function requireCateringRole() {
-  const session = await getSession()
-  if (!session) return { session: null, error: 'Unauthorized' } as const
-  if (!(CATERING_ROLES as readonly string[]).includes(session.role ?? '')) {
-    return { session: null, error: 'Forbidden' } as const
+  try {
+    return { session: await requireDashboardRole(CATERING_ROLES), error: null } as const
+  } catch (error) {
+    return { session: null, error: getDashboardGuardErrorMessage(error) } as const
   }
-  return { session, error: null } as const
 }
 
 function revalidateCatering() {
   revalidatePath('/ar/dashboard/inventory/catering')
   revalidatePath('/en/dashboard/inventory/catering')
+}
+
+async function fetchCateringOrderBranch(orderId: string): Promise<{
+  branchId?: string
+  status?: CateringOrderStatus
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('catering_orders')
+    .select('branch_id, status')
+    .eq('id', orderId)
+    .single()
+
+  if (error || !data) return { error: error?.message ?? 'طلب التقديم غير موجود' }
+  return {
+    branchId: data.branch_id,
+    status: data.status as CateringOrderStatus,
+  }
+}
+
+async function fetchCateringPackageBranch(packageId: string): Promise<{ branchId?: string; error?: string }> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('catering_packages')
+    .select('branch_id')
+    .eq('id', packageId)
+    .single()
+
+  if (error || !data) return { error: error?.message ?? 'باقة التقديم غير موجودة' }
+  return { branchId: data.branch_id }
 }
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -105,6 +139,12 @@ export async function createCateringOrder(formData: {
   }
 
   const data = parsed.data
+  try {
+    assertInventoryWriteAccess(session, data.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   const subtotal_bhd = data.price_per_person_bhd * data.guest_count
 
   const supabase = createServiceClient()
@@ -150,6 +190,14 @@ export async function updateCateringStatus(
     return { error: parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة' }
   }
 
+  const scope = await fetchCateringOrderBranch(parsed.data.orderId)
+  if (scope.error) return { error: scope.error }
+  try {
+    assertInventoryWriteAccess(session, scope.branchId)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   const supabase = createServiceClient()
   const { error } = await supabase
     .from('catering_orders')
@@ -174,6 +222,14 @@ export async function confirmCateringOrder(
     return { poId: null, error: parsed.error.errors[0]?.message ?? 'بيانات غير صحيحة' }
   }
 
+  const scope = await fetchCateringOrderBranch(parsed.data.orderId)
+  if (scope.error) return { poId: null, error: scope.error }
+  try {
+    assertInventoryWriteAccess(session, scope.branchId)
+  } catch (error) {
+    return { poId: null, error: getDashboardGuardErrorMessage(error) }
+  }
+
   const supabase = createServiceClient()
   const { data, error } = await supabase.rpc('rpc_catering_confirm', {
     p_order_id:    parsed.data.orderId,
@@ -195,9 +251,22 @@ export async function calcCateringIngredients(
   const { session, error: authError } = await requireCateringRole()
   if (authError || !session) return { error: authError ?? 'Unauthorized' }
 
+  const parsed = DeleteOrderSchema.safeParse({ orderId })
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? 'معرّف الطلب غير صحيح' }
+  }
+
+  const scope = await fetchCateringOrderBranch(parsed.data.orderId)
+  if (scope.error) return { error: scope.error }
+  try {
+    assertInventoryWriteAccess(session, scope.branchId)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   const supabase = createServiceClient()
   const { data, error } = await supabase.rpc('rpc_catering_calc_ingredients', {
-    p_order_id: orderId,
+    p_order_id: parsed.data.orderId,
   })
 
   if (error) return { error: error.message }
@@ -217,20 +286,19 @@ export async function deleteCateringOrder(
     return { error: parsed.error.errors[0]?.message ?? 'معرّف الطلب غير صحيح' }
   }
 
-  const supabase = createServiceClient()
+  const scope = await fetchCateringOrderBranch(parsed.data.orderId)
+  if (scope.error) return { error: scope.error }
+  try {
+    assertInventoryWriteAccess(session, scope.branchId)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
 
-  const { data: order, error: fetchError } = await supabase
-    .from('catering_orders')
-    .select('id, status')
-    .eq('id', parsed.data.orderId)
-    .single()
-
-  if (fetchError || !order) return { error: fetchError?.message ?? 'طلب التقديم غير موجود' }
-
-  if (!['draft', 'cancelled'].includes(order.status)) {
+  if (!scope.status || !['draft', 'cancelled'].includes(scope.status)) {
     return { error: 'لا يمكن حذف الطلبات إلا إذا كانت في حالة مسودة أو ملغاة' }
   }
 
+  const supabase = createServiceClient()
   const { error } = await supabase
     .from('catering_orders')
     .delete()
@@ -265,6 +333,22 @@ export async function upsertCateringPackage(data: {
 
   const { id, ...rest } = parsed.data
   const payload = { ...rest, updated_at: new Date().toISOString() }
+
+  try {
+    assertInventoryWriteAccess(session, payload.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  if (id) {
+    const scope = await fetchCateringPackageBranch(id)
+    if (scope.error) return { error: scope.error }
+    try {
+      assertInventoryWriteAccess(session, scope.branchId)
+    } catch (error) {
+      return { error: getDashboardGuardErrorMessage(error) }
+    }
+  }
 
   const supabase = createServiceClient()
 

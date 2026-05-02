@@ -165,6 +165,8 @@ async function fetchAndComputeCouponDiscount(
   supabase: TypedSupabase,
   couponId: string,
   subtotal: number,
+  customerId: string,
+  branchId: string,
 ): Promise<{ discount: number; coupon: CouponRow } | { error: string }> {
   const { data: coupon, error } = await supabase
     .from('coupons')
@@ -176,11 +178,45 @@ async function fetchAndComputeCouponDiscount(
   if (error || !coupon) return { error: 'Coupon not found or inactive' }
 
   const now = new Date()
+  if (coupon.paused) {
+    return { error: 'Coupon is paused' }
+  }
+  if (coupon.valid_from && new Date(coupon.valid_from) > now) {
+    return { error: 'Coupon is not active yet' }
+  }
   if (coupon.valid_until && new Date(coupon.valid_until) < now) {
     return { error: 'Coupon has expired' }
   }
+  if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
+    return { error: 'Coupon usage limit reached' }
+  }
   if (subtotal < (coupon.min_order_value_bhd ?? 0)) {
     return { error: 'Order total below coupon minimum' }
+  }
+  if (coupon.applicable_branches?.length && !coupon.applicable_branches.includes(branchId)) {
+    return { error: 'Coupon is not valid for this branch' }
+  }
+  if (coupon.days_active?.length && !coupon.days_active.includes(now.getDay())) {
+    return { error: 'Coupon is not valid today' }
+  }
+
+  const currentTime = now.toTimeString().slice(0, 5)
+  if (coupon.time_start && currentTime < coupon.time_start.slice(0, 5)) {
+    return { error: 'Coupon is not active at this time' }
+  }
+  if (coupon.time_end && currentTime > coupon.time_end.slice(0, 5)) {
+    return { error: 'Coupon is not active at this time' }
+  }
+
+  const { count: customerUsageCount, error: usageError } = await supabase
+    .from('coupon_usages')
+    .select('id', { count: 'exact', head: true })
+    .eq('coupon_id', couponId)
+    .eq('customer_id', customerId)
+
+  if (usageError) return { error: usageError.message }
+  if ((customerUsageCount ?? 0) >= coupon.per_customer_limit) {
+    return { error: 'Coupon customer limit reached' }
   }
 
   const discount = calculateDiscount(coupon, subtotal)
@@ -261,9 +297,10 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     // Any flow involving loyalty redemption or a coupon requires a verified
     // customer session — we cannot trust a client-supplied couponId / points
     // amount without knowing who is redeeming.
+    let customerSession: Awaited<ReturnType<typeof getCustomerSession>> = null
     if (pointsToRedeem > 0 || coupon) {
-      const sessionCheck = await getCustomerSession()
-      if (!sessionCheck) {
+      customerSession = await getCustomerSession()
+      if (!customerSession) {
         return { orderId: '', finalTotal: 0, error: 'Login required to use points or coupons' }
       }
     }
@@ -287,7 +324,16 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
   let resolvedCouponId: string | null = null
 
   if (coupon) {
-    const result = await fetchAndComputeCouponDiscount(supabase, coupon.couponId, subtotal)
+    if (!customerSession) {
+      return { orderId: '', finalTotal: 0, error: 'Login required to use coupons' }
+    }
+    const result = await fetchAndComputeCouponDiscount(
+      supabase,
+      coupon.couponId,
+      subtotal,
+      customerSession.id,
+      resolvedOrderData.branch_id,
+    )
     if ('error' in result) return { orderId: '', finalTotal: 0, error: result.error }
     serverCouponDiscount = result.discount
     resolvedCouponId = coupon.couponId
@@ -299,7 +345,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       return { orderId: '', finalTotal: 0, error: `Minimum redemption is ${MIN_REDEMPTION} points` }
     }
 
-    const customer = await getCustomerSession()
+    const customer = customerSession ?? await getCustomerSession()
     if (!customer) {
       return { orderId: '', finalTotal: 0, error: 'Customer session required to redeem points' }
     }
@@ -380,8 +426,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
   }
 
   if (resolvedCouponId) {
-    const customer = await getCustomerSession()
-    await recordCouponUsage(supabase, resolvedCouponId, customer?.id ?? null, order.id, serverCouponDiscount)
+    await recordCouponUsage(supabase, resolvedCouponId, customerSession?.id ?? null, order.id, serverCouponDiscount)
   }
 
   return { orderId: order.id, finalTotal, stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined }

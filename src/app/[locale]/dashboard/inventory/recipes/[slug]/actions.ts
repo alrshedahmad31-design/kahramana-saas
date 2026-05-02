@@ -1,7 +1,7 @@
 'use server'
 
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
 interface RecipeRowInput {
@@ -13,16 +13,15 @@ interface RecipeRowInput {
   is_optional?: boolean
 }
 
-const ALLOWED_WRITE_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager', 'kitchen'] as const
-
 export async function upsertRecipe(
   slug: string,
   rows: RecipeRowInput[]
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  if (!ALLOWED_WRITE_ROLES.includes(session.role as typeof ALLOWED_WRITE_ROLES[number])) {
-    return { error: 'Forbidden' }
+  let session
+  try {
+    session = await requireDashboardRole(['owner', 'general_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
 
   if (rows.some((r) => !r.ingredient_id && !r.prep_item_id)) {

@@ -25,11 +25,12 @@ export async function exportToExcel(
 }
 
 export async function callUpdateAbcClassification(): Promise<{ error?: string }> {
-  const { getSession } = await import('@/lib/auth/session')
+  const { getDashboardGuardErrorMessage, requireDashboardRole } = await import('@/lib/auth/dashboard-guards')
   const { createServiceClient } = await import('@/lib/supabase/server')
-  const session = await getSession()
-  if (!session || !['owner', 'general_manager'].includes(session.role ?? '')) {
-    return { error: 'Forbidden' }
+  try {
+    await requireDashboardRole(['owner', 'general_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
   }
   const supabase = createServiceClient()
   const { error } = await supabase.rpc('rpc_update_abc_classification')

@@ -1,18 +1,11 @@
 'use server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardRole, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
 export async function createPurchaseOrder(
   formData: FormData,
 ): Promise<{ error?: string; id?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager', 'inventory_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
-
-  const supabase = createServiceClient()
-
   const supplier_id = formData.get('supplier_id') as string
   const branch_id   = formData.get('branch_id') as string
   const expected_at = formData.get('expected_at') as string | null
@@ -20,6 +13,15 @@ export async function createPurchaseOrder(
 
   if (!supplier_id || !branch_id) return { error: 'الفرع والمورد مطلوبان' }
 
+  let session
+  try {
+    session = await requireDashboardSession()
+    assertInventoryWriteAccess(session, branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  const supabase = createServiceClient()
   const { data: po, error: poErr } = await supabase
     .from('purchase_orders')
     .insert({
@@ -71,12 +73,27 @@ export async function updatePOStatus(
   id: string,
   status: string,
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager', 'inventory_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
-
+  let session
+  try {
+    session = await requireDashboardSession()
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
   const supabase = createServiceClient()
+  const { data: po, error: fetchError } = await supabase
+    .from('purchase_orders')
+    .select('branch_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !po) return { error: 'Purchase order not found' }
+
+  try {
+    assertInventoryWriteAccess(session, po.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   const { error } = await supabase
     .from('purchase_orders')
     .update({ status, updated_at: new Date().toISOString() })
@@ -90,9 +107,11 @@ export async function updatePOStatus(
 export async function upsertSupplier(
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  if (!['owner', 'general_manager'].includes(session.role ?? '')) return { error: 'Forbidden' }
+  try {
+    await requireDashboardRole(['owner', 'general_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
 
   const supabase = createServiceClient()
   const id = formData.get('id') as string | null

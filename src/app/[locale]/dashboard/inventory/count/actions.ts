@@ -1,6 +1,6 @@
 'use server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
+import { assertBranchScope, assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardRole, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
 export async function submitCountSession(
@@ -8,10 +8,13 @@ export async function submitCountSession(
   branchId: string,
   counts: { ingredient_id: string; system_qty: number; actual_qty: number }[],
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager', 'inventory_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
+  let session
+  try {
+    session = await requireDashboardSession()
+    assertInventoryWriteAccess(session, branchId)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
 
   if (!sessionName || !branchId || counts.length === 0) {
     return { error: 'البيانات غير مكتملة' }
@@ -40,10 +43,13 @@ export async function approveCountSession(
   sessionName: string,
   branchId: string,
 ): Promise<{ error?: string }> {
-  const session = await getSession()
-  if (!session) return { error: 'Unauthorized' }
-  const allowed = ['owner', 'general_manager', 'branch_manager']
-  if (!allowed.includes(session.role ?? '')) return { error: 'Forbidden' }
+  let session
+  try {
+    session = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+    assertBranchScope(session, branchId)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
 
   const supabase = createServiceClient()
 
