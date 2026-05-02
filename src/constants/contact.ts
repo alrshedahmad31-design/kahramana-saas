@@ -124,19 +124,10 @@ export const DEFAULT_BRANCH = BRANCHES[DEFAULT_BRANCH_ID]
 export const WHATSAPP_BASE_URL = 'https://wa.me'
 
 /**
- * Canonical site URL — drives canonicals, sitemap, schema.org, OG metadata.
- * Pulled from NEXT_PUBLIC_SITE_URL so we can switch between
- *   - https://kahramana.vercel.app  (current preview deployment)
- *   - https://kahramanat.com        (future custom domain)
- * without redeploying with a code change. Falls back to the Vercel preview.
- *
- * IMPORTANT: when the custom domain goes live, set
- *   NEXT_PUBLIC_SITE_URL=https://kahramanat.com
- * in Vercel env and redeploy. No source change needed.
+ * Canonical production site URL for SEO, schema.org, sitemap, and OG metadata.
+ * Canonicals must never point at a vercel.app preview domain.
  */
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kahramanat.com'
-).replace(/\/$/, '')
+export const SITE_URL = 'https://kahramanat.com'
 
 export const GENERAL_CONTACT = {
   email: 'info@kahramanat.com',

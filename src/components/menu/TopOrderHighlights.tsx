@@ -50,7 +50,10 @@ export default function TopOrderHighlights({ items, locale }: TopOrderHighlights
               <Link href={`/menu/item/${item.slug}`} className="block relative aspect-[4/5] rounded-2xl overflow-hidden mb-6">
                 <Image
                   src={item.image}
-                  alt={isRTL ? `${item.name.ar} — كهرمانة بغداد` : `${item.name.en} — Kahramana Baghdad`}
+                  alt={isRTL
+                    ? `${item.name.ar}  كهرمانة بغداد | مطعم عراقي البحرين`
+                    : `${item.name.en}  Kahramana Baghdad | Iraqi Restaurant Bahrain`
+                  }
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />

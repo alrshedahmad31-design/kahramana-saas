@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
 import { getMenuData, getFeaturedSlugs, type LocaleCode } from '@/lib/menu'
 import MenuPageClient from '@/components/menu/MenuPageClient'
 
@@ -17,10 +16,10 @@ export async function generateMetadata(
 
   return {
     title: isAr
-      ? "قائمة الطعام"
-      : "Our Menu",
+      ? "منيو كهرمانة بغداد | 168 طبق عراقي أصيل"
+      : "Kahramana Baghdad Menu | 168 Authentic Iraqi Dishes",
     description: isAr
-      ? "استكشف قائمة كهرمانة بغداد الكاملة: مشاوي على الفحم، مسكوف عراقي، قوزي، فطور بغدادي، دولمة، شاورما عراقية، وأكثر من 168 طبقاً. مطعم عراقي أصيل في الرفاع وقلالي، البحرين."
+      ? "تصفح قائمة كهرمانة الكاملة: 16 تصنيفا من الفطور البغدادي إلى المشاوي والحلويات. جودة أصيلة في كل طبق متوفر في الرفاع وقلالي."
       : "Explore Kahramana Baghdad's full menu: charcoal grills, Iraqi Masgouf, Quzi, Baghdadi breakfast, Dolma, Iraqi shawarma, and 168+ dishes. Authentic Iraqi restaurant in Riffa and Qalali, Bahrain.",
     alternates: {
       canonical: url,
@@ -45,7 +44,6 @@ export async function generateMetadata(
 
 export default async function MenuPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
-  const nonce = (await headers()).get('x-nonce') ?? undefined
   
   const [categories, featuredSlugs] = await Promise.all([
     getMenuData(),

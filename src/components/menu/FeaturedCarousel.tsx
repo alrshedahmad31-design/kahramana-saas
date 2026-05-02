@@ -124,7 +124,10 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
               <div className="relative aspect-[16/10] overflow-hidden">
                 <Image
                   src={item.image ?? '/images/placeholder/dish.jpg'}
-                  alt={isRTL ? item.name.ar : item.name.en}
+                  alt={isRTL
+                    ? `${item.name.ar}  كهرمانة بغداد | مطعم عراقي البحرين`
+                    : `${item.name.en}  Kahramana Baghdad | Iraqi Restaurant Bahrain`
+                  }
                   fill
                   priority={index < 2}
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -189,4 +192,3 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
     </section>
   )
 }
-

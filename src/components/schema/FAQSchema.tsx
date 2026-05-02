@@ -1,9 +1,15 @@
+import { BRANCHES } from '@/lib/constants/branches'
+
 export function FAQSchema({ locale }: { locale: "ar" | "en" }) {
+  const riffa = BRANCHES[0]
+  const qallali = BRANCHES[1]
+  const badi = BRANCHES[2]
+
   const faqs = locale === "ar"
     ? [
         {
           q: "ما أوقات عمل مطعم كهرمانة بغداد؟",
-          a: "فرع الرفاع: يومياً من ٧ مساءً حتى ١ صباحاً. فرع قلالي: يومياً من ١٢ ظهراً حتى ١ صباحاً. فرع البديع: قريباً."
+          a: `${riffa.name_ar}: يومياً من ${riffa.opens_display_ar} حتى ${riffa.closes_display_ar}. ${qallali.name_ar}: يومياً من ${qallali.opens_display_ar} حتى ${qallali.closes_display_ar}. ${badi.name_ar}: قريباً.`
         },
         {
           q: "أين يقع مطعم كهرمانة بغداد في البحرين؟",
@@ -11,7 +17,7 @@ export function FAQSchema({ locale }: { locale: "ar" | "en" }) {
         },
         {
           q: "كيف أطلب من مطعم كهرمانة؟",
-          a: "يمكنك الطلب مباشرة عبر واتساب على الرقم 97317131413 أو بالزيارة المباشرة لأي فرع."
+          a: `يمكنك الطلب مباشرة عبر واتساب على الرقم ${riffa.whatsapp} أو بالزيارة المباشرة لأي فرع.`
         },
         {
           q: "كم سعر المسكوف العراقي في كهرمانة البحرين؟",
@@ -45,7 +51,7 @@ export function FAQSchema({ locale }: { locale: "ar" | "en" }) {
     : [
         {
           q: "What are Kahramana Baghdad's opening hours in Bahrain?",
-          a: "Riffa Branch: Daily 7:00 PM – 1:00 AM. Qallali Branch: Daily 12:00 PM – 1:00 AM. Al-Budaiya Branch: Coming soon."
+          a: `${riffa.name_en}: Daily ${riffa.opens_display_en} - ${riffa.closes_display_en}. ${qallali.name_en}: Daily ${qallali.opens_display_en} - ${qallali.closes_display_en}. ${badi.name_en}: Coming soon.`
         },
         {
           q: "Where is Kahramana Baghdad restaurant located in Bahrain?",
@@ -53,7 +59,7 @@ export function FAQSchema({ locale }: { locale: "ar" | "en" }) {
         },
         {
           q: "How can I order from Kahramana Baghdad?",
-          a: "You can order directly via WhatsApp at +97317131413 or visit any of our branches in Bahrain."
+          a: `You can order directly via WhatsApp at ${riffa.phone} or visit any of our branches in Bahrain.`
         },
         {
           q: "How much does Masgouf cost at Kahramana Bahrain?",

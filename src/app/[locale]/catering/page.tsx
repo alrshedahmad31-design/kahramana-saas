@@ -1,4 +1,4 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { setRequestLocale } from 'next-intl/server'
 import { headers } from 'next/headers'
 import CateringHero from '@/components/catering/catering-hero'
 import EventTypes from '@/components/catering/event-types'
@@ -8,6 +8,7 @@ import InquiryForm from '@/components/catering/inquiry-form'
 import CateringFaq from '@/components/catering/catering-faq'
 import FinalCta from '@/components/catering/final-cta'
 import { buildBreadcrumb } from '@/lib/seo/schemas'
+import { SITE_URL } from '@/constants/contact'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -15,19 +16,27 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params
-  const t = await getTranslations({ locale, namespace: 'catering.seo' })
+  const isAr = locale === 'ar'
 
   return {
-    title: t('title'),
-    description: t('description'),
+    title: isAr
+      ? 'تموين مناسبات عراقية | ولائم أعراس شركات | كهرمانة بغداد'
+      : 'Iraqi Event Catering | Weddings Feasts Companies | Kahramana Baghdad',
+    description: isAr
+      ? 'خدمة تموين المناسبات من كهرمانة بغداد: ولائم عائلية مجالس أعراس اجتماعات شركات. طلب مباشر عبر واتساب مع تأكيد من الفريق.'
+      : 'Kahramana Baghdad catering for family feasts, majlis gatherings, weddings, and corporate meetings. Direct WhatsApp inquiry with team confirmation.',
     openGraph: {
-      title: t('title'),
-      description: t('description'),
+      title: isAr
+        ? 'تموين مناسبات عراقية | ولائم أعراس شركات | كهرمانة بغداد'
+        : 'Iraqi Event Catering | Weddings Feasts Companies | Kahramana Baghdad',
+      description: isAr
+        ? 'خدمة تموين المناسبات من كهرمانة بغداد: ولائم عائلية مجالس أعراس اجتماعات شركات. طلب مباشر عبر واتساب مع تأكيد من الفريق.'
+        : 'Kahramana Baghdad catering for family feasts, majlis gatherings, weddings, and corporate meetings. Direct WhatsApp inquiry with team confirmation.',
       images: ['/assets/catering/wedding.webp'],
     },
     alternates: {
-      canonical: locale === 'en' ? '/en/catering' : '/catering',
-      languages: { 'x-default': '/catering', ar: '/catering', en: '/en/catering' },
+      canonical: `${SITE_URL}/${locale}/catering`,
+      languages: { 'x-default': `${SITE_URL}/ar/catering`, ar: `${SITE_URL}/ar/catering`, en: `${SITE_URL}/en/catering` },
     },
   }
 }

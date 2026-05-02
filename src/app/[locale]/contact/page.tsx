@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { headers } from 'next/headers'
-import { BRANCH_LIST, GENERAL_CONTACT } from '@/constants/contact'
+import { BRANCH_LIST, GENERAL_CONTACT, SITE_URL } from '@/constants/contact'
+import { BRANCHES as SEO_BRANCHES } from '@/lib/constants/branches'
 import ContactForm from '@/components/contact/ContactForm'
 import { buildContactPageSchema, buildBreadcrumb } from '@/lib/seo/schemas'
 import ContactHero from '@/components/contact/ContactHero'
@@ -15,12 +16,19 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await params
-  const t = await getTranslations('seo')
+  const isAr = locale === 'ar'
+  const riffa = SEO_BRANCHES[0]
+  const qallali = SEO_BRANCHES[1]
   return {
-    title: t('contactTitle'),
+    title: isAr
+      ? 'تواصل مع كهرمانة بغداد | مطعم عراقي البحرين'
+      : 'Contact Kahramana Baghdad | Iraqi Restaurant Bahrain',
+    description: isAr
+      ? `تواصل مع فروع كهرمانة بغداد. الرفاع: ${riffa.phone} قلالي: ${qallali.phone}. نموذج تواصل خرائط Google وروابط تواصل اجتماعي.`
+      : `Contact Kahramana Baghdad branches. Riffa: ${riffa.phone} Qallali: ${qallali.phone}. Contact form, Google Maps, and social links.`,
     alternates: {
-      canonical: locale === 'en' ? '/en/contact' : '/contact',
-      languages: { 'x-default': '/contact', ar: '/contact', en: '/en/contact' },
+      canonical: `${SITE_URL}/${locale}/contact`,
+      languages: { 'x-default': `${SITE_URL}/ar/contact`, ar: `${SITE_URL}/ar/contact`, en: `${SITE_URL}/en/contact` },
     },
   }
 }

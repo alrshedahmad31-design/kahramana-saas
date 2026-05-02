@@ -120,7 +120,10 @@
       "Bash(mkdir -p \"C:/Users/Espresso/Desktop/kahramana-platform/kahramana-Saas/src/app/[locale]/dashboard/inventory/reports/menu-engineering\")",
       "Bash(bash claude-seo/install.sh)",
       "PowerShell(python --version; python3 --version 2>$null; where.exe python 2>$null)",
-      "WebFetch(domain:kahramana.vercel.app)"
+      "WebFetch(domain:kahramana.vercel.app)",
+      "Bash(grep -rn \"ssr: false\" src/ --include=\"*.tsx\" --include=\"*.ts\")",
+      "Bash(grep -rn \"Muharraq\" src/app/ --include=\"*.tsx\")",
+      "Bash(grep -rn \"index: false\" src/ --include=\"*.tsx\" --include=\"*.ts\")"
     ]
   }
 }

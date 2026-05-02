@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
-import { GENERAL_CONTACT } from '@/constants/contact'
+import { GENERAL_CONTACT, SITE_URL } from '@/constants/contact'
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
@@ -8,8 +8,16 @@ export async function generateMetadata(): Promise<Metadata> {
     title: locale === 'ar'
       ? 'سياسة الخصوصية — كهرمانة بغداد'
       : 'Privacy Policy — Kahramana Baghdad',
+    robots: {
+      index: false,
+      follow: true,
+    },
     alternates: {
-      languages: { ar: '/privacy', en: '/en/privacy' },
+      canonical: `${SITE_URL}/${locale}/privacy`,
+      languages: {
+        ar: `${SITE_URL}/ar/privacy`,
+        en: `${SITE_URL}/en/privacy`,
+      },
     },
   }
 }

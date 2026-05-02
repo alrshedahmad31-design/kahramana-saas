@@ -88,6 +88,7 @@ export default async function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   const headersWithNonce = new Headers(request.headers)
   headersWithNonce.set('x-nonce', nonce)
+  headersWithNonce.set('x-pathname', pathname)
 
   // Skip RBAC entirely if Supabase env vars are missing (local dev without Supabase)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

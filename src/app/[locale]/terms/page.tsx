@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
-import { GENERAL_CONTACT } from '@/constants/contact'
+import { GENERAL_CONTACT, SITE_URL } from '@/constants/contact'
 import { Link } from '@/i18n/navigation'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -9,8 +9,16 @@ export async function generateMetadata(): Promise<Metadata> {
     title: locale === 'ar'
       ? 'شروط الخدمة — كهرمانة بغداد'
       : 'Terms of Service — Kahramana Baghdad',
+    robots: {
+      index: false,
+      follow: true,
+    },
     alternates: {
-      languages: { ar: '/terms', en: '/en/terms' },
+      canonical: `${SITE_URL}/${locale}/terms`,
+      languages: {
+        ar: `${SITE_URL}/ar/terms`,
+        en: `${SITE_URL}/en/terms`,
+      },
     },
   }
 }
@@ -60,7 +68,7 @@ function TermsArabic({ email }: { email: string }) {
       <S title="وصف الخدمة">
         <p>
           يتيح لك موقعنا تصفح قائمة طعام كهرمانة بغداد وتقديم طلبات الطعام إلكترونياً عبر
-          واتساب. نحن نعمل من خلال فرعَين في البحرين: الرفاع والمحرق. الخدمة متاحة يومياً
+          واتساب. نحن نعمل من خلال فرعَين في البحرين: الرفاع وقلالي. الخدمة متاحة يومياً
           خلال ساعات العمل المحددة لكل فرع.
         </p>
       </S>
@@ -135,7 +143,7 @@ function TermsEnglish({ email }: { email: string }) {
       <S title="Service Description">
         <p>
           Our website allows you to browse the Kahramana Baghdad menu and place food orders
-          electronically via WhatsApp. We operate two branches in Bahrain: Riffa and Muharraq.
+          electronically via WhatsApp. We operate two branches in Bahrain: Riffa and Qallali.
           The service is available daily during the opening hours specified for each branch.
         </p>
       </S>

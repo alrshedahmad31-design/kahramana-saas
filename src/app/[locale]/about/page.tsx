@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
 import { headers } from 'next/headers'
+import { SITE_URL } from '@/constants/contact'
 
 // ── Components ──────────────────────────────────────────────────────────────
 import StoryHero from '@/components/story/StoryHero'
@@ -19,16 +20,16 @@ import StoryCTA from '@/components/story/StoryCTA'
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
   return {
-    title:       locale === 'ar' ? 'قصتنا | كهرمانة بغداد' : 'Our Story | Kahramana Baghdad',
+    title:       locale === 'ar' ? 'قصة كهرمانة بغداد | مطعم عراقي أصيل تأسس 2018' : 'Kahramana Baghdad Story | Authentic Iraqi Restaurant Since 2018',
     description: locale === 'ar'
-      ? 'اكتشف حكاية نكهة لا تُقدَّم كوجبة بل كذاكرة. قصة كهرامة بغداد ورؤية المؤسس المهندس أسعد الجبوري.'
+      ? 'منذ 2018 يحمل كهرمانة بغداد رسالة واحدة: تقديم المطبخ البغدادي الأصيل دون تنازل. اكتشف قصة المؤسس وفلسفة الضيافة العراقية في البحرين.'
       : 'Discover a story of flavor served not as a meal but as a memory. The story of Kahramana Baghdad and the vision of founder Eng. Asaad Al-Jubouri.',
     openGraph: {
       images: [{ url: '/assets/founder/founder.webp' }],
     },
     alternates: {
-      canonical: locale === 'en' ? '/en/about' : '/about',
-      languages: { 'x-default': '/about', ar: '/about', en: '/en/about' },
+      canonical: `${SITE_URL}/${locale}/about`,
+      languages: { 'x-default': `${SITE_URL}/ar/about`, ar: `${SITE_URL}/ar/about`, en: `${SITE_URL}/en/about` },
     },
   }
 }

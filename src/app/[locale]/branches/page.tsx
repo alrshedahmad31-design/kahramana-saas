@@ -1,26 +1,31 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server'
 import { headers } from 'next/headers'
 import { BRANCH_LIST } from '@/constants/contact'
+import { BRANCHES as SEO_BRANCHES } from '@/lib/constants/branches'
 import { getBranchMetadata } from '@/lib/branches'
 import BranchesHero from '@/components/branches/branches-hero'
 import BranchCard from '@/components/branches/branch-card'
 import {
   buildBranchesPageGraph,
   buildBreadcrumb,
-  buildFAQSchema,
 } from '@/lib/seo/schemas'
+import { generateFAQSchema } from '@/lib/seo/schema'
 
 import { SITE_URL } from '@/constants/contact'
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
-  const t = await getTranslations({ locale, namespace: 'branches.seo' })
+  const isAr = locale === 'ar'
   const BASE = SITE_URL
   const url = `${BASE}/${locale}/branches`
 
   return {
-    title: t('title'),
-    description: t('description'),
+    title: isAr
+      ? 'فروع كهرمانة بغداد | الرفاع قلالي البديع البحرين'
+      : 'Kahramana Baghdad Branches | Riffa Qallali Badi Bahrain',
+    description: isAr
+      ? 'مواقع مطعم كهرمانة بغداد في البحرين: فرع الرفاع (الحجيات) وفرع قلالي (المحرق). ساعات العمل أرقام الواتساب وخرائط Google.'
+      : 'Kahramana Baghdad locations in Bahrain: Riffa and Qallali branches, with Badi coming soon. Opening hours, WhatsApp numbers, and Google Maps.',
     alternates: {
       canonical: url,
       languages: {
@@ -30,13 +35,44 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       },
     },
     openGraph: {
-      title: t('title'),
-      description: t('description'),
+      title: isAr
+        ? 'فروع كهرمانة بغداد | الرفاع قلالي البديع البحرين'
+        : 'Kahramana Baghdad Branches | Riffa Qallali Badi Bahrain',
+      description: isAr
+        ? 'مواقع مطعم كهرمانة بغداد في البحرين: فرع الرفاع (الحجيات) وفرع قلالي (المحرق). ساعات العمل أرقام الواتساب وخرائط Google.'
+        : 'Kahramana Baghdad locations in Bahrain: Riffa and Qallali branches, with Badi coming soon. Opening hours, WhatsApp numbers, and Google Maps.',
       url,
       images: [{ url: `${BASE}/assets/hero/hero-branches.webp`, width: 1200, height: 630 }],
     },
   }
 }
+
+const BRANCH_FAQS = [
+  {
+    question: 'ما هي أوقات عمل مطعم كهرمانة الرفاع',
+    answer: `يعمل فرع الرفاع يوميا من ${SEO_BRANCHES[0].opens_display_ar} حتى ${SEO_BRANCHES[0].closes_display_ar}.`,
+  },
+  {
+    question: 'ما هي أوقات عمل فرع كهرمانة قلالي',
+    answer: `يعمل فرع قلالي يوميا من ${SEO_BRANCHES[1].opens_display_ar} حتى ${SEO_BRANCHES[1].closes_display_ar}.`,
+  },
+  {
+    question: 'هل تقدمون خدمة التوصيل',
+    answer: 'نعم نقدم التوصيل عبر واتساب. تواصل مع أقرب فرع للتأكد من منطقة التوصيل.',
+  },
+  {
+    question: 'هل تقبلون حجوزات المجموعات',
+    answer: 'نعم يرجى التواصل مع الفرع المختار مسبقا لترتيب الجلسات الجماعية.',
+  },
+  {
+    question: 'أين يقع فرع كهرمانة الرفاع',
+    answer: 'يقع فرع الرفاع في منطقة الحجيات الرفاع البحرين.',
+  },
+  {
+    question: 'أين يقع فرع كهرمانة قلالي',
+    answer: 'يقع فرع قلالي على الشارع الرئيسي قلالي المحرق البحرين.',
+  },
+]
 
 export default async function BranchesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -61,13 +97,6 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
     { name: isAr ? 'الفروع'   : 'Branches', url: localeKey === 'en' ? '/en/branches' : '/branches' },
   ])
 
-  const faqSchema = buildFAQSchema(
-    ['hours', 'delivery', 'party', 'quality'].map((key) => ({
-      question: t(`faq.items.${key}.q`),
-      answer:   t(`faq.items.${key}.a`),
-    })),
-  )
-
   return (
     <main className="min-h-screen bg-brand-black pb-24" dir={isAr ? 'rtl' : 'ltr'}>
       <script
@@ -86,7 +115,7 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
         type="application/ld+json"
         suppressHydrationWarning
         nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(generateFAQSchema(BRANCH_FAQS)) }}
       />
 
       <BranchesHero 

@@ -10,6 +10,7 @@ import { headers } from 'next/headers'
 import { routing } from '@/i18n/routing'
 import { tokens } from '@/lib/design-tokens'
 import { SITE_URL } from '@/constants/contact'
+import { generateRestaurantSchema } from '@/lib/seo/schema'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import ConditionalFooter from '@/components/layout/ConditionalFooter'
@@ -56,8 +57,6 @@ const satoshi = localFont({
 
 // ── Metadata — global fallback; each page defines its own canonical/hreflang ──
 
-import { RestaurantSchema } from '@/components/schema/RestaurantSchema'
-
 export async function generateMetadata(
   { params }: { params: Promise<{ locale: string }> }
 ): Promise<Metadata> {
@@ -69,14 +68,14 @@ export async function generateMetadata(
     metadataBase: new URL(BASE),
     title: {
       default: isAr
-        ? "كهرمانة بغداد | مطعم عراقي أصيل في البحرين"
+        ? "كهرمانة بغداد | أفضل مطعم عراقي في البحرين"
         : "Kahramana Baghdad | Authentic Iraqi Restaurant in Bahrain",
       template: isAr
-        ? "%s | كهرمانة بغداد — مطعم عراقي البحرين"
+        ? "%s | كهرمانة بغداد"
         : "%s | Kahramana Baghdad — Iraqi Restaurant Bahrain"
     },
     description: isAr
-      ? "كهرمانة بغداد — سفير المذاق البغدادي في البحرين. أكثر من 168 طبقاً عراقياً أصيلاً: مسكوف، مشاوي، قوزي، فطور بغدادي، شاورما عراقية. فروع الرفاع وقلالي."
+      ? "اكتشف نكهات بغداد الأصيلة في البحرين. 168 طبقا عراقيا: مسكوف قوزي دولمة مشاوي. فرعان في الرفاع وقلالي. اطلب الآن عبر واتساب."
       : "Kahramana Baghdad — Bahrain's authentic Iraqi restaurant. 168+ dishes: Masgouf, grills, Quzi, Baghdadi breakfast, Iraqi shawarma. Branches in Riffa and Qalali.",
     keywords: isAr
       ? [
@@ -110,16 +109,9 @@ export async function generateMetadata(
     },
     alternates: {
       canonical: `${BASE}/${locale}`,
-      languages: {
-        "ar": `${BASE}/ar`,
-        "en": `${BASE}/en`,
-        "ar-BH": `${BASE}/ar`,
-        "en-BH": `${BASE}/en`,
-        "x-default": `${BASE}/ar`,
-      },
     },
     openGraph: {
-      type: "website",
+      type: "restaurant.restaurant" as "website",
       locale: isAr ? "ar_BH" : "en_BH",
       alternateLocale: isAr ? "en_BH" : "ar_BH",
       siteName: isAr ? "كهرمانة بغداد" : "Kahramana Baghdad",
@@ -132,7 +124,7 @@ export async function generateMetadata(
       url: `${BASE}/${locale}`,
       images: [
         {
-          url: `${BASE}/assets/hero/hero-menu.webp`,
+          url: `${BASE}/assets/hero/hero-poster.webp`,
           width: 1200,
           height: 630,
           alt: isAr
@@ -150,7 +142,7 @@ export async function generateMetadata(
       description: isAr
         ? "168 طبقاً عراقياً أصيلاً — فروع الرفاع وقلالي"
         : "168 authentic Iraqi dishes — Riffa & Qalali branches",
-      images: [`${BASE}/assets/hero/hero-menu.webp`],
+      images: [`${BASE}/assets/hero/hero-poster.webp`],
     },
     icons: {
       icon:  '/assets/favicon/favicon.ico',
@@ -189,7 +181,13 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
 
   const messages = await getMessages()
   const isRTL = locale === 'ar'
-  const nonce = (await headers()).get('x-nonce') ?? undefined
+  const requestHeaders = await headers()
+  const nonce = requestHeaders.get('x-nonce') ?? undefined
+  const requestPathname = requestHeaders.get('x-pathname') ?? `/${locale}`
+  const pathWithoutLocale = requestPathname
+    .replace(/^\/(ar|en)(?=\/|$)/, '')
+    .replace(/\/$/, '')
+  const alternatePath = pathWithoutLocale || ''
 
   const fontVariables = [
     cairo.variable,
@@ -213,6 +211,16 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         )}
         {/* Preload logo */}
         <link rel="preload" href="/assets/logo.svg" as="image" type="image/svg+xml" />
+        <link rel="alternate" hrefLang="ar" href={`${SITE_URL}/ar${alternatePath}`} />
+        <link rel="alternate" hrefLang="en" href={`${SITE_URL}/en${alternatePath}`} />
+        <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/ar${alternatePath}`} />
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateRestaurantSchema()),
+          }}
+        />
         {/* Preconnect to image CDN */}
         <link rel="preconnect" href={SITE_URL} />
         {/* DNS prefetch for WhatsApp */}
@@ -229,7 +237,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
           </ConditionalFooter>
           <CartDrawer />
           <CookieBanner />
-          <RestaurantSchema />
         </NextIntlClientProvider>
 
         {process.env.NEXT_PUBLIC_GA_ID && (

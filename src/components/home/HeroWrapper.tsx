@@ -1,11 +1,9 @@
-'use client'
-
 import dynamic from 'next/dynamic'
 
 const CinematicHero = dynamic(
   () => import('@/components/home/CinematicHero'),
   {
-    ssr: false,
+    ssr: true,
     loading: () => <div className="h-[100dvh] w-full bg-brand-black" />,
   }
 )

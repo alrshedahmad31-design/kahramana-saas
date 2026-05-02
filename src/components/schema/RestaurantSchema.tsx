@@ -15,7 +15,7 @@ export function RestaurantSchema() {
         "alternateName": ["Kahramana Baghdad", "Kahramana", "كهرمانة"],
         "description": "مطعم عراقي أصيل في البحرين يقدم أشهى الأطباق البغدادية من مسكوف ومشاوي وقوزي وفطور عراقي وشاورما عراقية. Iraqi restaurant in Bahrain serving authentic Baghdadi cuisine.",
         "url": SITE_URL,
-        "telephone": "+97317131413",
+        "telephone": riffa?.phone || "+97317131413",
         "email": GENERAL_CONTACT.email,
         "logo": {
           "@type": "ImageObject",
@@ -51,7 +51,7 @@ export function RestaurantSchema() {
           GENERAL_CONTACT.instagram,
           GENERAL_CONTACT.tiktok,
           GENERAL_CONTACT.facebook,
-          "https://wa.me/97317131413",
+          `https://wa.me/${(riffa?.phone || "97317131413").replace(/\+/g, '')}`,
           "https://www.talabat.com/ar/bahrain/kahramanat-baghdad-restaurant"
         ],
         "keywords": "مطعم عراقي البحرين, Iraqi restaurant Bahrain, مسكوف البحرين, مشاوي البحرين, قوزي, فطور بغدادي, شاورما عراقية, مطعم كهرمانة, Kahramana Baghdad Bahrain, food Bahrain, restaurant Bahrain"
@@ -61,11 +61,11 @@ export function RestaurantSchema() {
       riffa ? {
         "@type": "Restaurant",
         "@id": `${SITE_URL}/#branch-riffa`,
-        "name": "كهرمانة بغداد — فرع الرفاع",
-        "alternateName": "Kahramana Baghdad Riffa Branch",
+        "name": riffa.nameAr,
+        "alternateName": riffa.nameEn,
         "parentOrganization": { "@id": `${SITE_URL}/#restaurant` },
         "url": `${SITE_URL}/ar/branches/riffa`,
-        "telephone": "+97317131413",
+        "telephone": riffa.phone,
         "address": {
           "@type": "PostalAddress",
           "streetAddress": riffa.addressEn,
@@ -97,11 +97,11 @@ export function RestaurantSchema() {
       qallali ? {
         "@type": "Restaurant",
         "@id": `${SITE_URL}/#branch-qallali`,
-        "name": "كهرمانة بغداد — فرع قلالي",
-        "alternateName": "Kahramana Baghdad Qallali Branch",
+        "name": qallali.nameAr,
+        "alternateName": qallali.nameEn,
         "parentOrganization": { "@id": `${SITE_URL}/#restaurant` },
         "url": `${SITE_URL}/ar/branches/qallali`,
-        "telephone": "+97317131413",
+        "telephone": qallali.phone,
         "address": {
           "@type": "PostalAddress",
           "streetAddress": qallali.addressEn,

@@ -161,7 +161,10 @@ function ItemDetailHeroContent({
           <div className="relative aspect-square overflow-hidden rounded-[2rem] border border-brand-gold/10 bg-brand-surface-2 shadow-2xl">
             <MenuItemImage
               src={item.image}
-              alt={item.alt ? (isRTL ? item.alt.ar : item.alt.en) : name}
+              alt={isRTL
+                ? `${item.name.ar}  كهرمانة بغداد | مطعم عراقي البحرين`
+                : `${item.name.en}  Kahramana Baghdad | Iraqi Restaurant Bahrain`
+              }
               priority
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="transition-transform duration-1000 hover:scale-105"
