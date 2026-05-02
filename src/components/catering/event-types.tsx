@@ -23,10 +23,9 @@ export default function EventTypes() {
       <SectionHeader 
         title={t('title')}
         subtitle={t('eyebrow')}
-        align="start"
       />
 
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {CATERING_EVENT_TYPES.map((item, index) => (
           <article
             key={item}

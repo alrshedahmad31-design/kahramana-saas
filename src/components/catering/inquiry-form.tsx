@@ -64,15 +64,14 @@ export default function InquiryForm() {
 
   return (
     <section id="catering-inquiry" className="max-w-7xl mx-auto px-4 sm:px-6 py-20 scroll-mt-28">
+      <SectionHeader 
+        title={t('title')}
+        subtitle={t('eyebrow')}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-[0.74fr_1.26fr] gap-10 lg:gap-16">
-        <div className="text-start">
-          <SectionHeader 
-            title={t('title')}
-            subtitle={t('eyebrow')}
-            align="start"
-            className="!mb-6"
-          />
-          <p className={`text-sm leading-7 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+        <div>
+          <p className={`text-center text-sm leading-7 text-brand-muted lg:text-start ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
             {t('description')}
           </p>
           <div className={`mt-8 rounded-2xl border border-brand-gold/20 bg-brand-gold/10 p-5 text-sm leading-7 text-brand-gold-light ${isAr ? 'font-almarai' : 'font-satoshi'}`}>

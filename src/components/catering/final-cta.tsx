@@ -15,7 +15,7 @@ export default function FinalCta() {
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-brand-gold/30 text-brand-gold">
               <CateringIcon name="message" className="h-6 w-6" />
             </span>
-            <h2 className={`section-title !text-3xl sm:!text-5xl ${isAr ? 'font-cairo' : 'font-editorial'}`}>
+            <h2 className={`section-title ${isAr ? 'font-cairo' : 'font-editorial'}`}>
               {t('title')}
             </h2>
             <p className={`mt-4 max-w-2xl text-sm sm:text-base leading-8 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>

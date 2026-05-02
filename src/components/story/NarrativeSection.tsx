@@ -19,7 +19,6 @@ export default function NarrativeSection({ isRTL }: { isRTL: boolean }) {
         <SectionHeader 
           title={t('title')}
           subtitle={t('eyebrow')}
-          align="center"
         />
 
         <div className={`space-y-12 text-lg sm:text-xl text-brand-muted leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>

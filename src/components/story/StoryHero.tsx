@@ -49,7 +49,6 @@ export default function StoryHero({ isRTL }: { isRTL: boolean }) {
         <SectionHeader 
           title={t('title')}
           subtitle={t('eyebrow')}
-          align="center"
         />
 
         <motion.p 

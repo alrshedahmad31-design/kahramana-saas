@@ -72,7 +72,7 @@ export default async function HomePage() {
 
         {/* E. Bottom Transition / CTA */}
         <section className="py-40 px-6 sm:px-16 text-center bg-brand-black">
-           <h2 className={`section-title !mx-auto ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
+           <h2 className={`section-title mx-auto ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
               {t('home.cta.title')}
            </h2>
            <CinematicButton
@@ -87,4 +87,3 @@ export default async function HomePage() {
     </>
   )
 }
-

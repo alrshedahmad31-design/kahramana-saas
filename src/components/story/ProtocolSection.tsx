@@ -19,8 +19,6 @@ export default function ProtocolSection({ isRTL }: { isRTL: boolean }) {
       <div className="max-w-7xl mx-auto px-6 sm:px-16">
         <SectionHeader 
           title={t('title')}
-          align="center"
-          className="!mb-20"
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

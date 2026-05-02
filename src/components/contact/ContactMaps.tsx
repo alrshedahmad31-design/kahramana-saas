@@ -5,6 +5,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { MapPin, Navigation } from 'lucide-react'
 import { BRANCH_LIST } from '@/constants/contact'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -38,14 +39,11 @@ export default function ContactMaps({ isRTL }: Props) {
   return (
     <section ref={sectionRef} className="py-24 px-6 sm:px-16 bg-brand-black/50 backdrop-blur-sm border-y border-white/5">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col items-center text-center mb-16">
-          <span className="text-[10px] font-bold tracking-[0.4em] text-brand-gold uppercase mb-4">
-            {isRTL ? 'مواقعنا' : 'Our Locations'}
-          </span>
-          <h2 className={`section-title !mx-auto !text-3xl sm:!text-5xl ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
-            {isRTL ? 'تفضل بزيارة فروعنا' : 'Visit Our Branches'}
-          </h2>
-          <div className="w-24 h-[1px] bg-brand-gold/30 mt-8" />
+        <div className="flex flex-col items-center text-center">
+          <SectionHeader
+            title={isRTL ? 'تفضل بزيارة فروعنا' : 'Visit Our Branches'}
+            subtitle={isRTL ? 'مواقعنا' : 'Our Locations'}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">

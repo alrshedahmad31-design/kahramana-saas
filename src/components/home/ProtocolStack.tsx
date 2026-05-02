@@ -71,7 +71,7 @@ export default function ProtocolStack() {
   return (
     <section ref={containerRef} className="relative bg-brand-black">
       <div className="sticky top-0 h-24 flex items-center justify-center z-40 bg-brand-black/80 backdrop-blur-md border-b border-white/5">
-        <h2 className={`section-subtitle !mb-0 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+        <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-[0.22em] text-brand-gold ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
           {t('title')}
         </h2>
       </div>

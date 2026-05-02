@@ -24,7 +24,7 @@ export default function StoryCTA({ isRTL }: { isRTL: boolean }) {
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className={`section-title !mx-auto !text-5xl sm:!text-7xl ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
+          <h2 className={`section-title mx-auto ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
             {t('title')}
           </h2>
           <p className={`text-xl sm:text-2xl text-brand-muted mb-12 max-w-2xl mx-auto ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>

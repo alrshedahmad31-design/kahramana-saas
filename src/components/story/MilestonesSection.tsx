@@ -19,7 +19,6 @@ export default function MilestonesSection({ isRTL }: { isRTL: boolean }) {
         <SectionHeader 
           title={t('title')}
           subtitle={t('eyebrow')}
-          align="center"
         />
 
         <div className="relative">

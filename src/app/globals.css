@@ -77,15 +77,14 @@
   }
 
   .section-header {
-    @apply mb-12 sm:mb-20 text-start max-w-4xl;
+    @apply mb-12 sm:mb-16 mx-auto max-w-4xl text-center;
   }
 
   .section-subtitle {
-    @apply text-brand-gold font-bold tracking-[0.2em] uppercase text-xs sm:text-sm mb-4 block;
+    @apply mb-4 block text-xs sm:text-sm font-bold uppercase tracking-[0.22em] text-brand-gold;
   }
 
   .section-title {
-    @apply text-white text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.1] mb-6;
+    @apply mb-0 text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.12] text-white;
   }
 }
-

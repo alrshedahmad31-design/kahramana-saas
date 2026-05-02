@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -9,8 +9,6 @@ import SectionHeader from '@/components/ui/SectionHeader'
 gsap.registerPlugin(ScrollTrigger)
 
 export default function PhilosophyManifesto() {
-  const locale = useLocale()
-  const isRTL = locale === 'ar'
   const t = useTranslations('home.philosophy')
   const sectionRef = useRef<HTMLElement>(null)
 
@@ -54,8 +52,6 @@ export default function PhilosophyManifesto() {
         <SectionHeader 
           title={kahramana}
           subtitle={t('eyebrow')}
-          align="center"
-          className="!mb-12"
         />
 
         <div className="flex flex-col gap-8 sm:gap-16">

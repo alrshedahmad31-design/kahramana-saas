@@ -12,18 +12,18 @@ export default function CateringHero() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(209,159,81,0.18),transparent_34%),linear-gradient(180deg,rgba(17,11,5,0),rgba(17,11,5,1))]" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-14 md:pt-20 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-[1.02fr_0.98fr] gap-10 lg:gap-14 items-center">
-          <div className="text-start">
-            <p className="text-xs font-satoshi font-bold tracking-[0.34em] uppercase text-brand-gold">
+          <div className="text-center">
+            <p className="section-subtitle">
               {t('eyebrow')}
             </p>
-            <h1 className={`mt-5 max-w-3xl text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.05] text-brand-text ${isAr ? 'font-cairo' : 'font-editorial'}`}>
+            <h1 className={`section-title mx-auto max-w-3xl ${isAr ? 'font-cairo' : 'font-editorial'}`}>
               {t('title')}
             </h1>
-            <p className={`mt-6 max-w-2xl text-base sm:text-lg leading-8 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+            <p className={`mt-6 mx-auto max-w-2xl text-base sm:text-lg leading-8 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
               {t('description')}
             </p>
 
-            <div className="mt-9 flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div className="mt-9 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-center">
               <a
                 href="#catering-inquiry"
                 aria-label={t('primaryCta')}
@@ -40,7 +40,7 @@ export default function CateringHero() {
               </Link>
             </div>
 
-            <p className={`mt-5 max-w-xl text-xs leading-6 text-brand-muted/80 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+            <p className={`mt-5 mx-auto max-w-xl text-xs leading-6 text-brand-muted/80 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
               {t('microcopy')}
             </p>
           </div>

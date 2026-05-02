@@ -38,10 +38,10 @@ export default function BranchMap({ latitude, longitude, isAr }: Props) {
       <div className="max-w-7xl mx-auto">
         <div className="map-content relative">
           <div className="flex flex-col mb-12">
-            <h2 className={`section-title !text-3xl sm:!text-5xl !mb-4 ${isAr ? 'font-cairo' : 'font-editorial'}`}>
+            <h2 className={`section-title ${isAr ? 'font-cairo' : 'font-editorial'}`}>
               {isAr ? 'تفضل بزيارتنا' : 'Visit Us'}
             </h2>
-            <div className="w-24 h-1 bg-brand-gold" />
+            <div className="mt-4 w-24 h-1 bg-brand-gold" />
           </div>
 
           <div className="relative aspect-video w-full overflow-hidden rounded-3xl border border-brand-border bg-brand-surface-2 group">

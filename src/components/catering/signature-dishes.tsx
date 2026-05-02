@@ -13,22 +13,16 @@ export default function SignatureDishes() {
   return (
     <section className="bg-brand-surface/45 py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 text-start">
-          <div>
-            <SectionHeader 
-              title={t('title')}
-              subtitle={t('eyebrow')}
-              align="start"
-              className="!mb-0"
-            />
-          </div>
-          <p className={`max-w-xl text-sm leading-7 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {t('description')}
-          </p>
-        </div>
+        <SectionHeader 
+          title={t('title')}
+          subtitle={t('eyebrow')}
+        />
+        <p className={`mx-auto mb-12 max-w-3xl text-center text-sm leading-7 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+          {t('description')}
+        </p>
 
         {hasDishes ? (
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {dishes.slice(0, 6).map((dish) => (
               <article key={dish.id} className="overflow-hidden rounded-2xl border border-brand-border bg-brand-black/45">
                 <div className="relative aspect-[4/3] bg-brand-surface-2">
@@ -59,7 +53,7 @@ export default function SignatureDishes() {
             ))}
           </div>
         ) : (
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {CATERING_FALLBACK_DISHES.map((dish, index) => (
               <article key={dish} className="rounded-2xl border border-brand-border bg-brand-black/45 p-5">
                 <span className="font-satoshi text-3xl font-light text-brand-gold/35">

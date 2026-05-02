@@ -19,10 +19,9 @@ export default function CateringPackages() {
       <SectionHeader 
         title={t('title')}
         subtitle={t('eyebrow')}
-        align="start"
       />
 
-      <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {CATERING_REQUEST_STYLES.map((style, index) => (
           <article 
             key={style} 

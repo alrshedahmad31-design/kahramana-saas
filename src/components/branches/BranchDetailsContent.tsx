@@ -136,7 +136,7 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
 
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
           <div className="max-w-lg text-center md:text-start">
-            <h2 className={`section-title !text-3xl sm:!text-5xl ${isAr ? 'font-cairo' : 'font-editorial'}`}>
+            <h2 className={`section-title ${isAr ? 'font-cairo' : 'font-editorial'}`}>
               {isAr ? 'تذوق الأصالة اليوم' : 'Taste the Authenticity'}
             </h2>
             <p className={`text-brand-muted text-lg ${isAr ? 'font-almarai' : 'font-satoshi'}`}>

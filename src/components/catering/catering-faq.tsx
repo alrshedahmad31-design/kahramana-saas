@@ -13,10 +13,9 @@ export default function CateringFaq() {
       <SectionHeader 
         title={t('title')}
         subtitle={t('eyebrow')}
-        align="start"
       />
 
-      <div className="mt-8 divide-y divide-brand-border rounded-2xl border border-brand-border bg-brand-surface">
+      <div className="divide-y divide-brand-border rounded-2xl border border-brand-border bg-brand-surface">
         {faqItems.map((item) => (
           <details key={item} className="group p-5">
             <summary className={`flex cursor-pointer list-none items-center justify-between gap-4 text-start text-lg font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>

@@ -26,8 +26,6 @@ export default function PhilosophySection({ isRTL }: { isRTL: boolean }) {
             <SectionHeader 
               title={t('title')}
               subtitle={t('eyebrow')}
-              align="start"
-              className="!mb-0"
             />
           </div>
 

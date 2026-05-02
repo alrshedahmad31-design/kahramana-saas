@@ -21,8 +21,6 @@ export default function BranchesSection({ isRTL }: { isRTL: boolean }) {
         <SectionHeader 
           title={t('title')}
           subtitle={t('eyebrow')}
-          align="center"
-          className="!mb-6"
         />
         <motion.p
           initial={{ opacity: 0 }}

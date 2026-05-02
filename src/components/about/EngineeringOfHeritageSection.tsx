@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { Info } from 'lucide-react';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface EngineeringOfHeritageSectionProps {
   isRTL: boolean;
@@ -45,16 +46,10 @@ export function EngineeringOfHeritageSection({ isRTL }: EngineeringOfHeritageSec
       >
         {/* Header Section */}
         <div className="max-w-4xl mx-auto text-center px-4 mb-16 md:mb-24">
-          <motion.span 
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="section-subtitle !mb-6 block"
-          >
-            {t('eyebrow')}
-          </motion.span>
-          <h2 className="section-title !text-5xl md:!text-7xl tracking-tight">
-            {t('title')}
-          </h2>
+          <SectionHeader
+            title={t('title')}
+            subtitle={t('eyebrow')}
+          />
           <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed font-light">
             {t('intro')}
           </p>

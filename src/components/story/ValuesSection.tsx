@@ -33,7 +33,6 @@ export default function ValuesSection({ isRTL }: { isRTL: boolean }) {
           <SectionHeader 
             title={t('title')}
             subtitle={t('eyebrow')}
-            align="start"
           />
         </div>
 

@@ -98,7 +98,6 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
             <SectionHeader 
               title={t('title')}
               subtitle={t('eyebrow')}
-              align="start"
             />
 
             {/* Description Paragraphs */}

@@ -767,6 +767,7 @@
       "p3": "Today, with two branches and a growing family of loyal guests, we continue that promise every single day."
     },
     "milestones": {
+      "eyebrow": "Key Milestones",
       "title": "Our Journey",
       "m1": {
         "year": "2018",
@@ -809,6 +810,7 @@
       }
     },
     "values": {
+      "eyebrow": "Our Values",
       "title": "What We Stand For",
       "v1": {
         "title": "Authenticity",
@@ -836,6 +838,7 @@
       }
     },
     "branches": {
+      "eyebrow": "Kahramana Branches",
       "title": "Find Us",
       "desc": "Two branches in Bahrain, one authentic experience."
     },
