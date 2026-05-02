@@ -10,6 +10,7 @@ import {
   Sparkles, 
   History 
 } from 'lucide-react'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function ValuesSection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.values')
@@ -28,10 +29,12 @@ export default function ValuesSection({ isRTL }: { isRTL: boolean }) {
   return (
     <section className="py-24 sm:py-32 bg-brand-surface">
       <div className="max-w-7xl mx-auto px-6 sm:px-16">
-        <div className="mb-20 text-center">
-          <h2 className={`text-4xl sm:text-5xl font-bold text-brand-text ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
-            {t('title')}
-          </h2>
+        <div className="max-w-4xl">
+          <SectionHeader 
+            title={t('title')}
+            subtitle={t('eyebrow')}
+            align="start"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

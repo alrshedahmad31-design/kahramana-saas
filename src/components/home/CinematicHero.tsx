@@ -5,12 +5,13 @@ import Image from 'next/image'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useLocale, useTranslations } from 'next-intl'
+import { DEFAULT_BRANCH } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 
 gsap.registerPlugin(ScrollTrigger)
 
 export default function CinematicHero() {
-  const locale = useLocale()
+  const locale = useLocale() as 'ar' | 'en'
   const isRTL = locale === 'ar'
   const t = useTranslations('home.hero')
   const containerRef = useRef<HTMLDivElement>(null)
@@ -43,6 +44,11 @@ export default function CinematicHero() {
 
     return () => ctx.revert()
   }, [])
+
+  const waMessage = locale === 'ar' 
+    ? `مرحباً، أود التواصل بخصوص...` 
+    : `Hello, I'd like to get in touch...`
+  const waLink = `${DEFAULT_BRANCH.waLink}?text=${encodeURIComponent(waMessage)}`
 
   return (
     <section 
@@ -113,7 +119,7 @@ export default function CinematicHero() {
             {t('orderNow')}
           </CinematicButton>
           <CinematicButton
-            href="/branches"
+            href={waLink}
             isRTL={isRTL}
             variant="secondary"
             showIcon={false}

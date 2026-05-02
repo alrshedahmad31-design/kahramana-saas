@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function MilestonesSection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.milestones')
@@ -15,11 +16,11 @@ export default function MilestonesSection({ isRTL }: { isRTL: boolean }) {
   return (
     <section className="py-24 sm:py-32 bg-brand-black">
       <div className="max-w-7xl mx-auto px-6 sm:px-16">
-        <div className="mb-20 text-center">
-          <h2 className={`text-4xl sm:text-5xl font-bold text-brand-text ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
-            {t('title')}
-          </h2>
-        </div>
+        <SectionHeader 
+          title={t('title')}
+          subtitle={t('eyebrow')}
+          align="center"
+        />
 
         <div className="relative">
           {/* Vertical Line */}

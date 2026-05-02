@@ -75,5 +75,17 @@
   .text-glow {
     text-shadow: 0 0 20px rgba(200, 146, 42, 0.3);
   }
+
+  .section-header {
+    @apply mb-12 sm:mb-20 text-start max-w-4xl;
+  }
+
+  .section-subtitle {
+    @apply text-brand-gold font-bold tracking-[0.2em] uppercase text-xs sm:text-sm mb-4 block;
+  }
+
+  .section-title {
+    @apply text-white text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.1] mb-6;
+  }
 }
 

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function ProtocolSection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.protocol')
@@ -16,17 +17,11 @@ export default function ProtocolSection({ isRTL }: { isRTL: boolean }) {
   return (
     <section className="py-24 sm:py-32 bg-brand-black">
       <div className="max-w-7xl mx-auto px-6 sm:px-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-20"
-        >
-          <h2 className={`text-4xl sm:text-6xl font-bold text-brand-text ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
-            {t('title')}
-          </h2>
-          <div className="h-1 w-24 bg-brand-gold mx-auto mt-8 rounded-full" />
-        </motion.div>
+        <SectionHeader 
+          title={t('title')}
+          align="center"
+          className="!mb-20"
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, index) => (

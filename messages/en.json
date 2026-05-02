@@ -32,11 +32,11 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Ambassador of Baghdadi Taste",
-      "titlePart1": "Authentic Baghdad",
-      "titlePart2": "In the Heart of Bahrain",
-      "orderNow": "Order Now",
-      "branches": "Our Branches",
+      "eyebrow": "Ambassador of Baghdadi Taste in Bahrain",
+      "titlePart1": "Kahramana Baghdad",
+      "titlePart2": "Ambassador of Baghdadi Taste in Bahrain",
+      "orderNow": "Menu",
+      "branches": "Contact Us",
       "scrollDown": "Discover More"
     },
     "features": {
@@ -183,8 +183,8 @@
           "cta": "Request a Quote"
         },
         "iraqiFeast": {
-          "title": "Iraqi Feast",
-          "description": "A fuller Iraqi dining experience for larger occasions, coordinated after reviewing the details.",
+          "title": "Special Banquet",
+          "description": "A more complete experience for large occasions, coordinated after reviewing the details.",
           "cta": "Discuss Details"
         }
       },
@@ -741,79 +741,6 @@
     "contactTitle": "Contact Us — Kahramana Baghdad",
     "formTitle": "Send Us a Message",
     "formDesc": "Fill in the form below and we'll get back to you as soon as possible."
-  },
-  "home": {
-    "hero": {
-      "eyebrow": "Authentic Iraqi Cuisine",
-      "titlePart1": "The Taste of",
-      "titlePart2": "Baghdad",
-      "orderNow": "Order Now",
-      "branches": "Our Branches",
-      "scrollDown": "Scroll to explore"
-    },
-    "features": {
-      "proximity": {
-        "eyebrow": "Two Locations",
-        "title": "Always Near You",
-        "link": "View Branches",
-        "features": [
-          "Comfortable Family Seating",
-          "Authentic Baghdad Vibe",
-          "Full Guest Privacy"
-        ]
-      },
-      "telemetry": {
-        "eyebrow": "Live Orders",
-        "title": "Real-Time Kitchen",
-        "desc": "Every order tracked from placement to delivery.",
-        "liveFeed": "Live Feed",
-        "link": "Order Now",
-        "steps": [
-          "Order received",
-          "Sent to kitchen",
-          "Preparing",
-          "Ready for pickup",
-          "Out for delivery",
-          "Delivered"
-        ]
-      },
-      "vault": {
-        "eyebrow": "Heritage Recipes",
-        "title": "Guarded Flavors",
-        "desc": "Ancestral recipes perfected over generations.",
-        "link": "Our Story"
-      }
-    },
-    "philosophy": {
-      "eyebrow": "Our Philosophy",
-      "standard": "Where every dish tells a story of Baghdad's rich culinary heritage.",
-      "kahramana": "Taste the Authenticity"
-    },
-    "protocol": {
-      "title": "How We Work",
-      "steps": {
-        "01": {
-          "title": "Source",
-          "desc": "We carefully select the finest fresh ingredients daily from trusted local suppliers."
-        },
-        "02": {
-          "title": "Prepare",
-          "desc": "Our chefs follow authentic Baghdadi recipes, preparing each dish with precision and care."
-        },
-        "03": {
-          "title": "Cook",
-          "desc": "Traditional cooking methods bring out the true flavors of every ingredient."
-        },
-        "04": {
-          "title": "Serve",
-          "desc": "Each dish is presented with pride, delivering a complete dining experience."
-        }
-      }
-    },
-    "cta": {
-      "title": "Ready to taste Baghdad?",
-      "button": "Order Now"
-    }
   },
   "story": {
     "hero": {

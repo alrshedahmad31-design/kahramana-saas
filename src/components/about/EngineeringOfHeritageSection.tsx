@@ -48,11 +48,11 @@ export function EngineeringOfHeritageSection({ isRTL }: EngineeringOfHeritageSec
           <motion.span 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="block text-[#C8922A] tracking-[0.4em] uppercase text-xs md:text-sm mb-6 font-bold"
+            className="section-subtitle !mb-6 block"
           >
             {t('eyebrow')}
           </motion.span>
-          <h2 className="text-5xl md:text-7xl font-bold mb-8 text-white tracking-tight">
+          <h2 className="section-title !text-5xl md:!text-7xl tracking-tight">
             {t('title')}
           </h2>
           <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed font-light">

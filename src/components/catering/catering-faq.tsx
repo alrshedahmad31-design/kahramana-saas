@@ -1,4 +1,5 @@
 import { useLocale, useTranslations } from 'next-intl'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 const faqItems = ['pricing', 'notice', 'delivery', 'customization'] as const
 
@@ -9,14 +10,11 @@ export default function CateringFaq() {
 
   return (
     <section className="max-w-4xl mx-auto px-4 sm:px-6 py-20">
-      <div className="text-start">
-        <p className="text-xs font-satoshi font-bold tracking-[0.3em] uppercase text-brand-gold">
-          {t('eyebrow')}
-        </p>
-        <h2 className={`mt-3 text-3xl sm:text-5xl font-black text-brand-text ${isAr ? 'font-cairo' : 'font-editorial'}`}>
-          {t('title')}
-        </h2>
-      </div>
+      <SectionHeader 
+        title={t('title')}
+        subtitle={t('eyebrow')}
+        align="start"
+      />
 
       <div className="mt-8 divide-y divide-brand-border rounded-2xl border border-brand-border bg-brand-surface">
         {faqItems.map((item) => (

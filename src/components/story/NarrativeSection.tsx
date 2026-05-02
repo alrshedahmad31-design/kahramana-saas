@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function NarrativeSection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.narrative')
@@ -15,19 +16,11 @@ export default function NarrativeSection({ isRTL }: { isRTL: boolean }) {
       />
 
       <div className="max-w-4xl mx-auto px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          <p className="font-satoshi text-brand-gold text-xs font-bold tracking-[0.3em] uppercase mb-6">
-            {t('eyebrow')}
-          </p>
-          <h2 className={`text-3xl sm:text-5xl font-bold text-brand-text mb-12 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
-            {t('title')}
-          </h2>
-        </motion.div>
+        <SectionHeader 
+          title={t('title')}
+          subtitle={t('eyebrow')}
+          align="center"
+        />
 
         <div className={`space-y-12 text-lg sm:text-xl text-brand-muted leading-relaxed ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
           <motion.p

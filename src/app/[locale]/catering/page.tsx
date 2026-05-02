@@ -4,7 +4,6 @@ import CateringHero from '@/components/catering/catering-hero'
 import EventTypes from '@/components/catering/event-types'
 import CateringProtocol from '@/components/catering/catering-protocol'
 import CateringPackages from '@/components/catering/catering-packages'
-import SignatureDishes from '@/components/catering/signature-dishes'
 import InquiryForm from '@/components/catering/inquiry-form'
 import CateringFaq from '@/components/catering/catering-faq'
 import FinalCta from '@/components/catering/final-cta'
@@ -77,7 +76,6 @@ export default async function CateringPage({ params }: Props) {
       <EventTypes />
       <CateringProtocol />
       <CateringPackages />
-      <SignatureDishes />
       <InquiryForm />
       <CateringFaq />
       <FinalCta />

@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 
@@ -48,24 +47,25 @@ export default function CateringHero() {
 
           <div className="relative">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-brand-border bg-brand-surface">
-              <Image
-                src="/assets/catering/wedding.webp"
-                alt={t('visualAlt')}
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 48vw"
+              <video
+                src="/assets/hero/hero-catering.mp4"
+                poster="/assets/catering/hero-catering.webp"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/20 to-transparent" />
-              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/10 bg-brand-black/70 p-4 backdrop-blur-md sm:inset-x-6 sm:bottom-6 sm:p-5">
-                <p className="text-[10px] font-satoshi font-bold uppercase tracking-[0.28em] text-brand-gold">
+              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/10 bg-brand-black/60 p-4 backdrop-blur-xl sm:inset-x-6 sm:bottom-6 sm:p-5 shadow-2xl">
+                <p className="text-[10px] font-satoshi font-bold uppercase tracking-[0.32em] text-brand-gold/90">
                   {t('visualLabel')}
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   {visualItems.map((item) => (
                     <span
                       key={item}
-                      className={`rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                      className={`rounded-lg border border-white/5 bg-white/[0.05] px-3 py-2.5 text-[11px] font-medium text-brand-text/90 backdrop-blur-md transition-colors duration-300 hover:bg-white/[0.08] ${isAr ? 'font-almarai' : 'font-satoshi'}`}
                     >
                       {t(`visualItems.${item}`)}
                     </span>

@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import Image from 'next/image'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useTranslations } from 'next-intl'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function StoryHero({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.hero')
@@ -43,28 +44,13 @@ export default function StoryHero({ isRTL }: { isRTL: boolean }) {
       {/* Content */}
       <motion.div 
         style={{ opacity }}
-        className="relative z-10 w-full max-w-5xl px-6 text-center"
+        className="relative z-10 w-full max-w-5xl px-6"
       >
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-satoshi text-brand-gold text-xs sm:text-sm font-bold tracking-[0.3em] uppercase mb-8"
-        >
-          {t('eyebrow')}
-        </motion.p>
-
-        <motion.h1 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className={`
-            text-4xl sm:text-7xl font-bold text-brand-text leading-[1.1] mb-8
-            ${isRTL ? 'font-cairo' : 'font-editorial italic'}
-          `}
-        >
-          {t('title')}
-        </motion.h1>
+        <SectionHeader 
+          title={t('title')}
+          subtitle={t('eyebrow')}
+          align="center"
+        />
 
         <motion.p 
           initial={{ opacity: 0 }}

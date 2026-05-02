@@ -14,22 +14,22 @@ const PROTOCOLS = [
   {
     id: '01',
     color: PROTOCOL_COLORS.step1,
-    image: '/assets/hero/hero-menu.webp'
+    image: '/assets/protocol/step-01-source.png'
   },
   {
     id: '02',
     color: PROTOCOL_COLORS.step2,
-    image: '/assets/branches/riffa-hajiyat-branch.webp'
+    image: '/assets/protocol/step-02-prepare.png'
   },
   {
     id: '03',
     color: PROTOCOL_COLORS.step3,
-    image: '/assets/hero/hero-poster.webp'
+    image: '/assets/protocol/step-03-cook.webp'
   },
   {
     id: '04',
     color: PROTOCOL_COLORS.step4,
-    image: '/assets/branches/qallali-branch.webp'
+    image: '/assets/protocol/step-04-serve.webp'
   }
 ]
 
@@ -71,7 +71,7 @@ export default function ProtocolStack() {
   return (
     <section ref={containerRef} className="relative bg-brand-black">
       <div className="sticky top-0 h-24 flex items-center justify-center z-40 bg-brand-black/80 backdrop-blur-md border-b border-white/5">
-        <h2 className={`text-xl font-bold tracking-widest uppercase ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+        <h2 className={`section-subtitle !mb-0 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
           {t('title')}
         </h2>
       </div>

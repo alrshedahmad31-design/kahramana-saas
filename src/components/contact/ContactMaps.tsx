@@ -42,7 +42,7 @@ export default function ContactMaps({ isRTL }: Props) {
           <span className="text-[10px] font-bold tracking-[0.4em] text-brand-gold uppercase mb-4">
             {isRTL ? 'مواقعنا' : 'Our Locations'}
           </span>
-          <h2 className={`text-3xl sm:text-5xl font-bold text-brand-text ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
+          <h2 className={`section-title !mx-auto !text-3xl sm:!text-5xl ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
             {isRTL ? 'تفضل بزيارة فروعنا' : 'Visit Our Branches'}
           </h2>
           <div className="w-24 h-[1px] bg-brand-gold/30 mt-8" />

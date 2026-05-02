@@ -32,8 +32,8 @@ export default async function Footer() {
               className={`text-lg text-brand-muted font-almarai leading-relaxed max-w-md text-start`}
             >
               {isRTL
-                ? 'نكهة الرافدين الأصيلة في قلب البحرين. التزام تام بالجودة والتراث.'
-                : 'Authentic Mesopotamian flavors in the heart of Bahrain. A commitment to quality and heritage.'}
+                ? 'سفير المذاق البغدادي في البحرين'
+                : 'Ambassador of Baghdadi Taste in Bahrain'}
             </p>
 
             {/* Social links */}

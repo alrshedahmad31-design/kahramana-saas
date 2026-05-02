@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import SectionHeader from '@/components/ui/SectionHeader'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import {
   buildCateringWhatsappLink,
@@ -65,13 +66,13 @@ export default function InquiryForm() {
     <section id="catering-inquiry" className="max-w-7xl mx-auto px-4 sm:px-6 py-20 scroll-mt-28">
       <div className="grid grid-cols-1 lg:grid-cols-[0.74fr_1.26fr] gap-10 lg:gap-16">
         <div className="text-start">
-          <p className="text-xs font-satoshi font-bold tracking-[0.3em] uppercase text-brand-gold">
-            {t('eyebrow')}
-          </p>
-          <h2 className={`mt-3 text-3xl sm:text-5xl font-black text-brand-text ${isAr ? 'font-cairo' : 'font-editorial'}`}>
-            {t('title')}
-          </h2>
-          <p className={`mt-5 text-sm leading-7 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+          <SectionHeader 
+            title={t('title')}
+            subtitle={t('eyebrow')}
+            align="start"
+            className="!mb-6"
+          />
+          <p className={`text-sm leading-7 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
             {t('description')}
           </p>
           <div className={`mt-8 rounded-2xl border border-brand-gold/20 bg-brand-gold/10 p-5 text-sm leading-7 text-brand-gold-light ${isAr ? 'font-almarai' : 'font-satoshi'}`}>

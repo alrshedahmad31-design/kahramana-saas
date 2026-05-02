@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { useRef } from 'react'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function FounderSection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.founder')
@@ -94,11 +95,11 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
             className={`lg:col-span-7 flex flex-col pt-8 ${isRTL ? 'lg:pr-12' : 'lg:pl-12'}`}
           >
             {/* Header Area */}
-            <motion.div variants={itemFadeUp} className="mb-12">
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-4 leading-tight tracking-tight">
-                {t('eyebrow')}
-              </h2>
-            </motion.div>
+            <SectionHeader 
+              title={t('title')}
+              subtitle={t('eyebrow')}
+              align="start"
+            />
 
             {/* Description Paragraphs */}
             <div className="space-y-8 mb-16">
@@ -135,12 +136,32 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               </p>
               
               <div className="flex flex-col border-t border-white/10 pt-8 relative z-10">
-                <span className="text-lg md:text-xl font-bold text-[#C8922A] mb-1">
-                  {t('signature')}
-                </span>
-                <span className="text-sm text-gray-500 uppercase tracking-widest">
-                  {t('role')}
-                </span>
+                <div className={`flex flex-col ${isRTL ? 'items-start' : 'items-start'} gap-4`}>
+                  <div className="flex flex-col">
+                    <span className="text-lg md:text-xl font-bold text-[#C8922A] mb-1">
+                      {t('signature')}
+                    </span>
+                    <span className="text-sm text-gray-500 uppercase tracking-widest">
+                      {t('role')}
+                    </span>
+                  </div>
+                  
+                  {/* Digital Signature Image */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 1, duration: 1 }}
+                    className="relative w-48 h-20 -mt-4 opacity-80 filter brightness-110 contrast-125"
+                  >
+                    <Image
+                      src="/assets/founder/founder-signature.webp"
+                      alt="Signature"
+                      fill
+                      className="object-contain"
+                    />
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
           </motion.div>

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function PhilosophySection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.philosophy')
@@ -22,19 +23,12 @@ export default function PhilosophySection({ isRTL }: { isRTL: boolean }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
           <div className="lg:col-span-4">
-            <motion.div
-              initial={{ opacity: 0, x: isRTL ? 30 : -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            >
-              <p className="font-satoshi text-brand-gold text-xs font-bold tracking-[0.3em] uppercase mb-4">
-                {t('eyebrow')}
-              </p>
-              <h2 className={`text-5xl sm:text-7xl font-bold text-brand-text leading-tight ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
-                {t('title')}
-              </h2>
-            </motion.div>
+            <SectionHeader 
+              title={t('title')}
+              subtitle={t('eyebrow')}
+              align="start"
+              className="!mb-0"
+            />
           </div>
 
           <div className="lg:col-span-8 lg:flex lg:items-center">

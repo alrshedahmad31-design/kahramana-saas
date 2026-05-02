@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { CATERING_FALLBACK_DISHES, getCateringSignatureDishes } from '@/lib/catering'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function SignatureDishes() {
   const t = useTranslations('catering.signature')
@@ -14,12 +15,12 @@ export default function SignatureDishes() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 text-start">
           <div>
-            <p className="text-xs font-satoshi font-bold tracking-[0.3em] uppercase text-brand-gold">
-              {t('eyebrow')}
-            </p>
-            <h2 className={`mt-3 text-3xl sm:text-5xl font-black text-brand-text ${isAr ? 'font-cairo' : 'font-editorial'}`}>
-              {t('title')}
-            </h2>
+            <SectionHeader 
+              title={t('title')}
+              subtitle={t('eyebrow')}
+              align="start"
+              className="!mb-0"
+            />
           </div>
           <p className={`max-w-xl text-sm leading-7 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
             {t('description')}

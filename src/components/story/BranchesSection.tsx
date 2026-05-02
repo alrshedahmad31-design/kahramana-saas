@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { MapPin } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
+import SectionHeader from '@/components/ui/SectionHeader'
 
 export default function BranchesSection({ isRTL }: { isRTL: boolean }) {
   const t = useTranslations('story.branches')
@@ -17,19 +18,20 @@ export default function BranchesSection({ isRTL }: { isRTL: boolean }) {
       />
 
       <div className="max-w-7xl mx-auto px-6 sm:px-16 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+        <SectionHeader 
+          title={t('title')}
+          subtitle={t('eyebrow')}
+          align="center"
+          className="!mb-6"
+        />
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mb-16"
+          className={`text-xl text-brand-muted max-w-2xl mx-auto mb-16 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
         >
-          <h2 className={`text-4xl sm:text-5xl font-bold text-brand-text mb-6 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
-            {t('title')}
-          </h2>
-          <p className={`text-xl text-brand-muted max-w-2xl mx-auto ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-            {t('desc')}
-          </p>
-        </motion.div>
+          {t('desc')}
+        </motion.p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Riffa */}
