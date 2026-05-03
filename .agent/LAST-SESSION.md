@@ -2,7 +2,7 @@
 
 **Session ID**: 52
 **Date**: 2026-05-03
-**Focus**: Lighthouse Performance Diagnosis & Fixes (Performance 89 → target 95+, LCP 3.2s → <2.0s)
+**Focus**: Lighthouse Performance Diagnosis — two Lighthouse runs (89 → 70 → target 95+), ISR fix, logo SVGO
 
 ---
 
