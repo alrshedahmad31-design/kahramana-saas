@@ -1,4 +1,4 @@
-import { BRANCH_LIST, GENERAL_CONTACT, SITE_URL } from '@/constants/contact'
+import { BRANCH_LIST, GENERAL_CONTACT, SITE_URL, buildWaLinkForPhone } from '@/constants/contact'
 
 export function RestaurantSchema() {
   const riffa = BRANCH_LIST.find(b => b.id === 'riffa')
@@ -15,7 +15,7 @@ export function RestaurantSchema() {
         "alternateName": ["Kahramana Baghdad", "Kahramana", "كهرمانة"],
         "description": "مطعم عراقي أصيل في البحرين يقدم أشهى الأطباق البغدادية من مسكوف ومشاوي وقوزي وفطور عراقي وشاورما عراقية. Iraqi restaurant in Bahrain serving authentic Baghdadi cuisine.",
         "url": SITE_URL,
-        "telephone": riffa?.phone || "+97317131413",
+        "telephone": riffa?.phone,
         "email": GENERAL_CONTACT.email,
         "logo": {
           "@type": "ImageObject",
@@ -51,7 +51,7 @@ export function RestaurantSchema() {
           GENERAL_CONTACT.instagram,
           GENERAL_CONTACT.tiktok,
           GENERAL_CONTACT.facebook,
-          `https://wa.me/${(riffa?.phone || "97317131413").replace(/\+/g, '')}`,
+          ...(riffa?.phone ? [buildWaLinkForPhone(riffa.phone)] : []),
           "https://www.talabat.com/ar/bahrain/kahramanat-baghdad-restaurant"
         ],
         "keywords": "مطعم عراقي البحرين, Iraqi restaurant Bahrain, مسكوف البحرين, مشاوي البحرين, قوزي, فطور بغدادي, شاورما عراقية, مطعم كهرمانة, Kahramana Baghdad Bahrain, food Bahrain, restaurant Bahrain"
@@ -64,7 +64,7 @@ export function RestaurantSchema() {
         "name": riffa.nameAr,
         "alternateName": riffa.nameEn,
         "parentOrganization": { "@id": `${SITE_URL}/#restaurant` },
-        "url": `${SITE_URL}/ar/branches/riffa`,
+        "url": `${SITE_URL}/branches/riffa`,
         "telephone": riffa.phone,
         "address": {
           "@type": "PostalAddress",
@@ -100,7 +100,7 @@ export function RestaurantSchema() {
         "name": qallali.nameAr,
         "alternateName": qallali.nameEn,
         "parentOrganization": { "@id": `${SITE_URL}/#restaurant` },
-        "url": `${SITE_URL}/ar/branches/qallali`,
+        "url": `${SITE_URL}/branches/qallali`,
         "telephone": qallali.phone,
         "address": {
           "@type": "PostalAddress",

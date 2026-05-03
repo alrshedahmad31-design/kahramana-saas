@@ -8,8 +8,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import { PROTOCOL_COLORS } from '@/lib/design-tokens'
 
-gsap.registerPlugin(ScrollTrigger)
-
 const PROTOCOLS = [
   {
     id: '01',
@@ -40,6 +38,10 @@ export default function ProtocolStack() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Lazy registration -- keeps ScrollTrigger out of the module-evaluation
+    // critical path so it never mutates <html> style before first paint.
+    gsap.registerPlugin(ScrollTrigger)
+
     const ctx = gsap.context(() => {
       const cards = gsap.utils.toArray('.protocol-card') as HTMLElement[]
       

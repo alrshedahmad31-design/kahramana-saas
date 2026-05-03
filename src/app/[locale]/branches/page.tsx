@@ -1,5 +1,4 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server'
-import { headers } from 'next/headers'
 import { BRANCH_LIST, SITE_URL } from '@/constants/contact'
 import { BRANCHES as SEO_BRANCHES } from '@/lib/constants/branches'
 import { getBranchMetadata } from '@/lib/branches'
@@ -96,7 +95,6 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
   setRequestLocale(locale)
   const localeKey = locale === 'ar' ? 'ar' : 'en'
   const isAr = locale === 'ar'
-  const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations('branches')
 
   // Sort branches: active first
@@ -123,19 +121,16 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(graph) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { getMenuData, getFeaturedSlugs, type LocaleCode } from '@/lib/menu'
 import MenuPageClient from '@/components/menu/MenuPageClient'
-import { headers } from 'next/headers'
 
 import { SITE_URL } from '@/constants/contact'
 import {
@@ -23,7 +22,7 @@ export async function generateMetadata(
   const { locale } = await params;
   const isAr = locale === "ar";
   const BASE = SITE_URL;
-  const url = `${BASE}/${locale}/menu`;
+  const url = isAr ? `${BASE}/menu` : `${BASE}/en/menu`;
 
   return {
     title: isAr
@@ -35,9 +34,9 @@ export async function generateMetadata(
     alternates: {
       canonical: url,
       languages: {
-        "ar": `${BASE}/ar/menu`,
-        "en": `${BASE}/en/menu`,
-        "x-default": `${BASE}/ar/menu`,
+        'ar-BH':     `${BASE}/menu`,
+        'en-BH':     `${BASE}/en/menu`,
+        'x-default': `${BASE}/menu`,
       },
     },
     openGraph: {
@@ -57,8 +56,6 @@ export default async function MenuPage({ params, searchParams }: Props) {
   const { locale } = await params
   const { q } = await searchParams
   const localeKey = locale as 'ar' | 'en'
-  const nonce = (await headers()).get('x-nonce') ?? undefined
-  
   const [categories, featuredSlugs] = await Promise.all([
     getMenuData(),
     getFeaturedSlugs(),
@@ -75,25 +72,21 @@ export default async function MenuPage({ params, searchParams }: Props) {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
 

@@ -3693,6 +3693,14 @@ export type Database = {
           stock_value_bhd: number
         }[]
       }
+      rpc_inventory_count_session_approve: {
+        Args: {
+          p_approved_by: string
+          p_branch_id: string
+          p_session_name: string
+        }
+        Returns: undefined
+      }
       rpc_inventory_count_submit: {
         Args: { p_approved_by: string; p_count_id: string }
         Returns: undefined

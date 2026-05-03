@@ -6,13 +6,15 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import SectionHeader from '@/components/ui/SectionHeader'
 
-gsap.registerPlugin(ScrollTrigger)
-
 export default function PhilosophyManifesto() {
   const t = useTranslations('home.philosophy')
   const sectionRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
+    // Lazy registration -- keeps ScrollTrigger out of the module-evaluation
+    // critical path so it never mutates <html> style before first paint.
+    gsap.registerPlugin(ScrollTrigger)
+
     const ctx = gsap.context(() => {
       const words = gsap.utils.toArray('.reveal-word')
       

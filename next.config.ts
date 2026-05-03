@@ -98,6 +98,14 @@ const nextConfig: NextConfig = {
 
   // Vercel: disable source maps in production to reduce bundle size
   productionBrowserSourceMaps: false,
+
+  experimental: {
+    // Tree-shake large packages -- only import used modules into the bundle.
+    // Next.js 15 + SWC picks up package.json browserslist automatically,
+    // stripping legacy polyfills (Array.at, flat, Object.fromEntries, etc.)
+    // without needing browsersListForSwc flag.
+    optimizePackageImports: ['gsap', 'framer-motion', 'date-fns', 'lucide-react'],
+  },
 }
 
 export default withNextIntl(nextConfig)

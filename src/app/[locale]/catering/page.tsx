@@ -1,5 +1,4 @@
 import { setRequestLocale } from 'next-intl/server'
-import { headers } from 'next/headers'
 import CateringHero from '@/components/catering/catering-hero'
 import EventTypes from '@/components/catering/event-types'
 import CateringProtocol from '@/components/catering/catering-protocol'
@@ -35,8 +34,12 @@ export async function generateMetadata({ params }: Props) {
       images: ['/assets/catering/wedding.webp'],
     },
     alternates: {
-      canonical: `${SITE_URL}/${locale}/catering`,
-      languages: { 'x-default': `${SITE_URL}/ar/catering`, ar: `${SITE_URL}/ar/catering`, en: `${SITE_URL}/en/catering` },
+      canonical: isAr ? `${SITE_URL}/catering` : `${SITE_URL}/en/catering`,
+      languages: {
+        'x-default': `${SITE_URL}/catering`,
+        'ar-BH':     `${SITE_URL}/catering`,
+        'en-BH':     `${SITE_URL}/en/catering`,
+      },
     },
   }
 }
@@ -46,8 +49,6 @@ export default async function CateringPage({ params }: Props) {
   setRequestLocale(locale)
   const isAr = locale === 'ar'
   const localeKey = locale === 'ar' ? 'ar' : 'en'
-  const nonce = (await headers()).get('x-nonce') ?? undefined
-
   const serviceSchema = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -75,13 +76,11 @@ export default async function CateringPage({ params }: Props) {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <CateringHero />

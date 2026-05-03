@@ -16,6 +16,7 @@ import {
   GENERAL_CONTACT,
   type Branch,
 } from '@/constants/contact'
+import { BRANCH_EXTENDED_DATA } from '@/lib/branches'
 import type { CategoryWithItems } from '@/lib/menu'
 
 // Resolved at module load from NEXT_PUBLIC_SITE_URL → preview vs prod domain
@@ -33,7 +34,7 @@ const plannedBranches = BRANCH_LIST.filter((b) => b.status === 'planned')
 
 // Verified Google Business Profile ratings (source: GBP dashboard 2026-05)
 const BRANCH_RATINGS: Partial<Record<string, { ratingValue: string; reviewCount: string; bestRating: string; worstRating: string }>> = {
-  riffa:   { ratingValue: '4.5', reviewCount: '1519', bestRating: '5', worstRating: '1' },
+  riffa:   { ratingValue: '4.5', reviewCount: '1531', bestRating: '5', worstRating: '1' },
   qallali: { ratingValue: '4.4', reviewCount: '120',  bestRating: '5', worstRating: '1' },
 }
 
@@ -109,6 +110,14 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
     base.aggregateRating = {
       '@type': 'AggregateRating',
       ...rating,
+    }
+  }
+
+  const extData = BRANCH_EXTENDED_DATA[branch.id]
+  if (extData) {
+    base.description = localized(locale, extData.descriptionAr, extData.descriptionEn)
+    if (extData.imageUrl) {
+      base.image = `${SITE}${extData.imageUrl}`
     }
   }
 
@@ -223,8 +232,8 @@ export function buildOrganizationSchema(locale: Locale) {
     alternateName: 'Kahramana Baghdad',
     description: localized(
       locale,
-      'سفير المذاق البغدادي في البحرين. نقدم أشهى الأطباق العراقية الأصيلة والمشاوي على الفحم منذ عام ٢٠١٨.',
-      'Ambassador of Baghdadi taste in Bahrain. Serving authentic Iraqi cuisine and charcoal grills since 2018.'
+      'كهرمانة بغداد مطعم عراقي أصيل في البحرين، تأسس على يد المهندس أسعد الجبوري في أغسطس 2018. يقدم المطعم أكثر من 168 طبقاً بغدادياً أصيلاً في فرعين: الرفاع (منطقة الحجيات، يومياً من ٧ مساءً حتى ١ صباحاً) وقلالي (محافظة المحرق، يومياً من ١٢ ظهراً حتى ١ صباحاً). تشمل أبرز الأطباق: سمك المسگوف المشوي على الفحم، القوزي، المشاوي العراقية، والإفطار البغدادي. تقييم ٤٫٥ من ٥ بناءً على أكثر من ١٥٣١ تقييم على جوجل في فرع الرفاع. التوصيل متاح عبر واتساب في جميع أنحاء البحرين. متوفر جلسات عائلية وكبائن خاصة وخدمة التموين للمناسبات.',
+      'Kahramana Baghdad is an authentic Iraqi restaurant in Bahrain, founded by Eng. Asaad Al-Jubouri in August 2018. The restaurant serves over 168 traditional Baghdadi dishes across two branches in Riffa (Al-Hijiyat Area, daily 7 PM–1 AM) and Qallali (Muharraq Governorate, daily 12 PM–1 AM). Signature dishes include Masgouf (traditional Mesopotamian charcoal-grilled fish), Quzi (slow-cooked lamb), Iraqi kebab, and Baghdadi breakfast. Rated 4.5 stars from 1,531 Google reviews at the Riffa branch. Delivery available via WhatsApp across Bahrain. Family seating, private cabins, and event catering services available.'
     ),
     url: SITE,
     telephone: primaryBranch.phone,
@@ -249,6 +258,7 @@ export function buildOrganizationSchema(locale: Locale) {
       GENERAL_CONTACT.instagram,
       GENERAL_CONTACT.tiktok,
       GENERAL_CONTACT.facebook,
+      'https://www.talabat.com/ar/bahrain/kahramanat-baghdad-restaurant',
     ].filter(Boolean),
     location: activeBranches.map((b) => ({
       '@id': `${SITE}/#branch-${b.id}`,
@@ -324,10 +334,13 @@ export function buildBreadcrumb(crumbs: Crumb[]) {
 
 export function buildMenuBreadcrumb(locale: Locale) {
   const prefix = locale === 'en' ? '/en' : ''
-  return buildBreadcrumb([
-    { name: localized(locale, 'الرئيسية', 'Home'), url: `${prefix}/` },
-    { name: localized(locale, 'المنيو',   'Menu'), url: `${prefix}/menu` },
-  ])
+  return {
+    ...buildBreadcrumb([
+      { name: localized(locale, 'الرئيسية', 'Home'), url: `${prefix}/` },
+      { name: localized(locale, 'المنيو',   'Menu'), url: `${prefix}/menu` },
+    ]),
+    '@id': `${SITE}${prefix}/menu#breadcrumb`,
+  }
 }
 
 export function buildCategoryBreadcrumb(
@@ -537,18 +550,19 @@ export function buildFullMenuSchema(categories: CategoryWithItems[], locale: Loc
  */
 export function buildMenuWebPageSchema(locale: Locale) {
   const SITE = GENERAL_CONTACT.website
+  const prefix = locale === 'en' ? '/en' : ''
   return {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    '@id': `${SITE}/${locale === 'en' ? 'en/' : ''}menu#webpage`,
-    url: `${SITE}/${locale === 'en' ? 'en/' : ''}menu`,
+    '@id': `${SITE}${prefix}/menu#webpage`,
+    url: `${SITE}${prefix}/menu`,
     name: localized(locale, 'قائمة الطعام - كهرمانة بغداد', 'Menu - Kahramana Baghdad'),
     description: localized(
       locale,
       'اكتشف المذاق العراقي الأصيل في البحرين. تصفح قائمتنا الكاملة من المشاوي والمسكوف والقوزي.',
       'Discover authentic Iraqi taste in Bahrain. Browse our full menu of grills, masgouf, and quzi.'
     ),
-    breadcrumb: { '@id': `${SITE}/${locale === 'en' ? 'en/' : ''}menu#breadcrumb` },
+    breadcrumb: { '@id': `${SITE}${prefix}/menu#breadcrumb` },
     about: { '@id': `${SITE}/#organization` },
     isPartOf: { '@id': `${SITE}/#website` }
   }

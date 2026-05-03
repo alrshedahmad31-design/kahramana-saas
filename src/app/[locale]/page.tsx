@@ -4,6 +4,7 @@ import { getTranslations, getLocale } from 'next-intl/server'
 import HeroWrapper from '@/components/home/HeroWrapper'
 import FeatureArtifacts from '@/components/home/FeatureArtifacts'
 import CinematicButton from '@/components/ui/CinematicButton'
+import { SITE_URL } from '@/constants/contact'
 import {
   buildOrganizationSchema,
   buildFAQSchema,
@@ -18,11 +19,9 @@ const HomeFAQ              = dynamic(() => import('@/components/home/HomeFAQ'))
 
 // ISR: revalidate daily. Removing headers() from this render tree allows Next.js
 // to serve the homepage from Vercel's edge cache, dropping TTFB from ~1.1s to ~50ms.
-// strategy="afterInteractive" scripts are trusted by strict-dynamic in the CSP
-// middleware — no per-request nonce needed.
 export const revalidate = 86400
 
-// ── Metadata ──────────────────────────────────────────────────────────────────
+// -- Metadata -----------------------------------------------------------------
 
 export async function generateMetadata(
   { params }: { params: Promise<{ locale: string }> }
@@ -33,18 +32,20 @@ export async function generateMetadata(
   return {
     title: t('homeTitle'),
     description: t('homeDescription'),
+    // Absolute canonical URLs -- relative paths cause Lighthouse to flag
+    // "canonical points to another hreflang location" on preview deployments.
     alternates: {
-      canonical: locale === 'ar' ? '/' : '/en',
+      canonical: locale === 'ar' ? SITE_URL : `${SITE_URL}/en`,
       languages: {
-        'ar':        '/',
-        'en':        '/en',
-        'x-default': '/',
+        'ar':        SITE_URL,
+        'en':        `${SITE_URL}/en`,
+        'x-default': SITE_URL,
       },
     },
   }
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// -- Page ---------------------------------------------------------------------
 
 export default async function HomePage() {
   const locale = (await getLocale()) as 'ar' | 'en'
@@ -78,13 +79,13 @@ export default async function HomePage() {
       />
 
       <div className="flex flex-col">
-        {/* A. Cinematic Opening — never dynamic(), keeps SSR image out of Suspense boundary */}
+        {/* A. Cinematic Opening -- no dynamic() so SSR image is never inside Suspense */}
         <HeroWrapper />
 
-        {/* B. Feature Artifacts — first section below hero, keep in critical bundle */}
+        {/* B. Feature Artifacts -- first section below hero, keep in critical bundle */}
         <FeatureArtifacts />
 
-        {/* C–E. Below-fold sections — lazy-loaded to reduce initial JS parse cost (TBT) */}
+        {/* C-E. Below-fold sections -- lazy-loaded to reduce initial JS parse cost (TBT) */}
         <PhilosophyManifesto />
         <ProtocolStack />
         <HomeFAQ />

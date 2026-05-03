@@ -16,7 +16,6 @@ export async function createWasteLog(formData: FormData): Promise<{ error?: stri
   const branch_id     = formData.get('branch_id') as string
   const notes         = formData.get('notes') as string | null
   const photo_url     = formData.get('photo_url') as string | null
-  const cost_bhd      = Number(formData.get('cost_bhd') || 0)
 
   let session
   try {
@@ -26,11 +25,23 @@ export async function createWasteLog(formData: FormData): Promise<{ error?: stri
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  const supabase = createServiceClient()
-
   if (!ingredient_id || !quantity || !reason || !branch_id) {
     return { error: 'الحقول المطلوبة: الفرع، المكوّن، الكمية، السبب' }
   }
+
+  const supabase = createServiceClient()
+
+  // W1 FIX: calculate cost server-side — never trust client-submitted cost_bhd.
+  // A malicious or buggy client could submit any value (negative, inflated, zero).
+  const { data: ingredient, error: ingErr } = await supabase
+    .from('ingredients')
+    .select('cost_per_unit')
+    .eq('id', ingredient_id)
+    .single()
+
+  if (ingErr || !ingredient) return { error: 'المكوّن غير موجود' }
+
+  const cost_bhd = quantity * ingredient.cost_per_unit
 
   const { error } = await supabase.from('waste_log').insert({
     branch_id,
@@ -38,8 +49,8 @@ export async function createWasteLog(formData: FormData): Promise<{ error?: stri
     quantity,
     reason,
     cost_bhd,
-    notes: notes || null,
-    photo_url: photo_url || null,
+    notes:       notes || null,
+    photo_url:   photo_url || null,
     reported_by: session.id,
     reported_at: new Date().toISOString(),
   })
@@ -84,6 +95,8 @@ export async function approveWaste(id: string): Promise<{ error?: string }> {
 
   if (error) return { error: error.message }
   revalidatePath('/dashboard/inventory/waste')
+  revalidatePath(`/ar/dashboard/inventory/waste/${id}`)
+  revalidatePath(`/en/dashboard/inventory/waste/${id}`)
   return {}
 }
 
@@ -122,5 +135,7 @@ export async function rejectWaste(id: string, rejection_note: string): Promise<{
 
   if (error) return { error: error.message }
   revalidatePath('/dashboard/inventory/waste')
+  revalidatePath(`/ar/dashboard/inventory/waste/${id}`)
+  revalidatePath(`/en/dashboard/inventory/waste/${id}`)
   return {}
 }

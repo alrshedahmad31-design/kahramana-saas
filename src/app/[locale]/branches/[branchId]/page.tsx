@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import { BRANCHES, BRANCH_LIST, buildWaOrderLink } from '@/constants/contact'
 import { getBranchMetadata } from '@/lib/branches'
 import { buildBranchLocalBusiness, buildBreadcrumb } from '@/lib/seo/schemas'
@@ -35,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const isAr  = locale === 'ar'
   const name  = isAr ? branch.nameAr  : branch.nameEn
   const BASE  = SITE_URL
-  const url   = `${BASE}/${locale}/branches/${branchId}`
+  const url   = isAr ? `${BASE}/branches/${branchId}` : `${BASE}/en/branches/${branchId}`
 
   const title = isAr
     ? `مطعم كهرمانة بغداد — ${name} | أكل عراقي ومسكوف في البحرين`
@@ -50,9 +49,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: url,
       languages: {
-        'ar': `${BASE}/ar/branches/${branchId}`,
-        'en': `${BASE}/en/branches/${branchId}`,
-        'x-default': `${BASE}/ar/branches/${branchId}`,
+        'ar-BH':     `${BASE}/branches/${branchId}`,
+        'en-BH':     `${BASE}/en/branches/${branchId}`,
+        'x-default': `${BASE}/branches/${branchId}`,
       },
     },
     openGraph: {
@@ -75,7 +74,6 @@ export default async function BranchDetailPage({ params }: Props) {
 
   if (!branch || branch.status !== 'active') notFound()
 
-  const nonce = (await headers()).get('x-nonce') ?? undefined
   const localeKey  = locale as 'ar' | 'en'
   const branchName = isAr ? branch.nameAr : branch.nameEn
   const waLink     = buildWaOrderLink(branch.id, localeKey)
@@ -93,13 +91,11 @@ export default async function BranchDetailPage({ params }: Props) {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
 

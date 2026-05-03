@@ -8,10 +8,19 @@
     line-height: 1.6;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    scroll-behavior: smooth;
     background-color: theme('colors.brand-black');
     color: theme('colors.brand-text');
     scrollbar-gutter: stable;
+  }
+
+  /* Scoped separately so it never appears as an inline style during initial
+     paint -- GSAP ScrollTrigger detects global scroll-behavior and writes an
+     inline override on <html>, which was the source of CLS 0.151.
+     prefers-reduced-motion: no-preference also satisfies WCAG 2.5.3. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   *, *::before, *::after {

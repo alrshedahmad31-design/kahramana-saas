@@ -10,17 +10,32 @@ interface PageProps {
   searchParams: Promise<{ status?: string; branch?: string; reason?: string; page?: string }>
 }
 
-const REASON_LABELS: Record<string, string> = {
-  expired:          'منتهي الصلاحية',
-  damaged:          'تالف',
-  spillage:         'انسكاب',
-  overproduction:   'إنتاج زائد',
-  quality:          'جودة سيئة',
-  returned:         'مُرجَّع',
-  theft_suspected:  'شبهة سرقة',
-  prep_error:       'خطأ في التحضير',
-  over_portioning:  'إفراط في التقديم',
-  other:            'أخرى',
+function getReasonLabel(reason: string, isAr: boolean): string {
+  const ar: Record<string, string> = {
+    expired:         'منتهي الصلاحية',
+    damaged:         'تالف',
+    spillage:        'انسكاب',
+    overproduction:  'إنتاج زائد',
+    quality:         'جودة سيئة',
+    returned:        'مُرجَّع',
+    theft_suspected: 'شبهة سرقة',
+    prep_error:      'خطأ في التحضير',
+    over_portioning: 'إفراط في التقديم',
+    other:           'أخرى',
+  }
+  const en: Record<string, string> = {
+    expired:         'Expired',
+    damaged:         'Damaged',
+    spillage:        'Spillage',
+    overproduction:  'Overproduction',
+    quality:         'Poor Quality',
+    returned:        'Returned',
+    theft_suspected: 'Theft Suspected',
+    prep_error:      'Prep Error',
+    over_portioning: 'Over-portioning',
+    other:           'Other',
+  }
+  return (isAr ? ar : en)[reason] ?? reason
 }
 
 function escalationBadge(level: number) {
@@ -30,11 +45,11 @@ function escalationBadge(level: number) {
   return 'bg-brand-surface-2 text-brand-muted'
 }
 
-function escalationLabel(level: number) {
-  if (level === 3) return 'مغلق تلقائياً'
-  if (level === 2) return 'مُصعَّد للمالك'
-  if (level === 1) return 'مُصعَّد للمدير العام'
-  return 'مستوى المدير'
+function escalationLabel(level: number, isAr: boolean): string {
+  if (level === 3) return isAr ? 'مغلق تلقائياً'       : 'Auto-closed'
+  if (level === 2) return isAr ? 'مُصعَّد للمالك'      : 'Escalated to owner'
+  if (level === 1) return isAr ? 'مُصعَّد للمدير العام' : 'Escalated to GM'
+  return isAr ? 'مستوى المدير' : 'Branch level'
 }
 
 export default async function WastePage({ params, searchParams }: PageProps) {
@@ -82,21 +97,21 @@ export default async function WastePage({ params, searchParams }: PageProps) {
 
   const { data: wastes, count } = await query
 
-  // Summary stats
-  const today = new Date().toISOString().slice(0, 10)
-  const monthStart = new Date().toISOString().slice(0, 7) + '-01'
+  // I3 FIX: KPI totals from full DB queries, not from the paginated 20-row subset.
+  const today      = new Date().toISOString().split('T')[0]
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+
+  const [{ data: todayRows }, { data: monthRows }] = await Promise.all([
+    supabase.from('waste_log').select('cost_bhd').gte('reported_at', today),
+    supabase.from('waste_log').select('cost_bhd').gte('reported_at', monthStart),
+  ])
+
+  const todayCost = todayRows?.reduce((s, r) => s + Number(r.cost_bhd), 0) ?? 0
+  const monthCost = monthRows?.reduce((s, r) => s + Number(r.cost_bhd), 0) ?? 0
 
   const pendingCount = (wastes ?? []).filter(
     (w) => !w.approved_by && !w.rejected_by,
   ).length
-
-  const todayCost = (wastes ?? [])
-    .filter((w) => w.reported_at?.slice(0, 10) === today)
-    .reduce((sum, w) => sum + (w.cost_bhd ?? 0), 0)
-
-  const monthCost = (wastes ?? [])
-    .filter((w) => (w.reported_at ?? '') >= monthStart)
-    .reduce((sum, w) => sum + (w.cost_bhd ?? 0), 0)
 
   const totalPages = Math.ceil((count ?? 0) / 20)
 
@@ -254,7 +269,7 @@ export default async function WastePage({ params, searchParams }: PageProps) {
                   </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium bg-brand-surface-2 text-brand-text">
-                      {REASON_LABELS[w.reason] ?? w.reason}
+                      {getReasonLabel(w.reason, isAr)}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-satoshi text-sm text-brand-text">
@@ -264,7 +279,7 @@ export default async function WastePage({ params, searchParams }: PageProps) {
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium ${escalationBadge(w.escalation_level ?? 0)}`}
                     >
-                      {escalationLabel(w.escalation_level ?? 0)}
+                      {escalationLabel(w.escalation_level ?? 0, isAr)}
                     </span>
                   </td>
                   <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">

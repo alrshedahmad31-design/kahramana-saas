@@ -53,22 +53,16 @@ export async function approveCountSession(
 
   const supabase = createServiceClient()
 
-  const { data: rows, error: fetchErr } = await supabase
-    .from('inventory_counts')
-    .select('id')
-    .eq('count_session', sessionName)
-    .eq('branch_id', branchId)
-    .is('approved_by', null)
+  // C4 FIX: single atomic RPC replaces JS for-loop.
+  // Old loop: item 3 of 10 failing left items 1-2 committed with no rollback.
+  // New: all items in one plpgsql transaction — any failure rolls back all.
+  const { error } = await supabase.rpc('rpc_inventory_count_session_approve', {
+    p_session_name: sessionName,
+    p_branch_id:    branchId,
+    p_approved_by:  session.id,
+  })
 
-  if (fetchErr) return { error: fetchErr.message }
-
-  for (const row of rows ?? []) {
-    const { error } = await supabase.rpc('rpc_inventory_count_submit', {
-      p_count_id:    row.id,
-      p_approved_by: session.id,
-    })
-    if (error) return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   revalidatePath('/dashboard/inventory/count')
   return {}

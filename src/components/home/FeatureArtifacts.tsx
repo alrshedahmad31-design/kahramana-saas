@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocale, useTranslations } from 'next-intl'
-import { BRANCHES } from '@/constants/contact'
 import { colors } from '@/lib/design-tokens'
 import CinematicButton from '@/components/ui/CinematicButton'
 import LuxuryIcon from '@/components/icons/LuxuryIcon'
@@ -95,7 +94,7 @@ export default function FeatureArtifacts() {
 
           <div className="mt-6">
             <CinematicButton
-              href={BRANCHES.riffa.waLink}
+              href={isRTL ? '/branches' : '/en/branches'}
               isRTL={isRTL}
               className="w-full py-4 text-xs font-bold rounded-full"
             >

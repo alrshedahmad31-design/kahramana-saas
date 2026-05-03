@@ -82,7 +82,7 @@ export async function generateMetadata(
     },
     description: isAr
       ? "اكتشف نكهات بغداد الأصيلة في البحرين. 168 طبقا عراقيا: مسكوف قوزي دولمة مشاوي. فرعان في الرفاع وقلالي. اطلب الآن عبر واتساب."
-      : "Kahramana Baghdad — Bahrain's authentic Iraqi restaurant. 168+ dishes: Masgouf, grills, Quzi, Baghdadi breakfast, Iraqi shawarma. Branches in Riffa and Qalali.",
+      : "Kahramana Baghdad — Bahrain's authentic Iraqi restaurant. 168+ dishes: Masgouf, grills, Quzi, Baghdadi breakfast, Iraqi shawarma. Branches in Riffa and Qallali.",
     keywords: isAr
       ? [
           "مطعم عراقي البحرين", "كهرمانة بغداد", "مسكوف البحرين",
@@ -95,7 +95,7 @@ export async function generateMetadata(
           "Iraqi restaurant Bahrain", "Kahramana Baghdad", "Masgouf Bahrain",
           "Iraqi grills Bahrain", "Iraqi Quzi", "Baghdadi breakfast",
           "Iraqi shawarma", "restaurants Bahrain", "Riffa restaurant",
-          "Qalali restaurant", "Iraqi food Bahrain", "best restaurant Bahrain",
+          "Qallali restaurant", "Iraqi food Bahrain", "best restaurant Bahrain",
           "Middle Eastern food Bahrain", "halal restaurant Bahrain",
           "food delivery Bahrain", "Bahrain dining"
         ],
@@ -144,7 +144,7 @@ export async function generateMetadata(
         : "Kahramana Baghdad | Iraqi Restaurant Bahrain",
       description: isAr
         ? "168 طبقاً عراقياً أصيلاً — فروع الرفاع وقلالي"
-        : "168 authentic Iraqi dishes — Riffa & Qalali branches",
+        : "168 authentic Iraqi dishes — Riffa & Qallali branches",
       images: [`${BASE}/assets/hero/hero-poster.webp`],
     },
     icons: {

@@ -3,6 +3,9 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardRole, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
+const PO_STATUSES = ['draft', 'ordered', 'partial', 'received', 'cancelled'] as const
+type POStatus = typeof PO_STATUSES[number]
+
 export async function createPurchaseOrder(
   formData: FormData,
 ): Promise<{ error?: string; id?: string }> {
@@ -71,8 +74,12 @@ export async function createPurchaseOrder(
 
 export async function updatePOStatus(
   id: string,
-  status: string,
+  status: POStatus,
 ): Promise<{ error?: string }> {
+  if (!PO_STATUSES.includes(status)) {
+    return { error: `Invalid status: ${status}` }
+  }
+
   let session
   try {
     session = await requireDashboardSession()

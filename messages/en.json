@@ -36,7 +36,7 @@
       "titlePart1": "Kahramana Baghdad",
       "titlePart2": "Ambassador of Baghdadi Taste in Bahrain",
       "orderNow": "Menu",
-      "branches": "Contact Us",
+      "branches": "Our Branches",
       "waMessage": "Hello, I'd like to get in touch...",
       "scrollDown": "Discover More",
       "visualAlt": "Cinematic presentation of authentic Iraqi Masgouf and Charcoal Grills at Kahramana Baghdad Bahrain"
@@ -82,22 +82,22 @@
         "link": "Browse Archive"
       },
       "telemetry": {
-        "eyebrow": "System Status",
-        "title": "Live Quality Feed",
+        "eyebrow": "Our Kitchen Standard",
+        "title": "Live Quality Check",
         "liveFeed": "Live Feed",
         "desc": "Live tracking of preparation, cooking, and presentation standards for absolute consistency.",
         "link": "View Standards",
         "steps": [
-          "Fresh Ingredient Inventory",
-          "Temperature Calibration",
-          "Final Quality Inspection",
-          "Delivery Protocol"
+          "Fresh ingredients checked daily",
+          "Charcoal heat calibrated per dish",
+          "Every plate inspected before service",
+          "Order packed with care"
         ]
       },
       "proximity": {
         "eyebrow": "Privacy",
         "title": "Hospitality Engineering",
-        "link": "Book Your Table",
+        "link": "View Our Branches",
         "features": [
           "Private Family Seating",
           "Ancient Baghdadi Ambiance",

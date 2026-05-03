@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import { getTranslations, getLocale } from 'next-intl/server'
-import { DEFAULT_BRANCH } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import HeroAnimations from './HeroAnimations'
 
@@ -8,11 +7,12 @@ export default async function CinematicHero() {
   const locale = await getLocale() as 'ar' | 'en'
   const isRTL = locale === 'ar'
   const t = await getTranslations('home.hero')
-  const waLink = `${DEFAULT_BRANCH.waLink}?text=${encodeURIComponent(t('waMessage'))}`
 
+  // h-screen (100vh) instead of 100svh: svh recalculates on mobile browser
+  // chrome resize, causing CLS. 100vh is stable on all tested devices.
   return (
-    <section className="relative h-[100svh] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
-      {/* LCP image: Server-rendered HTML — no React state, no hydration wait before LCP paint */}
+    <section className="relative h-screen w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
+      {/* LCP image: priority + fetchPriority ensure early browser discovery */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/assets/hero/hero-poster.webp"
@@ -20,8 +20,8 @@ export default async function CinematicHero() {
           fill
           priority
           fetchPriority="high"
-          unoptimized
           decoding="sync"
+          quality={85}
           className="object-cover scale-110"
           sizes="100vw"
         />
@@ -34,7 +34,7 @@ export default async function CinematicHero() {
           {t('eyebrow')}
         </p>
 
-        <h1 className="mb-10 leading-[0.9] flex flex-col">
+        <h1 className="mb-4 leading-[0.9] flex flex-col">
           <span className={`hero-title-part-1 text-4xl sm:text-7xl font-bold text-brand-text ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
             {t('titlePart1')}
           </span>
@@ -43,17 +43,29 @@ export default async function CinematicHero() {
           </span>
         </h1>
 
+        {/* Geo-intent prose: SSR-visible for AI crawlers and passage indexing */}
+        <p className={`hero-desc text-brand-text/70 text-sm leading-relaxed mb-4 max-w-lg ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+          {isRTL
+            ? 'مطعم عراقي أصيل في البحرين منذ 2018 — فرعان في الرفاع وقلالي. مسگوف مشوي على الفحم، قوزي، مشاوي بغدادية، وإفطار عراقي تراثي.'
+            : 'Authentic Iraqi restaurant in Bahrain since 2018 — branches in Riffa and Qallali. Charcoal Masgouf, Quzi, Iraqi grills, and Baghdadi breakfast.'}
+        </p>
+
+        {/* Trust signal: GBP rating rendered visibly for E-E-A-T and SXO */}
+        <p className="hero-trust text-brand-gold/60 text-xs font-bold tracking-wider mb-6">
+          {isRTL ? '★★★★★ ٤٫٥ — ١٥٣١+ تقييم جوجل · منذ ٢٠١٨' : '★★★★★ 4.5 — 1,531+ Google Reviews · Since 2018'}
+        </p>
+
         <div className="hero-cta flex flex-wrap gap-4 justify-start">
           <CinematicButton href="/menu" isRTL={isRTL} className="px-8 py-4 font-bold rounded-full">
             {t('orderNow')}
           </CinematicButton>
-          <CinematicButton href={waLink} isRTL={isRTL} variant="secondary" showIcon={false} className="px-8 py-4 font-bold rounded-full">
+          <CinematicButton href={isRTL ? '/branches' : '/en/branches'} isRTL={isRTL} variant="secondary" showIcon={false} className="px-8 py-4 font-bold rounded-full">
             {t('branches')}
           </CinematicButton>
         </div>
       </div>
 
-      {/* GSAP animations isolated in a Client Component — never blocks LCP paint */}
+      {/* GSAP animations isolated in a Client Component -- never blocks LCP paint */}
       <HeroAnimations />
 
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-50">

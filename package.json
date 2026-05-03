@@ -62,5 +62,14 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
-  }
+  },
+  "browserslist": [
+    "chrome >= 109",
+    "edge >= 109",
+    "firefox >= 109",
+    "safari >= 16",
+    "ios_saf >= 16",
+    "samsung >= 20",
+    "not dead"
+  ]
 }

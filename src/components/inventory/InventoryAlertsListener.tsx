@@ -57,13 +57,15 @@ function AlertToast({ item, onDismiss }: { item: ToastItem; onDismiss: (key: num
 
 export default function InventoryAlertsListener() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
-  const supabase = createClient()
 
   const dismiss = useCallback((key: number) => {
     setToasts(prev => prev.filter(t => t.key !== key))
   }, [])
 
   useEffect(() => {
+    // I1 FIX: client created inside useEffect — not on every render.
+    const supabase = createClient()
+
     const channel = supabase
       .channel('inventory_alerts')
       .on(
@@ -75,18 +77,19 @@ export default function InventoryAlertsListener() {
 
           setToasts(prev => [...prev, { id: row.id, severity: row.severity, message: row.message, key }])
 
-          // Mark as read after showing
+          // I2 FIX: log mark-as-read failures instead of silently swallowing them.
           supabase
             .from('inventory_alerts')
             .update({ is_read: true })
             .eq('id', row.id)
-            .then(() => {})
+            .then(({ error }) => {
+              if (error) console.error('[alerts] mark-as-read failed:', error.message)
+            })
         },
       )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (toasts.length === 0) return null

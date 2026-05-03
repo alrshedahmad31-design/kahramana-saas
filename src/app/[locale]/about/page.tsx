@@ -1,6 +1,4 @@
 import type { Metadata } from 'next'
-import { getLocale } from 'next-intl/server'
-import { headers } from 'next/headers'
 import { SITE_URL } from '@/constants/contact'
 import { buildFounderSchema } from '@/lib/seo/schemas'
 
@@ -18,35 +16,43 @@ import StoryCTA from '@/components/story/StoryCTA'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale()
+export async function generateMetadata(
+  { params }: { params: Promise<{ locale: string }> }
+): Promise<Metadata> {
+  const { locale } = await params
+  const isAr = locale === 'ar'
   return {
-    title:       locale === 'ar' ? 'قصة كهرمانة بغداد | مطعم عراقي أصيل تأسس 2018' : 'Kahramana Baghdad Story | Authentic Iraqi Restaurant Since 2018',
-    description: locale === 'ar'
+    title:       isAr ? 'قصة كهرمانة بغداد | مطعم عراقي أصيل تأسس 2018' : 'Kahramana Baghdad Story | Authentic Iraqi Restaurant Since 2018',
+    description: isAr
       ? 'منذ 2018 يحمل كهرمانة بغداد رسالة واحدة: تقديم المطبخ البغدادي الأصيل دون تنازل. اكتشف قصة المؤسس وفلسفة الضيافة العراقية في البحرين.'
       : 'Kahramana Baghdad — authentic Iraqi restaurant in Bahrain since 2018. Founded by Eng. Asaad Al-Jubouri, serving 168+ traditional Baghdadi dishes across two branches in Riffa and Qallali.',
     openGraph: {
       images: [{ url: '/assets/founder/founder.webp' }],
     },
     alternates: {
-      canonical: `${SITE_URL}/${locale}/about`,
-      languages: { 'x-default': `${SITE_URL}/ar/about`, ar: `${SITE_URL}/ar/about`, en: `${SITE_URL}/en/about` },
+      canonical: isAr ? `${SITE_URL}/about` : `${SITE_URL}/en/about`,
+      languages: {
+        'x-default': `${SITE_URL}/about`,
+        'ar-BH':     `${SITE_URL}/about`,
+        'en-BH':     `${SITE_URL}/en/about`,
+      },
     },
   }
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function AboutPage() {
-  const locale = await getLocale()
-  const isAr   = locale === 'ar'
-  const nonce  = (await headers()).get('x-nonce') ?? undefined
+export default async function AboutPage(
+  { params }: { params: Promise<{ locale: string }> }
+) {
+  const { locale } = await params
+  const isAr = locale === 'ar'
 
   const schemaOrg = {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
     name: isAr ? 'قصتنا — كهرمانة بغداد' : 'Our Story — Kahramana Baghdad',
-    url: `${SITE_URL}/${locale}/about`,
+    url: isAr ? `${SITE_URL}/about` : `${SITE_URL}/en/about`,
     inLanguage: isAr ? 'ar-BH' : 'en-BH',
     mainEntity: { '@id': `${SITE_URL}/#organization` },
   }
@@ -61,13 +67,11 @@ export default async function AboutPage() {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(founderSchemaLd) }}
       />
 

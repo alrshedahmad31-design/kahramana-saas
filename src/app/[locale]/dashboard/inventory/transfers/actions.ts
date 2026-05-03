@@ -29,6 +29,17 @@ export async function createTransfer(formData: FormData): Promise<{ error?: stri
   const supabase = createServiceClient()
   const now = new Date().toISOString()
 
+  // C2 FIX: RPC first — if stock is insufficient or DB fails,
+  // no phantom transfer record is left behind with status='received'.
+  const { error: rpcErr } = await supabase.rpc('rpc_transfer_stock', {
+    p_from_branch: from_branch_id,
+    p_to_branch:   to_branch_id,
+    p_ingredient:  ingredient_id,
+    p_quantity:    quantity,
+    p_staff_id:    session.id,
+  })
+  if (rpcErr) return { error: rpcErr.message }
+
   const { error: insertErr } = await supabase.from('inventory_transfers').insert({
     from_branch_id,
     to_branch_id,
@@ -42,15 +53,6 @@ export async function createTransfer(formData: FormData): Promise<{ error?: stri
     notes:           notes || null,
   })
   if (insertErr) return { error: insertErr.message }
-
-  const { error: rpcErr } = await supabase.rpc('rpc_transfer_stock', {
-    p_from_branch:  from_branch_id,
-    p_to_branch:    to_branch_id,
-    p_ingredient:   ingredient_id,
-    p_quantity:     quantity,
-    p_staff_id:     session.id,
-  })
-  if (rpcErr) return { error: rpcErr.message }
 
   revalidatePath('/dashboard/inventory/transfers')
   return {}

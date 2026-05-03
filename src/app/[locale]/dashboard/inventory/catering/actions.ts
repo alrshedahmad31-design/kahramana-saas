@@ -7,6 +7,7 @@ import {
   requireDashboardRole,
 } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
+import { routing } from '@/i18n/routing'
 import type { CateringOrderRow, CateringOrderStatus, CateringPackageItem, CateringPackageRow } from '@/lib/supabase/custom-types'
 
 // ── Role guards ───────────────────────────────────────────────────────────────
@@ -21,9 +22,12 @@ async function requireCateringRole() {
   }
 }
 
-function revalidateCatering() {
-  revalidatePath('/ar/dashboard/inventory/catering')
-  revalidatePath('/en/dashboard/inventory/catering')
+// I5 FIX: iterate routing.locales so adding a third locale auto-propagates.
+function revalidateCatering(id?: string) {
+  for (const locale of routing.locales) {
+    revalidatePath(`/${locale}/dashboard/inventory/catering`)
+    if (id) revalidatePath(`/${locale}/dashboard/inventory/catering/${id}`)
+  }
 }
 
 async function fetchCateringOrderBranch(orderId: string): Promise<{
@@ -174,7 +178,7 @@ export async function createCateringOrder(formData: {
 
   if (error || !order) return { error: error?.message ?? 'فشل في إنشاء طلب التقديم' }
 
-  revalidateCatering()
+  revalidateCatering(order.id)
   return { orderId: order.id }
 }
 
@@ -206,7 +210,7 @@ export async function updateCateringStatus(
 
   if (error) return { error: error.message }
 
-  revalidateCatering()
+  revalidateCatering(parsed.data.orderId)
   return {}
 }
 
@@ -238,7 +242,7 @@ export async function confirmCateringOrder(
 
   if (error) return { poId: null, error: error.message }
 
-  revalidateCatering()
+  revalidateCatering(parsed.data.orderId)
   revalidatePath('/ar/dashboard/inventory/purchases')
   revalidatePath('/en/dashboard/inventory/purchases')
 
@@ -271,7 +275,7 @@ export async function calcCateringIngredients(
 
   if (error) return { error: error.message }
 
-  revalidateCatering()
+  revalidateCatering(parsed.data.orderId)
   return { snapshot: data }
 }
 
@@ -427,9 +431,7 @@ export async function updateCateringOrder(
 
   if (error) return { error: error.message }
 
-  revalidateCatering()
-  revalidatePath(`/ar/dashboard/inventory/catering/${id}`)
-  revalidatePath(`/en/dashboard/inventory/catering/${id}`)
+  revalidateCatering(id)
   return {}
 }
 
