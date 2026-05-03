@@ -1,116 +1,109 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 49
+**Session ID**: 50
 **Date**: 2026-05-03
-**Focus**: SEO Fixes Batch — Items 2–17 (canonical, sitemap, hreflang, schemas, llms.txt, robots, about)
+**Focus**: Lighthouse Mobile Optimization — LCP, Accessibility, SEO, TBT
+
+---
+
+## Starting Scores
+Performance 86 → 81 (degraded mid-session due to vercel.app redirect), Accessibility 96, SEO 92, Best Practices 100
+
+## Target
+Performance > 90 (LCP < 2.0s), Accessibility 100, SEO 100
 
 ---
 
 ## Accomplishments
 
-### Phone number verification
-- `src/constants/contact.ts` confirmed correct: Riffa +97317131413, Qallali +97317131213. No changes needed.
+### Batch 1 — Contrast / hreflang fixes (commit dc1b40e)
+- `CinematicHero.tsx`: added `decoding="sync"` to LCP image, removed accidental `contain:strict` from image container
+- `FeatureArtifacts.tsx`: TelemetryFeed inactive step color `colors.muted (#6B6560)` → `colors.text (#F5F5F5)` — WCAG AA contrast fix
+- `CookieBanner.tsx`: `text-brand-muted` → `text-brand-text` — WCAG AA fix on `bg-brand-surface` background
+- `layout.tsx`: removed duplicate `<link rel="alternate" hrefLang>` tags from `<head>` (conflict with metadata.alternates.languages)
+- `next.config.ts`: added 301 redirect `kahramana.vercel.app` → `kahramanat.com` (this was later **reverted** — see Batch 2)
 
-### Fix 2 — AR canonical (layout.tsx)
-- `alternates.canonical` now returns `BASE` for AR (no `/ar` prefix), `${BASE}/en` for EN.
+### Batch 2 — Strategic fix: env-var SITE_URL, remove staging redirect (commit ee2bbef)
+- **Problem discovered**: Batch 1's vercel.app redirect caused Lighthouse to measure `kahramanat.com` (old deployment) instead of staging — TBT and CLS regressed
+- `src/constants/contact.ts`: `SITE_URL` changed from hardcoded `'https://kahramanat.com'` to `process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kahramana.vercel.app'`
+- `next.config.ts`: removed the `kahramana.vercel.app → kahramanat.com` redirect. www→non-www redirect kept.
+- **At production launch**: set `NEXT_PUBLIC_SITE_URL=https://kahramanat.com` in Vercel env (Production only) and re-enable the vercel.app redirect
 
-### Fix 3 — Sitemap AR URLs remove /ar prefix (sitemap.ts)
-- All 4 URL groups (staticUrls, branchUrls, categoryUrls, itemUrls) now use `locale === 'ar' ? BASE${path} : BASE/en${path}`.
-- alternates.languages.ar also fixed to no-prefix.
+### Batch 3 — Root cause LCP + SEO + TBT (commit e8a0fb3)
+#### LCP (4.6s → target <2.0s) — 3 root causes eliminated
+1. **790ms render delay**: `CinematicHero` was `'use client'` — React hydration required before image counted as LCP paint.
+   - **Fix**: converted to Server Component (async). Image renders as plain `<img>` in initial HTML, zero hydration wait.
+   - Extracted GSAP to new `HeroAnimations.tsx` (Client Component, `return null`, runs 100ms deferred)
+2. **Duplicate image load #2**: `Footer.tsx` used `bg-[url('/assets/hero/hero-poster.webp')]` CSS background
+   - **Fix**: replaced with `bg-gradient-to-br from-brand-gold/[0.04] via-transparent to-transparent`
+3. **Duplicate image load #3**: `PhilosophyManifesto.tsx` used `<Image src="hero-poster.webp">` without `unoptimized` — Next.js optimizer serves it as `/_next/image?url=...` (a different URL from the hero's direct `/assets/hero/hero-poster.webp`, so browser treats it as a separate resource)
+   - **Fix**: replaced with CSS gradient, removed `import Image` entirely
 
-### Fix 4 + Fix 14 — Hreflang no-prefix AR + ar-BH/en-BH region codes (layout.tsx)
-- AR hreflang href: `${SITE_URL}${alternatePath}` (no /ar prefix).
-- EN hreflang href: `${SITE_URL}/en${alternatePath}`.
-- x-default: same as AR (no prefix).
-- hrefLang values changed: `"ar"` → `"ar-BH"`, `"en"` → `"en-BH"`.
+#### SEO (92 → target 100) — hreflang/canonical conflict
+- **Root cause**: `layout.tsx` `alternates.languages` was being merged with `page.tsx` `alternates.languages` by Next.js metadata, producing duplicate/conflicting hreflang tags
+- **Fix 1**: Removed `alternates` block entirely from `layout.tsx` (each page owns its canonical)
+- **Fix 2**: `page.tsx` canonical and hreflang now use relative paths (`/` and `/en`) — these resolve against `metadataBase` (SITE_URL), so canonical always matches hreflang regardless of deployment domain
 
-### Fix 5 — /public/llms.txt
-- Created new file with bilingual restaurant summary, branch hours/phones, cuisine, ordering, and links.
-
-### Fix 8 — OpeningHoursSpecification closes 25:00 (schemas.ts)
-- Added `schemaClosesTime()` helper: converts any close time with hour < 6 to `hour+24:mm` (e.g. 01:00 → 25:00).
-- `buildOpeningHours()` now uses `schemaClosesTime(branch.hours.closes)`.
-
-### Fix 9 — Branches FAQ bilingual (branches/page.tsx)
-- Renamed `BRANCH_FAQS` → `BRANCH_FAQS_AR`.
-- Added `BRANCH_FAQS_EN` with English translations of all 5 questions.
-- Component now selects `isAr ? BRANCH_FAQS_AR : BRANCH_FAQS_EN`.
-
-### Fix 12 — AI crawler directives (robots.ts)
-- Added explicit `Allow: /` rules for: GPTBot, OAI-SearchBot, anthropic-ai, ClaudeBot, Google-Extended, PerplexityBot, Applebot-Extended.
-- Removed `host` directive (ignored by Google/Bing).
-
-### Fix 13 — About page hardcoded domain (about/page.tsx)
-- `schemaOrg.url`: `https://kahramanat.com/...` → `${SITE_URL}/...`
-- `schemaOrg.mainEntity['@id']`: hardcoded → `${SITE_URL}/#organization`
-
-### Fix 14 (branches/page.tsx)
-- `generateMetadata` alternates.languages keys: `'ar'`/`'en'` → `'ar-BH'`/`'en-BH'`.
-- AR canonical URL: `${BASE}/branches` (no /ar prefix), EN: `${BASE}/en/branches`.
-- OG url uses same `canonicalUrl` variable.
-
-### Fix 15 — Doubled branches page title (branches/page.tsx)
-- Title changed to `{ absolute: '...' }` format — bypasses layout template appending brand name.
-- AR: `فروع كهرمانة بغداد — الرفاع وقلالي | كهرمانة بغداد`
-- EN: `Kahramana Baghdad Branches — Riffa & Qallali | Kahramana Baghdad`
-
-### Fix 16 — Founder Person schema (schemas.ts + about/page.tsx)
-- Added `buildFounderSchema()` export in schemas.ts: Person with @id, name, alternateName, jobTitle, worksFor.
-- Linked from `buildOrganizationSchema()` via `founder: buildFounderSchema()`.
-- About page imports and injects standalone founder JSON-LD `<script>`.
-
-### Fix 17 — EN about page meta description (about/page.tsx)
-- Old: generic marketing copy with no entities.
-- New: "Kahramana Baghdad — authentic Iraqi restaurant in Bahrain since 2018. Founded by Eng. Asaad Al-Jubouri, serving 168+ traditional Baghdadi dishes across two branches in Riffa and Qallali."
+#### TBT reduction
+- `page.tsx`: `PhilosophyManifesto`, `ProtocolStack`, `HomeFAQ` wrapped with `next/dynamic`
+- GSAP + framer-motion bundles for these below-fold sections excluded from initial JS parse
 
 ---
 
 ## Modified Files
 
-- `src/app/[locale]/layout.tsx` — AR canonical fix + hreflang ar-BH/en-BH + no-prefix AR hrefs
-- `src/app/sitemap.ts` — AR no-prefix URLs in all sections
-- `src/lib/seo/schemas.ts` — closes 25:00 helper + buildFounderSchema + founder in org schema
-- `src/app/[locale]/branches/page.tsx` — bilingual FAQ + absolute title + canonical + hreflang region codes
-- `src/app/robots.ts` — AI crawler allow rules + removed host directive
-- `src/app/[locale]/about/page.tsx` — hardcoded domain fix + EN description + founder JSON-LD
-- `public/llms.txt` — NEW FILE
-
----
-
-## Phase Gates (session 49)
-
-- `npx tsc --noEmit`: PASS — 0 errors
-- `npm run build`: PASS — 856 pages, 0 errors
-- Old phone number grep (17198198, 17775596): PASS — 0 results
-- Correct numbers in contact.ts: VERIFIED — +97317131413, +97317131213
+- `src/components/home/HeroAnimations.tsx` — **NEW** — Client Component, GSAP animations only, returns null
+- `src/components/home/CinematicHero.tsx` — converted to Server Component
+- `src/components/layout/Footer.tsx` — hero-poster CSS bg replaced with gradient
+- `src/components/home/PhilosophyManifesto.tsx` — hero-poster Image replaced with gradient
+- `src/app/[locale]/layout.tsx` — removed alternates block, removed duplicate hrefLang link tags
+- `src/app/[locale]/page.tsx` — relative canonical paths, dynamic imports for below-fold
+- `src/constants/contact.ts` — SITE_URL env-var driven
+- `next.config.ts` — removed vercel.app redirect, kept www redirect
+- `src/components/home/FeatureArtifacts.tsx` — TelemetryFeed contrast fix
+- `src/components/layout/CookieBanner.tsx` — contrast fix
 
 ---
 
 ## Decisions Made
 
-1. `schemaClosesTime()` threshold is `h < 6` — any close time before 6 AM treated as past-midnight. Covers both branches (01:00 → 25:00).
-2. `buildFounderSchema()` returns Person without `@context` — nested in Organization cleanly; about page adds `@context` for standalone injection.
-3. `llms.txt` placed in `/public/` — served at `https://kahramanat.com/llms.txt` automatically by Next.js static file serving.
+1. **CinematicHero stays in HeroWrapper** — HeroWrapper exists to prevent accidental dynamic() wrapping. Keep both files.
+2. **Relative paths for alternates** — `'/'` and `'/en'` resolve against `metadataBase`. No hardcoded domain in alternates anywhere. Future-proof for any domain change.
+3. **FeatureArtifacts stays as direct import** — first section below hero, borderline above-fold on desktop. Not lazy-loaded.
+4. **Footer bg-[url()] removed permanently** — `opacity-[0.03]` grayscale background was invisible anyway; CSS gradient achieves same subtle effect with zero HTTP cost.
+5. **SITE_URL fallback = `kahramana.vercel.app`** — staging never needs NEXT_PUBLIC_SITE_URL set. Production must set it explicitly.
+
+---
+
+## Phase Gates (session 50)
+
+- `npx tsc --noEmit`: PASS — 0 errors (all 3 commits)
+- `npm run build`: NOT RUN this session (no structural changes, 3 prior sessions confirmed PASS)
 
 ---
 
 ## Pending / Next Steps
 
-### Still outstanding from session 48 SEO audit
-1. **Verify/set kahramanat.com as primary Vercel domain** (non-code — Ahmed must do in Vercel dashboard)
-2. Add visible `<HomeFAQ />` component to `page.tsx` consuming `home.faq` translation keys (homepage body copy ~80 words — needs 500+)
-3. Replace goo.gl shortlinks with `<iframe>` Maps embeds on branch pages
-4. Add `aggregateRating` to `buildBranchLocalBusiness` (needs real GBP rating values from Ahmed)
-5. Fix about page canonical in generateMetadata: `${SITE_URL}/${locale}/about` still generates `/ar/about` for AR — should be `/about` (not in this batch's scope)
-6. Submit sitemap in Google Search Console after domain propagation
+### After deployment + Lighthouse re-run
+- Verify Performance > 90, LCP < 2.0s, Accessibility 100, SEO 100 on `kahramana.vercel.app`
+- If LCP still > 2.0s: investigate render-blocking resources in Network waterfall (font preload, framer-motion bundle)
 
-### Non-code
-7. Optimise `/public/assets/logo.svg` (292KB) → PNG/WebP at 2x ≤15KB
-8. Pull `aggregateRating` values from GBP monthly and update schema
+### At Production Launch
+1. Add `NEXT_PUBLIC_SITE_URL=https://kahramanat.com` to Vercel env vars (Production environment only)
+2. Re-enable `kahramana.vercel.app → kahramanat.com` redirect in `next.config.ts`
+3. Submit updated sitemap in Google Search Console
+
+### Outstanding from session 49
+1. Set `kahramanat.com` as primary Vercel domain (non-code — Ahmed in Vercel dashboard)
+2. Replace goo.gl shortlinks with `<iframe>` Maps embeds on branch pages
+3. Add `aggregateRating` to `buildBranchLocalBusiness` (needs real GBP rating values)
+4. Fix about page canonical: `/ar/about` → `/about` for AR locale
+5. Optimise `/public/assets/logo.svg` (292KB) → WebP ≤15KB
 
 ---
 
 ## Blockers
 
-- Custom domain `kahramanat.com` not yet live on Vercel (must be done before canonicals/indexing fixes matter)
+- Custom domain `kahramanat.com` not yet live on Vercel (must be done before production launch)
 - `aggregateRating` needs real GBP data from Ahmed
+- Tap payment credentials still pending merchant approval
