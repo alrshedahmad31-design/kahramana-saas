@@ -32,15 +32,16 @@ export async function generateMetadata(
   return {
     title: t('homeTitle'),
     description: t('homeDescription'),
-    // Absolute canonical URLs -- relative paths cause Lighthouse to flag
-    // "canonical points to another hreflang location" on preview deployments.
     alternates: {
       canonical: locale === 'ar' ? SITE_URL : `${SITE_URL}/en`,
       languages: {
-        'ar':        SITE_URL,
-        'en':        `${SITE_URL}/en`,
+        'ar-BH':     SITE_URL,
+        'en-BH':     `${SITE_URL}/en`,
         'x-default': SITE_URL,
       },
+    },
+    openGraph: {
+      images: [{ url: `${SITE_URL}/assets/hero/hero-poster.webp`, width: 1200, height: 630 }],
     },
   }
 }

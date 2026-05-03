@@ -73,8 +73,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: locale === 'en' ? `/en/menu/${slug}` : `/menu/${slug}`,
       languages: {
         'x-default': `/menu/${slug}`,
-        ar:          `/menu/${slug}`,
-        en:          `/en/menu/${slug}`,
+        'ar-BH':     `/menu/${slug}`,
+        'en-BH':     `/en/menu/${slug}`,
       },
     },
   }

@@ -34,7 +34,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const item = getMenuItemBySlug(slug)
   const isAr = locale === 'ar'
   const BASE = SITE_URL
-  const url = `${BASE}/${locale}/menu/item/${slug}`
+  const url = locale === 'ar'
+    ? `${BASE}/menu/item/${slug}`
+    : `${BASE}/en/menu/item/${slug}`
 
   if (!item) return { title: "Not Found" }
 
@@ -59,9 +61,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: url,
       languages: {
-        "ar": `${BASE}/ar/menu/item/${slug}`,
-        "en": `${BASE}/en/menu/item/${slug}`,
-        "x-default": `${BASE}/ar/menu/item/${slug}`,
+        'ar-BH':     `${BASE}/menu/item/${slug}`,
+        'en-BH':     `${BASE}/en/menu/item/${slug}`,
+        'x-default': `${BASE}/menu/item/${slug}`,
       },
     },
     openGraph: {
