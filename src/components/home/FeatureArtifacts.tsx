@@ -59,7 +59,7 @@ export default function FeatureArtifacts() {
           <div className="flex-1 bg-brand-black/40 rounded-xl p-4 font-mono text-[10px] sm:text-xs text-brand-gold overflow-hidden relative">
              <div className="absolute top-2 end-4 flex gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
-                <span className="text-[8px] uppercase opacity-50 tracking-tighter">{t('telemetry.liveFeed')}</span>
+                <span className="text-[8px] uppercase opacity-80 tracking-tighter">{t('telemetry.liveFeed')}</span>
              </div>
              <TelemetryFeed isRTL={isRTL} />
           </div>
@@ -238,7 +238,7 @@ function PrivacyFeatures() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col items-center text-center px-4"
         >
-          <span className="text-brand-gold font-mono text-3xl mb-4 opacity-50">
+          <span className="text-brand-gold font-mono text-3xl mb-4 opacity-80">
             0{index + 1}
           </span>
           <p className="text-xl sm:text-2xl font-bold text-brand-text leading-tight font-cairo">
