@@ -54,6 +54,7 @@ export default function CinematicHero() {
           fill
           priority
           fetchPriority="high"
+          unoptimized
           className="object-cover scale-110"
           sizes="100vw"
         />
