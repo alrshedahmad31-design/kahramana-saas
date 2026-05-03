@@ -143,7 +143,9 @@
       "PowerShell(cd \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\"; Get-ChildItem -Recurse | Where-Object { $_.FullName -notmatch 'node_modules|\\\\.git' -and $_.Extension -match '\\\\.tsx|\\\\.ts|\\\\.css|\\\\.json|\\\\.js' } | Select-String 'badi-branch|step-01-source' | Select-Object Path, Line | Format-List)",
       "PowerShell(Get-Item *)",
       "Bash(export PATH=\"$HOME/bin:$PATH\")",
-      "Bash(bash ~/claude-seo/install.sh)"
+      "Bash(bash ~/claude-seo/install.sh)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\" -Recurse -Include \"*.tsx\", \"*.ts\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }
