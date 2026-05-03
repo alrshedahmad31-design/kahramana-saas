@@ -3,11 +3,11 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { assertBranchScope, assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardRole, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
-const WASTE_REASONS = [
+const _WASTE_REASONS = [
   'expired', 'damaged', 'spillage', 'overproduction', 'quality',
   'returned', 'theft_suspected', 'prep_error', 'over_portioning', 'other',
 ] as const
-type WasteReason = typeof WASTE_REASONS[number]
+type WasteReason = typeof _WASTE_REASONS[number]
 
 export async function createWasteLog(formData: FormData): Promise<{ error?: string }> {
   const ingredient_id = formData.get('ingredient_id') as string

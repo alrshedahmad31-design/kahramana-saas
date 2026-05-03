@@ -32,7 +32,6 @@ export default function BranchCard({
   tViewOnMap,
   tComingSoon,
   tOrderWhatsApp,
-  tStatusActive,
   tStatusPlanned,
   tStatusOpen,
   tStatusClosed,

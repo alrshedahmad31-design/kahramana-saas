@@ -6,7 +6,6 @@ import type {
   LowStockAlert,
   ExpiryReportRow,
   InventoryAlertRow,
-  InventoryStockRow,
 } from '@/lib/supabase/custom-types'
 import LowStockWidget from '@/components/inventory/LowStockWidget'
 
@@ -119,7 +118,7 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
             <select
               name="branch"
               defaultValue={activeBranchId ?? ''}
-              onChange={(e) => { /* handled by form submit */ }}
+              onChange={(_e) => { /* handled by form submit */ }}
               className="rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none"
             >
               {branches.map((b) => (

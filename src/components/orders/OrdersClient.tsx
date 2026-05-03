@@ -169,7 +169,7 @@ export default function OrdersClient({
       ((totals ?? []) as { total_bhd: number }[]).reduce((s, r) => s + Number(r.total_bhd), 0)
     )
     setLoading(false)
-  }, [supabase, statusFilter, branchFilter, dateFilter, search, page])
+  }, [supabase, statusFilter, branchFilter, dateFilter, search, page, userBranchId])
 
   // Skip the first fetch when server already provided initial data
   useEffect(() => {

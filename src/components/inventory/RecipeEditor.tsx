@@ -333,7 +333,7 @@ export default function RecipeEditor({
                 </thead>
                 <tbody>
                   {prepRows.map((row) => {
-                    const prep = allPrepItems.find((p) => p.id === row.prep_item_id)
+                    const _prep = allPrepItems.find((p) => p.id === row.prep_item_id)
                     return (
                       <tr key={row.key} className="border-t border-brand-border">
                         <td className="px-3 py-2 min-w-[160px]">

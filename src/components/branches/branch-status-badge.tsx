@@ -9,8 +9,6 @@ interface Props {
 
 export default function BranchStatusBadge({ status, isAr, label, isOpen = true }: Props) {
   if (status === 'active') {
-    const colorClass = isOpen ? 'brand-success' : 'brand-muted'
-    
     return (
       <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isOpen ? 'bg-brand-success/10 border-brand-success/20' : 'bg-brand-muted/10 border-brand-muted/20'} border`}>
         {isOpen && (

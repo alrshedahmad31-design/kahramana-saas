@@ -7,13 +7,11 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { BRANCH_LIST, GENERAL_CONTACT } from '@/constants/contact'
 import { isBranchOpen } from '@/lib/utils/time'
-import { colors } from '@/lib/design-tokens'
 
 // ── Components ───────────────────────────────────────────────────────────────
 
 export default function Footer() {
   const locale = useLocale()
-  const t = useTranslations('branches')
   const tNav = useTranslations('nav')
   const isRTL = locale === 'ar'
   const [mounted, setMounted] = useState(false)
