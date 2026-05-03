@@ -6,7 +6,6 @@ import {
   calculateDistance, calculateETA, getUrgencyLevel,
   resolveExpectedAt, fmtDistance, fmtETA, mapsNavUrl,
 }                                                             from '@/lib/utils/delivery'
-import { mapsDirectionsUrl }                                  from '@/lib/utils/distance'
 import { buildCustomerContactLink }                           from '@/lib/whatsapp'
 import IssueReportModal                                       from '@/components/driver/IssueReportModal'
 import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
@@ -188,11 +187,17 @@ export default function DriverOrderCard({
     ? mapsNavUrl(branch.latitude, branch.longitude)
     : branchMapsUrl
 
-  const customerNavUrl = order.delivery_lat != null && order.delivery_lng != null
-    ? mapsNavUrl(order.delivery_lat, order.delivery_lng)
-    : deliveryAddrText
-      ? mapsDirectionsUrl(deliveryAddrText)
-      : null
+  const openCustomerMap = () => {
+    const lat = order.delivery_lat
+    const lng = order.delivery_lng
+    const address = order.delivery_address
+
+    if (lat && lng) {
+      window.open(`https://maps.google.com/?q=${lat},${lng}`)
+    } else if (address) {
+      window.open(`https://maps.google.com/?q=${encodeURIComponent(address + '، البحرين')}`)
+    }
+  }
 
   // Distance + ETA
   const deliveryDist =
@@ -618,7 +623,7 @@ export default function DriverOrderCard({
           )}
 
           {/* ── Delivery card (active orders, when address available) ──────────── */}
-          {!isCompleted && (deliveryAddrText || customerNavUrl) && (
+          {!isCompleted && (deliveryAddrText || order.delivery_address || (order.delivery_lat != null && order.delivery_lng != null)) && (
             <div className="rounded-xl border border-brand-border bg-brand-surface-2 overflow-hidden">
               <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
                 <div className="w-2.5 h-2.5 rounded-full bg-brand-success shrink-0" />
@@ -658,18 +663,17 @@ export default function DriverOrderCard({
                     </p>
                   )}
                 </div>
-                {customerNavUrl && (
-                  <a
-                    href={customerNavUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                {(order.delivery_lat != null && order.delivery_lng != null || order.delivery_address) && (
+                  <button
+                    type="button"
+                    onClick={openCustomerMap}
                     className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-2 min-h-[44px] border border-brand-success/30 bg-brand-success/10 text-brand-success hover:bg-brand-success/20 transition-colors duration-150"
                   >
                     <MapIcon />
                     <span className={`font-bold text-xs ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                       {isRTL ? 'خريطة العميل' : 'Map'}
                     </span>
-                  </a>
+                  </button>
                 )}
               </div>
             </div>
