@@ -1,8 +1,104 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 50
+**Session ID**: 52
 **Date**: 2026-05-03
-**Focus**: Lighthouse Mobile Optimization — LCP, Accessibility, SEO, TBT
+**Focus**: Lighthouse Performance Diagnosis & Fixes (Performance 89 → target 95+, LCP 3.2s → <2.0s)
+
+---
+
+## Lighthouse Scores (before session 52)
+Performance 89, Accessibility 100, Best Practices 100, SEO 92
+FCP 1.2s, LCP 3.2s, TBT 160ms, CLS 0, SI 4.3s
+
+## Root Causes Diagnosed
+
+### LCP 3.2s
+1. **Render-blocking CSS** — `902ce38a23f63005.css` (15.2 KiB, 600ms block, 77% unused CSS) is the primary LCP blocker
+2. **Hero image 37.5 KB unoptimized** — `unoptimized` flag bypassed Next.js image optimizer; mobile should get ~828px width at q=80 ≈ 10 KB
+3. **Framer-motion forced reflows** — `chunks/4674` caused 163ms forced reflows during LCP window (FeatureArtifacts in critical bundle)
+4. **Font loading chain** — Arabic fonts (Cairo/Almarai) in CSS dependency chain at 2,010ms (separate investigation needed)
+
+### SEO 92 (canonical issue)
+- `layout.tsx` OG `url` used `${BASE}/${locale}` for AR locale → resolved to `https://kahramana.vercel.app/ar`
+- Canonical from `page.tsx` = `https://kahramana.vercel.app/` (no AR prefix, correct per `as-needed` localePrefix)
+- Mismatch caused Lighthouse to detect canonical/hreflang conflict
+
+### Cache TTL = None for /assets/
+- Only `/_next/static/` and `/_next/image` had cache rules
+- `/assets/hero/hero-poster.webp`, `/assets/logo.svg`, etc. served with no Cache-Control (284 KiB uncached)
+
+### Hero image duplicate load
+- `unoptimized + fill + priority` can produce preload hint that doesn't match img src URL → two separate fetches
+- Removed `unoptimized` to use Next.js responsive optimizer (also fixes size issue)
+
+---
+
+## Changes Made (Session 52)
+
+### `next.config.ts`
+- Added `/assets/(.*)` → `Cache-Control: public, max-age=31536000, immutable`
+- Added `/fonts/(.*)` → same immutable rule
+
+### `src/app/[locale]/layout.tsx`
+- Fixed OG `url` for AR locale: `${BASE}/${locale}` → `locale === 'ar' ? BASE : ${BASE}/en`
+- Now OG URL matches canonical exactly (no `/ar` prefix leak)
+
+### `src/components/home/CinematicHero.tsx`
+- Removed `unoptimized` prop — Next.js now serves AVIF/WebP at ~828px for mobile
+- Added `quality={80}` — better compression, smaller download
+- Expected reduction: 37.5 KB → ~8–12 KB (60–75% smaller)
+- Fixes potential preload/img URL mismatch (duplicate load)
+
+### `src/app/[locale]/page.tsx`
+- `FeatureArtifacts` moved from direct import → `dynamic()` lazy import
+- Defers framer-motion bundle + layout measurements out of LCP window
+- Reduces TBT by removing 163ms of forced reflows from critical JS execution path
+
+---
+
+## Phase Gates (session 52)
+- `npx tsc --noEmit`: PASS — 0 errors
+- RTL violations: PASS
+- Hex colors: PASS
+- `npm run build`: PASS
+
+---
+
+## Remaining Performance Issues (not fixed this session)
+
+### Font critical path (2,010ms)
+- Cairo (800w, Arabic subset) and Almarai (400w/700w, Arabic subset) load via CSS dependency chain
+- `preload: true` on next/font/google may not preload Arabic subset effectively
+- **Fix**: Switch to `localFont` for Cairo + Almarai (self-host, explicit preload control)
+- OR: Accept trade-off — fonts use `display: swap` so they don't block LCP paint directly
+
+### Logo SVG (93 KB via /_next/image)
+- Original SVG is 292 KB, optimizer reduces to 93 KB but still large
+- **Fix**: Export logo as 256×256 PNG/WebP ≤15 KB, use that instead of SVG in Header
+
+### Unused CSS (10.8 KB / 77%)
+- `902ce38a23f63005.css` is the shared Tailwind chunk — contains all dashboard/menu/checkout utilities
+- CSS splitting by route would require CSS Modules refactor
+- **Workaround**: Consider `@layer` critical extraction for above-fold styles
+
+### Legacy JS polyfills (11.6 KB, chunks/1255 = GSAP)
+- GSAP 3.12.5 ships polyfills for Array.at, Object.fromEntries, Object.hasOwn etc.
+- Modern browsers (2020+) don't need these
+- **Fix**: GSAP 3.13+ or configure bundler to tree-shake polyfills
+
+---
+
+## Pending / Next Steps
+
+1. Deploy and re-run Lighthouse — expect Performance 92–96+, SEO 100
+2. If LCP still >2.5s: investigate font preload (switch Cairo/Almarai to localFont)
+3. Logo SVG optimization (292KB → WebP ≤15KB) — needs image tool, not code change
+4. Submit updated sitemap in Google Search Console after production domain switch
+
+---
+
+**Session 51 content preserved below:**
+
 
 ---
 
@@ -14,9 +110,15 @@ Performance > 90 (LCP < 2.0s), Accessibility 100, SEO 100
 
 ---
 
-## Accomplishments
+## Accomplishments (Session 51)
 
-### Batch 1 — Contrast / hreflang fixes (commit dc1b40e)
+### Driver UI Rebuild & Deployment
+- **Driver PWA Complete**: Professional interface with real-time urgency banners, progress tracking, and cash management live.
+- **Git Sync**: Local commits (`cf99bd6` - Complete Driver UI rebuild) pushed to GitHub `master`.
+- **Production Launch**: Deployed to [kahramanat.com](https://kahramanat.com) via Vercel (verified 856 static pages).
+- **Quality Audit**: Passed all Phase Gate checks (Type check, RTL check, Hex color check).
+
+## Accomplishments (Session 50)
 - `CinematicHero.tsx`: added `decoding="sync"` to LCP image, removed accidental `contain:strict` from image container
 - `FeatureArtifacts.tsx`: TelemetryFeed inactive step color `colors.muted (#6B6560)` → `colors.text (#F5F5F5)` — WCAG AA contrast fix
 - `CookieBanner.tsx`: `text-brand-muted` → `text-brand-text` — WCAG AA fix on `bg-brand-surface` background

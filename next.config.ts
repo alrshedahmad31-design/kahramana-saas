@@ -26,10 +26,24 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Image optimizer responses: long browser cache (Lighthouse: cache TTL fix)
+        // Image optimizer responses: long browser cache
         source: '/_next/image(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        // Public static assets (logo, hero, gallery, fonts, favicon): immutable browser cache.
+        // These are content-stable files — any change gets a new filename.
+        source: '/assets/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/fonts/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       {

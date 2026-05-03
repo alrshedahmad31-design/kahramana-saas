@@ -125,7 +125,7 @@ export async function generateMetadata(
       description: isAr
         ? "168 طبقاً عراقياً أصيلاً في البحرين — مسكوف، مشاوي، قوزي، فطور بغدادي"
         : "168 authentic Iraqi dishes in Bahrain — Masgouf, grills, Quzi, Baghdadi breakfast",
-      url: `${BASE}/${locale}`,
+      url: locale === 'ar' ? BASE : `${BASE}/en`,
       images: [
         {
           url: `${BASE}/assets/hero/hero-poster.webp`,

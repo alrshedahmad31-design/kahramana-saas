@@ -3,7 +3,6 @@ import dynamic from 'next/dynamic'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { headers } from 'next/headers'
 import HeroWrapper from '@/components/home/HeroWrapper'
-import FeatureArtifacts from '@/components/home/FeatureArtifacts'
 import CinematicButton from '@/components/ui/CinematicButton'
 import {
   buildOrganizationSchema,
@@ -13,7 +12,11 @@ import {
   buildNavigationSchema,
 } from '@/lib/seo/schemas'
 
-const PhilosophyManifesto = dynamic(() => import('@/components/home/PhilosophyManifesto'))
+// FeatureArtifacts is below-fold on mobile (hero is 100svh). Lazy-loading defers
+// framer-motion's layout measurements out of the LCP window, reducing TBT and
+// unblocking the hero image paint.
+const FeatureArtifacts     = dynamic(() => import('@/components/home/FeatureArtifacts'))
+const PhilosophyManifesto  = dynamic(() => import('@/components/home/PhilosophyManifesto'))
 const ProtocolStack        = dynamic(() => import('@/components/home/ProtocolStack'))
 const HomeFAQ              = dynamic(() => import('@/components/home/HomeFAQ'))
 
