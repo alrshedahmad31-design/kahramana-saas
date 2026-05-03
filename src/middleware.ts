@@ -62,11 +62,24 @@ function finalizeResponse(
   supabaseResponse: NextResponse,
   intlResponse:     NextResponse,
 ): NextResponse {
+  // Preserve redirects from intlMiddleware (e.g. /ar → / with as-needed prefix mode).
+  // Without this, the redirect is swallowed and Next.js serves a broken locale context.
+  if (intlResponse.status >= 300 && intlResponse.status < 400) {
+    const location = intlResponse.headers.get('location')
+    if (location) {
+      const response = NextResponse.redirect(location, intlResponse.status)
+      supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+      intlResponse.cookies.getAll().forEach((c)     => response.cookies.set(c))
+      response.headers.set('Content-Security-Policy', buildCsp(nonce))
+      return response
+    }
+  }
+
   // Create a fresh "next" response that forwards the nonce to Server Components
   // via modified request headers (readable via headers() in Server Components)
   const response = NextResponse.next({ request: { headers: headersWithNonce } })
 
-  // Copy intl response headers (e.g. locale cookie, Link header)
+  // Copy intl response headers (e.g. locale cookie, Link header, x-middleware-rewrite)
   intlResponse.headers.forEach((value, key) => {
     if (key.toLowerCase() !== 'content-security-policy') {
       response.headers.set(key, value)

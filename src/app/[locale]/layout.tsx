@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Cairo, Almarai } from 'next/font/google'
 import localFont from 'next/font/local'
 import { NextIntlClientProvider } from 'next-intl'
-import { getMessages } from 'next-intl/server'
+import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -177,6 +177,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
   if (!routing.locales.includes(locale as 'ar' | 'en')) {
     notFound()
   }
+
+  setRequestLocale(locale)
 
   const messages = await getMessages()
   const isRTL = locale === 'ar'

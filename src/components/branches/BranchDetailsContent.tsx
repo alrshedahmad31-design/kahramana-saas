@@ -3,7 +3,9 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useTranslations } from 'next-intl'
 import CinematicButton from '@/components/ui/CinematicButton'
+import { isBranchOpen } from '@/lib/utils/time'
 import type { Branch } from '@/constants/contact'
 import type { BranchMetadata } from '@/lib/branches'
 
@@ -18,6 +20,8 @@ interface Props {
 
 export default function BranchDetailsContent({ branch, metadata, isAr, waLink }: Props) {
   const sectionRef = useRef<HTMLDivElement>(null)
+  const t = useTranslations('branches')
+  const isOpen = isBranchOpen(branch.hours.opens, branch.hours.closes)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -98,8 +102,10 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
             {isAr ? branch.hours.ar : branch.hours.en}
           </p>
           <div className="mt-auto flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-brand-success animate-pulse" />
-            <span className="text-brand-muted text-xs font-bold">{isAr ? 'مفتوح الآن' : 'Open Now'}</span>
+            <span className={`w-2 h-2 rounded-full ${isOpen ? 'bg-brand-success animate-pulse' : 'bg-brand-muted'}`} />
+            <span className="text-brand-muted text-xs font-bold">
+              {isOpen ? t('status.open') : t('status.closed')}
+            </span>
           </div>
         </div>
 

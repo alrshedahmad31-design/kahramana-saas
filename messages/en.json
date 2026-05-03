@@ -704,7 +704,9 @@
     "whatsapp": "WhatsApp",
     "status": {
       "active": "Active Now",
-      "planned": "In Preparation"
+      "planned": "In Preparation",
+      "open": "Open Now",
+      "closed": "Closed Now"
     },
     "trust": {
       "title": "Why Choose Kahramana?",
@@ -803,7 +805,7 @@
     "founder": {
       "eyebrow": "Founder's Vision",
       "title": "Eng. Asaad Al-Jubouri",
-      "name_ar": "المهندس أسعد الجبوري",
+      "name_en": "Eng. Asaad Al-Jubouri",
       "p1": "Engineer Asaad Al-Jubouri carries a deep passion for detail — the same passion that accompanied him from the world of engineering to the world of taste. For him, food was never merely a business — it was a sincere act of transporting the culture and generosity of Baghdad to Bahrain.",
       "p2": "With the mindset of an engineer who believes that quality is built, not encountered by chance, he designed 'Kahramana Baghdad' to be more than just a restaurant: a space where Iraqi authenticity meets modern taste and refined Bahraini hospitality.",
       "p3": "Today, Al-Jubouri stands behind every detail presented to the guest — from the selection of ingredients to the style of presentation — ensuring that every visit is a true reflection of his passion, vision, and respect for his guests' taste.",

@@ -127,7 +127,8 @@
       "Bash(grep -rn \"cityAr.*المحرق\" src/constants/contact.ts)",
       "Bash(grep -n \"governorate\" src/constants/contact.ts)",
       "Bash(grep -n \"قلالي\\\\|Qallali\" src/components/story/BranchesSection.tsx)",
-      "Bash(grep -n \"97317131\" src/constants/contact.ts)"
+      "Bash(grep -n \"97317131\" src/constants/contact.ts)",
+      "Bash(npx next *)"
     ]
   }
 }

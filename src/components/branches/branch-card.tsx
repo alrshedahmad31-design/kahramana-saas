@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Link } from '@/i18n/navigation'
 import { Branch, buildWaOrderLink } from '@/constants/contact'
 import { BranchMetadata } from '@/lib/branches'
+import { isBranchOpen } from '@/lib/utils/time'
 import BranchStatusBadge from './branch-status-badge'
 import CinematicButton from '@/components/ui/CinematicButton'
 
@@ -18,6 +19,8 @@ interface Props {
   tOrderWhatsApp: string
   tStatusActive: string
   tStatusPlanned: string
+  tStatusOpen: string
+  tStatusClosed: string
   detailHref?: string
 }
 
@@ -31,10 +34,13 @@ export default function BranchCard({
   tOrderWhatsApp,
   tStatusActive,
   tStatusPlanned,
+  tStatusOpen,
+  tStatusClosed,
   detailHref,
 }: Props) {
   const waLink = buildWaOrderLink(branch.id, locale as 'ar' | 'en')
   const isPlanned = branch.status === 'planned'
+  const isOpen = isBranchOpen(branch.hours.opens, branch.hours.closes)
 
   return (
     <motion.div
@@ -59,7 +65,8 @@ export default function BranchCard({
           <BranchStatusBadge 
             status={branch.status} 
             isAr={isAr} 
-            label={isPlanned ? tStatusPlanned : tStatusActive}
+            isOpen={isOpen}
+            label={isPlanned ? tStatusPlanned : (isOpen ? tStatusOpen : tStatusClosed)}
           />
         </div>
       </div>
