@@ -52,13 +52,9 @@ const nextConfig: NextConfig = {
         destination: 'https://kahramanat.com/:path*',
         permanent: true,
       },
-      // vercel.app preview → production domain (prevents canonical pointing to vercel.app)
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'kahramana.vercel.app' }],
-        destination: 'https://kahramanat.com/:path*',
-        permanent: true,
-      },
+      // NOTE: kahramana.vercel.app → kahramanat.com redirect intentionally omitted.
+      // Add it back at production launch by setting NEXT_PUBLIC_SITE_URL=https://kahramanat.com
+      // in Vercel production env vars and re-enabling this redirect.
     ]
   },
 
