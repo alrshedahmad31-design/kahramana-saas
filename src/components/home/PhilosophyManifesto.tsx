@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import gsap from 'gsap'
@@ -12,10 +12,8 @@ gsap.registerPlugin(ScrollTrigger)
 export default function PhilosophyManifesto() {
   const t = useTranslations('home.philosophy')
   const sectionRef = useRef<HTMLElement>(null)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const ctx = gsap.context(() => {
       const words = gsap.utils.toArray('.reveal-word')
       
@@ -41,28 +39,23 @@ export default function PhilosophyManifesto() {
   const kahramana = t('kahramana')
 
   return (
-    <section 
+    <section
       ref={sectionRef}
       className="py-32 px-6 sm:px-16 bg-brand-black relative overflow-hidden flex flex-col items-center text-center"
-      suppressHydrationWarning
     >
-      {/* Background Texture — lazy-loaded via next/image to avoid competing with hero */}
+      {/* Background Texture */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
-        {mounted && (
-          <>
-            <div className="absolute inset-0 overflow-hidden grayscale">
-              <Image
-                src="/assets/hero/hero-poster.webp"
-                alt=""
-                fill
-                loading="lazy"
-                className="object-cover object-center"
-                sizes="100vw"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-brand-black via-transparent to-brand-black" />
-          </>
-        )}
+        <div className="absolute inset-0 overflow-hidden grayscale">
+          <Image
+            src="/assets/hero/hero-poster.webp"
+            alt=""
+            fill
+            loading="lazy"
+            className="object-cover object-center"
+            sizes="100vw"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-black via-transparent to-brand-black" />
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto">

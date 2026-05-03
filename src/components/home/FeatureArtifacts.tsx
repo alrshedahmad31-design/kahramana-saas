@@ -24,9 +24,9 @@ export default function FeatureArtifacts() {
             <span className="text-[10px] font-bold tracking-widest text-brand-gold uppercase mb-4 block">
               {t('vault.eyebrow')}
             </span>
-            <h3 className={`text-2xl font-bold mb-4 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
+            <h2 className={`text-2xl font-bold mb-4 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
               {t('vault.title')}
-            </h3>
+            </h2>
             <p className="text-sm text-brand-muted leading-relaxed">
               {t('vault.desc')}
             </p>
@@ -51,9 +51,9 @@ export default function FeatureArtifacts() {
             <span className="text-[10px] font-bold tracking-widest text-brand-gold uppercase mb-4 block">
               {t('telemetry.eyebrow')}
             </span>
-            <h3 className={`text-2xl font-bold mb-4 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
+            <h2 className={`text-2xl font-bold mb-4 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
               {t('telemetry.title')}
-            </h3>
+            </h2>
           </div>
 
           <div className="flex-1 bg-brand-black/40 rounded-xl p-4 font-mono text-[10px] sm:text-xs text-brand-gold overflow-hidden relative">
@@ -84,9 +84,9 @@ export default function FeatureArtifacts() {
             <span className="text-[10px] font-bold tracking-widest text-brand-gold uppercase mb-4 block">
               {t('proximity.eyebrow')}
             </span>
-            <h3 className={`text-2xl font-bold mb-4 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
+            <h2 className={`text-2xl font-bold mb-4 ${isRTL ? 'font-cairo' : 'font-editorial'}`}>
               {t('proximity.title')}
-            </h3>
+            </h2>
           </div>
 
           <div className="relative flex-1 flex items-center justify-center">
@@ -202,15 +202,13 @@ function TelemetryFeed({ isRTL }: { isRTL: boolean }) {
             <span className="text-[11px] font-medium tracking-tight">
               {step}
             </span>
-            {isVisible && (
-              <motion.span 
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="inline-flex h-4 w-4 items-center justify-center text-brand-gold"
-              >
-                <LuxuryIcon name="check" size={14} />
-              </motion.span>
-            )}
+            <motion.span
+              animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.5 }}
+              transition={{ duration: 0.3 }}
+              className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-brand-gold"
+            >
+              <LuxuryIcon name="check" size={14} />
+            </motion.span>
           </motion.div>
         )
       })}

@@ -26,6 +26,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Image optimizer responses: long browser cache (Lighthouse: cache TTL fix)
+        source: '/_next/image(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=604800' },
+        ],
+      },
+      {
         // All other routes: security headers + daily revalidation for HTML
         source: '/((?!_next/static).*)',
         headers: [

@@ -30,13 +30,9 @@ export default function Footer() {
     <footer className="relative bg-brand-black pt-20 overflow-hidden border-t border-brand-border/50">
       {/* ── Luxury Background Elements ────────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {mounted && (
-          <>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[500px] bg-brand-gold/5 blur-[120px] rounded-[100%]" />
-            <div className="absolute inset-0 opacity-[0.03] bg-[url('/assets/hero/hero-poster.webp')] bg-cover bg-center grayscale" />
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent" />
-          </>
-        )}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[500px] bg-brand-gold/5 blur-[120px] rounded-[100%]" />
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('/assets/hero/hero-poster.webp')] bg-cover bg-center grayscale" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent" />
       </div>
 
       {/* ── Tier 1: The Marquee (Artistic Flair) ──────────────────────────── */}
@@ -86,9 +82,9 @@ export default function Footer() {
             </div>
             
             <div className="flex gap-4">
-              <SocialIcon href={GENERAL_CONTACT.instagram} icon={<InstagramIcon />} />
-              <SocialIcon href={GENERAL_CONTACT.facebook} icon={<FacebookIcon />} />
-              <SocialIcon href={GENERAL_CONTACT.tiktok} icon={<TikTokIcon />} />
+              <SocialIcon href={GENERAL_CONTACT.instagram} icon={<InstagramIcon />} label="Instagram" />
+              <SocialIcon href={GENERAL_CONTACT.facebook} icon={<FacebookIcon />} label="Facebook" />
+              <SocialIcon href={GENERAL_CONTACT.tiktok} icon={<TikTokIcon />} label="TikTok" />
             </div>
           </div>
 
@@ -196,12 +192,13 @@ export default function Footer() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SocialIcon({ href, icon }: { href: string; icon: React.ReactNode }) {
+function SocialIcon({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
   return (
     <motion.a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={label}
       whileHover={{ scale: 1.1, y: -2 }}
       whileTap={{ scale: 0.9 }}
       className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand-surface border border-brand-border text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors shadow-lg shadow-black/20"
