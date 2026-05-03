@@ -120,11 +120,15 @@ export default async function BranchDetailPage({ params }: Props) {
       />
 
       {/* 3. Interactive Map Section */}
-      {branch.latitude && branch.longitude && (
-        <BranchMap 
+      {(branch.embedSrc || (branch.latitude && branch.longitude)) && (
+        <BranchMap
+          embedSrc={branch.embedSrc}
           latitude={branch.latitude}
           longitude={branch.longitude}
           isAr={isAr}
+          mapTitle={isAr
+            ? `خريطة فرع كهرمانة بغداد — ${branch.nameAr.replace('فرع ', '')}`
+            : `Kahramana Baghdad — ${branch.nameEn} Map`}
         />
       )}
 

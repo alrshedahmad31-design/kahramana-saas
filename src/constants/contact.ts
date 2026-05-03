@@ -27,8 +27,10 @@ export interface Branch {
   phone: string
   whatsapp: string
   waLink: string
-  /** Google Maps URL — to be confirmed by restaurant */
+  /** Google Maps URL — used for clickable "Open in Maps" links */
   mapsUrl: string | null
+  /** Official Google Maps embed src for iframe (pb= format) */
+  embedSrc: string | null
   /** Branch GPS coordinates — used for driver distance/ETA calculations */
   latitude:  number | null
   longitude: number | null
@@ -57,7 +59,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     phone: '+97317131413',
     whatsapp: '+97317131413',
     waLink: 'https://wa.me/97317131413',
-    mapsUrl: 'https://maps.app.goo.gl/J3CMk9AnhSqSBsGQA',
+    mapsUrl: 'https://maps.google.com/?q=26.1358149,50.5748089',
+    embedSrc: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3581.86897133457!2d50.5748089!3d26.1358149!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e49ade2308e955b%3A0xdf55f7b304a4e8c9!2z2YXYt9i52YUg2YPZh9ix2YXYp9mG2Kkg2KjYutiv2KfYrw!5e0!3m2!1sar!2sbh!4v1777791402552!5m2!1sar!2sbh',
     latitude: 26.1366914,
     longitude: 50.5593132,
     hours: {
@@ -84,7 +87,8 @@ export const BRANCHES: Record<BranchId, Branch> = {
     phone: '+97317131213',
     whatsapp: '+97317131213',
     waLink: 'https://wa.me/97317131213',
-    mapsUrl: 'https://maps.app.goo.gl/cVsYGpibZxy2rPEV8',
+    mapsUrl: 'https://maps.google.com/?q=26.27678350000001,50.657156999999984',
+    embedSrc: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3577.533999785344!2d50.657156999999984!3d26.27678350000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e49a7003470c54d%3A0xb9fec402d4532c00!2sKahramant%20Baghdad%20restaurant!5e0!3m2!1sar!2sbh!4v1777786101591!5m2!1sar!2sbh',
     latitude: 26.269074,
     longitude: 50.6433552,
     hours: {
@@ -110,6 +114,7 @@ export const BRANCHES: Record<BranchId, Branch> = {
     whatsapp: '',
     waLink: '',
     mapsUrl: null,
+    embedSrc: null,
     latitude: null,
     longitude: null,
     hours: {

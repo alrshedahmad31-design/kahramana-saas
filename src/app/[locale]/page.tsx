@@ -5,6 +5,7 @@ import HeroWrapper from '@/components/home/HeroWrapper'
 import FeatureArtifacts from '@/components/home/FeatureArtifacts'
 import PhilosophyManifesto from '@/components/home/PhilosophyManifesto'
 import ProtocolStack from '@/components/home/ProtocolStack'
+import HomeFAQ from '@/components/home/HomeFAQ'
 import CinematicButton from '@/components/ui/CinematicButton'
 import {
   buildOrganizationSchema,
@@ -89,7 +90,10 @@ export default async function HomePage() {
         {/* D. Protocol Archive */}
         <ProtocolStack />
 
-        {/* E. Bottom Transition / CTA */}
+        {/* E. FAQ Section */}
+        <HomeFAQ />
+
+        {/* F. Bottom Transition / CTA */}
         <section className="py-40 px-6 sm:px-16 text-center bg-brand-black">
            <h2 className={`section-title mx-auto ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
               {t('home.cta.title')}

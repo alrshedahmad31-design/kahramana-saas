@@ -44,17 +44,33 @@
     "faq": {
       "title": "Frequently Asked Questions",
       "items": {
-        "bestIraqi": {
-          "q": "What makes Kahramana the best Iraqi restaurant in Bahrain?",
-          "a": "Our commitment to heritage, using traditional charcoal grilling techniques and recipes passed down by generations of Baghdadi chefs, makes us the destination for authentic Iraqi taste in Riffa and Qallali."
+        "authentic": {
+          "q": "Where can I find an authentic Iraqi restaurant in Bahrain?",
+          "a": "Kahramana Baghdad offers an authentic Iraqi dining experience in Bahrain, featuring traditional Iraqi grills, heritage dishes, oriental appetizers, and family-friendly hospitality."
+        },
+        "grills": {
+          "q": "What makes the Iraqi grills at Kahramana Baghdad unique?",
+          "a": "Kahramana Baghdad's grills are distinguished by rich Iraqi marinades and careful preparation focused on flavor and texture, with options including Iraqi kebab, tikka, shish tawook, and mixed grill platters for individuals and families."
         },
         "masgouf": {
-          "q": "Do you serve authentic Iraqi Masgouf?",
-          "a": "Yes, we specialize in authentic Iraqi Masgouf fish, prepared using traditional techniques to ensure the smoky flavor of Baghdad in the heart of Bahrain."
+          "q": "Is Iraqi Masgouf fish available at Kahramana Baghdad?",
+          "a": "Yes, Iraqi Masgouf is available at Kahramana Baghdad. We recommend contacting the branch before your visit to confirm availability or for advance booking, especially during peak hours."
         },
-        "catering": {
-          "q": "Does Kahramana provide catering for weddings in Bahrain?",
-          "a": "Yes, Kahramana Baghdad offers premium catering services for weddings, corporate events, and private feasts across Bahrain with a focus on luxury Iraqi hospitality."
+        "families": {
+          "q": "Is Kahramana Baghdad suitable for families and private gatherings?",
+          "a": "Yes, Kahramana Baghdad is family-friendly and offers private seating and cabins for a more comfortable and personal experience, especially when booked in advance."
+        },
+        "delivery": {
+          "q": "Can I order delivery from Kahramana Baghdad?",
+          "a": "Yes, delivery is available depending on the branch and area. You can order Iraqi dishes and grills through available ordering channels or by contacting your nearest branch."
+        },
+        "events": {
+          "q": "Do you offer banquets or buffets for events and gatherings?",
+          "a": "Yes, Kahramana Baghdad offers options for banquets, private gatherings, and special occasions, with the ability to coordinate a customized Iraqi menu including grills and dishes suited to your guest count and occasion type."
+        },
+        "locations": {
+          "q": "Where are Kahramana Baghdad branches located in Bahrain?",
+          "a": "Kahramana Baghdad has branches in Riffa and Qallali. Full details for each branch — including Google Maps location, opening hours, and contact methods — are available on the branches page."
         }
       }
     },

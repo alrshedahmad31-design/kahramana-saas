@@ -31,6 +31,12 @@ const localized = <T,>(locale: Locale, ar: T, en: T): T =>
 const activeBranches = BRANCH_LIST.filter((b) => b.status === 'active')
 const plannedBranches = BRANCH_LIST.filter((b) => b.status === 'planned')
 
+// Verified Google Business Profile ratings (source: GBP dashboard 2026-05)
+const BRANCH_RATINGS: Partial<Record<string, { ratingValue: string; reviewCount: string; bestRating: string; worstRating: string }>> = {
+  riffa:   { ratingValue: '4.5', reviewCount: '1519', bestRating: '5', worstRating: '1' },
+  qallali: { ratingValue: '4.4', reviewCount: '120',  bestRating: '5', worstRating: '1' },
+}
+
 // Schema.org requires "25:00" format when closing time crosses midnight.
 function schemaClosesTime(time: string): string {
   const [h, m] = time.split(':').map(Number)
@@ -95,6 +101,14 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
       '@type': 'GeoCoordinates',
       latitude:  branch.latitude,
       longitude: branch.longitude,
+    }
+  }
+
+  const rating = BRANCH_RATINGS[branch.id]
+  if (rating) {
+    base.aggregateRating = {
+      '@type': 'AggregateRating',
+      ...rating,
     }
   }
 
@@ -214,7 +228,7 @@ export function buildOrganizationSchema(locale: Locale) {
     ),
     url: SITE,
     telephone: primaryBranch.phone,
-    foundingDate: '2018',
+    foundingDate: '2018-08-01',
     address: {
       '@type': 'PostalAddress',
       streetAddress:   localized(locale, primaryBranch.addressAr,  primaryBranch.addressEn),
@@ -414,61 +428,67 @@ export function buildFAQSchema(faqs: FAQ[]) {
 // Curated, owner-confirmable FAQ content — derived ONLY from existing copy
 // and constants. Update via translations once content is finalized.
 export function buildHomepageFAQ(locale: Locale): FAQ[] {
-  const riffa   = BRANCHES.riffa
-  const qallali = BRANCHES.qallali
-
-  // These should ideally match the keys in messages/{locale}.json home.faq.items
   if (locale === 'ar') {
     return [
       {
-        question: 'أين يقع مطعم كهرمانة بغداد في البحرين؟',
-        answer:
-          `لمطعم كهرمانة بغداد فرعان نشطان في البحرين: ${riffa.nameAr} في ${riffa.cityAr}، و${qallali.nameAr} في ${qallali.cityAr}، إضافة إلى فرع البديع قيد الافتتاح قريباً.`,
+        question: 'أين أجد مطعمًا عراقيًا أصيلًا في البحرين؟',
+        answer: 'مطعم كهرمانة بغداد يقدم تجربة طعام عراقية أصيلة في البحرين، تشمل المشاوي العراقية، الأطباق التراثية، المقبلات الشرقية، وأجواء ضيافة مناسبة للعائلات والضيوف.',
       },
       {
-        question: 'ما الذي يجعل كهرمانة أفضل مطعم عراقي في البحرين؟',
-        answer: 'التزامنا بالتراث العراقي، واستخدام تقنيات الشواء التقليدية على الفحم، والوصفات المتوارثة من أجيال من الطهاة البغداديين، يجعلنا الوجهة الأولى للمذاق العراقي الأصيل في الرفاع وقلالي.'
+        question: 'ما الذي يميز المشاوي العراقية في كهرمانة بغداد؟',
+        answer: 'تتميز مشاوي كهرمانة بغداد بتتبيلات عراقية غنية، وتحضير يهتم بالنكهة والقوام، مع خيارات مثل الكباب العراقي، التكة، الشيش طاووق، وتشكيلات المشاوي المناسبة للأفراد والعائلات.',
       },
       {
-        question: 'هل يقدم المطعم المسكوف العراقي الأصيل؟',
-        answer: 'نعم، نحن نتخصص في سمك المسكوف العراقي الأصيل المحضر بالطريقة التقليدية لضمان نكهة بغداد المدخنة في قلب البحرين.'
+        question: 'هل يتوفر سمك المسكوف العراقي في كهرمانة بغداد؟',
+        answer: 'نعم، يتوفر سمك المسكوف العراقي ضمن أطباق كهرمانة بغداد، ويُنصح بالتواصل مع الفرع قبل الزيارة للتأكد من التوفر أو الحجز المسبق، خصوصًا في أوقات الذروة.',
       },
       {
-        question: 'كيف يمكنني الطلب من كهرمانة بغداد؟',
-        answer:
-          'يمكنك الطلب من خلال موقعنا الإلكتروني، أو عبر واتساب مع الفرع الأقرب إليك، أو من تطبيقي طلبات وكيتا في البحرين.',
+        question: 'هل كهرمانة بغداد مناسب للعائلات والجلسات الخاصة؟',
+        answer: 'نعم، كهرمانة بغداد مناسب للعائلات، وتتوفر جلسات وكبائن خاصة تمنح الضيوف تجربة أكثر راحة وخصوصية، خصوصًا عند الحجز المسبق.',
       },
       {
-        question: 'هل يقدم كهرمانة بغداد خدمة تموين المناسبات؟',
-        answer:
-          'نعم، يقدم كهرمانة بغداد خدمات تموين فاخرة للأعراس، والفعاليات، والولائم الخاصة في جميع أنحاء البحرين مع التركيز على الضيافة العراقية الفاخرة.',
+        question: 'هل يمكن طلب التوصيل من كهرمانة بغداد؟',
+        answer: 'نعم، تتوفر خدمة التوصيل حسب الفرع والمنطقة، ويمكن طلب الأطباق العراقية والمشاوي عبر قنوات الطلب المتاحة أو التواصل مع الفرع المناسب.',
+      },
+      {
+        question: 'هل تقدمون ولائم أو بوفيهات للمناسبات والعزائم؟',
+        answer: 'نعم، يوفر كهرمانة بغداد خيارات للولائم، العزائم، والمناسبات الخاصة، مع إمكانية تنسيق قائمة طعام عراقية تشمل المشاوي والأطباق المناسبة لعدد الضيوف ونوع المناسبة.',
+      },
+      {
+        question: 'أين تقع فروع كهرمانة بغداد في البحرين؟',
+        answer: 'تتوفر فروع كهرمانة بغداد في الرفاع وقلالي، ويمكن الوصول إلى تفاصيل كل فرع من خلال صفحة الفروع، بما في ذلك الموقع على خرائط Google، أوقات العمل، وطرق التواصل.',
       },
     ]
   }
 
   return [
     {
-      question: 'Where is Kahramana Baghdad located in Bahrain?',
-      answer:
-        `Kahramana Baghdad has two active branches in Bahrain: ${riffa.nameEn} in ${riffa.cityEn}, and ${qallali.nameEn} in ${qallali.cityEn}, with an Al-Budayi branch coming soon.`,
+      question: 'Where can I find an authentic Iraqi restaurant in Bahrain?',
+      answer: 'Kahramana Baghdad offers an authentic Iraqi dining experience in Bahrain, featuring traditional Iraqi grills, heritage dishes, oriental appetizers, and family-friendly hospitality.',
     },
     {
-      question: 'What makes Kahramana the best Iraqi restaurant in Bahrain?',
-      answer: 'Our commitment to heritage, using traditional charcoal grilling techniques and recipes passed down by generations of Baghdadi chefs, makes us the destination for authentic Iraqi taste in Riffa and Qallali.'
+      question: 'What makes the Iraqi grills at Kahramana Baghdad unique?',
+      answer: "Kahramana Baghdad's grills are distinguished by rich Iraqi marinades and careful preparation focused on flavor and texture, with options including Iraqi kebab, tikka, shish tawook, and mixed grill platters for individuals and families.",
     },
     {
-      question: 'Do you serve authentic Iraqi Masgouf?',
-      answer: 'Yes, we specialize in authentic Iraqi Masgouf fish, prepared using traditional techniques to ensure the smoky flavor of Baghdad in the heart of Bahrain.'
+      question: 'Is Iraqi Masgouf fish available at Kahramana Baghdad?',
+      answer: 'Yes, Iraqi Masgouf is available at Kahramana Baghdad. We recommend contacting the branch before your visit to confirm availability or for advance booking, especially during peak hours.',
     },
     {
-      question: 'How can I order from Kahramana Baghdad?',
-      answer:
-        'You can order through our website, via WhatsApp directly with the branch nearest to you, or through Talabat and Keeta in Bahrain.',
+      question: 'Is Kahramana Baghdad suitable for families and private gatherings?',
+      answer: 'Yes, Kahramana Baghdad is family-friendly and offers private seating and cabins for a more comfortable and personal experience, especially when booked in advance.',
     },
     {
-      question: 'Does Kahramana Baghdad offer catering for weddings in Bahrain?',
-      answer:
-        'Yes, Kahramana Baghdad offers premium catering services for weddings, corporate events, and private feasts across Bahrain with a focus on luxury Iraqi hospitality.',
+      question: 'Can I order delivery from Kahramana Baghdad?',
+      answer: 'Yes, delivery is available depending on the branch and area. You can order Iraqi dishes and grills through available ordering channels or by contacting your nearest branch.',
+    },
+    {
+      question: 'Do you offer banquets or buffets for events and gatherings?',
+      answer: 'Yes, Kahramana Baghdad offers options for banquets, private gatherings, and special occasions, with the ability to coordinate a customized Iraqi menu including grills and dishes suited to your guest count and occasion type.',
+    },
+    {
+      question: 'Where are Kahramana Baghdad branches located in Bahrain?',
+      answer: 'Kahramana Baghdad has branches in Riffa and Qallali. Full details for each branch — including Google Maps location, opening hours, and contact methods — are available on the branches page.',
     },
   ]
 }

@@ -17,12 +17,12 @@ export default function Footer() {
   const tNav = useTranslations('nav')
   const isRTL = locale === 'ar'
   const [mounted, setMounted] = useState(false)
+  const [year, setYear] = useState<number>(2025)
 
   useEffect(() => {
     setMounted(true)
+    setYear(new Date().getFullYear())
   }, [])
-
-  const year = new Date().getFullYear()
 
   const marqueeText = isRTL ? 'كهرمانة بغداد • سفير المذاق البغدادي • ' : 'KAHRAMANA BAGHDAD • THE AMBASSADOR OF BAGHDAD • '
 
@@ -99,14 +99,14 @@ export default function Footer() {
             </h3>
             <div className="space-y-6">
               {BRANCH_LIST.map((branch) => {
-                const isOpen = branch.status === 'active' && isBranchOpen(branch.hours.opens, branch.hours.closes)
+                const isOpen = mounted && branch.status === 'active' && isBranchOpen(branch.hours.opens, branch.hours.closes)
                 return (
                   <div key={branch.id} className="group cursor-pointer">
                     <p className={`text-sm font-bold text-brand-text group-hover:text-brand-gold transition-colors ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
                       {isRTL ? branch.nameAr : branch.nameEn}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`w-1 h-1 rounded-full ${isOpen ? 'bg-brand-success' : 'bg-brand-muted opacity-30'}`} />
+                      <span className={`w-1 h-1 rounded-full transition-colors duration-500 ${isOpen ? 'bg-brand-success' : 'bg-brand-muted opacity-30'}`} />
                       <p className="text-[10px] text-brand-muted/70 uppercase tracking-wider">
                         {isRTL ? branch.hours.ar : branch.hours.en}
                       </p>

@@ -7,12 +7,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 interface Props {
-  latitude: number
-  longitude: number
+  embedSrc?: string | null
+  latitude?: number | null
+  longitude?: number | null
   isAr: boolean
+  mapTitle?: string
 }
 
-export default function BranchMap({ latitude, longitude, isAr }: Props) {
+export default function BranchMap({ embedSrc, latitude, longitude, isAr, mapTitle }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -31,7 +33,9 @@ export default function BranchMap({ latitude, longitude, isAr }: Props) {
     return () => ctx.revert()
   }, [])
 
-  const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`
+  const mapUrl = embedSrc ?? (latitude && longitude ? `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed` : null)
+
+  if (!mapUrl) return null
 
   return (
     <section ref={containerRef} className="py-24 px-6 sm:px-16 bg-brand-black">
@@ -53,7 +57,7 @@ export default function BranchMap({ latitude, longitude, isAr }: Props) {
               allowFullScreen={true}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Branch Location"
+              title={mapTitle ?? (isAr ? 'خريطة الفرع' : 'Branch Map')}
               className="grayscale transition-all duration-1000 group-hover:grayscale-0 contrast-[1.1] brightness-[0.9] group-hover:brightness-100"
             />
 
