@@ -1,11 +1,9 @@
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { headers } from 'next/headers'
 import HeroWrapper from '@/components/home/HeroWrapper'
 import FeatureArtifacts from '@/components/home/FeatureArtifacts'
-import PhilosophyManifesto from '@/components/home/PhilosophyManifesto'
-import ProtocolStack from '@/components/home/ProtocolStack'
-import HomeFAQ from '@/components/home/HomeFAQ'
 import CinematicButton from '@/components/ui/CinematicButton'
 import {
   buildOrganizationSchema,
@@ -15,26 +13,27 @@ import {
   buildNavigationSchema,
 } from '@/lib/seo/schemas'
 
-// ── Metadata ──────────────────────────────────────────────────────────────────
+const PhilosophyManifesto = dynamic(() => import('@/components/home/PhilosophyManifesto'))
+const ProtocolStack        = dynamic(() => import('@/components/home/ProtocolStack'))
+const HomeFAQ              = dynamic(() => import('@/components/home/HomeFAQ'))
 
-import { SITE_URL } from '@/constants/contact'
+// ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
   const t      = await getTranslations({ locale, namespace: 'seo' })
-  const BASE   = SITE_URL
-  // Arabic is the default locale — no prefix in URL (localePrefix: 'as-needed')
-  const url    = locale === 'ar' ? BASE : `${BASE}/en`
 
   return {
     title: t('homeTitle'),
     description: t('homeDescription'),
     alternates: {
-      canonical: url,
+      // Relative paths resolve against layout's metadataBase (NEXT_PUBLIC_SITE_URL or vercel.app).
+      // Canonical always matches hreflang regardless of deployment domain — no more SEO conflict.
+      canonical: locale === 'ar' ? '/' : '/en',
       languages: {
-        'ar': BASE,
-        'en': `${BASE}/en`,
-        'x-default': BASE,
+        'ar':        '/',
+        'en':        '/en',
+        'x-default': '/',
       },
     },
   }
@@ -79,33 +78,29 @@ export default async function HomePage() {
       />
 
       <div className="flex flex-col">
-        {/* A. Cinematic Opening */}
+        {/* A. Cinematic Opening — never dynamic(), keeps SSR image out of Suspense boundary */}
         <HeroWrapper />
 
-        {/* B. Feature Artifacts */}
+        {/* B. Feature Artifacts — first section below hero, keep in critical bundle */}
         <FeatureArtifacts />
 
-        {/* C. Philosophy Manifesto */}
+        {/* C–E. Below-fold sections — lazy-loaded to reduce initial JS parse cost (TBT) */}
         <PhilosophyManifesto />
-
-        {/* D. Protocol Archive */}
         <ProtocolStack />
-
-        {/* E. FAQ Section */}
         <HomeFAQ />
 
-        {/* F. Bottom Transition / CTA */}
+        {/* F. Bottom CTA */}
         <section className="py-40 px-6 sm:px-16 text-center bg-brand-black">
-           <h2 className={`section-title mx-auto ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
-              {t('home.cta.title')}
-           </h2>
-           <CinematicButton
-             href="/menu"
-             isRTL={isRTL}
-             className="px-12 py-5 text-xl font-bold rounded-2xl"
-           >
-              {t('home.cta.button')}
-           </CinematicButton>
+          <h2 className={`section-title mx-auto ${isRTL ? 'font-cairo' : 'font-editorial italic'}`}>
+            {t('home.cta.title')}
+          </h2>
+          <CinematicButton
+            href="/menu"
+            isRTL={isRTL}
+            className="px-12 py-5 text-xl font-bold rounded-2xl"
+          >
+            {t('home.cta.button')}
+          </CinematicButton>
         </section>
       </div>
     </>

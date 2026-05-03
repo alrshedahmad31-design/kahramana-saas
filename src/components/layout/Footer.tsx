@@ -31,7 +31,7 @@ export default function Footer() {
       {/* ── Luxury Background Elements ────────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[500px] bg-brand-gold/5 blur-[120px] rounded-[100%]" />
-        <div className="absolute inset-0 opacity-[0.03] bg-[url('/assets/hero/hero-poster.webp')] bg-cover bg-center grayscale" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/[0.04] via-transparent to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent" />
       </div>
 

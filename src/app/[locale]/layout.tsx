@@ -114,16 +114,6 @@ export async function generateMetadata(
         "max-video-preview": -1,
       },
     },
-    alternates: {
-      // Fallback canonical for any page that doesn't define its own.
-      // Arabic is the default locale (localePrefix: 'as-needed') → no /ar prefix.
-      canonical: isAr ? BASE : `${BASE}/en`,
-      languages: {
-        'ar': BASE,
-        'en': `${BASE}/en`,
-        'x-default': BASE,
-      },
-    },
     openGraph: {
       type: "website",
       locale: isAr ? "ar_BH" : "en_BH",

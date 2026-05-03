@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -44,17 +43,8 @@ export default function PhilosophyManifesto() {
       className="py-32 px-6 sm:px-16 bg-brand-black relative overflow-hidden flex flex-col items-center text-center"
     >
       {/* Background Texture */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute inset-0 overflow-hidden grayscale">
-          <Image
-            src="/assets/hero/hero-poster.webp"
-            alt=""
-            fill
-            loading="lazy"
-            className="object-cover object-center"
-            sizes="100vw"
-          />
-        </div>
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-brand-gold/20 via-transparent to-brand-gold/10" />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black via-transparent to-brand-black" />
       </div>
 
