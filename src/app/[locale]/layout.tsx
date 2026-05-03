@@ -25,6 +25,9 @@ const cairo = Cairo({
   variable: '--cairo',
   display: 'swap',
   preload: true,
+  // Adjusts fallback font metrics to minimise layout shift before Cairo loads
+  adjustFontFallback: true,
+  fallback: ['Tahoma', 'Arial', 'sans-serif'],
 })
 
 const almarai = Almarai({
@@ -33,6 +36,9 @@ const almarai = Almarai({
   variable: '--almarai',
   display: 'swap',
   preload: true,
+  // Adjusts fallback font metrics to minimise layout shift before Almarai loads
+  adjustFontFallback: true,
+  fallback: ['Tahoma', 'Arial', 'sans-serif'],
 })
 
 // ── English fonts from /public/fonts (self-hosted) ────────────────────────────
@@ -64,6 +70,8 @@ export async function generateMetadata(
   const BASE = SITE_URL;
 
   return {
+    // metadataBase resolves all relative URLs in metadata against the production domain,
+    // preventing vercel.app from leaking into canonical/OG URLs on preview deployments
     metadataBase: new URL(BASE),
     title: {
       default: isAr
@@ -107,7 +115,14 @@ export async function generateMetadata(
       },
     },
     alternates: {
+      // Fallback canonical for any page that doesn't define its own.
+      // Arabic is the default locale (localePrefix: 'as-needed') → no /ar prefix.
       canonical: isAr ? BASE : `${BASE}/en`,
+      languages: {
+        'ar': BASE,
+        'en': `${BASE}/en`,
+        'x-default': BASE,
+      },
     },
     openGraph: {
       type: "website",

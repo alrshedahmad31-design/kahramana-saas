@@ -191,8 +191,8 @@ function TelemetryFeed({ isRTL }: { isRTL: boolean }) {
           <motion.div
             key={idx}
             initial={{ opacity: 0, x: isRTL ? 10 : -10 }}
-            animate={{ 
-              opacity: isVisible ? 1 : 0.15, 
+            animate={{
+              opacity: isVisible ? 1 : 0.45,
               x: isVisible ? 0 : isRTL ? 5 : -5,
               color: isVisible ? colors.gold : colors.muted
             }}
@@ -238,7 +238,7 @@ function PrivacyFeatures() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col items-center text-center px-4"
         >
-          <span className="text-brand-gold font-mono text-3xl mb-4 opacity-80">
+          <span className="text-brand-gold font-mono text-3xl mb-4">
             0{index + 1}
           </span>
           <p className="text-xl sm:text-2xl font-bold text-brand-text leading-tight font-cairo">

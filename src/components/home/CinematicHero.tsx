@@ -3,12 +3,9 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useLocale, useTranslations } from 'next-intl'
 import { DEFAULT_BRANCH } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
-
-gsap.registerPlugin(ScrollTrigger)
 
 export default function CinematicHero() {
   const locale = useLocale() as 'ar' | 'en'
@@ -47,7 +44,8 @@ export default function CinematicHero() {
       ref={containerRef}
       className="relative h-[100svh] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16"
     >
-      <div className="absolute inset-0 z-0">
+      {/* LCP image: no opacity, no animation class — always visible immediately */}
+      <div className="absolute inset-0 z-0" style={{ contain: 'strict' }}>
         <Image
           src="/assets/hero/hero-poster.webp"
           alt={t('visualAlt')}
