@@ -23,7 +23,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
   const t      = await getTranslations({ locale, namespace: 'seo' })
   const BASE   = SITE_URL
-  const url    = `${BASE}/${locale}`
+  // Arabic is the default locale — no prefix in URL (localePrefix: 'as-needed')
+  const url    = locale === 'ar' ? BASE : `${BASE}/en`
 
   return {
     title: t('homeTitle'),
@@ -31,9 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: url,
       languages: {
-        'ar': `${BASE}/ar`,
+        'ar': BASE,
         'en': `${BASE}/en`,
-        'x-default': `${BASE}/ar`,
+        'x-default': BASE,
       },
     },
   }

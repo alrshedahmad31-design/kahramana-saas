@@ -71,7 +71,7 @@ export default function ContactHero({ eyebrow, title, description, imageAlt, isA
         
         <div className="relative w-full h-[120%] -top-[10%]">
            <Image
-            src="/assets/hero/hero-contact.webp"
+            src="/assets/hero/hero-contact-opt.webp"
             alt={imageAlt}
             fill
             sizes="100vw"

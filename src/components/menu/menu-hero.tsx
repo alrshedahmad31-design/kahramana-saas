@@ -20,6 +20,7 @@ export default function MenuHero({ titleOverride, descriptionOverride }: MenuHer
         muted
         loop
         playsInline
+        preload="none"
         className="absolute inset-0 w-full h-full object-cover object-[center_30%] opacity-60"
         poster="/assets/hero/hero-menu.webp"
         aria-label={t('heroImageAlt')}
@@ -84,16 +85,17 @@ export default function MenuHero({ titleOverride, descriptionOverride }: MenuHer
         </motion.div>
 
         {/* Scroll Cue */}
-        <motion.div
+        <motion.button
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-8 start-1/2 -translate-x-1/2 text-brand-gold cursor-pointer"
+          className="absolute bottom-8 start-1/2 -translate-x-1/2 text-brand-gold cursor-pointer bg-transparent border-0 p-0"
+          aria-label={t('scrollToMenu')}
           onClick={() => {
             document.getElementById('menu-content')?.scrollIntoView({ behavior: 'smooth' })
           }}
         >
           <ChevronDown size={32} strokeWidth={1.5} />
-        </motion.div>
+        </motion.button>
       </div>
     </section>
   )

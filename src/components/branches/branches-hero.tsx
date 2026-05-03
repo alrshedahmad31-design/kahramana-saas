@@ -15,7 +15,7 @@ export default function BranchesHero({ isAr, badge, title, description }: Props)
       {/* Background elements */}
       <div className="absolute top-0 inset-x-0 h-full -z-10">
         <div className="absolute inset-0 bg-brand-black" />
-        <div className="absolute inset-0 opacity-40 bg-[url('/images/ui/mesh-gradient.png')] bg-cover bg-center" />
+        <div className="absolute inset-0 opacity-40 bg-[url('/images/ui/mesh-gradient.webp')] bg-cover bg-center" />
         <div className="absolute bottom-0 inset-x-0 h-64 bg-gradient-to-t from-brand-black to-transparent" />
       </div>
 

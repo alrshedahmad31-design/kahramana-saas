@@ -391,6 +391,7 @@
     "heroItemCount": "{count, plural, one {# صنف} few {# أصناف} other {# صنف}}",
     "heroCategoryCount": "{count, plural, one {# تصنيف} other {# تصنيف}}",
     "heroImageAlt": "عرض سينمائي لمنيو كهرمانة بغداد الأصيل والضيافة العراقية التقليدية",
+    "scrollToMenu": "اسحب للأسفل للوصول للمنيو",
     "categoryEyebrow": "التصنيف",
     "categorySingleLabel": "تصنيف واحد",
     "categorySeoTitle": "{category} — منيو كهرمانة بغداد | مطعم عراقي البحرين",

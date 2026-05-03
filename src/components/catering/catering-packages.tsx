@@ -4,9 +4,9 @@ import { CATERING_REQUEST_STYLES } from '@/lib/catering'
 import SectionHeader from '@/components/ui/SectionHeader'
 
 const packageImages = {
-  familyOrder: '/assets/catering/style-family-new.png',
-  corporateHospitality: '/assets/catering/style-corporate-new.png',
-  iraqiFeast: '/assets/catering/style-banquet-new.png',
+  familyOrder: '/assets/catering/style-family-new.webp',
+  corporateHospitality: '/assets/catering/style-corporate-new.webp',
+  iraqiFeast: '/assets/catering/style-banquet-new.webp',
 } as const
 
 export default function CateringPackages() {

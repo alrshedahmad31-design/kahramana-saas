@@ -19,7 +19,7 @@ const PROTOCOLS = [
   {
     id: '02',
     color: PROTOCOL_COLORS.step2,
-    image: '/assets/protocol/step-02-prepare.png'
+    image: '/assets/protocol/step-02-prepare.webp'
   },
   {
     id: '03',

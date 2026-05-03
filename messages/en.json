@@ -391,6 +391,7 @@
     "heroItemCount": "{count, plural, one {# dish} other {# dishes}}",
     "heroCategoryCount": "{count, plural, one {# category} other {# categories}}",
     "heroImageAlt": "Cinematic display of Kahramana Baghdad authentic Iraqi menu and traditional hospitality",
+    "scrollToMenu": "Scroll down to menu",
     "categoryEyebrow": "Category",
     "categorySingleLabel": "1 category",
     "categorySeoTitle": "{category} — Kahramana Baghdad Menu | Iraqi Restaurant Bahrain",

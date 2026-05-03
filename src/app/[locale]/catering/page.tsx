@@ -69,6 +69,9 @@ export default async function CateringPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-brand-black" dir={isAr ? 'rtl' : 'ltr'}>
+      {/* Preload catering video poster for LCP */}
+      {/* eslint-disable-next-line @next/next/no-head-element */}
+      <link rel="preload" as="image" href="/assets/catering/hero-catering.webp" fetchPriority="high" />
       <script
         type="application/ld+json"
         suppressHydrationWarning

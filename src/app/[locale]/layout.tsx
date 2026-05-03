@@ -23,7 +23,7 @@ const cairo = Cairo({
   subsets: ['arabic'],
   weight: ['800'],
   variable: '--cairo',
-  display: 'optional',
+  display: 'swap',
   preload: true,
 })
 
@@ -31,7 +31,7 @@ const almarai = Almarai({
   subsets: ['arabic'],
   weight: ['400', '700'],
   variable: '--almarai',
-  display: 'optional',
+  display: 'swap',
   preload: true,
 })
 
@@ -42,7 +42,7 @@ const editorialNew = localFont({
     { path: '../../../public/fonts/EditorialNew-Bold.woff2',  weight: '700', style: 'normal' },
   ],
   variable: '--editorial',
-  display: 'optional',
+  display: 'swap',
 })
 
 const satoshi = localFont({
@@ -51,7 +51,7 @@ const satoshi = localFont({
     { path: '../../../public/fonts/Satoshi-Medium.woff2',  weight: '500', style: 'normal' },
   ],
   variable: '--satoshi',
-  display: 'optional',
+  display: 'swap',
 })
 
 // ── Metadata — global fallback; each page defines its own canonical/hreflang ──

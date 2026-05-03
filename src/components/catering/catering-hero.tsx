@@ -54,6 +54,7 @@ export default function CateringHero() {
                 loop
                 muted
                 playsInline
+                preload="none"
                 className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/20 to-transparent" />
