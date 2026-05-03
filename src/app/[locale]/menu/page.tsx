@@ -1,10 +1,21 @@
 import type { Metadata } from 'next'
 import { getMenuData, getFeaturedSlugs, type LocaleCode } from '@/lib/menu'
 import MenuPageClient from '@/components/menu/MenuPageClient'
+import { headers } from 'next/headers'
 
-import { FAQSchema } from '@/components/schema/FAQSchema'
-import { MenuPageSchema } from '@/components/schema/MenuPageSchema'
 import { SITE_URL } from '@/constants/contact'
+import {
+  buildFAQSchema,
+  buildFullMenuSchema,
+  buildMenuWebPageSchema,
+  buildMenuBreadcrumb,
+  buildHomepageFAQ,
+} from '@/lib/seo/schemas'
+
+type Props = {
+  params: Promise<{ locale: string }>
+  searchParams: Promise<{ q?: string }>
+}
 
 export async function generateMetadata(
   { params }: { params: Promise<{ locale: string }> }
@@ -16,11 +27,11 @@ export async function generateMetadata(
 
   return {
     title: isAr
-      ? "منيو كهرمانة بغداد | 168 طبق عراقي أصيل"
-      : "Kahramana Baghdad Menu | 168 Authentic Iraqi Dishes",
+      ? "منيو مطعم كهرمانة بغداد — قائمة الطعام العراقية الأصيلة"
+      : "Kahramana Baghdad Menu — Authentic Iraqi Dishes & Grills",
     description: isAr
-      ? "تصفح قائمة كهرمانة الكاملة: 16 تصنيفا من الفطور البغدادي إلى المشاوي والحلويات. جودة أصيلة في كل طبق متوفر في الرفاع وقلالي."
-      : "Explore Kahramana Baghdad's full menu: charcoal grills, Iraqi Masgouf, Quzi, Baghdadi breakfast, Dolma, Iraqi shawarma, and 168+ dishes. Authentic Iraqi restaurant in Riffa and Qalali, Bahrain.",
+      ? "تصفح قائمة الطعام الكاملة: مشويات عراقية، مسكوف، قوزي، وفطور بغدادي. أكثر من 168 طبقاً متوفرة في فروعنا بالبحرين."
+      : "Explore our full menu: Iraqi grills, Masgouf, Quzi, and Baghdadi breakfast. Over 168 authentic dishes available at our branches in Bahrain.",
     alternates: {
       canonical: url,
       languages: {
@@ -31,30 +42,67 @@ export async function generateMetadata(
     },
     openGraph: {
       title: isAr
-        ? "قائمة كهرمانة بغداد | مطعم عراقي البحرين"
-        : "Kahramana Baghdad Menu | Iraqi Restaurant Bahrain",
+        ? "قائمة طعام كهرمانة بغداد | المذاق العراقي في البحرين"
+        : "Kahramana Baghdad Menu | Authentic Iraqi Taste in Bahrain",
       description: isAr
-        ? "168 طبقاً عراقياً وخليجياً — مشاوي، مسكوف، قوزي، فطور بغدادي، شاورما"
-        : "168 Iraqi & Gulf dishes — grills, Masgouf, Quzi, Baghdadi breakfast, shawarma",
+        ? "اكتشف تشكيلة واسعة من الأطباق العراقية الأصيلة والمشويات على الفحم."
+        : "Discover a wide range of authentic Iraqi dishes and charcoal grills.",
       url,
       images: [{ url: `${BASE}/assets/hero/hero-menu.webp`, width: 1200, height: 630 }],
     },
   };
 }
 
-export default async function MenuPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function MenuPage({ params, searchParams }: Props) {
   const { locale } = await params
+  const { q } = await searchParams
+  const localeKey = locale as 'ar' | 'en'
+  const nonce = (await headers()).get('x-nonce') ?? undefined
   
   const [categories, featuredSlugs] = await Promise.all([
     getMenuData(),
     getFeaturedSlugs(),
   ])
 
+  // SEO Schemas
+  const faqSchema     = buildFAQSchema(buildHomepageFAQ(localeKey))
+  const menuSchema    = buildFullMenuSchema(categories, localeKey)
+  const webPageSchema = buildMenuWebPageSchema(localeKey)
+  const breadcrumb    = buildMenuBreadcrumb(localeKey)
+
   return (
     <>
-      <FAQSchema locale={locale as "ar" | "en"} />
-      <MenuPageSchema locale={locale as "ar" | "en"} />
-      <MenuPageClient categories={categories} locale={locale as LocaleCode} featuredSlugs={featuredSlugs} />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(menuSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+
+      <MenuPageClient 
+        categories={categories} 
+        locale={locale as LocaleCode} 
+        featuredSlugs={featuredSlugs} 
+        initialQuery={q}
+      />
     </>
   )
 }

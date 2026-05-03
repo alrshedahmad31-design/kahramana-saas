@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
 import { headers } from 'next/headers'
 import { SITE_URL } from '@/constants/contact'
+import { buildFounderSchema } from '@/lib/seo/schemas'
 
 // ── Components ──────────────────────────────────────────────────────────────
 import StoryHero from '@/components/story/StoryHero'
@@ -23,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title:       locale === 'ar' ? 'قصة كهرمانة بغداد | مطعم عراقي أصيل تأسس 2018' : 'Kahramana Baghdad Story | Authentic Iraqi Restaurant Since 2018',
     description: locale === 'ar'
       ? 'منذ 2018 يحمل كهرمانة بغداد رسالة واحدة: تقديم المطبخ البغدادي الأصيل دون تنازل. اكتشف قصة المؤسس وفلسفة الضيافة العراقية في البحرين.'
-      : 'Discover a story of flavor served not as a meal but as a memory. The story of Kahramana Baghdad and the vision of founder Eng. Asaad Al-Jubouri.',
+      : 'Kahramana Baghdad — authentic Iraqi restaurant in Bahrain since 2018. Founded by Eng. Asaad Al-Jubouri, serving 168+ traditional Baghdadi dishes across two branches in Riffa and Qallali.',
     openGraph: {
       images: [{ url: '/assets/founder/founder.webp' }],
     },
@@ -45,9 +46,14 @@ export default async function AboutPage() {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
     name: isAr ? 'قصتنا — كهرمانة بغداد' : 'Our Story — Kahramana Baghdad',
-    url: `https://kahramanat.com/${locale}/about`,
+    url: `${SITE_URL}/${locale}/about`,
     inLanguage: isAr ? 'ar-BH' : 'en-BH',
-    mainEntity: { '@id': 'https://kahramanat.com/#organization' },
+    mainEntity: { '@id': `${SITE_URL}/#organization` },
+  }
+
+  const founderSchemaLd = {
+    '@context': 'https://schema.org',
+    ...buildFounderSchema(),
   }
 
   return (
@@ -57,6 +63,12 @@ export default async function AboutPage() {
         suppressHydrationWarning
         nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(founderSchemaLd) }}
       />
 
       {/* Cinematic Hero */}

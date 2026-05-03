@@ -12,6 +12,7 @@ interface MobileSearchOverlayProps {
   onClose: () => void
   categories: CategoryWithItems[]
   locale: string
+  initialQuery?: string
 }
 
 export function MobileSearchOverlay({
@@ -19,10 +20,11 @@ export function MobileSearchOverlay({
   onClose,
   categories,
   locale,
+  initialQuery = '',
 }: MobileSearchOverlayProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isRTL = locale === 'ar'
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(initialQuery)
 
   useEffect(() => {
     if (isOpen) {
@@ -30,10 +32,10 @@ export function MobileSearchOverlay({
       setTimeout(() => inputRef.current?.focus(), 100)
     } else {
       document.body.style.overflow = 'unset'
-      setSearchQuery('')
+      if (!initialQuery) setSearchQuery('')
     }
     return () => { document.body.style.overflow = 'unset' }
-  }, [isOpen])
+  }, [isOpen, initialQuery])
 
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return []
@@ -56,7 +58,7 @@ export function MobileSearchOverlay({
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-          className="fixed inset-0 z-[100] bg-brand-black/95 backdrop-blur-md flex flex-col sm:hidden"
+          className="fixed inset-0 z-[100] bg-brand-black/95 backdrop-blur-md flex flex-col"
           dir={isRTL ? 'rtl' : 'ltr'}
         >
           {/* Close bar + Input */}
@@ -97,24 +99,26 @@ export function MobileSearchOverlay({
 
           {/* Results */}
           <div className="flex-1 overflow-y-auto">
-            {searchQuery.trim() ? (
-              filteredItems.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3 ps-3 pe-3 pt-4 pb-8">
-                  {filteredItems.map((item, index) => (
-                    <MenuItemCard key={item.id} item={item} locale={locale} index={index} />
-                  ))}
-                </div>
+            <div className="max-w-7xl mx-auto px-4">
+              {searchQuery.trim() ? (
+                filteredItems.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-8">
+                    {filteredItems.map((item, index) => (
+                      <MenuItemCard key={item.id} item={item} locale={locale} index={index} />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState query={searchQuery} locale={locale} />
+                )
               ) : (
-                <EmptyState query={searchQuery} locale={locale} />
-              )
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-                <Search size={32} className="text-brand-muted mb-4" />
-                <p className="font-almarai text-brand-muted text-sm">
-                  {isRTL ? 'اكتب اسم الطبق للبحث' : 'Type a dish name to search'}
-                </p>
-              </div>
-            )}
+                <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                  <Search size={32} className="text-brand-muted mb-4" />
+                  <p className="font-almarai text-brand-muted text-sm">
+                    {isRTL ? 'اكتب اسم الطبق للبحث' : 'Type a dish name to search'}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       )}

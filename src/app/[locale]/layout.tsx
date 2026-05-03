@@ -10,7 +10,7 @@ import { headers } from 'next/headers'
 import { routing } from '@/i18n/routing'
 import { tokens } from '@/lib/design-tokens'
 import { SITE_URL } from '@/constants/contact'
-import { generateRestaurantSchema } from '@/lib/seo/schema'
+import { buildOrganizationSchema } from '@/lib/seo/schemas'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import ConditionalFooter from '@/components/layout/ConditionalFooter'
@@ -107,7 +107,7 @@ export async function generateMetadata(
       },
     },
     alternates: {
-      canonical: `${BASE}/${locale}`,
+      canonical: isAr ? BASE : `${BASE}/en`,
     },
     openGraph: {
       type: "website",
@@ -212,14 +212,14 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         )}
         {/* Logo is loaded by the Header component at normal priority — no preload needed here
             since the 292KB SVG would compete with the hero image for critical bandwidth */}
-        <link rel="alternate" hrefLang="ar" href={`${SITE_URL}/ar${alternatePath}`} />
-        <link rel="alternate" hrefLang="en" href={`${SITE_URL}/en${alternatePath}`} />
-        <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/ar${alternatePath}`} />
+        <link rel="alternate" hrefLang="ar-BH" href={`${SITE_URL}${alternatePath}`} />
+        <link rel="alternate" hrefLang="en-BH" href={`${SITE_URL}/en${alternatePath}`} />
+        <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}${alternatePath}`} />
         <script
           type="application/ld+json"
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(generateRestaurantSchema()),
+            __html: JSON.stringify(buildOrganizationSchema(locale as 'ar' | 'en')),
           }}
         />
         {/* Preconnect to image CDN */}

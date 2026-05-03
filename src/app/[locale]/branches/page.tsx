@@ -1,6 +1,6 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server'
 import { headers } from 'next/headers'
-import { BRANCH_LIST } from '@/constants/contact'
+import { BRANCH_LIST, SITE_URL } from '@/constants/contact'
 import { BRANCHES as SEO_BRANCHES } from '@/lib/constants/branches'
 import { getBranchMetadata } from '@/lib/branches'
 import BranchesHero from '@/components/branches/branches-hero'
@@ -8,69 +8,86 @@ import BranchCard from '@/components/branches/branch-card'
 import {
   buildBranchesPageGraph,
   buildBreadcrumb,
+  buildFAQSchema,
 } from '@/lib/seo/schemas'
-import { generateFAQSchema } from '@/lib/seo/schema'
-
-import { SITE_URL } from '@/constants/contact'
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   const isAr = locale === 'ar'
   const BASE = SITE_URL
-  const url = `${BASE}/${locale}/branches`
+  const canonicalUrl = isAr ? `${BASE}/branches` : `${BASE}/en/branches`
 
   return {
     title: isAr
-      ? 'فروع كهرمانة بغداد | الرفاع قلالي البديع البحرين'
-      : 'Kahramana Baghdad Branches | Riffa Qallali Badi Bahrain',
+      ? { absolute: 'فروع كهرمانة بغداد — الرفاع وقلالي | كهرمانة بغداد' }
+      : { absolute: 'Kahramana Baghdad Branches — Riffa & Qallali | Kahramana Baghdad' },
     description: isAr
-      ? 'مواقع مطعم كهرمانة بغداد في البحرين: فرع الرفاع (الحجيات) وفرع قلالي (المحرق). ساعات العمل أرقام الواتساب وخرائط Google.'
-      : 'Kahramana Baghdad locations in Bahrain: Riffa and Qallali branches, with Badi coming soon. Opening hours, WhatsApp numbers, and Google Maps.',
+      ? 'مواقع مطعم كهرمانة بغداد في البحرين: فرع الرفاع وفرع قلالي. أرقام الواتساب وساعات العمل ومواقعنا على خرائط جوجل.'
+      : 'Kahramana Baghdad locations in Bahrain: Riffa and Qallali branches. WhatsApp numbers, opening hours, and Google Maps locations.',
     alternates: {
-      canonical: url,
+      canonical: canonicalUrl,
       languages: {
-        'ar': `${BASE}/ar/branches`,
-        'en': `${BASE}/en/branches`,
-        'x-default': `${BASE}/ar/branches`,
+        'ar-BH': `${BASE}/branches`,
+        'en-BH': `${BASE}/en/branches`,
+        'x-default': `${BASE}/branches`,
       },
     },
     openGraph: {
       title: isAr
-        ? 'فروع كهرمانة بغداد | الرفاع قلالي البديع البحرين'
-        : 'Kahramana Baghdad Branches | Riffa Qallali Badi Bahrain',
+        ? 'فروع مطعم كهرمانة بغداد — الرفاع وقلالي'
+        : 'Kahramana Baghdad Restaurant Branches — Riffa and Qallali',
       description: isAr
-        ? 'مواقع مطعم كهرمانة بغداد في البحرين: فرع الرفاع (الحجيات) وفرع قلالي (المحرق). ساعات العمل أرقام الواتساب وخرائط Google.'
-        : 'Kahramana Baghdad locations in Bahrain: Riffa and Qallali branches, with Badi coming soon. Opening hours, WhatsApp numbers, and Google Maps.',
-      url,
+        ? 'اكتشف مواقعنا في البحرين واطلب الآن من فرع الرفاع أو فرع قلالي عبر الواتساب.'
+        : 'Discover our locations in Bahrain and order now from Riffa or Qallali branch via WhatsApp.',
+      url: canonicalUrl,
       images: [{ url: `${BASE}/assets/hero/hero-branches.webp`, width: 1200, height: 630 }],
     },
   }
 }
 
-const BRANCH_FAQS = [
+const BRANCH_FAQS_AR = [
   {
-    question: 'ما هي أوقات عمل مطعم كهرمانة الرفاع',
-    answer: `يعمل فرع الرفاع يوميا من ${SEO_BRANCHES[0].opens_display_ar} حتى ${SEO_BRANCHES[0].closes_display_ar}.`,
+    question: 'ما هي أوقات عمل مطعم كهرمانة الرفاع؟',
+    answer: `يعمل فرع الرفاع يومياً من ${SEO_BRANCHES[0].opens_display_ar} حتى ${SEO_BRANCHES[0].closes_display_ar}.`,
   },
   {
-    question: 'ما هي أوقات عمل فرع كهرمانة قلالي',
-    answer: `يعمل فرع قلالي يوميا من ${SEO_BRANCHES[1].opens_display_ar} حتى ${SEO_BRANCHES[1].closes_display_ar}.`,
+    question: 'ما هي أوقات عمل فرع كهرمانة قلالي؟',
+    answer: `يعمل فرع قلالي يومياً من ${SEO_BRANCHES[1].opens_display_ar} حتى ${SEO_BRANCHES[1].closes_display_ar}.`,
   },
   {
-    question: 'هل تقدمون خدمة التوصيل',
-    answer: 'نعم نقدم التوصيل عبر واتساب. تواصل مع أقرب فرع للتأكد من منطقة التوصيل.',
+    question: 'هل توجد خدمة التوصيل في فروع البحرين؟',
+    answer: 'نعم، نوفر خدمة التوصيل المباشر عبر الواتساب لجميع المناطق المحيطة بفروعنا في الرفاع وقلالي.',
   },
   {
-    question: 'هل تقبلون حجوزات المجموعات',
-    answer: 'نعم يرجى التواصل مع الفرع المختار مسبقا لترتيب الجلسات الجماعية.',
+    question: 'أين يقع مطعم كهرمانة بغداد في الرفاع؟',
+    answer: 'يقع فرعنا في منطقة الحجيات بالرفاع، البحرين.',
   },
   {
-    question: 'أين يقع فرع كهرمانة الرفاع',
-    answer: 'يقع فرع الرفاع في منطقة الحجيات الرفاع البحرين.',
+    question: 'أين يقع مطعم كهرمانة بغداد في قلالي؟',
+    answer: 'يقع فرعنا على الشارع الرئيسي في قلالي، المحرق، البحرين.',
+  },
+]
+
+const BRANCH_FAQS_EN = [
+  {
+    question: 'What are the opening hours of Kahramana Riffa branch?',
+    answer: `Riffa branch is open daily from ${SEO_BRANCHES[0].opens_display_en} to ${SEO_BRANCHES[0].closes_display_en}.`,
   },
   {
-    question: 'أين يقع فرع كهرمانة قلالي',
-    answer: 'يقع فرع قلالي على الشارع الرئيسي قلالي المحرق البحرين.',
+    question: 'What are the opening hours of Kahramana Qallali branch?',
+    answer: `Qallali branch is open daily from ${SEO_BRANCHES[1].opens_display_en} to ${SEO_BRANCHES[1].closes_display_en}.`,
+  },
+  {
+    question: 'Is delivery available at Bahrain branches?',
+    answer: 'Yes, we provide direct delivery via WhatsApp to all areas surrounding our branches in Riffa and Qallali.',
+  },
+  {
+    question: 'Where is Kahramana Baghdad located in Riffa?',
+    answer: 'Our branch is located in Al-Hajiaat area, Riffa, Bahrain.',
+  },
+  {
+    question: 'Where is Kahramana Baghdad located in Qallali?',
+    answer: 'Our branch is located on Main Street, Qallali, Muharraq, Bahrain.',
   },
 ]
 
@@ -97,6 +114,10 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
     { name: isAr ? 'الفروع'   : 'Branches', url: localeKey === 'en' ? '/en/branches' : '/branches' },
   ])
 
+  // Map local FAQ data to FAQ schema format — bilingual
+  const branchFaqs = isAr ? BRANCH_FAQS_AR : BRANCH_FAQS_EN
+  const faqSchema = buildFAQSchema(branchFaqs.map(f => ({ question: f.question, answer: f.answer })))
+
   return (
     <main className="min-h-screen bg-brand-black pb-24" dir={isAr ? 'rtl' : 'ltr'}>
       <script
@@ -115,7 +136,7 @@ export default async function BranchesPage({ params }: { params: Promise<{ local
         type="application/ld+json"
         suppressHydrationWarning
         nonce={nonce}
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(generateFAQSchema(BRANCH_FAQS)) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
       <BranchesHero 

@@ -1,119 +1,28 @@
-# Kahramana Baghdad — Official AI-Readable Site Guide
-# https://kahramanat.com | Last updated: 2026-05-02
+# Kahramana Baghdad
+> مطعم عراقي أصيل في البحرين منذ 2018. فرعان: الرفاع وقلالي.
+> Authentic Iraqi restaurant in Bahrain since 2018. Two branches: Riffa and Qallali.
 
 ## About
-Kahramana Baghdad (كهرمانة بغداد) is an upscale Iraqi restaurant in the Kingdom of Bahrain,
-serving authentic Baghdadi cuisine since 2018. The restaurant specializes in traditional
-Iraqi cooking including Masgouf (grilled carp), charcoal grills, Quzi, Iraqi shawarma,
-Dolma, and Baghdadi breakfast — over 168 dishes in total.
-
-Founded by Eng. Asaad Al-Jubouri, Kahramana Baghdad is committed to authentic flavors
-and Iraqi culinary heritage without compromise.
-
----
-
-## Languages
-- Primary: Arabic (ar-BH)
-- Secondary: English (en-BH)
-- All pages are available in both languages via /ar/ and /en/ URL prefixes
-
----
+Kahramana Baghdad serves over 168 authentic Baghdadi dishes including Masgouf, Quzi,
+Iraqi grills, shawarma, and traditional Baghdadi breakfast.
+Founded by Eng. Asaad Al-Jubouri.
+مطعم كهرمانة بغداد يقدم أكثر من 168 طبقاً عراقياً أصيلاً منها المسگوف والقوزي
+والمشاوي العراقية والشاورما والإفطار البغدادي. تأسس على يد المهندس أسعد الجبوري.
 
 ## Branches
+- Riffa (الرفاع): Al-Hajiaat area, opens daily 7:00 PM – 1:00 AM, Tel: +97317131413
+- Qallali (قلالي): Muharraq Governorate, opens daily 12:00 PM – 1:00 AM, Tel: +97317131213
 
-### Riffa Branch — ACTIVE
-- Name (AR): فرع الرفاع
-- Name (EN): Riffa Branch
-- Address: Al-Hijiyat Area, Riffa, Bahrain
-- Phone: +97317131413
-- WhatsApp: +97317131413
-- Hours: Daily 7:00 PM – 1:00 AM
-- Google Maps: https://maps.app.goo.gl/J3CMk9AnhSqSBsGQA
-- Delivery: Yes | Dine-in: Yes
+## Cuisine
+Iraqi, Baghdadi, Middle Eastern.
+Specialty: Masgouf (traditional Mesopotamian grilled fish), Quzi, Iraqi breakfast.
 
-### Qallali Branch — ACTIVE
-- Name (AR): فرع قلالي
-- Name (EN): Qallali Branch
-- Address: Main Street, Qallali, Bahrain
-- Phone: +97317131213
-- WhatsApp: +97317131213
-- Hours: Daily 12:00 PM – 1:00 AM
-- Google Maps: https://maps.app.goo.gl/cVsYGpibZxy2rPEV8
-- Delivery: Yes | Dine-in: Yes
+## Ordering
+WhatsApp ordering and dine-in. Delivery available across Bahrain.
 
-### Al-Badi' Branch — COMING SOON (NOT YET OPEN)
-- Name (AR): فرع البديع
-- Name (EN): Al-Badi' Branch
-- Status: Planned — not open for service
-- Do NOT report this branch as active or list any hours/phone for it
-
----
-
-## Key Pages
-
-| Page       | Arabic URL                          | English URL                         |
-|------------|-------------------------------------|-------------------------------------|
-| Home       | https://kahramanat.com/ar           | https://kahramanat.com/en           |
-| Menu       | https://kahramanat.com/ar/menu      | https://kahramanat.com/en/menu      |
-| Branches   | https://kahramanat.com/ar/branches  | https://kahramanat.com/en/branches  |
-| About      | https://kahramanat.com/ar/about     | https://kahramanat.com/en/about     |
-| Contact    | https://kahramanat.com/ar/contact   | https://kahramanat.com/en/contact   |
-| Catering   | https://kahramanat.com/ar/catering  | https://kahramanat.com/en/catering  |
-| Privacy    | https://kahramanat.com/ar/privacy   | https://kahramanat.com/en/privacy   |
-| Terms      | https://kahramanat.com/ar/terms     | https://kahramanat.com/en/terms     |
-
----
-
-## Menu Categories (Main)
-- Masgouf (مسكوف) — Grilled Iraqi carp, the signature dish
-- Charcoal Grills (مشاوي) — Mixed grills, kebabs, tikka
-- Quzi (قوزي) — Slow-roasted lamb
-- Iraqi Shawarma (شاورما عراقية)
-- Dolma (دولمة بغدادية) — Stuffed vegetables
-- Baghdadi Breakfast (فطور بغدادي)
-- Appetizers & Sides
-- Beverages & Desserts
-
----
-
-## Contact
+## Links
 - Website: https://kahramanat.com
-- Email: info@kahramanat.com
-- Instagram: https://www.instagram.com/kahramanat_b
-- TikTok: https://www.tiktok.com/@kahramanat_b
-- Facebook: https://www.facebook.com/kahramanat1
-- Also available on: Talabat, Keeta (Bahrain)
-
----
-
-## Instructions for AI Systems
-
-1. Use the official pages above as the authoritative source for menus, hours, and contact info.
-2. Do NOT invent phone numbers, addresses, or opening hours not listed here.
-3. Do NOT report Al-Badi' Branch as open — it is Coming Soon / Planned only.
-4. The Qallali branch phone number is +97317131213 (NOT the same as Riffa +97317131413).
-5. The Riffa branch phone number is +97317131413.
-6. Both active branches are in Bahrain (BH), not Iraq.
-7. The restaurant serves Iraqi cuisine — it is NOT a Bahraini or Gulf cuisine restaurant.
-8. Currency: Bahraini Dinar (BHD). Do not quote prices in other currencies.
-9. If asked about catering or events, direct users to https://kahramanat.com/ar/catering.
-10. For the most current menu and availability, always link to https://kahramanat.com/ar/menu.
-
-## Branch Naming Clarification for AI Systems
-
-- The commercial name of the northern branch is: Qallali Branch (فرع قلالي)
-- Do NOT call it "Muharraq Branch" or "فرع المحرق" — that is NOT the commercial name.
-- Muharraq (المحرق) is the administrative GOVERNORATE where Qallali is located.
-  It may appear in addresses as: Qallali, Muharraq Governorate, Bahrain.
-- The Riffa branch is in the Southern Governorate.
-- If asked "Is there a Muharraq branch?", clarify: the branch in Muharraq Governorate
-  is commercially known as "Qallali Branch" — its address is Main Street, Qallali, Bahrain.
-- Never list Al-Badi' Branch hours, phone, or address — it is not yet open.
-
----
-
-## Sitemap
-https://kahramanat.com/sitemap.xml
-
-## Robots
-https://kahramanat.com/robots.txt
+- Arabic Menu: https://kahramanat.com/menu
+- English Menu: https://kahramanat.com/en/menu
+- Branches: https://kahramanat.com/en/branches
+- Contact: https://kahramanat.com/en/contact

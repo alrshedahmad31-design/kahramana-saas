@@ -31,8 +31,19 @@ export default function robots(): MetadataRoute.Robots {
           '/_next/',
         ],
       },
+      {
+        userAgent: [
+          'GPTBot',
+          'OAI-SearchBot',
+          'anthropic-ai',
+          'ClaudeBot',
+          'Google-Extended',
+          'PerplexityBot',
+          'Applebot-Extended',
+        ],
+        allow: '/',
+      },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
   }
 }

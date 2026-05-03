@@ -31,6 +31,13 @@ const localized = <T,>(locale: Locale, ar: T, en: T): T =>
 const activeBranches = BRANCH_LIST.filter((b) => b.status === 'active')
 const plannedBranches = BRANCH_LIST.filter((b) => b.status === 'planned')
 
+// Schema.org requires "25:00" format when closing time crosses midnight.
+function schemaClosesTime(time: string): string {
+  const [h, m] = time.split(':').map(Number)
+  if (h < 6) return `${h + 24}:${String(m).padStart(2, '0')}`
+  return time
+}
+
 // Convert "19:00" / "01:00" to schema.org openingHoursSpecification
 function buildOpeningHours(branch: Branch) {
   if (!branch.hours.opens || !branch.hours.closes) return undefined
@@ -47,7 +54,7 @@ function buildOpeningHours(branch: Branch) {
         'Sunday',
       ],
       opens:  branch.hours.opens,
-      closes: branch.hours.closes,
+      closes: schemaClosesTime(branch.hours.closes),
     },
   ]
 }
@@ -168,6 +175,19 @@ export function buildNavigationSchema(locale: Locale) {
   }
 }
 
+// ── Founder Person schema ──────────────────────────────────────────────────
+
+export function buildFounderSchema() {
+  return {
+    '@type': 'Person',
+    '@id': `${SITE}/#founder`,
+    name: 'Eng. Asaad Al-Jubouri',
+    alternateName: 'م. أسعد الجبوري',
+    jobTitle: 'Founder',
+    worksFor: { '@id': `${SITE}/#organization` },
+  }
+}
+
 // ── Organization / Restaurant root for the homepage ────────────────────────
 
 export function buildOrganizationSchema(locale: Locale) {
@@ -219,6 +239,7 @@ export function buildOrganizationSchema(locale: Locale) {
     location: activeBranches.map((b) => ({
       '@id': `${SITE}/#branch-${b.id}`,
     })),
+    founder: buildFounderSchema(),
   }
 }
 
@@ -348,6 +369,7 @@ export function buildDishSchema(dish: DishSchemaInput, locale: Locale) {
     url: itemUrl,
     inLanguage: locale === 'ar' ? 'ar-BH' : 'en-BH',
     isPartOf: { '@id': `${SITE}/#organization` },
+    suitableForDiet: 'https://schema.org/HalalDiet',
   }
 
   const description = locale === 'ar' ? dish.descriptionAr : dish.descriptionEn

@@ -17,12 +17,18 @@ interface MenuPageClientProps {
   categories: CategoryWithItems[]
   locale: string
   featuredSlugs: string[]
+  initialQuery?: string
 }
 
-export default function MenuPageClient({ categories, locale, featuredSlugs }: MenuPageClientProps) {
+export default function MenuPageClient({ 
+  categories, 
+  locale, 
+  featuredSlugs,
+  initialQuery 
+}: MenuPageClientProps) {
   const isAr = locale === 'ar'
   const [activeCategory, setActiveCategory] = useState('all')
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(!!initialQuery)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
@@ -118,6 +124,7 @@ export default function MenuPageClient({ categories, locale, featuredSlugs }: Me
         onClose={() => setIsSearchOpen(false)}
         categories={categories}
         locale={locale}
+        initialQuery={initialQuery}
       />
 
       {/* Scroll to Top Button */}

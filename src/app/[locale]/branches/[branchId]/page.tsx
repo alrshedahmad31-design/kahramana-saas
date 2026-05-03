@@ -38,8 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url   = `${BASE}/${locale}/branches/${branchId}`
 
   const title = isAr
-    ? `${name} — كهرمانة بغداد | ساعات العمل والموقع والطلب في البحرين`
-    : `${name} — Kahramana Baghdad | Hours, Location & Ordering in Bahrain`
+    ? `مطعم كهرمانة بغداد — ${name} | أكل عراقي ومسكوف في البحرين`
+    : `Kahramana Baghdad — ${name} | Iraqi Restaurant & Masgouf in Bahrain`
   const description = isAr
     ? `${name} مطعم كهرمانة بغداد في ${branch.cityAr}: ${branch.addressAr}. أوقات العمل: ${branch.hours.ar}. تواصل معنا واطلب الآن.`
     : `${name} Kahramana Baghdad Restaurant in ${branch.cityEn}: ${branch.addressEn}. Hours: ${branch.hours.en}. Contact us and order now.`

@@ -14,9 +14,9 @@ import RelatedItems from '@/components/menu/related-items'
 
 import { SITE_URL } from '@/constants/contact'
 import {
-  generateBreadcrumbSchema,
-  generateMenuItemSchema,
-} from '@/lib/seo/schema'
+  buildDishSchema,
+  buildBreadcrumb,
+} from '@/lib/seo/schemas'
 
 type Props = {
   params: Promise<{
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const item = getMenuItemBySlug(slug)
   const isAr = locale === 'ar'
   const BASE = SITE_URL
-  const url = `${BASE}/ar/menu/item/${slug}`
+  const url = `${BASE}/${locale}/menu/item/${slug}`
 
   if (!item) return { title: "Not Found" }
 
@@ -47,10 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : `${item.hasMultiplePrices ? "From " : ""}${item.fromPrice.toFixed(3)} BHD`
     : ""
 
+  const title = isAr
+    ? `${name} — كهرمانة بغداد | أفضل مطعم عراقي البحرين`
+    : `${name} — Kahramana Baghdad | Best Iraqi Restaurant Bahrain`
+
   return {
-    title: isAr
-      ? `${name} | كهرمانة بغداد — مطعم عراقي البحرين`
-      : `${name} | Kahramana Baghdad — Iraqi Restaurant Bahrain`,
+    title,
     description: isAr
       ? `${description} — ${priceText}. ${category} في مطعم كهرمانة بغداد العراقي، البحرين.`.slice(0, 155)
       : `${description} — ${priceText}. ${category} at Kahramana Baghdad Iraqi Restaurant, Bahrain.`.slice(0, 155),
@@ -63,9 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     },
     openGraph: {
-      title: isAr
-        ? `${name} — كهرمانة بغداد | مطعم عراقي البحرين`
-        : `${name} — Kahramana Baghdad | Iraqi Restaurant Bahrain`,
+      title,
       description: isAr
         ? `${(description || name).substring(0, 120)}... ${priceText}`
         : `${(description || name).substring(0, 120)}... ${priceText}`,
@@ -96,20 +96,23 @@ export default async function MenuItemPage({ params }: Props) {
   const tCommon = await getTranslations({ locale, namespace: 'common' })
   const nonce = (await headers()).get('x-nonce') ?? undefined
   const relatedItems = getRelatedItems(item.slug, 3)
-  const itemSchema = generateMenuItemSchema({
-    name_ar: item.name.ar,
-    name_en: item.name.en,
-    description_ar: item.description?.ar || item.name.ar,
-    price: item.fromPrice,
-    image_url: item.image,
+  
+  const itemSchema = buildDishSchema({
     slug: item.slug,
-    category_ar: item.categoryName.ar,
-  })
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: 'الرئيسية', url: `${SITE_URL}/ar` },
-    { name: 'قائمة الطعام', url: `${SITE_URL}/ar/menu` },
-    { name: item.categoryName.ar, url: `${SITE_URL}/ar/menu#${item.categorySlug}` },
-    { name: item.name.ar, url: `${SITE_URL}/ar/menu/item/${item.slug}` },
+    nameAr: item.name.ar,
+    nameEn: item.name.en,
+    descriptionAr: item.description?.ar,
+    descriptionEn: item.description?.en,
+    imageUrl: item.image.startsWith('http') ? item.image : `${SITE_URL}${item.image}`,
+    fromPrice: item.fromPrice,
+    available: item.available,
+  }, locale)
+
+  const breadcrumbSchema = buildBreadcrumb([
+    { name: isRTL ? 'الرئيسية' : 'Home', url: isRTL ? '/' : '/en' },
+    { name: isRTL ? 'قائمة الطعام' : 'Menu', url: isRTL ? '/menu' : '/en/menu' },
+    { name: isRTL ? item.categoryName.ar : item.categoryName.en, url: isRTL ? `/menu/${item.categorySlug}` : `/en/menu/${item.categorySlug}` },
+    { name: isRTL ? item.name.ar : item.name.en, url: isRTL ? `/menu/item/${item.slug}` : `/en/menu/item/${item.slug}` },
   ])
 
   return (

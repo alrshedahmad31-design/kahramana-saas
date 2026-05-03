@@ -22,13 +22,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticUrls: MetadataRoute.Sitemap = LOCALES.flatMap((locale) =>
     staticRoutes.map(({ path, priority, changeFrequency }) => ({
-      url: `${BASE_URL}/${locale}${path}`,
+      url: locale === 'ar' ? `${BASE_URL}${path}` : `${BASE_URL}/en${path}`,
       lastModified: now,
       changeFrequency,
       priority,
       alternates: {
         languages: {
-          ar: `${BASE_URL}/ar${path}`,
+          ar: `${BASE_URL}${path}`,
           en: `${BASE_URL}/en${path}`,
         },
       },
@@ -39,13 +39,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter((b) => b.status === 'active')
     .flatMap((branch) =>
       LOCALES.map((locale) => ({
-        url: `${BASE_URL}/${locale}/branches/${branch.id}`,
+        url: locale === 'ar' ? `${BASE_URL}/branches/${branch.id}` : `${BASE_URL}/en/branches/${branch.id}`,
         lastModified: now,
         changeFrequency: 'monthly' as const,
         priority: 0.85,
         alternates: {
           languages: {
-            ar: `${BASE_URL}/ar/branches/${branch.id}`,
+            ar: `${BASE_URL}/branches/${branch.id}`,
             en: `${BASE_URL}/en/branches/${branch.id}`,
           },
         },
@@ -55,13 +55,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const categories = getMenuCategories()
   const categoryUrls: MetadataRoute.Sitemap = categories.flatMap((cat) =>
     LOCALES.map((locale) => ({
-      url: `${BASE_URL}/${locale}/menu/${cat.slug}`,
+      url: locale === 'ar' ? `${BASE_URL}/menu/${cat.slug}` : `${BASE_URL}/en/menu/${cat.slug}`,
       lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.75,
       alternates: {
         languages: {
-          ar: `${BASE_URL}/ar/menu/${cat.slug}`,
+          ar: `${BASE_URL}/menu/${cat.slug}`,
           en: `${BASE_URL}/en/menu/${cat.slug}`,
         },
       },
@@ -71,13 +71,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const items = getAllMenuItems()
   const itemUrls: MetadataRoute.Sitemap = items.flatMap((item) =>
     LOCALES.map((locale) => ({
-      url: `${BASE_URL}/${locale}/menu/item/${item.slug}`,
-      lastModified: now, // Ideally we'd have updatedAt per item
+      url: locale === 'ar' ? `${BASE_URL}/menu/item/${item.slug}` : `${BASE_URL}/en/menu/item/${item.slug}`,
+      lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.80,
       alternates: {
         languages: {
-          ar: `${BASE_URL}/ar/menu/item/${item.slug}`,
+          ar: `${BASE_URL}/menu/item/${item.slug}`,
           en: `${BASE_URL}/en/menu/item/${item.slug}`,
         },
       },
