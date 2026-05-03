@@ -11,6 +11,7 @@
     scroll-behavior: smooth;
     background-color: theme('colors.brand-black');
     color: theme('colors.brand-text');
+    scrollbar-gutter: stable;
   }
 
   *, *::before, *::after {

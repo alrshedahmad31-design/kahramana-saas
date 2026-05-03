@@ -39,7 +39,7 @@ export default function CinematicHero() {
   return (
     <section 
       ref={containerRef}
-      className="relative h-[100dvh] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16"
+      className="relative h-[100svh] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16"
     >
       <div className="absolute inset-0 z-0">
         <Image

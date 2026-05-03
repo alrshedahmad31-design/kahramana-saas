@@ -222,8 +222,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
             __html: JSON.stringify(buildOrganizationSchema(locale as 'ar' | 'en')),
           }}
         />
-        {/* Preconnect to image CDN */}
-        <link rel="preconnect" href={SITE_URL} />
         {/* DNS prefetch for WhatsApp */}
         <link rel="dns-prefetch" href="https://wa.me" />
       </head>
