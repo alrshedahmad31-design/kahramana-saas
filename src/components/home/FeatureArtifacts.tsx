@@ -192,9 +192,10 @@ function TelemetryFeed({ isRTL }: { isRTL: boolean }) {
             key={idx}
             initial={{ opacity: 0, x: isRTL ? 10 : -10 }}
             animate={{
-              opacity: isVisible ? 1 : 0.45,
+              opacity: isVisible ? 1 : 0.55,
               x: isVisible ? 0 : isRTL ? 5 : -5,
-              color: isVisible ? colors.gold : colors.muted
+              // colors.muted (#6B6560) fails WCAG AA on dark bg — use colors.text (#F5F5F5)
+              color: isVisible ? colors.gold : colors.text
             }}
             transition={{ duration: 0.5 }}
             className="flex items-center justify-between gap-4 border-b border-white/5 pb-1"

@@ -25,7 +25,7 @@ export function CookieBanner() {
   return (
     <div className="fixed bottom-0 inset-x-0 z-50 p-4 bg-brand-surface border-t border-brand-border shadow-2xl">
       <div className={`max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-4 ${isAr ? 'sm:flex-row-reverse' : ''}`}>
-        <p className={`text-sm text-brand-muted flex-1 text-center ${isAr ? 'sm:text-end font-almarai' : 'sm:text-start font-satoshi'}`}>
+        <p className={`text-sm text-brand-text flex-1 text-center ${isAr ? 'sm:text-end font-almarai' : 'sm:text-start font-satoshi'}`}>
           {isAr ? (
             <>
               يستخدم موقعنا ملفات تعريف الارتباط الضرورية لعمله. باستخدامك الموقع، فأنت توافق على{' '}

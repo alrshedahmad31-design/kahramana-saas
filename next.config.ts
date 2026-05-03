@@ -52,6 +52,13 @@ const nextConfig: NextConfig = {
         destination: 'https://kahramanat.com/:path*',
         permanent: true,
       },
+      // vercel.app preview → production domain (prevents canonical pointing to vercel.app)
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'kahramana.vercel.app' }],
+        destination: 'https://kahramanat.com/:path*',
+        permanent: true,
+      },
     ]
   },
 

@@ -225,11 +225,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         {process.env.NEXT_PUBLIC_CLARITY_ID && (
           <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
         )}
-        {/* Logo is loaded by the Header component at normal priority — no preload needed here
-            since the 292KB SVG would compete with the hero image for critical bandwidth */}
-        <link rel="alternate" hrefLang="ar-BH" href={`${SITE_URL}${alternatePath}`} />
-        <link rel="alternate" hrefLang="en-BH" href={`${SITE_URL}/en${alternatePath}`} />
-        <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}${alternatePath}`} />
+        {/* hreflang is handled by metadata.alternates.languages below —
+            duplicate <link> tags here were causing canonical/hreflang conflicts */}
         <script
           type="application/ld+json"
           nonce={nonce}

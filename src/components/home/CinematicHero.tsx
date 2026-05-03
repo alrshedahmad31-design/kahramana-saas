@@ -44,8 +44,8 @@ export default function CinematicHero() {
       ref={containerRef}
       className="relative h-[100svh] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16"
     >
-      {/* LCP image: no opacity, no animation class — always visible immediately */}
-      <div className="absolute inset-0 z-0" style={{ contain: 'strict' }}>
+      {/* LCP image: always visible, not touched by GSAP scope */}
+      <div className="absolute inset-0 z-0">
         <Image
           src="/assets/hero/hero-poster.webp"
           alt={t('visualAlt')}
@@ -53,6 +53,7 @@ export default function CinematicHero() {
           priority
           fetchPriority="high"
           unoptimized
+          decoding="sync"
           className="object-cover scale-110"
           sizes="100vw"
         />
