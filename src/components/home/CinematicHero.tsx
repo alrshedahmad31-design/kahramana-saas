@@ -25,8 +25,9 @@ export default function CinematicHero() {
       });
       
       tl.from('.hero-eyebrow', { opacity: 0, y: 20, delay: 0.5 });
-      tl.from('.hero-title-part-1', { opacity: 0, y: 40, stagger: 0.1 }, '-=0.8');
-      tl.from('.hero-title-part-2', { opacity: 0, scale: 0.95, filter: 'blur(10px)' }, '-=0.6');
+      // opacity removed from title — text stays visible for LCP even before JS runs
+      tl.from('.hero-title-part-1', { y: 40, stagger: 0.1 }, '-=0.8');
+      tl.from('.hero-title-part-2', { scale: 0.95, filter: 'blur(10px)' }, '-=0.6');
       tl.from('.hero-cta', { opacity: 0, y: 20, stagger: 0.1 }, '-=0.8');
     }, containerRef.current || undefined);
 
@@ -62,7 +63,7 @@ export default function CinematicHero() {
         <h1 className="mb-10 leading-[0.9] flex flex-col">
           <span 
             className={`
-              hero-title-part-1 text-5xl sm:text-8xl font-bold text-brand-text
+              hero-title-part-1 text-4xl sm:text-7xl font-bold text-brand-text
               ${isRTL ? 'font-cairo' : 'font-editorial'}
             `}
           >
@@ -70,7 +71,7 @@ export default function CinematicHero() {
           </span>
           <span 
             className={`
-              hero-title-part-2 text-7xl sm:text-[12rem] font-bold text-brand-gold mt-2
+              hero-title-part-2 text-3xl sm:text-6xl font-bold text-brand-gold mt-2
               ${isRTL ? 'font-cairo' : 'font-editorial italic'}
             `}
           >

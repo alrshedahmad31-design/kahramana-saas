@@ -128,7 +128,13 @@
       "Bash(grep -n \"governorate\" src/constants/contact.ts)",
       "Bash(grep -n \"قلالي\\\\|Qallali\" src/components/story/BranchesSection.tsx)",
       "Bash(grep -n \"97317131\" src/constants/contact.ts)",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(ls public/assets/hero/)",
+      "Bash(dir public\\\\assets\\\\hero)",
+      "Bash(ls public/fonts/)",
+      "Bash(dir public\\\\fonts)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\public\\\\fonts\" -Recurse -File | Select-Object Name, @{N=\"KB\";E={[math]::Round\\($_.Length/1KB,1\\)}} | Sort-Object Name)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\public\\\\fonts\" -Recurse -File | Select-Object FullName, @{N=\"KB\";E={[math]::Round\\($_.Length/1KB,1\\)}})"
     ]
   }
 }

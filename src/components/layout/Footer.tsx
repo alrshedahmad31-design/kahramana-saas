@@ -13,8 +13,6 @@ export default async function Footer() {
 
   return (
     <footer className="bg-brand-black border-t border-white/5 rounded-t-[4rem] relative overflow-hidden mt-20">
-      {/* Subtle Noise/Texture background */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('/assets/hero/hero-poster.webp')] bg-cover bg-center grayscale" />
 
       {/* Main grid */}
       <div className="max-w-7xl mx-auto px-6 sm:px-16 py-20 relative z-10">

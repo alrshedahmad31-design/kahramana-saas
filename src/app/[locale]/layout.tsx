@@ -23,7 +23,7 @@ const cairo = Cairo({
   subsets: ['arabic'],
   weight: ['800'],
   variable: '--cairo',
-  display: 'swap',
+  display: 'optional',
   preload: true,
 })
 
@@ -31,7 +31,7 @@ const almarai = Almarai({
   subsets: ['arabic'],
   weight: ['400', '700'],
   variable: '--almarai',
-  display: 'swap',
+  display: 'optional',
   preload: true,
 })
 
@@ -42,7 +42,7 @@ const editorialNew = localFont({
     { path: '../../../public/fonts/EditorialNew-Bold.woff2',  weight: '700', style: 'normal' },
   ],
   variable: '--editorial',
-  display: 'swap',
+  display: 'optional',
 })
 
 const satoshi = localFont({
@@ -51,7 +51,7 @@ const satoshi = localFont({
     { path: '../../../public/fonts/Satoshi-Medium.woff2',  weight: '500', style: 'normal' },
   ],
   variable: '--satoshi',
-  display: 'swap',
+  display: 'optional',
 })
 
 // ── Metadata — global fallback; each page defines its own canonical/hreflang ──
@@ -210,8 +210,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         {process.env.NEXT_PUBLIC_CLARITY_ID && (
           <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
         )}
-        {/* Preload logo */}
-        <link rel="preload" href="/assets/logo.svg" as="image" type="image/svg+xml" />
+        {/* Logo is loaded by the Header component at normal priority — no preload needed here
+            since the 292KB SVG would compete with the hero image for critical bandwidth */}
         <link rel="alternate" hrefLang="ar" href={`${SITE_URL}/ar${alternatePath}`} />
         <link rel="alternate" hrefLang="en" href={`${SITE_URL}/en${alternatePath}`} />
         <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}/ar${alternatePath}`} />

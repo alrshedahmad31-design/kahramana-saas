@@ -81,7 +81,6 @@ export default function Header() {
               alt={isRTL ? 'كهرمانة بغداد' : 'Kahramana Baghdad'}
               width={120}
               height={36}
-              priority
               className={`transition-all duration-500 ${isScrolled ? 'h-7 w-auto' : 'h-9 w-auto'}`}
             />
           </Link>

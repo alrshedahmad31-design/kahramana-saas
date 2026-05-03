@@ -1,13 +1,8 @@
-import dynamic from 'next/dynamic'
+import CinematicHero from '@/components/home/CinematicHero'
 
-const CinematicHero = dynamic(
-  () => import('@/components/home/CinematicHero'),
-  {
-    ssr: true,
-    loading: () => <div className="h-[100dvh] w-full bg-brand-black" />,
-  }
-)
-
+// No dynamic() wrapper — direct import keeps the Suspense boundary out of the
+// critical path so the SSR-rendered hero image is never replaced by a fallback
+// during hydration. This is the primary LCP fix.
 export default function HeroWrapper() {
   return <CinematicHero />
 }
