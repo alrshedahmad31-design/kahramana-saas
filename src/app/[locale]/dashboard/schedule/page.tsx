@@ -34,7 +34,7 @@ export default async function SchedulePage({
   const weekStart = getMondayOf(new Date())
   const weekEnd   = addDays(weekStart, 6)
 
-  const [staffResult, shiftsResult] = await Promise.all([
+  const [staffResult, shiftsResult, leavesResult] = await Promise.all([
     supabase
       .from('staff_basic')
       .select('id, name, role, branch_id, is_active, created_at')
@@ -46,6 +46,10 @@ export default async function SchedulePage({
       .gte('shift_date', weekStart)
       .lte('shift_date', weekEnd)
       .order('shift_date'),
+    supabase
+      .from('leave_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending'),
   ])
 
   return (
@@ -55,6 +59,7 @@ export default async function SchedulePage({
       initialStaff={(staffResult.data ?? []) as StaffBasicRow[]}
       initialShifts={(shiftsResult.data ?? []) as unknown as ShiftWithStaff[]}
       initialWeekStart={weekStart}
+      pendingLeaves={leavesResult.count ?? 0}
     />
   )
 }

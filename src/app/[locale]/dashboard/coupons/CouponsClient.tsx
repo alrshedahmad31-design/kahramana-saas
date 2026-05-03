@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { toggleCouponPause } from './actions'
 import CreateCouponWizard from '@/components/coupons/CreateCouponWizard'
@@ -18,6 +19,7 @@ interface Props {
 export default function CouponsClient({ coupons: initial, branches }: Props) {
   const locale = useLocale()
   const isAr = locale === 'ar'
+  const router = useRouter()
   const [coupons, setCoupons] = useState(initial)
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<CouponRow | undefined>()
@@ -99,7 +101,7 @@ export default function CouponsClient({ coupons: initial, branches }: Props) {
 
   function onSaved() {
     closeForm()
-    window.location.reload()
+    router.refresh()
   }
 
   async function handleTogglePause(c: CouponRow) {

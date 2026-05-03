@@ -3,6 +3,8 @@ import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency, calculateGrowth } from '@/lib/analytics/calculations'
 import { getMetrics } from '@/lib/analytics/queries'
+import { createClient } from '@/lib/supabase/server'
+import type { BudgetVsActual } from '@/lib/supabase/custom-types'
 
 import DateRangePicker    from '@/components/analytics/DateRangePicker'
 import MetricCard         from '@/components/analytics/MetricCard'
@@ -13,10 +15,11 @@ import FinancialRatios    from '@/components/analytics/financial/FinancialRatios
 
 export const dynamic = 'force-dynamic'
 
-// Standard restaurant cost percentages — update after connecting real COGS data
-const COGS_PCT     = 0.30
-const LABOR_PCT    = 0.28
-const OVERHEAD_PCT = 0.15
+export type CostSource = 'actual' | 'budget' | 'estimated'
+
+const FALLBACK_COGS     = 0.30
+const FALLBACK_LABOR    = 0.28
+const FALLBACK_OVERHEAD = 0.15
 
 interface Props {
   params:       Promise<{ locale: string }>
@@ -36,25 +39,51 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
   const prev     = buildPrevRange(range)
   const branchId = user.branch_id ?? undefined
 
-  const metrics = await getMetrics(range.from, range.to, prev.from, prev.to, branchId)
+  const rangeYear  = range.from.getFullYear()
+  const rangeMonth = range.from.getMonth() + 1
+
+  const supabase = await createClient()
+
+  const [metrics, budgetResult] = await Promise.all([
+    getMetrics(range.from, range.to, prev.from, prev.to, branchId),
+    branchId
+      ? supabase.rpc('rpc_budget_vs_actual', { p_branch_id: branchId, p_month: rangeMonth, p_year: rangeYear })
+      : Promise.resolve({ data: null, error: null }),
+  ])
+
+  const budgetRow = (budgetResult.data as BudgetVsActual[] | null)?.[0] ?? null
+  const hasBudget = budgetRow !== null
+
+  let cogsPct: number    = FALLBACK_COGS
+  let cogsSource: CostSource = 'estimated'
+  const laborPct         = FALLBACK_LABOR
+  const overheadPct      = FALLBACK_OVERHEAD
+
+  if (budgetRow) {
+    if (budgetRow.actual_cogs_bhd > 0 && budgetRow.actual_revenue_bhd > 0) {
+      cogsPct    = budgetRow.actual_cogs_bhd / budgetRow.actual_revenue_bhd
+      cogsSource = 'actual'
+    } else {
+      cogsPct    = budgetRow.food_cost_target_pct / 100
+      cogsSource = 'budget'
+    }
+  }
 
   const currency = isAr ? 'د.ب' : 'BD'
-
-  const rev     = metrics.totalRevenue
-  const cogs    = rev * COGS_PCT
-  const labor   = rev * LABOR_PCT
-  const overhead= rev * OVERHEAD_PCT
-  const net     = rev - cogs - labor - overhead
-  const netPct  = rev > 0 ? net / rev : 0
+  const rev      = metrics.totalRevenue
+  const cogs     = rev * cogsPct
+  const labor    = rev * laborPct
+  const overhead = rev * overheadPct
+  const net      = rev - cogs - labor - overhead
+  const netPct   = rev > 0 ? net / rev : 0
 
   const revGrowth = calculateGrowth(metrics.totalRevenue, metrics.prevTotalRevenue)
 
-  // Break-even estimate (assumes fixed monthly overhead ~BD 1500 for small restaurant)
   const MONTHLY_FIXED = 1500
   const days = Math.max(1, Math.round((range.to.getTime() - range.from.getTime()) / 86_400_000))
-  const periodFixed    = MONTHLY_FIXED * (days / 30)
-  const avgDaily       = rev / days
-  const breakEvenDays  = avgDaily > 0 ? periodFixed / avgDaily : null
+  const periodFixed   = MONTHLY_FIXED * (days / 30)
+  const avgDaily      = rev / days
+  const breakEvenDays = avgDaily > 0 ? periodFixed / avgDaily : null
 
   return (
     <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
@@ -68,11 +97,23 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
             {isAr ? 'التحليل المالي' : 'Financial Analytics'}
           </h1>
           <p className={`text-sm text-brand-muted mt-0.5 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {isAr ? 'حساب الأرباح والخسائر ومؤشرات التكلفة' : 'P&L estimation and cost ratio benchmarks'}
+            {isAr ? 'حساب الأرباح والخسائر ومؤشرات التكلفة' : 'P&L and cost ratio analysis'}
           </p>
         </div>
         <DateRangePicker currentRange={range.label} locale={locale} />
       </div>
+
+      {/* Warning: no budget row → costs are estimated */}
+      {!hasBudget && branchId && (
+        <div className={`flex items-start gap-3 rounded-xl border border-brand-gold/30 bg-brand-gold/5 px-4 py-3 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+          <span className="shrink-0 mt-0.5">⚠️</span>
+          <p className="text-sm text-brand-gold">
+            {isAr
+              ? 'لا توجد ميزانية مُعدَّة لهذه الفترة — يتم عرض نسب تكلفة صناعية تقديرية. أضف ميزانية من صفحة الميزانية للحصول على أرقام أدق.'
+              : 'No budget configured for this period — showing estimated industry-standard cost ratios. Add a budget from the Budget page for more accurate figures.'}
+          </p>
+        </div>
+      )}
 
       {/* Summary metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -83,7 +124,7 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
           change={revGrowth}
         />
         <MetricCard
-          title={isAr ? 'صافي الربح (تقدير)' : 'Est. Net Profit'}
+          title={isAr ? 'صافي الربح' : 'Net Profit'}
           value={formatCurrency(net)}
           unit={currency}
         />
@@ -93,7 +134,7 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
         />
         <MetricCard
           title={isAr ? 'تكلفة أساسية' : 'Prime Cost'}
-          value={`${((COGS_PCT + LABOR_PCT) * 100).toFixed(0)}%`}
+          value={`${((cogsPct + laborPct) * 100).toFixed(0)}%`}
         />
       </div>
 
@@ -102,22 +143,17 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
         <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
           <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-5
             ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {isAr ? 'قائمة الأرباح والخسائر (تقديرية)' : 'P&L Statement — Estimated'}
+            {isAr ? 'قائمة الأرباح والخسائر' : 'P&L Statement'}
           </h2>
           <PLStatement
             revenue={rev}
-            cogsPct={COGS_PCT}
-            laborPct={LABOR_PCT}
-            overheadPct={OVERHEAD_PCT}
+            cogsPct={cogsPct}
+            laborPct={laborPct}
+            overheadPct={overheadPct}
             currency={currency}
             isRTL={isAr}
+            cogsSource={cogsSource}
           />
-
-          <p className={`text-xs text-brand-muted mt-4 italic ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {isAr
-              ? '* التكاليف تقديرية بنسب صناعية قياسية. ادعم بيانات COGS الفعلية لدقة أعلى.'
-              : '* Costs use industry-standard estimates. Connect actual COGS data for precision.'}
-          </p>
         </div>
 
         <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
@@ -127,10 +163,11 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
           </h2>
           <FinancialRatios
             revenue={rev}
-            cogsPct={COGS_PCT}
-            laborPct={LABOR_PCT}
-            overheadPct={OVERHEAD_PCT}
+            cogsPct={cogsPct}
+            laborPct={laborPct}
+            overheadPct={overheadPct}
             isRTL={isAr}
+            cogsSource={cogsSource}
           />
         </div>
       </div>

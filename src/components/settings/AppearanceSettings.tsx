@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from '@/i18n/routing'
 
-type Theme      = 'dark' | 'light' | 'system'
+type Theme      = 'dark'
 type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'
 
 interface Prefs {
@@ -37,6 +38,7 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 export default function AppearanceSettings() {
   const isAr     = useLocale() === 'ar'
   const supabase = useMemo(() => createClient(), [])
+  const router   = useRouter()
   const font     = isAr ? 'font-almarai' : 'font-satoshi'
 
   const [prefs,     setPrefs]     = useState<Prefs>(DEFAULTS)
@@ -63,12 +65,12 @@ export default function AppearanceSettings() {
     setSaveState('saving')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaveState('error'); return }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase
       .from('user_preferences')
       .upsert({ user_id: user.id, ...prefs, updated_at: new Date().toISOString() })
-    setSaveState(error ? 'error' : 'saved')
-    if (!error) setTimeout(() => setSaveState('idle'), 2500)
+    if (error) { setSaveState('error'); return }
+    setSaveState('saved')
+    router.push('/dashboard/settings', { locale: prefs.language as 'ar' | 'en' })
   }
 
   if (loading) {
@@ -123,25 +125,19 @@ export default function AppearanceSettings() {
         <label className={`text-xs font-black uppercase tracking-widest text-brand-muted ${font}`}>
           {isAr ? 'نظام الألوان' : 'Color Theme'}
         </label>
-        <div className="grid grid-cols-3 gap-3">
-          {([
-            { value: 'dark',   labelAr: 'داكن',   labelEn: 'Dark',   glyph: '🌙' },
-            { value: 'light',  labelAr: 'فاتح',   labelEn: 'Light',  glyph: '☀️' },
-            { value: 'system', labelAr: 'تلقائي', labelEn: 'System', glyph: '💻' },
-          ] as const).map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setPrefs(p => ({ ...p, theme: opt.value }))}
-              className={`flex flex-col items-center gap-2 py-5 rounded-xl border transition-all duration-150
-                ${prefs.theme === opt.value
-                  ? 'bg-brand-gold/10 border-brand-gold text-brand-gold'
-                  : 'bg-brand-surface-2 border-brand-border text-brand-muted hover:border-brand-gold/30'}`}
-            >
-              <span className="text-xl">{opt.glyph}</span>
-              <span className={`text-xs font-bold ${font}`}>{isAr ? opt.labelAr : opt.labelEn}</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-3 px-5 py-4 rounded-xl border border-brand-gold bg-brand-gold/10">
+          <span className="text-xl">🌙</span>
+          <div className="flex-1">
+            <span className={`text-sm font-black text-brand-gold ${font}`}>
+              {isAr ? 'داكن' : 'Dark'}
+            </span>
+            <p className={`text-xs text-brand-muted mt-0.5 ${font}`}>
+              {isAr ? 'الوضع الداكن فقط — الوضع الفاتح قريباً' : 'Dark mode only — light mode coming soon'}
+            </p>
+          </div>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border border-brand-gold/40 text-brand-gold bg-brand-gold/5 ${font}`}>
+            {isAr ? 'نشط' : 'Active'}
+          </span>
         </div>
       </div>
 
@@ -223,9 +219,6 @@ export default function AppearanceSettings() {
             {isAr ? 'فشل الحفظ' : 'Save failed'}
           </span>
         )}
-        <p className={`text-[11px] text-brand-muted/60 ${font}`}>
-          {isAr ? '* بعض الخيارات تتطلب إعادة تحميل الصفحة' : '* Some changes require a page reload'}
-        </p>
       </div>
     </div>
   )

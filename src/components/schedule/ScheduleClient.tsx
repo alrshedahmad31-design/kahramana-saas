@@ -17,6 +17,7 @@ interface Props {
   initialStaff:     StaffBasicRow[]
   initialShifts:    ShiftWithStaff[]
   initialWeekStart: string
+  pendingLeaves:    number
 }
 
 export default function ScheduleClient({
@@ -25,6 +26,7 @@ export default function ScheduleClient({
   initialStaff,
   initialShifts,
   initialWeekStart,
+  pendingLeaves,
 }: Props) {
   const isAr = locale === 'ar'
 
@@ -73,8 +75,6 @@ export default function ScheduleClient({
   function handleWeekChange(dir: 1 | -1) {
     setWeekStart((prev) => addDays(prev, dir * 7))
   }
-
-  const pendingLeaves = 0
 
   return (
     <div className="flex flex-col gap-5" dir={isAr ? 'rtl' : 'ltr'}>
