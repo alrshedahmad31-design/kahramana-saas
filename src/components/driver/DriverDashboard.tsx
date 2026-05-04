@@ -200,11 +200,6 @@ export default function DriverDashboard({
     return null
   }
 
-  function handleDelivered(orderId: string) {
-    setOrders((prev) => prev.filter((o) => o.id !== orderId))
-    fetchCompleted()
-  }
-
   const activeOrders    = orders.filter((o) => o.status === 'out_for_delivery')
   const availableOrders = orders.filter((o) => o.status === 'ready')
   const totalRevenue    = completedOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
@@ -301,7 +296,6 @@ export default function DriverDashboard({
                     branchMapsUrl={branchMapsUrl}
                     onAction={handleAction}
                     onArrive={handleArrive}
-                    onDelivered={handleDelivered}
                   />
                 ))}
               </div>

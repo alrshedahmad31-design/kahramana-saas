@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { UserPlus, ExternalLink, Clock, Truck, CheckCircle } from 'lucide-react'
+import { UserPlus, ExternalLink, Clock, Truck } from 'lucide-react'
 import { DV, DV_STATUS, DRIVER_STATUS }         from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver }           from '@/lib/delivery/types'
 
@@ -86,20 +86,15 @@ function KanbanCard({
   order,
   driver,
   isAr,
-  userRole,
   onSelect,
   onDispatch,
-  onSelfAssign,
 }: {
-  order:         DeliveryOrder
-  driver:        Driver | undefined
-  isAr:          boolean
-  userRole?:     string
-  onSelect:      () => void
-  onDispatch:    () => void
-  onSelfAssign?: (orderId: string) => Promise<void>
+  order:      DeliveryOrder
+  driver:     Driver | undefined
+  isAr:       boolean
+  onSelect:   () => void
+  onDispatch: () => void
 }) {
-  const [busy, setBusy] = useState(false)
   const elapsed  = useElapsed(order.created_at)
   const urgency: Urgency = order.status === 'delivered' || order.status === 'completed'
     ? 'normal'
@@ -257,62 +252,26 @@ function KanbanCard({
         {/* Action row */}
         {!isDone && (
           <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
-            {/* Driver: self-assign on ready unassigned orders */}
-            {userRole === 'driver' && !order.driver_id && order.status === 'ready' && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={async (e) => {
-                  e.stopPropagation()
-                  setBusy(true)
-                  await onSelfAssign?.(order.id)
-                  setBusy(false)
-                }}
-                style={{
-                  flex:           1,
-                  display:        'flex',
-                  alignItems:     'center',
-                  justifyContent: 'center',
-                  gap:            '4px',
-                  padding:        '8px 0',
-                  background:     busy ? DV.bgSurface : DV_STATUS.successBg,
-                  color:          busy ? DV.muted : DV_STATUS.successText,
-                  border:         'none',
-                  borderRadius:   '7px',
-                  fontSize:       '12px',
-                  fontWeight:     700,
-                  cursor:         busy ? 'not-allowed' : 'pointer',
-                  opacity:        busy ? 0.7 : 1,
-                  fontFamily:     'IBM Plex Sans Arabic, sans-serif',
-                  transition:     'background 0.15s',
-                }}
-              >
-                <CheckCircle size={12} />
-                {busy ? '…' : (isAr ? 'استلم هذا الطلب' : 'Take Order')}
-              </button>
-            )}
-
-            {/* Manager: dispatch button on unassigned orders */}
-            {userRole !== 'driver' && !order.driver_id && (
+            {!order.driver_id && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onDispatch() }}
                 style={{
-                  flex:           1,
-                  display:        'flex',
-                  alignItems:     'center',
+                  flex:         1,
+                  display:      'flex',
+                  alignItems:   'center',
                   justifyContent: 'center',
-                  gap:            '4px',
-                  padding:        '6px 0',
-                  background:     DV.amber,
-                  color:          DV.bgPage,
-                  border:         'none',
-                  borderRadius:   '7px',
-                  fontSize:       '12px',
-                  fontWeight:     700,
-                  cursor:         'pointer',
-                  fontFamily:     'IBM Plex Sans Arabic, sans-serif',
-                  transition:     'background 0.15s',
+                  gap:          '4px',
+                  padding:      '6px 0',
+                  background:   DV.amber,
+                  color:        DV.bgPage,
+                  border:       'none',
+                  borderRadius: '7px',
+                  fontSize:     '12px',
+                  fontWeight:   700,
+                  cursor:       'pointer',
+                  fontFamily:   'IBM Plex Sans Arabic, sans-serif',
+                  transition:   'background 0.15s',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = DV.amberLight }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = DV.amber }}
@@ -322,43 +281,40 @@ function KanbanCard({
               </button>
             )}
 
-            {/* Details button — managers only */}
-            {userRole !== 'driver' && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onSelect() }}
-                style={{
-                  flex:           order.driver_id ? 1 : 0,
-                  display:        'flex',
-                  alignItems:     'center',
-                  justifyContent: 'center',
-                  gap:            '4px',
-                  padding:        '6px 10px',
-                  background:     'transparent',
-                  color:          DV.muted,
-                  border:         `1px solid ${DV.border}`,
-                  borderRadius:   '7px',
-                  fontSize:       '12px',
-                  fontWeight:     600,
-                  cursor:         'pointer',
-                  fontFamily:     'IBM Plex Sans Arabic, sans-serif',
-                  transition:     'all 0.15s',
-                }}
-                onMouseEnter={e => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.color = DV.text
-                  el.style.borderColor = DV.amber
-                }}
-                onMouseLeave={e => {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.color = DV.muted
-                  el.style.borderColor = DV.border
-                }}
-              >
-                <ExternalLink size={11} />
-                {isAr ? 'تفاصيل' : 'Details'}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onSelect() }}
+              style={{
+                flex:         order.driver_id ? 1 : 0,
+                display:      'flex',
+                alignItems:   'center',
+                justifyContent: 'center',
+                gap:          '4px',
+                padding:      '6px 10px',
+                background:   'transparent',
+                color:        DV.muted,
+                border:       `1px solid ${DV.border}`,
+                borderRadius: '7px',
+                fontSize:     '12px',
+                fontWeight:   600,
+                cursor:       'pointer',
+                fontFamily:   'IBM Plex Sans Arabic, sans-serif',
+                transition:   'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.color = DV.text
+                el.style.borderColor = DV.amber
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.color = DV.muted
+                el.style.borderColor = DV.border
+              }}
+            >
+              <ExternalLink size={11} />
+              {isAr ? 'تفاصيل' : 'Details'}
+            </button>
           </div>
         )}
 
@@ -401,19 +357,15 @@ function KanbanColumn({
   orders,
   drivers,
   isAr,
-  userRole,
   onSelect,
   onDispatch,
-  onSelfAssign,
 }: {
-  col:          typeof COLS[number]
-  orders:       DeliveryOrder[]
-  drivers:      Driver[]
-  isAr:         boolean
-  userRole?:    string
-  onSelect:     (id: string) => void
-  onDispatch:   (order: DeliveryOrder) => void
-  onSelfAssign?: (orderId: string) => Promise<void>
+  col:        typeof COLS[number]
+  orders:     DeliveryOrder[]
+  drivers:    Driver[]
+  isAr:       boolean
+  onSelect:   (id: string) => void
+  onDispatch: (order: DeliveryOrder) => void
 }) {
   const urgentCount   = orders.filter(o =>
     getUrgency(o.created_at, o.expected_delivery_time) !== 'normal',
@@ -499,10 +451,8 @@ function KanbanColumn({
               order={order}
               driver={drivers.find(d => d.id === order.driver_id)}
               isAr={isAr}
-              userRole={userRole}
               onSelect={() => onSelect(order.id)}
               onDispatch={() => onDispatch(order)}
-              onSelfAssign={onSelfAssign}
             />
           ))
         )}
@@ -514,16 +464,14 @@ function KanbanColumn({
 // ── Main export ────────────────────────────────────────────────────────────────
 
 interface Props {
-  orders:        DeliveryOrder[]
-  drivers:       Driver[]
-  isAr:          boolean
-  userRole?:     string
-  onSelect:      (id: string) => void
-  onDispatch:    (order: DeliveryOrder) => void
-  onSelfAssign?: (orderId: string) => Promise<void>
+  orders:     DeliveryOrder[]
+  drivers:    Driver[]
+  isAr:       boolean
+  onSelect:   (id: string) => void
+  onDispatch: (order: DeliveryOrder) => void
 }
 
-export default function DeliveryKanban({ orders, drivers, isAr, userRole, onSelect, onDispatch, onSelfAssign }: Props) {
+export default function DeliveryKanban({ orders, drivers, isAr, onSelect, onDispatch }: Props) {
   return (
     <div style={{
       flex:       1,
@@ -542,10 +490,8 @@ export default function DeliveryKanban({ orders, drivers, isAr, userRole, onSele
           orders={orders.filter(o => (col.statuses as readonly string[]).includes(o.status))}
           drivers={drivers}
           isAr={isAr}
-          userRole={userRole}
           onSelect={onSelect}
           onDispatch={onDispatch}
-          onSelfAssign={onSelfAssign}
         />
       ))}
     </div>

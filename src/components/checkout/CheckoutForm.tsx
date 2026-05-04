@@ -132,10 +132,10 @@ type CheckoutValues = z.infer<typeof checkoutSchema>
 type AddressMode = 'manual' | 'location' | null
 
 interface ManualAddress {
-  building:  string
-  road:      string
-  block:     string
-  apartment: string
+  building: string
+  villa: string
+  road: string
+  block: string
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
   // ── Address state ─────────────────────────────────────────────────────────
   const [addressMode, setAddressMode] = useState<AddressMode>(null)
-  const [manualAddr, setManualAddr]   = useState<ManualAddress>({ building: '', road: '', block: '', apartment: '' })
+  const [manualAddr, setManualAddr]   = useState<ManualAddress>({ building: '', villa: '', road: '', block: '' })
   const [gpsCoords,  setGpsCoords]    = useState<{ lat: number; lng: number } | null>(null)
   const [gpsLoading, setGpsLoading]   = useState(false)
   const [gpsError,   setGpsError]     = useState<string | null>(null)
@@ -219,9 +219,13 @@ export default function CheckoutForm({ customerProfile }: Props) {
       return `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}`
     }
     if (addressMode === 'manual') {
-      const { building, road, block, apartment } = manualAddr
-      if (!building.trim() && !road.trim() && !block.trim()) return undefined
-      return `مبنى ${building.trim()}، طريق ${road.trim()}، مجمع ${block.trim()}${apartment.trim() ? '، شقة ' + apartment.trim() : ''}، البحرين`
+      const parts = [
+        manualAddr.block    && `م${manualAddr.block}`,
+        manualAddr.road     && `ش${manualAddr.road}`,
+        manualAddr.building && `م${manualAddr.building}`,
+        manualAddr.villa    && manualAddr.villa,
+      ].filter(Boolean)
+      return parts.length ? parts.join('، ') : undefined
     }
     return undefined
   }
@@ -230,8 +234,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
     if (orderType === 'pickup') return true
     if (addressMode === 'location' && gpsCoords) return true
     if (addressMode === 'manual') {
-      const { building, road, block } = manualAddr
-      return !!(building.trim() && road.trim() && block.trim())
+      const { road, block } = manualAddr
+      return !!(road.trim() || block.trim())
     }
     return false
   }
@@ -297,7 +301,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
         delivery_address:    isPickup ? null : deliveryAddress,
         delivery_building:   !isPickup && addressMode === 'manual' ? manualAddr.building.trim() || null : null,
         delivery_street:     !isPickup && addressMode === 'manual' ? manualAddr.road.trim() || null : null,
-        delivery_area:       !isPickup && addressMode === 'manual' ? manualAddr.block.trim() || null : null,
         delivery_lat:        !isPickup && addressMode === 'location' ? gpsCoords?.lat ?? null : null,
         delivery_lng:        !isPickup && addressMode === 'location' ? gpsCoords?.lng ?? null : null,
         source:              'direct',
@@ -639,31 +642,24 @@ export default function CheckoutForm({ customerProfile }: Props) {
           <div className="space-y-0">
             <AddressRow
               icon={Map}
-              label="مجمع"
+              label={t('address.area')}
               value={manualAddr.block}
               onChange={(v) => setManualAddr(p => ({ ...p, block: v }))}
-              placeholder="Block No. (e.g. 123)"
+              placeholder={t('address.areaPlaceholder')}
             />
             <AddressRow
               icon={Building}
-              label="مبنى / فيلا"
+              label={t('address.building')}
               value={manualAddr.building}
               onChange={(v) => setManualAddr(p => ({ ...p, building: v }))}
-              placeholder="Building / Villa No."
+              placeholder={t('address.buildingPlaceholder')}
             />
             <AddressRow
               icon={FileText}
-              label="طريق"
+              label={t('address.directions')}
               value={manualAddr.road}
               onChange={(v) => setManualAddr(p => ({ ...p, road: v }))}
-              placeholder="Road No."
-            />
-            <AddressRow
-              icon={Package}
-              label="شقة"
-              value={manualAddr.apartment}
-              onChange={(v) => setManualAddr(p => ({ ...p, apartment: v }))}
-              placeholder="Apt No. (optional)"
+              placeholder={t('address.directionsPlaceholder')}
             />
           </div>
         )}

@@ -13,7 +13,9 @@ export default async function DeliveryPage({ params }: Props) {
   const user = await getSession()
   if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
 
-  const allowedRoles = new Set(['owner', 'general_manager', 'branch_manager', 'driver'])
+  // Delivery board is a dispatch tool for managers only.
+  // Drivers use /driver, not this page.
+  const allowedRoles = new Set(['owner', 'general_manager', 'branch_manager'])
   if (!user.role || !allowedRoles.has(user.role)) {
     redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
   }
@@ -179,8 +181,6 @@ export default async function DeliveryPage({ params }: Props) {
         }}
         locale={locale}
         branchId={branchScope}
-        userRole={user.role ?? 'driver'}
-        userId={user.id}
       />
     </div>
   )

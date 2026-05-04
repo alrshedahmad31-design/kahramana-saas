@@ -5,7 +5,6 @@ import { createClient }    from '@/lib/supabase/client'
 import { CSS_VARS }        from '@/lib/delivery/tokens'
 import { useAudioAlert }   from '@/hooks/useAudioAlert'
 import { playBell }        from '@/lib/audio/bells'
-import { assignSelfAsDriver } from '@/app/[locale]/dashboard/delivery/actions'
 import type { DeliveryOrder, Driver, DeliveryMetrics, ViewMode } from '@/lib/delivery/types'
 import DeliveryHeader      from './DeliveryHeader'
 import MetricsStrip        from './MetricsStrip'
@@ -22,8 +21,6 @@ interface Props {
   initialMetrics: DeliveryMetrics
   locale:         string
   branchId:       string | null
-  userRole:       string
-  userId:         string
 }
 
 const ACTIVE_STATUSES = ['accepted', 'preparing', 'ready', 'out_for_delivery']
@@ -68,7 +65,7 @@ type ActiveDriverOrderRow = {
 }
 
 export default function DeliveryPageClient({
-  initialOrders, initialDrivers, initialMetrics, locale, branchId, userRole, userId: _userId,
+  initialOrders, initialDrivers, initialMetrics, locale, branchId,
 }: Props) {
   const supabase = useMemo(() => createClient(), [])
   const isAr     = locale === 'ar'
@@ -263,13 +260,6 @@ export default function DeliveryPageClient({
     }))
   }, [drivers])
 
-  async function handleSelfAssign(orderId: string) {
-    const result = await assignSelfAsDriver(orderId)
-    if (!result.success) console.error('Self-assign failed:', result.error)
-    await refreshOrders()
-    await refreshDrivers()
-  }
-
   function openOrder(id: string) {
     setSelectedId(id)
     setShowDrawer(true)
@@ -360,8 +350,6 @@ export default function DeliveryPageClient({
             isAr={isAr}
             onSelect={openOrder}
             onDispatch={openDispatch}
-            userRole={userRole}
-            onSelfAssign={userRole === 'driver' ? handleSelfAssign : undefined}
           />
         )}
       </div>

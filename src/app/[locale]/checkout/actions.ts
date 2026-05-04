@@ -36,7 +36,6 @@ const orderSchema = z.object({
   delivery_address:    z.string().max(1000).nullable(),
   delivery_building:   z.string().max(120).nullable(),
   delivery_street:     z.string().max(120).nullable(),
-  delivery_area:       z.string().max(120).nullable(),
   delivery_lat:        z.number().nullable(),
   delivery_lng:        z.number().nullable(),
   source:              z.string().max(50),
@@ -63,7 +62,6 @@ interface OrderBase {
   delivery_address:    string | null
   delivery_building:   string | null
   delivery_street:     string | null
-  delivery_area:       string | null
   delivery_lat:        number | null
   delivery_lng:        number | null
   source:              string
