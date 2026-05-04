@@ -75,7 +75,7 @@ export default function CouponStatsCards({ coupons }: Props) {
         <div className="flex items-end justify-between relative z-10">
           <div className="flex items-baseline gap-1">
             <h3 className="text-4xl font-black text-brand-text font-editorial leading-none tracking-tight">
-              {totalRevenue.toFixed(2)}
+              {totalRevenue.toFixed(3)}
             </h3>
             <span className="text-sm font-black text-brand-gold font-satoshi uppercase">
               {tCommon('currency')}

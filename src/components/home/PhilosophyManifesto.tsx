@@ -1,47 +1,16 @@
-'use client'
-
-import { useEffect, useRef } from 'react'
-import { useTranslations } from 'next-intl'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { getLocale, getTranslations } from 'next-intl/server'
 import SectionHeader from '@/components/ui/SectionHeader'
 
-export default function PhilosophyManifesto() {
-  const t = useTranslations('home.philosophy')
-  const sectionRef = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    // Lazy registration -- keeps ScrollTrigger out of the module-evaluation
-    // critical path so it never mutates <html> style before first paint.
-    gsap.registerPlugin(ScrollTrigger)
-
-    const ctx = gsap.context(() => {
-      const words = gsap.utils.toArray('.reveal-word')
-      
-      gsap.from(words, {
-        opacity: 0.1,
-        y: 20,
-        stagger: 0.05,
-        duration: 1,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top 70%',
-          end: 'bottom 40%',
-          scrub: true,
-        }
-      })
-    }, sectionRef)
-
-    return () => ctx.revert()
-  }, [])
+export default async function PhilosophyManifesto() {
+  const locale = await getLocale()
+  const isRTL = locale === 'ar'
+  const t = await getTranslations('home.philosophy')
 
   const standard = t('standard')
   const kahramana = t('kahramana')
 
   return (
     <section
-      ref={sectionRef}
       className="py-32 px-6 sm:px-16 bg-brand-black relative overflow-hidden flex flex-col items-center text-center"
     >
       {/* Background Texture */}
@@ -54,12 +23,13 @@ export default function PhilosophyManifesto() {
         <SectionHeader 
           title={kahramana}
           subtitle={t('eyebrow')}
+          isRTL={isRTL}
         />
 
         <div className="flex flex-col gap-8 sm:gap-16">
           <span className="text-xl sm:text-3xl text-brand-muted opacity-80 leading-relaxed max-w-2xl mx-auto">
             {standard.split(' ').map((word, i) => (
-              <span key={i} className="reveal-word inline-block mx-1">{word}</span>
+              <span key={i} className="inline-block mx-1">{word}</span>
             ))}
           </span>
         </div>

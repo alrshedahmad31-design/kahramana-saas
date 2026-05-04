@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import dynamic from 'next/dynamic'
 import { getTranslations, getLocale } from 'next-intl/server'
 import HeroWrapper from '@/components/home/HeroWrapper'
 import CinematicButton from '@/components/ui/CinematicButton'
@@ -12,13 +11,10 @@ import {
   buildNavigationSchema,
 } from '@/lib/seo/schemas'
 
-const FeatureArtifacts     = dynamic(() => import('@/components/home/FeatureArtifacts'), {
-  ssr: false,
-  loading: () => <div className="py-20 px-6 sm:px-16 h-[530px]" />,
-})
-const PhilosophyManifesto  = dynamic(() => import('@/components/home/PhilosophyManifesto'))
-const ProtocolStack        = dynamic(() => import('@/components/home/ProtocolStack'))
-const HomeFAQ              = dynamic(() => import('@/components/home/HomeFAQ'))
+import FeatureArtifactsWrapper from '@/components/home/FeatureArtifactsWrapper'
+import PhilosophyManifesto from '@/components/home/PhilosophyManifesto'
+import ProtocolStack from '@/components/home/ProtocolStack'
+import HomeFAQ from '@/components/home/HomeFAQ'
 
 // ISR: revalidate daily. Removing headers() from this render tree allows Next.js
 // to serve the homepage from Vercel's edge cache, dropping TTFB from ~1.1s to ~50ms.
@@ -87,9 +83,9 @@ export default async function HomePage() {
         <HeroWrapper />
 
         {/* B. Feature Artifacts -- lazy + ssr:false, framer-motion out of critical bundle */}
-        <FeatureArtifacts />
+        <FeatureArtifactsWrapper />
 
-        {/* C-E. Below-fold sections -- lazy-loaded to reduce initial JS parse cost (TBT) */}
+        {/* C-E. Below-fold content stays server-rendered; animation JS removed from this path */}
         <PhilosophyManifesto />
         <ProtocolStack />
         <HomeFAQ />

@@ -114,4 +114,12 @@
   .section-title {
     @apply mb-0 text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.12] text-white;
   }
+
+  .section-title-localized {
+    @apply font-cairo;
+  }
+
+  [dir='ltr'] .section-title-localized {
+    @apply font-editorial italic;
+  }
 }

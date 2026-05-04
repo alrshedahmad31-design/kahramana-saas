@@ -18,6 +18,7 @@ export default async function HomeFAQ() {
           title={t('title')}
           subtitle={isRTL ? 'معلومات تهمك' : 'Key Information'}
           className="text-center flex flex-col items-center"
+          isRTL={isRTL}
         />
 
         <div className="mt-16 space-y-4">

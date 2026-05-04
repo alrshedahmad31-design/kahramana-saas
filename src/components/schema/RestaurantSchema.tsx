@@ -71,6 +71,7 @@ export function RestaurantSchema() {
           "streetAddress": riffa.addressEn,
           "addressLocality": riffa.cityEn,
           "addressRegion": "Southern Governorate",
+          "postalCode": riffa.postalCode,
           "addressCountry": "BH"
         },
         "geo": {
@@ -107,6 +108,7 @@ export function RestaurantSchema() {
           "streetAddress": qallali.addressEn,
           "addressLocality": qallali.cityEn,
           "addressRegion": "Muharraq Governorate",
+          "postalCode": qallali.postalCode,
           "addressCountry": "BH"
         },
         "geo": {

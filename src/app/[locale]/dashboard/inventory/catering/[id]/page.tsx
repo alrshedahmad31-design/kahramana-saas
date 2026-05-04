@@ -38,6 +38,12 @@ export default async function CateringOrderDetailPage({ params }: PageProps) {
 
   const order = data as unknown as CateringOrderRow
 
+  if (order.branch_id && !['owner', 'general_manager'].includes(user.role)) {
+    if (order.branch_id !== user.branch_id) {
+      redirect(`${prefix}/dashboard/inventory/catering`)
+    }
+  }
+
   const { data: pkgData } = await supabase
     .from('catering_packages')
     .select('id, name_ar, name_en, min_guests, max_guests, price_per_person_bhd')

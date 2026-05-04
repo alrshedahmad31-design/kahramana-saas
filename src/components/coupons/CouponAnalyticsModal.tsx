@@ -83,9 +83,9 @@ export default function CouponAnalyticsModal({ coupon, onClose }: Props) {
               <div className="grid grid-cols-2 gap-4 mb-10">
                 {[
                   { label: isAr ? 'إجمالي الاستخدامات' : 'Total Uses',   value: coupon.usage_count, color: 'text-brand-text' },
-                  { label: isAr ? 'إجمالي التوفير'     : 'Total Savings', value: `${totalDiscount.toFixed(2)} ${currency}`, color: 'text-brand-gold' },
-                  { label: isAr ? 'متوسط الطلب'        : 'Avg Order',     value: `${avgOrderValue.toFixed(2)} ${currency}`, color: 'text-brand-text' },
-                  { label: isAr ? 'الإيرادات'          : 'Revenue',       value: `${Number(coupon.total_revenue_impact).toFixed(2)} ${currency}`, color: 'text-brand-success' },
+                  { label: isAr ? 'إجمالي التوفير'     : 'Total Savings', value: `${totalDiscount.toFixed(3)} ${currency}`, color: 'text-brand-gold' },
+                  { label: isAr ? 'متوسط الطلب'        : 'Avg Order',     value: `${avgOrderValue.toFixed(3)} ${currency}`, color: 'text-brand-text' },
+                  { label: isAr ? 'الإيرادات'          : 'Revenue',       value: `${Number(coupon.total_revenue_impact).toFixed(3)} ${currency}`, color: 'text-brand-success' },
                 ].map((m) => (
                   <div key={m.label} className="bg-brand-surface p-5 rounded-2xl border border-brand-border group hover:border-brand-gold/30 transition-colors">
                     <p className={`text-[10px] font-black uppercase text-brand-muted/60 mb-1 tracking-widest ${isAr ? 'font-almarai' : 'font-satoshi'}`}>{m.label}</p>
@@ -124,9 +124,9 @@ export default function CouponAnalyticsModal({ coupon, onClose }: Props) {
                           </span>
                         </div>
                         <div className="text-end">
-                          <p className="text-sm font-black text-brand-gold font-satoshi">-{Number(r.discount_amount).toFixed(2)} {currency}</p>
+                          <p className="text-sm font-black text-brand-gold font-satoshi">-{Number(r.discount_amount).toFixed(3)} {currency}</p>
                           <p className={`text-[10px] font-bold text-brand-muted uppercase ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                            {isAr ? `قيمة الطلب: ${Number(r.order_total).toFixed(2)} ${currency}` : `Cart: ${Number(r.order_total).toFixed(2)} ${currency}`}
+                            {isAr ? `قيمة الطلب: ${Number(r.order_total).toFixed(3)} ${currency}` : `Cart: ${Number(r.order_total).toFixed(3)} ${currency}`}
                           </p>
                         </div>
                       </div>

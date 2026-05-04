@@ -1,6 +1,3 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import { Link } from '@/i18n/navigation'
 import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { ReactNode } from 'react'
@@ -40,7 +37,7 @@ export default function CinematicButton({
             : <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
         )}
       </span>
-      <motion.div 
+      <span
         className={`absolute inset-0 ${isPrimary ? 'bg-white/20' : 'bg-brand-gold/10'} translate-y-full group-hover:translate-y-0 transition-transform duration-500`} 
         aria-hidden="true"
       />

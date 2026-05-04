@@ -89,6 +89,7 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
       addressRegion:    branch.governorateEn
         ? localized(locale, branch.governorateAr ?? branch.cityAr, branch.governorateEn)
         : localized(locale, branch.cityAr, branch.cityEn),
+      postalCode:       branch.postalCode,
       addressCountry:   'BH',
     },
     hasMap: branch.mapsUrl ?? undefined,
@@ -239,6 +240,7 @@ export function buildOrganizationSchema(locale: Locale) {
       addressRegion:   primaryBranch.governorateEn
         ? localized(locale, primaryBranch.governorateAr ?? primaryBranch.cityAr, primaryBranch.governorateEn)
         : localized(locale, primaryBranch.cityAr, primaryBranch.cityEn),
+      postalCode:      primaryBranch.postalCode,
       addressCountry:  'BH',
     },
     logo: `${SITE}/assets/brand/logo.svg`,
@@ -561,4 +563,3 @@ export function buildMenuWebPageSchema(locale: Locale) {
     isPartOf: { '@id': `${SITE}/#website` }
   }
 }
-

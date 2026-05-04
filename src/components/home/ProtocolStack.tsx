@@ -1,10 +1,5 @@
-'use client'
-
-import { useEffect, useRef } from 'react'
-import { useLocale, useTranslations } from 'next-intl'
+import { getLocale, getTranslations } from 'next-intl/server'
 import Image from 'next/image'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import { PROTOCOL_COLORS } from '@/lib/design-tokens'
 
@@ -31,47 +26,13 @@ const PROTOCOLS = [
   }
 ]
 
-export default function ProtocolStack() {
-  const locale = useLocale()
+export default async function ProtocolStack() {
+  const locale = await getLocale()
   const isRTL = locale === 'ar'
-  const t = useTranslations('home.protocol')
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    // Lazy registration -- keeps ScrollTrigger out of the module-evaluation
-    // critical path so it never mutates <html> style before first paint.
-    gsap.registerPlugin(ScrollTrigger)
-
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray('.protocol-card') as HTMLElement[]
-      
-      cards.forEach((card, i) => {
-        if (i === cards.length - 1) return
-
-        ScrollTrigger.create({
-          trigger: card,
-          start: 'top top',
-          pin: true,
-          pinSpacing: false,
-          scrub: true,
-          end: 'bottom top',
-          animation: gsap.timeline()
-            .to(card, {
-              scale: 0.9,
-              opacity: 0.5,
-              filter: 'blur(10px)',
-              duration: 1,
-              ease: 'power1.inOut'
-            })
-        })
-      })
-    }, containerRef.current || undefined)
-
-    return () => ctx.revert()
-  }, [])
+  const t = await getTranslations('home.protocol')
 
   return (
-    <section ref={containerRef} className="relative bg-brand-black">
+    <section className="relative bg-brand-black">
       <div className="sticky top-0 h-24 flex items-center justify-center z-40 bg-brand-black/80 backdrop-blur-md border-b border-white/5">
         <h2 className={`text-xs sm:text-sm font-bold uppercase tracking-[0.22em] text-brand-gold ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
           {t('title')}
@@ -82,7 +43,7 @@ export default function ProtocolStack() {
         {PROTOCOLS.map((step) => (
           <div 
             key={step.id} 
-            className="protocol-card h-screen w-full flex items-center justify-center p-6 sm:p-16 relative overflow-hidden"
+            className="min-h-screen w-full flex items-center justify-center p-6 sm:p-16 relative overflow-hidden"
           >
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0">
@@ -92,6 +53,7 @@ export default function ProtocolStack() {
                  fill
                  className="object-cover opacity-20"
                  sizes="100vw"
+                 quality={70}
                />
                <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/60 to-brand-black" />
             </div>
@@ -116,7 +78,7 @@ export default function ProtocolStack() {
               </div>
 
               <div className={`relative h-64 sm:h-[400px] rounded-2xl overflow-hidden ${isRTL ? 'order-1' : 'order-2'}`}>
-                 <Image src={step.image} fill className="object-cover" alt={t(`steps.${step.id}.title` as 'steps.01.title' | 'steps.02.title' | 'steps.03.title' | 'steps.04.title')} sizes="(max-width: 768px) 100vw, 50vw" />
+                 <Image src={step.image} fill className="object-cover" alt={t(`steps.${step.id}.title` as 'steps.01.title' | 'steps.02.title' | 'steps.03.title' | 'steps.04.title')} sizes="(max-width: 768px) 100vw, 50vw" quality={72} />
                  <div className="absolute inset-0 ring-1 ring-white/10 rounded-2xl" />
               </div>
             </div>

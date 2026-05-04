@@ -24,6 +24,8 @@ export interface Branch {
   /** Administrative governorate — use for schema:addressRegion only */
   governorateAr?: string
   governorateEn?: string
+  /** Bahrain postal/block code for LocalBusiness schema */
+  postalCode?: string
   phone: string
   whatsapp: string
   waLink: string
@@ -56,6 +58,7 @@ export const BRANCHES: Record<BranchId, Branch> = {
     cityEn: 'Riffa',
     governorateAr: 'المحافظة الجنوبية',
     governorateEn: 'Southern Governorate',
+    postalCode: '939',
     phone: '+97317131413',
     whatsapp: '+97317131413',
     waLink: 'https://wa.me/97317131413',
@@ -84,6 +87,7 @@ export const BRANCHES: Record<BranchId, Branch> = {
     cityEn: 'Qallali',
     governorateAr: 'محافظة المحرق',
     governorateEn: 'Muharraq Governorate',
+    postalCode: '255',
     phone: '+97317131213',
     whatsapp: '+97317131213',
     waLink: 'https://wa.me/97317131213',

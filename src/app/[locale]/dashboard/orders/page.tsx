@@ -27,9 +27,8 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
   const userBranchId  = isGlobalAdmin ? null : (user.branch_id ?? null)
 
   // Default filter matches client defaults: today, all statuses, page 1
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayIso = today.toISOString()
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bahrain' }).format(new Date())
+  const todayIso = new Date(`${today}T00:00:00+03:00`).toISOString()
 
   let ordersQuery = supabase
     .from('orders')

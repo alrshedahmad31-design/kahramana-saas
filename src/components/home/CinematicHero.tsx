@@ -1,4 +1,5 @@
 import { getTranslations, getLocale } from 'next-intl/server'
+import Image from 'next/image'
 import CinematicButton from '@/components/ui/CinematicButton'
 import HeroAnimationsLoader from './HeroAnimationsLoader'
 
@@ -9,25 +10,17 @@ export default async function CinematicHero() {
 
   return (
     <>
-      {/* Preload hero image — hoisted to <head> by React 19 */}
-      <link
-        rel="preload"
-        as="image"
-        href="/assets/hero/hero-poster.webp"
-        fetchPriority="high"
-      />
-
-      <section className="relative h-screen w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
+      <section className="relative min-h-[calc(100svh-5rem)] md:min-h-[calc(100svh-6rem)] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
         <div className="absolute inset-0 z-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/assets/hero/hero-poster.webp"
             alt={t('visualAlt')}
-            className="absolute inset-0 w-full h-full object-cover"
+            fill
+            priority
             fetchPriority="high"
-            decoding="sync"
-            width={1920}
-            height={1080}
+            sizes="100vw"
+            quality={78}
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />

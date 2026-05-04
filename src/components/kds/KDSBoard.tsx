@@ -24,12 +24,13 @@ interface Props {
 }
 
 function formatClock(): string {
-  const d    = new Date()
-  const h    = String(d.getHours() % 12 || 12).padStart(2, '0')
-  const m    = String(d.getMinutes()).padStart(2, '0')
-  const s    = String(d.getSeconds()).padStart(2, '0')
-  const ampm = d.getHours() >= 12 ? 'PM' : 'AM'
-  return `${h}:${m}:${s} ${ampm}`
+  return new Date().toLocaleTimeString('en-US', {
+    timeZone: 'Asia/Bahrain',
+    hour:   '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  })
 }
 
 const STATIONS: { id: StationFilter; labelEn: string; labelAr: string; icon: string }[] = [

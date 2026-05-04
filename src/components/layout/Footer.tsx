@@ -1,26 +1,17 @@
-'use client'
-
-import { useTranslations, useLocale } from 'next-intl'
+import { getLocale, getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { BRANCH_LIST, GENERAL_CONTACT } from '@/constants/contact'
 import { isBranchOpen } from '@/lib/utils/time'
 
 // ── Components ───────────────────────────────────────────────────────────────
 
-export default function Footer() {
-  const locale = useLocale()
-  const tNav = useTranslations('nav')
+export default async function Footer() {
+  const locale = await getLocale()
+  const tNav = await getTranslations('nav')
   const isRTL = locale === 'ar'
-  const [mounted, setMounted] = useState(false)
-  const [year, setYear] = useState<number>(2025)
-
-  useEffect(() => {
-    setMounted(true)
-    setYear(new Date().getFullYear())
-  }, [])
+  const year = new Date().getFullYear()
 
   const marqueeText = isRTL ? 'كهرمانة بغداد • سفير المذاق البغدادي • ' : 'KAHRAMANA BAGHDAD • THE AMBASSADOR OF BAGHDAD • '
 
@@ -35,9 +26,7 @@ export default function Footer() {
 
       {/* ── Tier 1: The Marquee (Artistic Flair) ──────────────────────────── */}
       <div className="relative z-10 py-10 border-b border-brand-border/30 overflow-hidden select-none">
-        <motion.div 
-          animate={{ x: isRTL ? [0, 1000] : [0, -1000] }}
-          transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+        <div
           className="flex whitespace-nowrap"
         >
           {[...Array(10)].map((_, i) => (
@@ -48,7 +37,7 @@ export default function Footer() {
               {marqueeText}
             </span>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       {/* ── Tier 2: Information Grid ──────────────────────────────────────── */}
@@ -93,7 +82,7 @@ export default function Footer() {
             </h3>
             <div className="space-y-6">
               {BRANCH_LIST.map((branch) => {
-                const isOpen = mounted && branch.status === 'active' && isBranchOpen(branch.hours.opens, branch.hours.closes)
+                const isOpen = branch.status === 'active' && isBranchOpen(branch.hours.opens, branch.hours.closes)
                 return (
                   <div key={branch.id} className="group cursor-pointer">
                     <p className={`text-sm font-bold text-brand-text group-hover:text-brand-gold transition-colors ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
@@ -191,19 +180,17 @@ export default function Footer() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SocialIcon({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+function SocialIcon({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
   return (
-    <motion.a
+    <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      whileHover={{ scale: 1.1, y: -2 }}
-      whileTap={{ scale: 0.9 }}
-      className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand-surface border border-brand-border text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors shadow-lg shadow-black/20"
+      className="w-10 h-10 flex items-center justify-center rounded-xl bg-brand-surface border border-brand-border text-brand-muted hover:border-brand-gold hover:text-brand-gold hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/20"
     >
       {icon}
-    </motion.a>
+    </a>
   )
 }
 

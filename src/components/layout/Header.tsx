@@ -6,7 +6,6 @@ import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { DEFAULT_BRANCH } from '@/constants/contact'
 import { useCartStore, selectTotalItems } from '@/lib/cart'
-import { motion, AnimatePresence } from 'framer-motion'
 import CinematicButton from '@/components/ui/CinematicButton'
 
 // ── Nav Links ─────────────────────────────────────────────────────────────────
@@ -158,31 +157,22 @@ export default function Header() {
               aria-label={isOpen ? t('closeMenu') : t('openMenu')}
               className="w-10 h-10 flex flex-col justify-center items-center gap-1.5"
             >
-              <motion.span 
-                animate={isOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
-                className="w-5 h-0.5 bg-brand-text block rounded-full"
+              <span
+                className={`w-5 h-0.5 bg-brand-text block rounded-full transition-transform duration-300 ${isOpen ? 'translate-y-2 rotate-45' : ''}`}
               />
-              <motion.span 
-                animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
-                className="w-5 h-0.5 bg-brand-text block rounded-full"
+              <span
+                className={`w-5 h-0.5 bg-brand-text block rounded-full transition-opacity duration-300 ${isOpen ? 'opacity-0' : 'opacity-100'}`}
               />
-              <motion.span 
-                animate={isOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }}
-                className="w-5 h-0.5 bg-brand-text block rounded-full"
+              <span
+                className={`w-5 h-0.5 bg-brand-text block rounded-full transition-transform duration-300 ${isOpen ? '-translate-y-2 -rotate-45' : ''}`}
               />
             </button>
           </div>
         </div>
 
         {/* Mobile Menu Overlay */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute top-full inset-x-0 mt-4 mx-4 p-6 glass-surface rounded-[2rem] md:hidden pointer-events-auto"
-            >
+        {isOpen && (
+            <div className="absolute top-full inset-x-0 mt-4 mx-4 p-6 glass-surface rounded-[2rem] md:hidden pointer-events-auto">
               <nav className="flex flex-col gap-4">
                 {NAV_LINKS.map(({ key, href }) => (
                     <Link
@@ -217,9 +207,8 @@ export default function Header() {
                   </CinematicButton>
                 </div>
               </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+        )}
       </header>
     </div>
 
