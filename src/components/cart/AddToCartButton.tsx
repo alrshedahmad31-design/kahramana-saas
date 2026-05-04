@@ -10,6 +10,7 @@ import { ItemSelectionContext } from '@/components/menu/item-selection-provider'
 import ItemSizeSelector from '@/components/menu/item-size-selector'
 import ItemVariantSelector from '@/components/menu/item-variant-selector'
 import { motion, AnimatePresence } from 'framer-motion'
+import { gtag } from '@/lib/gtag'
 
 interface Props {
   isRTL: boolean
@@ -68,6 +69,8 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
       selectedVariant: variantAr,
       quantity,
     })
+
+    gtag.addToCart({ id: item.id, name: item.name.en, price: computedPrice, quantity })
   }
 
   // Compact variant for grid cards

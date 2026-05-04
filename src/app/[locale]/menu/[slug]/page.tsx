@@ -5,7 +5,6 @@ import { headers } from 'next/headers'
 import {
   getCategorySlugs,
   getAllMenuItems,
-  getItemSlugs,
   getMenuCategories,
   getMenuCategoryBySlug,
   getMenuItemBySlug,
@@ -24,10 +23,7 @@ type Props = {
 }
 
 export function generateStaticParams() {
-  return [
-    ...getCategorySlugs().map((slug) => ({ slug })),
-    ...getItemSlugs().map((slug) => ({ slug })),
-  ]
+  return getCategorySlugs().map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

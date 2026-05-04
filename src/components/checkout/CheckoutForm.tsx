@@ -34,6 +34,7 @@ import TierBadge from '@/components/loyalty/TierBadge'
 import CouponInput from '@/components/checkout/CouponInput'
 import { pointsToCredit, formatPoints, MIN_REDEMPTION } from '@/lib/loyalty/calculations'
 import { createOrderWithPoints } from '@/app/[locale]/checkout/actions'
+import { gtag } from '@/lib/gtag'
 import type { CustomerProfileRow } from '@/lib/supabase/custom-types'
 import type { AppliedCoupon } from '@/components/checkout/CouponInput'
 
@@ -333,6 +334,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
     e.preventDefault()
     setErrors({})
     setSubmitError(null)
+    gtag.beginCheckout({ value: subtotal, itemCount: items.length })
+    gtag.whatsappClick('checkout')
 
     try {
       const res = await validateAndCreate()

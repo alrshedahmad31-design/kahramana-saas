@@ -7,6 +7,7 @@ import { BRANCH_LIST } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import LuxuryIcon from '@/components/icons/LuxuryIcon'
 import { submitContactMessage } from '@/app/[locale]/contact/actions'
+import { gtag } from '@/lib/gtag'
 
 const schema = z.object({
   name:      z.string().min(2).max(100),
@@ -68,6 +69,7 @@ export default function ContactForm() {
       return
     }
 
+    gtag.generateLead('contact_form')
     setStatus('success')
     setForm({ name: '', email: '', phone: '', branch_id: '', message: '' })
   }

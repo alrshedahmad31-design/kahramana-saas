@@ -9,6 +9,7 @@ import {
   type CateringInquiryValues,
   type CateringServiceType,
 } from '@/lib/whatsapp-catering-message'
+import { gtag } from '@/lib/gtag'
 
 const initialValues: CateringInquiryValues = {
   name: '',
@@ -59,6 +60,8 @@ export default function InquiryForm() {
         budget: tWhatsapp('labels.budget'),
       },
     })
+    gtag.generateLead('catering_inquiry')
+    gtag.whatsappClick('catering')
     window.open(link, '_blank', 'noopener,noreferrer')
   }
 

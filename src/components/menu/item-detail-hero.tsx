@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Link } from '@/i18n/navigation'
 import type { NormalizedMenuItem } from '@/lib/menu'
 import MenuItemImage from '@/components/menu/menu-item-image'
@@ -8,6 +9,7 @@ import { ItemSelectionProvider, useItemSelection } from '@/components/menu/item-
 import ItemPriceSelector from '@/components/menu/item-price-selector'
 import { motion } from 'framer-motion'
 import { Home, ChevronRight, ChevronLeft } from 'lucide-react'
+import { gtag } from '@/lib/gtag'
 
 interface ItemDetailHeroProps {
   item: NormalizedMenuItem
@@ -42,6 +44,11 @@ function ItemDetailHeroContent({
 }: ItemDetailHeroProps) {
   const { computedPrice } = useItemSelection()
   const name = isRTL ? item.name.ar : item.name.en
+
+  useEffect(() => {
+    gtag.viewItem({ id: item.id, name: item.name.en, category: item.categorySlug, price: item.fromPrice ?? 0 })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id])
   const description = item.description
     ? isRTL
       ? item.description.ar

@@ -27,8 +27,8 @@ export async function generateMetadata({
       ? `تواصل مع فروع كهرمانة بغداد. الرفاع: ${riffa.phone} قلالي: ${qallali.phone}. نموذج تواصل خرائط Google وروابط تواصل اجتماعي.`
       : `Contact Kahramana Baghdad branches. Riffa: ${riffa.phone} Qallali: ${qallali.phone}. Contact form, Google Maps, and social links.`,
     alternates: {
-      canonical: `${SITE_URL}/${locale}/contact`,
-      languages: { 'x-default': `${SITE_URL}/ar/contact`, ar: `${SITE_URL}/ar/contact`, en: `${SITE_URL}/en/contact` },
+      canonical: isAr ? `${SITE_URL}/contact` : `${SITE_URL}/en/contact`,
+      languages: { 'x-default': `${SITE_URL}/contact`, ar: `${SITE_URL}/contact`, en: `${SITE_URL}/en/contact` },
     },
   }
 }
