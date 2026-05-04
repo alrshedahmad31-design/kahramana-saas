@@ -1,96 +1,69 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 57
+**Session ID**: 58
 **Date**: 2026-05-04
-**Focus**: LCP + CLS root cause diagnosis and fixes (commit `902f213`)
+**Focus**: Middleware bundle size (171 kB) + framer-motion in critical bundle (~36 kB gzipped)
 
 ---
 
 ## Summary
 
-Diagnosed 2 independent root causes for LCP=4.1s and 1 for CLS=0.151. All 3 fixed in one commit.
+Two JS bundle optimizations: middleware no longer runs Supabase on public routes, and framer-motion is no longer in the homepage critical bundle.
 
 ---
 
-## Root Causes Discovered
+## Changes Made
 
-### LCP = 4.1s
+### Fix 1 — Middleware: Supabase runs on every request (`src/middleware.ts`)
 
-#### Cause A: Hero preload arrives late in SSR stream
-`<link rel="preload">` was inside `CinematicHero` (async Server Component). In Next.js 15 streaming SSR, async components resolve after the initial `<head>` bytes are sent. The preload hint arrived late in the stream — AFTER the browser's preload scanner already finished its pass. Image was discovered only via body HTML parsing (~1s later).
+**Problem**: `createServerClient` + `supabase.auth.getUser()` executed on every request that matched the middleware matcher — including the homepage, menu, branches, and all public pages. This caused the middleware bundle to be 171 kB and added a Supabase round-trip to every page load.
 
-**Fix**: Moved preload to `HeroWrapper` (synchronous Server Component). Sync components are processed before async work begins → preload is guaranteed to be in the initial `<head>` bytes.
+**Root cause**: The `isDashboard` / `isLogin` pattern checks happened *after* the Supabase client was already created and `getUser()` was already called.
 
-#### Cause B: Font swap pushing LCP timestamp
-Next.js 15.5.15 does not generate `<link rel="preload" as="font">` tags in the HTML for fonts declared in layouts (only in page-level components). Fonts were discovered late (via CSS parsing), loaded at ~2-3s, and when they swapped, Chrome re-recorded LCP at the swap timestamp.
+**Fix**: Moved the pattern checks to the top of the function. Public routes (`!isDashboard && !isLogin`) now exit immediately — no Supabase client created, no network call made. Supabase initialization only happens when the path is `/dashboard*` or `/login`.
 
-For editorialNew specifically: no `adjustFontFallback` was generated (CSS had no `size-adjust`/`ascent-override`). Cairo, Almarai, Satoshi all had it — only editorialNew was missing it. Font swap on large EN hero title (h1 at text-7xl) → Chrome re-recorded LCP at ~4s.
+Also removed the now-unused `type CookieOptionsWithName` import from `@supabase/ssr` (no longer needed since explicit type annotations on the `setAll` callback were dropped — TypeScript infers them from the SDK).
 
-**Fix**: Added `adjustFontFallback: "Times New Roman"` to editorialNew. Generates fallback @font-face with `size-adjust:97.60%`, `ascent-override:90.16%`, `line-gap-override:10.25%`. Text block dimensions now stay identical through the swap → Chrome doesn't re-record LCP.
-
-### CLS = 0.151
-
-**Cause**: Same as LCP Cause B — editorialNew lacked size-adjust CSS for its fallback. Large h1 text on EN pages swapped dimensions when font loaded → layout shift.
-
-**Fix**: Same — `adjustFontFallback: "Times New Roman"` now generates the correct CSS.
+**Files changed**: `src/middleware.ts`
 
 ---
 
-## Secondary Fix
+### Fix 2 — Homepage: framer-motion in critical bundle (`src/app/[locale]/page.tsx`)
 
-- Changed `decoding="sync"` → `decoding="async"` on hero `<img>`. `decoding="sync"` forces main-thread decode and can block compositing under Lighthouse 4× CPU throttle. `async` allows background thread decode while main thread runs hydration/GSAP.
+**Problem**: `FeatureArtifacts` was a static import, pulling framer-motion (~36 kB gzipped) into the homepage's initial JS bundle. This increased TBT and delayed interactivity.
 
-- Reordered editorialNew src: Bold (700) first → Bold is now the preloaded `.p.woff2` variant (hero title on EN uses `font-bold`).
+**Why ssr:false**: `FeatureArtifacts` uses `useState`, `useEffect`, and `AnimatePresence` — it has no meaningful SSR output and would hydration-mismatch anyway. `ssr: false` skips server rendering entirely and loads it as a pure client chunk.
 
----
+**Fix**: Converted to `dynamic()` import with `ssr: false` and a `loading` placeholder that reserves `h-[530px]` to prevent CLS while the chunk loads.
 
-## Commits This Session
-
-| Commit | Change |
-|--------|--------|
-| `902f213` | preload timing fix + editorialNew adjustFontFallback + decoding async |
+**Files changed**: `src/app/[locale]/page.tsx`
 
 ---
 
-## Current State (after session 57)
+## Current State (after session 58)
 
-**HeroWrapper.tsx**:
-- Has `<link rel="preload" as="image" href="/assets/hero/hero-poster.webp" fetchPriority="high" />` in sync Server Component
+**`src/middleware.ts`**:
+- Public routes skip Supabase entirely (early return after `intlMiddleware`)
+- Supabase client + `getUser()` only runs on `/dashboard*` and `/login`
+- `CookieOptionsWithName` import removed
 
-**CinematicHero.tsx**:
-- Preload link removed (moved to HeroWrapper)
-- `decoding="async"` on hero img
-
-**layout.tsx** (editorialNew):
-- `adjustFontFallback: 'Times New Roman'` ← new
-- Bold first in src array ← new
-
-**CSS verification (d8ab2e66c56022d1.css)**:
-```
-editorialNew Fallback: src:local("Times New Roman"); size-adjust:97.60%; ascent-override:90.16%; descent-override:30.74%; line-gap-override:10.25%
-```
-
----
-
-## Expected Metrics After Deploy
-
-- **LCP**: ~1.2–1.8s (FCP≈LCP if image preload works correctly)
-- **CLS**: ~0.05–0.08 (size-adjust eliminates editorialNew swap CLS; Cairo/Satoshi already had it)
-- **Performance score**: 90+
+**`src/app/[locale]/page.tsx`**:
+- `FeatureArtifacts` is now `dynamic(() => import(...), { ssr: false, loading: () => <div className="... h-[530px]" /> })`
+- framer-motion excluded from critical bundle
 
 ---
 
 ## Remaining / Pending
 
-1. **Run Lighthouse after Vercel deploy** to confirm improvements
+1. **Run Lighthouse after Vercel deploy** to confirm TBT and bundle improvements
 2. **Hero image replacement** (HIGH PRIORITY from session 56): `hero-poster.webp` is 800×420px — too small for a full-screen hero. Replace with 1920×1080 WebP.
-3. **Font preloads missing from HTML** (MEDIUM): Next.js 15.5.15 does not auto-generate `<link rel="preload" as="font">` for layout-level fonts. All fonts are discovered via CSS. If LCP is still driven by font swap after this session's fixes, consider adding explicit preload hints to layout `<head>` (but requires hardcoding hashed filenames).
+3. **Font preloads missing from HTML** (MEDIUM): Next.js 15.5.15 does not auto-generate `<link rel="preload" as="font">` for layout-level fonts.
 4. **Previous session L1/L2/M4**: sitemap, routing, trailing slash — still pending verification.
 
 ---
 
 ## Key Decisions
 
-1. **adjustFontFallback: "Times New Roman"** for editorialNew — serif system font gives the closest metric profile for an editorial serif font.
-2. **Preload in sync wrapper, not layout** — avoids preloading hero image on all pages (branches, menu, about, etc.).
-3. **decoding="async" not "sync"** — sync was added in session 56 as a performance hint but actually hurts on throttled CPUs by blocking the main thread.
+1. **`ssr: false` on FeatureArtifacts** — component is entirely interactive (useState/useEffect/AnimatePresence), SSR adds no value and risks hydration mismatch.
+2. **`h-[530px]` placeholder** — approximates the rendered section height to hold layout space and prevent CLS during lazy load.
+3. **Early return pattern in middleware** — check route pattern first, initialize expensive clients only when needed.

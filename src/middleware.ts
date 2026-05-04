@@ -1,5 +1,5 @@
 import createMiddleware from 'next-intl/middleware'
-import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import { routing } from '@/i18n/routing'
 import { ROLE_RANK } from '@/lib/auth/rbac'
@@ -96,14 +96,26 @@ function finalizeResponse(
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // Generate nonce for this request
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   const headersWithNonce = new Headers(request.headers)
   headersWithNonce.set('x-nonce', nonce)
   headersWithNonce.set('x-pathname', pathname)
 
-  // Skip RBAC entirely if Supabase env vars are missing (local dev without Supabase)
+  const isDashboard = DASHBOARD_PATTERN.test(pathname)
+  const isLogin     = LOGIN_PATTERN.test(pathname)
+
+  // ── Public routes: skip Supabase entirely ─────────────────────────────────
+  if (!isDashboard && !isLogin) {
+    const intlResponse = intlMiddleware(request)
+    return finalizeResponse(
+      headersWithNonce,
+      nonce,
+      NextResponse.next({ request: { headers: headersWithNonce } }),
+      intlResponse,
+    )
+  }
+
+  // ── Auth routes only ──────────────────────────────────────────────────────
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !supabaseKey) {
@@ -112,30 +124,21 @@ export default async function middleware(request: NextRequest) {
     return res
   }
 
-  // Collect Supabase auth-cookie updates in a mutable response
   let supabaseResponse = NextResponse.next({ request: { headers: headersWithNonce } })
-
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptionsWithName }[]) => {
-        cookiesToSet.forEach(({ name, value }: { name: string; value: string }) =>
-          request.cookies.set(name, value),
-        )
+      setAll: (cookiesToSet) => {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
         supabaseResponse = NextResponse.next({ request: { headers: headersWithNonce } })
-        cookiesToSet.forEach(
-          ({ name, value, options }: { name: string; value: string; options?: CookieOptionsWithName }) =>
-            supabaseResponse.cookies.set(name, value, options),
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options),
         )
       },
     },
   })
 
-  // Refresh session (must not be skipped — keeps tokens alive)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   const locale = pathname.startsWith('/en') ? 'en' : 'ar'
 
   const loginUrl = (redirectTo?: string): URL => {
@@ -143,71 +146,48 @@ export default async function middleware(request: NextRequest) {
     if (redirectTo) url.searchParams.set('redirect', redirectTo)
     return url
   }
-
   const dashboardUrl = (): URL =>
     new URL(locale === 'en' ? '/en/dashboard' : '/dashboard', request.url)
 
-  // ── Auth & RBAC logic ─────────────────────────────────────────────────────
+  if (!user) {
+    if (isDashboard) {
+      const response = NextResponse.redirect(loginUrl(pathname))
+      supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+      return response
+    }
+  } else {
+    const { data: staffRow } = await supabase
+      .from('staff_basic')
+      .select('role')
+      .eq('id', user.id)
+      .eq('is_active', true)
+      .single()
 
-  const isDashboard = DASHBOARD_PATTERN.test(pathname)
-  const isLogin     = LOGIN_PATTERN.test(pathname)
-
-  if (isDashboard || isLogin) {
-    if (!user) {
+    if (!staffRow) {
       if (isDashboard) {
-        const response = NextResponse.redirect(loginUrl(pathname))
-        supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+        const response = NextResponse.redirect(loginUrl())
+        supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
         return response
       }
-      // On login page and not authenticated -> fall through to intlMiddleware
     } else {
-      // User is authenticated in Supabase Auth. Now check if they are authorized staff.
-      const { data: staffRow } = await supabase
-        .from('staff_basic')
-        .select('role')
-        .eq('id', user.id)
-        .eq('is_active', true)
-        .single()
-
-      if (!staffRow) {
-        // Logged in but NO staff profile -> only allowed on /login
-        if (isDashboard) {
-          const response = NextResponse.redirect(loginUrl())
-          supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
-          return response
-        }
-        // If on /login and no profile, stay there (prevents loop)
-      } else {
-        // Logged in AND has valid staff profile
-        const role = staffRow.role as StaffRole
-
-        // Drivers belong on /driver, not /dashboard.
-        // Redirect them unconditionally from all dashboard routes and from /login.
-        if (role === 'driver') {
-          const driverUrl = new URL(locale === 'en' ? '/en/driver' : '/driver', request.url)
-          if (isDashboard || isLogin) {
-            const response = NextResponse.redirect(driverUrl)
-            supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
-            return response
-          }
-        } else if (isLogin) {
-          // Non-driver staff on /login while authenticated → send to dashboard
-          const response = NextResponse.redirect(dashboardUrl())
-          supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
-          return response
-        }
-
-        // Dashboard specific RBAC (non-driver roles)
-        if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
-          const response = NextResponse.redirect(dashboardUrl())
-          supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
-          return response
-        }
+      const role = staffRow.role as StaffRole
+      if (role === 'driver') {
+        const driverUrl = new URL(locale === 'en' ? '/en/driver' : '/driver', request.url)
+        const response = NextResponse.redirect(driverUrl)
+        supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+        return response
+      } else if (isLogin) {
+        const response = NextResponse.redirect(dashboardUrl())
+        supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+        return response
+      }
+      if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
+        const response = NextResponse.redirect(dashboardUrl())
+        supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+        return response
       }
     }
   }
-
-  // ── Run next-intl locale routing ──────────────────────────────────────────
 
   const intlResponse = intlMiddleware(request)
   return finalizeResponse(headersWithNonce, nonce, supabaseResponse, intlResponse)

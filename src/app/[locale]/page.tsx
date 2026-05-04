@@ -12,8 +12,10 @@ import {
   buildNavigationSchema,
 } from '@/lib/seo/schemas'
 
-import FeatureArtifacts from '@/components/home/FeatureArtifacts'
-
+const FeatureArtifacts     = dynamic(() => import('@/components/home/FeatureArtifacts'), {
+  ssr: false,
+  loading: () => <div className="py-20 px-6 sm:px-16 h-[530px]" />,
+})
 const PhilosophyManifesto  = dynamic(() => import('@/components/home/PhilosophyManifesto'))
 const ProtocolStack        = dynamic(() => import('@/components/home/ProtocolStack'))
 const HomeFAQ              = dynamic(() => import('@/components/home/HomeFAQ'))
@@ -84,7 +86,7 @@ export default async function HomePage() {
         {/* A. Cinematic Opening -- no dynamic() so SSR image is never inside Suspense */}
         <HeroWrapper />
 
-        {/* B. Feature Artifacts -- first section below hero, keep in critical bundle */}
+        {/* B. Feature Artifacts -- lazy + ssr:false, framer-motion out of critical bundle */}
         <FeatureArtifacts />
 
         {/* C-E. Below-fold sections -- lazy-loaded to reduce initial JS parse cost (TBT) */}
