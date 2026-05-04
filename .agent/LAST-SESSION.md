@@ -1,113 +1,96 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 54
+**Session ID**: 55
 **Date**: 2026-05-04
-**Focus**: Three-part feature — Structured checkout address fields + Unified delivery board + Driver self-assign flow
+**Focus**: SEO priority fixes (7 issues) + Performance audit fixes + SEO/GEO re-audit fixes
 
 ---
 
 ## Summary
 
-Full implementation of three interconnected features. Build verified clean at end of session.
+Three work streams completed and deployed (pushed to master, Vercel deploying).
 
 ---
 
-## Part 1 — Structured Address Fields in Checkout
+## Stream 1 — SEO Priority Fixes (7 issues)
 
-**`src/components/checkout/CheckoutForm.tsx`**:
-- Replaced free-text delivery address with 4 structured fields
-- Fields: مجمع (block, required), مبنى/فيلا (building, required), طريق (road, required), شقة (apartment, optional)
-- `buildAddressString()`: `مبنى ${building}، طريق ${road}، مجمع ${block}${apartment ? '، شقة ' + apartment : ''}، البحرين`
-- Passes `delivery_area: block.trim() || null` to createOrderWithPoints
+**Commit**: `d814332`
 
-**`src/app/[locale]/checkout/actions.ts`**:
-- Added `delivery_area: z.string().max(120).nullable()` to orderSchema
-- Added `delivery_area: string | null` to OrderBase interface
-
----
-
-## Part 2 — Unified Delivery/Dispatch Board
-
-**`src/app/[locale]/dashboard/delivery/page.tsx`**:
-- Added `'driver'` to allowed roles list
-- Passes `userRole={user.role ?? 'driver'}` and `userId={user.id}` to DeliveryPageClient
-
-**`src/app/[locale]/dashboard/dispatch/page.tsx`** (NEW):
-- Simple redirect → `/dashboard/delivery` (or `/en/dashboard/delivery`)
-
-**`src/components/delivery/DeliveryPageClient.tsx`**:
-- Added `userRole: string` and `userId: string` to Props
-- Added `handleSelfAssign` calling `assignSelfAsDriver`
-- Threads `userRole` and `onSelfAssign` down to DeliveryKanban
-
-**`src/components/delivery/DeliveryKanban.tsx`**:
-- Drivers: see "استلم هذا الطلب" (green) on ready unassigned orders; details button hidden
-- Managers: keep existing "تعيين/Assign" amber dropdown
-- Threads `userRole` and `onSelfAssign` through KanbanColumn → KanbanCard
+1. `src/app/page.tsx`: Removed `redirect('/ar')` — conflicted with next-intl as-needed routing. Now returns `notFound()`.
+2. Contact canonical: `/${locale}/contact` → locale-aware (`/contact` for AR, `/en/contact` for EN).
+3. Sitemap: Removed noindex pages `/privacy` and `/terms`. Kept `/refund-policy`.
+4. Schema: Removed unconfirmed qallali aggregate rating; `foundingDate: '2018-08-01'` → `'2018'`; removed "across Bahrain delivery" and "private cabins" from description.
+5. Menu `[slug]/generateStaticParams`: Removed `getItemSlugs()` — item slugs generated noindex redirect stubs.
+6. Analytics (`src/lib/gtag.ts`): New utility with `view_item`, `add_to_cart`, `begin_checkout`, `whatsapp_click`, `generate_lead`. Wired into AddToCartButton, CheckoutForm, ContactForm, inquiry-form, item-detail-hero.
+7. Footer: Added Contact and Refund Policy links to navigation column.
 
 ---
 
-## Part 3 — Driver Self-Assign Flow
+## Stream 2 — Performance Optimization
 
-**`src/app/[locale]/dashboard/delivery/actions.ts`** (added):
-- `assignSelfAsDriver(orderId)`: driver role only, claims ready+unassigned order → sets out_for_delivery + picked_up_at
-- `markOrderDelivered(orderId)`: driver role only, arrived_at guard, marks delivered
+### First attempt (commit `2d51ba6`) — Mixed results
+- ✓ GA4/Clarity: `afterInteractive` → `lazyOnload` → FCP 1.8s → 1.2s
+- ✗ FeatureArtifacts dynamic import → TBT worsened 200→340ms (deferred chunk executed in TBT window)
+- ✗ `decoding="async"` on hero image → LCP worsened 3.8→4.0s
 
-**`src/components/driver/DriverOrderCard.tsx`**:
-- Removed confirmation dialog for delivery
-- `handleDeliver` calls `markOrderDelivered(order.id)` directly
-- `onDelivered?.(order.id)` callback on success
-- `openCustomerMap`: structured Bahrain query when GPS absent — `Building X Road X, Block X, Riffa, Bahrain`
+### Correct fix (commit `012cc9f`) — Root cause addressed
+- Reverted FeatureArtifacts to static import (fixes TBT regression)
+- Reverted `decoding="sync"` on hero image (fixes LCP regression)
+- **New**: `HeroAnimationsLoader.tsx` — thin 'use client' wrapper that dynamic-imports HeroAnimations with `ssr: false`. Removes GSAP (~30KB) from critical JS bundle.
+- **New**: CSS `opacity: 0` in globals.css for `.hero-eyebrow`, `.hero-title-part-1`, `.hero-title-part-2`, `.hero-cta` + 3s CSS fallback animation. Replaces `gsap.set(opacity:0)` synchronous call.
+- HeroAnimations: removed synchronous `gsap.set()`, added `prefers-reduced-motion` guard.
 
-**`src/components/driver/DriverDashboard.tsx`**:
-- Added `handleDelivered(orderId)` → removes from active list + refreshes completed
-- Passes `onDelivered={handleDelivered}` to DriverOrderCards
-
----
-
-## New Migration
-
-**`supabase/migrations/045_delivery_self_assign.sql`** (NEW):
-- Adds `delivery_apartment` TEXT column to orders table (idempotent DO block)
-- **NOT YET APPLIED TO PRODUCTION** — needs `supabase db push`
+**Expected**: TBT ~130ms (was 340ms before, 200ms baseline), LCP ~3.8s, FCP 1.2s.
 
 ---
 
-## Types Regenerated
+## Stream 3 — SEO/GEO Re-audit Fixes (commit `c4ea92f`)
 
-**`src/lib/supabase/types.ts`** — regenerated from live schema (project wwmzuofstyzworukfxkt).
-- Fixed: removed `<claude-code-hint>` XML artifact injected at line 3996 that caused 5 TS parse errors
+**H2** (false alarm): gtag IS wired — 5 components import and use it.
+
+**H3**: Privacy + Terms Arabic canonicals fixed:
+- Before: `${SITE_URL}/${locale}/privacy` → produced `/ar/privacy`
+- After: locale-aware → `/privacy` (AR) / `/en/privacy` (EN). Added `x-default`.
+
+**H4**: Refund policy:
+- Added `robots: { index: true, follow: true }` (aligns with sitemap inclusion)
+- Added explicit canonical: `/refund-policy` (AR) / `/en/refund-policy` (EN)
+
+**M1**: Menu `[slug]/generateMetadata` — removed unreachable item-slug noindex branch. Runtime redirect in page body kept as safety net.
+
+**M2**: `public/llms.txt` cleaned:
+- Removed "August" from founding date → "2018" only
+- Removed "widely regarded as one of Bahrain's best" (unconfirmed superlative)
+- Removed "private cabins" claim
+- Changed "across Bahrain delivery" → "nearby areas — contact branch to confirm"
+
+**M3**: `buildPlannedBranchSchema`: Downgraded type from `LocalBusiness` → `Thing`, removed address/locality. Non-open branch as LocalBusiness with address can mislead Maps/Knowledge Graph.
 
 ---
 
-## Phase Gates (session 54)
-- `npx tsc --noEmit`: PASS — 0 errors
-- `npm run build`: PASS — 858 static pages, 0 errors
-- RTL violations: PASS
+## Phase Gates (session 55)
+- `npx tsc --noEmit`: PASS — 0 errors (src only)
+- `npm run build`: PASS — 520 static pages, 0 errors
+- RTL violations: PASS (spot checked changed files)
 - Hardcoded phones/wa.me: PASS
+- `git push origin master`: PASS — Vercel deploy triggered
 
 ---
 
 ## Remaining / Pending
 
-1. **Migration 045** not yet applied — run `supabase db push` when ready
-2. **Vercel runtime log check** — step 3 of the verification was skipped (Vercel MCP needs OAuth). Check Vercel dashboard manually or complete OAuth flow
-3. **Deploy** — all session 54 changes not yet pushed to Vercel
+1. **C1 (production drift)**: Pushed. Verify live site after Vercel deploy completes.
+2. **L1**: Verify `https://kahramanat.com/sitemap.xml` reflects 386 expected URLs after deploy.
+3. **L2**: Verify live `/`, `/ar`, `/en` routing behavior after deploy.
+4. **M4**: Trailing slash on `/en/menu` — investigate Vercel redirect config after deploy.
+5. **H1**: Schema Riffa rating (4.5/1531) and Talabat URL remain — these are confirmed facts, leaving as-is unless owner requests removal. `priceRange: '$$'` also remains.
+6. **Performance**: Run Lighthouse again after deploy to confirm TBT improvement from GSAP lazy-load.
 
 ---
 
-## Decisions Made
+## Key Decisions
 
-1. `assignSelfAsDriver` sets status to `out_for_delivery` immediately (not a separate "picked up" step) for simplicity
-2. `markOrderDelivered` requires `arrived_at` to be set first (prevents premature delivery marking)
-3. `/dashboard/dispatch` becomes a simple redirect rather than a merged page (no pre-existing dispatch page to merge)
-4. Driver sees unified `/dashboard/delivery` board — same kanban as staff but with self-assign instead of dropdown assign
-
----
-
-## Next Steps
-
-1. Apply migration 045: `supabase db push`
-2. Push/deploy to Vercel
-3. Test self-assign flow in browser as a driver role user
-4. Confirm `delivery_apartment` column appears in Supabase table editor
+1. Kept `getMenuItemBySlug` + runtime redirect in `menu/[slug]/page.tsx` as safety net for direct URL access even though `generateStaticParams` no longer generates item slugs.
+2. `buildPlannedBranchSchema` → `Thing` type (not `LocalBusiness`) to prevent Maps confusion for non-open location.
+3. FeatureArtifacts MUST stay static import — dynamic import pushes its chunk execution into TBT window, worsening TBT. framer-motion is already in the bundle via Footer anyway.
+4. `lazyOnload` for GA4/Clarity is correct and kept — significantly helped FCP.
