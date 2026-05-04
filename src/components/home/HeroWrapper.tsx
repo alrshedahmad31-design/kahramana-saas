@@ -1,8 +1,18 @@
 import CinematicHero from '@/components/home/CinematicHero'
 
-// No dynamic() wrapper — direct import keeps the Suspense boundary out of the
-// critical path so the SSR-rendered hero image is never replaced by a fallback
-// during hydration. This is the primary LCP fix.
+// Preload declared here (sync Server Component) so React 19 hoists it to <head>
+// before CinematicHero's async work resolves. If declared inside the async
+// CinematicHero, the hint arrives late in the stream and misses the preload scanner.
 export default function HeroWrapper() {
-  return <CinematicHero />
+  return (
+    <>
+      <link
+        rel="preload"
+        as="image"
+        href="/assets/hero/hero-poster.webp"
+        fetchPriority="high"
+      />
+      <CinematicHero />
+    </>
+  )
 }

@@ -43,11 +43,15 @@ const almarai = Almarai({
 // ── English fonts from /public/fonts (self-hosted) ────────────────────────────
 const editorialNew = localFont({
   src: [
-    { path: '../../../public/fonts/EditorialNew-Light.woff2', weight: '300', style: 'normal' },
+    // Bold first — hero titles use font-bold (700); first file is the preloaded variant
     { path: '../../../public/fonts/EditorialNew-Bold.woff2',  weight: '700', style: 'normal' },
+    { path: '../../../public/fonts/EditorialNew-Light.woff2', weight: '300', style: 'normal' },
   ],
   variable: '--editorial',
   display: 'swap',
+  // Generates size-adjust/ascent-override CSS for the fallback font so the
+  // text box dimensions don't change when EditorialNew loads → eliminates CLS
+  adjustFontFallback: 'Times New Roman',
 })
 
 const satoshi = localFont({

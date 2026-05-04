@@ -11,8 +11,6 @@ export default async function CinematicHero() {
   // chrome resize, causing CLS. 100vh is stable on all tested devices.
   return (
     <>
-    {/* Preload hoisted to <head> by React 19 float — bypasses _next/image AVIF cold-generation */}
-    <link rel="preload" as="image" href="/assets/hero/hero-poster.webp" fetchPriority="high" />
     <section className="relative h-screen w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
       {/* LCP image: served from static CDN (immutable), no _next/image AVIF overhead */}
       <div className="absolute inset-0 z-0">
@@ -22,7 +20,7 @@ export default async function CinematicHero() {
           alt={t('visualAlt')}
           className="absolute inset-0 w-full h-full object-cover"
           fetchPriority="high"
-          decoding="sync"
+          decoding="async"
           width={800}
           height={420}
         />
