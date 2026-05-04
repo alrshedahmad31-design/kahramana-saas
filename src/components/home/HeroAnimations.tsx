@@ -10,7 +10,10 @@ export default function HeroAnimations() {
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-    const targets = ['.hero-eyebrow', '.hero-title-part-1', '.hero-title-part-2', '.hero-cta']
+    // Titles are NOT animated — any JS-animated property on the LCP element
+    // causes Chrome to defer LCP to animation completion. Eyebrow + CTA are
+    // small non-LCP elements and animate fine.
+    const targets = ['.hero-eyebrow', '.hero-cta']
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
@@ -19,12 +22,8 @@ export default function HeroAnimations() {
           gsap.set(targets, { willChange: 'auto', clearProps: 'willChange' })
         },
       })
-      // Titles: y-only — opacity is NOT animated so LCP fires at FCP regardless of GSAP timing
-      tl.to('.hero-title-part-1', { y: 0 }, 0)
-      tl.to('.hero-title-part-2', { y: 0 }, 0.1)
-      // Eyebrow + CTA: small elements, opacity fade is fine
-      tl.to('.hero-eyebrow', { opacity: 1 }, 0.2)
-      tl.to('.hero-cta',     { opacity: 1, y: 0 }, 0.3)
+      tl.to('.hero-eyebrow', { opacity: 0.8 }, 0.2)
+      tl.to('.hero-cta',     { opacity: 1, y: 0 }, 0.4)
     })
 
     return () => ctx.revert()

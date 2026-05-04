@@ -65,26 +65,16 @@
   }
 }
 
-/* Hero titles: visible from SSR — Chrome records LCP at FCP (1.2s), not at GSAP fire time.
-   The 800×420 hero image has a large upscale penalty (effective area = intrinsic = 336k px²),
-   making h1 text the likely LCP candidate. Hiding titles behind opacity:0 caused 4.4s LCP
-   when GSAP fired late (mobile 4x CPU = GSAP fires at ~3s). */
-.hero-title-part-1,
-.hero-title-part-2 {
-  transform: translateY(16px);
-}
-
-/* Eyebrow and CTA: small elements — opacity:0 is fine, they don't affect LCP */
+/* Hero titles: no CSS/GSAP animation — static visible from SSR.
+   Any animated property on the LCP element (transform OR opacity) causes Chrome
+   to defer LCP to when the animation settles, even if the element is technically
+   visible earlier. Eyebrow + CTA are small non-LCP elements; they animate fine. */
 .hero-eyebrow,
 .hero-cta {
   opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-title-part-1,
-  .hero-title-part-2 {
-    transform: none;
-  }
   .hero-eyebrow,
   .hero-cta {
     opacity: 1;
