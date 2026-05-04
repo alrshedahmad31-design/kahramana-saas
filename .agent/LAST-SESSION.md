@@ -1,96 +1,96 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 55
+**Session ID**: 57
 **Date**: 2026-05-04
-**Focus**: SEO priority fixes (7 issues) + Performance audit fixes + SEO/GEO re-audit fixes
+**Focus**: LCP + CLS root cause diagnosis and fixes (commit `902f213`)
 
 ---
 
 ## Summary
 
-Three work streams completed and deployed (pushed to master, Vercel deploying).
+Diagnosed 2 independent root causes for LCP=4.1s and 1 for CLS=0.151. All 3 fixed in one commit.
 
 ---
 
-## Stream 1 — SEO Priority Fixes (7 issues)
+## Root Causes Discovered
 
-**Commit**: `d814332`
+### LCP = 4.1s
 
-1. `src/app/page.tsx`: Removed `redirect('/ar')` — conflicted with next-intl as-needed routing. Now returns `notFound()`.
-2. Contact canonical: `/${locale}/contact` → locale-aware (`/contact` for AR, `/en/contact` for EN).
-3. Sitemap: Removed noindex pages `/privacy` and `/terms`. Kept `/refund-policy`.
-4. Schema: Removed unconfirmed qallali aggregate rating; `foundingDate: '2018-08-01'` → `'2018'`; removed "across Bahrain delivery" and "private cabins" from description.
-5. Menu `[slug]/generateStaticParams`: Removed `getItemSlugs()` — item slugs generated noindex redirect stubs.
-6. Analytics (`src/lib/gtag.ts`): New utility with `view_item`, `add_to_cart`, `begin_checkout`, `whatsapp_click`, `generate_lead`. Wired into AddToCartButton, CheckoutForm, ContactForm, inquiry-form, item-detail-hero.
-7. Footer: Added Contact and Refund Policy links to navigation column.
+#### Cause A: Hero preload arrives late in SSR stream
+`<link rel="preload">` was inside `CinematicHero` (async Server Component). In Next.js 15 streaming SSR, async components resolve after the initial `<head>` bytes are sent. The preload hint arrived late in the stream — AFTER the browser's preload scanner already finished its pass. Image was discovered only via body HTML parsing (~1s later).
 
----
+**Fix**: Moved preload to `HeroWrapper` (synchronous Server Component). Sync components are processed before async work begins → preload is guaranteed to be in the initial `<head>` bytes.
 
-## Stream 2 — Performance Optimization
+#### Cause B: Font swap pushing LCP timestamp
+Next.js 15.5.15 does not generate `<link rel="preload" as="font">` tags in the HTML for fonts declared in layouts (only in page-level components). Fonts were discovered late (via CSS parsing), loaded at ~2-3s, and when they swapped, Chrome re-recorded LCP at the swap timestamp.
 
-### First attempt (commit `2d51ba6`) — Mixed results
-- ✓ GA4/Clarity: `afterInteractive` → `lazyOnload` → FCP 1.8s → 1.2s
-- ✗ FeatureArtifacts dynamic import → TBT worsened 200→340ms (deferred chunk executed in TBT window)
-- ✗ `decoding="async"` on hero image → LCP worsened 3.8→4.0s
+For editorialNew specifically: no `adjustFontFallback` was generated (CSS had no `size-adjust`/`ascent-override`). Cairo, Almarai, Satoshi all had it — only editorialNew was missing it. Font swap on large EN hero title (h1 at text-7xl) → Chrome re-recorded LCP at ~4s.
 
-### Correct fix (commit `012cc9f`) — Root cause addressed
-- Reverted FeatureArtifacts to static import (fixes TBT regression)
-- Reverted `decoding="sync"` on hero image (fixes LCP regression)
-- **New**: `HeroAnimationsLoader.tsx` — thin 'use client' wrapper that dynamic-imports HeroAnimations with `ssr: false`. Removes GSAP (~30KB) from critical JS bundle.
-- **New**: CSS `opacity: 0` in globals.css for `.hero-eyebrow`, `.hero-title-part-1`, `.hero-title-part-2`, `.hero-cta` + 3s CSS fallback animation. Replaces `gsap.set(opacity:0)` synchronous call.
-- HeroAnimations: removed synchronous `gsap.set()`, added `prefers-reduced-motion` guard.
+**Fix**: Added `adjustFontFallback: "Times New Roman"` to editorialNew. Generates fallback @font-face with `size-adjust:97.60%`, `ascent-override:90.16%`, `line-gap-override:10.25%`. Text block dimensions now stay identical through the swap → Chrome doesn't re-record LCP.
 
-**Expected**: TBT ~130ms (was 340ms before, 200ms baseline), LCP ~3.8s, FCP 1.2s.
+### CLS = 0.151
+
+**Cause**: Same as LCP Cause B — editorialNew lacked size-adjust CSS for its fallback. Large h1 text on EN pages swapped dimensions when font loaded → layout shift.
+
+**Fix**: Same — `adjustFontFallback: "Times New Roman"` now generates the correct CSS.
 
 ---
 
-## Stream 3 — SEO/GEO Re-audit Fixes (commit `c4ea92f`)
+## Secondary Fix
 
-**H2** (false alarm): gtag IS wired — 5 components import and use it.
+- Changed `decoding="sync"` → `decoding="async"` on hero `<img>`. `decoding="sync"` forces main-thread decode and can block compositing under Lighthouse 4× CPU throttle. `async` allows background thread decode while main thread runs hydration/GSAP.
 
-**H3**: Privacy + Terms Arabic canonicals fixed:
-- Before: `${SITE_URL}/${locale}/privacy` → produced `/ar/privacy`
-- After: locale-aware → `/privacy` (AR) / `/en/privacy` (EN). Added `x-default`.
-
-**H4**: Refund policy:
-- Added `robots: { index: true, follow: true }` (aligns with sitemap inclusion)
-- Added explicit canonical: `/refund-policy` (AR) / `/en/refund-policy` (EN)
-
-**M1**: Menu `[slug]/generateMetadata` — removed unreachable item-slug noindex branch. Runtime redirect in page body kept as safety net.
-
-**M2**: `public/llms.txt` cleaned:
-- Removed "August" from founding date → "2018" only
-- Removed "widely regarded as one of Bahrain's best" (unconfirmed superlative)
-- Removed "private cabins" claim
-- Changed "across Bahrain delivery" → "nearby areas — contact branch to confirm"
-
-**M3**: `buildPlannedBranchSchema`: Downgraded type from `LocalBusiness` → `Thing`, removed address/locality. Non-open branch as LocalBusiness with address can mislead Maps/Knowledge Graph.
+- Reordered editorialNew src: Bold (700) first → Bold is now the preloaded `.p.woff2` variant (hero title on EN uses `font-bold`).
 
 ---
 
-## Phase Gates (session 55)
-- `npx tsc --noEmit`: PASS — 0 errors (src only)
-- `npm run build`: PASS — 520 static pages, 0 errors
-- RTL violations: PASS (spot checked changed files)
-- Hardcoded phones/wa.me: PASS
-- `git push origin master`: PASS — Vercel deploy triggered
+## Commits This Session
+
+| Commit | Change |
+|--------|--------|
+| `902f213` | preload timing fix + editorialNew adjustFontFallback + decoding async |
+
+---
+
+## Current State (after session 57)
+
+**HeroWrapper.tsx**:
+- Has `<link rel="preload" as="image" href="/assets/hero/hero-poster.webp" fetchPriority="high" />` in sync Server Component
+
+**CinematicHero.tsx**:
+- Preload link removed (moved to HeroWrapper)
+- `decoding="async"` on hero img
+
+**layout.tsx** (editorialNew):
+- `adjustFontFallback: 'Times New Roman'` ← new
+- Bold first in src array ← new
+
+**CSS verification (d8ab2e66c56022d1.css)**:
+```
+editorialNew Fallback: src:local("Times New Roman"); size-adjust:97.60%; ascent-override:90.16%; descent-override:30.74%; line-gap-override:10.25%
+```
+
+---
+
+## Expected Metrics After Deploy
+
+- **LCP**: ~1.2–1.8s (FCP≈LCP if image preload works correctly)
+- **CLS**: ~0.05–0.08 (size-adjust eliminates editorialNew swap CLS; Cairo/Satoshi already had it)
+- **Performance score**: 90+
 
 ---
 
 ## Remaining / Pending
 
-1. **C1 (production drift)**: Pushed. Verify live site after Vercel deploy completes.
-2. **L1**: Verify `https://kahramanat.com/sitemap.xml` reflects 386 expected URLs after deploy.
-3. **L2**: Verify live `/`, `/ar`, `/en` routing behavior after deploy.
-4. **M4**: Trailing slash on `/en/menu` — investigate Vercel redirect config after deploy.
-5. **H1**: Schema Riffa rating (4.5/1531) and Talabat URL remain — these are confirmed facts, leaving as-is unless owner requests removal. `priceRange: '$$'` also remains.
-6. **Performance**: Run Lighthouse again after deploy to confirm TBT improvement from GSAP lazy-load.
+1. **Run Lighthouse after Vercel deploy** to confirm improvements
+2. **Hero image replacement** (HIGH PRIORITY from session 56): `hero-poster.webp` is 800×420px — too small for a full-screen hero. Replace with 1920×1080 WebP.
+3. **Font preloads missing from HTML** (MEDIUM): Next.js 15.5.15 does not auto-generate `<link rel="preload" as="font">` for layout-level fonts. All fonts are discovered via CSS. If LCP is still driven by font swap after this session's fixes, consider adding explicit preload hints to layout `<head>` (but requires hardcoding hashed filenames).
+4. **Previous session L1/L2/M4**: sitemap, routing, trailing slash — still pending verification.
 
 ---
 
 ## Key Decisions
 
-1. Kept `getMenuItemBySlug` + runtime redirect in `menu/[slug]/page.tsx` as safety net for direct URL access even though `generateStaticParams` no longer generates item slugs.
-2. `buildPlannedBranchSchema` → `Thing` type (not `LocalBusiness`) to prevent Maps confusion for non-open location.
-3. FeatureArtifacts MUST stay static import — dynamic import pushes its chunk execution into TBT window, worsening TBT. framer-motion is already in the bundle via Footer anyway.
-4. `lazyOnload` for GA4/Clarity is correct and kept — significantly helped FCP.
+1. **adjustFontFallback: "Times New Roman"** for editorialNew — serif system font gives the closest metric profile for an editorial serif font.
+2. **Preload in sync wrapper, not layout** — avoids preloading hero image on all pages (branches, menu, about, etc.).
+3. **decoding="async" not "sync"** — sync was added in session 56 as a performance hint but actually hurts on throttled CPUs by blocking the main thread.
