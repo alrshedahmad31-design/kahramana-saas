@@ -13,6 +13,11 @@
     scrollbar-gutter: stable;
   }
 
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   /* Scoped separately so it never appears as an inline style during initial
      paint -- GSAP ScrollTrigger detects global scroll-behavior and writes an
      inline override on <html>, which was the source of CLS 0.151.

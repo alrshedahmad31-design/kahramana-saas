@@ -15,12 +15,13 @@ export default async function CinematicHero() {
           <Image
             src="/assets/hero/hero-poster.webp"
             alt={t('visualAlt')}
-            fill
+            width={1920}
+            height={1080}
             priority
             fetchPriority="high"
             sizes="100vw"
             quality={78}
-            className="object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />
