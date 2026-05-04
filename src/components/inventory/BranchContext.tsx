@@ -34,16 +34,20 @@ interface Props {
 export function BranchProvider({ children, branches, defaultBranchId, isGlobal }: Props) {
   const [selectedBranchId, setSelected] = useState<string | null>(() => {
     if (!isGlobal) return defaultBranchId
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(LS_KEY)
-      if (stored && branches.some(b => b.id === stored)) return stored
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem(LS_KEY)
+        if (stored && branches.some(b => b.id === stored)) return stored
+      }
+    } catch {
+      // localStorage unavailable (Safari private, storage quota)
     }
     return defaultBranchId
   })
 
   useEffect(() => {
     if (isGlobal && selectedBranchId) {
-      localStorage.setItem(LS_KEY, selectedBranchId)
+      try { localStorage.setItem(LS_KEY, selectedBranchId) } catch { /* quota/private */ }
     }
   }, [isGlobal, selectedBranchId])
 
