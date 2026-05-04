@@ -21,8 +21,8 @@ export default async function CinematicHero() {
           priority
           fetchPriority="high"
           decoding="sync"
-          quality={85}
-          className="object-cover scale-110"
+          quality={75}
+          className="object-cover"
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
