@@ -65,22 +65,27 @@
   }
 }
 
-/* Hero animation targets: start hidden so GSAP can animate them in.
-   CSS sets opacity:0 to prevent FOUC before GSAP fires.
-   GSAP overrides via inline styles. No CSS animation fallback — the
-   animation cascade level (5) overrides GSAP inline styles (level 6)
-   which caused a 3.7s LCP regression when the fallback fired at t=3s. */
-.hero-eyebrow,
+/* Hero titles: visible from SSR — Chrome records LCP at FCP (1.2s), not at GSAP fire time.
+   The 800×420 hero image has a large upscale penalty (effective area = intrinsic = 336k px²),
+   making h1 text the likely LCP candidate. Hiding titles behind opacity:0 caused 4.4s LCP
+   when GSAP fired late (mobile 4x CPU = GSAP fires at ~3s). */
 .hero-title-part-1,
-.hero-title-part-2,
+.hero-title-part-2 {
+  transform: translateY(16px);
+}
+
+/* Eyebrow and CTA: small elements — opacity:0 is fine, they don't affect LCP */
+.hero-eyebrow,
 .hero-cta {
   opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-eyebrow,
   .hero-title-part-1,
-  .hero-title-part-2,
+  .hero-title-part-2 {
+    transform: none;
+  }
+  .hero-eyebrow,
   .hero-cta {
     opacity: 1;
   }
