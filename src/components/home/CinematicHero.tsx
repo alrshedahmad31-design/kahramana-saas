@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import { getTranslations, getLocale } from 'next-intl/server'
 import CinematicButton from '@/components/ui/CinematicButton'
 import HeroAnimationsLoader from './HeroAnimationsLoader'
@@ -11,19 +10,21 @@ export default async function CinematicHero() {
   // h-screen (100vh) instead of 100svh: svh recalculates on mobile browser
   // chrome resize, causing CLS. 100vh is stable on all tested devices.
   return (
+    <>
+    {/* Preload hoisted to <head> by React 19 float — bypasses _next/image AVIF cold-generation */}
+    <link rel="preload" as="image" href="/assets/hero/hero-poster.webp" fetchPriority="high" />
     <section className="relative h-screen w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
-      {/* LCP image: priority + fetchPriority ensure early browser discovery */}
+      {/* LCP image: served from static CDN (immutable), no _next/image AVIF overhead */}
       <div className="absolute inset-0 z-0">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/assets/hero/hero-poster.webp"
           alt={t('visualAlt')}
-          fill
-          priority
+          className="absolute inset-0 w-full h-full object-cover"
           fetchPriority="high"
           decoding="sync"
-          quality={75}
-          className="object-cover"
-          sizes="100vw"
+          width={800}
+          height={420}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />
@@ -75,5 +76,6 @@ export default async function CinematicHero() {
         <div className="w-px h-12 bg-gradient-to-b from-brand-gold to-transparent" />
       </div>
     </section>
+    </>
   )
 }
