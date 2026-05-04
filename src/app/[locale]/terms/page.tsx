@@ -14,9 +14,10 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: true,
     },
     alternates: {
-      canonical: `${SITE_URL}/${locale}/terms`,
+      canonical: locale === 'ar' ? `${SITE_URL}/terms` : `${SITE_URL}/en/terms`,
       languages: {
-        ar: `${SITE_URL}/ar/terms`,
+        'x-default': `${SITE_URL}/terms`,
+        ar: `${SITE_URL}/terms`,
         en: `${SITE_URL}/en/terms`,
       },
     },

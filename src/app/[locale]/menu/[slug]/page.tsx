@@ -29,21 +29,6 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params
   const category = getMenuCategoryBySlug(slug)
-  const item = getMenuItemBySlug(slug)
-
-  if (item && !category) {
-    const itemPath =
-      locale === 'ar' ? `/menu/item/${item.slug}` : `/en/menu/item/${item.slug}`
-    return {
-      alternates: {
-        canonical: itemPath,
-      },
-      robots: {
-        index: false,
-        follow: true,
-      },
-    }
-  }
 
   if (!category) return {}
 

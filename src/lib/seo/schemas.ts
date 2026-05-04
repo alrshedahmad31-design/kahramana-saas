@@ -131,7 +131,7 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
 export function buildPlannedBranchSchema(branch: Branch, locale: Locale) {
   return {
     '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
+    '@type': 'Thing',
     '@id': `${SITE}/#branch-${branch.id}-planned`,
     name: localized(
       locale,
@@ -143,11 +143,6 @@ export function buildPlannedBranchSchema(branch: Branch, locale: Locale) {
       'فرع جديد قيد الافتتاح — لم يبدأ تقديم الخدمة بعد.',
       'New branch coming soon — not yet open for service.',
     ),
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: localized(locale, branch.cityAr, branch.cityEn),
-      addressCountry:  'BH',
-    },
     url: `${SITE}/${locale === 'en' ? 'en/' : ''}branches`,
   }
 }

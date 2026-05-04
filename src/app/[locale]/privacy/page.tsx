@@ -13,9 +13,10 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: true,
     },
     alternates: {
-      canonical: `${SITE_URL}/${locale}/privacy`,
+      canonical: locale === 'ar' ? `${SITE_URL}/privacy` : `${SITE_URL}/en/privacy`,
       languages: {
-        ar: `${SITE_URL}/ar/privacy`,
+        'x-default': `${SITE_URL}/privacy`,
+        ar: `${SITE_URL}/privacy`,
         en: `${SITE_URL}/en/privacy`,
       },
     },

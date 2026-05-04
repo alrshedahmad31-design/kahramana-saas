@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
-import { BRANCH_LIST, GENERAL_CONTACT } from '@/constants/contact'
+import { BRANCH_LIST, GENERAL_CONTACT, SITE_URL } from '@/constants/contact'
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
@@ -8,8 +8,14 @@ export async function generateMetadata(): Promise<Metadata> {
     title: locale === 'ar'
       ? 'سياسة الإلغاء والاسترداد — كهرمانة بغداد'
       : 'Cancellation & Refund Policy — Kahramana Baghdad',
+    robots: { index: true, follow: true },
     alternates: {
-      languages: { ar: '/refund-policy', en: '/en/refund-policy' },
+      canonical: locale === 'ar' ? `${SITE_URL}/refund-policy` : `${SITE_URL}/en/refund-policy`,
+      languages: {
+        'x-default': `${SITE_URL}/refund-policy`,
+        ar: `${SITE_URL}/refund-policy`,
+        en: `${SITE_URL}/en/refund-policy`,
+      },
     },
   }
 }
