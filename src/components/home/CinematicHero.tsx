@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { getTranslations, getLocale } from 'next-intl/server'
 import CinematicButton from '@/components/ui/CinematicButton'
-import HeroAnimations from './HeroAnimations'
+import HeroAnimationsLoader from './HeroAnimationsLoader'
 
 export default async function CinematicHero() {
   const locale = await getLocale() as 'ar' | 'en'
@@ -20,7 +20,7 @@ export default async function CinematicHero() {
           fill
           priority
           fetchPriority="high"
-          decoding="async"
+          decoding="sync"
           quality={85}
           className="object-cover scale-110"
           sizes="100vw"
@@ -65,8 +65,8 @@ export default async function CinematicHero() {
         </div>
       </div>
 
-      {/* GSAP animations isolated in a Client Component -- never blocks LCP paint */}
-      <HeroAnimations />
+      {/* GSAP animations: loaded lazily via HeroAnimationsLoader (ssr:false dynamic) */}
+      <HeroAnimationsLoader />
 
       <div className="absolute bottom-10 start-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-50">
         <span className="text-[10px] font-bold tracking-widest uppercase text-brand-gold [writing-mode:vertical-rl]">

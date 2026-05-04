@@ -65,6 +65,33 @@
   }
 }
 
+/* Hero animation targets: start hidden so GSAP can animate them in.
+   Previously done via gsap.set() (synchronous, in the TBT window).
+   CSS avoids the FOUC without any JavaScript. GSAP overrides via
+   inline styles when it animates; the 3s fallback reveals elements
+   on slow connections or when JS is delayed. */
+.hero-eyebrow,
+.hero-title-part-1,
+.hero-title-part-2,
+.hero-cta {
+  opacity: 0;
+  animation: hero-reveal 0.6s ease 3s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-eyebrow,
+  .hero-title-part-1,
+  .hero-title-part-2,
+  .hero-cta {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+@keyframes hero-reveal {
+  to { opacity: 1; }
+}
+
 @layer utilities {
   .rounded-premium {
     border-radius: 2.5rem;

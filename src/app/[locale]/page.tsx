@@ -12,10 +12,8 @@ import {
   buildNavigationSchema,
 } from '@/lib/seo/schemas'
 
-// FeatureArtifacts uses framer-motion heavily — dynamic import prevents it from
-// joining the initial JS bundle and pushing framer-motion into the critical path.
-// ssr: true keeps the SSR HTML (no layout shift); only the JS chunk is deferred.
-const FeatureArtifacts     = dynamic(() => import('@/components/home/FeatureArtifacts'))
+import FeatureArtifacts from '@/components/home/FeatureArtifacts'
+
 const PhilosophyManifesto  = dynamic(() => import('@/components/home/PhilosophyManifesto'))
 const ProtocolStack        = dynamic(() => import('@/components/home/ProtocolStack'))
 const HomeFAQ              = dynamic(() => import('@/components/home/HomeFAQ'))
