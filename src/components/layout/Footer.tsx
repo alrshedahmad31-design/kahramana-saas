@@ -28,7 +28,7 @@ export default function Footer() {
     <footer className="relative bg-brand-black pt-20 overflow-hidden border-t border-brand-border/50">
       {/* ── Luxury Background Elements ────────────────────────────────────── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[500px] bg-brand-gold/5 blur-[120px] rounded-[100%]" />
+        <div className="absolute bottom-0 start-1/2 -translate-x-1/2 w-[120%] h-[500px] bg-brand-gold/5 blur-[120px] rounded-[100%]" />
         <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/[0.04] via-transparent to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent" />
       </div>

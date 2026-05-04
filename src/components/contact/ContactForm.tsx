@@ -164,7 +164,7 @@ export default function ContactForm() {
                 </option>
               ))}
             </select>
-            <div className={`absolute top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${isAr ? 'left-4' : 'right-4'}`}>
+            <div className="absolute top-1/2 end-4 -translate-y-1/2 pointer-events-none transition-colors">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-brand-muted group-hover:text-brand-gold">
                 <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>

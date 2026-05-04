@@ -409,6 +409,13 @@
       "title": "Best Iraqi Cuisine in Bahrain",
       "description": "Experience the authenticity of Baghdadi cuisine with over 168 carefully selected items. From the famous Iraqi Masgouf and mixed grills to Quzi and Baghdadi breakfast, we offer a unique dining experience at our Riffa and Qalali branches. Kahramana Baghdad is your premier destination for authentic Iraqi food in the Kingdom of Bahrain."
     },
+    "featured": {
+      "title": "Chef's Recommendations",
+      "description": "Signature dishes carefully selected by our kitchen team for Kahramana guests.",
+      "bestseller": "Bestseller",
+      "previous": "Show previous recommendations",
+      "next": "Show next recommendations"
+    },
     "filter": {
       "ariaLabel": "Filter menu",
       "search": "Search Menu"
@@ -822,6 +829,7 @@
     "founder": {
       "eyebrow": "Founder's Vision",
       "title": "Eng. Asaad Al-Jubouri",
+      "name_ar": "المهندس أسعد الجبوري",
       "name_en": "Eng. Asaad Al-Jubouri",
       "p1": "Engineer Asaad Al-Jubouri carries a deep passion for detail — the same passion that accompanied him from the world of engineering to the world of taste. For him, food was never merely a business — it was a sincere act of transporting the culture and generosity of Baghdad to Bahrain.",
       "p2": "With the mindset of an engineer who believes that quality is built, not encountered by chance, he designed 'Kahramana Baghdad' to be more than just a restaurant: a space where Iraqi authenticity meets modern taste and refined Bahraini hospitality.",

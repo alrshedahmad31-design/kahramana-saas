@@ -100,7 +100,7 @@ export default function ContactHero({ eyebrow, title, description, imageAlt, isA
       </div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-brand-black to-transparent z-40" />
+      <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-brand-black to-transparent z-40" />
     </div>
   )
 }

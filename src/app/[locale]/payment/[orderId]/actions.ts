@@ -3,6 +3,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { getSession } from '@/lib/auth/session'
+import { appendOrderAccessToken, verifyOrderAccessToken } from '@/lib/auth/order-access'
 import { generateStaticQR } from '@/lib/payments/benefit'
 import { createCharge } from '@/lib/payments/tap-client'
 import type { Json, PaymentMethod, PaymentStatus } from '@/lib/supabase/custom-types'
@@ -25,7 +26,10 @@ type Authorized =
   | { ok: true;  order: { id: string; total_bhd: number; customer_phone: string | null } }
   | { ok: false; error: string }
 
-async function authorizeOrderAccess(orderId: string): Promise<Authorized> {
+async function authorizeOrderAccess(
+  orderId: string,
+  accessToken?: string | null,
+): Promise<Authorized> {
   const supabase = await createServiceClient()
 
   const { data: order, error } = await supabase
@@ -35,6 +39,11 @@ async function authorizeOrderAccess(orderId: string): Promise<Authorized> {
     .maybeSingle()
 
   if (error || !order) return { ok: false, error: 'Order not found' }
+
+  // Path 0 — guest checkout link with a server-signed order capability token
+  if (verifyOrderAccessToken(orderId, accessToken)) {
+    return { ok: true, order }
+  }
 
   // Path 1 — staff with active profile
   const staff = await getSession()
@@ -55,7 +64,10 @@ async function authorizeOrderAccess(orderId: string): Promise<Authorized> {
   return { ok: false, error: 'Forbidden' }
 }
 
-async function authorizeByPaymentId(paymentId: string): Promise<Authorized> {
+async function authorizeByPaymentId(
+  paymentId: string,
+  accessToken?: string | null,
+): Promise<Authorized> {
   const supabase = await createServiceClient()
 
   const { data: payment } = await supabase
@@ -65,7 +77,7 @@ async function authorizeByPaymentId(paymentId: string): Promise<Authorized> {
     .maybeSingle()
 
   if (!payment?.order_id) return { ok: false, error: 'Payment not found' }
-  return authorizeOrderAccess(payment.order_id)
+  return authorizeOrderAccess(payment.order_id, accessToken)
 }
 
 // ── Public actions ────────────────────────────────────────────────────────────
@@ -76,8 +88,9 @@ export async function initializePayment(
   orderId:   string,
   method:    PaymentMethod,
   _amountBHD: number, // kept for API compatibility; ignored — server uses DB value
+  accessToken?: string | null,
 ): Promise<InitPaymentResult> {
-  const auth = await authorizeOrderAccess(orderId)
+  const auth = await authorizeOrderAccess(orderId, accessToken)
   if (!auth.ok) return { paymentId: '', error: auth.error }
 
   const amountBHD = Number(auth.order.total_bhd)
@@ -144,8 +157,9 @@ export async function completeCashPayment(
 // webhook (Phase 7+) will replace this with verified gateway events.
 export async function confirmBenefitPayment(
   paymentId: string,
+  accessToken?: string | null,
 ): Promise<{ error?: string }> {
-  const auth = await authorizeByPaymentId(paymentId)
+  const auth = await authorizeByPaymentId(paymentId, accessToken)
   if (!auth.ok) return { error: auth.error }
 
   const supabase = await createServiceClient()
@@ -167,11 +181,23 @@ export async function initiateTapPayment(
   _customerName:  string | null,
   _customerPhone: string | null,
   locale:         string,
+  accessToken?:   string | null,
 ): Promise<{ checkoutUrl?: string; error?: string }> {
-  const auth = await authorizeOrderAccess(orderId)
+  const auth = await authorizeOrderAccess(orderId, accessToken)
   if (!auth.ok) return { error: auth.error }
 
   const supabase = await createServiceClient()
+
+  const { data: payment } = await supabase
+    .from('payments')
+    .select('id, order_id')
+    .eq('id', paymentId)
+    .eq('order_id', orderId)
+    .maybeSingle()
+
+  if (!payment) {
+    return { error: 'Payment not found' }
+  }
 
   // Re-fetch the canonical name + phone from the DB (never trust the client)
   const { data: orderRow } = await supabase
@@ -189,7 +215,7 @@ export async function initiateTapPayment(
   }
 
   const siteUrl     = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kahramanat.com'
-  const redirectUrl = `${siteUrl}/${locale}/order/${orderId}`
+  const redirectUrl = appendOrderAccessToken(`${siteUrl}/${locale}/order/${orderId}`, accessToken)
 
   try {
     const charge = await createCharge({
@@ -211,6 +237,7 @@ export async function initiateTapPayment(
         gateway_response:       charge as unknown as Json,
       })
       .eq('id', paymentId)
+      .eq('order_id', orderId)
 
     return { checkoutUrl: charge.transaction.url }
   } catch (err) {
@@ -222,6 +249,7 @@ export async function initiateTapPayment(
         gateway_response: { error: msg } as unknown as Json,
       })
       .eq('id', paymentId)
+      .eq('order_id', orderId)
     return { error: msg }
   }
 }
@@ -229,8 +257,9 @@ export async function initiateTapPayment(
 // Polls current payment status for an order
 export async function getPaymentStatus(
   orderId: string,
+  accessToken?: string | null,
 ): Promise<{ status: PaymentStatus | null; paymentId: string | null }> {
-  const auth = await authorizeOrderAccess(orderId)
+  const auth = await authorizeOrderAccess(orderId, accessToken)
   if (!auth.ok) return { status: null, paymentId: null }
 
   const supabase = await createServiceClient()

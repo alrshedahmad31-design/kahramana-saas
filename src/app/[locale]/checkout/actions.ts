@@ -6,6 +6,7 @@ import { getCustomerSession } from '@/lib/auth/customerSession'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
 import { calculateDiscount } from '@/lib/coupons/calculations'
+import { createOrderAccessToken } from '@/lib/auth/order-access'
 import type { PointsTransactionInsert, CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
 
 // ── Server-side input validation ──────────────────────────────────────────────
@@ -100,6 +101,7 @@ interface StockWarning {
 interface CheckoutResult {
   orderId:       string
   finalTotal:    number
+  accessToken?:  string
   error?:        string
   stock_warnings?: StockWarning[]
 }
@@ -399,7 +401,12 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       await recordCouponUsage(supabase, resolvedCouponId, customer.id, order.id, serverCouponDiscount)
     }
 
-    return { orderId: order.id, finalTotal, stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined }
+    return {
+      orderId: order.id,
+      finalTotal,
+      accessToken: createOrderAccessToken(order.id),
+      stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined,
+    }
   }
 
   // ── Standard path (coupon only, no points) ────────────────────────────────
@@ -431,7 +438,12 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     await recordCouponUsage(supabase, resolvedCouponId, customerSession?.id ?? null, order.id, serverCouponDiscount)
   }
 
-  return { orderId: order.id, finalTotal, stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined }
+  return {
+    orderId: order.id,
+    finalTotal,
+    accessToken: createOrderAccessToken(order.id),
+    stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined,
+  }
 } catch (err) {
   return {
     orderId: '',

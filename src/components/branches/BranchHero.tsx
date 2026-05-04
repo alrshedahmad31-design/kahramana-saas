@@ -108,7 +108,7 @@ export default function BranchHero({ branchName, description, branchId, isAr }: 
       </div>
 
       {/* Luxury Detail */}
-      <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
     </section>
   )
 }

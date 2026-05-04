@@ -324,7 +324,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       setStockWarnings(result.stock_warnings.map(w => w.name_ar))
     }
 
-    return { orderId: result.orderId, values, deliveryAddress }
+    return { orderId: result.orderId, accessToken: result.accessToken ?? null, values, deliveryAddress }
   }
 
   // ── Submit via WhatsApp ────────────────────────────────────────────────────
@@ -338,7 +338,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       const res = await validateAndCreate()
       if (!res) return
 
-      const { orderId, values } = res
+      const { orderId, accessToken, values } = res
       const shortOrderId = orderId.slice(-8).toUpperCase()
       const waLink = buildWhatsAppCheckoutLink(items, values.branchId, {
         customerName:  values.customerName,
@@ -346,12 +346,12 @@ export default function CheckoutForm({ customerProfile }: Props) {
         address:       res.deliveryAddress ?? undefined,
         notes:         values.notes,
         orderNumber:   shortOrderId,
-        trackingUrl:   buildOrderTrackingUrl(orderId, locale),
+        trackingUrl:   buildOrderTrackingUrl(orderId, locale, accessToken),
       })
 
       window.open(waLink, '_blank', 'noopener,noreferrer')
       clearCart()
-      router.push(`/payment/${orderId}`)
+      router.push(`/payment/${orderId}${accessToken ? `?t=${encodeURIComponent(accessToken)}` : ''}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)
@@ -370,7 +370,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       if (!res) return
 
       clearCart()
-      router.push(`/payment/${res.orderId}`)
+      router.push(`/payment/${res.orderId}${res.accessToken ? `?t=${encodeURIComponent(res.accessToken)}` : ''}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)

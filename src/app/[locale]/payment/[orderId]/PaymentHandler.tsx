@@ -20,11 +20,16 @@ interface Props {
   customerName:      string | null
   customerPhone:     string | null
   locale:            string
+  accessToken:       string | null
   existingPaymentId: string | null
   existingMethod:    PaymentMethod | null
 }
 
 type UIState = 'selecting' | 'confirming' | 'qr' | 'redirecting' | 'error'
+
+function withAccessToken(path: string, accessToken: string | null): string {
+  return accessToken ? `${path}?t=${encodeURIComponent(accessToken)}` : path
+}
 
 export default function PaymentHandler({
   orderId,
@@ -33,6 +38,7 @@ export default function PaymentHandler({
   customerName,
   customerPhone,
   locale,
+  accessToken,
   existingPaymentId,
   existingMethod,
 }: Props) {
@@ -50,10 +56,10 @@ export default function PaymentHandler({
     setUiState('confirming')
     setError(null)
 
-    const result = await initializePayment(orderId, method, amountBHD)
+    const result = await initializePayment(orderId, method, amountBHD, accessToken)
 
     if (result.error === 'already_completed') {
-      router.push(`/order/${orderId}`)
+      router.push(withAccessToken(`/order/${orderId}`, accessToken))
       return
     }
     if (!result.paymentId) {
@@ -69,7 +75,7 @@ export default function PaymentHandler({
         const { error: err } = await completeCashPayment(result.paymentId)
         if (err) { setError(err); setUiState('error'); return }
         setUiState('redirecting')
-        router.push(`/order/${orderId}`)
+        router.push(withAccessToken(`/order/${orderId}`, accessToken))
         break
       }
 
@@ -89,6 +95,7 @@ export default function PaymentHandler({
           customerName,
           customerPhone,
           locale,
+          accessToken,
         )
         if (err || !checkoutUrl) {
           setError(err ?? tCommon('error'))
@@ -103,14 +110,14 @@ export default function PaymentHandler({
 
   async function handleBenefitPaid() {
     if (!paymentId) throw new Error('No payment ID')
-    const { error: err } = await confirmBenefitPayment(paymentId)
+    const { error: err } = await confirmBenefitPayment(paymentId, accessToken)
     if (err) {
       setError(err)
       setUiState('error')
       throw new Error(err) // propagates to BenefitPayQR to reset its confirming state
     }
     setUiState('redirecting')
-    router.push(`/order/${orderId}`)
+    router.push(withAccessToken(`/order/${orderId}`, accessToken))
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────

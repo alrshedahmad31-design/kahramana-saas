@@ -135,8 +135,8 @@ export default function MenuPageClient({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-brand-gold text-brand-black rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform duration-300"
-            aria-label="Scroll to top"
+            className="fixed bottom-8 end-8 z-50 w-12 h-12 bg-brand-gold text-brand-black rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform duration-300"
+            aria-label={isAr ? 'العودة إلى أعلى الصفحة' : 'Scroll to top'}
           >
             <ChevronUp size={24} />
           </motion.button>
@@ -145,4 +145,3 @@ export default function MenuPageClient({
     </main>
   )
 }
-

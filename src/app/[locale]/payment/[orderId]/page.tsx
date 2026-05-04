@@ -2,11 +2,15 @@ import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getCustomerSession } from '@/lib/auth/customerSession'
+import { getSession } from '@/lib/auth/session'
+import { appendOrderAccessToken, verifyOrderAccessToken } from '@/lib/auth/order-access'
 import PaymentHandler from './PaymentHandler'
 import type { PaymentMethod } from '@/lib/supabase/custom-types'
 
 interface Props {
   params: Promise<{ locale: string; orderId: string }>
+  searchParams?: Promise<{ t?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -18,8 +22,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function PaymentPage({ params }: Props) {
+export default async function PaymentPage({ params, searchParams }: Props) {
   const { locale, orderId } = await params
+  const accessToken = (await searchParams)?.t ?? null
   
   try {
     const supabase = await createServiceClient()
@@ -36,6 +41,17 @@ export default async function PaymentPage({ params }: Props) {
       notFound()
     }
 
+    const staff = await getSession()
+    const customer = await getCustomerSession()
+    const isAuthorized =
+      Boolean(staff?.role) ||
+      verifyOrderAccessToken(orderId, accessToken) ||
+      Boolean(customer?.phone && order.customer_phone && customer.phone === order.customer_phone)
+
+    if (!isAuthorized) {
+      notFound()
+    }
+
     // Fetch existing payment (if any)
     const { data: payment } = await supabase
       .from('payments')
@@ -45,7 +61,7 @@ export default async function PaymentPage({ params }: Props) {
 
     // Already paid → skip to order confirmation
     if (payment?.status === 'completed') {
-      redirect(`/${locale}/order/${orderId}`)
+      redirect(appendOrderAccessToken(`/${locale}/order/${orderId}`, accessToken))
     }
 
     return (
@@ -57,6 +73,7 @@ export default async function PaymentPage({ params }: Props) {
           customerName={order.customer_name}
           customerPhone={order.customer_phone}
           locale={locale}
+          accessToken={accessToken}
           existingPaymentId={payment?.id ?? null}
           existingMethod={(payment?.method as PaymentMethod | null) ?? null}
         />

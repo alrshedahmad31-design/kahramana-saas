@@ -193,7 +193,7 @@ function TelemetryFeed({ isRTL }: { isRTL: boolean }) {
             animate={{
               opacity: isVisible ? 1 : 0.55,
               x: isVisible ? 0 : isRTL ? 5 : -5,
-              // colors.muted (#6B6560) fails WCAG AA on dark bg — use colors.text (#F5F5F5)
+              // The muted token fails WCAG AA on this dark bg; use the primary text token.
               color: isVisible ? colors.gold : colors.text
             }}
             transition={{ duration: 0.5 }}

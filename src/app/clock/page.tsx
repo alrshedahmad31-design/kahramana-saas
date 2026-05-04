@@ -77,7 +77,7 @@ export default function ClockPage() {
   async function handleClockIn() {
     if (!staffState || busy) return
     setBusy(true)
-    const result = await clockIn(staffState.staff.id)
+    const result = await clockIn(staffState.staff.id, pin)
     setBusy(false)
     if (result.success) {
       setDone({ message: 'Clocked in! Have a great shift.' })
@@ -90,7 +90,7 @@ export default function ClockPage() {
   async function handleClockOut() {
     if (!staffState?.activeEntry || busy) return
     setBusy(true)
-    const result = await clockOut(staffState.activeEntry, staffState.staff.id)
+    const result = await clockOut(staffState.activeEntry, staffState.staff.id, pin)
     setBusy(false)
     if (result.success) {
       setDone({ message: 'Clocked out!', hours: result.hoursWorked })

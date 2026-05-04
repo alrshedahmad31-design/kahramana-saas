@@ -4,13 +4,19 @@ import { getTranslations } from 'next-intl/server'
 import { headers } from 'next/headers'
 import { Link } from '@/i18n/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getCustomerSession } from '@/lib/auth/customerSession'
+import { getSession } from '@/lib/auth/session'
+import { verifyOrderAccessToken } from '@/lib/auth/order-access'
 import type { OrderWithItems } from '@/lib/supabase/custom-types'
 import { BRANCHES } from '@/constants/contact'
 import AutoRefresh from '@/components/ui/AutoRefresh'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
-type Props = { params: Promise<{ locale: string; id: string }> }
+type Props = {
+  params: Promise<{ locale: string; id: string }>
+  searchParams?: Promise<{ t?: string }>
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
@@ -23,8 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function OrderConfirmationPage({ params }: Props) {
+export default async function OrderConfirmationPage({ params, searchParams }: Props) {
   const { locale, id } = await params
+  const accessToken = (await searchParams)?.t ?? null
   const isAr = locale === 'ar'
   const t     = await getTranslations('order')
   const tCommon = await getTranslations('common')
@@ -48,6 +55,17 @@ export default async function OrderConfirmationPage({ params }: Props) {
     }
   } catch {
     // Supabase not configured — show generic confirmation below
+  }
+
+  if (order) {
+    const staff = await getSession()
+    const customer = await getCustomerSession()
+    const isAuthorized =
+      Boolean(staff?.role) ||
+      verifyOrderAccessToken(id, accessToken) ||
+      Boolean(customer?.phone && order.customer_phone && customer.phone === order.customer_phone)
+
+    if (!isAuthorized) notFound()
   }
 
   const nonce   = (await headers()).get('x-nonce') ?? undefined

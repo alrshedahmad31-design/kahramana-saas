@@ -72,7 +72,7 @@ export default function StickyFilterBar({
     >
       {/* Scroll container wrapper */}
       <div className="relative flex-1 h-full min-w-0">
-        {/* Left Fade Overlay */}
+        {/* Start Fade Overlay */}
         <AnimatePresence>
           {showStartFade && (
             <motion.div 
@@ -80,7 +80,7 @@ export default function StickyFilterBar({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className={`absolute top-0 bottom-0 z-10 w-12 pointer-events-none 
-                         ${isRTL ? 'right-0 bg-gradient-to-l' : 'left-0 bg-gradient-to-r'} 
+                         ${isRTL ? 'start-0 bg-gradient-to-l' : 'start-0 bg-gradient-to-r'} 
                          from-brand-black to-transparent`} 
             />
           )}
@@ -134,7 +134,7 @@ export default function StickyFilterBar({
           ))}
         </div>
 
-        {/* Right Fade Overlay */}
+        {/* End Fade Overlay */}
         <AnimatePresence>
           {showEndFade && (
             <motion.div 
@@ -142,7 +142,7 @@ export default function StickyFilterBar({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className={`absolute top-0 bottom-0 z-10 w-12 pointer-events-none 
-                         ${isRTL ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l'} 
+                         ${isRTL ? 'end-0 bg-gradient-to-r' : 'end-0 bg-gradient-to-l'} 
                          from-brand-black to-transparent`} 
             />
           )}
@@ -164,4 +164,3 @@ export default function StickyFilterBar({
     </nav>
   )
 }
-

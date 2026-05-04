@@ -15,6 +15,7 @@ interface FeaturedCarouselProps {
 
 export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProps) {
   const isRTL = locale === 'ar'
+  const tMenu = useTranslations('menu')
   const tCommon = useTranslations('common')
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -58,7 +59,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
   return (
     <section className="relative py-12 bg-gradient-to-b from-brand-black via-brand-surface to-brand-black overflow-hidden">
       {/* Cinematic Background Decoration */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute top-0 end-0 w-64 h-64 bg-brand-gold/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
       
       {/* Section Header */}
       <div className="px-6 mb-8 relative z-10" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -67,12 +68,10 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
             <div className="w-12 h-[3px] bg-brand-gold mb-4 rounded-full" />
             <h2 className="font-cairo font-black text-brand-text text-3xl md:text-4xl flex items-center gap-3 tracking-tight">
               <Flame size={28} className="text-brand-gold animate-pulse" />
-              {isRTL ? 'توصيات الشيف' : "Chef's Recommendations"}
+              {tMenu('featured.title')}
             </h2>
             <p className="font-almarai text-brand-muted text-base mt-2 max-w-md">
-              {isRTL 
-                ? 'أطباقنا الأكثر تميزاً وشعبية المختارة بعناية لضيوفنا' 
-                : "Our most distinguished and popular dishes, handpicked for our guests"}
+              {tMenu('featured.description')}
             </p>
           </div>
 
@@ -81,6 +80,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
             <button
               onClick={() => scroll(isRTL ? 'right' : 'left')}
               disabled={isRTL ? !canScrollRight : !canScrollLeft}
+              aria-label={tMenu('featured.previous')}
               className="w-12 h-12 rounded-full border border-brand-border flex items-center justify-center
                          text-brand-text hover:bg-brand-gold hover:text-brand-black hover:border-brand-gold
                          disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300"
@@ -90,6 +90,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
             <button
               onClick={() => scroll(isRTL ? 'left' : 'right')}
               disabled={isRTL ? !canScrollLeft : !canScrollRight}
+              aria-label={tMenu('featured.next')}
               className="w-12 h-12 rounded-full border border-brand-border flex items-center justify-center
                          text-brand-text hover:bg-brand-gold hover:text-brand-black hover:border-brand-gold
                          disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-300"
@@ -141,7 +142,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
                 <div className="absolute top-4 start-4">
                   <span className="flex items-center gap-1.5 bg-brand-gold/90 backdrop-blur-md text-brand-black font-almarai font-bold text-xs px-3 py-1.5 rounded-full shadow-lg">
                     <Flame size={12} />
-                    {isRTL ? 'الأكثر طلباً' : 'Bestseller'}
+                    {tMenu('featured.bestseller')}
                   </span>
                 </div>
 
@@ -180,7 +181,7 @@ export default function FeaturedCarousel({ items, locale }: FeaturedCarouselProp
                 <div className="mt-6 flex items-center gap-2 text-brand-muted group-hover:text-brand-gold transition-colors duration-300">
                   <div className="h-[1px] flex-1 bg-brand-border/50 group-hover:bg-brand-gold/30 transition-colors" />
                   <span className="font-almarai text-xs font-bold">
-                    {isRTL ? 'التفاصيل' : 'Details'}
+                    {tMenu('details')}
                   </span>
                   <ChevronRight size={14} className={isRTL ? 'rotate-180' : ''} />
                 </div>

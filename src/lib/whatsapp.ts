@@ -117,9 +117,13 @@ export function buildCustomerContactLink(customerPhone: string, message?: string
   return buildWaLinkForPhone(customerPhone, message)
 }
 
-export function buildOrderTrackingUrl(orderId: string, locale: string): string {
+export function buildOrderTrackingUrl(
+  orderId: string,
+  locale: string,
+  accessToken?: string | null,
+): string {
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? '').replace(/\/+$/, '')
   const localePrefix = locale === 'en' ? '/en' : ''
-  const path = `${localePrefix}/order/${orderId}`
+  const path = `${localePrefix}/order/${orderId}${accessToken ? `?t=${encodeURIComponent(accessToken)}` : ''}`
   return siteUrl ? `${siteUrl}${path}` : path
 }

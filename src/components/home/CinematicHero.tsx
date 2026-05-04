@@ -68,7 +68,7 @@ export default async function CinematicHero() {
       {/* GSAP animations isolated in a Client Component -- never blocks LCP paint */}
       <HeroAnimations />
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-50">
+      <div className="absolute bottom-10 start-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-50">
         <span className="text-[10px] font-bold tracking-widest uppercase text-brand-gold [writing-mode:vertical-rl]">
           {t('scrollDown')}
         </span>
