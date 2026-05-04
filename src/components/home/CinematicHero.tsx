@@ -20,7 +20,7 @@ export default async function CinematicHero() {
           fill
           priority
           fetchPriority="high"
-          decoding="sync"
+          decoding="async"
           quality={85}
           className="object-cover scale-110"
           sizes="100vw"
