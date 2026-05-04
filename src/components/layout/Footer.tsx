@@ -89,7 +89,7 @@ export default async function Footer() {
                       {isRTL ? branch.nameAr : branch.nameEn}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`w-1 h-1 rounded-full transition-colors duration-500 ${isOpen ? 'bg-brand-success' : 'bg-brand-muted opacity-30'}`} />
+                      <span suppressHydrationWarning className={`w-1 h-1 rounded-full transition-colors duration-500 ${isOpen ? 'bg-brand-success' : 'bg-brand-muted opacity-30'}`} />
                       <p className="text-[10px] text-brand-muted/70 uppercase tracking-wider">
                         {isRTL ? branch.hours.ar : branch.hours.en}
                       </p>

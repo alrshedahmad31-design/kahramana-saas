@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations, useLocale } from 'next-intl'
+import Link from 'next/link'
 import CinematicButton from '@/components/ui/CinematicButton'
 
 export default function NotFound() {
@@ -37,14 +38,13 @@ export default function NotFound() {
         >
           {isAr ? 'تصفح المنيو' : 'Browse Menu'}
         </CinematicButton>
-        <CinematicButton
-          href="/"
-          isRTL={isAr}
-          variant="secondary"
-          className="px-8 py-3.5 text-base font-bold rounded-lg"
+        <Link
+          href="/ar"
+          aria-label={t('goHome')}
+          className="inline-flex items-center justify-center rounded-lg border border-white/10 px-8 py-3.5 text-base font-bold text-brand-text backdrop-blur-md transition-all hover:scale-105 hover:bg-white/5 active:scale-95"
         >
           {t('goHome')}
-        </CinematicButton>
+        </Link>
       </div>
     </div>
   )

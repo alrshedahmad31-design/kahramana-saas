@@ -393,10 +393,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
         className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center px-4"
       >
         <p className={`text-lg font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-          {isAr ? 'سلتك فارغة' : 'Your cart is empty'}
+          {isAr ? 'سلة فارغة' : 'Empty cart'}
         </p>
         <a
           href={isAr ? '/' : '/en'}
+          aria-label={isAr ? 'تصفح المنيو' : 'Browse the menu'}
           className="font-satoshi text-sm text-brand-gold hover:text-brand-gold-light transition-colors duration-150"
         >
           {isAr ? 'تصفح المنيو' : 'Browse the menu'}

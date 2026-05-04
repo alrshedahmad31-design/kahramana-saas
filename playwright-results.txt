@@ -1,0 +1,9 @@
+
+Running 158 tests using 1 worker
+
+  Γ£ÿ    1 tests\kahramana.spec.ts:76:9 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ AR: card titles in HTTP response (server-rendered) (880ms)
+  Γ£ÿ    2 tests\kahramana.spec.ts:76:9 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ AR: card titles in HTTP response (server-rendered) (retry #1) (749ms)
+  Γ£ÿ    3 tests\kahramana.spec.ts:84:9 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ AR: card CTA links in HTTP response (918ms)
+  Γ£ÿ    4 tests\kahramana.spec.ts:84:9 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ AR: card CTA links in HTTP response (retry #1) (788ms)
+  Γ£ÿ    5 tests\kahramana.spec.ts:92:9 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ AR: 3 cards visible on screen (803ms)
+  Γ£ÿ    6 tests\kahramana.spec.ts:92:9 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ AR: 3 cards visible on screen (retry #1) (793ms)
