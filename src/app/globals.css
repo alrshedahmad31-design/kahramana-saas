@@ -65,14 +65,12 @@
   }
 }
 
-/* Hero titles: no CSS/GSAP animation — static visible from SSR.
-   Any animated property on the LCP element (transform OR opacity) causes Chrome
-   to defer LCP to when the animation settles, even if the element is technically
-   visible earlier. Eyebrow + CTA are small non-LCP elements; they animate fine. */
+/* Hero eyebrow + CTA: hidden at SSR, revealed by GSAP after load.
+   NO transform — animating position on a visible element registers as CLS.
+   Opacity-only reveal avoids any layout shift measurement. */
 .hero-eyebrow,
 .hero-cta {
   opacity: 0;
-  transform: translateY(16px);
 }
 
 @media (prefers-reduced-motion: reduce) {

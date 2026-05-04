@@ -61,6 +61,7 @@ const satoshi = localFont({
   ],
   variable: '--satoshi',
   display: 'swap',
+  adjustFontFallback: 'Arial',
 })
 
 // ── Metadata — global fallback; each page defines its own canonical/hreflang ──

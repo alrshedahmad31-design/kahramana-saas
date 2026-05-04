@@ -23,7 +23,7 @@ export default function HeroAnimations() {
         },
       })
       tl.to('.hero-eyebrow', { opacity: 0.8 }, 0.2)
-      tl.to('.hero-cta',     { opacity: 1, y: 0 }, 0.4)
+      tl.to('.hero-cta',     { opacity: 1 },  0.4)
     })
 
     return () => ctx.revert()
