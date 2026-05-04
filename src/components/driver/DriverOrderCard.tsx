@@ -8,6 +8,7 @@ import {
 }                                                             from '@/lib/utils/delivery'
 import { buildCustomerContactLink }                           from '@/lib/whatsapp'
 import IssueReportModal                                       from '@/components/driver/IssueReportModal'
+import { markOrderDelivered }                                 from '@/app/[locale]/dashboard/delivery/actions'
 import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
 import type { BranchId }                                      from '@/constants/contact'
 
@@ -22,6 +23,7 @@ interface Props {
   variant?:      'active' | 'completed'
   onAction?:     (id: string, status: DriverActiveStatus, tipBhd?: number) => Promise<string | null>
   onArrive?:     (id: string) => Promise<string | null>
+  onDelivered?:  (id: string) => void
 }
 
 // ── Urgency config ─────────────────────────────────────────────────────────────
@@ -118,21 +120,18 @@ function formatTime(iso: string): string {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function DriverOrderCard({
-  order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive,
+  order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive, onDelivered,
 }: Props) {
   const [elapsed,       setElapsed]       = useState(() => formatElapsed(order.created_at))
   const [busy,          setBusy]          = useState(false)
   const [actionError,   setActionError]   = useState<string | null>(null)
   const [itemsExpanded, setItemsExpanded] = useState(() => order.status === 'ready')
-  const [showIssue,      setShowIssue]      = useState(false)
-  const [confirmDeliver, setConfirmDeliver] = useState(false)
-  const [tipBhd,         setTipBhd]        = useState(0)
+  const [showIssue,     setShowIssue]     = useState(false)
 
   const isCompleted = variant === 'completed'
   const isReady     = order.status === 'ready'
   const isOnRoad    = order.status === 'out_for_delivery'
   const hasArrived  = !!order.arrived_at
-  const isCash      = order.payments?.method === 'cash'
 
   const orderRef = order.id.slice(-4).toUpperCase()
 
@@ -190,11 +189,24 @@ export default function DriverOrderCard({
   const openCustomerMap = () => {
     const lat = order.delivery_lat
     const lng = order.delivery_lng
-    const address = order.delivery_address
 
     if (lat && lng) {
       window.open(`https://maps.google.com/?q=${lat},${lng}`)
-    } else if (address) {
+      return
+    }
+
+    const building = order.delivery_building
+    const road     = order.delivery_street
+    const block    = order.delivery_area
+
+    if (building && road && block) {
+      const query = `Building ${building} Road ${road}, Block ${block}, Riffa, Bahrain`
+      window.open(`https://maps.google.com/?q=${encodeURIComponent(query)}`)
+      return
+    }
+
+    const address = order.delivery_address
+    if (address) {
       window.open(`https://maps.google.com/?q=${encodeURIComponent(address + '، البحرين')}`)
     }
   }
@@ -243,18 +255,17 @@ export default function DriverOrderCard({
   }
 
   async function handleDeliver() {
-    if (busy || !onAction) return
-    // Ask for confirmation on cash orders if not yet confirmed
-    if (isCash && !confirmDeliver) {
-      setConfirmDeliver(true)
-      return
-    }
+    if (busy) return
     setBusy(true)
-    setConfirmDeliver(false)
     setActionError(null)
-    const error = await onAction(order.id, 'out_for_delivery', isCash && tipBhd > 0 ? tipBhd : undefined)
-    if (error) setActionError(error)
-    setBusy(false)
+    const result = await markOrderDelivered(order.id)
+    if (!result.success) {
+      setActionError(result.error)
+      setBusy(false)
+    } else {
+      onDelivered?.(order.id)
+      setBusy(false)
+    }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -423,73 +434,20 @@ export default function DriverOrderCard({
 
               {/* Step 3: arrived (or no arrive step) → deliver */}
               {isOnRoad && (hasArrived || !onArrive) && (
-                <>
-                  {/* Cash confirmation prompt */}
-                  {confirmDeliver && isCash && (
-                    <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/30 px-3 py-2.5 flex flex-col gap-2.5">
-                      <p className={`text-sm font-bold text-red-400 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                        {isRTL
-                          ? `تأكيد: هل استلمت ${Number(order.total_bhd).toFixed(3)} BD نقداً؟`
-                          : `Confirm: did you collect ${Number(order.total_bhd).toFixed(3)} BD cash?`
-                        }
-                      </p>
-                      {/* Optional tip input */}
-                      <div>
-                        <label className={`block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                          {isRTL ? 'إكرامية إضافية؟ (اختياري)' : 'Extra tip? (optional)'}
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            step="0.100"
-                            min="0"
-                            max="50"
-                            value={tipBhd || ''}
-                            onChange={e => setTipBhd(Math.max(0, Number(e.target.value) || 0))}
-                            placeholder="0.000"
-                            className="flex-1 rounded-lg bg-brand-surface border border-brand-border px-3 py-1.5 font-satoshi text-sm text-brand-text tabular-nums placeholder:text-brand-muted/40 focus:outline-none focus:border-brand-gold/60"
-                            dir="ltr"
-                          />
-                          <span className="font-satoshi text-xs text-brand-muted shrink-0">BD</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => { setConfirmDeliver(false); setTipBhd(0) }}
-                          className={`flex-1 rounded-xl py-2 border border-brand-border text-brand-muted text-sm font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
-                        >
-                          {isRTL ? 'إلغاء' : 'Cancel'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleDeliver}
-                          disabled={busy}
-                          className={`flex-[2] rounded-xl py-2 bg-brand-success text-brand-black text-sm font-black ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
-                        >
-                          {busy ? '…' : (isRTL ? 'نعم، تم التسليم ✓' : 'Yes, Delivered ✓')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {!confirmDeliver && (
-                    <button
-                      type="button"
-                      onClick={handleDeliver}
-                      disabled={busy}
-                      className={`
-                        w-full min-h-[60px] rounded-2xl font-black text-lg
-                        transition-all duration-150 active:scale-[0.98]
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        ${isRTL ? 'font-cairo' : 'font-satoshi'}
-                        ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-success text-brand-black'}
-                      `}
-                    >
-                      {busy ? '…' : (isRTL ? 'تم تسليم الطلب ✓' : 'DELIVERED ✓')}
-                    </button>
-                  )}
-                </>
+                <button
+                  type="button"
+                  onClick={handleDeliver}
+                  disabled={busy}
+                  className={`
+                    w-full min-h-[60px] rounded-2xl font-black text-lg
+                    transition-all duration-150 active:scale-[0.98]
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    ${isRTL ? 'font-cairo' : 'font-satoshi'}
+                    ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-success text-brand-black'}
+                  `}
+                >
+                  {busy ? '…' : (isRTL ? 'تم تسليم الطلب ✓' : 'DELIVERED ✓')}
+                </button>
               )}
 
               {/* Action error */}
