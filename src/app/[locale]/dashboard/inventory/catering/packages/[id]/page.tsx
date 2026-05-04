@@ -36,7 +36,7 @@ export default async function EditCateringPackagePage({ params }: PageProps) {
 
   const pkg = data as unknown as CateringPackageRow
 
-  if (pkg.branch_id && !['owner', 'general_manager'].includes(user.role)) {
+  if (pkg.branch_id && !['owner', 'general_manager'].includes(user.role ?? '')) {
     if (pkg.branch_id !== user.branch_id) {
       redirect(`${prefix}/dashboard/inventory/catering`)
     }
