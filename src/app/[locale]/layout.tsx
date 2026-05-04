@@ -43,12 +43,15 @@ const almarai = Almarai({
 // ── English fonts from /public/fonts (self-hosted) ────────────────────────────
 const editorialNew = localFont({
   src: [
-    // Bold first — hero titles use font-bold (700); first file is the preloaded variant
+    // Bold first — next/font/local preloads the first entry only.
+    // Hero h1 uses weight-700; preloading Bold prevents LCP text from being
+    // invisible during the font-swap window.
     { path: '../../../public/fonts/EditorialNew-Bold.woff2',  weight: '700', style: 'normal' },
     { path: '../../../public/fonts/EditorialNew-Light.woff2', weight: '300', style: 'normal' },
   ],
   variable: '--editorial',
   display: 'swap',
+  preload: true,
   // Generates size-adjust/ascent-override CSS for the fallback font so the
   // text box dimensions don't change when EditorialNew loads → eliminates CLS
   adjustFontFallback: 'Times New Roman',
@@ -189,7 +192,21 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
 
   setRequestLocale(locale)
 
-  const messages = await getMessages()
+  const allMessages = await getMessages()
+
+  // Strip server-only namespaces before serialising into the client bundle.
+  // 'home'     → fully SSR'd after FeatureArtifacts split; no 'use client' component reads it.
+  // 'seo'      → used only in generateMetadata() — never reaches the client.
+  // 'tracking' → server-only order tracking utilities.
+  // All other namespaces remain because real client components use them
+  // (Header→nav, CartDrawer→cart/common, menus, dashboard, driver, etc.).
+  const SERVER_ONLY_NS = new Set(['home', 'seo', 'tracking'])
+  const clientMessages = Object.fromEntries(
+    (Object.entries(allMessages) as [string, unknown][]).filter(
+      ([k]) => !SERVER_ONLY_NS.has(k),
+    ),
+  ) as typeof allMessages
+
   const isRTL = locale === 'ar'
 
   const fontVariables = [
@@ -224,7 +241,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         <link rel="dns-prefetch" href="https://wa.me" />
       </head>
       <body className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col">
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={clientMessages}>
           <Header />
           <main className="flex-1 pt-20 md:pt-24">
             {children}

@@ -148,7 +148,8 @@
       "Bash(Select-Object FullName)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\dashboard\" -Recurse -Filter \"*.tsx\")",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "PowerShell(\\(Get-Content \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\node_modules\\\\next\\\\package.json\" | ConvertFrom-Json\\).version)"
+      "PowerShell(\\(Get-Content \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\node_modules\\\\next\\\\package.json\" | ConvertFrom-Json\\).version)",
+      "Bash(grep -E \"locale\\\\]$|locale\\\\]/page|/ar$|First Load JS\")"
     ]
   }
 }
