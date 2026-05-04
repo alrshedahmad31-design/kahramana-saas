@@ -40,9 +40,9 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
       className="relative py-32 md:py-48 overflow-hidden bg-brand-black"
     >
       {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-brand-gold/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-brand-gold/5 rounded-full blur-[100px]" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -start-20 w-96 h-96 bg-brand-gold/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 -end-20 w-96 h-96 bg-brand-gold/5 rounded-full blur-[100px]" />
       </div>
 
       <div className="max-w-7xl mx-auto px-6 sm:px-16 relative z-10">
@@ -73,14 +73,14 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               whileInView={{ opacity: 1, scale: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.8, duration: 0.8 }}
-              className={`absolute -bottom-8 ${isRTL ? '-left-8' : '-right-8'} bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-3xl hidden md:block`}
+              className="absolute -bottom-8 -end-8 bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-3xl hidden md:block"
             >
               <p className="text-brand-gold text-xs font-bold tracking-[0.3em] uppercase mb-1">
-                {isRTL ? t('signature') : t('signature')}
+                {t('signature')}
               </p>
               <div className="w-12 h-px bg-brand-gold/30 mb-3" />
               <p className="text-white/40 text-[10px] tracking-widest uppercase">
-                {isRTL ? 'تراث عراقي' : 'Iraqi Heritage'}
+                {t('heritageLabel')}
               </p>
             </motion.div>
           </motion.div>
@@ -127,7 +127,7 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               variants={itemFadeUp}
               className="relative p-10 md:p-14 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-md rounded-[3rem] border border-white/10 overflow-hidden group hover:border-brand-gold/30 transition-colors duration-500"
             >
-              <div className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-7xl text-brand-gold/10 font-serif pointer-events-none group-hover:text-brand-gold/20 transition-colors duration-500`}>
+              <div className="absolute top-8 end-8 text-7xl text-brand-gold/10 font-serif pointer-events-none group-hover:text-brand-gold/20 transition-colors duration-500">
                 &ldquo;
               </div>
               <p className="text-2xl md:text-3xl text-white leading-snug font-medium italic mb-10 relative z-10">
@@ -135,7 +135,7 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               </p>
               
               <div className="flex flex-col border-t border-white/10 pt-8 relative z-10">
-                <div className={`flex flex-col ${isRTL ? 'items-start' : 'items-start'} gap-4`}>
+                <div className="flex flex-col items-start gap-4">
                   <div className="flex flex-col">
                     <span className="text-lg md:text-xl font-bold text-brand-gold mb-1">
                       {t('signature')}
@@ -155,7 +155,7 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
                   >
                     <Image
                       src="/assets/founder/founder-signature.webp"
-                      alt="Signature"
+                      alt={t('signatureAlt')}
                       fill
                       className="object-contain"
                     />
