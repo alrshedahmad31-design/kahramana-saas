@@ -1953,6 +1953,7 @@ export type Database = {
           customer_signature: string | null
           delivered_at: string | null
           delivery_address: string | null
+          delivery_apartment: string | null
           delivery_area: string | null
           delivery_building: string | null
           delivery_instructions: string | null
@@ -1993,6 +1994,7 @@ export type Database = {
           customer_signature?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
+          delivery_apartment?: string | null
           delivery_area?: string | null
           delivery_building?: string | null
           delivery_instructions?: string | null
@@ -2033,6 +2035,7 @@ export type Database = {
           customer_signature?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
+          delivery_apartment?: string | null
           delivery_area?: string | null
           delivery_building?: string | null
           delivery_instructions?: string | null
