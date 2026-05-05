@@ -68,23 +68,22 @@ export default async function CashReconciliationPage({ params, searchParams: _se
     newQuery = newQuery.in('driver_id', (scopedDriverIds.length === 0 ? ['00000000-0000-0000-0000-000000000000'] : scopedDriverIds))
   }
 
-  const { data: newRaw } = await newQuery
-
-  const newHandovers: CashHandoverRow[] = (newRaw ?? []).map((r: any) => ({
-    id:                    r.id,
-    driver_id:             r.driver_id,
-    driver_name:           r.staff_basic?.name ?? r.driver_id.slice(0, 8),
-    shift_date:            r.created_at.split('T')[0],
-    total_cash:            Number(r.expected_amount),
-    order_ids:             r.order_ids ?? [],
-    handed_at:             r.created_at,
-    verified:              r.manager_confirmed,
+  const { data: handoversData } = await newQuery
+  const newHandovers: CashHandoverRow[] = (handoversData ?? []).map((h: any) => ({
+    id:                    h.id,
+    driver_id:             h.driver_id,
+    driver_name:           (h.staff_basic as any)?.name ?? h.driver_id.slice(0, 8),
+    shift_date:            h.created_at.split('T')[0],
+    total_cash:            Number(h.expected_amount),
+    order_ids:             h.order_ids ?? [],
+    handed_at:             h.created_at,
+    verified:              h.manager_confirmed,
     notes:                 null,
-    reconciliation_status: r.manager_confirmed ? 'verified' : 'pending',
-    actual_received:       Number(r.actual_amount),
-    discrepancy:           Number(r.difference),
+    reconciliation_status: h.manager_confirmed ? 'verified' : 'pending',
+    actual_received:       Number(h.actual_amount),
+    discrepancy:           Number(h.difference),
     manager_notes:         null,
-    is_new_system:         true // marker for UI to use confirmCashHandover
+    is_new_system:         true
   }))
 
   // ── Legacy Table ────────────────────────────────────────────────────────
@@ -107,7 +106,7 @@ export default async function CashReconciliationPage({ params, searchParams: _se
   const oldHandovers: CashHandoverRow[] = (raw ?? []).map((r: any) => ({
     id:                    r.id,
     driver_id:             r.driver_id,
-    driver_name:           r.staff_basic?.name ?? r.driver_id.slice(0, 8),
+    driver_name:           (r.staff_basic as any)?.name ?? r.driver_id.slice(0, 8),
     shift_date:            r.shift_date,
     total_cash:            Number(r.total_cash),
     order_ids:             r.order_ids ?? [],

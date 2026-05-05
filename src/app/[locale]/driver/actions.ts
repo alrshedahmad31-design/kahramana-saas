@@ -2,7 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
-import type { DriverLocationInsert, DriverCashHandoverInsert } from '@/lib/supabase/custom-types'
+import type { DriverLocationInsert } from '@/lib/supabase/custom-types'
 
 export type DriverActionResult = { success: true } | { success: false; error: string }
 
@@ -71,14 +71,18 @@ export async function driverBumpOrder(
     orderUpdate.assigned_driver_id = user.id
     orderUpdate.picked_up_at       = now
   }
-  if (currentStatus === 'out_for_delivery') {
-    orderUpdate.delivered_at = now
-    if (tipBhd && tipBhd > 0) {
-      if (tipBhd > 50) return { success: false, error: 'Tip exceeds maximum (50 BD)' }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(orderUpdate as any).tip_bhd = Number(tipBhd.toFixed(3))
+    if (currentStatus === 'out_for_delivery') {
+      orderUpdate.delivered_at = now
+      if (tipBhd && tipBhd > 0) {
+        if (tipBhd > 50) return { success: false, error: 'Tip exceeds maximum (50 BD)' }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(orderUpdate as any).tip_bhd = Number(tipBhd.toFixed(3))
+      }
+      if (actualCollected !== undefined && actualCollected !== null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(orderUpdate as any).actual_collected = Number(actualCollected.toFixed(3))
+      }
     }
-  }
 
   const query = supabase
     .from('orders')
@@ -288,14 +292,16 @@ export async function submitCashHandover(
     const supabase = await createClient()
     const { data: orders } = await supabase
       .from('orders')
-      .select('id, assigned_driver_id, total_bhd, status, branch_id, payments(method)')
+      .select('id, assigned_driver_id, total_bhd, status, branch_id, payments(method), actual_collected, tip_bhd')
       .in('id', orderIds)
 
     if (!orders || orders.length === 0) return { success: false, error: 'Orders not found' }
+    
+    const typedOrders = orders as any[]
 
     // Branch and Ownership validation
-    branchId = orders[0].branch_id
-    const invalid = orders.filter(
+    branchId = typedOrders[0].branch_id
+    const invalid = typedOrders.filter(
       o =>
         o.assigned_driver_id !== user.id ||
         o.status             !== 'delivered' ||
@@ -305,9 +311,8 @@ export async function submitCashHandover(
     if (invalid.length > 0) return { success: false, error: 'Invalid orders in handover' }
 
     // Sum price + tips (if any)
-    // tips are in orders.tip_bhd
-    totalExpected = orders.reduce(
-      (s, o) => s + Number(o.total_bhd) + Number((o as any).tip_bhd ?? 0),
+    totalExpected = typedOrders.reduce(
+      (s: number, o) => s + Number(o.actual_collected ?? o.total_bhd) + Number(o.tip_bhd ?? 0),
       0
     )
   } else {
@@ -355,9 +360,10 @@ export async function submitCashHandover(
     action: 'INSERT',
     table_name: 'cash_handovers',
     record_id: handover.id,
-    performed_by: user.id,
-    old_data: {},
-    new_data: {
+    user_id: user.id,
+    actor_role: user.role as any, // Cast to any to avoid staff_role mismatch if needed
+    branch_id: branchId,
+    changes: {
       order_ids: orderIds,
       expected:  totalExpected,
       actual:    actualAmount,

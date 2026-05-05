@@ -12,7 +12,7 @@ export interface PendingAction {
   id?:             number
   orderId:         string
   currentStatus:   string
-  metadata:        any
+  metadata:        Record<string, unknown> | null
   timestamp:       number
 }
 

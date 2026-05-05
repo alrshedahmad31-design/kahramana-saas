@@ -202,7 +202,8 @@ export default function DriverDashboard({
 
       for (const action of actions) {
         try {
-          const res = await driverBumpOrder(action.orderId, action.currentStatus as any, action.metadata?.tipBhd, action.metadata?.actualCollected)
+          const metadata = action.metadata as { tipBhd?: number, actualCollected?: number } | null
+          const res = await driverBumpOrder(action.orderId, action.currentStatus as 'ready' | 'out_for_delivery', metadata?.tipBhd, metadata?.actualCollected)
           if (res.success) {
             if (action.id) await deletePendingAction(action.id)
           }
@@ -265,10 +266,10 @@ export default function DriverDashboard({
         fetchCompleted()
         return result.error
       }
-    } catch (err) {
+    } catch (_err) {
       // Offline or Network Error -> Save for sync
       try {
-        await savePendingAction({ orderId, currentStatus, metadata })
+        await savePendingAction({ orderId, currentStatus, metadata: metadata as Record<string, unknown> | null })
         const remaining = await getPendingActions()
         setPendingSync(remaining.length)
       } catch (dbErr) {

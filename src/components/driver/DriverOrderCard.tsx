@@ -131,12 +131,13 @@ export default function DriverOrderCard({
   const [showFailed,     setShowFailed]     = useState(false)
   const [tipBhd,         setTipBhd]        = useState(0)
   const [actualCollected, setActualCollected] = useState<number | null>(null)
+  const [confirmDeliver,  setConfirmDeliver]  = useState(false)
 
   useEffect(() => {
     if (confirmDeliver) {
       setActualCollected(Number(order.total_bhd))
     }
-  }, [confirmDeliver, order.total_bhd])
+  }, [confirmDeliver, order.total_bhd, setActualCollected])
 
   const isCompleted = variant === 'completed'
   const isReady     = order.status === 'ready'
