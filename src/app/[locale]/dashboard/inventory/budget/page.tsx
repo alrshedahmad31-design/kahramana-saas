@@ -48,8 +48,9 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
     .eq('is_active', true)
     .order('name_ar')
 
-  const activeBranchId: string | null =
-    branch ?? (isGlobal ? null : (user.branch_id ?? null)) ?? (branches?.[0]?.id ?? null)
+  const activeBranchId: string | null = isGlobal
+    ? (branch ?? branches?.[0]?.id ?? null)
+    : (user.branch_id ?? null)
 
   if (!activeBranchId) {
     return (

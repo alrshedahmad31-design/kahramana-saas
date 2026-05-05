@@ -69,7 +69,7 @@ function COGSBarChart({ dishes }: { dishes: DishCogsRow[] }) {
       <ResponsiveContainer width="100%" height={420}>
         <BarChart data={top20} layout="vertical" margin={{ right: 16, left: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={colors.surface2} horizontal={false} />
-          <XAxis type="number" tick={{ fill: colors.muted, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(2)}`} />
+          <XAxis type="number" tick={{ fill: colors.muted, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(3)}`} />
           <YAxis type="category" dataKey="name" tick={{ fill: colors.muted, fontSize: 11 }} width={120} />
           <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="value" radius={[0, 4, 4, 0]}>

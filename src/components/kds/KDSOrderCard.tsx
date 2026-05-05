@@ -191,6 +191,7 @@ export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {
           type="button"
           onClick={handleAdvance}
           disabled={bumping}
+          aria-label={isRTL ? btn.ar : btn.en}
           className={`
             w-full min-h-[80px] rounded-2xl font-black text-4xl
             transition-all duration-150 active:scale-[0.98]

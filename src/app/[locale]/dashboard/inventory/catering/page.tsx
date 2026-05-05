@@ -38,8 +38,9 @@ export default async function CateringPage({ params, searchParams }: PageProps) 
     .eq('is_active', true)
     .order('name_ar')
 
-  const activeBranchId = branch ?? (isGlobal ? null : (user.branch_id ?? null))
-    ?? (branches?.[0]?.id ?? null)
+  const activeBranchId = isGlobal
+    ? (branch ?? null)
+    : (user.branch_id ?? null)
 
   // Fetch orders
   const ordersRes = await (

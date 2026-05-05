@@ -137,7 +137,9 @@ export async function logExportFormat(
   format:     'csv' | 'excel' | 'pdf',
 ): Promise<void> {
   const user = await getSession()
-  if (!user) return
+  if (!user || !canAccessReports(user)) {
+    throw new Error('Unauthorized — Owner or General Manager access required')
+  }
 
   const sb = createServiceClient()
   await sb.from('report_audit_log').insert({

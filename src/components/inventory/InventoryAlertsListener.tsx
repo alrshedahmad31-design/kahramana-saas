@@ -83,7 +83,9 @@ export default function InventoryAlertsListener() {
             .update({ is_read: true })
             .eq('id', row.id)
             .then(({ error }) => {
-              if (error) console.error('[alerts] mark-as-read failed:', error.message)
+              if (error && process.env.NODE_ENV === 'development') {
+                console.error('[alerts] mark-as-read failed:', error.message)
+              }
             })
         },
       )

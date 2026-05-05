@@ -22,9 +22,11 @@ interface InventorySummary {
 
 async function fetchInventorySummary(branchId: string | null): Promise<InventorySummary> {
   const supabase = await createServiceClient()
-  const now = new Date()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-  const monthStartIso = monthStart.toISOString()
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bahrain',
+  }).format(new Date())
+  const [bahrainYear, bahrainMonth] = today.split('-')
+  const monthStartIso = `${bahrainYear}-${bahrainMonth}-01T00:00:00+03:00`
 
   let foodCostQuery = supabase
     .from('inventory_movements')

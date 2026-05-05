@@ -114,11 +114,15 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
     const channel = supabase
       .channel('kds-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
-        console.info('KDS realtime event:', payload)
+        if (process.env.NODE_ENV === 'development') {
+          console.info('KDS realtime event:', payload)
+        }
         await fetchOrders()
       })
       .subscribe((status) => {
-        console.info('KDS realtime subscription:', status)
+        if (process.env.NODE_ENV === 'development') {
+          console.info('KDS realtime subscription:', status)
+        }
       })
     return () => { void supabase.removeChannel(channel) }
   }, [supabase, fetchOrders])
@@ -230,6 +234,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
             type="button"
             onClick={() => setMuted((m) => !m)}
             title={muted ? (isAr ? 'تشغيل' : 'Unmute') : (isAr ? 'كتم' : 'Mute')}
+            aria-label={muted ? (isAr ? 'تشغيل صوت التنبيهات' : 'Unmute kitchen alerts') : (isAr ? 'كتم صوت التنبيهات' : 'Mute kitchen alerts')}
             className="w-11 h-11 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
           >
             {muted ? <MuteOnIcon /> : <MuteOffIcon />}
@@ -239,7 +244,8 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
           <button
             type="button"
             onClick={() => setFullscreen((f) => !f)}
-            title={fullscreen ? 'Exit' : 'Fullscreen'}
+            title={fullscreen ? (isAr ? 'خروج' : 'Exit') : (isAr ? 'ملء الشاشة' : 'Fullscreen')}
+            aria-label={fullscreen ? (isAr ? 'الخروج من ملء الشاشة' : 'Exit fullscreen') : (isAr ? 'فتح ملء الشاشة' : 'Enter fullscreen')}
             className="w-11 h-11 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
           >
             {fullscreen ? <ShrinkIcon /> : <ExpandIcon />}

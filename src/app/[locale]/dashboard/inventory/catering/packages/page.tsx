@@ -24,10 +24,16 @@ export default async function CateringPackagesPage({ params }: PageProps) {
   }
 
   const supabase = createServiceClient()
-  const { data } = await supabase
+  let packagesQuery = supabase
     .from('catering_packages')
     .select('*')
     .order('name_ar')
+
+  if (user.role !== 'owner' && user.role !== 'general_manager') {
+    packagesQuery = packagesQuery.eq('branch_id', user.branch_id ?? '')
+  }
+
+  const { data } = await packagesQuery
 
   const packages = (data ?? []) as unknown as CateringPackageRow[]
 

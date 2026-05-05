@@ -21,7 +21,11 @@ export default async function DeliveryPage({ params }: Props) {
   }
 
   const supabase = await createClient()
-  const today    = new Date().toISOString().split('T')[0]
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bahrain',
+  }).format(new Date())
+  const todayStart = `${today}T00:00:00+03:00`
+  const todayEnd   = `${today}T23:59:59+03:00`
   const branchScope = user.role === 'owner' || user.role === 'general_manager'
     ? null
     : user.branch_id ?? null
@@ -48,7 +52,8 @@ export default async function DeliveryPage({ params }: Props) {
     .from('orders')
     .select('id, total_bhd, created_at, updated_at, assigned_driver_id, expected_delivery_time')
     .in('status', ['delivered', 'completed'])
-    .gte('created_at', today)
+    .gte('created_at', todayStart)
+    .lte('created_at', todayEnd)
 
   if (branchScope) completedQuery = completedQuery.eq('branch_id', branchScope)
   const { data: completedRaw } = await completedQuery

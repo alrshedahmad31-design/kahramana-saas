@@ -109,7 +109,7 @@ export default function ActivityFeed({ orders, isRTL }: Props) {
                     )}
                   </p>
                   <p className="font-satoshi text-xs text-brand-gold tabular-nums mt-0.5">
-                    {Number(order.total_bhd).toFixed(3)}
+                    {Number(order.total_bhd).toFixed(3)} BD
                   </p>
                 </div>
               </div>

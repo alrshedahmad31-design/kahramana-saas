@@ -98,11 +98,16 @@ export default async function WastePage({ params, searchParams }: PageProps) {
   const { data: wastes, count } = await query
 
   // I3 FIX: KPI totals from full DB queries, not from the paginated 20-row subset.
-  const today      = new Date().toISOString().split('T')[0]
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bahrain',
+  }).format(new Date())
+  const [bahrainYear, bahrainMonth] = today.split('-')
+  const todayStart = `${today}T00:00:00+03:00`
+  const todayEnd   = `${today}T23:59:59+03:00`
+  const monthStart = `${bahrainYear}-${bahrainMonth}-01T00:00:00+03:00`
 
   const [{ data: todayRows }, { data: monthRows }] = await Promise.all([
-    supabase.from('waste_log').select('cost_bhd').gte('reported_at', today),
+    supabase.from('waste_log').select('cost_bhd').gte('reported_at', todayStart).lte('reported_at', todayEnd),
     supabase.from('waste_log').select('cost_bhd').gte('reported_at', monthStart),
   ])
 
