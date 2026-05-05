@@ -11,6 +11,7 @@ export type StatusFilter =
   | 'ready'
   | 'out_for_delivery'
   | 'delivered'
+  | 'returned'
   | 'cancelled'
 export type DateFilter   = 'all' | 'today' | 'yesterday' | 'last7' | 'last30'
 
@@ -37,6 +38,7 @@ const STATUS_OPTIONS: { key: StatusFilter; labelEn: string; labelAr: string }[] 
   { key: 'ready',            labelEn: 'Ready',             labelAr: 'جاهز' },
   { key: 'out_for_delivery', labelEn: 'Delivering',        labelAr: 'في الطريق' },
   { key: 'delivered',        labelEn: 'Delivered',         labelAr: 'تم التسليم' },
+  { key: 'returned',         labelEn: 'Returned',          labelAr: 'مرتجع' },
   { key: 'cancelled',        labelEn: 'Cancelled',         labelAr: 'ملغي' },
 ]
 

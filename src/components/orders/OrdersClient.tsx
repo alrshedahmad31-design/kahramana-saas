@@ -26,6 +26,7 @@ const STATUS_MAP: Record<StatusFilter, OrderStatus[] | null> = {
   ready:            ['ready'],
   out_for_delivery: ['out_for_delivery'],
   delivered:        ['delivered', 'completed'],
+  returned:         ['returned'],
   cancelled:        ['cancelled', 'payment_failed'],
 }
 
@@ -59,7 +60,7 @@ const KANBAN_COLS = [
   },
   {
     key:      'done',
-    statuses: ['delivered', 'completed', 'cancelled'] as OrderStatus[],
+    statuses: ['delivered', 'completed', 'cancelled', 'returned'] as OrderStatus[],
     labelAr:  'مكتمل',
     labelEn:  'Done',
     borderCls: 'border-brand-border',

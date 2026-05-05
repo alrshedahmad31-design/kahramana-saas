@@ -112,6 +112,14 @@ export interface BranchSummary {
   total_revenue_bhd: number
 }
 
+export interface CashReconciliationMetrics {
+  totalExpected:   number
+  totalActual:     number
+  totalDifference: number
+  handoverCount:   number
+  pendingConfirmationCount: number
+}
+
 export interface SalesReportRow {
   order_date:        string
   branch_id:         string
@@ -484,6 +492,42 @@ export async function getOperationalMetrics(
     : 0
 
   return { totalOrders, cancelledOrders, cancellationRate, avgFulfillmentMinutes, ordersWithFulfillmentData: fulfillmentTimes.length }
+}
+
+// ── Cash Reconciliation Metrics (Handover discrepancies) ──────────────────────
+
+export async function getCashReconciliationMetrics(
+  from:      Date,
+  to:        Date,
+  branchId?: string,
+): Promise<CashReconciliationMetrics> {
+  const sb = createServiceClient()
+
+  let q = sb
+    .from('cash_handovers')
+    .select('expected_amount, actual_amount, difference, manager_confirmed')
+    .gte('created_at', toISO(from))
+    .lte('created_at', toISO(to))
+
+  if (branchId) q = q.eq('branch_id', branchId)
+
+  const { data, error } = await q
+  if (error || !data) {
+    return { totalExpected: 0, totalActual: 0, totalDifference: 0, handoverCount: 0, pendingConfirmationCount: 0 }
+  }
+
+  const totalExpected = data.reduce((s, r) => s + Number(r.expected_amount), 0)
+  const totalActual   = data.reduce((s, r) => s + Number(r.actual_amount),   0)
+  const totalDifference = data.reduce((s, r) => s + Number(r.difference),    0)
+  const pendingConfirmationCount = data.filter((r) => !r.manager_confirmed).length
+
+  return {
+    totalExpected,
+    totalActual,
+    totalDifference,
+    handoverCount: data.length,
+    pendingConfirmationCount,
+  }
 }
 
 // ── Secondary metrics (new vs. repeat customers, items sold) ──────────────────

@@ -76,7 +76,7 @@ import type { OrderStatus } from '@/lib/supabase/custom-types'
 
 const ACTIVE_STATUSES   = ['new', 'under_review', 'accepted', 'preparing', 'ready', 'out_for_delivery']
 const DONE_STATUSES: OrderStatus[] = ['delivered', 'completed']
-const EXCLUDED_CSV      = '(cancelled,payment_failed)'
+const EXCLUDED_CSV      = '(cancelled,payment_failed,returned)'
 
 // ── Main data fetch ───────────────────────────────────────────────────────────
 

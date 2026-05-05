@@ -26,6 +26,7 @@ export type CashHandoverRow = {
   actual_received:       number | null
   discrepancy:           number | null
   manager_notes:         string | null
+  is_new_system?:        boolean
 }
 
 export default async function CashReconciliationPage({ params, searchParams: _searchParams }: Props) {
@@ -54,6 +55,39 @@ export default async function CashReconciliationPage({ params, searchParams: _se
     scopedDriverIds = (drivers ?? []).map((driver: { id: string }) => driver.id)
   }
 
+  // ── NEW Table: cash_handovers ───────────────────────────────────────────
+  let newQuery = supabase
+    .from('cash_handovers')
+    .select(`
+      id, driver_id, expected_amount, actual_amount, difference, manager_confirmed,
+      order_ids, created_at, staff_basic!driver_id(name)
+    `)
+    .order('created_at', { ascending: false })
+
+  if (scopedDriverIds) {
+    newQuery = newQuery.in('driver_id', (scopedDriverIds.length === 0 ? ['00000000-0000-0000-0000-000000000000'] : scopedDriverIds))
+  }
+
+  const { data: newRaw } = await newQuery
+
+  const newHandovers: CashHandoverRow[] = (newRaw ?? []).map((r: any) => ({
+    id:                    r.id,
+    driver_id:             r.driver_id,
+    driver_name:           r.staff_basic?.name ?? r.driver_id.slice(0, 8),
+    shift_date:            r.created_at.split('T')[0],
+    total_cash:            Number(r.expected_amount),
+    order_ids:             r.order_ids ?? [],
+    handed_at:             r.created_at,
+    verified:              r.manager_confirmed,
+    notes:                 null,
+    reconciliation_status: r.manager_confirmed ? 'verified' : 'pending',
+    actual_received:       Number(r.actual_amount),
+    discrepancy:           Number(r.difference),
+    manager_notes:         null,
+    is_new_system:         true // marker for UI to use confirmCashHandover
+  }))
+
+  // ── Legacy Table ────────────────────────────────────────────────────────
   let query = supabase
     .from('driver_cash_handovers')
     .select(`
@@ -62,33 +96,15 @@ export default async function CashReconciliationPage({ params, searchParams: _se
       staff_basic!driver_id(name)
     `)
     .order('handed_at', { ascending: false })
-    .limit(100)
+    .limit(50)
 
   if (scopedDriverIds) {
-    if (scopedDriverIds.length === 0) {
-      query = query.eq('driver_id', '00000000-0000-0000-0000-000000000000')
-    } else {
-      query = query.in('driver_id', scopedDriverIds)
-    }
+    query = query.in('driver_id', (scopedDriverIds.length === 0 ? ['00000000-0000-0000-0000-000000000000'] : scopedDriverIds))
   }
 
   const { data: raw } = await query
 
-  const handovers: CashHandoverRow[] = (raw ?? []).map((r: {
-    id: string
-    driver_id: string
-    shift_date: string
-    total_cash: number
-    order_ids: string[]
-    handed_at: string
-    verified: boolean
-    notes: string | null
-    reconciliation_status: string | null
-    actual_received: number | null
-    discrepancy: number | null
-    manager_notes: string | null
-    staff_basic: { name: string } | null
-  }) => ({
+  const oldHandovers: CashHandoverRow[] = (raw ?? []).map((r: any) => ({
     id:                    r.id,
     driver_id:             r.driver_id,
     driver_name:           r.staff_basic?.name ?? r.driver_id.slice(0, 8),
@@ -103,6 +119,10 @@ export default async function CashReconciliationPage({ params, searchParams: _se
     discrepancy:           r.discrepancy != null ? Number(r.discrepancy) : null,
     manager_notes:         r.manager_notes,
   }))
+
+  const handovers = [...newHandovers, ...oldHandovers].sort(
+    (a, b) => new Date(b.handed_at).getTime() - new Date(a.handed_at).getTime()
+  )
 
   return (
     <CashReconciliationClient

@@ -161,6 +161,33 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, 
       <FilterDropdown label="كل السائقين" options={FILTER_OPTIONS.driver} />
       <FilterDropdown label="كل الحالات"  options={FILTER_OPTIONS.status} />
 
+      {/* Dispatch button */}
+      <button
+        type="button"
+        onClick={onAssign}
+        title={isAr ? 'تعيين سائق' : 'Assign Driver'}
+        style={{
+          height:       '34px',
+          display:      'flex',
+          alignItems:   'center',
+          gap:          '8px',
+          padding:      '0 12px',
+          background:   DV.bgCard,
+          border:       `1px solid ${DV.border}`,
+          borderRadius: '8px',
+          color:        DV.amber,
+          cursor:       'pointer',
+          flexShrink:   0,
+          fontSize:     '13px',
+          fontWeight:   600,
+          fontFamily:   'IBM Plex Sans Arabic, sans-serif',
+          transition:   'all 0.15s',
+        }}
+      >
+        <UserPlus size={16} />
+        {isAr ? 'تعيين' : 'Assign'}
+      </button>
+
       {/* Mute toggle */}
       <button
         type="button"

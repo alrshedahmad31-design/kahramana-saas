@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
-import { updateOrderStatus } from '@/app/[locale]/dashboard/orders/actions'
+import { updateOrderStatus, updateOrderWithReason } from '@/app/[locale]/dashboard/orders/actions'
 import { ALLOWED_TRANSITIONS, CAN_CANCEL } from '@/lib/auth/permissions'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 
@@ -36,6 +36,28 @@ export default function OrderStatusSelect({
 
   async function handleChange(next: OrderStatus) {
     setError(null)
+
+    // Handle statuses that require a reason
+    if (next === 'cancelled' || next === 'returned') {
+      const promptTitle = next === 'cancelled' 
+        ? (document.documentElement.dir === 'rtl' ? 'سبب الإلغاء:' : 'Cancellation reason:')
+        : (document.documentElement.dir === 'rtl' ? 'سبب الإرجاع:' : 'Return reason:')
+      
+      const reason = prompt(promptTitle)
+      if (!reason) return // User cancelled the prompt
+
+      startTrans(async () => {
+        const result = await updateOrderWithReason(orderId, reason, next)
+        if (!result.success) {
+          setError(result.error)
+          return
+        }
+        setStatus(next)
+        onStatusChange?.(next)
+      })
+      return
+    }
+
     startTrans(async () => {
       const result = await updateOrderStatus(orderId, next)
 

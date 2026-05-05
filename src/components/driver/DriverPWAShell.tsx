@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 interface Props {
   locale:   string
@@ -16,6 +17,9 @@ export default function DriverPWAShell({ locale, children }: Props) {
   const [offline,        setOffline]        = useState(false)
   const [installPrompt,  setInstallPrompt]  = useState<Event | null>(null)
   const [showInstall,    setShowInstall]    = useState(false)
+  const [pushDismissed,  setPushDismissed]  = useState(false)
+
+  const { permissionState, requestPermission } = usePushNotifications()
 
   // Register service worker
   useEffect(() => {
@@ -74,6 +78,40 @@ export default function DriverPWAShell({ locale, children }: Props) {
           {t('title')}
         </span>
       </header>
+
+      {/* Push permission prompt (shown once, until granted or denied) */}
+      {permissionState === 'default' && !pushDismissed && (
+        <div className="shrink-0 bg-brand-gold/10 border-b border-brand-gold/30 px-4 py-3
+                        flex items-center justify-between gap-3">
+          <div>
+            <p className={`font-bold text-sm text-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? '🔔 فعّل الإشعارات' : '🔔 Enable Notifications'}
+            </p>
+            <p className={`text-xs text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? 'لتصلك التنبيهات فور وصول طلب جديد' : 'Get alerts the moment a new order arrives'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setPushDismissed(true)}
+              className="text-brand-muted hover:text-brand-text transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label={isAr ? 'تجاهل' : 'Dismiss'}
+            >
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={requestPermission}
+              className={`bg-brand-gold text-brand-black font-black text-sm px-4 py-2 rounded-lg min-h-[44px] ${isAr ? 'font-cairo' : 'font-satoshi'}`}
+            >
+              {isAr ? 'تفعيل' : 'Enable'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Offline banner */}
       {offline && (

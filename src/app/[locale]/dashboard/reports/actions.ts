@@ -15,6 +15,7 @@ import {
   getMetrics, getDailySales, getTopItems,
   getHourlyDistribution, getOperationalMetrics,
   getTopCustomers, getCouponAnalytics,
+  getCashReconciliationMetrics,
 } from '@/lib/analytics/queries'
 import {
   buildPrevRange, formatCurrency, calculateGrowth,
@@ -186,10 +187,11 @@ async function buildSalesSummary(
   const to    = new Date(`${filters.to}T23:59:59+03:00`)
   const prev  = buildPrevRange({ from, to, label: 'custom' })
 
-  const [validation, metrics, dailySales] = await Promise.all([
+  const [validation, metrics, dailySales, cashMetrics] = await Promise.all([
     validateSalesData(filters),
     getMetrics(from, to, prev.from, prev.to, filters.branchId),
     getDailySales(from, to, filters.branchId),
+    getCashReconciliationMetrics(from, to, filters.branchId),
   ])
 
   const branchName = filters.branchId ? await resolveBranchName(filters.branchId) : null
@@ -214,6 +216,16 @@ async function buildSalesSummary(
     { label_en: 'Orders Growth',   label_ar: 'نمو الطلبات',        value: sign(og)                                      },
     { label_en: 'AOV Growth',      label_ar: 'نمو المتوسط',        value: sign(ag)                                      },
     { label_en: 'Customers',       label_ar: 'عملاء معروفون',      value: String(metrics.uniqueCustomers)               },
+    { 
+      label_en: 'Cash Discrepancy', 
+      label_ar: 'عجز/زيادة النقد', 
+      value: `${cashMetrics.totalDifference >= 0 ? '+' : ''}${formatCurrency(cashMetrics.totalDifference)} BD` 
+    },
+    {
+      label_en: 'Pending Handovers',
+      label_ar: 'حوالات معلقة',
+      value: String(cashMetrics.pendingConfirmationCount)
+    }
   ]
 
   await logReport({

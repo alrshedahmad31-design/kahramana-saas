@@ -88,12 +88,16 @@ function KanbanCard({
   isAr,
   onSelect,
   onDispatch,
+  onUnassign,
+  onCancel,
 }: {
   order:      DeliveryOrder
   driver:     Driver | undefined
   isAr:       boolean
   onSelect:   () => void
   onDispatch: () => void
+  onUnassign: () => void
+  onCancel:   (reason: string) => void
 }) {
   const elapsed  = useElapsed(order.created_at)
   const urgency: Urgency = order.status === 'delivered' || order.status === 'completed'
@@ -334,6 +338,53 @@ function KanbanCard({
               <ExternalLink size={11} />
               {isAr ? 'تفاصيل' : 'Details'}
             </button>
+
+            {/* Manager tools: Unassign / Cancel */}
+            {(order.status === 'out_for_delivery' || order.status === 'ready') && order.driver_id && (
+              <button
+                type="button"
+                title={isAr ? 'إلغاء التعيين' : 'Unassign Driver'}
+                onClick={(e) => { e.stopPropagation(); if (confirm(isAr ? 'إلغاء تعيين السائق؟' : 'Unassign driver?')) onUnassign() }}
+                style={{
+                  padding:      '6px',
+                  background:   'transparent',
+                  color:        DV_STATUS.errorText,
+                  border:       `1px solid ${DV.border}`,
+                  borderRadius: '7px',
+                  cursor:       'pointer',
+                  transition:   'all 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = DV_STATUS.errorBg }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = DV.border }}
+              >
+                <Truck size={12} />
+              </button>
+            )}
+
+            {order.status !== 'delivered' && order.status !== 'completed' && (
+              <button
+                type="button"
+                title={isAr ? 'إلغاء الطلب' : 'Cancel Order'}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  const reason = prompt(isAr ? 'سبب الإلغاء:' : 'Cancellation reason:');
+                  if (reason) onCancel(reason); // Pass reason if needed, but the current UI only triggers onCancel
+                }}
+                style={{
+                  padding:      '6px',
+                  background:   'transparent',
+                  color:        DV_STATUS.errorText,
+                  border:       `1px solid ${DV.border}`,
+                  borderRadius: '7px',
+                  cursor:       'pointer',
+                  transition:   'all 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = DV_STATUS.errorBg }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = DV.border }}
+              >
+                <span style={{ fontSize: '10px', fontWeight: 800 }}>X</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -378,6 +429,8 @@ function KanbanColumn({
   isAr,
   onSelect,
   onDispatch,
+  onUnassign,
+  onCancel,
 }: {
   col:        typeof COLS[number]
   orders:     DeliveryOrder[]
@@ -385,6 +438,8 @@ function KanbanColumn({
   isAr:       boolean
   onSelect:   (id: string) => void
   onDispatch: (order: DeliveryOrder) => void
+  onUnassign: (id: string) => void
+  onCancel:   (id: string, reason: string) => void
 }) {
   const urgentCount   = orders.filter(o =>
     getUrgency(o.created_at, o.expected_delivery_time) !== 'normal',
@@ -472,6 +527,8 @@ function KanbanColumn({
               isAr={isAr}
               onSelect={() => onSelect(order.id)}
               onDispatch={() => onDispatch(order)}
+              onUnassign={() => onUnassign(order.id)}
+              onCancel={(reason: string) => onCancel(order.id, reason)}
             />
           ))
         )}
@@ -488,9 +545,11 @@ interface Props {
   isAr:       boolean
   onSelect:   (id: string) => void
   onDispatch: (order: DeliveryOrder) => void
+  onUnassign: (id: string) => void
+  onCancel:   (id: string, reason: string) => void
 }
 
-export default function DeliveryKanban({ orders, drivers, isAr, onSelect, onDispatch }: Props) {
+export default function DeliveryKanban({ orders, drivers, isAr, onSelect, onDispatch, onUnassign, onCancel }: Props) {
   return (
     <div style={{
       flex:       1,
@@ -511,6 +570,8 @@ export default function DeliveryKanban({ orders, drivers, isAr, onSelect, onDisp
           isAr={isAr}
           onSelect={onSelect}
           onDispatch={onDispatch}
+          onUnassign={onUnassign}
+          onCancel={onCancel}
         />
       ))}
     </div>

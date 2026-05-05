@@ -47,6 +47,7 @@ const STATUS_ALLOWED_ROLES: Partial<Record<OrderStatus, StaffRole[]>> = {
   delivered:        ['owner', 'general_manager', 'branch_manager', 'driver'],
   completed:        ['owner', 'general_manager', 'branch_manager'],
   cancelled:        CAN_CANCEL,
+  returned:         CAN_CANCEL,
 }
 
 export function canUpdateOrderStatus(

@@ -15,16 +15,17 @@ interface Props {
 export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClose, onConfirmed }: Props) {
   const totalCash = cashOrders.reduce((s, o) => s + Number(o.total_bhd) + Number(o.tip_bhd ?? 0), 0)
 
-  const [loading,  setLoading]  = useState(false)
-  const [done,     setDone]     = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
+  const [loading,     setLoading]     = useState(false)
+  const [done,        setDone]        = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+  const [actualAmount, setActualAmount] = useState(() => totalCash)
 
   async function handleConfirm() {
     if (loading || done) return
     setLoading(true)
     setError(null)
-    // Server recomputes the total from DB — no client-supplied amount is trusted.
-    const result = await submitCashHandover(cashOrders.map(o => o.id))
+    // Server recomputes the expected total from DB — actualAmount is what the driver is handing over.
+    const result = await submitCashHandover(cashOrders.map(o => o.id), actualAmount)
     setLoading(false)
     if (!result.success) {
       setError(result.error)
@@ -65,15 +66,35 @@ export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClos
 
         <div className="px-5 py-5 flex flex-col gap-4">
 
-          {/* Total */}
-          <div className="rounded-2xl bg-brand-surface-2 border border-red-500/30 px-4 py-5 text-center">
-            <p className={`text-xs font-bold uppercase tracking-wider text-red-400 mb-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-              {isRTL ? 'إجمالي النقد المحصّل' : 'Total Cash Collected'}
-            </p>
-            <p className="font-satoshi font-black text-5xl text-red-300 tabular-nums leading-none">
-              {totalCash.toFixed(3)}
-            </p>
-            <p className="font-satoshi text-xl text-red-400 mt-1">BD</p>
+          <div className="rounded-2xl bg-brand-surface-2 border border-brand-border px-4 py-5 flex flex-col gap-4">
+            <div className="text-center">
+              <p className={`text-xs font-bold uppercase tracking-wider text-brand-muted mb-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? 'إجمالي النظام المتوقع' : 'System Expected Total'}
+              </p>
+              <p className="font-satoshi font-black text-3xl text-brand-text tabular-nums leading-none">
+                {totalCash.toFixed(3)}
+                <span className="text-sm font-medium text-brand-muted ms-1">BD</span>
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-brand-border/60">
+              <label className={`block text-center text-xs font-bold uppercase tracking-wider text-red-400 mb-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {isRTL ? 'المبلغ الفعلي المسلم للمطعم' : 'Actual Cash Handed to Restaurant'}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  step="0.100"
+                  min="0"
+                  value={actualAmount || ''}
+                  onChange={e => setActualAmount(Math.max(0, Number(e.target.value) || 0))}
+                  placeholder="0.000"
+                  className="w-full h-14 rounded-xl bg-brand-surface border border-brand-border text-center font-satoshi font-black text-2xl text-red-300 tabular-nums focus:outline-none focus:border-red-500/50"
+                  dir="ltr"
+                />
+                <span className="font-satoshi text-lg text-brand-muted shrink-0">BD</span>
+              </div>
+            </div>
           </div>
 
           {/* Order breakdown */}

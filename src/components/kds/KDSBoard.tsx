@@ -53,6 +53,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
   const [clock,          setClock]          = useState(formatClock)
   const [activeStation,  setActiveStation]  = useState<StationFilter>('all')
   const [viewBranch,     setViewBranch]     = useState<string | null>(null)
+  const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'online' | 'offline'>('connecting')
 
   // Track known IDs to detect new accepted & new ready transitions
   const knownIds      = useRef(new Set(initialOrders.map((o) => o.id)))
@@ -69,7 +70,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
       .from('orders')
       .select(`
         id, customer_name, customer_phone, branch_id, status, notes,
-        total_bhd, created_at, updated_at, source,
+        total_bhd, created_at, updated_at, source, order_type,
         whatsapp_sent_at, coupon_id, coupon_discount_bhd, assigned_driver_id,
         order_items(id, name_ar, name_en, quantity, selected_size, selected_variant)
       `)
@@ -120,6 +121,9 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
         await fetchOrders()
       })
       .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setRealtimeStatus('online')
+        else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setRealtimeStatus('offline')
+        
         if (process.env.NODE_ENV === 'development') {
           console.info('KDS realtime subscription:', status)
         }
@@ -183,6 +187,18 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
               🔔 {isAr ? 'طلب جديد!' : 'New order!'}
             </span>
           )}
+          <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-brand-surface-2 border border-brand-border">
+            <div className={`w-2 h-2 rounded-full ${
+              realtimeStatus === 'online' ? 'bg-brand-success' : 
+              realtimeStatus === 'connecting' ? 'bg-brand-gold animate-pulse' : 
+              'bg-brand-error'
+            }`} />
+            <span className="text-[10px] font-bold text-brand-muted uppercase tracking-tighter tabular-nums">
+              {realtimeStatus === 'online' ? (isAr ? 'متصل' : 'LIVE') : 
+               realtimeStatus === 'connecting' ? (isAr ? 'جاري الاتصال...' : 'SYNCING...') : 
+               (isAr ? 'غير متصل' : 'OFFLINE')}
+            </span>
+          </div>
         </div>
 
         {/* Center: branch filter (GM/Owner only) + station filter */}

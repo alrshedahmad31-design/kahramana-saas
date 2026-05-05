@@ -151,3 +151,54 @@ export async function disputeCashHandover(
 
   return { success: true }
 }
+export async function confirmCashHandover(handoverId: string): Promise<{ success: true } | { error: string }> {
+  let user
+  try {
+    user = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  const service = await createServiceClient()
+  const now = new Date().toISOString()
+
+  // 1. Fetch and Verify Scope
+  const { data: h, error: fetchErr } = await service
+    .from('cash_handovers')
+    .select('id, branch_id, manager_confirmed')
+    .eq('id', handoverId)
+    .single()
+
+  if (fetchErr || !h) return { error: 'Handover not found' }
+  if (h.manager_confirmed) return { error: 'Already confirmed' }
+  
+  try {
+    assertBranchScope(user, h.branch_id)
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  // 2. Update
+  const { error: updateErr } = await service
+    .from('cash_handovers')
+    .update({
+      manager_confirmed: true,
+      confirmed_by:      user.id,
+      confirmed_at:      now
+    })
+    .eq('id', handoverId)
+
+  if (updateErr) return { error: updateErr.message }
+
+  // 3. Audit
+  await service.from('audit_logs').insert({
+    action: 'UPDATE',
+    table_name: 'cash_handovers',
+    record_id: handoverId,
+    performed_by: user.id,
+    old_data: { manager_confirmed: false },
+    new_data: { manager_confirmed: true, confirmed_by: user.id, confirmed_at: now }
+  })
+
+  return { success: true }
+}

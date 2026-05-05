@@ -192,22 +192,35 @@ export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {
 
       {/* ── Bump button — huge ─────────────────────────────────────────── */}
       <div className="px-5 pb-5 pt-1">
-        <button
-          type="button"
-          onClick={handleAdvance}
-          disabled={bumping}
-          aria-label={isRTL ? btn.ar : btn.en}
-          className={`
-            w-full min-h-[80px] rounded-2xl font-black text-4xl
-            transition-all duration-150 active:scale-[0.98]
-            disabled:opacity-50 disabled:cursor-not-allowed
-            ${font} ${btn.cls}
-          `}
-        >
-          {bumping
-            ? <span className="w-8 h-8 rounded-full border-4 border-current/30 border-t-current animate-spin inline-block" />
-            : (isRTL ? btn.ar : btn.en)}
-        </button>
+        {order.status === 'ready' && order.order_type === 'delivery' ? (
+          <div className={`
+            w-full min-h-[80px] rounded-2xl flex items-center justify-center gap-3
+            bg-brand-surface-2 border border-brand-border text-brand-muted
+            ${font}
+          `}>
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-gold animate-pulse" />
+            <span className="text-2xl font-black">
+              {isRTL ? 'بانتظار السائق' : 'Waiting for Driver'}
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAdvance}
+            disabled={bumping}
+            aria-label={isRTL ? btn.ar : btn.en}
+            className={`
+              w-full min-h-[80px] rounded-2xl font-black text-4xl
+              transition-all duration-150 active:scale-[0.98]
+              disabled:opacity-50 disabled:cursor-not-allowed
+              ${font} ${btn.cls}
+            `}
+          >
+            {bumping
+              ? <span className="w-8 h-8 rounded-full border-4 border-current/30 border-t-current animate-spin inline-block" />
+              : (isRTL ? btn.ar : btn.en)}
+          </button>
+        )}
       </div>
     </article>
   )

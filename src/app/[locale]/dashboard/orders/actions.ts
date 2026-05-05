@@ -70,3 +70,61 @@ export async function updateOrderStatus(
 
   return { success: true, status: nextStatus }
 }
+
+/**
+ * Updates an order status with a mandatory reason.
+ * Used for cancellations and returns.
+ */
+export async function updateOrderWithReason(
+  orderId: string,
+  reason: string,
+  targetStatus: 'cancelled' | 'returned' = 'cancelled',
+): Promise<UpdateOrderStatusResult> {
+  const caller = await getSession()
+  if (!caller || !['owner', 'general_manager', 'branch_manager'].includes(caller.role || '')) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const supabase = await createServiceClient()
+  const { data: order } = await supabase.from('orders').select('branch_id, status, notes').eq('id', orderId).single()
+  if (!order) return { success: false, error: 'Order not found' }
+
+  // Scoping: branch managers can only cancel/return their own branch orders
+  if (caller.role === 'branch_manager' && caller.branch_id !== order.branch_id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const timestamp = new Date().toISOString()
+  const tag = targetStatus.toUpperCase()
+  const updatedNotes = order.notes 
+    ? `${order.notes}\n[${tag} ${timestamp}]: ${reason}` 
+    : `[${tag} ${timestamp}]: ${reason}`
+
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({ 
+      status: targetStatus,
+      notes:  updatedNotes,
+      updated_at: timestamp
+    })
+    .eq('id', orderId)
+
+  if (updateError) return { success: false, error: updateError.message }
+
+  // Log to audit table
+  await supabase.from('audit_logs').insert({
+    table_name: 'orders',
+    action:     'UPDATE',
+    user_id:    caller.id,
+    record_id:  orderId,
+    changes:    { status: targetStatus, reason },
+    branch_id:  order.branch_id,
+    actor_role: caller.role,
+  })
+
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/orders`)
+  revalidatePath(`/${locale}/dashboard/delivery`)
+
+  return { success: true, status: targetStatus }
+}

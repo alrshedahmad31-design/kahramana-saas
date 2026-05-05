@@ -18,7 +18,9 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
   delivered:        'bg-brand-success/10 text-brand-success border-brand-success/30',
   completed:        'bg-brand-surface-2 text-brand-muted border-brand-border',
   cancelled:        'bg-brand-error/10 text-brand-error border-brand-error/30',
+  returned:         'bg-brand-muted/20 text-brand-text border-brand-muted/50',
   payment_failed:   'bg-brand-error/15 text-brand-error border-brand-error/40',
+  delivery_failed:  'bg-brand-error/20 text-brand-error border-brand-error/50',
 }
 
 export default function StatusBadge({ status, label, size = 'sm' }: Props) {

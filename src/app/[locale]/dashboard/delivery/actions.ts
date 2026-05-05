@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
+import { sendPushToDriver } from '@/app/[locale]/driver/push-actions'
 
 const MANAGER_ROLES = new Set(['owner', 'general_manager', 'branch_manager'])
 const GLOBAL_ADMIN_ROLES = new Set(['owner', 'general_manager'])
@@ -119,5 +120,77 @@ export async function assignDriverToOrder(
   revalidatePath(`/${locale}/dashboard/orders`)
   revalidatePath(`/${locale}/dashboard/delivery`)
 
+  // 5. Push notification to driver (best-effort, does not fail the dispatch)
+  await sendPushToDriver(driverId, {
+    title: '😋 طلب جديد',
+    body:  'تم تعيينك لطلب جديد — افتح التطبيق للمعاينة',
+    url:   `/${locale}/driver`,
+    tag:   'driver-order',
+  }).catch(() => { /* silent: push is informational only */ })
+
+  return { success: true }
+}
+
+// ── Unassign driver / Return to pool ──────────────────────────────────────────
+// Reverts status to 'ready' and clears the assigned driver.
+export async function unassignDriver(orderId: string): Promise<DispatchActionResult> {
+  const caller = await getSession()
+  if (!caller || !caller.role || !MANAGER_ROLES.has(caller.role)) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const supabase = await createServiceClient()
+  const { data: order } = await supabase.from('orders').select('branch_id').eq('id', orderId).single()
+  if (!order) return { success: false, error: 'Order not found' }
+
+  if (!GLOBAL_ADMIN_ROLES.has(caller.role) && caller.branch_id !== order.branch_id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('orders')
+    .update({ 
+      assigned_driver_id: null, 
+      status: 'ready', 
+      picked_up_at: null,
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', orderId)
+
+  if (error) return { success: false, error: error.message }
+  
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/delivery`)
+  return { success: true }
+}
+
+// ── Reassign to different driver ──────────────────────────────────────────────
+// Changes the driver without changing the status (assumes order is out_for_delivery).
+export async function reassignDriver(orderId: string, driverId: string): Promise<DispatchActionResult> {
+  const caller = await getSession()
+  if (!caller || !caller.role || !MANAGER_ROLES.has(caller.role)) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const supabase = await createServiceClient()
+  const { data: order } = await supabase.from('orders').select('branch_id, status').eq('id', orderId).single()
+  if (!order) return { success: false, error: 'Order not found' }
+
+  if (!GLOBAL_ADMIN_ROLES.has(caller.role) && caller.branch_id !== order.branch_id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('orders')
+    .update({ 
+      assigned_driver_id: driverId, 
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', orderId)
+
+  if (error) return { success: false, error: error.message }
+
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/delivery`)
   return { success: true }
 }

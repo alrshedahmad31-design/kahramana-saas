@@ -4,11 +4,12 @@ import { useState, useEffect, useMemo }                       from 'react'
 import { BRANCHES }                                           from '@/constants/contact'
 import {
   calculateDistance, calculateETA, getUrgencyLevel,
-  resolveExpectedAt, fmtDistance, fmtETA, mapsNavUrl,
+  resolveExpectedAt, fmtDistance, fmtETA,
 }                                                             from '@/lib/utils/delivery'
 import { mapsDirectionsUrl }                                  from '@/lib/utils/distance'
 import { buildCustomerContactLink }                           from '@/lib/whatsapp'
 import IssueReportModal                                       from '@/components/driver/IssueReportModal'
+import DeliveryFailedModal                                    from '@/components/driver/DeliveryFailedModal'
 import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
 import type { BranchId }                                      from '@/constants/contact'
 
@@ -21,7 +22,7 @@ interface Props {
   isRTL:         boolean
   branchMapsUrl: string | null
   variant?:      'active' | 'completed'
-  onAction?:     (id: string, status: DriverActiveStatus, tipBhd?: number) => Promise<string | null>
+  onAction?:     (id: string, status: DriverActiveStatus, metadata?: { tipBhd?: number, actualCollected?: number }) => Promise<string | null>
   onArrive?:     (id: string) => Promise<string | null>
   driverLocation?: { lat: number, lng: number } | null
 }
@@ -127,8 +128,15 @@ export default function DriverOrderCard({
   const [actionError,   setActionError]   = useState<string | null>(null)
   const [itemsExpanded, setItemsExpanded] = useState(() => order.status === 'ready')
   const [showIssue,      setShowIssue]      = useState(false)
-  const [confirmDeliver, setConfirmDeliver] = useState(false)
+  const [showFailed,     setShowFailed]     = useState(false)
   const [tipBhd,         setTipBhd]        = useState(0)
+  const [actualCollected, setActualCollected] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (confirmDeliver) {
+      setActualCollected(Number(order.total_bhd))
+    }
+  }, [confirmDeliver, order.total_bhd])
 
   const isCompleted = variant === 'completed'
   const isReady     = order.status === 'ready'
@@ -269,8 +277,8 @@ export default function DriverOrderCard({
     try {
       const error = await onAction(order.id, 'ready')
       if (error) setActionError(error)
-    } catch (e: any) {
-      setActionError(e.message || 'Network error')
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Network error')
     } finally {
       setBusy(false)
     }
@@ -283,8 +291,8 @@ export default function DriverOrderCard({
     try {
       const error = await onArrive(order.id)
       if (error) setActionError(error)
-    } catch (e: any) {
-      setActionError(e.message || 'Network error')
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Network error')
     } finally {
       setBusy(false)
     }
@@ -301,10 +309,13 @@ export default function DriverOrderCard({
     setConfirmDeliver(false)
     setActionError(null)
     try {
-      const error = await onAction(order.id, 'out_for_delivery', isCash && tipBhd > 0 ? tipBhd : undefined)
+      const error = await onAction(order.id, 'out_for_delivery', {
+        tipBhd: isCash && tipBhd > 0 ? tipBhd : undefined,
+        actualCollected: isCash && actualCollected !== null ? actualCollected : undefined,
+      })
       if (error) setActionError(error)
-    } catch (e: any) {
-      setActionError(e.message || 'Network error')
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Network error')
     } finally {
       setBusy(false)
     }
@@ -486,8 +497,25 @@ export default function DriverOrderCard({
                           : `Confirm: did you collect ${Number(order.total_bhd).toFixed(3)} BD cash?`
                         }
                       </p>
-                      {/* Optional tip input */}
+                      {/* Actual collected input */}
                       <div>
+                        <label className={`block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                          {isRTL ? 'المبلغ الفعلي المستلم' : 'Actual Amount Collected'}
+                        </label>
+                        <div className="flex items-center gap-2 mb-3">
+                          <input
+                            type="number"
+                            step="0.100"
+                            min="0"
+                            value={actualCollected ?? ''}
+                            onChange={e => setActualCollected(Math.max(0, Number(e.target.value) || 0))}
+                            placeholder="0.000"
+                            className="flex-1 rounded-lg bg-brand-surface border border-brand-border px-3 py-1.5 font-satoshi text-sm text-brand-text tabular-nums focus:outline-none focus:border-brand-gold/60"
+                            dir="ltr"
+                          />
+                          <span className="font-satoshi text-xs text-brand-muted shrink-0">BD</span>
+                        </div>
+
                         <label className={`block text-xs font-bold text-brand-muted uppercase tracking-wider mb-1 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                           {isRTL ? 'إكرامية إضافية؟ (اختياري)' : 'Extra tip? (optional)'}
                         </label>
@@ -866,23 +894,43 @@ export default function DriverOrderCard({
             )}
           </div>
 
-          {/* ── Issue report button (active orders only) ───────────────────────── */}
+          {/* ── Issue report / Failed button (active orders only) ─────────────── */}
           {!isCompleted && (
-            <button
-              type="button"
-              onClick={() => setShowIssue(true)}
-              className={`
-                w-full min-h-[44px] rounded-xl border border-brand-border
-                flex items-center justify-center gap-2
-                text-brand-muted hover:text-brand-error hover:border-brand-error/40
-                transition-colors duration-150
-              `}
-            >
-              <WarningIcon />
-              <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                {isRTL ? 'مشكلة في الطلب' : 'Report an Issue'}
-              </span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowIssue(true)}
+                className={`
+                  flex-1 min-h-[44px] rounded-xl border border-brand-border
+                  flex items-center justify-center gap-2
+                  text-brand-muted hover:text-brand-gold hover:border-brand-gold/40
+                  transition-colors duration-150
+                `}
+              >
+                <WarningIcon />
+                <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isRTL ? 'إبلاغ عن مشكلة' : 'Report Issue'}
+                </span>
+              </button>
+
+              {isOnRoad && (
+                <button
+                  type="button"
+                  onClick={() => setShowFailed(true)}
+                  className={`
+                    flex-1 min-h-[44px] rounded-xl border border-brand-error/30 bg-brand-error/5
+                    flex items-center justify-center gap-2
+                    text-brand-error hover:bg-brand-error hover:text-white
+                    transition-all duration-150
+                  `}
+                >
+                  <WarningIcon />
+                  <span className={`font-bold text-sm ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {isRTL ? 'فشل التوصيل' : 'Delivery Failed'}
+                  </span>
+                </button>
+              )}
+            </div>
           )}
 
         </div>
@@ -895,6 +943,16 @@ export default function DriverOrderCard({
           orderRef={orderRef}
           isRTL={isRTL}
           onClose={() => setShowIssue(false)}
+        />
+      )}
+
+      {/* ── Delivery Failed modal ───────────────────────────────────────────── */}
+      {showFailed && (
+        <DeliveryFailedModal
+          orderId={order.id}
+          orderRef={orderRef}
+          isRTL={isRTL}
+          onClose={() => setShowFailed(false)}
         />
       )}
     </>

@@ -21,9 +21,6 @@ import {
   Store,
   Edit,
   Send,
-  Map,
-  Building,
-  FileText,
   Package,
 } from 'lucide-react'
 import { useCartStore, selectCartTotalFils, selectLineTotalFils, selectTotalItems } from '@/lib/cart'
@@ -73,37 +70,6 @@ function SectionCard({ children, className = '' }: { children: React.ReactNode, 
   )
 }
 
-function AddressRow({
-  icon: Icon,
-  label,
-  value,
-  onChange,
-  placeholder
-}: {
-  icon: LucideIcon
-  label: string
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
-}) {
-  return (
-    <div className="flex items-stretch border border-brand-border rounded-xl mb-2 min-h-[56px] overflow-hidden">
-      <div className="flex items-center gap-3 px-4 shrink-0 min-w-[160px] sm:min-w-[180px] bg-brand-surface-2/30 border-e border-brand-border">
-        <Icon size={18} className="text-brand-gold shrink-0" />
-        <span className="text-[11px] sm:text-xs font-bold text-brand-gold tracking-wider">
-          {label}
-        </span>
-      </div>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="flex-1 bg-transparent px-4 py-3 text-sm text-brand-text placeholder:text-brand-muted/30 focus:outline-none"
-      />
-    </div>
-  )
-}
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -134,9 +100,7 @@ type CheckoutErrorKey = keyof CheckoutValues | 'address' | 'deliveryBuilding' | 
 
 // ── Address types ─────────────────────────────────────────────────────────────
 
-type AddressMode = 'manual' | 'location' | null
-
-interface ManualAddress {
+type ManualAddress = {
   block: string
   road: string
   building: string
@@ -184,7 +148,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const [orderType, setOrderType] = useState<'delivery' | 'pickup' | null>(null)
 
   // ── Address state ─────────────────────────────────────────────────────────
-  const [addressMode, setAddressMode] = useState<AddressMode>(null)
   const [manualAddr, setManualAddr]   = useState<ManualAddress>({ block: '', road: '', building: '', flat: '' })
   const [gpsCoords,  setGpsCoords]    = useState<{ lat: number; lng: number } | null>(null)
   const [gpsLoading, setGpsLoading]   = useState(false)
@@ -250,7 +213,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
       (pos) => {
         setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
         setGpsLoading(false)
-        setAddressMode('location')
       },
       () => {
         setGpsError(t('errors.gpsDenied'))
@@ -713,7 +675,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
             type="button"
             onClick={() => {
               setOrderType('pickup')
-              setAddressMode(null)
               setErrors(p => { const n = { ...p }; delete n.address; return n })
             }}
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all font-bold text-sm

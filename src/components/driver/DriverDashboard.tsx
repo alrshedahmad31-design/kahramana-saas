@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { driverBumpOrder, markDriverArrived, postDriverLocation, toggleDriverAvailability } from '@/app/[locale]/driver/actions'
+import { savePendingAction, getPendingActions, deletePendingAction, type PendingAction } from '@/lib/utils/offline-db'
 import { useAudioAlert } from '@/hooks/useAudioAlert'
 import { playBell } from '@/lib/audio/bells'
 import DriverHeader from './DriverHeader'
@@ -55,6 +56,7 @@ export default function DriverDashboard({
   const [reminderDismissed,  setReminderDismissed]  = useState(false)
 
   const [userLocation,    setUserLocation]    = useState<{ lat: number, lng: number } | null>(null)
+  const [pendingSync,     setPendingSync]     = useState<number>(0)
   const lastGpsUpdateRef = useRef<number>(0)
 
   const supabase = useMemo(() => createClient(), [])
@@ -134,13 +136,18 @@ export default function DriverDashboard({
   useEffect(() => {
     const channel = supabase
       .channel('driver-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'orders',
+        filter: branchId ? `branch_id=eq.${branchId}` : undefined
+      }, () => {
         fetchOrders()
         fetchCompleted()
       })
       .subscribe()
     return () => { void supabase.removeChannel(channel) }
-  }, [supabase, fetchOrders, fetchCompleted])
+  }, [supabase, branchId, fetchOrders, fetchCompleted])
 
   // GPS — only tracks while driver has an active out_for_delivery order
   useEffect(() => {
@@ -182,13 +189,55 @@ export default function DriverDashboard({
     return () => clearInterval(id)
   }, [])
 
+  // Offline Sync Logic
+  const syncPendingActions = useCallback(async () => {
+    try {
+      const actions = await getPendingActions()
+      if (actions.length === 0) {
+        setPendingSync(0)
+        return
+      }
+
+      setPendingSync(actions.length)
+
+      for (const action of actions) {
+        try {
+          const res = await driverBumpOrder(action.orderId, action.currentStatus as any, action.metadata?.tipBhd, action.metadata?.actualCollected)
+          if (res.success) {
+            if (action.id) await deletePendingAction(action.id)
+          }
+        } catch {
+          // Still offline or transient error, keep it for next try
+        }
+      }
+
+      // Refresh counts
+      const remaining = await getPendingActions()
+      setPendingSync(remaining.length)
+      
+      if (remaining.length < actions.length) {
+        fetchOrders()
+        fetchCompleted()
+      }
+    } catch (e) {
+      console.error('Sync error:', e)
+    }
+  }, [fetchOrders, fetchCompleted])
+
+  useEffect(() => {
+    window.addEventListener('online', syncPendingActions)
+    // Initial check
+    syncPendingActions()
+    return () => window.removeEventListener('online', syncPendingActions)
+  }, [syncPendingActions])
+
   async function handleAvailabilityToggle() {
     setIsOnline((v) => !v) // optimistic
     const result = await toggleDriverAvailability()
     if (!result.success) setIsOnline((v) => !v) // revert on DB error
   }
 
-  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery', tipBhd?: number): Promise<string | null> {
+  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery', metadata?: { tipBhd?: number, actualCollected?: number }): Promise<string | null> {
     const nextStatus = currentStatus === 'ready' ? 'out_for_delivery' : 'delivered'
     const now = new Date().toISOString()
 
@@ -209,11 +258,26 @@ export default function DriverDashboard({
       }
     }
 
-    const result = await driverBumpOrder(orderId, currentStatus, tipBhd)
-    if (!result.success) {
-      fetchOrders()
-      fetchCompleted()
-      return result.error
+    try {
+      const result = await driverBumpOrder(orderId, currentStatus, metadata?.tipBhd, metadata?.actualCollected)
+      if (!result.success) {
+        fetchOrders()
+        fetchCompleted()
+        return result.error
+      }
+    } catch (err) {
+      // Offline or Network Error -> Save for sync
+      try {
+        await savePendingAction({ orderId, currentStatus, metadata })
+        const remaining = await getPendingActions()
+        setPendingSync(remaining.length)
+      } catch (dbErr) {
+        console.error('Failed to save to IndexedDB:', dbErr)
+      }
+      
+      return isAr 
+        ? 'أنت غير متصل بالإنترنت. سيتم مزامنة العملية تلقائياً عند عودة الاتصال.' 
+        : 'You are offline. Action will sync automatically when connection returns.'
     }
     return null
   }
@@ -293,6 +357,23 @@ export default function DriverDashboard({
               onDismiss={() => setReminderDismissed(true)}
               isRTL={isAr}
             />
+          )}
+          
+          {/* Offline Sync Banner */}
+          {pendingSync > 0 && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-brand-gold/10 border border-brand-gold/30 animate-pulse">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🔄</span>
+                <div>
+                  <p className={`font-bold text-sm text-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                    {isAr ? `جاري مزامنة ${pendingSync} عمليات...` : `Syncing ${pendingSync} actions...`}
+                  </p>
+                  <p className="text-[10px] text-brand-gold/70">
+                    {isAr ? 'سيتم الحفظ تلقائياً عند استقرار الإنترنت' : 'Saving automatically when internet returns'}
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Performance stats — only when deliveries exist */}

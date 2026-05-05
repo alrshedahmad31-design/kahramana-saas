@@ -19,6 +19,7 @@ export async function driverBumpOrder(
   orderId:       string,
   currentStatus: 'ready' | 'out_for_delivery',
   tipBhd?:       number,   // only meaningful for the delivered transition
+  actualCollected?: number, // what the customer actually paid (cash only)
 ): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
@@ -79,11 +80,18 @@ export async function driverBumpOrder(
     }
   }
 
-  const { data: updatedRows, error } = await supabase
+  const query = supabase
     .from('orders')
     .update(orderUpdate)
     .eq('id', orderId)
-    .eq('status', currentStatus)   // optimistic-concurrency guard
+    .eq('status', currentStatus)
+
+  // If picking up a ready order, ensure it hasn't been claimed yet
+  if (currentStatus === 'ready') {
+    query.is('assigned_driver_id', null)
+  }
+
+  const { data: updatedRows, error } = await query
     .select('id')
 
   if (error) return { success: false, error: error.message }
@@ -264,101 +272,100 @@ export async function toggleDriverAvailability(): Promise<DriverActionResult> {
 //      payload is NEVER trusted (prevents tampered totals from DevTools).
 
 export async function submitCashHandover(
-  orderIds: string[],
-): Promise<DriverActionResult & { totalCash?: number }> {
+  orderIds:     string[],
+  actualAmount: number, // The physical cash being handed over
+): Promise<DriverActionResult & { totalExpected?: number }> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
     return { success: false, error: 'Unauthorized' }
   }
 
-  // Authoritative total — recomputed from DB. Even if client sends garbage,
-  // server is the only source of truth.
-  let totalCash = 0
+  // Authoritative total — recomputed from DB.
+  let totalExpected = 0
+  let branchId: string | null = null
 
   if (orderIds.length > 0) {
-    const anon = await createClient()
-    const { data: orders } = await anon
+    const supabase = await createClient()
+    const { data: orders } = await supabase
       .from('orders')
-      .select('id, assigned_driver_id, total_bhd, status, payments(method)')
+      .select('id, assigned_driver_id, total_bhd, status, branch_id, payments(method)')
       .in('id', orderIds)
-    // tip_bhd not in generated types yet — cast via unknown
 
-    // Ensure all requested IDs were actually found
-    const fetchedIds = new Set((orders ?? []).map(o => o.id))
-    const missing    = orderIds.filter(id => !fetchedIds.has(id))
-    if (missing.length > 0) return { success: false, error: 'Invalid order IDs' }
+    if (!orders || orders.length === 0) return { success: false, error: 'Orders not found' }
 
-    // Reject any order not owned by this driver, not delivered, or not a cash order.
-    // payments is a one-to-one embed so TS infers a single object, not an array.
-    const invalid = (orders ?? []).filter(
+    // Branch and Ownership validation
+    branchId = orders[0].branch_id
+    const invalid = orders.filter(
       o =>
         o.assigned_driver_id !== user.id ||
         o.status             !== 'delivered' ||
-        o.payments?.method   !== 'cash',
+        o.payments?.method   !== 'cash' ||
+        o.branch_id          !== branchId
     )
-    if (invalid.length > 0) {
-      return { success: false, error: 'Unauthorized orders in handover' }
-    }
+    if (invalid.length > 0) return { success: false, error: 'Invalid orders in handover' }
 
-    // Sum from DB — include tip_bhd if present (migration 040); ignore client values.
-    totalCash = (orders ?? []).reduce(
-      (s, o) => s + Number(o.total_bhd) + Number((o as Record<string, unknown>).tip_bhd ?? 0),
-      0,
+    // Sum price + tips (if any)
+    // tips are in orders.tip_bhd
+    totalExpected = orders.reduce(
+      (s, o) => s + Number(o.total_bhd) + Number((o as any).tip_bhd ?? 0),
+      0
     )
+  } else {
+    return { success: false, error: 'No orders selected' }
   }
 
-  // Use service client for atomicity — bypasses RLS so the link-table insert
-  // and the rollback delete both succeed without permission edge cases.
   const service = await createServiceClient()
-  const today   = new Date().toISOString().split('T')[0]
+  const now = new Date().toISOString()
 
-  const handover: DriverCashHandoverInsert = {
-    driver_id:  user.id,
-    shift_date: today,
-    total_cash: totalCash,
-    order_ids:  orderIds,
-  }
-
-  const { data: row, error: hErr } = await service
-    .from('driver_cash_handovers')
-    .insert(handover)
+  // 1. Create the handover record
+  const { data: handover, error: hErr } = await service
+    .from('cash_handovers')
+    .insert({
+      driver_id:       user.id,
+      branch_id:       branchId!,
+      expected_amount: Number(totalExpected.toFixed(3)),
+      actual_amount:   Number(actualAmount.toFixed(3)),
+      order_ids:       orderIds,
+      manager_confirmed: false
+    })
     .select('id')
     .single()
 
-  if (hErr || !row) return { success: false, error: hErr?.message ?? 'Insert failed' }
+  if (hErr || !handover) return { success: false, error: hErr?.message ?? 'Handover failed' }
 
-  // Link each order to this handover — UNIQUE(order_id) on the link table
-  // prevents the same order from appearing in two handovers (23505 error).
-  if (orderIds.length > 0) {
-    const links = orderIds.map(oid => ({ handover_id: row.id, order_id: oid }))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: linkErr } = await (service as any)
-      .from('driver_cash_handover_orders')
-      .insert(links)
+  // 2. Mark orders as handed over
+  const { error: updateErr } = await service
+    .from('orders')
+    .update({
+      cash_handed_over: true,
+      handed_over_at:   now,
+      cash_settlement_id: handover.id // Maintain backwards compatibility if needed
+    })
+    .in('id', orderIds)
+    .eq('assigned_driver_id', user.id)
 
-    if (linkErr) {
-      // Rollback the parent row so it doesn't appear as an empty phantom handover.
-      await service.from('driver_cash_handovers').delete().eq('id', row.id)
-      if (linkErr.code === '23505') {
-        return { success: false, error: 'Some orders are already settled in another handover' }
-      }
-      return { success: false, error: linkErr.message }
+  if (updateErr) {
+    // Attempt rollback
+    await service.from('cash_handovers').delete().eq('id', handover.id)
+    return { success: false, error: updateErr.message }
+  }
+
+  // 3. Audit Log
+  await service.from('audit_logs').insert({
+    action: 'INSERT',
+    table_name: 'cash_handovers',
+    record_id: handover.id,
+    performed_by: user.id,
+    old_data: {},
+    new_data: {
+      order_ids: orderIds,
+      expected:  totalExpected,
+      actual:    actualAmount,
+      diff:      actualAmount - totalExpected
     }
-  }
+  })
 
-  // Stamp cash_settled_at + cash_settlement_id on each settled order (migration 037)
-  if (orderIds.length > 0) {
-    const now = new Date().toISOString()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (service as any)
-      .from('orders')
-      .update({ cash_settled_at: now, cash_settlement_id: row.id })
-      .in('id', orderIds)
-      .eq('assigned_driver_id', user.id)
-      .is('cash_settled_at', null)
-  }
-
-  return { success: true, totalCash }
+  return { success: true, totalExpected }
 }
 
 // ── Submit driver issue report ────────────────────────────────────────────────
@@ -419,3 +426,70 @@ export async function submitDriverIssue(
   if (error) return { success: false, error: error.message }
   return { success: true }
 }
+
+export async function reportDeliveryFailure(
+  orderId: string,
+  reason:  string,
+  notes?:  string,
+): Promise<DriverActionResult> {
+  const user = await getSession()
+  if (!user || user.role !== 'driver') {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  if (!reason.trim()) {
+    return { success: false, error: 'Reason is required' }
+  }
+
+  const supabase = await createClient()
+
+  const { data: order, error: fetchError } = await supabase
+    .from('orders')
+    .select('id, branch_id, assigned_driver_id, status, driver_notes')
+    .eq('id', orderId)
+    .single()
+
+  if (fetchError || !order) return { success: false, error: 'Order not found' }
+
+  // Branch guard
+  if (user.branch_id && order.branch_id !== user.branch_id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  // Ownership guard: must be assigned to this driver and currently on route
+  if (order.assigned_driver_id !== user.id || order.status !== 'out_for_delivery') {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const service = await createServiceClient()
+
+  // 1. Update order status to delivery_failed and append note
+  const failureNote = `[فشل التوصيل]: ${reason}${notes ? ` - ${notes}` : ''}`
+  const updatedDriverNotes = order.driver_notes 
+    ? `${order.driver_notes}\n${failureNote}` 
+    : failureNote
+
+  const { error: updateError } = await service
+    .from('orders')
+    .update({ 
+      status: 'delivery_failed',
+      driver_notes: updatedDriverNotes,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', orderId)
+
+  if (updateError) return { success: false, error: updateError.message }
+
+  // 2. Also log in driver_order_issues for reporting
+  await service
+    .from('driver_order_issues')
+    .insert({
+      order_id:  orderId,
+      driver_id: user.id,
+      reason:    reason.trim(),
+      notes:     notes?.trim() ?? null,
+    })
+
+  return { success: true }
+}
+

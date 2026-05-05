@@ -139,3 +139,60 @@ function remove(db, id) {
     req.onerror   = () => reject(req.error)
   })
 }
+
+// ── Web Push Notifications ────────────────────────────────────────────────────
+//
+// Sent by the server when a new order is assigned to this driver.
+// Payload shape: { title, body, url, tag }
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+
+  let payload
+  try {
+    payload = event.data.json()
+  } catch {
+    payload = { title: 'كهرمانة', body: event.data.text(), url: '/ar/driver' }
+  }
+
+  const { title = 'كهرمانة', body = '', url = '/ar/driver', tag = 'driver-order' } = payload
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      tag,                  // replaces previous notification with same tag
+      renotify: true,
+      icon:  '/assets/favicon/web-app-manifest-192x192.png',
+      badge: '/assets/favicon/web-app-manifest-192x192.png',
+      dir:   'rtl',
+      lang:  'ar',
+      data:  { url },
+      actions: [
+        { action: 'open', title: 'فتح الطلب' },
+        { action: 'dismiss', title: 'إغلاق' },
+      ],
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  if (event.action === 'dismiss') return
+
+  const targetUrl = event.notification.data?.url ?? '/ar/driver'
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // Focus an existing driver tab if open
+      const existing = clients.find((c) => c.url.includes('/driver'))
+      if (existing) {
+        existing.focus()
+        existing.navigate(targetUrl)
+        return
+      }
+      // Otherwise open a new tab
+      return self.clients.openWindow(targetUrl)
+    }),
+  )
+})

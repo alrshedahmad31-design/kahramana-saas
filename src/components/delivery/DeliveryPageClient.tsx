@@ -14,6 +14,8 @@ import OrderListPanel      from './OrderListPanel'
 import DriverFleetPanel    from './DriverFleetPanel'
 import OrderDetailDrawer   from './OrderDetailDrawer'
 import DispatchModal       from './DispatchModal'
+import { unassignDriver }  from '@/app/[locale]/dashboard/delivery/actions'
+import { updateOrderWithReason } from '@/app/[locale]/dashboard/orders/actions'
 
 interface Props {
   initialOrders:  DeliveryOrder[]
@@ -270,6 +272,26 @@ export default function DeliveryPageClient({
     setShowDispatch(true)
   }
 
+  async function handleUnassign(orderId: string) {
+    const res = await unassignDriver(orderId)
+    if (res.success) {
+      await refreshOrders()
+      await refreshDrivers()
+    } else {
+      alert(res.error)
+    }
+  }
+
+  async function handleCancel(orderId: string, reason: string) {
+    const res = await updateOrderWithReason(orderId, reason, 'cancelled')
+    if (res.success) {
+      await refreshOrders()
+      await refreshDrivers()
+    } else {
+      alert(res.error)
+    }
+  }
+
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
@@ -350,6 +372,8 @@ export default function DeliveryPageClient({
             isAr={isAr}
             onSelect={openOrder}
             onDispatch={openDispatch}
+            onUnassign={handleUnassign}
+            onCancel={handleCancel}
           />
         )}
       </div>

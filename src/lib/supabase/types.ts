@@ -111,6 +111,68 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_handovers: {
+        Row: {
+          id: string
+          driver_id: string
+          branch_id: string
+          expected_amount: number
+          actual_amount: number
+          difference: number
+          manager_confirmed: boolean
+          confirmed_by: string | null
+          confirmed_at: string | null
+          order_ids: string[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          driver_id: string
+          branch_id: string
+          expected_amount: number
+          actual_amount: number
+          manager_confirmed?: boolean
+          confirmed_by?: string | null
+          confirmed_at?: string | null
+          order_ids: string[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          driver_id?: string
+          branch_id?: string
+          expected_amount?: number
+          actual_amount?: number
+          manager_confirmed?: boolean
+          confirmed_by?: string | null
+          confirmed_at?: string | null
+          order_ids?: string[]
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_handovers_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_handovers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_handovers_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "auth_users_view"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       business_hours: {
         Row: {
           branch_id: string
@@ -965,6 +1027,47 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      driver_push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          driver_id: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          driver_id: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          driver_id?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_push_subscriptions_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          }
         ]
       }
       ingredient_allergens: {
@@ -1986,6 +2089,9 @@ export type Database = {
           total_bhd: number
           updated_at: string
           whatsapp_sent_at: string | null
+          actual_collected: number | null
+          cash_handed_over: boolean
+          handed_over_at: string | null
         }
         Insert: {
           arrived_at?: string | null
@@ -2029,6 +2135,9 @@ export type Database = {
           total_bhd: number
           updated_at?: string
           whatsapp_sent_at?: string | null
+          actual_collected?: number | null
+          cash_handed_over?: boolean
+          handed_over_at?: string | null
         }
         Update: {
           arrived_at?: string | null
@@ -2072,6 +2181,9 @@ export type Database = {
           total_bhd?: number
           updated_at?: string
           whatsapp_sent_at?: string | null
+          actual_collected?: number | null
+          cash_handed_over?: boolean
+          handed_over_at?: string | null
         }
         Relationships: [
           {
@@ -3821,6 +3933,8 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "payment_failed"
+        | "delivery_failed"
+        | "returned"
       payment_method: "cash" | "benefit_qr" | "tap_card" | "tap_knet"
       payment_status:
         | "pending"
@@ -4001,6 +4115,8 @@ export const Constants = {
         "completed",
         "cancelled",
         "payment_failed",
+        "delivery_failed",
+        "returned",
       ],
       payment_method: ["cash", "benefit_qr", "tap_card", "tap_knet"],
       payment_status: [

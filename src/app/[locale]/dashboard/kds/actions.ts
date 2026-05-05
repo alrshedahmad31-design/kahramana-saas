@@ -34,7 +34,7 @@ export async function advanceOrderStatus(
   const supabase = await createServiceClient()
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, branch_id, status')
+    .select('id, branch_id, status, order_type')
     .eq('id', orderId)
     .single()
 
@@ -44,6 +44,11 @@ export async function advanceOrderStatus(
   }
   if (!canUpdateOrderStatus(caller, order, nextStatus)) {
     return { success: false, error: 'Forbidden transition' }
+  }
+
+  // Guard: Delivery orders cannot be completed by kitchen
+  if (currentStatus === 'ready' && order.order_type === 'delivery') {
+    return { success: false, error: 'Delivery orders must be handled by a driver.' }
   }
 
   const { error } = await supabase

@@ -177,9 +177,24 @@ function HandoverCard({ handover: h, isAr }: { handover: CashHandoverRow; isAr: 
     setError(null)
     const { disputeCashHandover } = await import('@/app/[locale]/dashboard/delivery/cash-reconciliation/actions')
     const result = await disputeCashHandover(h.id, notes)
+    setLoading(true) // keep loading until refresh?
     setLoading(false)
     if ('error' in result) { setError(result.error); return }
     setLocalStatus('disputed')
+  }
+
+  async function handleNewSystemConfirm() {
+    if (loading || localStatus !== 'pending') return
+    setLoading(true)
+    setError(null)
+    const { confirmCashHandover } = await import('@/app/[locale]/dashboard/delivery/cash-reconciliation/actions')
+    const result = await confirmCashHandover(h.id)
+    setLoading(false)
+    if ('error' in result) {
+      setError(result.error)
+      return
+    }
+    setLocalStatus('verified')
   }
 
   return (
@@ -214,7 +229,7 @@ function HandoverCard({ handover: h, isAr }: { handover: CashHandoverRow; isAr: 
       </div>
 
       {/* Reconciliation panel — only shown for pending */}
-      {localStatus === 'pending' && (
+      {localStatus === 'pending' && !h.is_new_system && (
         <div className="px-5 py-4 flex flex-col gap-3">
           {/* Amount input */}
           <div className="flex items-center gap-3">
@@ -302,6 +317,56 @@ function HandoverCard({ handover: h, isAr }: { handover: CashHandoverRow; isAr: 
               `}
             >
               {loading ? '…' : (isAr ? 'طعن' : 'Dispute')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* New System Confirmation Panel */}
+      {localStatus === 'pending' && h.is_new_system && (
+        <div className="px-5 py-4 bg-brand-surface-2/30 border-t border-brand-border">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className={`text-xs font-bold text-brand-muted uppercase tracking-wider mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? 'المبلغ المسلم من السائق' : 'Amount Handed by Driver'}
+                </p>
+                <p className="font-satoshi font-black text-2xl text-brand-text tabular-nums">
+                  {(h.actual_received ?? 0).toFixed(3)} <span className="text-xs font-medium text-brand-muted">BD</span>
+                </p>
+              </div>
+              
+              <div className={`shrink-0 rounded-xl px-4 py-2 border ${Math.abs(h.discrepancy ?? 0) <= TOLERANCE ? 'bg-brand-success/10 border-brand-success/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                <p className={`text-xs font-bold uppercase tracking-wider mb-0.5 ${Math.abs(h.discrepancy ?? 0) <= TOLERANCE ? 'text-brand-success' : 'text-red-400'} ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? 'الفرق' : 'Difference'}
+                </p>
+                <p className={`font-satoshi font-black text-lg tabular-nums ${Math.abs(h.discrepancy ?? 0) <= TOLERANCE ? 'text-brand-success' : 'text-red-400'}`}>
+                  {(h.discrepancy ?? 0) >= 0 ? '+' : ''}{(h.discrepancy ?? 0).toFixed(3)}
+                </p>
+              </div>
+            </div>
+
+            {error && (
+              <p className={`text-xs text-red-400 font-bold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                ⚠️ {error}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleNewSystemConfirm}
+              disabled={loading}
+              className={`
+                w-full rounded-xl py-3 font-black text-base transition-all duration-150
+                ${Math.abs(h.discrepancy ?? 0) <= TOLERANCE 
+                  ? 'bg-brand-success text-brand-black' 
+                  : 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+                }
+                active:scale-[0.99] disabled:opacity-50
+                ${isAr ? 'font-almarai' : 'font-satoshi'}
+              `}
+            >
+              {loading ? '…' : (isAr ? 'تأكيد استلام المبلغ' : 'Confirm Cash Receipt')}
             </button>
           </div>
         </div>
