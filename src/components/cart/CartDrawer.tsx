@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from '@/i18n/navigation'
-import { useCartStore, selectTotalItems, selectSubtotal, type CartItem } from '@/lib/cart'
-import { formatPrice } from '@/lib/format'
+import { useCartStore, selectTotalItems, selectCartTotalFils, selectLineTotalFils, type CartItem } from '@/lib/cart'
+import { formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { X, Trash2, Minus, Plus, ShoppingBag, MapPin } from 'lucide-react'
@@ -29,7 +29,7 @@ export default function CartBottomSheet() {
   const setBranch        = useCartStore((s) => s.setBranch)
 
   const totalItems = selectTotalItems(items)
-  const subtotal   = selectSubtotal(items)
+  const subtotalFils = selectCartTotalFils(items)
 
   const [mounted, setMounted] = useState(false)
   const [removedItem, setRemovedItem] = useState<CartItem | null>(null)
@@ -217,7 +217,7 @@ export default function CartBottomSheet() {
                     <span className="text-[10px] text-brand-muted/40 font-almarai italic">{t('freeDelivery')}</span>
                   </div>
                   <div className="flex items-baseline gap-1 font-satoshi text-brand-gold">
-                    <span className="text-3xl font-black tabular-nums">{formatPrice(subtotal, locale)}</span>
+                    <span className="text-3xl font-black tabular-nums">{formatPriceFils(subtotalFils, locale)}</span>
                   </div>
                 </div>
 
@@ -287,7 +287,7 @@ function CartItemRow({ item, isRTL, locale, labels, onRemove, onUpdateQty, onUpd
   onUpdateNotes: (n: string) => void
 }) {
   const [notesOpen, setNotesOpen] = useState(false)
-  const lineTotal = item.priceBhd * item.quantity
+  const lineTotalFils = selectLineTotalFils(item)
   const name = isRTL ? item.nameAr : item.nameEn
 
   return (
@@ -356,7 +356,7 @@ function CartItemRow({ item, isRTL, locale, labels, onRemove, onUpdateQty, onUpd
             </div>
 
             <div className="flex items-baseline gap-1 font-satoshi text-brand-gold">
-              <span className="text-lg font-black tabular-nums">{formatPrice(lineTotal, locale)}</span>
+              <span className="text-lg font-black tabular-nums">{formatPriceFils(lineTotalFils, locale)}</span>
             </div>
           </div>
         </div>

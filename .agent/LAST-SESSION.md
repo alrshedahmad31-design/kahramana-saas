@@ -1,69 +1,89 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 58
-**Date**: 2026-05-04
-**Focus**: Middleware bundle size (171 kB) + framer-motion in critical bundle (~36 kB gzipped)
+**Session ID**: 59
+**Date**: 2026-05-05
+**Focus**: Production crash fix (LowStockWidget) + Arabic unit translations + Owner inventory guide v2.0
 
 ---
 
 ## Summary
 
-Two JS bundle optimizations: middleware no longer runs Supabase on public routes, and framer-motion is no longer in the homepage critical bundle.
+Three deliverables completed: (1) fixed a live production crash on the inventory dashboard, (2) added bilingual unit label support across all inventory UI, (3) rewrote the owner inventory documentation guide with verified content and sidebar-ordered sections.
 
 ---
 
 ## Changes Made
 
-### Fix 1 — Middleware: Supabase runs on every request (`src/middleware.ts`)
+### Fix 1 — Production crash: LowStockWidget (`src/components/inventory/LowStockWidget.tsx`)
 
-**Problem**: `createServerClient` + `supabase.auth.getUser()` executed on every request that matched the middleware matcher — including the homepage, menu, branches, and all public pages. This caused the middleware bundle to be 171 kB and added a Supabase round-trip to every page load.
+**Problem**: `item.available.toFixed(1)` threw `TypeError` in production. The `rpc_low_stock_alerts` RPC returns `available` as a computed NUMERIC expression which PostgREST serializes as a JSON string, not a JS number.
 
-**Root cause**: The `isDashboard` / `isLogin` pattern checks happened *after* the Supabase client was already created and `getUser()` was already called.
+**Fix**: Wrapped with `Number()` before `.toFixed()` and before `<= 0` comparisons.
 
-**Fix**: Moved the pattern checks to the top of the function. Public routes (`!isDashboard && !isLogin`) now exit immediately — no Supabase client created, no network call made. Supabase initialization only happens when the path is `/dashboard*` or `/login`.
-
-Also removed the now-unused `type CookieOptionsWithName` import from `@supabase/ssr` (no longer needed since explicit type annotations on the `setAll` callback were dropped — TypeScript infers them from the SDK).
-
-**Files changed**: `src/middleware.ts`
+**Commit**: `fix: guard against PostgREST returning NUMERIC as string in LowStockWidget`
 
 ---
 
-### Fix 2 — Homepage: framer-motion in critical bundle (`src/app/[locale]/page.tsx`)
+### Fix 2 — Arabic unit labels in inventory UI
 
-**Problem**: `FeatureArtifacts` was a static import, pulling framer-motion (~36 kB gzipped) into the homepage's initial JS bundle. This increased TBT and delayed interactivity.
+**New shared utility**: `src/lib/inventory/units.ts`
+- Exports `translateUnit(unit: string | undefined, isAr: boolean): string`
+- Covers all 16 ingredient units + batch (prep only)
 
-**Why ssr:false**: `FeatureArtifacts` uses `useState`, `useEffect`, and `AnimatePresence` — it has no meaningful SSR output and would hydration-mismatch anyway. `ssr: false` skips server rendering entirely and loads it as a pure client chunk.
+**Forms updated** (interactive dropdowns now show Arabic/English labels):
+- `src/components/inventory/IngredientForm.tsx` — replaced `UNITS[]` with `UNIT_LABELS[]` map
+- `src/components/inventory/PrepItemForm.tsx` — replaced `PREP_UNITS[]` with `PREP_UNIT_LABELS[]` map
 
-**Fix**: Converted to `dynamic()` import with `ssr: false` and a `loading` placeholder that reserves `h-[530px]` to prevent CLS while the chunk loads.
+**Pages updated** (display columns now translated):
+- `src/app/[locale]/dashboard/inventory/ingredients/page.tsx`
+- `src/app/[locale]/dashboard/inventory/prep-items/page.tsx`
+- `src/app/[locale]/dashboard/inventory/stock/[branchId]/page.tsx`
+- `src/app/[locale]/dashboard/inventory/reports/abc-analysis/page.tsx`
 
-**Files changed**: `src/app/[locale]/page.tsx`
+**i18n**: Added `inventory.units` namespace to `messages/ar.json` and `messages/en.json`.
+
+**Commit**: `2d8bb06` (pending push confirmation)
 
 ---
 
-## Current State (after session 58)
+### Fix 3 — Owner inventory guide v2.0
 
-**`src/middleware.ts`**:
-- Public routes skip Supabase entirely (early return after `intlMiddleware`)
-- Supabase client + `getUser()` only runs on `/dashboard*` and `/login`
-- `CookieOptionsWithName` import removed
+**File**: `kahramana_inventory_guide.docx` (50 KB) in project root.
 
-**`src/app/[locale]/page.tsx`**:
-- `FeatureArtifacts` is now `dynamic(() => import(...), { ssr: false, loading: () => <div className="... h-[530px]" /> })`
-- framer-motion excluded from critical bundle
+**What changed vs v1:**
+- Sections ordered exactly per dashboard sidebar (Overview → Reports → Ingredients → Prep Items → Recipes → Stock → Par Levels → Waste → Count → Purchases → Transfers → Catering → Budget → Import)
+- Every section has a "ما المطلوب لكي يعمل" (prerequisites) block
+- 4 documentation errors corrected with visible warning boxes:
+  1. `available` is not a stored column — it's computed as `on_hand - reserved - catering_reserved`
+  2. `cost_per_unit` lives in `ingredients`, not `inventory_stock`
+  3. Expiry alert threshold is 3 days (pg_cron), not 7 days (7 days is a UI display filter)
+  4. `batch` unit is only valid for prep items, NOT for ingredients
+- Version updated to "2.0 — مراجعة موثقة"
+
+**Build script**: `build_doc_v2.py` in project root (can be deleted).
+
+---
+
+## Current State (after session 59)
+
+- LowStockWidget crash: **FIXED and pushed**
+- Arabic unit labels: **DONE** — commit `2d8bb06` exists locally, not yet pushed
+- Owner guide: **v2.0 generated** at project root
 
 ---
 
 ## Remaining / Pending
 
-1. **Run Lighthouse after Vercel deploy** to confirm TBT and bundle improvements
-2. **Hero image replacement** (HIGH PRIORITY from session 56): `hero-poster.webp` is 800×420px — too small for a full-screen hero. Replace with 1920×1080 WebP.
-3. **Font preloads missing from HTML** (MEDIUM): Next.js 15.5.15 does not auto-generate `<link rel="preload" as="font">` for layout-level fonts.
-4. **Previous session L1/L2/M4**: sitemap, routing, trailing slash — still pending verification.
+1. **Push unit translation commit** (`2d8bb06`) — confirm with Ahmed first
+2. **Delete `build_doc_v2.py`** build script from project root (cleanup)
+3. **Run Lighthouse after Vercel deploy** (from session 58) — TBT and bundle improvements
+4. **Hero image replacement** (HIGH PRIORITY from session 56): `hero-poster.webp` is 800×420px — replace with 1920×1080 WebP
+5. **Font preloads missing from HTML** (MEDIUM): Next.js 15.5.15 does not auto-generate `<link rel="preload" as="font">`
 
 ---
 
 ## Key Decisions
 
-1. **`ssr: false` on FeatureArtifacts** — component is entirely interactive (useState/useEffect/AnimatePresence), SSR adds no value and risks hydration mismatch.
-2. **`h-[530px]` placeholder** — approximates the rendered section height to hold layout space and prevent CLS during lazy load.
-3. **Early return pattern in middleware** — check route pattern first, initialize expensive clients only when needed.
+1. **`Number()` wrapper pattern** — all NUMERIC/DECIMAL values returned from PostgREST RPCs must be wrapped with `Number()` before arithmetic or `.toFixed()` calls. Rule saved to memory `feedback_postgrest_numeric.md`.
+2. **Shared `translateUnit()` helper** — centralized unit translation avoids duplication across 6+ components.
+3. **i18n via local label maps** — inventory components use `{ value, ar, en }` objects (not `useTranslations()`) to stay consistent with the existing codebase pattern.

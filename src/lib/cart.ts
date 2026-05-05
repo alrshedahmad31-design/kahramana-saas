@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { BranchId } from '@/constants/contact'
+import { bhdToFils, filsToBhd } from '@/lib/format'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -11,7 +12,8 @@ export interface CartItem {
   nameEn: string
   imageUrl?: string
   quantity: number
-  priceBhd: number       // price snapshot at add-to-cart time — immutable
+  priceFils?: number     // canonical price snapshot at add-to-cart time
+  priceBhd?: number      // legacy persisted carts only
   selectedSize?: string
   selectedVariant?: string
   notes?: string         // per-item special instructions
@@ -46,8 +48,20 @@ export function selectTotalItems(items: CartItem[]): number {
   return items.reduce((sum, item) => sum + item.quantity, 0)
 }
 
+export function getCartItemUnitPriceFils(item: CartItem): number {
+  return item.priceFils ?? bhdToFils(item.priceBhd ?? 0)
+}
+
+export function selectLineTotalFils(item: CartItem): number {
+  return getCartItemUnitPriceFils(item) * item.quantity
+}
+
+export function selectCartTotalFils(items: CartItem[]): number {
+  return items.reduce((sum, item) => sum + selectLineTotalFils(item), 0)
+}
+
 export function selectSubtotal(items: CartItem[]): number {
-  return items.reduce((sum, item) => sum + item.priceBhd * item.quantity, 0)
+  return filsToBhd(selectCartTotalFils(items))
 }
 
 // ── Store ─────────────────────────────────────────────────────────────────────
@@ -84,13 +98,16 @@ export const useCartStore = create<CartState & CartActions>()(
           newItem.selectedSize,
           newItem.selectedVariant,
         )
+        const { priceBhd, priceFils, quantity, ...itemFields } = newItem
+        const unitPriceFils = priceFils ?? bhdToFils(priceBhd ?? 0)
+
         set((state) => {
           const existing = state.items.find((i) => i.cartKey === cartKey)
           if (existing) {
             return {
               items: state.items.map((i) =>
                 i.cartKey === cartKey
-                  ? { ...i, quantity: i.quantity + (newItem.quantity ?? 1) }
+                  ? { ...i, quantity: i.quantity + (quantity ?? 1) }
                   : i,
               ),
               isOpen: true,
@@ -99,7 +116,12 @@ export const useCartStore = create<CartState & CartActions>()(
           return {
             items: [
               ...state.items,
-              { ...newItem, cartKey, quantity: newItem.quantity ?? 1 },
+              {
+                ...itemFields,
+                cartKey,
+                quantity: quantity ?? 1,
+                priceFils: unitPriceFils,
+              },
             ],
             isOpen: true,
           }

@@ -11,7 +11,7 @@ import ItemSizeSelector from '@/components/menu/item-size-selector'
 import ItemVariantSelector from '@/components/menu/item-variant-selector'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gtag } from '@/lib/gtag'
-import { formatPrice } from '@/lib/format'
+import { bhdToFils, formatPrice } from '@/lib/format'
 
 interface Props {
   isRTL: boolean
@@ -65,7 +65,7 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
       nameAr: item.name.ar,
       nameEn: item.name.en,
       imageUrl: item.image,
-      priceBhd: computedPrice,
+      priceFils: bhdToFils(computedPrice),
       selectedSize,
       selectedVariant: variantAr,
       quantity,

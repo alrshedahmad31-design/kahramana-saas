@@ -26,8 +26,8 @@ import {
   FileText,
   Package,
 } from 'lucide-react'
-import { useCartStore, selectSubtotal, selectTotalItems } from '@/lib/cart'
-import { formatPrice } from '@/lib/format'
+import { useCartStore, selectCartTotalFils, selectLineTotalFils, selectTotalItems } from '@/lib/cart'
+import { filsToBhd, formatPrice, formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import TierBadge from '@/components/loyalty/TierBadge'
@@ -164,7 +164,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
   const items     = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clearCart)
-  const subtotal  = selectSubtotal(items)
+  const subtotalFils = selectCartTotalFils(items)
+  const subtotal = filsToBhd(subtotalFils)
   const totalItems = selectTotalItems(items)
 
   // ── Form fields ───────────────────────────────────────────────────────────
@@ -966,7 +967,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                     </button>
                   </div>
                   <div className="font-satoshi font-bold text-brand-gold text-sm tabular-nums">
-                    {formatPrice(item.priceBhd * item.quantity, locale)}
+                    {formatPriceFils(selectLineTotalFils(item), locale)}
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import { BRANCHES, buildWaLinkForPhone, type BranchId } from '@/constants/contact'
-import { type CartItem, SIZE_LABELS, selectSubtotal } from '@/lib/cart'
+import { type CartItem, SIZE_LABELS, selectCartTotalFils, selectLineTotalFils } from '@/lib/cart'
+import { formatPrice, formatPriceFils } from '@/lib/format'
 
 // ── Message formatter — Arabic only (per PLAN.md) ────────────────────────────
 
@@ -12,15 +13,15 @@ export function formatOrderMessage(
   if (items.length === 0) return ''
 
   const branch   = BRANCHES[branchId]
-  const subtotal = selectSubtotal(items)
+  const subtotalFils = selectCartTotalFils(items)
 
   const itemLines = items.flatMap((item) => {
     const sizeLabel    = item.selectedSize
       ? ` (${SIZE_LABELS[item.selectedSize]?.ar ?? item.selectedSize})`
       : ''
     const variantLabel = item.selectedVariant ? ` — ${item.selectedVariant}` : ''
-    const lineTotal    = (item.priceBhd * item.quantity).toFixed(3)
-    const line = `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal} BD`
+    const lineTotal    = formatPriceFils(selectLineTotalFils(item), 'ar')
+    const line = `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal}`
     return item.notes ? [line, `  ↳ ${item.notes}`] : [line]
   })
 
@@ -32,7 +33,7 @@ export function formatOrderMessage(
     'الطلب:',
     ...itemLines,
     DIVIDER,
-    `الإجمالي: ${subtotal.toFixed(3)} BD`,
+    `الإجمالي: ${formatPriceFils(subtotalFils, 'ar')}`,
   ].join('\n')
 }
 
@@ -71,12 +72,6 @@ export interface PricedCheckoutMessageOptions {
   trackingUrl?: string
   subtotalBhd: number
   totalBhd: number
-}
-
-function formatPrice(value: number, locale: string): string {
-  return locale === 'ar'
-    ? `${value.toFixed(3)} د.ب`
-    : `${value.toFixed(3)} BD`
 }
 
 function formatPricedItemLines(
@@ -173,15 +168,15 @@ export function formatCheckoutMessage(
   if (items.length === 0) return ''
 
   const branch   = BRANCHES[branchId]
-  const subtotal = selectSubtotal(items)
+  const subtotalFils = selectCartTotalFils(items)
 
   const itemLines = items.flatMap((item) => {
     const sizeLabel    = item.selectedSize
       ? ` (${SIZE_LABELS[item.selectedSize]?.ar ?? item.selectedSize})`
       : ''
     const variantLabel = item.selectedVariant ? ` — ${item.selectedVariant}` : ''
-    const lineTotal    = (item.priceBhd * item.quantity).toFixed(3)
-    const line = `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal} BD`
+    const lineTotal    = formatPriceFils(selectLineTotalFils(item), 'ar')
+    const line = `• ${item.quantity}× ${item.nameAr}${sizeLabel}${variantLabel} — ${lineTotal}`
     return item.notes ? [line, `  ↳ ${item.notes}`] : [line]
   })
 
@@ -196,7 +191,7 @@ export function formatCheckoutMessage(
   if (options.customerPhone) lines.push(`الهاتف: ${options.customerPhone}`)
   if (options.address)       lines.push(`العنوان: ${options.address}`)
 
-  lines.push('', 'الطلب:', ...itemLines, DIVIDER, `الإجمالي: ${subtotal.toFixed(3)} BD`)
+  lines.push('', 'الطلب:', ...itemLines, DIVIDER, `الإجمالي: ${formatPriceFils(subtotalFils, 'ar')}`)
 
   if (options.notes) {
     lines.push('', `ملاحظات: ${options.notes}`)
