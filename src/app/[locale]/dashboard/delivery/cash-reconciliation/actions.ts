@@ -40,10 +40,8 @@ export async function reconcileCashHandover(input: {
   }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = service as any
 
-  const { data: handover, error: fetchErr } = await db
+  const { data: handover, error: fetchErr } = await service
     .from('driver_cash_handovers')
     .select('id, total_cash, reconciliation_status, staff_basic!driver_id(branch_id)')
     .eq('id', handoverId)
@@ -71,7 +69,7 @@ export async function reconcileCashHandover(input: {
 
   const now = new Date().toISOString()
 
-  const { error: updateErr } = await db
+  const { error: updateErr } = await service
     .from('driver_cash_handovers')
     .update({
       actual_received:      Number(actualReceived.toFixed(3)),
@@ -86,12 +84,11 @@ export async function reconcileCashHandover(input: {
 
   if (updateErr) return { error: updateErr.message }
 
-  // Write audit log
-  await db.from('audit_logs').insert({
+  await service.from('audit_logs').insert({
     table_name: 'driver_cash_handovers',
     record_id:  handoverId,
     action:     'UPDATE',
-    actor_id:   user.id,
+    user_id:    user.id,
     actor_role: user.role,
     changes: {
       reconciliation_status: newStatus,
@@ -117,10 +114,8 @@ export async function disputeCashHandover(
   if (!notes.trim()) return { error: 'Notes are required to dispute a handover' }
 
   const service = await createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = service as any
 
-  const { data: handover, error: fetchErr } = await db
+  const { data: handover, error: fetchErr } = await service
     .from('driver_cash_handovers')
     .select('id, reconciliation_status, staff_basic!driver_id(branch_id)')
     .eq('id', handoverId)
@@ -133,7 +128,7 @@ export async function disputeCashHandover(
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  const { error } = await db
+  const { error } = await service
     .from('driver_cash_handovers')
     .update({
       reconciliation_status: 'disputed',
@@ -145,11 +140,11 @@ export async function disputeCashHandover(
 
   if (error) return { error: error.message }
 
-  await db.from('audit_logs').insert({
+  await service.from('audit_logs').insert({
     table_name: 'driver_cash_handovers',
     record_id:  handoverId,
     action:     'UPDATE',
-    actor_id:   user.id,
+    user_id:    user.id,
     actor_role: user.role,
     changes:    { reconciliation_status: 'disputed', manager_notes: notes.trim() },
   })

@@ -58,11 +58,11 @@ export async function createStaff(input: CreateStaffInput): Promise<ActionResult
   const service = await createServiceClient()
   // auth.admin is available at runtime when using the service role key.
   // The @supabase/ssr wrapper doesn't expose the admin type — targeted cast only here.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const authAdmin = (service.auth as any).admin as {
+  type _AuthAdminSimple = {
     createUser: (opts: { email: string; password: string; email_confirm: boolean }) => Promise<{ data: { user: { id: string } | null }; error: { message: string } | null }>
     deleteUser: (id: string) => Promise<void>
   }
+  const authAdmin = (service.auth as unknown as { admin: _AuthAdminSimple }).admin
 
   // Create the Supabase auth user with the service role (bypasses email verification)
   const { data: authData, error: authError } = await authAdmin.createUser({
@@ -86,7 +86,6 @@ export async function createStaff(input: CreateStaffInput): Promise<ActionResult
   })
 
   if (insertError) {
-    // Clean up the orphaned auth user
     await authAdmin.deleteUser(staffId)
     return { success: false, error: insertError.message }
   }
@@ -205,7 +204,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
 
   const service = createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const authAdmin = (service.auth as any).admin as AuthAdmin
+  const authAdmin = (service.auth as unknown as { admin: AuthAdmin }).admin
 
   // Create auth user with a random temp password — the invite email lets staff set their own
   const { data: authData, error: authError } = await authAdmin.createUser({
@@ -260,12 +259,16 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
       data: { name: input.name, role: input.role },
     })
     if (inviteError) {
-      console.warn('[createStaffFull] invite email failed:', inviteError.message)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[createStaffFull] invite email failed:', inviteError.message)
+      }
     } else {
       inviteSent = true
     }
   } catch (e) {
-    console.warn('[createStaffFull] invite email exception:', e)
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[createStaffFull] invite email exception:', e)
+    }
   }
 
   await revalidateStaff(input.locale)
@@ -297,7 +300,7 @@ export async function resendStaffInvitation(staffId: string): Promise<ActionResu
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const authAdmin = (service.auth as any).admin as AuthAdmin
+  const authAdmin = (service.auth as unknown as { admin: AuthAdmin }).admin
 
   const { data: userData, error: userError } = await authAdmin.getUserById(staffId)
   if (userError || !userData?.user?.email) {

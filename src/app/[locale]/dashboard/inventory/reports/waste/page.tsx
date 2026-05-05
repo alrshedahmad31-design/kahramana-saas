@@ -36,7 +36,7 @@ export default async function WasteReportPage({ params, searchParams }: PageProp
   if (!ALLOWED_ROLES.includes(user.role ?? '')) redirect(`${prefix}/dashboard`)
 
   const dateFrom = sp.from ?? new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
-  const dateTo = sp.to ?? new Date().toISOString().slice(0, 10)
+  const dateTo = sp.to ?? new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bahrain' }).format(new Date())
 
   const supabase = await createClient()
   const { data: wastes } = await supabase

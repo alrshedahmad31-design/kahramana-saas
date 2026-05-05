@@ -4,6 +4,7 @@ import { revalidatePath }      from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession }          from '@/lib/auth/session'
 import { canManageStaff }      from '@/lib/auth/rbac'
+import { assertBranchScope, getDashboardGuardErrorMessage } from '@/lib/auth/dashboard-guards'
 import type { EmploymentType, StaffBasicRow, TablesUpdate } from '@/lib/supabase/custom-types'
 
 type ActionResult = { success: true } | { success: false; error: string }
@@ -111,6 +112,29 @@ export async function approveTimeEntry(entryId: string): Promise<ActionResult> {
   }
 
   const service = await createServiceClient()
+
+  const { data: entry } = await service
+    .from('time_entries')
+    .select('staff_id')
+    .eq('id', entryId)
+    .single()
+
+  if (!entry) return { success: false, error: 'Time entry not found' }
+
+  const { data: staff } = await service
+    .from('staff_basic')
+    .select('branch_id')
+    .eq('id', entry.staff_id)
+    .single()
+
+  if (!staff) return { success: false, error: 'Staff not found' }
+
+  try {
+    assertBranchScope(caller, staff.branch_id)
+  } catch (scopeError) {
+    return { success: false, error: getDashboardGuardErrorMessage(scopeError) }
+  }
+
   const { error } = await service.from('time_entries').update({
     approved_by: caller.id,
     approved_at: new Date().toISOString(),

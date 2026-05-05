@@ -92,7 +92,7 @@ export default async function CountSessionPage({ params }: PageProps) {
             <p className="font-satoshi text-sm text-brand-muted">
               {isAr ? 'التاريخ:' : 'Date:'}{' '}
               <span className="text-brand-text">
-                {new Date(first.counted_at).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB')}
+                {new Date(first.counted_at).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB', { timeZone: 'Asia/Bahrain' })}
               </span>
             </p>
             <p className="font-satoshi text-sm text-brand-muted">

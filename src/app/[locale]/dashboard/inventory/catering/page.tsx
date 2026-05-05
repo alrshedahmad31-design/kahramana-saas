@@ -164,7 +164,7 @@ export default async function CateringPage({ params, searchParams }: PageProps) 
                     <div>
                       <p className="font-satoshi font-bold text-sm text-brand-text">{order.client_name}</p>
                       <p className="font-satoshi text-xs text-brand-muted mt-0.5">
-                        {new Date(order.event_date).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {new Date(order.event_date).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Bahrain' })}
                         {order.event_time && ` · ${order.event_time}`}
                         {' · '}{order.guest_count} {isAr ? 'ضيف' : 'guests'}
                       </p>

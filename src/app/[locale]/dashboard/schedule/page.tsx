@@ -5,17 +5,19 @@ import { createClient }      from '@/lib/supabase/server'
 import ScheduleClient        from '@/components/schedule/ScheduleClient'
 import type { StaffBasicRow, ShiftWithStaff } from '@/lib/supabase/custom-types'
 
+const BHR_FMT = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bahrain' })
+
 function getMondayOf(date: Date): string {
   const d   = new Date(date)
   const day = d.getDay()
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day))
-  return d.toISOString().split('T')[0]
+  return BHR_FMT.format(d)
 }
 
 function addDays(base: string, n: number): string {
   const d = new Date(base + 'T00:00:00')
   d.setDate(d.getDate() + n)
-  return d.toISOString().split('T')[0]
+  return BHR_FMT.format(d)
 }
 
 export default async function SchedulePage({

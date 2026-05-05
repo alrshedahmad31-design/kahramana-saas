@@ -64,7 +64,7 @@ export default function CateringCalendar({ orders, prefix, isAr = true }: Props)
                   {date.getDate()}
                 </span>
                 <span className="font-satoshi text-xs text-brand-muted">
-                  {date.toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB', { month: 'short' })}
+                  {date.toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB', { month: 'short', timeZone: 'Asia/Bahrain' })}
                 </span>
               </div>
               <div className="flex-1 min-w-0">

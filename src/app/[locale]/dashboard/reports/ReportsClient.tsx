@@ -116,7 +116,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
     }
 
     setReportData(result.data)
-    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+    requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: 'smooth' }))
   }
 
   function handleCollapse() {

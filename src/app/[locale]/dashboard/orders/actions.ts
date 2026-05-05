@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canUpdateOrderStatus } from '@/lib/auth/rbac'
+import { revalidatePath } from 'next/cache'
+import { getLocale } from 'next-intl/server'
 import type { OrderRow, OrderItemRow } from '@/lib/supabase/custom-types'
 import type { OrderStatus } from '@/lib/supabase/custom-types'
 
@@ -61,5 +63,10 @@ export async function updateOrderStatus(
     .eq('status', order.status)
 
   if (updateError) return { success: false, error: updateError.message }
+
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/orders`)
+  revalidatePath(`/${locale}/dashboard/delivery`)
+
   return { success: true, status: nextStatus }
 }

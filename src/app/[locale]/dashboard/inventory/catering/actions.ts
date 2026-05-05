@@ -319,8 +319,8 @@ export async function deleteCateringOrder(
 export async function getCateringOrder(
   id: string,
 ): Promise<{ order?: CateringOrderRow; error?: string }> {
-  const { error: authError } = await requireCateringRole()
-  if (authError) return { error: authError ?? 'Unauthorized' }
+  const { session, error: authError } = await requireCateringRole()
+  if (authError || !session) return { error: authError ?? 'Unauthorized' }
 
   const supabase = createServiceClient()
   const { data, error } = await supabase
@@ -330,14 +330,21 @@ export async function getCateringOrder(
     .single()
 
   if (error || !data) return { error: 'الطلب غير موجود' }
+
+  try {
+    assertInventoryWriteAccess(session, data.branch_id)
+  } catch (scopeError) {
+    return { error: getDashboardGuardErrorMessage(scopeError) }
+  }
+
   return { order: data as unknown as CateringOrderRow }
 }
 
 export async function getCateringPackage(
   id: string,
 ): Promise<{ package?: CateringPackageRow; error?: string }> {
-  const { error: authError } = await requireCateringRole()
-  if (authError) return { error: authError ?? 'Unauthorized' }
+  const { session, error: authError } = await requireCateringRole()
+  if (authError || !session) return { error: authError ?? 'Unauthorized' }
 
   const supabase = createServiceClient()
   const { data, error } = await supabase
@@ -347,6 +354,13 @@ export async function getCateringPackage(
     .single()
 
   if (error || !data) return { error: 'الباقة غير موجودة' }
+
+  try {
+    assertInventoryWriteAccess(session, data.branch_id)
+  } catch (scopeError) {
+    return { error: getDashboardGuardErrorMessage(scopeError) }
+  }
+
   return { package: data as unknown as CateringPackageRow }
 }
 

@@ -2,6 +2,8 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
+import { revalidatePath } from 'next/cache'
+import { getLocale } from 'next-intl/server'
 
 const MANAGER_ROLES = new Set(['owner', 'general_manager', 'branch_manager'])
 const GLOBAL_ADMIN_ROLES = new Set(['owner', 'general_manager'])
@@ -112,6 +114,10 @@ export async function assignDriverToOrder(
     branch_id:  order.branch_id,
     actor_role: caller.role,
   })
+
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/orders`)
+  revalidatePath(`/${locale}/dashboard/delivery`)
 
   return { success: true }
 }

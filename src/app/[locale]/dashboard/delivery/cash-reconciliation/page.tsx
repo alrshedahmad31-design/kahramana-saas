@@ -42,15 +42,10 @@ export default async function CashReconciliationPage({ params, searchParams: _se
 
   const supabase = await createClient()
 
-  // Fetch handovers with driver name via join — type assertion needed until
-  // supabase types are regenerated after migration 029 is applied.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
-
   let scopedDriverIds: string[] | null = null
   if (user.role === 'branch_manager') {
     if (!user.branch_id) redirect(`${prefix}/dashboard`)
-    const { data: drivers } = await db
+    const { data: drivers } = await supabase
       .from('staff_basic')
       .select('id')
       .eq('role', 'driver')
@@ -59,7 +54,7 @@ export default async function CashReconciliationPage({ params, searchParams: _se
     scopedDriverIds = (drivers ?? []).map((driver: { id: string }) => driver.id)
   }
 
-  let query = db
+  let query = supabase
     .from('driver_cash_handovers')
     .select(`
       id, driver_id, shift_date, total_cash, order_ids, handed_at, verified, notes,

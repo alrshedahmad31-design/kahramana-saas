@@ -42,7 +42,7 @@ function availableTextClass(row: StockRow): string {
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('ar-IQ', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('ar-IQ', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Asia/Bahrain' })
 }
 
 export default function StockTable({ stocks, locale = 'ar' }: Props) {
