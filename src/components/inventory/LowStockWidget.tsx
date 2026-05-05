@@ -67,8 +67,8 @@ export default function LowStockWidget({ items, prefix, locale = 'ar' }: Props) 
                     </div>
                   </td>
                   <td className="px-3 py-2.5">
-                    <span className={`font-satoshi text-sm font-medium tabular-nums ${item.available <= 0 ? 'text-red-400' : 'text-brand-gold'}`}>
-                      {item.available.toFixed(1)}
+                    <span className={`font-satoshi text-sm font-medium tabular-nums ${Number(item.available) <= 0 ? 'text-red-400' : 'text-brand-gold'}`}>
+                      {Number(item.available).toFixed(1)}
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
