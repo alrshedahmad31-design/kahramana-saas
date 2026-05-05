@@ -21,6 +21,7 @@ export type Database = {
           branch_id: string | null
           changes: Json | null
           created_at: string
+          estimated_minutes: number
           id: string
           record_id: string | null
           table_name: string
@@ -68,6 +69,7 @@ export type Database = {
       branches: {
         Row: {
           created_at: string
+          estimated_minutes: number
           id: string
           is_active: boolean
           latitude: number | null
@@ -81,6 +83,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          estimated_minutes?: number
           id: string
           is_active?: boolean
           latitude?: number | null
@@ -94,6 +97,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          estimated_minutes?: number
           id?: string
           is_active?: boolean
           latitude?: number | null
@@ -1894,6 +1898,7 @@ export type Database = {
           menu_item_slug: string
           name_ar: string
           name_en: string
+          notes: string | null
           order_id: string
           quantity: number
           selected_size: string | null
@@ -1907,6 +1912,7 @@ export type Database = {
           menu_item_slug: string
           name_ar: string
           name_en: string
+          notes?: string | null
           order_id: string
           quantity: number
           selected_size?: string | null
@@ -1920,6 +1926,7 @@ export type Database = {
           menu_item_slug?: string
           name_ar?: string
           name_en?: string
+          notes?: string | null
           order_id?: string
           quantity?: number
           selected_size?: string | null

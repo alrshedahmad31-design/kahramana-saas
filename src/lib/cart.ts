@@ -151,3 +151,10 @@ export const useCartStore = create<CartState & CartActions>()(
     },
   ),
 )
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== 'kahramana-cart' || event.storageArea !== window.localStorage) return
+    void useCartStore.persist.rehydrate()
+  })
+}

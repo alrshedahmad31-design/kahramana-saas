@@ -18,6 +18,38 @@ type Props = {
   searchParams?: Promise<{ t?: string }>
 }
 
+type OrderEtaInput = Pick<OrderWithItems, 'order_type' | 'status'>
+
+function getEtaText(order: OrderEtaInput | null, estimatedMinutes: number | null, isAr: boolean) {
+  if (!order) return null
+
+  if (['delivered', 'completed'].includes(order.status)) {
+    return isAr ? 'تم اكتمال الطلب' : 'Order completed'
+  }
+  if (order.status === 'cancelled') {
+    return isAr ? 'تم إلغاء الطلب' : 'Order cancelled'
+  }
+  if (order.status === 'ready') {
+    return order.order_type === 'pickup'
+      ? (isAr ? 'جاهز للاستلام الآن' : 'Ready for pickup now')
+      : (isAr ? 'طلبك جاهز وسيخرج للتوصيل قريباً' : 'Ready and will leave for delivery soon')
+  }
+  if (order.status === 'out_for_delivery') {
+    return isAr ? 'طلبك في الطريق' : 'Your order is on the way'
+  }
+
+  const fallback = order.order_type === 'pickup'
+    ? (isAr ? '٢٥-٣٥ دقيقة' : '25-35 min')
+    : (isAr ? '٣٠-٤٥ دقيقة' : '30-45 min')
+  const duration = estimatedMinutes
+    ? (isAr ? `${estimatedMinutes} دقيقة` : `${estimatedMinutes} min`)
+    : fallback
+
+  return order.order_type === 'pickup'
+    ? (isAr ? `الاستلام المتوقع خلال ${duration}` : `Estimated pickup in ${duration}`)
+    : (isAr ? `التوصيل المتوقع خلال ${duration}` : `Estimated delivery in ${duration}`)
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'order' })
@@ -42,6 +74,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
   // Fetch order using service role (bypasses RLS — guest orders are unauthed)
   let order: OrderWithItems | null = null
+  let branchEstimatedMinutes: number | null = null
   try {
     const supabase = await createServiceClient()
     const { data, error } = await supabase
@@ -52,6 +85,13 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
     if (!error && data) {
       order = data as unknown as OrderWithItems
+      const { data: branchSla } = await supabase
+        .from('branches')
+        .select('estimated_minutes')
+        .eq('id', data.branch_id)
+        .maybeSingle()
+
+      branchEstimatedMinutes = branchSla?.estimated_minutes ?? null
     }
   } catch {
     // Supabase not configured — show generic confirmation below
@@ -71,6 +111,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const nonce   = (await headers()).get('x-nonce') ?? undefined
   const shortId = id.slice(-8).toUpperCase()
   const branch  = order ? BRANCHES[order.branch_id as keyof typeof BRANCHES] ?? null : null
+  const etaText = getEtaText(order, branchEstimatedMinutes, isAr)
 
   const schemaOrg = order
     ? {
@@ -152,6 +193,19 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             </div>
           )}
 
+          {etaText && (
+            <div className="px-5 py-3 border-b border-brand-border text-start">
+              <p className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-0.5
+                ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                {isAr ? 'الوقت المتوقع' : 'Estimated time'}
+              </p>
+              <p className={`text-sm font-bold text-brand-gold
+                ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+                {etaText}
+              </p>
+            </div>
+          )}
+
           {/* Customer name/phone */}
           {(order?.customer_name || order?.customer_phone) && (
             <div className="px-5 py-3 border-b border-brand-border text-start">
@@ -186,6 +240,11 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                     {(item.selected_size || item.selected_variant) && (
                       <p className="font-almarai text-xs text-brand-muted mt-0.5">
                         {[item.selected_size, item.selected_variant].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                    {item.notes && (
+                      <p className="font-almarai text-xs text-brand-muted mt-1">
+                        {item.notes}
                       </p>
                     )}
                   </div>

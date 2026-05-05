@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
@@ -26,7 +26,7 @@ import {
   FileText,
   Package,
 } from 'lucide-react'
-import { useCartStore, selectSubtotal } from '@/lib/cart'
+import { useCartStore, selectSubtotal, selectTotalItems } from '@/lib/cart'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import TierBadge from '@/components/loyalty/TierBadge'
@@ -159,6 +159,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const items     = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clearCart)
   const subtotal  = selectSubtotal(items)
+  const totalItems = selectTotalItems(items)
 
   // ── Form fields ───────────────────────────────────────────────────────────
   const [selectedBranch, setSelectedBranch] = useState<BranchId | null>(null)
@@ -186,6 +187,12 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const availablePoints = customerProfile?.points_balance ?? 0
   const canRedeem       = availablePoints >= MIN_REDEMPTION
   const pointsDiscount  = usePoints && canRedeem ? pointsToCredit(availablePoints) : 0
+
+  useEffect(() => {
+    if (!customerProfile) return
+    setName((current) => current || customerProfile.name || '')
+    setPhone((current) => current || customerProfile.phone || '')
+  }, [customerProfile])
 
   // ── Coupon state ───────────────────────────────────────────────────────────
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
@@ -328,6 +335,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
         selected_size:    item.selectedSize    ?? null,
         selected_variant: item.selectedVariant ?? null,
         quantity:         item.quantity,
+        notes:            item.notes ?? null,
       })),
       clientSubtotalBhd: subtotal,
       paymentMode,
@@ -457,15 +465,16 @@ export default function CheckoutForm({ customerProfile }: Props) {
         className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center px-4"
       >
         <p className={`text-lg font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-          {isAr ? 'سلة فارغة' : 'Empty cart'}
+          {t('emptyCart')}
         </p>
-        <a
-          href={isAr ? '/' : '/en'}
-          aria-label={isAr ? 'تصفح المنيو' : 'Browse the menu'}
+        <button
+          type="button"
+          onClick={() => router.push('/menu')}
+          aria-label={t('browseMenu')}
           className="font-satoshi text-sm text-brand-gold hover:text-brand-gold-light transition-colors duration-150"
         >
-          {isAr ? 'تصفح المنيو' : 'Browse the menu'}
-        </a>
+          {t('browseMenu')}
+        </button>
       </div>
     )
   }
@@ -476,7 +485,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
     <form
       onSubmit={handleWASubmit}
       dir={isAr ? 'rtl' : 'ltr'}
-      className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-24"
+      className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-36"
     >
       {/* Header */}
       <div className={`mb-10 ${isAr ? 'text-end' : 'text-start'}`}>
@@ -491,6 +500,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
         </p>
       </div>
 
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 lg:items-start">
+        <div className="min-w-0">
       {/* STEP 1: Branch Selection */}
       <StepHeader
         number="1"
@@ -821,6 +832,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
         />
       </SectionCard>
 
+        </div>
+        <aside className="min-w-0 lg:sticky lg:top-6">
       {/* STEP 6: Order Summary */}
       <StepHeader
         number="6"
@@ -858,7 +871,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                     type="button"
                     onClick={() => useCartStore.getState().removeItem(item.cartKey)}
                     className="text-brand-error/60 hover:text-brand-error transition-colors p-1"
-                    aria-label="Remove item"
+                    aria-label={t('removeItem')}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -876,6 +889,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                     <button
                       type="button"
                       onClick={() => useCartStore.getState().updateQuantity(item.cartKey, item.quantity - 1)}
+                      aria-label={t('decreaseQuantity')}
                       className="px-2 h-full hover:bg-brand-gold/10 text-brand-muted hover:text-brand-gold transition-colors"
                     >
                       <Minus size={12} />
@@ -886,6 +900,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                     <button
                       type="button"
                       onClick={() => useCartStore.getState().updateQuantity(item.cartKey, item.quantity + 1)}
+                      aria-label={t('increaseQuantity')}
                       className="px-2 h-full hover:bg-brand-gold/10 text-brand-muted hover:text-brand-gold transition-colors"
                     >
                       <Plus size={12} />
@@ -1074,6 +1089,30 @@ export default function CheckoutForm({ customerProfile }: Props) {
           <p className={`text-[11px] text-brand-muted opacity-60 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
             {t('terms')}
           </p>
+        </div>
+      </div>
+        </aside>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-[90] border-t border-brand-border bg-brand-black/95 px-4 py-3 shadow-[0_-16px_40px_rgba(0,0,0,0.45)] backdrop-blur-md lg:hidden">
+        <div className={`mx-auto flex max-w-md items-center gap-3 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+          <div className={`min-w-0 flex-1 ${isAr ? 'text-end' : 'text-start'}`}>
+            <p className={`text-[11px] text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {t('mobileItems', { count: totalItems })}
+            </p>
+            <p className="font-satoshi text-xl font-black text-brand-gold tabular-nums">
+              {finalTotal.toFixed(3)}
+              <span className="ms-1 text-[10px] font-bold uppercase text-brand-muted">{tCommon('currency')}</span>
+            </p>
+          </div>
+          <CinematicButton
+            type="submit"
+            disabled={loading}
+            isRTL={isAr}
+            className="h-12 shrink-0 rounded-xl px-5 text-sm font-bold"
+          >
+            {loading ? t('processing') : t('placeOrder')}
+          </CinematicButton>
         </div>
       </div>
     </form>

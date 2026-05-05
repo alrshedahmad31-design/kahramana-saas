@@ -21,6 +21,7 @@ const itemSchema = z.object({
   selected_size:    z.string().max(50).nullable(),
   selected_variant: z.string().max(50).nullable(),
   quantity:         z.number().int().min(1).max(50),
+  notes:            z.string().max(300).nullable().optional(),
 })
 
 const BAHRAIN_PHONE_RE = /^(\+?973)?[36]\d{7}$/
@@ -126,6 +127,7 @@ interface ItemBase {
   selected_size:    string | null
   selected_variant: string | null
   quantity:         number
+  notes?:           string | null
 }
 
 interface PricedItemBase extends ItemBase {
@@ -195,6 +197,7 @@ function buildCheckoutLinks(
       selectedVariant: item.selected_variant,
       unitPriceBhd: item.unit_price_bhd,
       lineTotalBhd: item.item_total_bhd,
+      notes: item.notes,
     })),
     {
       locale,
@@ -337,6 +340,7 @@ function repriceCheckoutItems(
       selected_size:    item.selected_size,
       selected_variant: resolved.selectedVariant,
       quantity:         item.quantity,
+      notes:            item.notes?.trim() || null,
       unit_price_bhd:   resolved.unitPriceBhd,
       item_total_bhd:   Number((item.quantity * resolved.unitPriceBhd).toFixed(3)),
     })

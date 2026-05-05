@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -21,6 +21,7 @@ export default function CartBottomSheet() {
   const branchId         = useCartStore((s) => s.branchId)
   const isOpen           = useCartStore((s) => s.isOpen)
   const closeCart        = useCartStore((s) => s.closeCart)
+  const addItem          = useCartStore((s) => s.addItem)
   const removeItem       = useCartStore((s) => s.removeItem)
   const updateQty        = useCartStore((s) => s.updateQuantity)
   const updateItemNotes  = useCartStore((s) => s.updateItemNotes)
@@ -31,7 +32,16 @@ export default function CartBottomSheet() {
   const subtotal   = selectSubtotal(items)
 
   const [mounted, setMounted] = useState(false)
+  const [removedItem, setRemovedItem] = useState<CartItem | null>(null)
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => { setMounted(true) }, [])
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (isOpen && mounted) {
@@ -47,6 +57,25 @@ export default function CartBottomSheet() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [closeCart])
+
+  function handleRemoveItem(item: CartItem) {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    removeItem(item.cartKey)
+    setRemovedItem(item)
+    undoTimerRef.current = setTimeout(() => setRemovedItem(null), 5000)
+  }
+
+  function handleUndoRemove() {
+    if (!removedItem) return
+    const { cartKey: _cartKey, ...restoredItem } = removedItem
+    addItem(restoredItem)
+    setRemovedItem(null)
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+  }
+
+  function handleClearCart() {
+    if (window.confirm(t('confirmClear'))) clearCart()
+  }
 
   if (!mounted) return null
 
@@ -97,6 +126,7 @@ export default function CartBottomSheet() {
 
               <button
                 onClick={closeCart}
+                aria-label={t('close')}
                 className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-surface-2 text-brand-muted transition-all hover:bg-brand-surface hover:text-brand-text active:scale-90"
               >
                 <X size={24} />
@@ -148,7 +178,7 @@ export default function CartBottomSheet() {
                     </p>
                   </div>
                   <button
-                    onClick={() => { closeCart(); window.location.href = '/menu'; }}
+                    onClick={() => { closeCart(); router.push('/menu') }}
                     className="rounded-2xl border border-brand-gold/20 bg-brand-gold/5 px-8 py-4 text-sm font-black text-brand-gold transition-all hover:bg-brand-gold hover:text-brand-black"
                   >
                     {t('browseMenu')}
@@ -162,7 +192,12 @@ export default function CartBottomSheet() {
                       item={item}
                       isRTL={isRTL}
                       currency={tCommon('currency')}
-                      onRemove={() => removeItem(item.cartKey)}
+                      labels={{
+                        remove: t('removeAlt', { name: isRTL ? item.nameAr : item.nameEn }),
+                        decrease: t('decrease'),
+                        increase: t('increase'),
+                      }}
+                      onRemove={() => handleRemoveItem(item)}
                       onUpdateQty={(q: number) => updateQty(item.cartKey, q)}
                       onUpdateNotes={(n: string) => updateItemNotes(item.cartKey, n)}
                     />
@@ -195,11 +230,11 @@ export default function CartBottomSheet() {
                   </CinematicButton>
 
                   <button
-                    onClick={clearCart}
+                    onClick={handleClearCart}
                     className="flex items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-widest text-brand-muted/40 transition-colors hover:text-brand-error"
                   >
                     <Trash2 size={12} />
-                    {isRTL ? 'مسح كافة العناصر' : 'Clear All Items'}
+                    {t('clearAll')}
                   </button>
                 </div>
               </div>
@@ -207,14 +242,43 @@ export default function CartBottomSheet() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {removedItem && (
+          <motion.div
+            role="status"
+            aria-live="polite"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            className="fixed bottom-6 left-1/2 z-[130] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 items-center justify-between gap-4 rounded-2xl border border-brand-border bg-brand-surface px-4 py-3 shadow-2xl"
+          >
+            <span className={`text-sm text-brand-text ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+              {t('removedToast', { name: isRTL ? removedItem.nameAr : removedItem.nameEn })}
+            </span>
+            <button
+              type="button"
+              onClick={handleUndoRemove}
+              className="shrink-0 rounded-lg bg-brand-gold px-3 py-2 text-xs font-bold text-brand-black"
+            >
+              {t('undo')}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
 
-function CartItemRow({ item, isRTL, currency, onRemove, onUpdateQty, onUpdateNotes }: {
+function CartItemRow({ item, isRTL, currency, labels, onRemove, onUpdateQty, onUpdateNotes }: {
   item: CartItem
   isRTL: boolean
   currency: string
+  labels: {
+    remove: string
+    decrease: string
+    increase: string
+  }
   onRemove: () => void
   onUpdateQty: (q: number) => void
   onUpdateNotes: (n: string) => void
@@ -259,6 +323,7 @@ function CartItemRow({ item, isRTL, currency, onRemove, onUpdateQty, onUpdateNot
             </div>
             <button
               onClick={onRemove}
+              aria-label={labels.remove}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-brand-muted/40 transition-colors hover:bg-brand-error/10 hover:text-brand-error"
             >
               <Trash2 size={16} />
@@ -270,6 +335,7 @@ function CartItemRow({ item, isRTL, currency, onRemove, onUpdateQty, onUpdateNot
             <div className="flex items-center gap-1 rounded-lg bg-brand-black/20 p-1">
               <button
                 onClick={() => onUpdateQty(Math.max(1, item.quantity - 1))}
+                aria-label={labels.decrease}
                 className="flex h-7 w-7 items-center justify-center rounded-md text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-text active:scale-90"
               >
                 <Minus size={14} />
@@ -279,6 +345,7 @@ function CartItemRow({ item, isRTL, currency, onRemove, onUpdateQty, onUpdateNot
               </span>
               <button
                 onClick={() => onUpdateQty(item.quantity + 1)}
+                aria-label={labels.increase}
                 className="flex h-7 w-7 items-center justify-center rounded-md text-brand-muted transition-colors hover:bg-brand-surface hover:text-brand-text active:scale-90"
               >
                 <Plus size={14} />
