@@ -8,6 +8,7 @@ import { getCustomerSession } from '@/lib/auth/customerSession'
 import { getSession } from '@/lib/auth/session'
 import { verifyOrderAccessToken } from '@/lib/auth/order-access'
 import type { OrderWithItems } from '@/lib/supabase/custom-types'
+import { formatPrice } from '@/lib/format'
 import { BRANCHES } from '@/constants/contact'
 import AutoRefresh from '@/components/ui/AutoRefresh'
 
@@ -19,35 +20,47 @@ type Props = {
 }
 
 type OrderEtaInput = Pick<OrderWithItems, 'order_type' | 'status'>
+interface EtaCopy {
+  completed: string
+  cancelled: string
+  readyPickup: string
+  readyDelivery: string
+  onWay: string
+  pickupFallback: string
+  deliveryFallback: string
+  minute: (minutes: number) => string
+  pickup: (duration: string) => string
+  delivery: (duration: string) => string
+}
 
-function getEtaText(order: OrderEtaInput | null, estimatedMinutes: number | null, isAr: boolean) {
+function getEtaText(order: OrderEtaInput | null, estimatedMinutes: number | null, copy: EtaCopy) {
   if (!order) return null
 
   if (['delivered', 'completed'].includes(order.status)) {
-    return isAr ? 'تم اكتمال الطلب' : 'Order completed'
+    return copy.completed
   }
   if (order.status === 'cancelled') {
-    return isAr ? 'تم إلغاء الطلب' : 'Order cancelled'
+    return copy.cancelled
   }
   if (order.status === 'ready') {
     return order.order_type === 'pickup'
-      ? (isAr ? 'جاهز للاستلام الآن' : 'Ready for pickup now')
-      : (isAr ? 'طلبك جاهز وسيخرج للتوصيل قريباً' : 'Ready and will leave for delivery soon')
+      ? copy.readyPickup
+      : copy.readyDelivery
   }
   if (order.status === 'out_for_delivery') {
-    return isAr ? 'طلبك في الطريق' : 'Your order is on the way'
+    return copy.onWay
   }
 
   const fallback = order.order_type === 'pickup'
-    ? (isAr ? '٢٥-٣٥ دقيقة' : '25-35 min')
-    : (isAr ? '٣٠-٤٥ دقيقة' : '30-45 min')
+    ? copy.pickupFallback
+    : copy.deliveryFallback
   const duration = estimatedMinutes
-    ? (isAr ? `${estimatedMinutes} دقيقة` : `${estimatedMinutes} min`)
+    ? copy.minute(estimatedMinutes)
     : fallback
 
   return order.order_type === 'pickup'
-    ? (isAr ? `الاستلام المتوقع خلال ${duration}` : `Estimated pickup in ${duration}`)
-    : (isAr ? `التوصيل المتوقع خلال ${duration}` : `Estimated delivery in ${duration}`)
+    ? copy.pickup(duration)
+    : copy.delivery(duration)
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -66,7 +79,6 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const accessToken = (await searchParams)?.t ?? null
   const isAr = locale === 'ar'
   const t     = await getTranslations('order')
-  const tCommon = await getTranslations('common')
 
   // Validate UUID format before querying
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -111,7 +123,18 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const nonce   = (await headers()).get('x-nonce') ?? undefined
   const shortId = id.slice(-8).toUpperCase()
   const branch  = order ? BRANCHES[order.branch_id as keyof typeof BRANCHES] ?? null : null
-  const etaText = getEtaText(order, branchEstimatedMinutes, isAr)
+  const etaText = getEtaText(order, branchEstimatedMinutes, {
+    completed: t('eta.completed'),
+    cancelled: t('eta.cancelled'),
+    readyPickup: t('eta.readyPickup'),
+    readyDelivery: t('eta.readyDelivery'),
+    onWay: t('eta.onWay'),
+    pickupFallback: t('eta.pickupFallback'),
+    deliveryFallback: t('eta.deliveryFallback'),
+    minute: (minutes) => t('eta.minutes', { minutes }),
+    pickup: (duration) => t('eta.pickup', { duration }),
+    delivery: (duration) => t('eta.delivery', { duration }),
+  })
 
   const schemaOrg = order
     ? {
@@ -174,7 +197,10 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                 #{shortId}
               </p>
             </div>
-            <StatusBadge status={order?.status ?? 'new'} isAr={isAr} />
+            <StatusBadge
+              status={order?.status ?? 'new'}
+              label={t(`status.${order?.status ?? 'new'}`)}
+            />
           </div>
 
           {/* Branch */}
@@ -197,7 +223,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             <div className="px-5 py-3 border-b border-brand-border text-start">
               <p className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-0.5
                 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {isAr ? 'الوقت المتوقع' : 'Estimated time'}
+                {t('estimatedTime')}
               </p>
               <p className={`text-sm font-bold text-brand-gold
                 ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
@@ -249,7 +275,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                     )}
                   </div>
                   <span className="font-satoshi text-sm text-brand-gold tabular-nums shrink-0">
-                    {item.item_total_bhd.toFixed(3)} {tCommon('currency')}
+                    {formatPrice(item.item_total_bhd, locale)}
                   </span>
                 </div>
               ))}
@@ -261,10 +287,10 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             <div className="flex items-center justify-between px-5 py-4 border-t border-brand-border bg-brand-surface-2">
               <span className={`text-sm font-bold text-brand-muted
                 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {tCommon('currency') && t('title') && isAr ? 'الإجمالي' : 'Total'}
+                {t('totalLabel')}
               </span>
               <span className="font-satoshi font-bold text-brand-text text-xl tabular-nums">
-                {order?.total_bhd?.toFixed(3) ?? '0.000'} {tCommon('currency')}
+                {formatPrice(order?.total_bhd ?? 0, locale)}
               </span>
             </div>
           )}
@@ -274,7 +300,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             <div className="px-5 py-3 border-t border-brand-border text-start">
               <p className={`text-xs font-bold text-brand-muted mb-1 uppercase tracking-wide
                 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {isAr ? 'ملاحظات' : 'Notes'}
+                {t('notesLabel')}
               </p>
               <p className="font-almarai text-sm text-brand-muted">{order.notes}</p>
             </div>
@@ -295,7 +321,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                        transition-colors duration-150"
           >
             <WhatsAppIcon />
-            {isAr ? 'تواصل مع الفرع عبر واتساب' : 'Contact Branch via WhatsApp'}
+            {t('contactBranchWhatsapp')}
           </a>
         )}
 
@@ -333,41 +359,8 @@ const STATUS_STYLES: Record<string, { bgClass: string; textClass: string }> = {
   payment_failed:  { bgClass: 'bg-brand-error/15',    textClass: 'text-brand-error'       },
 }
 
-const STATUS_LABELS_AR: Record<string, string> = {
-  pending_payment:  'بانتظار الدفع',
-  confirmed:        'مؤكد',
-  new:              'جديد',
-  under_review:     'قيد المراجعة',
-  accepted:         'مقبول',
-  preparing:        'يُحضَّر',
-  ready:            'جاهز',
-  out_for_delivery: 'في الطريق',
-  delivered:        'تم التوصيل',
-  completed:        'مكتمل',
-  cancelled:        'ملغي',
-  payment_failed:   'فشل الدفع',
-}
-
-const STATUS_LABELS_EN: Record<string, string> = {
-  pending_payment:  'Pending Payment',
-  confirmed:        'Confirmed',
-  new:              'New',
-  under_review:     'Under Review',
-  accepted:         'Accepted',
-  preparing:        'Preparing',
-  ready:            'Ready',
-  out_for_delivery: 'Out for Delivery',
-  delivered:        'Delivered',
-  completed:        'Completed',
-  cancelled:        'Cancelled',
-  payment_failed:   'Payment Failed',
-}
-
-function StatusBadge({ status, isAr }: { status: string; isAr: boolean }) {
+function StatusBadge({ status, label }: { status: string; label: string }) {
   const style = STATUS_STYLES[status] ?? STATUS_STYLES['new']
-  const label = isAr
-    ? (STATUS_LABELS_AR[status] ?? status)
-    : (STATUS_LABELS_EN[status] ?? status)
   return (
     <span className={`font-satoshi text-xs font-bold rounded-lg
                      ps-3 pe-3 pt-1.5 pb-1.5

@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from '@/i18n/navigation'
 import { useCartStore, selectTotalItems, selectSubtotal, type CartItem } from '@/lib/cart'
+import { formatPrice } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { X, Trash2, Minus, Plus, ShoppingBag, MapPin } from 'lucide-react'
@@ -14,7 +15,6 @@ export default function CartBottomSheet() {
   const locale = useLocale()
   const isRTL  = locale === 'ar'
   const t      = useTranslations('cart')
-  const tCommon = useTranslations('common')
   const router = useRouter()
 
   const items            = useCartStore((s) => s.items)
@@ -120,7 +120,7 @@ export default function CartBottomSheet() {
                   {t('title')}
                 </h2>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-gold/60">
-                   {totalItems} {isRTL ? 'منتجات' : 'Items'}
+                  {t('itemCount', { count: totalItems })}
                 </p>
               </div>
 
@@ -191,11 +191,13 @@ export default function CartBottomSheet() {
                       key={item.cartKey}
                       item={item}
                       isRTL={isRTL}
-                      currency={tCommon('currency')}
+                      locale={locale}
                       labels={{
                         remove: t('removeAlt', { name: isRTL ? item.nameAr : item.nameEn }),
                         decrease: t('decrease'),
                         increase: t('increase'),
+                        notesPlaceholder: t('notesPlaceholder'),
+                        specialInstructions: t('specialInstructions'),
                       }}
                       onRemove={() => handleRemoveItem(item)}
                       onUpdateQty={(q: number) => updateQty(item.cartKey, q)}
@@ -212,11 +214,10 @@ export default function CartBottomSheet() {
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold uppercase tracking-wider text-brand-muted/60">{t('subtotal')}</span>
-                    <span className="text-[10px] text-brand-muted/40 font-almarai italic">Excluding delivery</span>
+                    <span className="text-[10px] text-brand-muted/40 font-almarai italic">{t('freeDelivery')}</span>
                   </div>
                   <div className="flex items-baseline gap-1 font-satoshi text-brand-gold">
-                    <span className="text-3xl font-black tabular-nums">{subtotal.toFixed(3)}</span>
-                    <span className="text-xs font-bold opacity-60">{tCommon('currency')}</span>
+                    <span className="text-3xl font-black tabular-nums">{formatPrice(subtotal, locale)}</span>
                   </div>
                 </div>
 
@@ -270,21 +271,23 @@ export default function CartBottomSheet() {
   )
 }
 
-function CartItemRow({ item, isRTL, currency, labels, onRemove, onUpdateQty, onUpdateNotes }: {
+function CartItemRow({ item, isRTL, locale, labels, onRemove, onUpdateQty, onUpdateNotes }: {
   item: CartItem
   isRTL: boolean
-  currency: string
+  locale: string
   labels: {
     remove: string
     decrease: string
     increase: string
+    notesPlaceholder: string
+    specialInstructions: string
   }
   onRemove: () => void
   onUpdateQty: (q: number) => void
   onUpdateNotes: (n: string) => void
 }) {
   const [notesOpen, setNotesOpen] = useState(false)
-  const lineTotal = (item.priceBhd * item.quantity).toFixed(3)
+  const lineTotal = item.priceBhd * item.quantity
   const name = isRTL ? item.nameAr : item.nameEn
 
   return (
@@ -353,8 +356,7 @@ function CartItemRow({ item, isRTL, currency, labels, onRemove, onUpdateQty, onU
             </div>
 
             <div className="flex items-baseline gap-1 font-satoshi text-brand-gold">
-              <span className="text-lg font-black tabular-nums">{lineTotal}</span>
-              <span className="text-[10px] font-bold opacity-60">{currency}</span>
+              <span className="text-lg font-black tabular-nums">{formatPrice(lineTotal, locale)}</span>
             </div>
           </div>
         </div>
@@ -374,7 +376,7 @@ function CartItemRow({ item, isRTL, currency, labels, onRemove, onUpdateQty, onU
             autoFocus
             defaultValue={item.notes ?? ''}
             onBlur={(e) => { onUpdateNotes(e.target.value); setNotesOpen(false) }}
-            placeholder={isRTL ? 'مثال: بدون بصل، إضافي حارة...' : 'e.g. no onions, extra spicy...'}
+            placeholder={labels.notesPlaceholder}
             rows={2}
             dir={isRTL ? 'rtl' : 'ltr'}
             className={`w-full rounded-lg border border-brand-border/50 bg-brand-black/40 px-3 py-2 text-xs text-brand-text placeholder:text-brand-muted/50 focus:border-brand-gold/50 focus:outline-none resize-none ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
@@ -384,7 +386,7 @@ function CartItemRow({ item, isRTL, currency, labels, onRemove, onUpdateQty, onU
             onClick={() => setNotesOpen(true)}
             className={`text-[11px] text-brand-muted/40 hover:text-brand-muted transition-colors ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
           >
-            + {isRTL ? 'ملاحظات خاصة' : 'Special instructions'}
+            + {labels.specialInstructions}
           </button>
         )}
       </div>

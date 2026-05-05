@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
-import { useRouter } from '@/i18n/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
 import { z } from 'zod'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -27,12 +27,14 @@ import {
   Package,
 } from 'lucide-react'
 import { useCartStore, selectSubtotal, selectTotalItems } from '@/lib/cart'
+import { formatPrice } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import TierBadge from '@/components/loyalty/TierBadge'
 import CouponInput from '@/components/checkout/CouponInput'
 import { pointsToCredit, formatPoints, MIN_REDEMPTION } from '@/lib/loyalty/calculations'
 import { createOrderWithPoints } from '@/app/[locale]/checkout/actions'
+import { createClient } from '@/lib/supabase/client'
 import { gtag } from '@/lib/gtag'
 import type { CustomerProfileRow } from '@/lib/supabase/custom-types'
 import type { AppliedCoupon } from '@/components/checkout/CouponInput'
@@ -109,7 +111,7 @@ const checkoutSchema = z.object({
   customerName: z
     .string()
     .min(2, 'name_required')
-    .max(100, 'Name too long'),
+    .max(100, 'name_too_long'),
 
   customerPhone: z
     .string()
@@ -120,7 +122,7 @@ const checkoutSchema = z.object({
 
   notes: z
     .string()
-    .max(500, 'Notes too long')
+    .max(500, 'notes_too_long')
     .optional()
     .transform((v) => v?.trim() || undefined),
 
@@ -147,12 +149,16 @@ interface Props {
   customerProfile: CustomerProfileRow | null
 }
 
+interface BranchSupport {
+  phone: string
+  waLink: string
+}
+
 export default function CheckoutForm({ customerProfile }: Props) {
   const locale  = useLocale()
   const isAr    = locale === 'ar'
   const t       = useTranslations('checkout')
   const tL      = useTranslations('loyalty')
-  const tCommon = useTranslations('common')
   const router  = useRouter()
   const idempotencyKeyRef = useRef(crypto.randomUUID())
 
@@ -163,6 +169,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
   // ── Form fields ───────────────────────────────────────────────────────────
   const [selectedBranch, setSelectedBranch] = useState<BranchId | null>(null)
+  const [branchSupport, setBranchSupport] = useState<Partial<Record<BranchId, BranchSupport>>>({})
   const [name,        setName]        = useState('')
   const [phone,       setPhone]       = useState('')
   const [notes,       setNotes]       = useState('')
@@ -194,18 +201,46 @@ export default function CheckoutForm({ customerProfile }: Props) {
     setPhone((current) => current || customerProfile.phone || '')
   }, [customerProfile])
 
+  useEffect(() => {
+    let isActive = true
+
+    async function loadBranchSupport() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('branches')
+        .select('id, phone, wa_link')
+
+      if (!isActive || !data) return
+
+      const nextSupport: Partial<Record<BranchId, BranchSupport>> = {}
+      for (const branch of data) {
+        if (branch.id === 'riffa' || branch.id === 'qallali' || branch.id === 'badi') {
+          nextSupport[branch.id] = {
+            phone: branch.phone,
+            waLink: branch.wa_link,
+          }
+        }
+      }
+      setBranchSupport(nextSupport)
+    }
+
+    void loadBranchSupport()
+    return () => { isActive = false }
+  }, [])
+
   // ── Coupon state ───────────────────────────────────────────────────────────
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
   const couponDiscount  = appliedCoupon?.discount ?? 0
 
   // ── Final total ────────────────────────────────────────────────────────────
   const finalTotal = Math.max(0.001, subtotal - pointsDiscount - couponDiscount)
+  const selectedBranchSupport = selectedBranch ? branchSupport[selectedBranch] : null
 
   // ── GPS ───────────────────────────────────────────────────────────────────
 
   function requestLocation() {
     if (!navigator.geolocation) {
-      setGpsError(isAr ? 'المتصفح لا يدعم تحديد الموقع' : 'Geolocation not supported')
+      setGpsError(t('errors.gpsUnsupported'))
       return
     }
     setGpsLoading(true)
@@ -217,7 +252,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
         setAddressMode('location')
       },
       () => {
-        setGpsError(isAr ? 'تعذّر الوصول للموقع — تأكد من الصلاحيات' : 'Location access denied')
+        setGpsError(t('errors.gpsDenied'))
         setGpsLoading(false)
       },
       { timeout: 10000 },
@@ -232,12 +267,12 @@ export default function CheckoutForm({ customerProfile }: Props) {
     }
     if (addressMode === 'manual') {
       const parts = [
-        manualAddr.block    && `م${manualAddr.block}`,
-        manualAddr.road     && `ش${manualAddr.road}`,
-        manualAddr.building && `م${manualAddr.building}`,
+        manualAddr.block    && `${t('address.blockPrefix')}${manualAddr.block}`,
+        manualAddr.road     && `${t('address.roadPrefix')}${manualAddr.road}`,
+        manualAddr.building && `${t('address.buildingPrefix')}${manualAddr.building}`,
         manualAddr.villa    && manualAddr.villa,
       ].filter(Boolean)
-      return parts.length ? parts.join('، ') : undefined
+      return parts.length ? parts.join(t('listSeparator')) : undefined
     }
     return undefined
   }
@@ -254,11 +289,13 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
   function localizeCheckoutError(message: string): string {
     const labels: Record<string, string> = {
-      name_required: isAr ? 'الاسم مطلوب (حرفان على الأقل)' : 'Name is required (min 2 chars)',
-      phone_invalid: isAr ? 'رقم الهاتف غير صحيح (+973XXXXXXXX)' : 'Invalid Bahrain number (+973XXXXXXXX)',
-      building_required: isAr ? 'رقم المبنى مطلوب' : 'Building is required',
-      road_required: isAr ? 'رقم الطريق مطلوب' : 'Road is required',
-      block_required: isAr ? 'رقم البلوك مطلوب' : 'Block is required',
+      name_required: t('errors.nameRequired'),
+      name_too_long: t('errors.nameTooLong'),
+      phone_invalid: t('errors.phoneInvalid'),
+      building_required: t('errors.buildingRequired'),
+      road_required: t('errors.roadRequired'),
+      block_required: t('errors.blockRequired'),
+      notes_too_long: t('errors.notesTooLong'),
     }
     return labels[message] ?? message
   }
@@ -269,17 +306,13 @@ export default function CheckoutForm({ customerProfile }: Props) {
     const newErrors: typeof errors = {}
 
     if (!selectedBranch) {
-      newErrors.branchId = isAr ? 'الرجاء اختيار الفرع' : 'Please select a branch'
+      newErrors.branchId = t('errors.branchRequired')
     }
 
     if (!orderType) {
-      newErrors.address = isAr
-        ? 'الرجاء اختيار طريقة الاستلام (توصيل أو استلام من الفرع)'
-        : 'Please select delivery or pickup'
+      newErrors.address = t('errors.orderTypeRequired')
     } else if (!validateAddress()) {
-      newErrors.address = isAr
-        ? 'الرجاء إدخال المبنى والطريق والبلوك أو مشاركة موقعك'
-        : 'Please enter building, road, and block or share your location'
+      newErrors.address = t('errors.addressRequired')
     }
 
     const parsed = checkoutSchema.safeParse({
@@ -293,11 +326,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
       for (const issue of parsed.error.issues) {
         const field = issue.path[0] as keyof CheckoutValues
         if (issue.message === 'name_required') {
-          newErrors[field] = isAr ? 'الاسم مطلوب (حرفان على الأقل)' : 'Name is required (min 2 chars)'
+          newErrors[field] = t('errors.nameRequired')
         } else if (issue.message === 'phone_invalid') {
-          newErrors[field] = isAr ? 'رقم الهاتف غير صحيح (+973XXXXXXXX)' : 'Invalid Bahrain number (+973XXXXXXXX)'
+          newErrors[field] = t('errors.phoneInvalid')
         } else {
-          newErrors[field] = issue.message
+          newErrors[field] = localizeCheckoutError(issue.message)
         }
       }
     }
@@ -371,7 +404,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       if (result.stock_warnings && result.stock_warnings.length > 0) {
         setStockWarnings(result.stock_warnings.map(w => w.name_ar))
       }
-      throw new Error(result.error ?? 'Order creation failed')
+      throw new Error(result.error ?? t('errors.orderCreationFailed'))
     }
 
     if (result.stock_warnings && result.stock_warnings.length > 0) {
@@ -409,7 +442,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       router.push(`/order/${orderId}${accessToken ? `?t=${encodeURIComponent(accessToken)}` : ''}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)
+      setSubmitError(t('errors.generic', { message: msg }))
       setLoading(false)
     }
   }
@@ -428,7 +461,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       router.push(`/payment/${res.orderId}${res.accessToken ? `?t=${encodeURIComponent(res.accessToken)}` : ''}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)
+      setSubmitError(t('errors.generic', { message: msg }))
       setLoading(false)
     }
   }
@@ -451,7 +484,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       router.push(`/${path}/${res.orderId}${res.accessToken ? `?t=${encodeURIComponent(res.accessToken)}` : ''}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)
+      setSubmitError(t('errors.generic', { message: msg }))
       setLoading(false)
     }
   }
@@ -539,7 +572,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                 {isAr ? branch.hours.ar : branch.hours.en}
               </p>
               <p className={`text-[10px] mt-1 text-brand-muted/60 ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-                {isAr ? 'متاح للاستلام والتوصيل' : 'Available for pickup & delivery'}
+                {t('branchAvailable')}
               </p>
             </button>
           ))}
@@ -548,6 +581,32 @@ export default function CheckoutForm({ customerProfile }: Props) {
           <p className="mt-3 text-xs text-brand-error font-almarai flex items-center gap-1">
             <span className="shrink-0">⚠</span> {errors.branchId}
           </p>
+        )}
+        {selectedBranchSupport && (
+          <div className={`mt-4 rounded-xl border border-brand-border bg-brand-surface-2 px-4 py-3 text-sm ${isAr ? 'text-end' : 'text-start'}`}>
+            <p className={`mb-2 font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {t('branchSupport')}
+            </p>
+            <div className={`flex flex-wrap gap-3 ${isAr ? 'justify-end' : 'justify-start'}`}>
+              <a
+                href={`tel:${selectedBranchSupport.phone}`}
+                className="inline-flex items-center gap-2 text-brand-gold hover:text-brand-gold-light"
+                dir="ltr"
+              >
+                <Phone size={14} />
+                {selectedBranchSupport.phone}
+              </a>
+              <a
+                href={selectedBranchSupport.waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-brand-gold hover:text-brand-gold-light"
+              >
+                <Send size={14} />
+                {t('branchWhatsapp')}
+              </a>
+            </div>
+          </div>
         )}
       </SectionCard>
 
@@ -641,7 +700,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
               ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
           >
             <Truck size={16} className={orderType === 'delivery' ? 'text-brand-gold' : 'text-brand-muted'} />
-            {isAr ? 'توصيل' : 'Delivery'}
+            {t('delivery')}
           </button>
           <button
             type="button"
@@ -657,7 +716,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
               ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
           >
             <Package size={16} className={orderType === 'pickup' ? 'text-brand-gold' : 'text-brand-muted'} />
-            {isAr ? 'استلام من الفرع' : 'Branch Pickup'}
+            {t('pickup')}
           </button>
         </div>
 
@@ -669,10 +728,10 @@ export default function CheckoutForm({ customerProfile }: Props) {
             </div>
             <div>
               <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {isAr ? 'سيكون طلبك جاهزاً للاستلام من الفرع' : 'Your order will be ready for pickup at the branch'}
+                {t('pickupReadyTitle')}
               </p>
               <p className={`text-[11px] text-brand-muted mt-0.5 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {isAr ? 'سنتصل بك عند جاهزية الطلب' : "We'll contact you when it's ready"}
+                {t('pickupReadyHint')}
               </p>
             </div>
           </div>
@@ -750,7 +809,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                 </div>
                 <div>
                   <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                    {isAr ? 'تم تحديد الموقع بنجاح' : 'Location captured successfully'}
+                    {t('gpsSuccess')}
                   </p>
                   <p className="text-[11px] text-brand-muted font-satoshi tabular-nums">
                     {gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}
@@ -761,7 +820,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
               <div className="rounded-xl border border-brand-border bg-brand-surface-2 p-6 flex flex-col items-center justify-center text-center gap-3">
                 <Loader2 size={32} className="animate-spin text-brand-gold opacity-50" />
                 <p className={`text-sm text-brand-muted italic ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isAr ? 'بانتظار تحديد موقعك عبر الأقمار الصناعية...' : 'Waiting for GPS satellite signal...'}
+                  {t('gpsWaiting')}
                 </p>
               </div>
             ) : null}
@@ -776,7 +835,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
               </div>
             )}
             <p className={`text-[11px] text-brand-muted/70 px-2 mt-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? 'سيقوم السائق باستخدام هذا الموقع للوصول إليك بدقة.' : 'The driver will use this location to reach you accurately.'}
+              {t('gpsDriverHint')}
             </p>
           </div>
         )}
@@ -790,7 +849,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
         )}
         {(errors.deliveryArea || errors.deliveryBuilding || errors.deliveryStreet) && (
           <div className="mt-4 text-xs text-brand-error font-almarai bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
-            {[errors.deliveryArea, errors.deliveryBuilding, errors.deliveryStreet].filter(Boolean).join('، ')}
+            {[errors.deliveryArea, errors.deliveryBuilding, errors.deliveryStreet].filter(Boolean).join(t('listSeparator'))}
           </div>
         )}
       </SectionCard>
@@ -907,8 +966,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                     </button>
                   </div>
                   <div className="font-satoshi font-bold text-brand-gold text-sm tabular-nums">
-                    {(item.priceBhd * item.quantity).toFixed(3)}
-                    <span className="text-[10px] text-brand-muted ms-1 font-normal">{tCommon('currency')}</span>
+                    {formatPrice(item.priceBhd * item.quantity, locale)}
                   </div>
                 </div>
               </div>
@@ -920,10 +978,10 @@ export default function CheckoutForm({ customerProfile }: Props) {
         <div className="bg-brand-surface-2 p-5 space-y-3">
           <div className={`flex justify-between items-center text-sm ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
             <span className={`text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? 'المجموع الفرعي' : 'Subtotal'}
+              {t('subtotal')}
             </span>
             <span className="font-satoshi text-brand-text tabular-nums">
-              {subtotal.toFixed(3)} {tCommon('currency')}
+              {formatPrice(subtotal, locale)}
             </span>
           </div>
 
@@ -932,11 +990,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
               <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
                 <Tag size={12} className="text-brand-success" />
                 <span className={`text-brand-success ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isAr ? `خصم الكوبون (${appliedCoupon?.code})` : `Coupon Discount (${appliedCoupon?.code})`}
+                  {t('couponDiscount', { code: appliedCoupon?.code ?? '' })}
                 </span>
               </div>
               <span className="font-satoshi text-brand-success tabular-nums">
-                -{couponDiscount.toFixed(3)} {tCommon('currency')}
+                {formatPrice(-couponDiscount, locale)}
               </span>
             </div>
           )}
@@ -946,11 +1004,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
               <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
                 <CheckCircle size={12} className="text-brand-success" />
                 <span className={`text-brand-success ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isAr ? 'خصم نقاط الولاء' : 'Loyalty Points Discount'}
+                  {t('pointsDiscount')}
                 </span>
               </div>
               <span className="font-satoshi text-brand-success tabular-nums">
-                -{pointsDiscount.toFixed(3)} {tCommon('currency')}
+                {formatPrice(-pointsDiscount, locale)}
               </span>
             </div>
           )}
@@ -961,9 +1019,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
             </span>
             <div className="text-end">
               <span className="font-satoshi font-black text-brand-gold text-2xl tabular-nums">
-                {finalTotal.toFixed(3)}
+                {formatPrice(finalTotal, locale)}
               </span>
-              <span className="text-xs text-brand-muted ms-1 font-satoshi uppercase">{tCommon('currency')}</span>
             </div>
           </div>
         </div>
@@ -982,7 +1039,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                   {formatPoints(availablePoints)} {tL('points')}
                 </p>
                 <p className={`text-[11px] text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  ≈ {pointsToCredit(availablePoints).toFixed(3)} {tCommon('currency')}
+                  ≈ {formatPrice(pointsToCredit(availablePoints), locale)}
                 </p>
               </div>
             </div>
@@ -1012,7 +1069,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       <div className="space-y-4">
         {stockWarnings.length > 0 && (
           <div className="rounded-xl border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm text-brand-gold font-almarai">
-            ⚠ {isAr ? 'تنبيه مخزون:' : 'Stock warning:'} {stockWarnings.join('، ')}
+            ⚠ {t('stockWarningPrefix')} {stockWarnings.join(t('listSeparator'))}
           </div>
         )}
 
@@ -1020,10 +1077,10 @@ export default function CheckoutForm({ customerProfile }: Props) {
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-black/80 px-4">
             <div className="w-full max-w-sm rounded-2xl border border-brand-gold/30 bg-brand-surface p-5 text-center">
               <p className={`mb-3 text-base font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-                {isAr ? 'بعض الأصناف متوفرة بكمية محدودة' : 'Some items have limited stock'}
+                {t('stockLimitedTitle')}
               </p>
               <p className={`mb-5 text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {stockWarnings.join('، ')}
+                {stockWarnings.join(t('listSeparator'))}
               </p>
               <div className="flex gap-3">
                 <button
@@ -1031,14 +1088,14 @@ export default function CheckoutForm({ customerProfile }: Props) {
                   onClick={() => { setPendingStockMode(null); setLoading(false) }}
                   className="flex-1 rounded-xl border border-brand-border px-4 py-3 text-sm font-bold text-brand-muted"
                 >
-                  {isAr ? 'رجوع' : 'Back'}
+                  {t('back')}
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmLowStock}
                   className="flex-1 rounded-xl bg-brand-gold px-4 py-3 text-sm font-bold text-brand-black"
                 >
-                  {isAr ? 'متابعة' : 'Continue'}
+                  {t('continue')}
                 </button>
               </div>
             </div>
@@ -1087,7 +1144,18 @@ export default function CheckoutForm({ customerProfile }: Props) {
             {t('paymentNote')}
           </p>
           <p className={`text-[11px] text-brand-muted opacity-60 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {t('terms')}
+            {t('termsPrefix')}{' '}
+            <Link href="/privacy" className="text-brand-gold hover:text-brand-gold-light">
+              {t('privacyPolicy')}
+            </Link>
+            {' / '}
+            <Link href="/terms" className="text-brand-gold hover:text-brand-gold-light">
+              {t('termsOfService')}
+            </Link>
+            {' / '}
+            <Link href="/refund-policy" className="text-brand-gold hover:text-brand-gold-light">
+              {t('refundPolicy')}
+            </Link>
           </p>
         </div>
       </div>
@@ -1101,8 +1169,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
               {t('mobileItems', { count: totalItems })}
             </p>
             <p className="font-satoshi text-xl font-black text-brand-gold tabular-nums">
-              {finalTotal.toFixed(3)}
-              <span className="ms-1 text-[10px] font-bold uppercase text-brand-muted">{tCommon('currency')}</span>
+              {formatPrice(finalTotal, locale)}
             </p>
           </div>
           <CinematicButton

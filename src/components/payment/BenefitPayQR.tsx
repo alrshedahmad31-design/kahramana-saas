@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Timer, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { formatPrice } from '@/lib/format'
 
 const PAYMENT_TIMEOUT_SECONDS = 15 * 60
 
@@ -23,7 +24,7 @@ export default function BenefitPayQR({
   disabled,
 }: Props) {
   const t       = useTranslations('payment.benefit')
-  const tCommon = useTranslations('common')
+  const locale  = useLocale()
 
   const [secondsLeft, setSecondsLeft] = useState(PAYMENT_TIMEOUT_SECONDS)
   const [confirming,  setConfirming]  = useState(false)
@@ -91,8 +92,7 @@ export default function BenefitPayQR({
           {t('order_label')} #{orderNumber}
         </p>
         <p className="text-brand-gold font-satoshi text-2xl font-medium tabular-nums">
-          {amountBHD.toFixed(3)}{' '}
-          <span className="text-base font-normal">{tCommon('currency')}</span>
+          {formatPrice(amountBHD, locale)}
         </p>
       </div>
 
@@ -124,7 +124,7 @@ export default function BenefitPayQR({
         ].join(' ')}
       >
         {confirming ? (
-          tCommon('loading')
+          t('processing')
         ) : (
           <>
             <CheckCircle2 className="w-4 h-4" />

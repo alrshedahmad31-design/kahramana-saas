@@ -2,13 +2,14 @@
 
 import { motion } from 'framer-motion'
 import type { MenuVariantOption } from '@/lib/menu'
+import { formatPrice } from '@/lib/format'
 
 interface ItemVariantSelectorProps {
   variants: MenuVariantOption[]
   selectedVariant?: string
   onChange: (variant: string) => void
   label: string
-  currency: string
+  locale: string
   isRTL: boolean
   showPrices: boolean
 }
@@ -18,7 +19,7 @@ export default function ItemVariantSelector({
   selectedVariant,
   onChange,
   label,
-  currency,
+  locale,
   isRTL,
   showPrices,
 }: ItemVariantSelectorProps) {
@@ -63,7 +64,7 @@ export default function ItemVariantSelector({
               
               {showPrices && typeof variant.price_bhd === 'number' && (
                 <span className={`relative z-10 text-[10px] font-bold tabular-nums opacity-60 ${active ? 'text-brand-black' : 'text-brand-muted'}`}>
-                  {variant.price_bhd.toFixed(3)} {currency}
+                  {formatPrice(variant.price_bhd, locale)}
                 </span>
               )}
             </button>

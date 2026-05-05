@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useContext } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { ShoppingBag, Minus, Plus } from 'lucide-react'
 import { useCartStore } from '@/lib/cart'
 import type { MenuVariantOption, NormalizedMenuItem } from '@/lib/menu'
@@ -11,6 +11,7 @@ import ItemSizeSelector from '@/components/menu/item-size-selector'
 import ItemVariantSelector from '@/components/menu/item-variant-selector'
 import { motion, AnimatePresence } from 'framer-motion'
 import { gtag } from '@/lib/gtag'
+import { formatPrice } from '@/lib/format'
 
 interface Props {
   isRTL: boolean
@@ -22,7 +23,7 @@ interface Props {
 export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', disabled }: Props) {
   const t = useTranslations('menu')
   const tCart = useTranslations('cart')
-  const tCommon = useTranslations('common')
+  const locale = useLocale()
   const addItem = useCartStore((state) => state.addItem)
   
   // Try to get from context, fallback to prop
@@ -108,7 +109,7 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
             selectedSize={selectedSize}
             onChange={setSelectedSize}
             label={t('size')}
-            currency={tCommon('currency')}
+            locale={locale}
             isRTL={isRTL}
           />
         )}
@@ -119,7 +120,7 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
             selectedVariant={selectedVariant}
             onChange={setSelectedVariant}
             label={t('variant')}
-            currency={tCommon('currency')}
+            locale={locale}
             isRTL={isRTL}
             showPrices={!item.sizes}
           />
@@ -175,8 +176,7 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
           <ShoppingBag className="h-5 w-5 transition-transform group-hover:-translate-y-1 group-hover:scale-110" aria-hidden="true" />
           <span>{t('addToCart')}</span>
           <div className="ms-auto flex items-baseline gap-1 rounded-lg bg-brand-black/10 px-3 py-1 tabular-nums">
-            <span className="text-xl">{lineTotal.toFixed(3)}</span>
-            <span className="text-[10px] font-bold opacity-60">{tCommon('currency')}</span>
+            <span className="text-xl">{formatPrice(lineTotal, locale)}</span>
           </div>
         </button>
       </div>

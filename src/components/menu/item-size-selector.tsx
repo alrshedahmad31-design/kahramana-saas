@@ -3,13 +3,14 @@
 import { motion } from 'framer-motion'
 import { SIZE_LABELS, type CartItem } from '@/lib/cart'
 import type { MenuSizeMap } from '@/lib/menu'
+import { formatPrice } from '@/lib/format'
 
 interface ItemSizeSelectorProps {
   sizes: MenuSizeMap
   selectedSize?: string
   onChange: (size: string) => void
   label: string
-  currency: string
+  locale: string
   isRTL: boolean
 }
 
@@ -18,7 +19,7 @@ export default function ItemSizeSelector({
   selectedSize,
   onChange,
   label,
-  currency,
+  locale,
   isRTL,
 }: ItemSizeSelectorProps) {
   const sizeKeys = Object.keys(sizes)
@@ -67,7 +68,7 @@ export default function ItemSizeSelector({
                   : displayLabel?.en ?? typedSize}
               </span>
               <span className={`relative z-10 text-[10px] font-bold tabular-nums opacity-60 ${active ? 'text-brand-black' : 'text-brand-muted'}`}>
-                {price.toFixed(3)} {currency}
+                {formatPrice(price, locale)}
               </span>
             </button>
           )
