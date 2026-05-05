@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+export const dynamic = 'force-dynamic'
 import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { createClient } from '@/lib/supabase/server'
 import OrdersClient from '@/components/orders/OrdersClient'

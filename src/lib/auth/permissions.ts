@@ -7,6 +7,8 @@ export const CAN_CANCEL: StaffRole[] = ['owner', 'general_manager', 'branch_mana
 export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   new:              ['under_review', 'accepted', 'cancelled'],
   under_review:     ['accepted', 'cancelled'],
+  pending_payment:  ['cancelled'],
+  confirmed:        ['accepted', 'cancelled'],
   accepted:         ['preparing', 'cancelled'],
   preparing:        ['ready'],
   ready:            ['out_for_delivery', 'completed'],

@@ -112,6 +112,7 @@ export default async function Footer() {
                 { label: isRTL ? 'تواصل معنا' : 'Contact', href: '/contact' },
                 { label: isRTL ? 'من نحن' : 'About Us', href: '/about' },
                 { label: isRTL ? 'سياسة الاسترجاع' : 'Refund Policy', href: '/refund-policy' },
+                { label: isRTL ? 'سياسة الخصوصية' : 'Privacy Policy', href: '/privacy-policy' },
               ].map((link) => (
                 <Link 
                   key={link.href} 

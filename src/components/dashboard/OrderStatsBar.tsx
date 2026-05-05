@@ -1,3 +1,4 @@
+// Force rebuild - status mapping fix
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -31,12 +32,13 @@ export default function OrderStatsBar() {
         .gte('created_at', today.toISOString())
 
       if (!data) return
+      console.log('OrderStatsBar Data at', new Date().toLocaleTimeString(), ':', data.map(o => o.status))
 
-      const done = data.filter(o => ['delivered', 'completed'].includes(o.status))
+      const done = data.filter(o => ['delivered', 'completed'].includes(String(o.status).trim()))
       setStats({
-        newCount:       data.filter(o => ['new', 'under_review'].includes(o.status)).length,
-        preparingCount: data.filter(o => ['accepted', 'preparing'].includes(o.status)).length,
-        readyCount:     data.filter(o => ['ready', 'out_for_delivery'].includes(o.status)).length,
+        newCount:       data.filter(o => ['new', 'under_review', 'pending_payment', 'confirmed'].includes(String(o.status).trim())).length,
+        preparingCount: data.filter(o => ['accepted', 'preparing'].includes(String(o.status).trim())).length,
+        readyCount:     data.filter(o => ['ready', 'out_for_delivery'].includes(String(o.status).trim())).length,
         deliveredToday: done.length,
         revenueToday:   done.reduce((s, o) => s + Number(o.total_bhd || 0), 0),
       })
@@ -57,8 +59,9 @@ export default function OrderStatsBar() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
 
+      {/* Debug: {JSON.stringify(stats)} */}
       {/* New */}
-      <div className="relative bg-brand-surface border-2 border-brand-error rounded-xl p-4 overflow-hidden">
+      <div className={`relative border-2 border-brand-error rounded-xl p-4 overflow-hidden ${stats.newCount > 0 ? 'bg-brand-error/20' : 'bg-brand-surface'}`}>
         <p className={`text-[10px] font-black text-brand-muted uppercase tracking-widest mb-2 ${font}`}>
           {isAr ? 'طلبات جديدة' : 'New Orders'}
         </p>

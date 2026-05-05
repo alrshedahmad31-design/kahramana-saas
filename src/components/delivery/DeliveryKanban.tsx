@@ -18,8 +18,8 @@ const COLS = [
   },
   {
     id:       'ready',
-    labelAr:  'جاهز للاستلام',
-    labelEn:  'Ready',
+    labelAr:  'بانتظار السائق',
+    labelEn:  'Awaiting Pickup',
     statuses: ['ready'],
     accent:   DV_STATUS.successBg,
     textColor: DV_STATUS.successText,
@@ -252,7 +252,7 @@ function KanbanCard({
         {/* Action row */}
         {!isDone && (
           <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
-            {!order.driver_id && (
+            {!order.driver_id && order.status !== 'ready' && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onDispatch() }}
@@ -279,6 +279,25 @@ function KanbanCard({
                 <UserPlus size={12} />
                 {isAr ? 'تعيين' : 'Assign'}
               </button>
+            )}
+
+            {order.status === 'ready' && !order.driver_id && (
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                padding: '6px 0',
+                background: 'rgba(45,122,79,0.12)',
+                border: `1px dashed ${DV_STATUS.successBg}`,
+                borderRadius: '7px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: DV_STATUS.successText,
+              }}>
+                {isAr ? 'بانتظار سائق...' : 'Waiting for driver...'}
+              </div>
             )}
 
             <button

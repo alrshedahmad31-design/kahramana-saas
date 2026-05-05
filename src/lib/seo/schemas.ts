@@ -95,6 +95,7 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
     hasMap: branch.mapsUrl ?? undefined,
     menu: `${SITE}/${locale === 'en' ? 'en/' : ''}menu`,
     openingHoursSpecification: buildOpeningHours(branch),
+    sameAs: [branch.mapsUrl].filter(Boolean),
   }
 
   if (branch.latitude !== null && branch.longitude !== null) {
@@ -255,6 +256,7 @@ export function buildOrganizationSchema(locale: Locale) {
       GENERAL_CONTACT.tiktok,
       GENERAL_CONTACT.facebook,
       'https://www.talabat.com/ar/bahrain/kahramanat-baghdad-restaurant',
+      ...activeBranches.filter((b) => b.mapsUrl).map((b) => b.mapsUrl as string),
     ].filter(Boolean),
     location: activeBranches.map((b) => ({
       '@id': `${SITE}/#branch-${b.id}`,

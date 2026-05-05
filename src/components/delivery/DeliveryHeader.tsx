@@ -184,32 +184,6 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, 
         {isMuted ? <MuteOnSvg /> : <MuteOffSvg />}
       </button>
 
-      {/* Assign button */}
-      <button
-        type="button"
-        onClick={onAssign}
-        style={{
-          display:      'flex',
-          alignItems:   'center',
-          gap:          '6px',
-          padding:      '7px 16px',
-          background:   DV.amber,
-          color:        DV.bgPage,
-          border:       'none',
-          borderRadius: '8px',
-          fontSize:     '13px',
-          fontWeight:   700,
-          cursor:       'pointer',
-          fontFamily:   'IBM Plex Sans Arabic, sans-serif',
-          whiteSpace:   'nowrap',
-          transition:   'background 0.15s',
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = DV.amberLight }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = DV.amber }}
-      >
-        <UserPlus size={15} />
-        {isAr ? 'تعيين سائق' : 'Assign Driver'}
-      </button>
     </header>
   )
 }

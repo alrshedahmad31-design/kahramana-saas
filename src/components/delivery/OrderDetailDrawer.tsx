@@ -305,6 +305,36 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                       تغيير
                     </button>
                   </div>
+                ) : order.status === 'ready' ? (
+                  <div style={{
+                    padding: '12px',
+                    background: 'rgba(45,122,79,0.12)',
+                    border: `1px dashed ${DV_STATUS.successBg}`,
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: DV_STATUS.successText, marginBottom: '4px' }}>
+                      {isAr ? 'الطلب متاح في قائمة الاستلام' : 'Order is in the pickup pool'}
+                    </p>
+                    <p style={{ fontSize: '11px', color: DV.muted }}>
+                      {isAr ? 'سيقوم أحد السائقين باستلامه قريباً' : 'A driver will claim it soon'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onDispatch}
+                      style={{
+                        marginTop: '8px',
+                        fontSize: '11px',
+                        color: DV.amber,
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {isAr ? 'تعيين سائق يدوياً؟' : 'Assign manually?'}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"

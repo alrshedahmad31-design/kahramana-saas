@@ -45,11 +45,11 @@ export default async function ProtocolStack() {
             key={step.id} 
             className="min-h-screen w-full flex items-center justify-center p-6 sm:p-16 relative overflow-hidden"
           >
-            {/* Background Image with Overlay */}
-            <div className="absolute inset-0 z-0">
-               <Image 
-                 src={step.image} 
-                 alt={t(`steps.${step.id}.title` as 'steps.01.title' | 'steps.02.title' | 'steps.03.title' | 'steps.04.title')}
+            {/* Background Image with Overlay — purely decorative, hidden from screen readers */}
+            <div className="absolute inset-0 z-0" aria-hidden="true">
+               <Image
+                 src={step.image}
+                 alt=""
                  fill
                  className="object-cover opacity-20"
                  sizes="100vw"

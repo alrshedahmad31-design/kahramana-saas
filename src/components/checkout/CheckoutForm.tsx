@@ -137,10 +137,10 @@ type CheckoutErrorKey = keyof CheckoutValues | 'address' | 'deliveryBuilding' | 
 type AddressMode = 'manual' | 'location' | null
 
 interface ManualAddress {
-  building: string
-  villa: string
-  road: string
   block: string
+  road: string
+  building: string
+  flat: string
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -185,7 +185,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
   // ── Address state ─────────────────────────────────────────────────────────
   const [addressMode, setAddressMode] = useState<AddressMode>(null)
-  const [manualAddr, setManualAddr]   = useState<ManualAddress>({ building: '', villa: '', road: '', block: '' })
+  const [manualAddr, setManualAddr]   = useState<ManualAddress>({ block: '', road: '', building: '', flat: '' })
   const [gpsCoords,  setGpsCoords]    = useState<{ lat: number; lng: number } | null>(null)
   const [gpsLoading, setGpsLoading]   = useState(false)
   const [gpsError,   setGpsError]     = useState<string | null>(null)
@@ -263,29 +263,35 @@ export default function CheckoutForm({ customerProfile }: Props) {
   // ── Address formatter ─────────────────────────────────────────────────────
 
   function buildAddressString(): string | undefined {
-    if (addressMode === 'location' && gpsCoords) {
-      return `https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}`
+    if (orderType === 'pickup') return undefined
+    
+    const parts: string[] = []
+    
+    // 1. Text address parts
+    const textParts = [
+      manualAddr.block    && `${t('address.blockPrefix')}${manualAddr.block}`,
+      manualAddr.road     && `${t('address.roadPrefix')}${manualAddr.road}`,
+      manualAddr.building && `${t('address.buildingPrefix')}${manualAddr.building}`,
+      manualAddr.flat     && manualAddr.flat,
+    ].filter(Boolean)
+    
+    if (textParts.length > 0) {
+      parts.push(textParts.join(t('listSeparator')))
     }
-    if (addressMode === 'manual') {
-      const parts = [
-        manualAddr.block    && `${t('address.blockPrefix')}${manualAddr.block}`,
-        manualAddr.road     && `${t('address.roadPrefix')}${manualAddr.road}`,
-        manualAddr.building && `${t('address.buildingPrefix')}${manualAddr.building}`,
-        manualAddr.villa    && manualAddr.villa,
-      ].filter(Boolean)
-      return parts.length ? parts.join(t('listSeparator')) : undefined
+    
+    // 2. GPS link
+    if (gpsCoords) {
+      parts.push(`https://maps.google.com/?q=${gpsCoords.lat},${gpsCoords.lng}`)
     }
-    return undefined
+    
+    return parts.length ? parts.join(' \n ') : undefined
   }
 
   function validateAddress(): boolean {
     if (orderType === 'pickup') return true
-    if (addressMode === 'location' && gpsCoords) return true
-    if (addressMode === 'manual') {
-      const { building, road, block } = manualAddr
-      return !!(building.trim() && road.trim() && block.trim())
-    }
-    return false
+    // Require manual address fields even if GPS is shared, for driver clarity
+    const { block, road, building } = manualAddr
+    return !!(block.trim() && road.trim() && building.trim())
   }
 
   function localizeCheckoutError(message: string): string {
@@ -356,11 +362,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
         notes:               values.notes ?? null,
         customer_notes:      values.notes ?? null,
         delivery_address:    isPickup ? null : deliveryAddress,
-        delivery_building:   !isPickup && addressMode === 'manual' ? manualAddr.building.trim() || null : null,
-        delivery_street:     !isPickup && addressMode === 'manual' ? manualAddr.road.trim() || null : null,
-        delivery_area:       !isPickup && addressMode === 'manual' ? manualAddr.block.trim() || null : null,
-        delivery_lat:        !isPickup && addressMode === 'location' ? gpsCoords?.lat ?? null : null,
-        delivery_lng:        !isPickup && addressMode === 'location' ? gpsCoords?.lng ?? null : null,
+        delivery_building:   !isPickup ? manualAddr.building.trim() || null : null,
+        delivery_street:     !isPickup ? manualAddr.road.trim() || null : null,
+        delivery_area:       !isPickup ? manualAddr.block.trim() || null : null,
+        delivery_lat:        !isPickup ? gpsCoords?.lat ?? null : null,
+        delivery_lng:        !isPickup ? gpsCoords?.lng ?? null : null,
         source:              'direct',
         whatsapp_sent_at:    null,
       },
@@ -739,109 +745,124 @@ export default function CheckoutForm({ customerProfile }: Props) {
         )}
 
         {/* Address input — delivery only */}
-        {orderType === 'delivery' && (<>
-        {/* Mode Switcher */}
-        <div className="flex gap-2 mb-5">
-          <button
-            type="button"
-            onClick={() => setAddressMode('manual')}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all font-bold text-sm
-              ${addressMode === 'manual'
-                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
-                : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
-              ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
-          >
-            <Edit size={16} className={addressMode === 'manual' ? 'text-brand-gold' : 'text-brand-muted'} />
-            {t('address.manual')}
-          </button>
-          <button
-            type="button"
-            onClick={requestLocation}
-            disabled={gpsLoading}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all font-bold text-sm
-              ${addressMode === 'location'
-                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
-                : 'border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40'}
-              ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
-          >
-            {gpsLoading ? (
-              <Loader2 size={16} className="animate-spin text-brand-gold" />
-            ) : (
-              <Send size={16} className={addressMode === 'location' ? 'text-brand-gold' : 'text-brand-muted'} />
-            )}
-            {t('address.gps')}
-          </button>
-        </div>
-
-        {/* Manual Address Fields */}
-        {addressMode === 'manual' && (
-          <div className="space-y-0">
-            <AddressRow
-              icon={Map}
-              label={t('address.area')}
-              value={manualAddr.block}
-              onChange={(v) => setManualAddr(p => ({ ...p, block: v }))}
-              placeholder={t('address.areaPlaceholder')}
-            />
-            <AddressRow
-              icon={Building}
-              label={t('address.building')}
-              value={manualAddr.building}
-              onChange={(v) => setManualAddr(p => ({ ...p, building: v }))}
-              placeholder={t('address.buildingPlaceholder')}
-            />
-            <AddressRow
-              icon={FileText}
-              label={t('address.directions')}
-              value={manualAddr.road}
-              onChange={(v) => setManualAddr(p => ({ ...p, road: v }))}
-              placeholder={t('address.directionsPlaceholder')}
-            />
-          </div>
-        )}
-
-        {/* GPS Result UI */}
-        {addressMode === 'location' && (
-          <div className={`space-y-3 ${isAr ? 'text-end' : 'text-start'}`}>
-            {gpsCoords ? (
-              <div className="rounded-xl border border-brand-success/30 bg-brand-success/5 p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-success/20 flex items-center justify-center shrink-0">
-                  <CheckCircle size={20} className="text-brand-success" />
+        {orderType === 'delivery' && (
+          <div className="space-y-6">
+            {/* GPS Section */}
+            <div className="space-y-3">
+              {!gpsCoords ? (
+                <button
+                  type="button"
+                  onClick={requestLocation}
+                  disabled={gpsLoading}
+                  className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-brand-border bg-brand-surface-2 text-brand-muted hover:border-brand-gold/40 transition-all font-bold text-sm
+                    ${isAr ? 'font-almarai flex-row-reverse' : 'font-satoshi'}`}
+                >
+                  {gpsLoading ? (
+                    <Loader2 size={18} className="animate-spin text-brand-gold" />
+                  ) : (
+                    <Send size={18} className="text-brand-muted" />
+                  )}
+                  {t('address.gps')}
+                </button>
+              ) : (
+                <div className={`rounded-xl border border-brand-success/30 bg-brand-success/5 p-4 flex items-center gap-3 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                  <div className="w-10 h-10 rounded-full bg-brand-success/20 flex items-center justify-center shrink-0">
+                    <CheckCircle size={20} className="text-brand-success" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                      {t('address.gpsSuccess')}
+                    </p>
+                    <p className={`text-[11px] text-brand-muted font-satoshi tabular-nums ${isAr ? 'text-end' : 'text-start'}`}>
+                      {gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}
+                    </p>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setGpsCoords(null)}
+                    className="text-xs text-brand-error/60 hover:text-brand-error font-almarai px-2 py-1"
+                  >
+                    {isAr ? 'حذف' : 'Remove'}
+                  </button>
                 </div>
-                <div>
-                  <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                    {t('gpsSuccess')}
-                  </p>
-                  <p className="text-[11px] text-brand-muted font-satoshi tabular-nums">
-                    {gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)}
+              )}
+              
+              {gpsError && (
+                <div className="rounded-xl border border-brand-error/30 bg-brand-error/5 p-4 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-brand-error/20 flex items-center justify-center shrink-0">
+                    <span className="text-brand-error font-bold">!</span>
+                  </div>
+                  <p className="text-xs text-brand-error font-almarai">
+                    {gpsError}
                   </p>
                 </div>
+              )}
+            </div>
+
+            {/* Manual Fields Section */}
+            <div className="space-y-4">
+              <div className={`flex items-center gap-2 mb-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
+                <Edit size={14} className="text-brand-gold" />
+                <span className={`text-xs font-bold text-brand-text opacity-60 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {t('address.manual')}
+                </span>
               </div>
-            ) : !gpsError ? (
-              <div className="rounded-xl border border-brand-border bg-brand-surface-2 p-6 flex flex-col items-center justify-center text-center gap-3">
-                <Loader2 size={32} className="animate-spin text-brand-gold opacity-50" />
-                <p className={`text-sm text-brand-muted italic ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  {t('gpsWaiting')}
-                </p>
-              </div>
-            ) : null}
-            {gpsError && (
-              <div className="rounded-xl border border-brand-error/30 bg-brand-error/5 p-4 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-brand-error/20 flex items-center justify-center shrink-0">
-                  <span className="text-brand-error font-bold">!</span>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className={`block text-[10px] sm:text-[11px] font-bold text-brand-gold uppercase tracking-[0.1em] ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                    {t('address.block')}
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={manualAddr.block}
+                    onChange={(e) => setManualAddr(p => ({ ...p, block: e.target.value }))}
+                    placeholder={t('address.blockPlaceholder')}
+                    className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-3.5 text-sm sm:text-base text-brand-text focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/20 outline-none transition-all duration-200 ${isAr ? 'text-end font-almarai' : 'text-start font-satoshi'}`}
+                  />
                 </div>
-                <p className="text-xs text-brand-error font-almarai">
-                  {gpsError}
-                </p>
+                <div className="space-y-1.5">
+                  <label className={`block text-[10px] sm:text-[11px] font-bold text-brand-gold uppercase tracking-[0.1em] ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                    {t('address.road')}
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={manualAddr.road}
+                    onChange={(e) => setManualAddr(p => ({ ...p, road: e.target.value }))}
+                    placeholder={t('address.roadPlaceholder')}
+                    className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-3.5 text-sm sm:text-base text-brand-text focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/20 outline-none transition-all duration-200 ${isAr ? 'text-end font-almarai' : 'text-start font-satoshi'}`}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={`block text-[10px] sm:text-[11px] font-bold text-brand-gold uppercase tracking-[0.1em] ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                    {t('address.building')}
+                  </label>
+                  <input
+                    type="text"
+                    value={manualAddr.building}
+                    onChange={(e) => setManualAddr(p => ({ ...p, building: e.target.value }))}
+                    placeholder={t('address.buildingPlaceholder')}
+                    className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-3.5 text-sm sm:text-base text-brand-text focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/20 outline-none transition-all duration-200 ${isAr ? 'text-end font-almarai' : 'text-start font-satoshi'}`}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className={`block text-[10px] sm:text-[11px] font-bold text-brand-gold uppercase tracking-[0.1em] ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                    {t('address.flat')}
+                  </label>
+                  <input
+                    type="text"
+                    value={manualAddr.flat}
+                    onChange={(e) => setManualAddr(p => ({ ...p, flat: e.target.value }))}
+                    placeholder={t('address.flatPlaceholder')}
+                    className={`w-full bg-brand-surface-2 border border-brand-border rounded-xl px-4 py-3.5 text-sm sm:text-base text-brand-text focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/20 outline-none transition-all duration-200 ${isAr ? 'text-end font-almarai' : 'text-start font-satoshi'}`}
+                  />
+                </div>
               </div>
-            )}
-            <p className={`text-[11px] text-brand-muted/70 px-2 mt-2 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {t('gpsDriverHint')}
-            </p>
+            </div>
           </div>
         )}
-
-        </>)}
 
         {errors.address && (
           <p className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-2 bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">

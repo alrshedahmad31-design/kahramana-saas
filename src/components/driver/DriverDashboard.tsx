@@ -305,11 +305,11 @@ export default function DriverDashboard({
           {/* Available for pickup */}
           <section>
             <SectionLabel
-              title={isAr ? 'جاهزة للاستلام' : 'Ready for Pickup'}
+              title={isAr ? 'طلبات متاحة للاستلام' : 'Orders Available for Pickup'}
               count={availableOrders.length}
               color="text-brand-gold"
               dotColor="bg-brand-gold"
-              pulse={false}
+              pulse={availableOrders.length > 0}
             />
             {availableOrders.length === 0 ? (
               <div className="mt-3 flex items-center justify-center py-10 rounded-xl border border-brand-border bg-brand-surface">

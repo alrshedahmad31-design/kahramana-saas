@@ -324,6 +324,7 @@ export function resolveMenuItemPrice(
   return 0
 }
 
+
 export function resolveCheckoutMenuItemPrice(
   slug: string,
   selection: MenuPriceSelection = {},
@@ -335,27 +336,38 @@ export function resolveCheckoutMenuItemPrice(
   const hasSizes = Boolean(item.sizes && Object.keys(item.sizes).length > 0)
   const hasVariants = Boolean(item.variants && item.variants.length > 0)
 
+  // Hardened Selection with Fallbacks
+  const effectiveSelection: MenuPriceSelection = { ...selection }
+
+  if (hasSizes && !effectiveSelection.size) {
+    // Fallback to the first available size
+    effectiveSelection.size = Object.keys(item.sizes!)[0]
+  }
+
+  if (hasVariants && !effectiveSelection.variant) {
+    // Fallback to the first available variant
+    effectiveSelection.variant = item.variants![0].label.en
+  }
+
   if (hasSizes) {
-    if (!selection.size) return { error: `Missing size for ${item.name.en}` }
-    const sizePrice = (item.sizes as Record<string, number | undefined>)[selection.size]
+    const sizePrice = (item.sizes as Record<string, number | undefined>)[effectiveSelection.size!]
     if (typeof sizePrice !== 'number') {
-      return { error: `Invalid size for ${item.name.en}` }
+      return { error: `Invalid size ${effectiveSelection.size} for ${item.name.en}` }
     }
   }
 
   let selectedVariant: string | null = null
   if (hasVariants) {
-    if (!selection.variant) return { error: `Missing variant for ${item.name.en}` }
     const variant = item.variants?.find(
       (option) =>
-        option.label.en === selection.variant ||
-        option.label.ar === selection.variant,
+        option.label.en === effectiveSelection.variant ||
+        option.label.ar === effectiveSelection.variant,
     )
-    if (!variant) return { error: `Invalid variant for ${item.name.en}` }
+    if (!variant) return { error: `Invalid variant ${effectiveSelection.variant} for ${item.name.en}` }
     selectedVariant = variant.label.ar
   }
 
-  const unitPriceBhd = resolveMenuItemPrice(item, selection)
+  const unitPriceBhd = resolveMenuItemPrice(item, effectiveSelection)
   if (unitPriceBhd <= 0) return { error: `Invalid price for ${item.name.en}` }
 
   return { item, unitPriceBhd, selectedVariant }

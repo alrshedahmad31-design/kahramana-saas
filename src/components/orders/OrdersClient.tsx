@@ -1,3 +1,4 @@
+// Force rebuild - status mapping fix
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
@@ -19,7 +20,7 @@ const PAGE_SIZE = 20
 
 const STATUS_MAP: Record<StatusFilter, OrderStatus[] | null> = {
   all:              null,
-  new:              ['new', 'under_review'],
+  new:              ['new', 'under_review', 'pending_payment', 'confirmed'],
   accepted:         ['accepted'],
   preparing:        ['preparing'],
   ready:            ['ready'],
@@ -31,7 +32,7 @@ const STATUS_MAP: Record<StatusFilter, OrderStatus[] | null> = {
 const KANBAN_COLS = [
   {
     key:      'new',
-    statuses: ['new', 'under_review'] as OrderStatus[],
+    statuses: ['new', 'under_review', 'pending_payment', 'confirmed', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'completed', 'cancelled', 'payment_failed'] as OrderStatus[],
     labelAr:  'جديد',
     labelEn:  'New',
     borderCls: 'border-brand-error',
@@ -112,6 +113,7 @@ export default function OrdersClient({
   const { isMuted, toggleMute, alert: bellAlert } = useAudioAlert()
 
   const [orders,        setOrders]        = useState<OrderCardData[]>(initialOrders)
+  useEffect(() => { console.log('Orders State Updated at', new Date().toLocaleTimeString(), ':', orders.map(o => o.status)) }, [orders])
   const [loading,       setLoading]       = useState(initialOrders.length === 0)
   const [totalCount,    setTotalCount]    = useState(initialTotalCount)
   const [filteredTotal, setFilteredTotal] = useState(initialFilteredTotal)
@@ -214,10 +216,14 @@ export default function OrdersClient({
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   const kanbanGroups = useMemo(() => {
-    return KANBAN_COLS.map(col => ({
-      ...col,
-      orders: orders.filter(o => col.statuses.includes(o.status)),
-    }))
+    return KANBAN_COLS.map(col => {
+      const filtered = orders.filter(o => {
+        const match = col.statuses.includes(String(o.status).trim() as OrderStatus)
+        if (orders.length > 0) console.log(`Kanban Filter [${col.key}]: ${o.status} in [${col.statuses.join(',')}] => ${match}`)
+        return match
+      })
+      return { ...col, orders: filtered }
+    })
   }, [orders])
 
   const font = isAr ? 'font-almarai' : 'font-satoshi'

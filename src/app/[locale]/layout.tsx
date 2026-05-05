@@ -123,6 +123,18 @@ export async function generateMetadata(
         "max-video-preview": -1,
       },
     },
+    alternates: {
+      canonical: locale === 'ar' ? BASE : `${BASE}/en`,
+      languages: {
+        'ar-BH': BASE,
+        'ar-IQ': BASE,
+        'ar-SA': BASE,
+        'ar-AE': BASE,
+        'ar-KW': BASE,
+        'en':    `${BASE}/en`,
+        'x-default': BASE,
+      },
+    },
     openGraph: {
       type: "website",
       locale: isAr ? "ar_BH" : "en_BH",

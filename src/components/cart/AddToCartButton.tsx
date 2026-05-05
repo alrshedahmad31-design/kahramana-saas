@@ -30,6 +30,17 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
   const context = useContext(ItemSelectionContext)
   const item = propItem || context?.item
   
+  // Default values if context is missing (e.g. in the grid)
+  const defaultSize = useMemo(() => {
+    if (!item?.sizes) return undefined
+    return Object.keys(item.sizes)[0]
+  }, [item?.sizes])
+
+  const defaultVariantEn = useMemo(() => {
+    if (!item?.variants || item.variants.length === 0) return undefined
+    return item.variants[0].label.en
+  }, [item?.variants])
+
   const {
     selectedSize,
     selectedVariant,
@@ -40,19 +51,20 @@ export default function AddToCartButton({ isRTL, item: propItem, size = 'lg', di
     setSelectedVariant,
     setQuantity
   } = context || {
-    selectedSize: undefined,
-    selectedVariant: undefined,
+    selectedSize: defaultSize,
+    selectedVariant: defaultVariantEn,
     quantity: 1,
-    computedPrice: propItem ? resolveMenuItemPrice(propItem) : 0,
-    lineTotal: propItem ? resolveMenuItemPrice(propItem) : 0,
+    computedPrice: item ? resolveMenuItemPrice(item, { size: defaultSize, variant: defaultVariantEn }) : 0,
+    lineTotal: item ? resolveMenuItemPrice(item, { size: defaultSize, variant: defaultVariantEn }) : 0,
     setSelectedSize: () => {},
     setSelectedVariant: () => {},
     setQuantity: () => {}
   }
 
   const variantAr = useMemo(() => {
-    if (!item?.variants || !selectedVariant) return undefined
-    return item.variants.find((v: MenuVariantOption) => v.label.en === selectedVariant)?.label.ar ?? selectedVariant
+    if (!item?.variants || item.variants.length === 0) return undefined
+    const currentVariant = selectedVariant || item.variants[0].label.en
+    return item.variants.find((v: MenuVariantOption) => v.label.en === currentVariant)?.label.ar ?? item.variants[0].label.ar
   }, [item?.variants, selectedVariant])
 
   if (!item) return null

@@ -191,7 +191,7 @@ export default function DriverOrderCard({
   const customerNavUrl = order.delivery_lat != null && order.delivery_lng != null
     ? mapsNavUrl(order.delivery_lat, order.delivery_lng)
     : deliveryAddrText
-      ? mapsDirectionsUrl(deliveryAddrText)
+      ? mapsDirectionsUrl(`${deliveryAddrText}${order.delivery_area ? `, ${order.delivery_area}` : ''}, Bahrain`)
       : null
 
   // Distance + ETA
@@ -391,7 +391,7 @@ export default function DriverOrderCard({
                     ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-gold text-brand-black'}
                   `}
                 >
-                  {busy ? '…' : (isRTL ? 'استلمت الطلب ✓' : 'PICKED UP ✓')}
+                  {busy ? '…' : (isRTL ? 'استلام وبدء التوصيل ✓' : 'ACCEPT & PICK UP ✓')}
                 </button>
               )}
 

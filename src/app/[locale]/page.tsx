@@ -35,7 +35,11 @@ export async function generateMetadata(
       canonical: locale === 'ar' ? SITE_URL : `${SITE_URL}/en`,
       languages: {
         'ar-BH':     SITE_URL,
-        'en-BH':     `${SITE_URL}/en`,
+        'ar-IQ':     SITE_URL,
+        'ar-SA':     SITE_URL,
+        'ar-AE':     SITE_URL,
+        'ar-KW':     SITE_URL,
+        'en':        `${SITE_URL}/en`,
         'x-default': SITE_URL,
       },
     },
