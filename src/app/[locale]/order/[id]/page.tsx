@@ -260,6 +260,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, { bgClass: string; textClass: string }> = {
+  pending_payment: { bgClass: 'bg-brand-gold/15',     textClass: 'text-brand-gold'        },
+  confirmed:       { bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
   new:             { bgClass: 'bg-brand-gold/15',     textClass: 'text-brand-gold'        },
   under_review:    { bgClass: 'bg-brand-gold/15',     textClass: 'text-brand-gold'        },
   accepted:        { bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
@@ -273,6 +275,8 @@ const STATUS_STYLES: Record<string, { bgClass: string; textClass: string }> = {
 }
 
 const STATUS_LABELS_AR: Record<string, string> = {
+  pending_payment:  'بانتظار الدفع',
+  confirmed:        'مؤكد',
   new:              'جديد',
   under_review:     'قيد المراجعة',
   accepted:         'مقبول',
@@ -286,6 +290,8 @@ const STATUS_LABELS_AR: Record<string, string> = {
 }
 
 const STATUS_LABELS_EN: Record<string, string> = {
+  pending_payment:  'Pending Payment',
+  confirmed:        'Confirmed',
   new:              'New',
   under_review:     'Under Review',
   accepted:         'Accepted',

@@ -47,6 +47,124 @@ export interface CheckoutMessageOptions {
   trackingUrl?:   string
 }
 
+export interface PricedWhatsAppItem {
+  nameAr: string
+  nameEn: string
+  quantity: number
+  selectedSize: string | null
+  selectedVariant: string | null
+  unitPriceBhd: number
+  lineTotalBhd: number
+  notes?: string | null
+}
+
+export interface PricedCheckoutMessageOptions {
+  locale: string
+  branchId: BranchId
+  orderId: string
+  orderNumber: string
+  orderType: 'delivery' | 'pickup'
+  customerName: string
+  customerPhone: string
+  address?: string | null
+  notes?: string | null
+  trackingUrl?: string
+  subtotalBhd: number
+  totalBhd: number
+}
+
+function formatPrice(value: number, locale: string): string {
+  return locale === 'ar'
+    ? `${value.toFixed(3)} د.ب`
+    : `${value.toFixed(3)} BD`
+}
+
+function formatPricedItemLines(
+  items: PricedWhatsAppItem[],
+  locale: string,
+  includeNotes: boolean,
+): string[] {
+  const isAr = locale === 'ar'
+  return items.flatMap((item) => {
+    const name = isAr ? item.nameAr : item.nameEn
+    const sizeLabel = item.selectedSize
+      ? ` (${isAr ? SIZE_LABELS[item.selectedSize]?.ar ?? item.selectedSize : SIZE_LABELS[item.selectedSize]?.en ?? item.selectedSize})`
+      : ''
+    const variantLabel = item.selectedVariant ? ` — ${item.selectedVariant}` : ''
+    const line = isAr
+      ? `• ${item.quantity}× ${name}${sizeLabel}${variantLabel} = ${formatPrice(item.lineTotalBhd, locale)}`
+      : `• ${item.quantity}x ${name}${sizeLabel}${variantLabel} = ${formatPrice(item.lineTotalBhd, locale)}`
+    return includeNotes && item.notes ? [line, `  ↳ ${item.notes}`] : [line]
+  })
+}
+
+export function formatCustomerPricedCheckoutMessage(
+  items: PricedWhatsAppItem[],
+  options: PricedCheckoutMessageOptions,
+): string {
+  const isAr = options.locale === 'ar'
+  const branch = BRANCHES[options.branchId]
+  return [
+    isAr ? 'تأكيد طلب كهرمانة بغداد' : 'Kahramana Baghdad order confirmation',
+    DIVIDER,
+    `${isAr ? 'رقم الطلب' : 'Order ID'}: #${options.orderNumber}`,
+    `${isAr ? 'الفرع' : 'Branch'}: ${isAr ? branch.nameAr : branch.nameEn}`,
+    `${isAr ? 'نوع الطلب' : 'Order type'}: ${isAr ? (options.orderType === 'delivery' ? 'توصيل' : 'استلام') : options.orderType}`,
+    '',
+    isAr ? 'الأصناف:' : 'Items:',
+    ...formatPricedItemLines(items, options.locale, false),
+    DIVIDER,
+    `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatPrice(options.subtotalBhd, options.locale)}`,
+    `${isAr ? 'التوصيل' : 'Delivery'}: ${isAr ? 'مجاني' : 'Free'}`,
+    `${isAr ? 'الإجمالي' : 'Total'}: ${formatPrice(options.totalBhd, options.locale)}`,
+    ...(options.trackingUrl ? ['', isAr ? 'تتبع الطلب:' : 'Track order:', options.trackingUrl] : []),
+  ].join('\n')
+}
+
+export function formatRestaurantPricedCheckoutMessage(
+  items: PricedWhatsAppItem[],
+  options: PricedCheckoutMessageOptions,
+): string {
+  const isAr = options.locale === 'ar'
+  const branch = BRANCHES[options.branchId]
+  return [
+    isAr ? 'طلب جديد' : 'New order',
+    DIVIDER,
+    `${isAr ? 'رقم الطلب' : 'Order ID'}: #${options.orderNumber}`,
+    `${isAr ? 'الفرع' : 'Branch'}: ${isAr ? branch.nameAr : branch.nameEn}`,
+    `${isAr ? 'نوع الطلب' : 'Order type'}: ${isAr ? (options.orderType === 'delivery' ? 'توصيل' : 'استلام') : options.orderType}`,
+    `${isAr ? 'الاسم' : 'Customer'}: ${options.customerName}`,
+    `${isAr ? 'الهاتف' : 'Phone'}: ${options.customerPhone}`,
+    ...(options.address ? [`${isAr ? 'العنوان' : 'Address'}: ${options.address}`] : []),
+    '',
+    isAr ? 'الأصناف:' : 'Items:',
+    ...formatPricedItemLines(items, options.locale, true),
+    DIVIDER,
+    `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatPrice(options.subtotalBhd, options.locale)}`,
+    `${isAr ? 'التوصيل' : 'Delivery'}: ${isAr ? 'مجاني' : 'Free'}`,
+    `${isAr ? 'الإجمالي' : 'Total'}: ${formatPrice(options.totalBhd, options.locale)}`,
+    ...(options.notes ? ['', `${isAr ? 'ملاحظات عامة' : 'General notes'}: ${options.notes}`] : []),
+    ...(options.trackingUrl ? ['', isAr ? 'رابط التتبع:' : 'Tracking URL:', options.trackingUrl] : []),
+  ].join('\n')
+}
+
+export function buildPricedCheckoutWhatsAppLinks(
+  items: PricedWhatsAppItem[],
+  options: PricedCheckoutMessageOptions,
+): { customerLink: string; restaurantLink: string } {
+  const branch = BRANCHES[options.branchId]
+  return {
+    customerLink: buildWaLinkForPhone(
+      options.customerPhone,
+      formatCustomerPricedCheckoutMessage(items, options),
+    ),
+    restaurantLink: buildWaLinkForPhone(
+      branch.whatsapp,
+      formatRestaurantPricedCheckoutMessage(items, options),
+    ),
+  }
+}
+
 export function formatCheckoutMessage(
   items: CartItem[],
   branchId: BranchId,

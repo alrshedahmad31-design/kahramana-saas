@@ -5,7 +5,7 @@ export type PaymentRow = {
   id: string
   order_id: string
   amount_bhd: number
-  method: PaymentMethod
+  method: PaymentMethod | null
   status: PaymentStatus
   gateway_transaction_id: string | null
   paid_at: string | null
@@ -37,6 +37,8 @@ const METHOD_LABEL: Record<PaymentMethod, { en: string; ar: string }> = {
 
 const STATUS_STYLE: Record<PaymentStatus, string> = {
   pending:    'bg-brand-gold/10 text-brand-gold border-brand-gold/20',
+  pending_cod: 'bg-brand-gold/10 text-brand-gold border-brand-gold/20',
+  awaiting_manual_review: 'bg-brand-gold/10 text-brand-gold border-brand-gold/20',
   processing: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   completed:  'bg-brand-success/10 text-brand-success border-brand-success/20',
   failed:     'bg-brand-error/10 text-brand-error border-brand-error/20',
@@ -45,6 +47,8 @@ const STATUS_STYLE: Record<PaymentStatus, string> = {
 
 const STATUS_LABEL: Record<PaymentStatus, { en: string; ar: string }> = {
   pending:    { en: 'Pending',    ar: 'قيد الانتظار' },
+  pending_cod: { en: 'Pending COD', ar: 'نقداً عند الاستلام' },
+  awaiting_manual_review: { en: 'Awaiting Review', ar: 'بانتظار المراجعة' },
   processing: { en: 'Processing', ar: 'جارٍ المعالجة' },
   completed:  { en: 'Completed',  ar: 'مكتمل' },
   failed:     { en: 'Failed',     ar: 'فاشل' },
@@ -128,7 +132,7 @@ export default function PaymentsTable({ payments, totalCount, page, pageSize, lo
                     {p.orders?.customer_name ?? p.orders?.customer_phone ?? '—'}
                   </td>
                   <td className="px-4 py-3 text-brand-muted whitespace-nowrap">
-                    {isAr ? METHOD_LABEL[p.method].ar : METHOD_LABEL[p.method].en}
+                    {p.method ? (isAr ? METHOD_LABEL[p.method].ar : METHOD_LABEL[p.method].en) : (isAr ? 'لم تُحدد' : 'Not selected')}
                   </td>
                   <td className="px-4 py-3 font-mono text-brand-text whitespace-nowrap">
                     {currency} {p.amount_bhd.toFixed(3)}

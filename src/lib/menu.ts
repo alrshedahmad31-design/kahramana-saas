@@ -96,6 +96,12 @@ export interface MenuPriceSelection {
   variant?: string
 }
 
+export interface CheckoutPriceResult {
+  item: NormalizedMenuItem
+  unitPriceBhd: number
+  selectedVariant: string | null
+}
+
 const FALLBACK_MENU_IMAGE = '/assets/hero/hero-menu.webp'
 
 const CATEGORY_PRESENTATION: Record<
@@ -316,6 +322,43 @@ export function resolveMenuItemPrice(
   }
 
   return 0
+}
+
+export function resolveCheckoutMenuItemPrice(
+  slug: string,
+  selection: MenuPriceSelection = {},
+): CheckoutPriceResult | { error: string } {
+  const item = getMenuItemBySlug(slug)
+  if (!item) return { error: 'Menu item not found' }
+  if (!item.available) return { error: `${item.name.en} is unavailable` }
+
+  const hasSizes = Boolean(item.sizes && Object.keys(item.sizes).length > 0)
+  const hasVariants = Boolean(item.variants && item.variants.length > 0)
+
+  if (hasSizes) {
+    if (!selection.size) return { error: `Missing size for ${item.name.en}` }
+    const sizePrice = (item.sizes as Record<string, number | undefined>)[selection.size]
+    if (typeof sizePrice !== 'number') {
+      return { error: `Invalid size for ${item.name.en}` }
+    }
+  }
+
+  let selectedVariant: string | null = null
+  if (hasVariants) {
+    if (!selection.variant) return { error: `Missing variant for ${item.name.en}` }
+    const variant = item.variants?.find(
+      (option) =>
+        option.label.en === selection.variant ||
+        option.label.ar === selection.variant,
+    )
+    if (!variant) return { error: `Invalid variant for ${item.name.en}` }
+    selectedVariant = variant.label.ar
+  }
+
+  const unitPriceBhd = resolveMenuItemPrice(item, selection)
+  if (unitPriceBhd <= 0) return { error: `Invalid price for ${item.name.en}` }
+
+  return { item, unitPriceBhd, selectedVariant }
 }
 
 export function normalizeMenuItem(

@@ -7,6 +7,8 @@ interface Props {
 }
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
+  pending_payment:  'bg-brand-gold/10 text-brand-gold border-brand-gold/30',
+  confirmed:        'bg-brand-success/10 text-brand-success border-brand-success/30',
   new:              'bg-brand-gold/10 text-brand-gold border-brand-gold/30',
   under_review:     'bg-brand-surface-2 text-brand-muted border-brand-border',
   accepted:         'bg-brand-gold-light/10 text-brand-gold-light border-brand-gold-light/30',

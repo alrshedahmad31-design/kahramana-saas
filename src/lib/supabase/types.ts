@@ -1963,8 +1963,10 @@ export type Database = {
           delivery_proof_url: string | null
           delivery_street: string | null
           driver_notes: string | null
+          expires_at: string | null
           expected_delivery_time: string | null
           id: string
+          idempotency_key: string | null
           notes: string | null
           order_source: string
           order_type: string | null
@@ -2004,8 +2006,10 @@ export type Database = {
           delivery_proof_url?: string | null
           delivery_street?: string | null
           driver_notes?: string | null
+          expires_at?: string | null
           expected_delivery_time?: string | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_source?: string
           order_type?: string | null
@@ -2045,8 +2049,10 @@ export type Database = {
           delivery_proof_url?: string | null
           delivery_street?: string | null
           driver_notes?: string | null
+          expires_at?: string | null
           expected_delivery_time?: string | null
           id?: string
+          idempotency_key?: string | null
           notes?: string | null
           order_source?: string
           order_type?: string | null
@@ -2188,10 +2194,11 @@ export type Database = {
         Row: {
           amount_bhd: number
           created_at: string
+          expires_at: string | null
           gateway_response: Json | null
           gateway_transaction_id: string | null
           id: string
-          method: Database["public"]["Enums"]["payment_method"]
+          method: Database["public"]["Enums"]["payment_method"] | null
           order_id: string
           paid_at: string | null
           refund_amount_bhd: number | null
@@ -2203,10 +2210,11 @@ export type Database = {
         Insert: {
           amount_bhd: number
           created_at?: string
+          expires_at?: string | null
           gateway_response?: Json | null
           gateway_transaction_id?: string | null
           id?: string
-          method: Database["public"]["Enums"]["payment_method"]
+          method?: Database["public"]["Enums"]["payment_method"] | null
           order_id: string
           paid_at?: string | null
           refund_amount_bhd?: number | null
@@ -2218,10 +2226,11 @@ export type Database = {
         Update: {
           amount_bhd?: number
           created_at?: string
+          expires_at?: string | null
           gateway_response?: Json | null
           gateway_transaction_id?: string | null
           id?: string
-          method?: Database["public"]["Enums"]["payment_method"]
+          method?: Database["public"]["Enums"]["payment_method"] | null
           order_id?: string
           paid_at?: string | null
           refund_amount_bhd?: number | null
@@ -3611,6 +3620,16 @@ export type Database = {
         Args: { p_coupon_id: string }
         Returns: undefined
       }
+      process_tap_webhook: {
+        Args: {
+          p_payload: Json
+          p_event_type: string
+          p_gateway_id: string
+          p_status: Database["public"]["Enums"]["payment_status"] | null
+          p_order_reference: string | null
+        }
+        Returns: Json
+      }
       refresh_analytics_views: { Args: never; Returns: undefined }
       rpc_auto_generate_pos: { Args: never; Returns: undefined }
       rpc_budget_trend: {
@@ -3783,6 +3802,8 @@ export type Database = {
         | "packing"
       loyalty_tier: "bronze" | "silver" | "gold" | "platinum"
       order_status:
+        | "pending_payment"
+        | "confirmed"
         | "new"
         | "under_review"
         | "accepted"
@@ -3796,6 +3817,8 @@ export type Database = {
       payment_method: "cash" | "benefit_qr" | "tap_card" | "tap_knet"
       payment_status:
         | "pending"
+        | "pending_cod"
+        | "awaiting_manual_review"
         | "processing"
         | "completed"
         | "failed"
@@ -3959,6 +3982,8 @@ export const Constants = {
       kds_station: ["grill", "fry", "salads", "desserts", "drinks", "packing"],
       loyalty_tier: ["bronze", "silver", "gold", "platinum"],
       order_status: [
+        "pending_payment",
+        "confirmed",
         "new",
         "under_review",
         "accepted",
@@ -3973,6 +3998,8 @@ export const Constants = {
       payment_method: ["cash", "benefit_qr", "tap_card", "tap_knet"],
       payment_status: [
         "pending",
+        "pending_cod",
+        "awaiting_manual_review",
         "processing",
         "completed",
         "failed",

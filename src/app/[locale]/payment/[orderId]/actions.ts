@@ -111,15 +111,40 @@ export async function initializePayment(
     if (existing.status === 'completed') {
       return { paymentId: existing.id, error: 'already_completed' }
     }
-    const qrBase64 = existing.method === 'benefit_qr'
+
+    const nextStatus = method === 'cash' ? 'pending_cod' : 'pending'
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update({ method, status: nextStatus })
+      .eq('id', existing.id)
+
+    if (updateError) return { paymentId: '', error: updateError.message }
+
+    if (method === 'cash') {
+      await supabase
+        .from('orders')
+        .update({ status: 'confirmed', expires_at: null })
+        .eq('id', orderId)
+    }
+
+    const qrBase64 = method === 'benefit_qr'
       ? await generateStaticQR(orderId, amountBHD)
       : undefined
     return { paymentId: existing.id, qrBase64 }
   }
 
+  const expiresAt = method === 'cash'
+    ? null
+    : new Date(Date.now() + 20 * 60 * 1000).toISOString()
   const { data: payment, error } = await supabase
     .from('payments')
-    .insert({ order_id: orderId, amount_bhd: amountBHD, method })
+    .insert({
+      order_id:   orderId,
+      amount_bhd: amountBHD,
+      method,
+      status:     method === 'cash' ? 'pending_cod' : 'pending',
+      expires_at: expiresAt,
+    })
     .select('id')
     .single()
 
@@ -152,9 +177,8 @@ export async function completeCashPayment(
   return { error: error?.message }
 }
 
-// Phase 6: manual Benefit confirmation — customer taps "I've Paid".
-// Allowed for the order's owning customer OR for staff. The Benefit Pay
-// webhook (Phase 7+) will replace this with verified gateway events.
+// Customer Benefit confirmation only queues staff/payment-provider review.
+// It must never mark the payment as completed from the customer-facing page.
 export async function confirmBenefitPayment(
   paymentId: string,
   accessToken?: string | null,
@@ -165,7 +189,7 @@ export async function confirmBenefitPayment(
   const supabase = await createServiceClient()
   const { error } = await supabase
     .from('payments')
-    .update({ status: 'completed' })
+    .update({ status: 'awaiting_manual_review' })
     .eq('id', paymentId)
     .eq('status', 'pending')
   return { error: error?.message }

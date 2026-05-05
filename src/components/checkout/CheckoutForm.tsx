@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
@@ -28,7 +28,6 @@ import {
 } from 'lucide-react'
 import { useCartStore, selectSubtotal } from '@/lib/cart'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
-import { buildOrderTrackingUrl, buildWhatsAppCheckoutLink } from '@/lib/whatsapp'
 import CinematicButton from '@/components/ui/CinematicButton'
 import TierBadge from '@/components/loyalty/TierBadge'
 import CouponInput from '@/components/checkout/CouponInput'
@@ -114,7 +113,10 @@ const checkoutSchema = z.object({
 
   customerPhone: z
     .string()
-    .regex(/^(\+?973)?[0-9]{8}$/, { message: 'phone_invalid' }),
+    .regex(/^(\+?973)?[36]\d{7}$/, { message: 'phone_invalid' })
+    .or(z.string().transform((v) => v.replace(/\s+/g, '')).pipe(
+      z.string().regex(/^(\+?973)?[36]\d{7}$/, { message: 'phone_invalid' })
+    )),
 
   notes: z
     .string()
@@ -126,6 +128,7 @@ const checkoutSchema = z.object({
 })
 
 type CheckoutValues = z.infer<typeof checkoutSchema>
+type CheckoutErrorKey = keyof CheckoutValues | 'address' | 'deliveryBuilding' | 'deliveryStreet' | 'deliveryArea'
 
 // ── Address types ─────────────────────────────────────────────────────────────
 
@@ -151,6 +154,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const tL      = useTranslations('loyalty')
   const tCommon = useTranslations('common')
   const router  = useRouter()
+  const idempotencyKeyRef = useRef(crypto.randomUUID())
 
   const items     = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clearCart)
@@ -161,10 +165,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const [name,        setName]        = useState('')
   const [phone,       setPhone]       = useState('')
   const [notes,       setNotes]       = useState('')
-  const [errors,      setErrors]      = useState<Partial<Record<keyof CheckoutValues | 'address', string>>>({})
+  const [errors,      setErrors]      = useState<Partial<Record<CheckoutErrorKey, string>>>({})
   const [loading,       setLoading]       = useState(false)
   const [submitError,   setSubmitError]   = useState<string | null>(null)
   const [stockWarnings, setStockWarnings] = useState<string[]>([])
+  const [pendingStockMode, setPendingStockMode] = useState<'cod' | 'online' | null>(null)
 
   // ── Order type state (delivery / pickup) ─────────────────────────────────
   const [orderType, setOrderType] = useState<'delivery' | 'pickup' | null>(null)
@@ -234,15 +239,26 @@ export default function CheckoutForm({ customerProfile }: Props) {
     if (orderType === 'pickup') return true
     if (addressMode === 'location' && gpsCoords) return true
     if (addressMode === 'manual') {
-      const { road, block } = manualAddr
-      return !!(road.trim() || block.trim())
+      const { building, road, block } = manualAddr
+      return !!(building.trim() && road.trim() && block.trim())
     }
     return false
   }
 
+  function localizeCheckoutError(message: string): string {
+    const labels: Record<string, string> = {
+      name_required: isAr ? 'الاسم مطلوب (حرفان على الأقل)' : 'Name is required (min 2 chars)',
+      phone_invalid: isAr ? 'رقم الهاتف غير صحيح (+973XXXXXXXX)' : 'Invalid Bahrain number (+973XXXXXXXX)',
+      building_required: isAr ? 'رقم المبنى مطلوب' : 'Building is required',
+      road_required: isAr ? 'رقم الطريق مطلوب' : 'Road is required',
+      block_required: isAr ? 'رقم البلوك مطلوب' : 'Block is required',
+    }
+    return labels[message] ?? message
+  }
+
   // ── Core submit logic ─────────────────────────────────────────────────────
 
-  async function validateAndCreate() {
+  async function validateAndCreate(paymentMode: 'cod' | 'online', confirmLowStock = false) {
     const newErrors: typeof errors = {}
 
     if (!selectedBranch) {
@@ -255,8 +271,8 @@ export default function CheckoutForm({ customerProfile }: Props) {
         : 'Please select delivery or pickup'
     } else if (!validateAddress()) {
       newErrors.address = isAr
-        ? 'الرجاء إدخال العنوان أو مشاركة موقعك'
-        : 'Please enter your address or share your location'
+        ? 'الرجاء إدخال المبنى والطريق والبلوك أو مشاركة موقعك'
+        : 'Please enter building, road, and block or share your location'
     }
 
     const parsed = checkoutSchema.safeParse({
@@ -301,6 +317,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
         delivery_address:    isPickup ? null : deliveryAddress,
         delivery_building:   !isPickup && addressMode === 'manual' ? manualAddr.building.trim() || null : null,
         delivery_street:     !isPickup && addressMode === 'manual' ? manualAddr.road.trim() || null : null,
+        delivery_area:       !isPickup && addressMode === 'manual' ? manualAddr.block.trim() || null : null,
         delivery_lat:        !isPickup && addressMode === 'location' ? gpsCoords?.lat ?? null : null,
         delivery_lng:        !isPickup && addressMode === 'location' ? gpsCoords?.lng ?? null : null,
         source:              'direct',
@@ -308,19 +325,44 @@ export default function CheckoutForm({ customerProfile }: Props) {
       },
       items: items.map((item) => ({
         menu_item_slug:   item.itemId,
-        name_ar:          item.nameAr,
-        name_en:          item.nameEn,
         selected_size:    item.selectedSize    ?? null,
         selected_variant: item.selectedVariant ?? null,
         quantity:         item.quantity,
-        unit_price_bhd:   item.priceBhd,
-        item_total_bhd:   parseFloat((item.priceBhd * item.quantity).toFixed(3)),
       })),
+      clientSubtotalBhd: subtotal,
+      paymentMode,
+      idempotency_key: idempotencyKeyRef.current,
+      confirmLowStock,
+      locale: locale as 'ar' | 'en',
       pointsToRedeem: usePoints ? availablePoints : 0,
       coupon: appliedCoupon ? { couponId: appliedCoupon.id } : undefined,
     })
 
+    if (result.requiresStockConfirmation && result.stock_warnings) {
+      setStockWarnings(result.stock_warnings.map(w => w.name_ar))
+      setPendingStockMode(paymentMode)
+      setLoading(false)
+      return null
+    }
+
     if (result.error || !result.orderId) {
+      if (result.fieldErrors) {
+        const serverErrors: typeof errors = {}
+        for (const [field, message] of Object.entries(result.fieldErrors)) {
+          const localized = localizeCheckoutError(message)
+          if (field === 'order.customer_name') serverErrors.customerName = localized
+          if (field === 'order.customer_phone') serverErrors.customerPhone = localized
+          if (field === 'order.delivery_building') serverErrors.deliveryBuilding = localized
+          if (field === 'order.delivery_street') serverErrors.deliveryStreet = localized
+          if (field === 'order.delivery_area') serverErrors.deliveryArea = localized
+        }
+        setErrors(serverErrors)
+        setLoading(false)
+        return null
+      }
+      if (result.stock_warnings && result.stock_warnings.length > 0) {
+        setStockWarnings(result.stock_warnings.map(w => w.name_ar))
+      }
       throw new Error(result.error ?? 'Order creation failed')
     }
 
@@ -328,7 +370,14 @@ export default function CheckoutForm({ customerProfile }: Props) {
       setStockWarnings(result.stock_warnings.map(w => w.name_ar))
     }
 
-    return { orderId: result.orderId, accessToken: result.accessToken ?? null, values, deliveryAddress }
+    return {
+      orderId: result.orderId,
+      accessToken: result.accessToken ?? null,
+      values,
+      deliveryAddress,
+      restaurantWhatsAppLink: result.restaurantWhatsAppLink,
+      customerWhatsAppLink: result.customerWhatsAppLink,
+    }
   }
 
   // ── Submit via WhatsApp ────────────────────────────────────────────────────
@@ -341,23 +390,15 @@ export default function CheckoutForm({ customerProfile }: Props) {
     gtag.whatsappClick('checkout')
 
     try {
-      const res = await validateAndCreate()
+      const res = await validateAndCreate('cod')
       if (!res) return
 
-      const { orderId, accessToken, values } = res
-      const shortOrderId = orderId.slice(-8).toUpperCase()
-      const waLink = buildWhatsAppCheckoutLink(items, values.branchId, {
-        customerName:  values.customerName,
-        customerPhone: values.customerPhone,
-        address:       res.deliveryAddress ?? undefined,
-        notes:         values.notes,
-        orderNumber:   shortOrderId,
-        trackingUrl:   buildOrderTrackingUrl(orderId, locale, accessToken),
-      })
-
-      window.open(waLink, '_blank', 'noopener,noreferrer')
+      const { orderId, accessToken } = res
+      if (res.restaurantWhatsAppLink) {
+        window.open(res.restaurantWhatsAppLink, '_blank', 'noopener,noreferrer')
+      }
       clearCart()
-      router.push(`/payment/${orderId}${accessToken ? `?t=${encodeURIComponent(accessToken)}` : ''}`)
+      router.push(`/order/${orderId}${accessToken ? `?t=${encodeURIComponent(accessToken)}` : ''}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)
@@ -372,11 +413,34 @@ export default function CheckoutForm({ customerProfile }: Props) {
     setSubmitError(null)
 
     try {
-      const res = await validateAndCreate()
+      const res = await validateAndCreate('online')
       if (!res) return
 
       clearCart()
       router.push(`/payment/${res.orderId}${res.accessToken ? `?t=${encodeURIComponent(res.accessToken)}` : ''}`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)
+      setLoading(false)
+    }
+  }
+
+  async function handleConfirmLowStock() {
+    if (!pendingStockMode) return
+    setSubmitError(null)
+    try {
+      const res = await validateAndCreate(pendingStockMode, true)
+      if (!res) return
+
+      setPendingStockMode(null)
+      if (pendingStockMode === 'cod') {
+        if (res.restaurantWhatsAppLink) {
+          window.open(res.restaurantWhatsAppLink, '_blank', 'noopener,noreferrer')
+        }
+      }
+      clearCart()
+      const path = pendingStockMode === 'cod' ? 'order' : 'payment'
+      router.push(`/${path}/${res.orderId}${res.accessToken ? `?t=${encodeURIComponent(res.accessToken)}` : ''}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       setSubmitError(isAr ? `حدث خطأ: ${msg}` : `Error: ${msg}`)
@@ -713,6 +777,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
             <span className="shrink-0 text-lg">⚠</span> {errors.address}
           </p>
         )}
+        {(errors.deliveryArea || errors.deliveryBuilding || errors.deliveryStreet) && (
+          <div className="mt-4 text-xs text-brand-error font-almarai bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
+            {[errors.deliveryArea, errors.deliveryBuilding, errors.deliveryStreet].filter(Boolean).join('، ')}
+          </div>
+        )}
       </SectionCard>
 
       {/* STEP 4: Notes */}
@@ -928,7 +997,36 @@ export default function CheckoutForm({ customerProfile }: Props) {
       <div className="space-y-4">
         {stockWarnings.length > 0 && (
           <div className="rounded-xl border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm text-brand-gold font-almarai">
-            ⚠️ {isAr ? 'بعض الأصناف قد تكون غير متوفرة — سنتواصل معك للتأكيد' : 'Some items may be unavailable — we will contact you to confirm'}
+            ⚠ {isAr ? 'تنبيه مخزون:' : 'Stock warning:'} {stockWarnings.join('، ')}
+          </div>
+        )}
+
+        {pendingStockMode && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-brand-black/80 px-4">
+            <div className="w-full max-w-sm rounded-2xl border border-brand-gold/30 bg-brand-surface p-5 text-center">
+              <p className={`mb-3 text-base font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+                {isAr ? 'بعض الأصناف متوفرة بكمية محدودة' : 'Some items have limited stock'}
+              </p>
+              <p className={`mb-5 text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                {stockWarnings.join('، ')}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setPendingStockMode(null); setLoading(false) }}
+                  className="flex-1 rounded-xl border border-brand-border px-4 py-3 text-sm font-bold text-brand-muted"
+                >
+                  {isAr ? 'رجوع' : 'Back'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmLowStock}
+                  className="flex-1 rounded-xl bg-brand-gold px-4 py-3 text-sm font-bold text-brand-black"
+                >
+                  {isAr ? 'متابعة' : 'Continue'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

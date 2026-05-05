@@ -7,7 +7,6 @@ import PaymentSelector from '@/components/payment/PaymentSelector'
 import BenefitPayQR from '@/components/payment/BenefitPayQR'
 import {
   initializePayment,
-  completeCashPayment,
   confirmBenefitPayment,
   initiateTapPayment,
 } from './actions'
@@ -72,8 +71,6 @@ export default function PaymentHandler({
 
     switch (method) {
       case 'cash': {
-        const { error: err } = await completeCashPayment(result.paymentId)
-        if (err) { setError(err); setUiState('error'); return }
         setUiState('redirecting')
         router.push(withAccessToken(`/order/${orderId}`, accessToken))
         break

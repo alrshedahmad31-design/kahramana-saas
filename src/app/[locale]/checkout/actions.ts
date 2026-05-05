@@ -8,6 +8,8 @@ import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
 import { calculateDiscount } from '@/lib/coupons/calculations'
 import { createOrderAccessToken } from '@/lib/auth/order-access'
 import type { PointsTransactionInsert, CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
+import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
+import { buildOrderTrackingUrl, buildPricedCheckoutWhatsAppLinks } from '@/lib/whatsapp'
 
 // ── Server-side input validation ──────────────────────────────────────────────
 // Sanity-check the payload before touching the DB. unit_price_bhd remains
@@ -16,14 +18,17 @@ import type { PointsTransactionInsert, CouponUsageInsert, CouponRow } from '@/li
 
 const itemSchema = z.object({
   menu_item_slug:   z.string().min(1).max(120),
-  name_ar:          z.string().min(1).max(200),
-  name_en:          z.string().min(1).max(200),
   selected_size:    z.string().max(50).nullable(),
   selected_variant: z.string().max(50).nullable(),
   quantity:         z.number().int().min(1).max(50),
-  unit_price_bhd:   z.number().min(0.001).max(500),
-  item_total_bhd:   z.number().min(0).max(50_000),
 })
+
+const BAHRAIN_PHONE_RE = /^(\+?973)?[36]\d{7}$/
+
+function isValidBahrainPhone(value: string | null): boolean {
+  if (!value) return false
+  return BAHRAIN_PHONE_RE.test(value.replace(/\s+/g, ''))
+}
 
 const orderSchema = z.object({
   customer_name:       z.string().max(120).nullable(),
@@ -36,6 +41,7 @@ const orderSchema = z.object({
   delivery_address:    z.string().max(1000).nullable(),
   delivery_building:   z.string().max(120).nullable(),
   delivery_street:     z.string().max(120).nullable(),
+  delivery_area:       z.string().max(120).nullable(),
   delivery_lat:        z.number().nullable(),
   delivery_lng:        z.number().nullable(),
   source:              z.string().max(50),
@@ -45,8 +51,54 @@ const orderSchema = z.object({
 const checkoutSchema = z.object({
   order:          orderSchema,
   items:          z.array(itemSchema).min(1).max(60),
+  clientSubtotalBhd: z.number().min(0.001).max(50_000),
+  paymentMode:    z.enum(['cod', 'online']),
+  idempotency_key: z.string().uuid(),
+  confirmLowStock: z.boolean().optional(),
+  locale:         z.enum(['ar', 'en']),
   pointsToRedeem: z.number().int().min(0).max(1_000_000),
   coupon:         z.object({ couponId: z.string().uuid() }).optional(),
+}).superRefine((value, ctx) => {
+  const name = value.order.customer_name?.trim() ?? ''
+  if (name.length < 2) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['order', 'customer_name'],
+      message: 'name_required',
+    })
+  }
+
+  if (!isValidBahrainPhone(value.order.customer_phone)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['order', 'customer_phone'],
+      message: 'phone_invalid',
+    })
+  }
+
+  if (value.order.order_type === 'delivery') {
+    if (!value.order.delivery_building?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['order', 'delivery_building'],
+        message: 'building_required',
+      })
+    }
+    if (!value.order.delivery_street?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['order', 'delivery_street'],
+        message: 'road_required',
+      })
+    }
+    if (!value.order.delivery_area?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['order', 'delivery_area'],
+        message: 'block_required',
+      })
+    }
+  }
 })
 
 type TypedSupabase = Awaited<ReturnType<typeof createServiceClient>>
@@ -62,6 +114,7 @@ interface OrderBase {
   delivery_address:    string | null
   delivery_building:   string | null
   delivery_street:     string | null
+  delivery_area:       string | null
   delivery_lat:        number | null
   delivery_lng:        number | null
   source:              string
@@ -70,11 +123,14 @@ interface OrderBase {
 
 interface ItemBase {
   menu_item_slug:   string
-  name_ar:          string
-  name_en:          string
   selected_size:    string | null
   selected_variant: string | null
   quantity:         number
+}
+
+interface PricedItemBase extends ItemBase {
+  name_ar:          string
+  name_en:          string
   unit_price_bhd:   number
   item_total_bhd:   number
 }
@@ -86,6 +142,11 @@ interface CouponPayload {
 interface CheckoutPayload {
   order:          OrderBase
   items:          ItemBase[]
+  clientSubtotalBhd: number
+  paymentMode:    'cod' | 'online'
+  idempotency_key: string
+  confirmLowStock?: boolean
+  locale:         'ar' | 'en'
   pointsToRedeem: number
   coupon?:        CouponPayload
 }
@@ -94,6 +155,8 @@ interface StockWarning {
   menu_item_slug:     string
   name_ar:            string
   shortage_ingredient: string | null
+  shortage_required?: number
+  shortage_available?: number
 }
 
 interface CheckoutResult {
@@ -101,7 +164,101 @@ interface CheckoutResult {
   finalTotal:    number
   accessToken?:  string
   error?:        string
+  fieldErrors?:  Record<string, string>
   stock_warnings?: StockWarning[]
+  requiresStockConfirmation?: boolean
+  restaurantWhatsAppLink?: string
+  customerWhatsAppLink?: string
+}
+
+function getPaymentExpiresAt(paymentMode: 'cod' | 'online'): string | null {
+  if (paymentMode === 'cod') return null
+  return new Date(Date.now() + 20 * 60 * 1000).toISOString()
+}
+
+function buildCheckoutLinks(
+  orderId: string,
+  accessToken: string,
+  locale: 'ar' | 'en',
+  branchId: BranchId,
+  orderData: OrderBase,
+  pricedItems: PricedItemBase[],
+  subtotalBhd: number,
+  totalBhd: number,
+) {
+  return buildPricedCheckoutWhatsAppLinks(
+    pricedItems.map((item) => ({
+      nameAr: item.name_ar,
+      nameEn: item.name_en,
+      quantity: item.quantity,
+      selectedSize: item.selected_size,
+      selectedVariant: item.selected_variant,
+      unitPriceBhd: item.unit_price_bhd,
+      lineTotalBhd: item.item_total_bhd,
+    })),
+    {
+      locale,
+      branchId,
+      orderId,
+      orderNumber: orderId.slice(-8).toUpperCase(),
+      orderType: orderData.order_type,
+      customerName: orderData.customer_name ?? '',
+      customerPhone: orderData.customer_phone ?? '',
+      address: orderData.delivery_address,
+      notes: orderData.notes,
+      trackingUrl: buildOrderTrackingUrl(orderId, locale, accessToken),
+      subtotalBhd,
+      totalBhd,
+    },
+  )
+}
+
+async function createInitialPayment(
+  supabase: TypedSupabase,
+  orderId: string,
+  amountBhd: number,
+  paymentMode: 'cod' | 'online',
+  expiresAt: string | null,
+): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from('payments')
+    .insert({
+      order_id:    orderId,
+      amount_bhd:  amountBhd,
+      method:      paymentMode === 'cod' ? 'cash' : null,
+      status:      paymentMode === 'cod' ? 'pending_cod' : 'pending',
+      expires_at:  expiresAt,
+    })
+
+  return { error: error?.message }
+}
+
+async function findExistingOrderByIdempotencyKey(
+  supabase: TypedSupabase,
+  idempotencyKey: string,
+): Promise<CheckoutResult | null> {
+  const { data: existing, error } = await supabase
+    .from('orders')
+    .select('id, total_bhd')
+    .eq('idempotency_key', idempotencyKey)
+    .maybeSingle()
+
+  if (error || !existing) return null
+
+  return {
+    orderId: existing.id,
+    finalTotal: Number(existing.total_bhd),
+    accessToken: createOrderAccessToken(existing.id),
+  }
+}
+
+function mapValidationErrors(error: z.ZodError): Record<string, string> {
+  const fieldErrors: Record<string, string> = {}
+  for (const issue of error.issues) {
+    const path = issue.path.join('.')
+    if (path) fieldErrors[path] = issue.message
+  }
+  return fieldErrors
 }
 
 function isBranchId(value: string): value is BranchId {
@@ -153,11 +310,40 @@ async function ensureCheckoutBranch(
 // unit_price_bhd is still client-supplied (sizes/variants have no DB price),
 // but we recompute each item_total = quantity × unit_price and sum them,
 // so a tampered item_total_bhd cannot lower the charged amount.
-function computeSubtotal(items: ItemBase[]): number {
+function computeSubtotal(items: PricedItemBase[]): number {
   return items.reduce((sum, item) => {
     if (item.quantity <= 0 || item.unit_price_bhd <= 0) return sum
     return sum + item.quantity * item.unit_price_bhd
   }, 0)
+}
+
+function repriceCheckoutItems(
+  items: ItemBase[],
+): { items: PricedItemBase[]; subtotal: number } | { error: string } {
+  const pricedItems: PricedItemBase[] = []
+
+  for (const item of items) {
+    const resolved = resolveCheckoutMenuItemPrice(item.menu_item_slug, {
+      size: item.selected_size ?? undefined,
+      variant: item.selected_variant ?? undefined,
+    })
+
+    if ('error' in resolved) return { error: resolved.error }
+
+    pricedItems.push({
+      menu_item_slug:   resolved.item.slug,
+      name_ar:          resolved.item.name.ar,
+      name_en:          resolved.item.name.en,
+      selected_size:    item.selected_size,
+      selected_variant: resolved.selectedVariant,
+      quantity:         item.quantity,
+      unit_price_bhd:   resolved.unitPriceBhd,
+      item_total_bhd:   Number((item.quantity * resolved.unitPriceBhd).toFixed(3)),
+    })
+  }
+
+  const subtotal = Number(computeSubtotal(pricedItems).toFixed(3))
+  return { items: pricedItems, subtotal }
 }
 
 // ── Server-side coupon re-validation ─────────────────────────────────────────
@@ -255,45 +441,82 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
   // Validate the entire payload server-side before touching the DB
   const parsed = checkoutSchema.safeParse(payload)
   if (!parsed.success) {
-    return { orderId: '', finalTotal: 0, error: 'Invalid checkout payload' }
+    return {
+      orderId: '',
+      finalTotal: 0,
+      error: 'Invalid checkout payload',
+      fieldErrors: mapValidationErrors(parsed.error),
+    }
   }
 
   try {
-    const { order: orderData, items, pointsToRedeem, coupon } = parsed.data
+    const { order: orderData, items, clientSubtotalBhd, paymentMode, idempotency_key, confirmLowStock, locale, pointsToRedeem, coupon } = parsed.data
 
     const supabase = await createServiceClient()
+    const existingOrder = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
+    if (existingOrder) return existingOrder
 
-    // ── Non-blocking stock check ──────────────────────────────────────────────
-    // Never blocks order creation — recipes may not be mapped yet for all items.
-    const stockWarnings: StockWarning[] = []
+    const repriced = repriceCheckoutItems(items)
+    if ('error' in repriced) {
+      return { orderId: '', finalTotal: 0, error: repriced.error }
+    }
+
+    if (Math.abs(repriced.subtotal - clientSubtotalBhd) > 0.001) {
+      return { orderId: '', finalTotal: 0, error: 'PRICE_MISMATCH' }
+    }
+
+    // ── Blocking stock check before order insertion ───────────────────────────
+    const lowStockWarnings: StockWarning[] = []
+    const hardStockFailures: StockWarning[] = []
     try {
-      const { data: stockRows } = await supabase.rpc('rpc_check_stock_for_cart', {
+      const { data: stockRows, error: stockError } = await supabase.rpc('rpc_check_stock_for_cart', {
         p_branch_id: orderData.branch_id,
-        p_items: items.map(i => ({ slug: i.menu_item_slug, quantity: i.quantity })),
+        p_items: repriced.items.map(i => ({ slug: i.menu_item_slug, qty: i.quantity })),
       })
-      for (const row of (stockRows ?? []) as unknown as Array<{ menu_item_slug: string; name_ar: string; available: boolean; shortage_ingredient: string | null }>) {
-        if (!row.available) {
-          if (!row.shortage_ingredient) {
-            // Recipe not mapped — log info alert, no user warning
-            supabase
-              .from('inventory_alerts')
-              .insert({
-                branch_id:     orderData.branch_id,
-                ingredient_id: null,
-                alert_type:    'unmapped_item',
-                severity:      'info',
-                message:       `لا توجد وصفة للصنف: ${row.name_ar}`,
-                metadata:      { slug: row.menu_item_slug },
-              })
-              .then(() => {})
-          } else {
-            stockWarnings.push({ menu_item_slug: row.menu_item_slug, name_ar: row.name_ar, shortage_ingredient: row.shortage_ingredient })
-          }
+
+      if (stockError) {
+        return { orderId: '', finalTotal: 0, error: stockError.message }
+      }
+
+      for (const row of stockRows ?? []) {
+        if (row.available) continue
+
+        const item = repriced.items.find((candidate) => candidate.menu_item_slug === row.menu_item_slug)
+        const warning: StockWarning = {
+          menu_item_slug: row.menu_item_slug,
+          name_ar: item?.name_ar ?? row.menu_item_slug,
+          shortage_ingredient: row.shortage_ingredient,
+          shortage_required: row.shortage_required,
+          shortage_available: row.shortage_available,
+        }
+
+        if (row.shortage_available <= 0) {
+          hardStockFailures.push(warning)
+        } else {
+          lowStockWarnings.push(warning)
         }
       }
     } catch {
-      // Stock check failure is non-fatal — continue to order creation
-      console.warn('[checkout] stock check RPC failed — proceeding without stock validation')
+      return { orderId: '', finalTotal: 0, error: 'Stock check failed' }
+    }
+
+    if (hardStockFailures.length > 0) {
+      return {
+        orderId: '',
+        finalTotal: 0,
+        error: 'OUT_OF_STOCK',
+        stock_warnings: hardStockFailures,
+      }
+    }
+
+    if (lowStockWarnings.length > 0 && !confirmLowStock) {
+      return {
+        orderId: '',
+        finalTotal: 0,
+        error: 'LOW_STOCK_CONFIRMATION_REQUIRED',
+        stock_warnings: lowStockWarnings,
+        requiresStockConfirmation: true,
+      }
     }
 
     // Any flow involving loyalty redemption or a coupon requires a verified
@@ -316,9 +539,11 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     ...orderData,
     branch_id: branchResult.branchId,
   }
+  const orderStatus = paymentMode === 'cod' ? 'confirmed' : 'pending_payment'
+  const expiresAt = getPaymentExpiresAt(paymentMode)
 
   // ── Server-side total computation (ignores client total_bhd) ─────────────
-  const subtotal = computeSubtotal(items)
+  const subtotal = repriced.subtotal
   if (subtotal <= 0) return { orderId: '', finalTotal: 0, error: 'Invalid order total' }
 
   // ── Coupon: re-fetch and recompute server-side ────────────────────────────
@@ -360,23 +585,29 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
     const { data: order, error: orderErr } = await supabase
       .from('orders')
-      .insert({ ...resolvedOrderData, total_bhd: finalTotal })
+      .insert({ ...resolvedOrderData, status: orderStatus, expires_at: expiresAt, idempotency_key, total_bhd: finalTotal })
       .select('id')
       .single()
 
     if (orderErr || !order) {
+      if (orderErr?.code === '23505') {
+        const existing = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
+        if (existing) return existing
+      }
       return { orderId: '', finalTotal: 0, error: orderErr?.message ?? 'Order creation failed' }
     }
 
     const { error: itemsErr } = await supabase
       .from('order_items')
-      .insert(items.map((i) => ({
+      .insert(repriced.items.map((i) => ({
         ...i,
-        item_total_bhd: i.quantity * i.unit_price_bhd,
         order_id: order.id,
       })))
 
     if (itemsErr) return { orderId: '', finalTotal: 0, error: itemsErr.message }
+
+    const paymentResult = await createInitialPayment(supabase, order.id, finalTotal, paymentMode, expiresAt)
+    if (paymentResult.error) return { orderId: '', finalTotal: 0, error: paymentResult.error }
 
     const newBalance = customer.points_balance - pointsToRedeem
     await supabase
@@ -399,11 +630,25 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       await recordCouponUsage(supabase, resolvedCouponId, customer.id, order.id, serverCouponDiscount)
     }
 
+    const accessToken = createOrderAccessToken(order.id)
+    const links = buildCheckoutLinks(
+      order.id,
+      accessToken,
+      locale,
+      branchResult.branchId,
+      resolvedOrderData,
+      repriced.items,
+      subtotal,
+      finalTotal,
+    )
+
     return {
       orderId: order.id,
       finalTotal,
-      accessToken: createOrderAccessToken(order.id),
-      stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined,
+      accessToken,
+      restaurantWhatsAppLink: links.restaurantLink,
+      customerWhatsAppLink: links.customerLink,
+      stock_warnings: lowStockWarnings.length > 0 ? lowStockWarnings : undefined,
     }
   }
 
@@ -412,19 +657,22 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
   const { data: order, error: orderErr } = await supabase
     .from('orders')
-    .insert({ ...resolvedOrderData, total_bhd: finalTotal })
+    .insert({ ...resolvedOrderData, status: orderStatus, expires_at: expiresAt, idempotency_key, total_bhd: finalTotal })
     .select('id')
     .single()
 
   if (orderErr || !order) {
+    if (orderErr?.code === '23505') {
+      const existing = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
+      if (existing) return existing
+    }
     return { orderId: '', finalTotal: 0, error: orderErr?.message ?? 'Order creation failed' }
   }
 
   const { error: itemsErr } = await supabase
     .from('order_items')
-    .insert(items.map((i) => ({
+    .insert(repriced.items.map((i) => ({
       ...i,
-      item_total_bhd: i.quantity * i.unit_price_bhd,
       order_id: order.id,
     })))
 
@@ -432,15 +680,32 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     return { orderId: '', finalTotal: 0, error: itemsErr.message }
   }
 
+  const paymentResult = await createInitialPayment(supabase, order.id, finalTotal, paymentMode, expiresAt)
+  if (paymentResult.error) return { orderId: '', finalTotal: 0, error: paymentResult.error }
+
   if (resolvedCouponId) {
     await recordCouponUsage(supabase, resolvedCouponId, customerSession?.id ?? null, order.id, serverCouponDiscount)
   }
 
+  const accessToken = createOrderAccessToken(order.id)
+  const links = buildCheckoutLinks(
+    order.id,
+    accessToken,
+    locale,
+    branchResult.branchId,
+    resolvedOrderData,
+    repriced.items,
+    subtotal,
+    finalTotal,
+  )
+
   return {
     orderId: order.id,
     finalTotal,
-    accessToken: createOrderAccessToken(order.id),
-    stock_warnings: stockWarnings.length > 0 ? stockWarnings : undefined,
+    accessToken,
+    restaurantWhatsAppLink: links.restaurantLink,
+    customerWhatsAppLink: links.customerLink,
+    stock_warnings: lowStockWarnings.length > 0 ? lowStockWarnings : undefined,
   }
 } catch (err) {
   return {

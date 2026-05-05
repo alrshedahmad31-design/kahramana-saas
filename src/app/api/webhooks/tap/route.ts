@@ -6,6 +6,7 @@ import type { Json } from '@/lib/supabase/custom-types'
 // Hard cap on webhook body size to keep a malicious POST from filling up
 // payment_webhooks with multi-MB JSON. 64 KiB is far above any real Tap event.
 const MAX_BODY_BYTES = 64 * 1024
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function POST(request: Request) {
   // ── Body-size guard ─────────────────────────────────────────────────────────
@@ -40,72 +41,31 @@ export async function POST(request: Request) {
 
   const supabase   = await createServiceClient()
   const gatewayId  = String(body['id'] ?? '')
+  const eventType = String(body['object'] ?? '')
+  const status = eventType === 'charge'
+    ? tapStatusToPaymentStatus(String(body['status'] ?? ''))
+    : null
+  const reference = (body['reference'] as Record<string, string> | undefined)?.order
+  const orderReference = reference && UUID_RE.test(reference) ? reference : null
 
-  // Idempotency: skip if this gateway event was already processed
-  if (gatewayId) {
-    const { data: dup } = await supabase
-      .from('payment_webhooks')
-      .select('id, processed')
-      .contains('payload', { id: gatewayId })
-      .maybeSingle()
+  const { data, error } = await supabase.rpc('process_tap_webhook', {
+    p_payload:         body as unknown as Json,
+    p_event_type:      eventType,
+    p_gateway_id:      gatewayId,
+    p_status:          status,
+    p_order_reference: orderReference,
+  })
 
-    if (dup?.processed) {
-      return NextResponse.json({ received: true })
-    }
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Store webhook for audit trail
-  const { data: webhook } = await supabase
-    .from('payment_webhooks')
-    .insert({
-      provider:   'tap',
-      event_type: String(body['object'] ?? ''),
-      payload:    body as unknown as Json,
-    })
-    .select('id')
-    .single()
+  const processed = typeof data === 'object' && data !== null && 'processed' in data
+    ? Boolean((data as Record<string, unknown>).processed)
+    : false
 
-  // Handle charge events
-  if (body['object'] === 'charge') {
-    const tapStatus = String(body['status'] ?? '')
-    const status    = tapStatusToPaymentStatus(tapStatus)
-
-    if (status) {
-      // Update by gateway_transaction_id (set when charge was created)
-      const { data: updated } = await supabase
-        .from('payments')
-        .update({
-          status,
-          gateway_transaction_id: gatewayId,
-          gateway_response:       body as unknown as Json,
-        })
-        .eq('gateway_transaction_id', gatewayId)
-        .select('id')
-
-      // Fallback: match by order reference when gateway_transaction_id not yet stored
-      if (!updated?.length) {
-        const reference = (body['reference'] as Record<string, string> | undefined)?.order
-        if (reference) {
-          await supabase
-            .from('payments')
-            .update({
-              status,
-              gateway_transaction_id: gatewayId,
-              gateway_response:       body as unknown as Json,
-            })
-            .eq('order_id', reference)
-            .in('status', ['pending', 'processing'])
-        }
-      }
-    }
-  }
-
-  // Mark webhook processed
-  if (webhook?.id) {
-    await supabase
-      .from('payment_webhooks')
-      .update({ processed: true, processed_at: new Date().toISOString() })
-      .eq('id', webhook.id)
+  if (!processed) {
+    return NextResponse.json({ received: true, processed: false }, { status: 202 })
   }
 
   return NextResponse.json({ received: true })
