@@ -64,6 +64,7 @@ const satoshi = localFont({
   ],
   variable: '--satoshi',
   display: 'swap',
+  preload: true,
   adjustFontFallback: 'Arial',
 })
 

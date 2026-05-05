@@ -57,6 +57,14 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Hero preload: raw <img> removed Next.js auto-preload; homepage-only prevents wasteful fetches on other pages */}
+      <link
+        rel="preload"
+        as="image"
+        href="/assets/hero/hero-poster.webp"
+        fetchPriority="high"
+        type="image/webp"
+      />
       <script
         type="application/ld+json"
         suppressHydrationWarning
