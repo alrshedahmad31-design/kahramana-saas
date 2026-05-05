@@ -327,8 +327,8 @@ function repriceCheckoutItems(
 
   for (const item of items) {
     const resolved = resolveCheckoutMenuItemPrice(item.menu_item_slug, {
-      size: item.selected_size ?? undefined,
-      variant: item.selected_variant ?? undefined,
+      size: (item.selected_size && item.selected_size !== '') ? item.selected_size : undefined,
+      variant: (item.selected_variant && item.selected_variant !== '') ? item.selected_variant : undefined,
     })
 
     if ('error' in resolved) return { error: resolved.error }
@@ -543,7 +543,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     ...orderData,
     branch_id: branchResult.branchId,
   }
-  const orderStatus = paymentMode === 'cod' ? 'confirmed' : 'pending_payment'
+  const orderStatus = paymentMode === 'cod' ? 'new' : 'pending_payment'
   const expiresAt = getPaymentExpiresAt(paymentMode)
 
   // ── Server-side total computation (ignores client total_bhd) ─────────────
