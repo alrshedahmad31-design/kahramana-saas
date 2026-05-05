@@ -1,5 +1,4 @@
 import { getTranslations, getLocale } from 'next-intl/server'
-import Image from 'next/image'
 import CinematicButton from '@/components/ui/CinematicButton'
 import HeroAnimationsLoader from './HeroAnimationsLoader'
 
@@ -12,15 +11,14 @@ export default async function CinematicHero() {
     <>
       <section className="relative min-h-[calc(100svh-5rem)] md:min-h-[calc(100svh-6rem)] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
         <div className="absolute inset-0 z-0">
-          <Image
+          {/* Raw <img>: <Image fill> caused CLS 0.151 during hydration; absolute pos + explicit w/h = zero layout contribution */}
+          <img
             src="/assets/hero/hero-poster.webp"
             alt={t('visualAlt')}
             width={1920}
             height={1080}
-            priority
             fetchPriority="high"
-            sizes="100vw"
-            quality={78}
+            decoding="sync"
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
