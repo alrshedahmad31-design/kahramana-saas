@@ -527,18 +527,24 @@ export function buildFullMenuSchema(categories: CategoryWithItems[], locale: Loc
     hasMenuSection: categories.map((cat) => ({
       '@type': 'MenuSection',
       name: localized(locale, cat.nameAR, cat.nameEN ?? cat.nameAR),
-      hasMenuItem: cat.items.slice(0, 8).map((item) => ({
-        '@type': 'MenuItem',
-        name: localized(locale, item.name.ar, item.name.en),
-        description: localized(locale, item.description?.ar, item.description?.en),
-        offers: {
-          '@type': 'Offer',
-          price: item.fromPrice,
-          priceCurrency: 'BHD',
-          availability: item.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
-        },
-        image: item.image
-      }))
+      hasMenuItem: cat.items.slice(0, 8).map((item) => {
+        const imageUrl = item.image?.startsWith('http')
+          ? item.image
+          : `${process.env.NEXT_PUBLIC_SITE_URL}${item.image}`
+
+        return {
+          '@type': 'MenuItem',
+          name: localized(locale, item.name.ar, item.name.en),
+          description: localized(locale, item.description?.ar, item.description?.en),
+          offers: {
+            '@type': 'Offer',
+            price: item.fromPrice,
+            priceCurrency: 'BHD',
+            availability: item.available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+          },
+          image: imageUrl
+        }
+      })
     }))
   }
 }

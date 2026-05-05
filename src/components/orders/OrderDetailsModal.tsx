@@ -177,6 +177,11 @@ export default function OrderDetailsModal({ orderId, isRTL, userRole, onClose, o
                           <p className={`font-satoshi text-sm font-medium text-brand-text leading-snug ${isRTL ? 'font-almarai' : ''}`}>
                             {isRTL ? item.name_ar : item.name_en}
                           </p>
+                          {item.notes && (
+                            <p className={`text-xs text-brand-error font-bold italic mt-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                              {isRTL ? `ملاحظة: ${item.notes}` : `Note: ${item.notes}`}
+                            </p>
+                          )}
                           {(item.selected_size || item.selected_variant) && (
                             <p className="font-satoshi text-xs text-brand-muted mt-0.5">
                               {[item.selected_size, item.selected_variant].filter(Boolean).join(' · ')}

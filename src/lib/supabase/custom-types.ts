@@ -92,7 +92,7 @@ export type ShiftWithStaff = ShiftRow & {
 };
 
 export type KDSQueueItem = KDSQueueRow & {
-  order_items: Pick<OrderItemRow, 'name_ar' | 'name_en' | 'quantity' | 'selected_size' | 'selected_variant'>;
+  order_items: Pick<OrderItemRow, 'name_ar' | 'name_en' | 'quantity' | 'selected_size' | 'selected_variant' | 'notes'>;
   orders: Pick<OrderRow, 'customer_name' | 'notes' | 'branch_id' | 'status' | 'created_at'>;
 };
 
@@ -106,11 +106,12 @@ export type KDSOrder = Omit<OrderRow, 'status'> & {
     selected_size: string | null;
     selected_variant: string | null;
     menu_item_slug: string | null;
+    notes: string | null;
   }>;
 };
 
 export type DriverOrder = OrderRow & {
-  order_items: Pick<OrderItemRow, 'name_ar' | 'name_en' | 'quantity' | 'selected_size' | 'selected_variant'>[];
+  order_items: Pick<OrderItemRow, 'name_ar' | 'name_en' | 'quantity' | 'selected_size' | 'selected_variant' | 'notes'>[];
   payments?: { method: PaymentMethod } | null;
   cash_settlement?: Array<{ handover_id: string }> | null;
   // Added by migration 037 — manually typed until types.ts is regenerated

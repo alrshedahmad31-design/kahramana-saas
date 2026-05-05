@@ -79,13 +79,22 @@ export async function driverBumpOrder(
     }
   }
 
-  const { error } = await supabase
+  const { data: updatedRows, error } = await supabase
     .from('orders')
     .update(orderUpdate)
     .eq('id', orderId)
     .eq('status', currentStatus)   // optimistic-concurrency guard
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  
+  if (!updatedRows || updatedRows.length === 0) {
+    return { 
+      success: false, 
+      error: 'Order update failed. It might have been claimed by another driver or its status changed.' 
+    }
+  }
+
   return { success: true }
 }
 
@@ -113,13 +122,22 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
   const service = await createServiceClient()
   const now     = new Date().toISOString()
 
-  const { error } = await service
+  const { data: updatedRows, error } = await service
     .from('orders')
     .update({ arrived_at: now, updated_at: now })
     .eq('id', orderId)
     .eq('assigned_driver_id', user.id)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  
+  if (!updatedRows || updatedRows.length === 0) {
+    return { 
+      success: false, 
+      error: 'Order update failed. Status might have changed.' 
+    }
+  }
+
   return { success: true }
 }
 

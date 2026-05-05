@@ -27,7 +27,7 @@ export default async function KDSPage({ params }: Props) {
     .from('orders')
     .select(`
       *,
-      order_items(id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug)
+      order_items(id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes)
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
     .order('created_at', { ascending: true })

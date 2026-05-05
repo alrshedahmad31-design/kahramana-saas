@@ -12,7 +12,7 @@ import type { OrderStatus } from '@/lib/supabase/custom-types'
 export type OrderDetails = OrderRow & {
   order_items: Pick<OrderItemRow,
     'id' | 'name_ar' | 'name_en' | 'selected_size' | 'selected_variant' |
-    'quantity' | 'unit_price_bhd' | 'item_total_bhd'
+    'quantity' | 'unit_price_bhd' | 'item_total_bhd' | 'notes'
   >[]
 }
 
@@ -22,7 +22,7 @@ export async function getOrderDetails(orderId: string): Promise<OrderDetails | n
     .from('orders')
     .select(`
       *,
-      order_items(id, name_ar, name_en, selected_size, selected_variant, quantity, unit_price_bhd, item_total_bhd)
+      order_items(id, name_ar, name_en, selected_size, selected_variant, quantity, unit_price_bhd, item_total_bhd, notes)
     `)
     .eq('id', orderId)
     .single()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect }                                from 'react'
+import { useState, useEffect, useMemo }                       from 'react'
 import { BRANCHES }                                           from '@/constants/contact'
 import {
   calculateDistance, calculateETA, getUrgencyLevel,
@@ -23,6 +23,7 @@ interface Props {
   variant?:      'active' | 'completed'
   onAction?:     (id: string, status: DriverActiveStatus, tipBhd?: number) => Promise<string | null>
   onArrive?:     (id: string) => Promise<string | null>
+  driverLocation?: { lat: number, lng: number } | null
 }
 
 // ── Urgency config ─────────────────────────────────────────────────────────────
@@ -119,7 +120,7 @@ function formatTime(iso: string): string {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function DriverOrderCard({
-  order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive,
+  order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive, driverLocation,
 }: Props) {
   const [elapsed,       setElapsed]       = useState(() => formatElapsed(order.created_at))
   const [busy,          setBusy]          = useState(false)
@@ -151,20 +152,25 @@ export default function DriverOrderCard({
   // Payment
   const paymentInfo = order.payments ? PAYMENT_LABEL[order.payments.method] : null
 
-  // Address parsing (keep existing logic)
+  // Extract URL if present in address
+  const extractedUrl = order.delivery_address?.match(/https?:\/\/[^\s]+/)?.[0] ?? null
+
+  // Address parsing
   const rawAddr = order.delivery_address
   const deliveryAddrText: string | null = (() => {
     if (!rawAddr) return order.notes ?? null
-    if (rawAddr.startsWith('http')) return null
-    if (/[مش]\d/.test(rawAddr)) {
+    // Remove the URL from display text if it exists
+    const cleanAddr = extractedUrl ? rawAddr.replace(extractedUrl, '').trim() : rawAddr
+    if (cleanAddr.startsWith('http')) return null
+    if (/[مش]\d/.test(cleanAddr)) {
       let blockSeen = false
-      return rawAddr
+      return cleanAddr
         .split(/،\s*/)
         .filter(Boolean)
         .map((p) => {
           if (/^م\d/.test(p)) {
             const n = p.replace(/^م/, '')
-            if (!blockSeen) { blockSeen = true; return isRTL ? `بلوك ${n}` : `Block ${n}` }
+            if (!blockSeen) { blockSeen = true; return isRTL ? `مجمع ${n}` : `Block ${n}` }
             return isRTL ? `مبنى ${n}` : `Building ${n}`
           }
           if (/^ش\d/.test(p)) return isRTL ? `طريق ${p.replace(/^ش/, '')}` : `Road ${p.replace(/^ش/, '')}`
@@ -173,7 +179,7 @@ export default function DriverOrderCard({
         })
         .join(isRTL ? '، ' : ', ')
     }
-    return rawAddr
+    return cleanAddr
   })()
   const customerNotes = order.customer_notes ?? order.delivery_instructions ?? null
 
@@ -185,14 +191,51 @@ export default function DriverOrderCard({
 
   // Navigation URLs
   const branchNavUrl = branch?.latitude != null && branch?.longitude != null
-    ? mapsNavUrl(branch.latitude, branch.longitude)
+    ? mapsDirectionsUrl(`${branch.latitude},${branch.longitude}`, driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined)
     : branchMapsUrl
 
-  const customerNavUrl = order.delivery_lat != null && order.delivery_lng != null
-    ? mapsNavUrl(order.delivery_lat, order.delivery_lng)
-    : deliveryAddrText
-      ? mapsDirectionsUrl(`${deliveryAddrText}${order.delivery_area ? `, ${order.delivery_area}` : ''}, Bahrain`)
-      : null
+  const mapsSearchQuery = (() => {
+    if (order.delivery_lat != null && order.delivery_lng != null) return null
+    const parts = []
+    if (order.delivery_building) parts.push(`Bldg ${order.delivery_building}`)
+    if (order.delivery_street)   parts.push(`Rd ${order.delivery_street}`)
+    if (order.delivery_area)     parts.push(`Block ${order.delivery_area}`)
+    if (parts.length === 0) return deliveryAddrText || ''
+    return parts.join(', ')
+  })()
+
+  // Use extracted URL first, then lat/lng, then search query
+  const customerNavUrl = useMemo(() => {
+    // 1. If we have coordinates in the extracted URL, wrap them in a directions URL
+    if (extractedUrl) {
+      const coordMatch = extractedUrl.match(/(?:q=|@|place\/)(-?\d+\.\d+),(-?\d+\.\d+)/)
+      if (coordMatch) {
+        return mapsDirectionsUrl(
+          `${coordMatch[1]},${coordMatch[2]}`,
+          driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined
+        )
+      }
+      return extractedUrl
+    }
+
+    // 2. If we have explicit lat/lng from DB
+    if (order.delivery_lat != null && order.delivery_lng != null) {
+      return mapsDirectionsUrl(
+        `${order.delivery_lat},${order.delivery_lng}`,
+        driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined
+      )
+    }
+
+    // 3. Fallback to text search
+    if (mapsSearchQuery) {
+      return mapsDirectionsUrl(
+        `${mapsSearchQuery}, Bahrain`,
+        driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined
+      )
+    }
+
+    return null
+  }, [extractedUrl, order.delivery_lat, order.delivery_lng, mapsSearchQuery, driverLocation])
 
   // Distance + ETA
   const deliveryDist =
@@ -223,18 +266,28 @@ export default function DriverOrderCard({
     if (busy || !onAction) return
     setBusy(true)
     setActionError(null)
-    const error = await onAction(order.id, 'ready')
-    if (error) setActionError(error)
-    setBusy(false)
+    try {
+      const error = await onAction(order.id, 'ready')
+      if (error) setActionError(error)
+    } catch (e: any) {
+      setActionError(e.message || 'Network error')
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleArrive() {
     if (busy || !onArrive) return
     setBusy(true)
     setActionError(null)
-    const error = await onArrive(order.id)
-    if (error) setActionError(error)
-    setBusy(false)
+    try {
+      const error = await onArrive(order.id)
+      if (error) setActionError(error)
+    } catch (e: any) {
+      setActionError(e.message || 'Network error')
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleDeliver() {
@@ -247,9 +300,14 @@ export default function DriverOrderCard({
     setBusy(true)
     setConfirmDeliver(false)
     setActionError(null)
-    const error = await onAction(order.id, 'out_for_delivery', isCash && tipBhd > 0 ? tipBhd : undefined)
-    if (error) setActionError(error)
-    setBusy(false)
+    try {
+      const error = await onAction(order.id, 'out_for_delivery', isCash && tipBhd > 0 ? tipBhd : undefined)
+      if (error) setActionError(error)
+    } catch (e: any) {
+      setActionError(e.message || 'Network error')
+    } finally {
+      setBusy(false)
+    }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -648,14 +706,38 @@ export default function DriverOrderCard({
               <div className="flex items-start gap-3 px-3 pb-2.5">
                 <div className="flex-1 min-w-0">
                   {deliveryAddrText && (
-                    <p className={`text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                      {deliveryAddrText}
-                    </p>
+                    customerNavUrl ? (
+                      <a
+                        href={customerNavUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`block text-sm text-brand-text leading-snug hover:text-brand-success transition-colors ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+                      >
+                        {deliveryAddrText}
+                      </a>
+                    ) : (
+                      <p className={`text-sm text-brand-text leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {deliveryAddrText}
+                      </p>
+                    )
                   )}
                   {customerNotes && (
                     <p className={`text-xs text-brand-muted/80 mt-1 leading-snug ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                       {customerNotes}
                     </p>
+                  )}
+                  {order.notes && (
+                    <div className="mt-2 rounded-lg border border-brand-error/30 bg-brand-error/10 px-3 py-2">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm leading-none shrink-0">📝</span>
+                        <span className={`text-[10px] font-black text-brand-error uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                          {isRTL ? 'ملاحظة التوصيل:' : 'Delivery Note:'}
+                        </span>
+                      </div>
+                      <p className={`text-xs font-bold text-brand-text leading-tight ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {order.notes}
+                      </p>
+                    </div>
                   )}
                 </div>
                 {customerNavUrl && (
@@ -687,6 +769,21 @@ export default function DriverOrderCard({
               <p className={`text-sm text-brand-text/80 ps-5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                 {deliveryAddrText}
               </p>
+
+              {/* Delivery Note (General) */}
+              {order.notes && (
+                <div className="mt-2.5 mx-1 mb-1 rounded-lg border border-brand-error/30 bg-brand-error/10 px-3 py-2">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm leading-none shrink-0">📝</span>
+                    <span className={`text-[10px] font-black text-brand-error uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                      {isRTL ? 'ملاحظة التوصيل:' : 'Delivery Note:'}
+                    </span>
+                  </div>
+                  <p className={`text-xs font-bold text-brand-text leading-tight ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                    {order.notes}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -733,6 +830,16 @@ export default function DriverOrderCard({
                                 {item.selected_variant}
                               </span>
                             )}
+                          </div>
+                        )}
+                        {item.notes && (
+                          <div className={`mt-1.5 rounded-md border border-brand-error/30 bg-brand-error/10 px-2 py-1 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                            <p className="text-[10px] font-black text-brand-error uppercase tracking-wider mb-0.5">
+                              {isRTL ? 'ملاحظة الصنف:' : 'Item Note:'}
+                            </p>
+                            <p className="text-xs font-bold text-brand-text leading-tight">
+                              {item.notes}
+                            </p>
                           </div>
                         )}
                       </div>

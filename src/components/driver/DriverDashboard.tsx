@@ -54,6 +54,9 @@ export default function DriverDashboard({
   const [showHandover,       setShowHandover]       = useState(false)
   const [reminderDismissed,  setReminderDismissed]  = useState(false)
 
+  const [userLocation,    setUserLocation]    = useState<{ lat: number, lng: number } | null>(null)
+  const lastGpsUpdateRef = useRef<number>(0)
+
   const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
@@ -67,7 +70,7 @@ export default function DriverDashboard({
         picked_up_at, arrived_at, delivered_at,
         total_bhd, assigned_driver_id, created_at, updated_at,
         source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
-        order_items(name_ar, name_en, quantity, selected_size, selected_variant),
+        order_items(name_ar, name_en, quantity, selected_size, selected_variant, notes),
         payments(method)
       `)
       .in('status', ['ready', 'out_for_delivery'])
@@ -148,13 +151,20 @@ export default function DriverDashboard({
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        postDriverLocation({
-          driver_id:  driverId,
-          order_id:   activeOrder.id,
-          lat:        pos.coords.latitude,
-          lng:        pos.coords.longitude,
-          accuracy_m: pos.coords.accuracy ?? null,
-        })
+        const { latitude, longitude } = pos.coords
+        setUserLocation({ lat: latitude, lng: longitude })
+
+        const now = Date.now()
+        if (now - lastGpsUpdateRef.current >= 15_000) {
+          lastGpsUpdateRef.current = now
+          postDriverLocation({
+            driver_id:  driverId,
+            order_id:   activeOrder.id,
+            lat:        latitude,
+            lng:        longitude,
+            accuracy_m: pos.coords.accuracy ?? null,
+          })
+        }
       },
       (err) => {
         if (err.code !== err.PERMISSION_DENIED) {
@@ -179,10 +189,30 @@ export default function DriverDashboard({
   }
 
   async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery', tipBhd?: number): Promise<string | null> {
-    setOrders((prev) => prev.filter((o) => o.id !== orderId))
+    const nextStatus = currentStatus === 'ready' ? 'out_for_delivery' : 'delivered'
+    const now = new Date().toISOString()
+
+    // Optimistic update
+    setOrders((prev) => {
+      if (nextStatus === 'delivered') return prev.filter((o) => o.id !== orderId)
+      return prev.map((o) =>
+        o.id === orderId
+          ? { ...o, status: nextStatus, assigned_driver_id: driverId, picked_up_at: now, updated_at: now }
+          : o
+      )
+    })
+
+    if (nextStatus === 'delivered') {
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        setCompletedOrders(prev => [{ ...order, status: 'delivered', delivered_at: now, updated_at: now }, ...prev])
+      }
+    }
+
     const result = await driverBumpOrder(orderId, currentStatus, tipBhd)
     if (!result.success) {
       fetchOrders()
+      fetchCompleted()
       return result.error
     }
     return null
@@ -296,6 +326,7 @@ export default function DriverDashboard({
                     branchMapsUrl={branchMapsUrl}
                     onAction={handleAction}
                     onArrive={handleArrive}
+                    driverLocation={userLocation}
                   />
                 ))}
               </div>
@@ -326,6 +357,7 @@ export default function DriverDashboard({
                     isRTL={isAr}
                     branchMapsUrl={branchMapsUrl}
                     onAction={handleAction}
+                    driverLocation={userLocation}
                   />
                 ))}
               </div>

@@ -163,6 +163,11 @@ export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {
                       {item.selected_variant}
                     </span>
                   )}
+                  {item.notes && (
+                    <span className={`bg-brand-error/10 border border-brand-error/40 text-brand-error font-bold text-sm px-3 py-1 rounded-lg ${font}`}>
+                      {isRTL ? 'ملاحظة: ' : 'Note: '}{item.notes}
+                    </span>
+                  )}
                 </div>
               )}
             </div>

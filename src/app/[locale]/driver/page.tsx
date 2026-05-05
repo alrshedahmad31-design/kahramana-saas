@@ -40,7 +40,7 @@ export default async function DriverPage({ params }: Props) {
     picked_up_at, arrived_at, delivered_at,
     total_bhd, assigned_driver_id, created_at, updated_at,
     source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
-    order_items(name_ar, name_en, quantity, selected_size, selected_variant),
+    order_items(name_ar, name_en, quantity, selected_size, selected_variant, notes),
     payments(method)
   `
 

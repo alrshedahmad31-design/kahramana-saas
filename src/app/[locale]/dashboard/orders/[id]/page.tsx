@@ -29,7 +29,7 @@ export default async function OrderDetailPage({ params }: Props) {
 
   let order: OrderRow | null = null
 
-  let items: Pick<OrderItemRow, 'id' | 'name_ar' | 'name_en' | 'selected_size' | 'selected_variant' | 'quantity' | 'unit_price_bhd' | 'item_total_bhd'>[] = []
+  let items: Pick<OrderItemRow, 'id' | 'name_ar' | 'name_en' | 'selected_size' | 'selected_variant' | 'quantity' | 'unit_price_bhd' | 'item_total_bhd' | 'notes'>[] = []
 
   try {
     const supabase = await createServiceClient()
@@ -50,7 +50,7 @@ export default async function OrderDetailPage({ params }: Props) {
 
     const { data: itemsData } = await supabase
       .from('order_items')
-      .select('id, name_ar, name_en, selected_size, selected_variant, quantity, unit_price_bhd, item_total_bhd')
+      .select('id, name_ar, name_en, selected_size, selected_variant, quantity, unit_price_bhd, item_total_bhd, notes')
       .eq('order_id', id)
       .order('created_at', { ascending: true })
 
@@ -136,11 +136,11 @@ export default async function OrderDetailPage({ params }: Props) {
               {Number(order.total_bhd).toFixed(3)} {tC('currency')}
             </dd>
           </div>
-          {order.notes && (
+          {(order.notes || order.customer_notes) && (
             <div className="col-span-2">
               <dt className="font-satoshi text-brand-muted">{t('notes')}</dt>
               <dd className="font-satoshi font-medium text-brand-text mt-0.5">
-                {order.notes}
+                {order.customer_notes || order.notes}
               </dd>
             </div>
           )}
@@ -163,6 +163,11 @@ export default async function OrderDetailPage({ params }: Props) {
                 {(item.selected_size || item.selected_variant) && (
                   <p className="font-satoshi text-xs text-brand-muted mt-0.5">
                     {[item.selected_size, item.selected_variant].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+                {item.notes && (
+                  <p className="mt-1 text-sm font-semibold text-red-500 bg-red-50 px-2 py-1 rounded inline-block">
+                    {isAr ? 'ملاحظة: ' : 'Note: '}{item.notes}
                   </p>
                 )}
                 <p className="font-satoshi text-xs text-brand-muted tabular-nums mt-0.5">

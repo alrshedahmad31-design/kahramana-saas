@@ -1,89 +1,103 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-**Session ID**: 59
+**Session ID**: 60
 **Date**: 2026-05-05
-**Focus**: Production crash fix (LowStockWidget) + Arabic unit translations + Owner inventory guide v2.0
+**Focus**: Codex modifications review + COD order status bug fix + SEO/Schema/Privacy tasks
 
 ---
 
 ## Summary
 
-Three deliverables completed: (1) fixed a live production crash on the inventory dashboard, (2) added bilingual unit label support across all inventory UI, (3) rewrote the owner inventory documentation guide with verified content and sidebar-ordered sections.
+Three workstreams: (1) reviewed and validated fils-based pricing refactor from Codex — confirmed correct with one behavioral note on WhatsApp formatting, (2) fixed critical bug where COD orders were created with status `'confirmed'` instead of `'new'`, bypassing staff review, (3) executed 7 SEO tasks including hreflang expansion, alt text fixes, schema sameAs, and Privacy Policy page.
 
 ---
 
 ## Changes Made
 
-### Fix 1 — Production crash: LowStockWidget (`src/components/inventory/LowStockWidget.tsx`)
+### Fix 1 — COD Order Status Bug (`src/app/[locale]/checkout/actions.ts`)
 
-**Problem**: `item.available.toFixed(1)` threw `TypeError` in production. The `rpc_low_stock_alerts` RPC returns `available` as a computed NUMERIC expression which PostgREST serializes as a JSON string, not a JS number.
+**Problem**: Line 546 — `const orderStatus = paymentMode === 'cod' ? 'confirmed' : 'pending_payment'`
+COD orders were created as `'confirmed'` (staff already confirmed), skipping `'new'` state entirely.
 
-**Fix**: Wrapped with `Number()` before `.toFixed()` and before `<= 0` comparisons.
+**Fix**: Changed `'confirmed'` → `'new'` for COD path.
 
-**Commit**: `fix: guard against PostgREST returning NUMERIC as string in LowStockWidget`
+```diff
+- const orderStatus = paymentMode === 'cod' ? 'confirmed' : 'pending_payment'
++ const orderStatus = paymentMode === 'cod' ? 'new' : 'pending_payment'
+```
 
----
-
-### Fix 2 — Arabic unit labels in inventory UI
-
-**New shared utility**: `src/lib/inventory/units.ts`
-- Exports `translateUnit(unit: string | undefined, isAr: boolean): string`
-- Covers all 16 ingredient units + batch (prep only)
-
-**Forms updated** (interactive dropdowns now show Arabic/English labels):
-- `src/components/inventory/IngredientForm.tsx` — replaced `UNITS[]` with `UNIT_LABELS[]` map
-- `src/components/inventory/PrepItemForm.tsx` — replaced `PREP_UNITS[]` with `PREP_UNIT_LABELS[]` map
-
-**Pages updated** (display columns now translated):
-- `src/app/[locale]/dashboard/inventory/ingredients/page.tsx`
-- `src/app/[locale]/dashboard/inventory/prep-items/page.tsx`
-- `src/app/[locale]/dashboard/inventory/stock/[branchId]/page.tsx`
-- `src/app/[locale]/dashboard/inventory/reports/abc-analysis/page.tsx`
-
-**i18n**: Added `inventory.units` namespace to `messages/ar.json` and `messages/en.json`.
-
-**Commit**: `2d8bb06` (pending push confirmation)
+**Impact**: COD orders now enter staff review queue correctly (`'new'` status). Online payment orders unaffected (`'pending_payment'` → trigger → `'confirmed'` via `payments_sync_order_status` trigger in migration 049).
 
 ---
 
-### Fix 3 — Owner inventory guide v2.0
+### Fix 2 — Codex Modifications (fils-based pricing)
 
-**File**: `kahramana_inventory_guide.docx` (50 KB) in project root.
+Reviewed and confirmed correct. The refactor stores prices as integer fils (1 BHD = 1000 fils) to eliminate floating-point errors. Key files: `src/lib/format.ts`, `src/lib/cart.ts`, `src/components/cart/AddToCartButton.tsx`, `CartDrawer.tsx`, `CheckoutForm.tsx`, `src/lib/whatsapp.ts`.
 
-**What changed vs v1:**
-- Sections ordered exactly per dashboard sidebar (Overview → Reports → Ingredients → Prep Items → Recipes → Stock → Par Levels → Waste → Count → Purchases → Transfers → Catering → Budget → Import)
-- Every section has a "ما المطلوب لكي يعمل" (prerequisites) block
-- 4 documentation errors corrected with visible warning boxes:
-  1. `available` is not a stored column — it's computed as `on_hand - reserved - catering_reserved`
-  2. `cost_per_unit` lives in `ingredients`, not `inventory_stock`
-  3. Expiry alert threshold is 3 days (pg_cron), not 7 days (7 days is a UI display filter)
-  4. `batch` unit is only valid for prep items, NOT for ingredients
-- Version updated to "2.0 — مراجعة موثقة"
-
-**Build script**: `build_doc_v2.py` in project root (can be deleted).
+**Behavioral note**: The local `formatPrice` in `whatsapp.ts` (which produced simple `"2.500 BD"` strings) was removed and replaced with `Intl.NumberFormat('ar-BH')`. WhatsApp order messages now use Arabic locale formatting — verify output looks correct in production.
 
 ---
 
-## Current State (after session 59)
+### SEO Tasks
 
-- LowStockWidget crash: **FIXED and pushed**
-- Arabic unit labels: **DONE** — commit `2d8bb06` exists locally, not yet pushed
-- Owner guide: **v2.0 generated** at project root
+**Task 2 — hreflang** (`src/app/[locale]/layout.tsx` + `src/app/[locale]/page.tsx`)
+- Layout: added `alternates.languages` with `ar-BH, ar-IQ, ar-SA, ar-AE, ar-KW, en, x-default`
+- Homepage: expanded from `ar-BH` only to all 5 Arabic country codes
+
+**Task 4 — Protocol alt text** (`src/components/home/ProtocolStack.tsx`)
+- Background image (opacity-20, purely decorative) → `alt=""` + `aria-hidden="true"` on wrapper div
+- Card image (main visual) → unchanged (already uses descriptive translation-based alt)
+
+**Task 5 — Schema sameAs** (`src/lib/seo/schemas.ts`)
+- `buildBranchLocalBusiness`: added `sameAs: [branch.mapsUrl]`
+- `buildOrganizationSchema`: added Maps URLs for all active branches to the organization `sameAs` array
+
+**Task 8 — Privacy Policy** (3 files)
+- Created `src/app/[locale]/privacy-policy/page.tsx` — full bilingual page (AR/EN) covering: data collected, WhatsApp handling, retention (12 months), right to deletion (7 days), cookies/tracking
+- Footer: added "سياسة الخصوصية / Privacy Policy" link
+- Sitemap: added `/privacy-policy` route (priority 0.30, yearly)
+
+**Bonus fix** (`src/components/orders/OrdersClient.tsx`)
+- Pre-existing `as any` → `as OrderStatus` at line 221 — was blocking the build
 
 ---
 
-## Remaining / Pending
+## Current State (after session 60)
 
-1. **Push unit translation commit** (`2d8bb06`) — confirm with Ahmed first
-2. **Delete `build_doc_v2.py`** build script from project root (cleanup)
-3. **Run Lighthouse after Vercel deploy** (from session 58) — TBT and bundle improvements
-4. **Hero image replacement** (HIGH PRIORITY from session 56): `hero-poster.webp` is 800×420px — replace with 1920×1080 WebP
-5. **Font preloads missing from HTML** (MEDIUM): Next.js 15.5.15 does not auto-generate `<link rel="preload" as="font">`
+- COD order status bug: **FIXED** ✅
+- Fils-based pricing (Codex): **VALIDATED** ✅
+- hreflang (5 Arabic locales): **DONE** ✅
+- Protocol alt text: **FIXED** ✅
+- Schema sameAs with Maps URLs: **DONE** ✅
+- FAQPage schema: already existed — no change needed ✅
+- Privacy Policy page: **CREATED** ✅
+- Build: `npx tsc --noEmit` + `npm run build` — both clean ✅
+
+---
+
+## Pending / Requires Manual Action
+
+1. **Vercel Dashboard — set env vars** (CRITICAL before going live):
+   - `NEXT_PUBLIC_SITE_URL=https://kahramanat.com`
+   - `NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX` (get from Ahmed)
+   - `NEXT_PUBLIC_CLARITY_ID=xxxxxxxxxx` (get from Ahmed)
+
+2. **OG Image** — create `/public/og-image.jpg` 1200×630px with brand colors `#C8922A`. Current OG image is `hero-poster.webp` (already correct dimensions, sufficient as temporary fallback).
+
+3. **llms.txt update** — after `kahramanat.com` domain goes live: replace all `kahramana.vercel.app` with `kahramanat.com` in `public/llms.txt`.
+
+4. **WhatsApp message format** — verify Intl.NumberFormat output (`ar-BH` locale) looks correct on actual WhatsApp messages in production. May output Arabic-Indic numerals depending on Node.js version.
+
+5. From session 59 (still pending):
+   - Push unit translation commit (`2d8bb06`)
+   - Delete `build_doc_v2.py` from project root
+   - Hero image replacement: `hero-poster.webp` is 800×420px — replace with 1920×1080 WebP
 
 ---
 
 ## Key Decisions
 
-1. **`Number()` wrapper pattern** — all NUMERIC/DECIMAL values returned from PostgREST RPCs must be wrapped with `Number()` before arithmetic or `.toFixed()` calls. Rule saved to memory `feedback_postgrest_numeric.md`.
-2. **Shared `translateUnit()` helper** — centralized unit translation avoids duplication across 6+ components.
-3. **i18n via local label maps** — inventory components use `{ value, ar, en }` objects (not `useTranslations()`) to stay consistent with the existing codebase pattern.
+1. **COD status = 'new'** — COD orders enter `'new'` state so staff reviews them. The `STATUS_MAP` on the dashboard includes `'new'` in the "pending" column, so they appear correctly.
+2. **hreflang at layout level** — layout-level alternates serve as fallback for pages without their own alternates. Pages that define their own (homepage, menu pages, etc.) override the layout entirely.
+3. **Privacy Policy** — modeled after refund-policy page structure. Covers data collection, WhatsApp data handling, 12-month retention, right to deletion in 7 days.
+4. **Schema sameAs** — added Maps URLs to both branch-level LocalBusiness AND organization-level entity for maximum schema coverage.
