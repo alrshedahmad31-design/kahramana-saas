@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { translateUnit } from '@/lib/inventory/units'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
@@ -171,7 +172,7 @@ export default async function AbcAnalysisPage({ params }: PageProps) {
                 {items.map((ing) => (
                   <tr key={ing.id} className="border-b border-brand-border/30 hover:bg-brand-surface-2 transition-colors">
                     <td className="px-4 py-2 font-satoshi text-brand-text">{ing.name_ar}</td>
-                    <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-muted">{ing.on_hand.toFixed(2)} {ing.unit}</td>
+                    <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-muted">{ing.on_hand.toFixed(2)} {translateUnit(ing.unit, isAr)}</td>
                     <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-muted">{ing.cost_per_unit.toFixed(3)}</td>
                     <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-gold font-semibold">{ing.total_value.toFixed(3)}</td>
                     <td className="px-4 py-2 text-end font-satoshi text-xs text-brand-muted">{isAr ? COUNT_FREQ[cls].ar : COUNT_FREQ[cls].en}</td>

@@ -3,7 +3,15 @@
 import { useState, useTransition } from 'react'
 import type { PrepItemRow, PrepUnit } from '@/lib/supabase/custom-types'
 
-const PREP_UNITS: PrepUnit[] = ['g','kg','ml','l','unit','portion','batch']
+const PREP_UNIT_LABELS: { value: PrepUnit; ar: string; en: string }[] = [
+  { value: 'g',       ar: 'غرام',  en: 'g' },
+  { value: 'kg',      ar: 'كغم',   en: 'kg' },
+  { value: 'ml',      ar: 'مل',    en: 'ml' },
+  { value: 'l',       ar: 'لتر',   en: 'L' },
+  { value: 'unit',    ar: 'وحدة',  en: 'unit' },
+  { value: 'portion', ar: 'حصة',   en: 'portion' },
+  { value: 'batch',   ar: 'دفعة',  en: 'batch' },
+]
 
 const STORAGE_TEMPS = [
   { value: 'frozen',  ar: 'مجمد',        en: 'Frozen' },
@@ -85,8 +93,8 @@ export default function PrepItemForm({ prepItem, locale, action }: Props) {
         <div>
           <label className={labelClass}>{isAr ? 'وحدة القياس *' : 'Unit *'}</label>
           <select name="unit" required defaultValue={prepItem?.unit ?? 'kg'} className={selectClass}>
-            {PREP_UNITS.map((u) => (
-              <option key={u} value={u}>{u}</option>
+            {PREP_UNIT_LABELS.map((u) => (
+              <option key={u.value} value={u.value}>{isAr ? u.ar : u.en}</option>
             ))}
           </select>
         </div>

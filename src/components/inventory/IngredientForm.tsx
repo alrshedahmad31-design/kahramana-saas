@@ -4,7 +4,23 @@ import { useState, useTransition } from 'react'
 import AllergenSelector from './AllergenSelector'
 import type { IngredientRow, IngredientUnit, IngredientCategory, StorageTemp } from '@/lib/supabase/custom-types'
 
-const UNITS: IngredientUnit[] = ['g','kg','ml','l','unit','tbsp','tsp','oz','lb','piece','portion','bottle','can','bag','box']
+const UNIT_LABELS: { value: IngredientUnit; ar: string; en: string }[] = [
+  { value: 'g',       ar: 'غرام',          en: 'g' },
+  { value: 'kg',      ar: 'كغم',           en: 'kg' },
+  { value: 'ml',      ar: 'مل',            en: 'ml' },
+  { value: 'l',       ar: 'لتر',           en: 'L' },
+  { value: 'unit',    ar: 'وحدة',          en: 'unit' },
+  { value: 'tbsp',    ar: 'ملعقة كبيرة',  en: 'tbsp' },
+  { value: 'tsp',     ar: 'ملعقة صغيرة',  en: 'tsp' },
+  { value: 'oz',      ar: 'أوقية',         en: 'oz' },
+  { value: 'lb',      ar: 'رطل',           en: 'lb' },
+  { value: 'piece',   ar: 'قطعة',          en: 'piece' },
+  { value: 'portion', ar: 'حصة',           en: 'portion' },
+  { value: 'bottle',  ar: 'زجاجة',         en: 'bottle' },
+  { value: 'can',     ar: 'علبة',          en: 'can' },
+  { value: 'bag',     ar: 'كيس',           en: 'bag' },
+  { value: 'box',     ar: 'صندوق',         en: 'box' },
+]
 
 const CATEGORIES: { value: IngredientCategory; ar: string; en: string }[] = [
   { value: 'protein',    ar: 'بروتين',      en: 'Protein' },
@@ -114,8 +130,8 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
         <div>
           <label className={labelClass}>{isAr ? 'وحدة القياس *' : 'Unit *'}</label>
           <select name="unit" required defaultValue={ingredient?.unit ?? 'g'} className={selectClass}>
-            {UNITS.map((u) => (
-              <option key={u} value={u}>{u}</option>
+            {UNIT_LABELS.map((u) => (
+              <option key={u.value} value={u.value}>{isAr ? u.ar : u.en}</option>
             ))}
           </select>
         </div>

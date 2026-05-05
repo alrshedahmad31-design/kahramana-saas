@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { translateUnit } from '@/lib/inventory/units'
 import OpeningBalanceModal from '@/components/inventory/OpeningBalanceModal'
 import { recordOpeningBalance } from './actions'
 
@@ -177,7 +178,7 @@ export default async function BranchStockPage({ params, searchParams }: PageProp
                       <p className="font-satoshi text-sm font-medium text-brand-text">{row.ingredient?.name_ar ?? '—'}</p>
                       <p className="font-satoshi text-xs text-brand-muted">{row.ingredient?.name_en ?? ''}</p>
                     </td>
-                    <td className="px-4 py-3 font-satoshi text-xs text-brand-muted">{row.ingredient?.unit ?? '—'}</td>
+                    <td className="px-4 py-3 font-satoshi text-xs text-brand-muted">{translateUnit(row.ingredient?.unit, isAr)}</td>
                     <td className="px-4 py-3 font-satoshi text-sm text-brand-text">{row.on_hand}</td>
                     <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">{row.reserved}</td>
                     <td className={`px-4 py-3 font-satoshi text-sm ${availableTextClass(available, reorderPoint)}`}>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { translateUnit } from '@/lib/inventory/units'
 import type { PrepItemRow } from '@/lib/supabase/custom-types'
 
 interface PageProps {
@@ -124,7 +125,7 @@ export default async function PrepItemsPage({ params, searchParams }: PageProps)
                         <p className="font-satoshi text-xs text-brand-muted">{item.name_en}</p>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">{item.unit}</td>
+                    <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">{translateUnit(item.unit, isAr)}</td>
                     <td className="px-4 py-3 font-satoshi text-sm text-brand-text">{item.batch_yield_qty}</td>
                     <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">{item.shelf_life_hours ?? '—'}</td>
                     <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">

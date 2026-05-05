@@ -1063,5 +1063,25 @@
       "expired_title": "QR Code Expired",
       "expired_message": "This QR code has expired. Please go back and try again."
     }
+  },
+  "inventory": {
+    "units": {
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "l": "L",
+      "unit": "unit",
+      "tbsp": "tbsp",
+      "tsp": "tsp",
+      "oz": "oz",
+      "lb": "lb",
+      "piece": "piece",
+      "portion": "portion",
+      "bottle": "bottle",
+      "can": "can",
+      "bag": "bag",
+      "box": "box",
+      "batch": "batch"
+    }
   }
 }

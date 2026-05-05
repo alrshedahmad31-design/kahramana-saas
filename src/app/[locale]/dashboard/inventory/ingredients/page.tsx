@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { translateUnit } from '@/lib/inventory/units'
 import type { IngredientRow, IngredientCategory, AbcClass } from '@/lib/supabase/custom-types'
 
 interface PageProps {
@@ -177,7 +178,7 @@ export default async function IngredientsPage({ params, searchParams }: PageProp
                         <p className="font-satoshi text-xs text-brand-muted">{ing.name_en}</p>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">{ing.unit}</td>
+                    <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">{translateUnit(ing.unit, isAr)}</td>
                     <td className="px-4 py-3 font-satoshi text-sm text-brand-text">{ing.cost_per_unit.toFixed(3)} BD</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-bold ${abcBadgeClass(ing.abc_class)}`}>
