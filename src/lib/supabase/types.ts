@@ -21,7 +21,6 @@ export type Database = {
           branch_id: string | null
           changes: Json | null
           created_at: string
-          estimated_minutes: number
           id: string
           record_id: string | null
           table_name: string
@@ -111,68 +110,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cash_handovers: {
-        Row: {
-          id: string
-          driver_id: string
-          branch_id: string
-          expected_amount: number
-          actual_amount: number
-          difference: number
-          manager_confirmed: boolean
-          confirmed_by: string | null
-          confirmed_at: string | null
-          order_ids: string[]
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          driver_id: string
-          branch_id: string
-          expected_amount: number
-          actual_amount: number
-          manager_confirmed?: boolean
-          confirmed_by?: string | null
-          confirmed_at?: string | null
-          order_ids: string[]
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          driver_id?: string
-          branch_id?: string
-          expected_amount?: number
-          actual_amount?: number
-          manager_confirmed?: boolean
-          confirmed_by?: string | null
-          confirmed_at?: string | null
-          order_ids?: string[]
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cash_handovers_driver_id_fkey"
-            columns: ["driver_id"]
-            isOneToOne: false
-            referencedRelation: "auth_users_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cash_handovers_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cash_handovers_confirmed_by_fkey"
-            columns: ["confirmed_by"]
-            isOneToOne: false
-            referencedRelation: "auth_users_view"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       business_hours: {
         Row: {
           branch_id: string
@@ -211,6 +148,63 @@ export type Database = {
           },
           {
             foreignKeyName: "business_hours_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
+      }
+      cash_handovers: {
+        Row: {
+          actual_amount: number
+          branch_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string | null
+          difference: number | null
+          driver_id: string
+          expected_amount: number
+          id: string
+          manager_confirmed: boolean | null
+          order_ids: string[]
+        }
+        Insert: {
+          actual_amount: number
+          branch_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string | null
+          difference?: number | null
+          driver_id: string
+          expected_amount: number
+          id?: string
+          manager_confirmed?: boolean | null
+          order_ids: string[]
+        }
+        Update: {
+          actual_amount?: number
+          branch_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string | null
+          difference?: number | null
+          driver_id?: string
+          expected_amount?: number
+          id?: string
+          manager_confirmed?: boolean | null
+          order_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_handovers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_handovers_branch_id_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "v_inventory_valuation"
@@ -473,6 +467,13 @@ export type Database = {
             foreignKeyName: "coupon_redemptions_coupon_id_fkey"
             columns: ["coupon_id"]
             isOneToOne: false
+            referencedRelation: "coupon_analytics_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
             referencedRelation: "coupons"
             referencedColumns: ["id"]
           },
@@ -554,6 +555,13 @@ export type Database = {
           used_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coupon_usages_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_analytics_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coupon_usages_coupon_id_fkey"
             columns: ["coupon_id"]
@@ -951,6 +959,7 @@ export type Database = {
           lat: number
           lng: number
           order_id: string | null
+          updated_at: string | null
         }
         Insert: {
           accuracy_m?: number | null
@@ -960,6 +969,7 @@ export type Database = {
           lat: number
           lng: number
           order_id?: string | null
+          updated_at?: string | null
         }
         Update: {
           accuracy_m?: number | null
@@ -969,6 +979,7 @@ export type Database = {
           lat?: number
           lng?: number
           order_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1067,7 +1078,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff_basic"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       ingredient_allergens: {
@@ -2048,9 +2059,11 @@ export type Database = {
       }
       orders: {
         Row: {
+          actual_collected: number | null
           arrived_at: string | null
           assigned_driver_id: string | null
           branch_id: string
+          cash_handed_over: boolean | null
           cash_settled_at: string | null
           cash_settlement_id: string | null
           coupon_discount_bhd: number | null
@@ -2073,8 +2086,9 @@ export type Database = {
           delivery_proof_url: string | null
           delivery_street: string | null
           driver_notes: string | null
-          expires_at: string | null
           expected_delivery_time: string | null
+          expires_at: string | null
+          handed_over_at: string | null
           id: string
           idempotency_key: string | null
           notes: string | null
@@ -2089,14 +2103,13 @@ export type Database = {
           total_bhd: number
           updated_at: string
           whatsapp_sent_at: string | null
-          actual_collected: number | null
-          cash_handed_over: boolean
-          handed_over_at: string | null
         }
         Insert: {
+          actual_collected?: number | null
           arrived_at?: string | null
           assigned_driver_id?: string | null
           branch_id: string
+          cash_handed_over?: boolean | null
           cash_settled_at?: string | null
           cash_settlement_id?: string | null
           coupon_discount_bhd?: number | null
@@ -2119,8 +2132,9 @@ export type Database = {
           delivery_proof_url?: string | null
           delivery_street?: string | null
           driver_notes?: string | null
-          expires_at?: string | null
           expected_delivery_time?: string | null
+          expires_at?: string | null
+          handed_over_at?: string | null
           id?: string
           idempotency_key?: string | null
           notes?: string | null
@@ -2135,14 +2149,13 @@ export type Database = {
           total_bhd: number
           updated_at?: string
           whatsapp_sent_at?: string | null
-          actual_collected?: number | null
-          cash_handed_over?: boolean
-          handed_over_at?: string | null
         }
         Update: {
+          actual_collected?: number | null
           arrived_at?: string | null
           assigned_driver_id?: string | null
           branch_id?: string
+          cash_handed_over?: boolean | null
           cash_settled_at?: string | null
           cash_settlement_id?: string | null
           coupon_discount_bhd?: number | null
@@ -2165,8 +2178,9 @@ export type Database = {
           delivery_proof_url?: string | null
           delivery_street?: string | null
           driver_notes?: string | null
-          expires_at?: string | null
           expected_delivery_time?: string | null
+          expires_at?: string | null
+          handed_over_at?: string | null
           id?: string
           idempotency_key?: string | null
           notes?: string | null
@@ -2181,9 +2195,6 @@ export type Database = {
           total_bhd?: number
           updated_at?: string
           whatsapp_sent_at?: string | null
-          actual_collected?: number | null
-          cash_handed_over?: boolean
-          handed_over_at?: string | null
         }
         Relationships: [
           {
@@ -2212,6 +2223,13 @@ export type Database = {
             columns: ["cash_settlement_id"]
             isOneToOne: false
             referencedRelation: "driver_cash_handovers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_analytics_view"
             referencedColumns: ["id"]
           },
           {
@@ -3604,8 +3622,56 @@ export type Database = {
           },
         ]
       }
+      webhook_errors: {
+        Row: {
+          created_at: string
+          gateway_id: string | null
+          id: string
+          order_id: string | null
+          payload: Json
+          provider: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          gateway_id?: string | null
+          id?: string
+          order_id?: string | null
+          payload: Json
+          provider: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          gateway_id?: string | null
+          id?: string
+          order_id?: string | null
+          payload?: Json
+          provider?: string
+          reason?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
+      coupon_analytics_view: {
+        Row: {
+          campaign_name: string | null
+          code: string | null
+          id: string | null
+          is_active: boolean | null
+          net_revenue: number | null
+          order_count_from_coupon: number | null
+          revenue_with_coupon: number | null
+          roi_percent: number | null
+          total_discount_given: number | null
+          type: Database["public"]["Enums"]["coupon_type"] | null
+          usage_count: number | null
+          usage_limit: number | null
+          value: number | null
+        }
+        Relationships: []
+      }
       customer_lifetime_value: {
         Row: {
           avg_order_value_bhd: number | null
@@ -3614,6 +3680,19 @@ export type Database = {
           first_order_at: string | null
           last_order_at: string | null
           order_count: number | null
+          total_spent_bhd: number | null
+        }
+        Relationships: []
+      }
+      customer_segments_view: {
+        Row: {
+          avg_order_value_bhd: number | null
+          customer_name: string | null
+          customer_phone: string | null
+          first_order_at: string | null
+          last_order_at: string | null
+          order_count: number | null
+          segment: string | null
           total_spent_bhd: number | null
         }
         Relationships: []
@@ -3652,6 +3731,19 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_item_performance: {
+        Row: {
+          avg_price: number | null
+          estimated_profit: number | null
+          item_id: string | null
+          name_ar: string | null
+          name_en: string | null
+          order_count: number | null
+          total_quantity: number | null
+          total_revenue: number | null
+        }
+        Relationships: []
+      }
       mv_variance_report: {
         Row: {
           abc_class: Database["public"]["Enums"]["abc_class"] | null
@@ -3664,6 +3756,14 @@ export type Database = {
           variance: number | null
           variance_cost_bhd: number | null
           variance_pct: number | null
+        }
+        Relationships: []
+      }
+      order_source_summary: {
+        Row: {
+          order_count: number | null
+          revenue: number | null
+          source: string | null
         }
         Relationships: []
       }
@@ -3693,7 +3793,8 @@ export type Database = {
       v_inventory_valuation: {
         Row: {
           branch_id: string | null
-          branch_name: string | null
+          branch_name_ar: string | null
+          branch_name_en: string | null
           category: string | null
           ingredient_count: number | null
           reserved_value_bhd: number | null
@@ -3726,6 +3827,7 @@ export type Database = {
         Args: { p_orders: number; p_spent: number }
         Returns: Database["public"]["Enums"]["loyalty_tier"]
       }
+      cancel_expired_pending_payment_orders: { Args: never; Returns: undefined }
       cleanup_driver_locations: { Args: never; Returns: undefined }
       fn_check_price_spike: {
         Args: {
@@ -3741,11 +3843,11 @@ export type Database = {
       }
       process_tap_webhook: {
         Args: {
-          p_payload: Json
           p_event_type: string
           p_gateway_id: string
-          p_status: Database["public"]["Enums"]["payment_status"] | null
-          p_order_reference: string | null
+          p_order_reference: string
+          p_payload: Json
+          p_status: Database["public"]["Enums"]["payment_status"]
         }
         Returns: Json
       }
@@ -3878,10 +3980,12 @@ export type Database = {
           total_sold: number
         }[]
       }
-      rpc_receive_purchase_order: {
-        Args: { p_lines: Json; p_po_id: string; p_received_by: string }
-        Returns: undefined
-      }
+      rpc_receive_purchase_order:
+        | { Args: { p_lines: Json; p_po_id: string }; Returns: undefined }
+        | {
+            Args: { p_lines: Json; p_po_id: string; p_received_by: string }
+            Returns: undefined
+          }
       rpc_transfer_stock: {
         Args: {
           p_from_branch: string
@@ -3921,29 +4025,29 @@ export type Database = {
         | "packing"
       loyalty_tier: "bronze" | "silver" | "gold" | "platinum"
       order_status:
-        | "pending_payment"
-        | "confirmed"
         | "new"
         | "under_review"
         | "accepted"
         | "preparing"
         | "ready"
         | "out_for_delivery"
+        | "delivery_failed"
         | "delivered"
         | "completed"
         | "cancelled"
         | "payment_failed"
-        | "delivery_failed"
+        | "pending_payment"
+        | "confirmed"
         | "returned"
       payment_method: "cash" | "benefit_qr" | "tap_card" | "tap_knet"
       payment_status:
         | "pending"
-        | "pending_cod"
-        | "awaiting_manual_review"
         | "processing"
         | "completed"
         | "failed"
         | "refunded"
+        | "pending_cod"
+        | "awaiting_manual_review"
       staff_role:
         | "owner"
         | "general_manager"
@@ -4103,30 +4207,30 @@ export const Constants = {
       kds_station: ["grill", "fry", "salads", "desserts", "drinks", "packing"],
       loyalty_tier: ["bronze", "silver", "gold", "platinum"],
       order_status: [
-        "pending_payment",
-        "confirmed",
         "new",
         "under_review",
         "accepted",
         "preparing",
         "ready",
         "out_for_delivery",
+        "delivery_failed",
         "delivered",
         "completed",
         "cancelled",
         "payment_failed",
-        "delivery_failed",
+        "pending_payment",
+        "confirmed",
         "returned",
       ],
       payment_method: ["cash", "benefit_qr", "tap_card", "tap_knet"],
       payment_status: [
         "pending",
-        "pending_cod",
-        "awaiting_manual_review",
         "processing",
         "completed",
         "failed",
         "refunded",
+        "pending_cod",
+        "awaiting_manual_review",
       ],
       staff_role: [
         "owner",

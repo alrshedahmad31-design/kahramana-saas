@@ -52,8 +52,8 @@ export async function POST(request: Request) {
     p_payload:         body as unknown as Json,
     p_event_type:      eventType,
     p_gateway_id:      gatewayId,
-    p_status:          status,
-    p_order_reference: orderReference,
+    p_status:          status ?? 'pending',
+    p_order_reference: orderReference ?? '',
   })
 
   if (error) {

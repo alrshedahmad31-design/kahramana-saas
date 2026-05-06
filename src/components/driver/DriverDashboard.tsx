@@ -56,6 +56,8 @@ export default function DriverDashboard({
   const [reminderDismissed,  setReminderDismissed]  = useState(false)
 
   const [userLocation,    setUserLocation]    = useState<{ lat: number, lng: number } | null>(null)
+  const [gpsStatus,       setGpsStatus]       = useState<'idle' | 'tracking' | 'error' | 'denied'>('idle')
+  const [gpsError,        setGpsError]        = useState<string | null>(null)
   const [pendingSync,     setPendingSync]     = useState<number>(0)
   const lastGpsUpdateRef = useRef<number>(0)
 
@@ -151,15 +153,23 @@ export default function DriverDashboard({
 
   // GPS — only tracks while driver has an active out_for_delivery order
   useEffect(() => {
-    if (!isOnline || !('geolocation' in navigator)) return
+    if (!isOnline || !('geolocation' in navigator)) {
+      setGpsStatus('idle')
+      return
+    }
 
     const activeOrder = orders.find((o) => o.status === 'out_for_delivery')
-    if (!activeOrder) return  // no active delivery → don't drain battery
+    if (!activeOrder) {
+      setGpsStatus('idle')
+      return
+    }
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords
         setUserLocation({ lat: latitude, lng: longitude })
+        setGpsStatus('tracking')
+        setGpsError(null)
 
         const now = Date.now()
         if (now - lastGpsUpdateRef.current >= 15_000) {
@@ -174,14 +184,22 @@ export default function DriverDashboard({
         }
       },
       (err) => {
-        if (err.code !== err.PERMISSION_DENIED) {
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsStatus('denied')
+          setGpsError(isAr ? 'تم رفض الوصول للموقع. يرجى تفعيل الـ GPS لتتمكن من مشاركة موقعك.' : 'Location access denied. Please enable GPS to share your position.')
+        } else {
+          setGpsStatus('error')
+          setGpsError(err.message)
           console.warn('GPS error:', err.message)
         }
       },
       { enableHighAccuracy: true, maximumAge: 30_000 },
     )
-    return () => navigator.geolocation.clearWatch(watchId)
-  }, [isOnline, driverId, orders])
+    return () => {
+      navigator.geolocation.clearWatch(watchId)
+      setGpsStatus('idle')
+    }
+  }, [isOnline, driverId, orders, isAr])
 
   // Live clock
   useEffect(() => {
@@ -374,6 +392,41 @@ export default function DriverDashboard({
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* GPS Tracking Indicator */}
+          {gpsStatus !== 'idle' && (
+            <div className={`flex items-center justify-between p-3 rounded-xl border transition-colors duration-300 ${
+              gpsStatus === 'tracking' 
+                ? 'bg-brand-success/10 border-brand-success/30' 
+                : 'bg-red-500/10 border-red-500/30'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full ${
+                  gpsStatus === 'tracking' ? 'bg-brand-success animate-pulse' : 'bg-red-500'
+                }`} />
+                <div>
+                  <p className={`font-bold text-sm ${
+                    gpsStatus === 'tracking' ? 'text-brand-success' : 'text-red-400'
+                  } ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                    {gpsStatus === 'tracking' 
+                      ? (isAr ? 'موقعك يُشارك' : 'Sharing location')
+                      : (isAr ? 'الموقع متوقف' : 'Location sharing stopped')
+                    }
+                  </p>
+                  {gpsError && (
+                    <p className="text-[10px] text-red-400/80 mt-0.5">
+                      {gpsError}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {gpsStatus === 'tracking' && (
+                <span className="text-xs font-medium text-brand-success/50 tabular-nums">
+                  {isAr ? 'كل ١٥ ثانية' : 'Every 15s'}
+                </span>
+              )}
             </div>
           )}
 

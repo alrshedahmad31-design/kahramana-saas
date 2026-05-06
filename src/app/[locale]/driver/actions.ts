@@ -170,23 +170,20 @@ export async function postDriverLocation(
 
   const supabase = await createServiceClient()
 
-  // Server-side rate limit: max one insert per 15 seconds per driver.
-  // Silent throttle — not an error from the client's perspective.
-  const { data: last } = await supabase
-    .from('driver_locations')
-    .select('created_at')
-    .eq('driver_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (last && Date.now() - new Date(last.created_at).getTime() < 15_000) {
-    return { success: true }
-  }
-
+  // Use UPSERT logic with the unique constraint on (driver_id, order_id)
+  // This ensures the table only holds the LATEST location for each active delivery.
   const { error } = await supabase
     .from('driver_locations')
-    .insert({ ...payload, driver_id: user.id })
+    .upsert(
+      [{ 
+        ...payload, 
+        driver_id: user.id, 
+        updated_at: new Date().toISOString() 
+      }], 
+      { 
+        onConflict: 'driver_id,order_id' 
+      }
+    )
 
   if (error) return { success: false, error: error.message }
   return { success: true }

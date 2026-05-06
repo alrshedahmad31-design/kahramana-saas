@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import type { OrderWithItems, OrderStatus } from '@/lib/supabase/custom-types'
 import OrderTimeline from '@/components/orders/OrderTimeline'
+import OrderDriverMap from '@/components/orders/OrderDriverMap'
 
 interface Props {
   initialOrder: OrderWithItems
@@ -145,6 +146,17 @@ export default function OrderTrackingStatus({ initialOrder, branchEstimatedMinut
             ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
             {etaText}
           </p>
+        </div>
+      )}
+
+      {/* Driver Map Section - Only for out_for_delivery */}
+      {order.status === 'out_for_delivery' && (
+        <div className="px-5 py-4 border-b border-brand-border">
+          <OrderDriverMap 
+            orderId={order.id}
+            customerLocation={order.delivery_lat && order.delivery_lng ? { lat: Number(order.delivery_lat), lng: Number(order.delivery_lng) } : null}
+            isAr={isAr}
+          />
         </div>
       )}
 

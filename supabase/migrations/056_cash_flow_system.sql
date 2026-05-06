@@ -12,7 +12,7 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS handed_over_at TIMESTAMPTZ DEFAULT N
 CREATE TABLE IF NOT EXISTS cash_handovers (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   driver_id            UUID NOT NULL REFERENCES auth.users(id),
-  branch_id            UUID NOT NULL REFERENCES branches(id),
+  branch_id            TEXT NOT NULL REFERENCES branches(id),
   expected_amount      DECIMAL(10,3) NOT NULL,
   actual_amount        DECIMAL(10,3) NOT NULL,
   difference           DECIMAL(10,3) GENERATED ALWAYS AS (actual_amount - expected_amount) STORED,

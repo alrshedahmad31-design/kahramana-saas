@@ -1,12 +1,14 @@
 -- ============================================================
 -- Kahramana Baghdad — Restore Dashboard Views
--- Migration: 044_restore_dashboard_views.sql
--- Description: Restores full functionality to v_dish_cogs and 
+-- Migration: 059_restore_dashboard_views.sql
+-- Description: Restores full functionality to v_dish_cogs and
 -- adds bilingual support to v_inventory_valuation.
 -- ============================================================
 
 -- 1. Restore v_dish_cogs with all fields needed by the dashboard
-CREATE OR REPLACE VIEW v_dish_cogs
+-- DROP required because CREATE OR REPLACE cannot add/rename columns vs the prior schema
+DROP VIEW IF EXISTS v_dish_cogs;
+CREATE VIEW v_dish_cogs
 WITH (security_invoker = true) AS
 WITH ingredient_costs AS (
   SELECT
@@ -67,7 +69,9 @@ FROM menu_items_sync m
 LEFT JOIN total_costs tc ON tc.menu_item_slug = m.slug;
 
 -- 2. Update v_inventory_valuation for bilingual branch names
-CREATE OR REPLACE VIEW v_inventory_valuation
+-- DROP required because CREATE OR REPLACE cannot rename existing columns
+DROP VIEW IF EXISTS v_inventory_valuation;
+CREATE VIEW v_inventory_valuation
 WITH (security_invoker = true) AS
 SELECT
   b.id                                                   AS branch_id,

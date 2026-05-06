@@ -1,9 +1,29 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
-import { LoadScript, GoogleMap, Marker, Polyline } from '@react-google-maps/api'
-import { DV, DV_STATUS, MAP_STYLES, DRIVER_STATUS, STATUS_BORDER } from '@/lib/delivery/tokens'
+import { useEffect, useState } from 'react'
+import { MapContainer, TileLayer, Marker, Polyline, useMap, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import { DV, DV_STATUS, DRIVER_STATUS, STATUS_BORDER } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
+
+// Fix Leaflet marker icon issue in Next.js
+const createMarkerIcon = (color: string, isHovered = false) => {
+  const size = isHovered ? 24 : 18
+  return L.divIcon({
+    className: 'custom-div-icon',
+    html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  })
+}
+
+const DRIVER_ICON = (color: string) => L.divIcon({
+  className: 'driver-div-icon',
+  html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #0A0A0A; box-shadow: 0 0 10px ${color}80;"></div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+})
 
 interface Props {
   orders:         DeliveryOrder[]
@@ -13,13 +33,7 @@ interface Props {
   isAr:           boolean
 }
 
-const MAP_CENTER  = { lat: 26.0667, lng: 50.5577 }
-const MAP_STYLE   = { width: '100%', height: '100%' }
-const MAP_OPTIONS = {
-  disableDefaultUI: true,
-  zoomControl:      true,
-  styles:           MAP_STYLES,
-}
+const MAP_CENTER: [number, number] = [26.0667, 50.5577]
 
 const DRIVER_STATUS_COLOR: Record<string, string> = {
   available:  DV_STATUS.successText,
@@ -29,110 +43,92 @@ const DRIVER_STATUS_COLOR: Record<string, string> = {
   offline:    DV.muted,
 }
 
-export default function MapView({ orders, drivers, hoveredOrderId, onOrderClick, isAr: _isAr }: Props) {
-  const mapRef = useRef<google.maps.Map | null>(null)
-
-  const onLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map
-  }, [])
-
-  // Pan to hovered order's location
+// Helper to pan the map
+function MapController({ hoveredOrderId, orders }: { hoveredOrderId: string | null, orders: DeliveryOrder[] }) {
+  const map = useMap()
+  
   useEffect(() => {
-    if (!hoveredOrderId || !mapRef.current) return
+    if (!hoveredOrderId) return
     const order = orders.find(o => o.id === hoveredOrderId)
     if (order?.customer_location) {
-      mapRef.current.panTo(order.customer_location)
+      map.panTo([order.customer_location.lat, order.customer_location.lng])
     }
-  }, [hoveredOrderId, orders])
+  }, [hoveredOrderId, orders, map])
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? ''
+  return null
+}
 
-  if (!apiKey) {
+export default function MapView({ orders, drivers, hoveredOrderId, onOrderClick, isAr }: Props) {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
     return (
-      <div style={{
-        width: '100%', height: '100%', background: DV.bgCard,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: '12px', border: `1px solid ${DV.border}`,
-      }}>
-        <div style={{ fontSize: '32px' }}>🗺️</div>
-        <div style={{ fontSize: '14px', color: DV.muted, textAlign: 'center', lineHeight: 1.6 }}>
-          الخريطة غير متوفرة<br />
-          <span style={{ fontSize: '12px' }}>أضف NEXT_PUBLIC_GOOGLE_MAPS_KEY</span>
-        </div>
-        {/* Show orders as text list in fallback */}
-        <div style={{ marginTop: '16px', width: '80%', maxHeight: '200px', overflow: 'auto' }}>
-          {orders.filter(o => o.customer_location).map(o => (
-            <button
-              key={o.id}
-              type="button"
-              onClick={() => onOrderClick(o.id)}
-              style={{
-                display:     'block', width: '100%', marginBottom: '4px',
-                padding:     '6px 10px',
-                background:  DV.bgSurface, border: `1px solid ${DV.border}`,
-                borderRight: `3px solid ${STATUS_BORDER[o.status] ?? DV.amber}`,
-                borderRadius:'6px', color: DV.text, fontSize: '12px', cursor: 'pointer',
-                textAlign:   'start', fontFamily: 'IBM Plex Sans Arabic, sans-serif',
-              }}
-            >
-              #{o.order_number} — {o.customer_name ?? '—'}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div style={{ width: '100%', height: '100%', background: DV.bgCard }} />
     )
   }
 
   return (
-    <LoadScript googleMapsApiKey={apiKey}>
-      <GoogleMap
-        mapContainerStyle={MAP_STYLE}
-        center={MAP_CENTER}
-        zoom={13}
-        options={MAP_OPTIONS}
-        onLoad={onLoad}
+    <div className="h-full w-full relative">
+      <MapContainer 
+        center={MAP_CENTER} 
+        zoom={13} 
+        style={{ width: '100%', height: '100%' }}
+        zoomControl={false}
       >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          className="map-tiles"
+        />
+        
+        <MapController hoveredOrderId={hoveredOrderId} orders={orders} />
+
         {/* Driver markers */}
         {drivers.map(driver => {
-          if (!driver.location || typeof window === 'undefined' || !window.google) return null
+          if (!driver.location) return null
           const color = DRIVER_STATUS_COLOR[driver.status] ?? DV.muted
           return (
             <Marker
               key={`driver-${driver.id}`}
-              position={driver.location}
-              icon={{
-                path:          window.google.maps.SymbolPath.CIRCLE,
-                scale:         10,
-                fillColor:     color,
-                fillOpacity:   1,
-                strokeColor:   DV.bgPage,
-                strokeWeight:  2.5,
-              }}
-              title={driver.name}
-            />
+              position={[driver.location.lat, driver.location.lng]}
+              icon={DRIVER_ICON(color)}
+            >
+              <Popup>
+                <div className={`text-xs ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  <strong>{driver.name}</strong><br />
+                  {isAr ? 'الحالة: ' : 'Status: '}{driver.status}
+                </div>
+              </Popup>
+            </Marker>
           )
         })}
 
         {/* Order markers */}
         {orders.map(order => {
-          if (!order.customer_location || typeof window === 'undefined' || !window.google) return null
+          if (!order.customer_location) return null
           const isHovered = order.id === hoveredOrderId
           const color     = STATUS_BORDER[order.status] ?? DV.amber
           return (
             <Marker
               key={`order-${order.id}`}
-              position={order.customer_location}
-              onClick={() => onOrderClick(order.id)}
-              icon={{
-                path:          window.google.maps.SymbolPath.CIRCLE,
-                scale:         isHovered ? 14 : 10,
-                fillColor:     color,
-                fillOpacity:   isHovered ? 1 : 0.85,
-                strokeColor:   DV.text,
-                strokeWeight:  isHovered ? 3 : 1.5,
+              position={[order.customer_location.lat, order.customer_location.lng]}
+              icon={createMarkerIcon(color, isHovered)}
+              eventHandlers={{
+                click: () => onOrderClick(order.id),
               }}
-              title={`#${order.order_number}`}
-            />
+            >
+              <Popup>
+                <div className={`text-xs ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  <strong>#{order.order_number}</strong><br />
+                  {order.customer_name}<br />
+                  <span style={{ color }}>{isAr ? 'الحالة: ' : 'Status: '}{order.status}</span>
+                </div>
+              </Popup>
+            </Marker>
           )
         })}
 
@@ -144,21 +140,32 @@ export default function MapView({ orders, drivers, hoveredOrderId, onOrderClick,
           return (
             <Polyline
               key={`route-${driver.id}`}
-              path={[driver.location, order.customer_location]}
-              options={{
-                strokeColor:   DV.amberLight,
-                strokeOpacity: 0.6,
-                strokeWeight:  2,
-                icons: [{
-                  icon:   { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 },
-                  offset: '0',
-                  repeat: '16px',
-                }],
+              positions={[
+                [driver.location.lat, driver.location.lng],
+                [order.customer_location.lat, order.customer_location.lng]
+              ]}
+              pathOptions={{
+                color: DV.amberLight,
+                weight: 2,
+                dashArray: '5, 10',
+                opacity: 0.6
               }}
             />
           )
         })}
-      </GoogleMap>
-    </LoadScript>
+      </MapContainer>
+
+      {/* Map Legend/Controls */}
+      <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
+        <div className="bg-brand-surface border border-brand-border rounded-lg p-2 shadow-lg text-[10px] flex flex-col gap-1.5">
+          {Object.entries(DRIVER_STATUS_COLOR).map(([status, color]) => (
+            <div key={status} className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+              <span className="capitalize text-brand-muted">{status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
