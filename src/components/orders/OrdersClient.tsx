@@ -204,7 +204,7 @@ export default function OrdersClient({
         }
 
         if (payload.eventType === 'UPDATE') {
-          const updated = payload.new as any
+          const updated = payload.new as Partial<OrderCardData>
           setOrders(prev => {
             // If the order isn't in our current list (e.g. filtered out), don't add it
             if (!prev.some(o => o.id === updated.id)) return prev
@@ -214,7 +214,7 @@ export default function OrdersClient({
         }
 
         if (payload.eventType === 'DELETE') {
-          const deletedId = (payload.old as any).id
+          const deletedId = (payload.old as { id: string }).id
           setOrders(prev => prev.filter(o => o.id !== deletedId))
           return
         }
