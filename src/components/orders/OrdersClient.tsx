@@ -195,8 +195,29 @@ export default function OrdersClient({
       .channel('orders-dashboard-v2')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
         console.info('Order realtime event:', payload)
-        if (payload.eventType === 'INSERT') bellAlert('new')
-        await fetchOrders()
+        
+        if (payload.eventType === 'INSERT') {
+          bellAlert('new')
+          // For new orders, we MUST re-fetch to get joined order_items which aren't in the payload
+          await fetchOrders()
+          return
+        }
+
+        if (payload.eventType === 'UPDATE') {
+          const updated = payload.new as any
+          setOrders(prev => {
+            // If the order isn't in our current list (e.g. filtered out), don't add it
+            if (!prev.some(o => o.id === updated.id)) return prev
+            return prev.map(o => o.id === updated.id ? { ...o, ...updated } : o)
+          })
+          return
+        }
+
+        if (payload.eventType === 'DELETE') {
+          const deletedId = (payload.old as any).id
+          setOrders(prev => prev.filter(o => o.id !== deletedId))
+          return
+        }
       })
       .subscribe((status) => {
         console.info('Orders realtime subscription:', status)

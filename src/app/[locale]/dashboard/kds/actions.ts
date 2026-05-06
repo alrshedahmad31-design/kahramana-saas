@@ -25,11 +25,11 @@ export async function advanceOrderStatus(
   }
 
   if (!canAccessKDS(caller)) {
-    return { success: false, error: 'Forbidden' }
+    return { success: false, error: 'Unauthorized: KDS access restricted' }
   }
 
   const nextStatus = ADVANCE[currentStatus]
-  if (!nextStatus) return { success: false, error: 'Invalid transition' }
+  if (!nextStatus) return { success: false, error: `Cannot advance from ${currentStatus} status` }
 
   const supabase = await createServiceClient()
   const { data: order, error: fetchError } = await supabase
@@ -43,7 +43,7 @@ export async function advanceOrderStatus(
     return { success: false, error: 'Order status changed. Refresh and try again.' }
   }
   if (!canUpdateOrderStatus(caller, order, nextStatus)) {
-    return { success: false, error: 'Forbidden transition' }
+    return { success: false, error: 'Unauthorized: Insufficient permissions to change status' }
   }
 
   // Guard: Delivery orders cannot be completed by kitchen

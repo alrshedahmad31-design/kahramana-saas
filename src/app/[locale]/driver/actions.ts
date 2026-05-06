@@ -22,8 +22,11 @@ export async function driverBumpOrder(
   actualCollected?: number, // what the customer actually paid (cash only)
 ): Promise<DriverActionResult> {
   const user = await getSession()
-  if (!user || user.role !== 'driver') {
-    return { success: false, error: 'Unauthorized' }
+  if (!user) {
+    return { success: false, error: 'Login Required' }
+  }
+  if (user.role !== 'driver') {
+    return { success: false, error: 'Unauthorized: Driver access only' }
   }
 
   const supabase = await createClient()
@@ -43,12 +46,12 @@ export async function driverBumpOrder(
 
   // Branch guard: driver may only act on orders in their own branch
   if (user.branch_id && order.branch_id !== user.branch_id) {
-    return { success: false, error: 'Unauthorized' }
+    return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
 
   // Ownership guard: when delivering, the order must already be assigned to this driver
   if (currentStatus === 'out_for_delivery' && order.assigned_driver_id !== user.id) {
-    return { success: false, error: 'Unauthorized' }
+    return { success: false, error: 'Unauthorized: This order is assigned to another driver' }
   }
 
   // Arrival guard: driver must mark arrived before confirming delivery

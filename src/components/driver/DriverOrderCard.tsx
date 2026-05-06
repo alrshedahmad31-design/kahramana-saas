@@ -217,13 +217,15 @@ export default function DriverOrderCard({
   const customerNavUrl = useMemo(() => {
     // 1. If we have coordinates in the extracted URL, wrap them in a directions URL
     if (extractedUrl) {
-      const coordMatch = extractedUrl.match(/(?:q=|@|place\/)(-?\d+\.\d+),(-?\d+\.\d+)/)
+      const coordMatch = extractedUrl.match(/(?:q=|@|place\/|destination=)(-?\d+\.\d+),(-?\d+\.\d+)/)
       if (coordMatch) {
         return mapsDirectionsUrl(
           `${coordMatch[1]},${coordMatch[2]}`,
           driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined
         )
       }
+      // If it's already a directions URL, return as is (to preserve parameters like travelmode)
+      if (extractedUrl.includes('dir/?api=1')) return extractedUrl
       return extractedUrl
     }
 
