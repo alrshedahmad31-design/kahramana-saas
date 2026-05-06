@@ -137,8 +137,8 @@ BEGIN
 
   IF NOT FOUND THEN RETURN NEW; END IF;
 
-  -- 5 points per 1 BHD, floored
-  v_points_earned := floor(NEW.total_bhd * 5);
+  -- 1% of total in fils (10 points per 1 BHD)
+  v_points_earned := floor(NEW.total_bhd * 10);
   v_new_balance   := v_customer.points_balance + v_points_earned;
   v_new_orders    := v_customer.total_orders   + 1;
   v_new_spent     := v_customer.total_spent_bhd + NEW.total_bhd;

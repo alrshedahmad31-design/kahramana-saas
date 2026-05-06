@@ -611,7 +611,8 @@
       "completed": "Your order is complete, thank you!",
       "cancelled": "Your order has been cancelled",
       "payment_failed": "Payment failed, please try again"
-    }
+    },
+    "pointsEarned": "You earned {points} loyalty points from this order!"
   },
   "tracking": {
     "title": "Track Your Order",

@@ -17,7 +17,10 @@ export default function OrderTrackingStatus({ initialOrder, branchEstimatedMinut
   const [order, setOrder] = useState(initialOrder)
   const supabase = useMemo(() => createClient(), [])
 
+  const [pointsEarned, setPointsEarned] = useState<number | null>(null)
+
   useEffect(() => {
+    // 1. Listen for order updates
     const channel = supabase
       .channel(`order-tracking-${order.id}`)
       .on(
@@ -28,19 +31,46 @@ export default function OrderTrackingStatus({ initialOrder, branchEstimatedMinut
           table: 'orders',
           filter: `id=eq.${order.id}`,
         },
-        (payload) => {
+        async (payload) => {
           console.info('Order update received:', payload.new)
-          // We spread the new data over the old order state
-          // Note: Realtime payload only includes the updated columns
+          const newStatus = payload.new.status as OrderStatus
+          
           setOrder((prev) => ({ ...prev, ...(payload.new as any) }))
+
+          // 2. If completed, check for loyalty points
+          if (newStatus === 'completed') {
+            const { data } = await supabase
+              .from('points_transactions')
+              .select('points_earned')
+              .eq('order_id', order.id)
+              .eq('transaction_type', 'earned')
+              .maybeSingle()
+            
+            if (data?.points_earned) {
+              setPointsEarned(data.points_earned)
+            }
+          }
         }
       )
       .subscribe()
 
+    // 3. Initial check if already completed
+    if (order.status === 'completed' && !pointsEarned) {
+      supabase
+        .from('points_transactions')
+        .select('points_earned')
+        .eq('order_id', order.id)
+        .eq('transaction_type', 'earned')
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.points_earned) setPointsEarned(data.points_earned)
+        })
+    }
+
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [order.id, supabase])
+  }, [order.id, order.status, supabase, pointsEarned])
 
   const etaText = useMemo(() => {
     const copy = {
@@ -73,6 +103,20 @@ export default function OrderTrackingStatus({ initialOrder, branchEstimatedMinut
 
   return (
     <>
+      {/* Loyalty Points Toast */}
+      {pointsEarned && (
+        <div className="bg-brand-gold/10 border-b border-brand-gold/20 px-5 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="w-8 h-8 rounded-full bg-brand-gold/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-brand-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className={`text-sm font-bold text-brand-gold ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+            {t('pointsEarned', { points: pointsEarned })}
+          </p>
+        </div>
+      )}
+
       {/* Order number + status */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border">
         <div className="text-start">

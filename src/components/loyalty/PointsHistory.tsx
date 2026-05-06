@@ -74,10 +74,8 @@ export default function PointsHistory({ transactions }: Props) {
             <tr className="border-b border-brand-border">
               {[
                 isAr ? 'التاريخ' : 'Date',
-                isAr ? 'النوع'   : 'Type',
-                isAr ? 'مكتسبة'  : 'Earned',
-                isAr ? 'مستخدمة' : 'Spent',
-                isAr ? 'الرصيد'  : 'Balance',
+                isAr ? 'رقم الطلب' : 'Order #',
+                isAr ? 'النقاط'  : 'Points',
               ].map((h) => (
                 <th key={h} className="px-4 py-3 text-xs font-bold text-brand-muted uppercase tracking-wide text-start font-satoshi">
                   {h}
@@ -86,32 +84,26 @@ export default function PointsHistory({ transactions }: Props) {
             </tr>
           </thead>
           <tbody>
-            {visible.map((tx) => (
-              <tr key={tx.id} className="border-b border-brand-border last:border-0 hover:bg-brand-surface-2 transition-colors">
-                <td className="px-4 py-3 font-satoshi text-xs text-brand-muted tabular-nums">
-                  {new Date(tx.created_at).toLocaleDateString(isAr ? 'ar-BH' : 'en-BH', {
-                    day: 'numeric', month: 'short', year: 'numeric',
-                  })}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`font-satoshi text-xs font-bold capitalize ${TYPE_STYLES[tx.transaction_type as PointsTransactionType]}`}>
-                    {t(`transactions.${tx.transaction_type}`)}
-                  </span>
-                  {tx.description && (
-                    <p className="font-satoshi text-xs text-brand-muted mt-0.5 line-clamp-1">{tx.description}</p>
-                  )}
-                </td>
-                <td className="px-4 py-3 font-satoshi tabular-nums text-brand-success font-medium">
-                  {tx.points_earned > 0 ? `+${tx.points_earned}` : '—'}
-                </td>
-                <td className="px-4 py-3 font-satoshi tabular-nums text-brand-gold font-medium">
-                  {tx.points_spent > 0 ? `-${tx.points_spent}` : '—'}
-                </td>
-                <td className="px-4 py-3 font-satoshi tabular-nums text-brand-text font-bold">
-                  {tx.balance_after.toLocaleString('en-US')}
-                </td>
-              </tr>
-            ))}
+            {visible.map((tx) => {
+              const shortOrderId = tx.order_id ? `#${tx.order_id.slice(-8).toUpperCase()}` : '—'
+              const isEarned = tx.transaction_type === 'earned' || tx.transaction_type === 'bonus'
+              
+              return (
+                <tr key={tx.id} className="border-b border-brand-border last:border-0 hover:bg-brand-surface-2 transition-colors">
+                  <td className="px-4 py-3 font-satoshi text-xs text-brand-muted tabular-nums">
+                    {new Date(tx.created_at).toLocaleDateString(isAr ? 'ar-BH' : 'en-BH', {
+                      day: 'numeric', month: 'short', year: 'numeric',
+                    })}
+                  </td>
+                  <td className="px-4 py-3 font-satoshi text-xs text-brand-text font-bold tabular-nums">
+                    {shortOrderId}
+                  </td>
+                  <td className={`px-4 py-3 font-satoshi tabular-nums font-bold ${isEarned ? 'text-brand-success' : 'text-brand-gold'}`}>
+                    {isEarned ? `+${tx.points_earned}` : `-${tx.points_spent}`}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
 
