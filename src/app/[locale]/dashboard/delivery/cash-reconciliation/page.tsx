@@ -69,9 +69,11 @@ export default async function CashReconciliationPage({ params, searchParams: _se
   }
 
   const { data: handoversData } = await newQuery
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const newHandovers: CashHandoverRow[] = (handoversData ?? []).map((h: any) => ({
     id:                    h.id,
     driver_id:             h.driver_id,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     driver_name:           (h.staff_basic as any)?.name ?? h.driver_id.slice(0, 8),
     shift_date:            h.created_at.split('T')[0],
     total_cash:            Number(h.expected_amount),
@@ -103,9 +105,11 @@ export default async function CashReconciliationPage({ params, searchParams: _se
 
   const { data: raw } = await query
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const oldHandovers: CashHandoverRow[] = (raw ?? []).map((r: any) => ({
     id:                    r.id,
     driver_id:             r.driver_id,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     driver_name:           (r.staff_basic as any)?.name ?? r.driver_id.slice(0, 8),
     shift_date:            r.shift_date,
     total_cash:            Number(r.total_cash),

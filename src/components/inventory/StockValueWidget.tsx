@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { colors } from '@/lib/design-tokens'
 import type { InventoryValuationRow } from '@/lib/supabase/custom-types'
@@ -13,7 +14,7 @@ interface Props {
   valuations:  InventoryValuationRow[]
   trendPoints: DailyPoint[]
   currency:    string
-  isAr?:       boolean
+  locale:      string
 }
 
 interface TooltipProps { active?: boolean; payload?: Array<{ value: number }>; label?: string; currency: string }
@@ -30,8 +31,10 @@ function CustomTooltip({ active, payload, label, currency }: TooltipProps) {
   )
 }
 
-export default function StockValueWidget({ valuations, trendPoints, currency, isAr = true }: Props) {
+export default function StockValueWidget({ valuations, trendPoints, currency, locale }: Props) {
+  const t = useTranslations('inventory.valuation')
   const totalValue = valuations.reduce((s, r) => s + r.total_value_bhd, 0)
+  const isAr = locale === 'ar'
 
   return (
     <div className="bg-brand-surface border border-brand-border rounded-xl p-5 flex flex-col gap-4 h-full">
@@ -40,14 +43,14 @@ export default function StockValueWidget({ valuations, trendPoints, currency, is
         <div className="w-8 h-8 rounded-lg bg-brand-surface-2 border border-brand-border flex items-center justify-center text-brand-gold shrink-0">
           <ChartIcon />
         </div>
-        <h3 className="font-satoshi font-bold text-sm text-brand-text">
-          {isAr ? 'قيمة المخزون' : 'Stock Value'}
+        <h3 className="font-cairo font-bold text-sm text-brand-text">
+          {t('title')}
         </h3>
       </div>
 
       {/* Total */}
       <div>
-        <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wider mb-1">
+        <p className="font-cairo text-xs text-brand-muted uppercase tracking-wider mb-1">
           {isAr ? 'الإجمالي' : 'Total'}
         </p>
         <p className="font-satoshi font-black text-3xl text-brand-gold tabular-nums leading-none">
@@ -61,8 +64,8 @@ export default function StockValueWidget({ valuations, trendPoints, currency, is
         <div className="flex flex-col gap-1.5">
           {valuations.map(b => (
             <div key={b.branch_id} className="flex items-center justify-between gap-2">
-              <span className="font-satoshi text-xs text-brand-muted truncate">
-                {isAr ? b.branch_name : b.branch_name}
+              <span className="font-cairo text-xs text-brand-muted truncate">
+                {isAr ? b.branch_name_ar : (b.branch_name_en || b.branch_name_ar)}
               </span>
               <span className="font-satoshi text-xs font-medium text-brand-text tabular-nums shrink-0">
                 {b.total_value_bhd.toFixed(3)} {currency}
@@ -75,7 +78,7 @@ export default function StockValueWidget({ valuations, trendPoints, currency, is
       {/* Mini trend chart */}
       {trendPoints.length > 1 && (
         <div className="mt-auto">
-          <p className="font-satoshi text-xs text-brand-muted mb-2">
+          <p className="font-cairo text-xs text-brand-muted mb-2">
             {isAr ? 'آخر 14 يوم' : 'Last 14 days'}
           </p>
           <ResponsiveContainer width="100%" height={80}>
@@ -105,6 +108,7 @@ export default function StockValueWidget({ valuations, trendPoints, currency, is
     </div>
   )
 }
+
 
 function ChartIcon() {
   return (

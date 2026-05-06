@@ -659,7 +659,7 @@
     "filterLast7": "آخر 7 أيام",
     "filterLast30": "آخر 30 يوماً",
     "filterAllDates": "كل الأوقات",
-    "ordersStats": "{count} طلب · BD {total}",
+    "ordersStats": "{count} طلب · {total} د.ب",
     "closeModal": "إغلاق",
     "paymentSummary": "ملخص الدفع",
     "itemsSubtotal": "إجمالي الأصناف",
@@ -747,6 +747,11 @@
       "entity": "السجل",
       "timestamp": "الوقت",
       "ip": "عنوان IP"
+    },
+    "onboarding": {
+      "title": "إكمال إعداد النظام",
+      "fix_now": "تعديل الآن",
+      "missing_branch_en": "الاسم الإنجليزي مفقود للفرع {branch}. يرجى تحديث بيانات الفرع لضمان عمل التقارير بشكل صحيح."
     }
   },
   "auth": {
@@ -1168,6 +1173,103 @@
       "bag": "كيس",
       "box": "صندوق",
       "batch": "دفعة"
+    },
+    "valuation": {
+      "title": "تقييم المخزون",
+      "totalItems": "إجمالي الأصناف",
+      "totalValue": "القيمة الإجمالية",
+      "reserved": "محجوز",
+      "stockLevel": "مستوى المخزون",
+      "category": "التصنيف",
+      "branch": "الفرع",
+      "filterCategory": "تصفية حسب التصنيف"
+    },
+    "analytics": {
+      "revenue": "إيرادات اليوم",
+      "vsYesterday": "مقارنة بالأمس",
+      "activeOrders": "الطلبات النشطة",
+      "completedToday": "مكتملة اليوم",
+      "todayTotal": "إجمالي اليوم",
+      "soFar": "حتى الآن",
+      "avgPrep": "دقيقة متوسط",
+      "orders": "طلب",
+      "peak": "الذروة",
+      "noRevenue": "لا توجد إيرادات بعد"
+    },
+    "import": {
+      "title": "استيراد المخزون",
+      "dropzone": "اسحب الملف هنا أو انقر للاختيار",
+      "uploading": "جاري الرفع...",
+      "success": "تم الاستيراد بنجاح"
+    }
+  },
+  "reports": {
+    "title": "التقارير",
+    "subtitle": "منصة التقارير المؤسسية — بيانات مُتحقق منها وقابلة للتدقيق",
+    "allBranches": "كل الفروع",
+    "history": "السجل",
+    "auditLog": "سجل التقارير",
+    "noReports": "لا توجد تقارير مُنشأة بعد",
+    "report": "التقرير",
+    "period": "الفترة",
+    "records": "السجلات",
+    "format": "الصيغة",
+    "generated": "التاريخ",
+    "source": "المصدر",
+    "detailedData": "البيانات التفصيلية",
+    "rows": "سجل",
+    "clearSort": "إلغاء الفرز",
+    "showLess": "عرض أقل",
+    "showAllRows": "عرض كل {count} سجل",
+    "noData": "لا توجد بيانات للفترة المحددة",
+    "periodLabel": "الفترة:"
+  },
+  "staff": {
+    "savedSuccess": "تم الحفظ بنجاح",
+    "edit": "تعديل",
+    "phone": "الهاتف",
+    "hireDate": "تاريخ التعيين",
+    "employmentType": "نوع التوظيف",
+    "hourlyRate": "الراتب بالساعة",
+    "hourlyRateBD": "الراتب بالساعة (د.ب)",
+    "emergencyContact": "جهة الاتصال الطارئ",
+    "emergencyPhone": "هاتف الطوارئ",
+    "address": "العنوان",
+    "clockPin": "PIN التسجيل",
+    "clockPinLabel": "PIN التسجيل (4 أرقام)",
+    "notes": "ملاحظات",
+    "saving": "جارٍ الحفظ…",
+    "saveChanges": "حفظ التغييرات",
+    "cancel": "إلغاء",
+    "roles": {
+      "owner": "المالك",
+      "general_manager": "مدير عام",
+      "branch_manager": "مدير فرع",
+      "cashier": "كاشير",
+      "kitchen": "مطبخ",
+      "driver": "سائق",
+      "inventory": "مخزون",
+      "inventory_manager": "مدير المخزون",
+      "marketing": "تسويق",
+      "support": "دعم"
+    },
+    "employment": {
+      "full_time": "دوام كامل",
+      "part_time": "دوام جزئي",
+      "contract": "عقد",
+      "temporary": "مؤقت"
+    },
+    "schedule": {
+      "upcoming": "الورديات القادمة",
+      "past": "الورديات السابقة",
+      "noUpcoming": "لا توجد ورديات قادمة"
+    },
+    "status": {
+      "scheduled": "مجدول",
+      "confirmed": "مؤكد",
+      "completed": "مكتمل",
+      "cancelled": "ملغي",
+      "no_show": "غياب"
     }
   }
 }

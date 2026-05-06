@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import {
   AreaChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
@@ -35,6 +36,7 @@ function CustomTooltip({ active, payload, label, currency }: TooltipProps) {
 }
 
 export default function TodayRevenueChart({ hourlyPoints, currency, isRTL }: Props) {
+  const t = useTranslations('inventory.analytics')
   const maxRevenue = Math.max(...hourlyPoints.map(p => p.revenue))
   const totalToday = hourlyPoints.reduce((s, p) => s + p.revenue, 0)
 
@@ -55,21 +57,21 @@ export default function TodayRevenueChart({ hourlyPoints, currency, isRTL }: Pro
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-5">
         <div>
-          <h2 className={`font-satoshi font-black text-sm text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : ''}`}>
-            {isRTL ? 'الإيرادات اليوم' : "Today's Revenue"}
+          <h2 className="font-cairo font-black text-sm text-brand-muted uppercase tracking-wider">
+            {t('revenue')}
           </h2>
           {totalToday > 0 && (
             <p className="font-satoshi font-black text-2xl text-brand-gold tabular-nums mt-1">
               {totalToday.toFixed(3)}
-              <span className="text-sm font-medium text-brand-muted ms-1.5">{currency}</span>
+              <span className="text-sm font-medium text-brand-muted ms-1.5 font-satoshi">{currency}</span>
             </p>
           )}
         </div>
 
         {maxRevenue > 0 && peakPoint.revenue > 0 && (
           <div className="shrink-0 text-end">
-            <p className="font-satoshi text-xs text-brand-muted">
-              {isRTL ? 'الذروة' : 'Peak'}
+            <p className="font-cairo text-xs text-brand-muted">
+              {t('peak')}
             </p>
             <p className="font-satoshi text-sm font-bold text-brand-text tabular-nums">
               {peakPoint.label}
@@ -83,8 +85,8 @@ export default function TodayRevenueChart({ hourlyPoints, currency, isRTL }: Pro
 
       {maxRevenue === 0 ? (
         <div className="h-48 flex items-center justify-center">
-          <p className="font-satoshi text-sm text-brand-muted/40">
-            {isRTL ? 'لا توجد إيرادات بعد' : 'No revenue yet today'}
+          <p className="font-cairo text-sm text-brand-muted/40">
+            {t('noRevenue')}
           </p>
         </div>
       ) : (

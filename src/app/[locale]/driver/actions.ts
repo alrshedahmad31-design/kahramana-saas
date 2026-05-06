@@ -297,6 +297,7 @@ export async function submitCashHandover(
 
     if (!orders || orders.length === 0) return { success: false, error: 'Orders not found' }
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const typedOrders = orders as any[]
 
     // Branch and Ownership validation
@@ -361,6 +362,7 @@ export async function submitCashHandover(
     table_name: 'cash_handovers',
     record_id: handover.id,
     user_id: user.id,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     actor_role: user.role as any, // Cast to any to avoid staff_role mismatch if needed
     branch_id: branchId,
     changes: {

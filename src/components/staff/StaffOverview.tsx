@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { BRANCHES }                from '@/constants/contact'
+import { useTranslations }        from 'next-intl'
 import { updateStaffProfile }      from '@/app/[locale]/dashboard/staff/[id]/actions'
 import type { StaffExtendedRow, EmploymentType, StaffRole } from '@/lib/supabase/custom-types'
 
@@ -11,42 +12,12 @@ interface Props {
   isRTL:       boolean
 }
 
-const ROLE_LABEL_EN: Record<StaffRole, string> = {
-  owner:             'Owner',
-  general_manager:   'General Manager',
-  branch_manager:    'Branch Manager',
-  cashier:           'Cashier',
-  kitchen:           'Kitchen',
-  driver:            'Driver',
-  inventory:         'Inventory',
-  inventory_manager: 'Inventory Manager',
-  marketing:         'Marketing',
-  support:           'Support',
-}
-
-const ROLE_LABEL_AR: Record<StaffRole, string> = {
-  owner:             'المالك',
-  general_manager:   'مدير عام',
-  branch_manager:    'مدير فرع',
-  cashier:           'كاشير',
-  kitchen:           'مطبخ',
-  driver:            'سائق',
-  inventory:         'مخزون',
-  inventory_manager: 'مدير المخزون',
-  marketing:         'تسويق',
-  support:           'دعم',
-}
-
-const EMP_LABEL: Record<EmploymentType, { en: string; ar: string }> = {
-  full_time:  { en: 'Full Time',  ar: 'دوام كامل' },
-  part_time:  { en: 'Part Time',  ar: 'دوام جزئي' },
-  contract:   { en: 'Contract',   ar: 'عقد' },
-  temporary:  { en: 'Temporary',  ar: 'مؤقت' },
-}
+// Removed static labels in favor of useTranslations
 
 export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
   const [editing,    setEditing]    = useState(false)
   const [isPending,  startTransition] = useTransition()
+  const t = useTranslations()
   const [error,      setError]      = useState<string | null>(null)
   const [success,    setSuccess]    = useState(false)
 
@@ -104,7 +75,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
       {/* Toast */}
       {success && (
         <div className="rounded-lg bg-brand-success/10 border border-brand-success/20 px-4 py-2.5 font-satoshi text-sm text-brand-success">
-          {isRTL ? 'تم الحفظ بنجاح' : 'Saved successfully'}
+          {t('staff.savedSuccess')}
         </div>
       )}
       {error && (
@@ -126,7 +97,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
               {staff.name}
             </h2>
             <p className="font-satoshi text-sm text-brand-muted">
-              {isRTL ? ROLE_LABEL_AR[staff.role] : ROLE_LABEL_EN[staff.role]}
+              {t(`staff.roles.${staff.role}`)}
               {branch && (
                 <span className="ms-1.5 text-brand-muted/50">
                   · {isRTL ? branch.nameAr : branch.nameEn}
@@ -143,7 +114,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
             className="flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 font-satoshi text-sm text-brand-muted hover:text-brand-text hover:border-brand-gold/40 transition-colors duration-150 min-h-[40px]"
           >
             <EditIcon />
-            {isRTL ? 'تعديل' : 'Edit'}
+            {t('staff.edit')}
           </button>
         )}
       </div>
@@ -151,26 +122,26 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
       {/* Info grid */}
       {!editing ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoCard label={isRTL ? 'الهاتف' : 'Phone'} value={staff.phone} isRTL={isRTL} />
-          <InfoCard label={isRTL ? 'تاريخ التعيين' : 'Hire Date'} value={staff.hire_date ?? null} isRTL={isRTL} />
+          <InfoCard label={t('staff.phone')} value={staff.phone} isRTL={isRTL} />
+          <InfoCard label={t('staff.hireDate')} value={staff.hire_date ?? null} isRTL={isRTL} />
           <InfoCard
-            label={isRTL ? 'نوع التوظيف' : 'Employment Type'}
-            value={staff.employment_type ? (isRTL ? EMP_LABEL[staff.employment_type as EmploymentType].ar : EMP_LABEL[staff.employment_type as EmploymentType].en) : null}
+            label={t('staff.employmentType')}
+            value={staff.employment_type ? t(`staff.employment.${staff.employment_type}`) : null}
             isRTL={isRTL}
           />
           <InfoCard
-            label={isRTL ? 'الراتب بالساعة' : 'Hourly Rate'}
+            label={t('staff.hourlyRate')}
             value={staff.hourly_rate != null ? `${staff.hourly_rate} BD` : null}
             isRTL={isRTL}
           />
-          <InfoCard label={isRTL ? 'جهة الاتصال الطارئ' : 'Emergency Contact'} value={staff.emergency_contact_name} isRTL={isRTL} />
-          <InfoCard label={isRTL ? 'هاتف الطوارئ' : 'Emergency Phone'} value={staff.emergency_contact_phone} isRTL={isRTL} />
+          <InfoCard label={t('staff.emergencyContact')} value={staff.emergency_contact_name} isRTL={isRTL} />
+          <InfoCard label={t('staff.emergencyPhone')} value={staff.emergency_contact_phone} isRTL={isRTL} />
           <div className="sm:col-span-2">
-            <InfoCard label={isRTL ? 'العنوان' : 'Address'} value={staff.address} isRTL={isRTL} />
+            <InfoCard label={t('staff.address')} value={staff.address} isRTL={isRTL} />
           </div>
-          <InfoCard label={isRTL ? 'PIN التسجيل' : 'Clock PIN'} value={staff.clock_pin ? '••••' : null} isRTL={isRTL} />
+          <InfoCard label={t('staff.clockPin')} value={staff.clock_pin ? '••••' : null} isRTL={isRTL} />
           <div className="sm:col-span-2">
-            <InfoCard label={isRTL ? 'ملاحظات' : 'Notes'} value={staff.staff_notes} isRTL={isRTL} />
+            <InfoCard label={t('staff.notes')} value={staff.staff_notes} isRTL={isRTL} />
           </div>
         </div>
       ) : (
@@ -179,60 +150,60 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'الهاتف' : 'Phone'}
+                {t('staff.phone')}
               </label>
               <input type="tel" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} className={inputCls} dir="ltr" />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'تاريخ التعيين' : 'Hire Date'}
+                {t('staff.hireDate')}
               </label>
               <input type="date" value={form.hire_date} onChange={(e) => handleChange('hire_date', e.target.value)} className={inputCls} />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'نوع التوظيف' : 'Employment Type'}
+                {t('staff.employmentType')}
               </label>
               <select value={form.employment_type} onChange={(e) => handleChange('employment_type', e.target.value)} className={inputCls}>
-                {(Object.entries(EMP_LABEL) as [EmploymentType, { en: string; ar: string }][]).map(([k, v]) => (
-                  <option key={k} value={k}>{isRTL ? v.ar : v.en}</option>
+                {(['full_time', 'part_time', 'contract', 'temporary'] as EmploymentType[]).map((k) => (
+                  <option key={k} value={k}>{t(`staff.employment.${k}`)}</option>
                 ))}
               </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'الراتب بالساعة (BD)' : 'Hourly Rate (BD)'}
+                {t('staff.hourlyRateBD')}
               </label>
               <input type="number" step="0.001" value={form.hourly_rate} onChange={(e) => handleChange('hourly_rate', e.target.value)} className={inputCls} />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'جهة الاتصال الطارئ' : 'Emergency Contact'}
+                {t('staff.emergencyContact')}
               </label>
               <input type="text" value={form.emergency_contact_name} onChange={(e) => handleChange('emergency_contact_name', e.target.value)} className={inputCls} />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'هاتف الطوارئ' : 'Emergency Phone'}
+                {t('staff.emergencyPhone')}
               </label>
               <input type="tel" value={form.emergency_contact_phone} onChange={(e) => handleChange('emergency_contact_phone', e.target.value)} className={inputCls} dir="ltr" />
             </div>
 
             <div className="sm:col-span-2 flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'العنوان' : 'Address'}
+                {t('staff.address')}
               </label>
               <input type="text" value={form.address} onChange={(e) => handleChange('address', e.target.value)} className={inputCls} />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'PIN التسجيل (4 أرقام)' : 'Clock PIN (4 digits)'}
+                {t('staff.clockPinLabel')}
               </label>
               <input
                 type="text"
@@ -248,7 +219,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
 
             <div className="sm:col-span-2 flex flex-col gap-1.5">
               <label className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">
-                {isRTL ? 'ملاحظات' : 'Notes'}
+                {t('staff.notes')}
               </label>
               <textarea
                 rows={3}
@@ -266,14 +237,14 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
               disabled={isPending}
               className="flex-1 min-h-[44px] rounded-lg bg-brand-gold text-brand-black font-satoshi font-bold text-sm hover:bg-brand-gold/90 transition-colors duration-150 disabled:opacity-50"
             >
-              {isPending ? (isRTL ? 'جارٍ الحفظ…' : 'Saving…') : (isRTL ? 'حفظ التغييرات' : 'Save Changes')}
+              {isPending ? t('staff.saving') : t('staff.saveChanges')}
             </button>
             <button
               type="button"
               onClick={() => setEditing(false)}
               className="min-h-[44px] px-5 rounded-lg border border-brand-border text-brand-muted hover:text-brand-text font-satoshi text-sm transition-colors duration-150"
             >
-              {isRTL ? 'إلغاء' : 'Cancel'}
+              {t('staff.cancel')}
             </button>
           </div>
         </div>

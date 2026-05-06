@@ -13,6 +13,8 @@ import TodaySummary           from '@/components/dashboard/TodaySummary'
 import AnalyticsRefresher     from '@/components/analytics/AnalyticsRefresher'
 import InventoryWidgetsSection from '@/components/inventory/InventoryWidgetsSection'
 import InventoryWidgetsSkeleton from '@/components/inventory/InventoryWidgetsSkeleton'
+import OnboardingAlerts        from '@/components/dashboard/OnboardingAlerts'
+import { createClient }        from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,10 +34,19 @@ export default async function DashboardHomePage({ params }: Props) {
   const isGlobal       = user.role === 'owner' || user.role === 'general_manager'
   const showInventory  = canAccessSection(user.role, 'inventory')
 
+  const supabase = await createClient()
+  const { data: branches } = await supabase
+    .from('branches')
+    .select('id, name_ar, name_en')
+    .eq('is_active', true)
+
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-5">
       {/* Auto-refresh every 10 s — re-runs this server component */}
       <AnalyticsRefresher />
+
+      {/* ── Onboarding Checks ─────────────────────────────────────────────────── */}
+      <OnboardingAlerts branches={branches ?? []} locale={locale} />
 
       {/* ── Hero: 4 metric cards ──────────────────────────────────────────────── */}
       <HeroMetrics data={data} currency={currency} prefix={prefix} isRTL={isAr} />

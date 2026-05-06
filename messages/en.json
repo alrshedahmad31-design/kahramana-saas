@@ -747,6 +747,11 @@
       "entity": "Record",
       "timestamp": "Time",
       "ip": "IP Address"
+    },
+    "onboarding": {
+      "title": "Complete System Setup",
+      "fix_now": "Fix Now",
+      "missing_branch_en": "English name missing for branch {branch}. Update branch details to ensure reports work correctly."
     }
   },
   "auth": {
@@ -1168,6 +1173,103 @@
       "bag": "bag",
       "box": "box",
       "batch": "batch"
+    },
+    "valuation": {
+      "title": "Inventory Valuation",
+      "totalItems": "Total Items",
+      "totalValue": "Total Value",
+      "reserved": "Reserved",
+      "stockLevel": "Stock Level",
+      "category": "Category",
+      "branch": "Branch",
+      "filterCategory": "Filter by category"
+    },
+    "analytics": {
+      "revenue": "Today's Revenue",
+      "vsYesterday": "vs yesterday",
+      "activeOrders": "Active Orders",
+      "completedToday": "Completed Today",
+      "todayTotal": "Today's Total",
+      "soFar": "So far today",
+      "avgPrep": "min avg",
+      "orders": "orders",
+      "peak": "Peak",
+      "noRevenue": "No revenue yet today"
+    },
+    "import": {
+      "title": "Inventory Import",
+      "dropzone": "Drop file here or click to select",
+      "uploading": "Uploading...",
+      "success": "Import successful"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Enterprise reporting platform — validated, auditable, reproducible data",
+    "allBranches": "All branches",
+    "history": "History",
+    "auditLog": "Report Audit Log",
+    "noReports": "No reports generated yet",
+    "report": "Report",
+    "period": "Period",
+    "records": "Records",
+    "format": "Format",
+    "generated": "Generated",
+    "source": "Source",
+    "detailedData": "Detailed Data",
+    "rows": "rows",
+    "clearSort": "Clear sort",
+    "showLess": "Show less",
+    "showAllRows": "Show all {count} rows",
+    "noData": "No data for the selected period",
+    "periodLabel": "Period:"
+  },
+  "staff": {
+    "savedSuccess": "Saved successfully",
+    "edit": "Edit",
+    "phone": "Phone",
+    "hireDate": "Hire Date",
+    "employmentType": "Employment Type",
+    "hourlyRate": "Hourly Rate",
+    "hourlyRateBD": "Hourly Rate (BD)",
+    "emergencyContact": "Emergency Contact",
+    "emergencyPhone": "Emergency Phone",
+    "address": "Address",
+    "clockPin": "Clock PIN",
+    "clockPinLabel": "Clock PIN (4 digits)",
+    "notes": "Notes",
+    "saving": "Saving…",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "roles": {
+      "owner": "Owner",
+      "general_manager": "General Manager",
+      "branch_manager": "Branch Manager",
+      "cashier": "Cashier",
+      "kitchen": "Kitchen",
+      "driver": "Driver",
+      "inventory": "Inventory",
+      "inventory_manager": "Inventory Manager",
+      "marketing": "Marketing",
+      "support": "Support"
+    },
+    "employment": {
+      "full_time": "Full Time",
+      "part_time": "Part Time",
+      "contract": "Contract",
+      "temporary": "Temporary"
+    },
+    "schedule": {
+      "upcoming": "Upcoming Shifts",
+      "past": "Past Shifts",
+      "noUpcoming": "No upcoming shifts scheduled"
+    },
+    "status": {
+      "scheduled": "Scheduled",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "no_show": "No Show"
     }
   }
 }

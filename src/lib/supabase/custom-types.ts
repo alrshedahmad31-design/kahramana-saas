@@ -218,13 +218,24 @@ export interface ExpiryReportRow {
 }
 
 export interface DishCogsRow {
-  slug: string; name_ar: string; name_en: string; selling_price: number|null
-  cost_bhd: number; profit_bhd: number; margin_pct: number|null
+  slug: string;
+  name_ar: string;
+  name_en: string;
+  selling_price: number;
+  cost_bhd: number;
+  profit_bhd: number;
+  margin_pct: number | null;
 }
 
 export interface InventoryValuationRow {
-  branch_id: string; branch_name: string; category: string|null
+  branch_id: string; branch_name_ar: string; branch_name_en: string; category: string|null
   ingredient_count: number; total_value_bhd: number; reserved_value_bhd: number
+}
+
+export interface VendorPerformanceRow {
+  id: string; name_ar: string; name_en: string|null; total_orders: number
+  total_spent_bhd: number; delivery_accuracy_pct: number; avg_quality_rating: number
+  avg_delay_days: number; cancelled_orders: number
 }
 
 // ── Catering types (migration 041) ──────────────────────────────────────────

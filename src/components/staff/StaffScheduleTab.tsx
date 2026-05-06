@@ -1,6 +1,7 @@
 'use client'
 
 import { formatTimeRange } from '@/lib/staff/calculations'
+import { useTranslations } from 'next-intl'
 import type { ShiftRow }   from '@/lib/supabase/custom-types'
 
 interface Props {
@@ -16,20 +17,7 @@ const STATUS_STYLE: Record<string, string> = {
   no_show:    'bg-brand-error/15 text-brand-error border-brand-error/20',
 }
 
-const STATUS_LABEL_EN: Record<string, string> = {
-  scheduled: 'Scheduled',
-  confirmed: 'Confirmed',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-  no_show:   'No Show',
-}
-const STATUS_LABEL_AR: Record<string, string> = {
-  scheduled: 'مجدول',
-  confirmed: 'مؤكد',
-  completed: 'مكتمل',
-  cancelled: 'ملغي',
-  no_show:   'غياب',
-}
+// Removed static labels in favor of useTranslations
 
 function formatShiftDate(date: string, isRTL: boolean): string {
   return new Date(date + 'T00:00:00').toLocaleDateString(
@@ -39,6 +27,7 @@ function formatShiftDate(date: string, isRTL: boolean): string {
 }
 
 export default function StaffScheduleTab({ shifts, isRTL }: Props) {
+  const t = useTranslations()
   const today       = new Date().toISOString().split('T')[0]
   const upcoming    = shifts.filter((s) => s.shift_date >= today && s.status !== 'cancelled').slice(0, 10)
   const past        = shifts.filter((s) => s.shift_date < today || s.status === 'completed').slice(0, 10)
@@ -48,10 +37,10 @@ export default function StaffScheduleTab({ shifts, isRTL }: Props) {
       {/* Upcoming */}
       <section>
         <h3 className={`font-satoshi font-black text-sm text-brand-muted uppercase tracking-wider mb-3 ${isRTL ? 'font-almarai' : ''}`}>
-          {isRTL ? 'الورديات القادمة' : 'Upcoming Shifts'}
+          {t('staff.schedule.upcoming')}
         </h3>
         {upcoming.length === 0 ? (
-          <EmptyState isRTL={isRTL} msgEn="No upcoming shifts scheduled" msgAr="لا توجد ورديات قادمة" />
+          <EmptyState isRTL={isRTL} msg={t('staff.schedule.noUpcoming')} />
         ) : (
           <div className="flex flex-col gap-2">
             {upcoming.map((shift) => (
@@ -65,7 +54,7 @@ export default function StaffScheduleTab({ shifts, isRTL }: Props) {
       {past.length > 0 && (
         <section>
           <h3 className={`font-satoshi font-black text-sm text-brand-muted uppercase tracking-wider mb-3 ${isRTL ? 'font-almarai' : ''}`}>
-            {isRTL ? 'الورديات السابقة' : 'Past Shifts'}
+            {t('staff.schedule.past')}
           </h3>
           <div className="flex flex-col gap-2">
             {past.map((shift) => (
@@ -79,6 +68,7 @@ export default function StaffScheduleTab({ shifts, isRTL }: Props) {
 }
 
 function ShiftCard({ shift, isRTL, dim = false }: { shift: ShiftRow; isRTL: boolean; dim?: boolean }) {
+  const t = useTranslations()
   return (
     <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${dim ? 'opacity-60' : ''} border-brand-border bg-brand-surface-2`}>
       <div className="flex flex-col min-w-[96px] shrink-0">
@@ -97,17 +87,17 @@ function ShiftCard({ shift, isRTL, dim = false }: { shift: ShiftRow; isRTL: bool
       )}
 
       <span className={`ms-auto shrink-0 text-xs font-satoshi font-medium rounded px-2 py-0.5 border ${STATUS_STYLE[shift.status]}`}>
-        {isRTL ? STATUS_LABEL_AR[shift.status] : STATUS_LABEL_EN[shift.status]}
+        {t(`staff.status.${shift.status}`)}
       </span>
     </div>
   )
 }
 
-function EmptyState({ isRTL, msgEn, msgAr }: { isRTL: boolean; msgEn: string; msgAr: string }) {
+function EmptyState({ isRTL, msg }: { isRTL: boolean; msg: string }) {
   return (
     <div className="flex items-center justify-center py-10 rounded-xl border border-brand-border bg-brand-surface-2">
       <p className={`font-satoshi text-sm text-brand-muted/40 ${isRTL ? 'font-almarai' : ''}`}>
-        {isRTL ? msgAr : msgEn}
+        {msg}
       </p>
     </div>
   )

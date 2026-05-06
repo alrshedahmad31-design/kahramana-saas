@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { calculateGrowth } from '@/lib/analytics/calculations'
 import type { DashboardData } from '@/lib/dashboard/stats'
 
@@ -20,7 +21,7 @@ function TrendBadge({ pct, label }: { pct: number; label: string }) {
   return (
     <p className={`font-satoshi text-sm tabular-nums ${color}`}>
       {arrow}{sign}{Math.abs(pct).toFixed(1)}%
-      <span className="text-brand-muted/60 ms-1.5 text-xs font-normal">{label}</span>
+      <span className="text-brand-muted/60 ms-1.5 text-xs font-normal font-cairo">{label}</span>
     </p>
   )
 }
@@ -28,17 +29,18 @@ function TrendBadge({ pct, label }: { pct: number; label: string }) {
 // ── Status dots for active orders ─────────────────────────────────────────────
 
 function StatusDots({ counts }: { counts: DashboardData['activeOrders'] }) {
+  const t = useTranslations('order.status')
   const dots = [
-    { count: counts.new + counts.under_review + counts.accepted, color: 'bg-brand-error',   label: 'pending' },
-    { count: counts.preparing,                                    color: 'bg-brand-gold',    label: 'preparing' },
-    { count: counts.ready,                                        color: 'bg-brand-success', label: 'ready' },
-    { count: counts.out_for_delivery,                             color: 'bg-brand-muted',   label: 'on road' },
+    { count: counts.new + counts.under_review + counts.accepted, color: 'bg-brand-error',   label: t('under_review') },
+    { count: counts.preparing,                                    color: 'bg-brand-gold',    label: t('preparing') },
+    { count: counts.ready,                                        color: 'bg-brand-success', label: t('ready') },
+    { count: counts.out_for_delivery,                             color: 'bg-brand-muted',   label: t('out_for_delivery') },
   ]
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {dots.map(d => d.count > 0 && (
         <span key={d.label} className="flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full ${d.color} shrink-0`} />
+          <span className={`w-2 h-2 rounded-full ${d.color} shrink-0`} title={d.label} />
           <span className="font-satoshi text-xs text-brand-muted tabular-nums">{d.count}</span>
         </span>
       ))}
@@ -82,7 +84,7 @@ function MetricCard({ icon, title, primary, secondary, action, accentBorder }: C
         )}
       </div>
 
-      <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wider">{title}</p>
+      <p className="font-cairo text-xs text-brand-muted uppercase tracking-wider">{title}</p>
 
       <div className="font-satoshi font-black text-3xl text-brand-text tabular-nums leading-none">
         {primary}
@@ -96,6 +98,7 @@ function MetricCard({ icon, title, primary, secondary, action, accentBorder }: C
 // ── Hero section ──────────────────────────────────────────────────────────────
 
 export default function HeroMetrics({ data, currency, prefix, isRTL }: Props) {
+  const t = useTranslations('inventory.analytics')
   const revGrowth = calculateGrowth(data.todayRevenue, data.yesterdayRevenue)
 
   return (
@@ -103,15 +106,15 @@ export default function HeroMetrics({ data, currency, prefix, isRTL }: Props) {
       {/* Revenue */}
       <MetricCard
         icon={<RevenueIcon />}
-        title={isRTL ? 'إيرادات اليوم' : "Today's Revenue"}
+        title={t('revenue')}
         primary={
           <span>
             {data.todayRevenue.toFixed(3)}
-            <span className="text-sm font-medium text-brand-muted ms-1.5">{currency}</span>
+            <span className="text-sm font-medium text-brand-muted ms-1.5 font-satoshi">{currency}</span>
           </span>
         }
         secondary={
-          <TrendBadge pct={revGrowth} label={isRTL ? 'مقارنة بالأمس' : 'vs yesterday'} />
+          <TrendBadge pct={revGrowth} label={t('vsYesterday')} />
         }
         accentBorder={data.todayRevenue > 0 ? 'border-brand-gold/30' : 'border-brand-border'}
       />
@@ -119,12 +122,12 @@ export default function HeroMetrics({ data, currency, prefix, isRTL }: Props) {
       {/* Active Orders */}
       <MetricCard
         icon={<OrdersIcon />}
-        title={isRTL ? 'الطلبات النشطة' : 'Active Orders'}
+        title={t('activeOrders')}
         primary={
           <span>
             {data.activeOrders.total}
-            <span className="text-base font-medium text-brand-muted ms-1.5">
-              {isRTL ? 'طلب' : 'orders'}
+            <span className="text-base font-medium text-brand-muted ms-1.5 font-cairo">
+              {t('orders')}
             </span>
           </span>
         }
@@ -136,12 +139,12 @@ export default function HeroMetrics({ data, currency, prefix, isRTL }: Props) {
       {/* Completed */}
       <MetricCard
         icon={<CheckIcon />}
-        title={isRTL ? 'مكتملة اليوم' : 'Completed Today'}
+        title={t('completedToday')}
         primary={
           <span>
             {data.completedToday}
-            <span className="text-base font-medium text-brand-muted ms-1.5">
-              {isRTL ? 'طلب' : 'orders'}
+            <span className="text-base font-medium text-brand-muted ms-1.5 font-cairo">
+              {t('orders')}
             </span>
           </span>
         }
@@ -149,7 +152,7 @@ export default function HeroMetrics({ data, currency, prefix, isRTL }: Props) {
           data.avgPrepMins > 0 ? (
             <p className="font-satoshi text-sm text-brand-muted tabular-nums">
               <span className="text-brand-success">{data.avgPrepMins}</span>
-              <span className="ms-1">{isRTL ? 'دقيقة متوسط' : 'min avg'}</span>
+              <span className="ms-1 font-cairo">{t('avgPrep')}</span>
             </p>
           ) : (
             <p className="font-satoshi text-xs text-brand-muted/40">—</p>
@@ -162,18 +165,18 @@ export default function HeroMetrics({ data, currency, prefix, isRTL }: Props) {
       {/* Total Today */}
       <MetricCard
         icon={<CalendarIcon />}
-        title={isRTL ? 'إجمالي اليوم' : "Today's Total"}
+        title={t('todayTotal')}
         primary={
           <span>
             {data.totalOrdersToday}
-            <span className="text-base font-medium text-brand-muted ms-1.5">
-              {isRTL ? 'طلب' : 'orders'}
+            <span className="text-base font-medium text-brand-muted ms-1.5 font-cairo">
+              {t('orders')}
             </span>
           </span>
         }
         secondary={
-          <p className="font-satoshi text-sm text-brand-muted">
-            {isRTL ? 'حتى الآن' : 'So far today'}
+          <p className="font-cairo text-sm text-brand-muted">
+            {t('soFar')}
           </p>
         }
       />

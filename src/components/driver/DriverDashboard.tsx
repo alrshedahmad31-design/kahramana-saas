@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { driverBumpOrder, markDriverArrived, postDriverLocation, toggleDriverAvailability } from '@/app/[locale]/driver/actions'
-import { savePendingAction, getPendingActions, deletePendingAction, type PendingAction } from '@/lib/utils/offline-db'
+import { savePendingAction, getPendingActions, deletePendingAction } from '@/lib/utils/offline-db'
 import { useAudioAlert } from '@/hooks/useAudioAlert'
 import { playBell } from '@/lib/audio/bells'
 import DriverHeader from './DriverHeader'

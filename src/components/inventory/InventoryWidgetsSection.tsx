@@ -42,7 +42,7 @@ async function fetchInventoryDashboardData(branchId: string | null) {
 
   const valuationQuery = supabase
     .from('v_inventory_valuation')
-    .select('branch_id, branch_name, category, ingredient_count, total_value_bhd, reserved_value_bhd')
+    .select('branch_id, branch_name_ar, branch_name_en, category, ingredient_count, total_value_bhd, reserved_value_bhd')
     .order('total_value_bhd', { ascending: false })
 
   const valuationPromise = branchId
@@ -84,7 +84,7 @@ async function fetchInventoryDashboardData(branchId: string | null) {
 
   // Group valuation by branch
   const valuationMap = new Map<string, InventoryValuationRow>()
-  for (const row of (valuationRes.data ?? []) as InventoryValuationRow[]) {
+  for (const row of (valuationRes.data ?? []) as unknown as InventoryValuationRow[]) {
     const existing = valuationMap.get(row.branch_id)
     if (existing) {
       existing.total_value_bhd    += row.total_value_bhd
@@ -166,7 +166,7 @@ export default async function InventoryWidgetsSection({ branchId, prefix, isAr, 
         <LowStockWidget      items={lowStockItems}  prefix={prefix} locale={isAr ? 'ar' : 'en'} />
         <ExpiryCalendarWidget rows={expiryItems}    prefix={prefix} isAr={isAr} />
         <WasteEscalationWidget counts={wasteCounts}  prefix={prefix} isAr={isAr} />
-        <StockValueWidget    valuations={valuations} trendPoints={trendPoints} currency={currency} isAr={isAr} />
+        <StockValueWidget    valuations={valuations} trendPoints={trendPoints} currency={currency} locale={isAr ? 'ar' : 'en'} />
       </div>
     </div>
   )

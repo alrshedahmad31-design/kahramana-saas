@@ -195,9 +195,10 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
     action: 'UPDATE',
     table_name: 'cash_handovers',
     record_id: handoverId,
-    performed_by: user.id,
-    old_data: { manager_confirmed: false },
-    new_data: { manager_confirmed: true, confirmed_by: user.id, confirmed_at: now }
+    user_id: user.id,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    actor_role: user.role as any,
+    changes: { manager_confirmed: true, confirmed_by: user.id, confirmed_at: now }
   })
 
   return { success: true }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { RefreshCw, Clock, ChevronRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import {
   generateReport,
   getBranches,
@@ -57,6 +58,7 @@ const TABS: (ReportCategory | 'history')[] = ['financial', 'operational', 'custo
 
 export default function ReportsClient({ locale, initialFrom, initialTo, initialRange }: Props) {
   const isAr = locale === 'ar'
+  const t = useTranslations()
 
   const [from,      setFrom]      = useState(initialFrom ?? daysAgo(29))
   const [to,        setTo]        = useState(initialTo   ?? todayStr())
@@ -158,12 +160,10 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
       {/* Header */}
       <div>
         <h1 className={`text-2xl font-bold text-brand-text ${hf}`}>
-          {isAr ? 'التقارير' : 'Reports'}
+          {t('reports.title')}
         </h1>
         <p className={`text-sm text-brand-muted mt-0.5 ${lf}`}>
-          {isAr
-            ? 'منصة التقارير المؤسسية — بيانات مُتحقق منها وقابلة للتدقيق'
-            : 'Enterprise reporting platform — validated, auditable, reproducible data'}
+          {t('reports.subtitle')}
         </p>
       </div>
 
@@ -205,7 +205,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
               onChange={(e) => setBranchId(e.target.value)}
               className="px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
             >
-              <option value="">{isAr ? 'كل الفروع' : 'All branches'}</option>
+              <option value="">{t('reports.allBranches')}</option>
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{isAr ? b.name_ar : b.name_en}</option>
               ))}
@@ -227,7 +227,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
             } ${lf}`}
           >
             {tab === 'history'
-              ? (isAr ? 'السجل' : 'History')
+              ? t('reports.history')
               : (isAr ? CATEGORY_META[tab].label_ar : CATEGORY_META[tab].label_en)
             }
           </button>
@@ -239,7 +239,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
         <div className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-brand-border flex items-center justify-between">
             <span className={`text-xs font-bold text-brand-muted uppercase tracking-wide ${lf}`}>
-              {isAr ? 'سجل التقارير' : 'Report Audit Log'}
+              {t('reports.auditLog')}
             </span>
             <button
               onClick={() => { setHistoryLoaded(false) }}
@@ -250,7 +250,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
           </div>
           {history.length === 0 ? (
             <p className={`px-5 py-10 text-center text-brand-muted text-sm ${lf}`}>
-              {isAr ? 'لا توجد تقارير مُنشأة بعد' : 'No reports generated yet'}
+              {t('reports.noReports')}
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -258,11 +258,11 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                 <thead>
                   <tr className="border-b border-brand-border">
                     {[
-                      isAr ? 'التقرير' : 'Report',
-                      isAr ? 'الفترة' : 'Period',
-                      isAr ? 'السجلات' : 'Records',
-                      isAr ? 'الصيغة' : 'Format',
-                      isAr ? 'التاريخ' : 'Generated',
+                      t('reports.report'),
+                      t('reports.period'),
+                      t('reports.records'),
+                      t('reports.format'),
+                      t('reports.generated'),
                     ].map((h, i) => (
                       <th key={i} className={`px-5 py-3 text-start text-xs font-semibold text-brand-muted uppercase tracking-wide ${lf}`}>
                         {h}
@@ -338,9 +338,9 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                   {isAr ? reportData.title_ar : reportData.title_en}
                 </h2>
                 <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-brand-muted ${lf}`}>
-                  <span>{isAr ? 'الفترة:' : 'Period:'} <span className="font-satoshi">{reportData.periodLabel}</span></span>
+                  <span>{t('reports.periodLabel')} <span className="font-satoshi">{reportData.periodLabel}</span></span>
                   <span className="text-brand-border">·</span>
-                  <span>{isAr ? 'المصدر:' : 'Source:'} <span className="font-satoshi">{reportData.validation.dataSource}</span></span>
+                  <span>{t('reports.source')} <span className="font-satoshi">{reportData.validation.dataSource}</span></span>
                   <span className="text-brand-border">·</span>
                   <span className="flex items-center gap-1">
                     <Clock size={10} />
@@ -389,10 +389,10 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
               <div className="rounded-xl border border-brand-border overflow-hidden">
                 <div className="px-4 py-3 border-b border-brand-border bg-brand-surface-2 flex items-center justify-between gap-3">
                   <span className={`text-xs font-semibold text-brand-muted uppercase tracking-wide ${lf}`}>
-                    {isAr ? 'البيانات التفصيلية' : 'Detailed Data'}
+                    {t('reports.detailedData')}
                     {' '}
                     <span className="font-satoshi normal-case">
-                      ({reportData.rows.length} {isAr ? 'سجل' : 'rows'})
+                      ({reportData.rows.length} {t('reports.rows')})
                     </span>
                   </span>
                   {sortCol !== null && (
@@ -400,7 +400,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                       onClick={() => { setSortCol(null); setSortAsc(true) }}
                       className={`text-xs text-brand-muted hover:text-brand-gold transition-colors ${lf}`}
                     >
-                      {isAr ? 'إلغاء الفرز' : 'Clear sort'}
+                      {t('reports.clearSort')}
                     </button>
                   )}
                 </div>
@@ -459,15 +459,15 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
                       className={`text-sm text-brand-gold hover:opacity-80 transition-opacity ${lf}`}
                     >
                       {showAllRows
-                        ? (isAr ? 'عرض أقل' : 'Show less')
-                        : (isAr ? `عرض كل ${reportData.rows.length} سجل` : `Show all ${reportData.rows.length} rows`)}
+                        ? t('reports.showLess')
+                        : t('reports.showAllRows', { count: reportData.rows.length })}
                     </button>
                   </div>
                 )}
               </div>
             ) : (
               <p className={`text-center py-8 text-brand-muted text-sm ${lf}`}>
-                {isAr ? 'لا توجد بيانات للفترة المحددة' : 'No data for the selected period'}
+                {t('reports.noData')}
               </p>
             )}
 
