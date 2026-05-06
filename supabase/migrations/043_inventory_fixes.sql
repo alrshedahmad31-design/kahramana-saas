@@ -23,9 +23,12 @@
 ALTER TABLE inventory_movements
   DROP CONSTRAINT IF EXISTS inventory_movements_quantity_check;
 
-ALTER TABLE inventory_movements
-  ADD CONSTRAINT inventory_movements_quantity_nonzero
-  CHECK (quantity <> 0);
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'inventory_movements_quantity_nonzero') THEN
+    ALTER TABLE inventory_movements ADD CONSTRAINT inventory_movements_quantity_nonzero CHECK (quantity <> 0);
+  END IF;
+END $$;
 
 
 -- ============================================================

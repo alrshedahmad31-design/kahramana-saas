@@ -19,19 +19,6 @@ type Props = {
   searchParams?: Promise<{ t?: string }>
 }
 
-type OrderEtaInput = Pick<OrderWithItems, 'order_type' | 'status'>
-interface EtaCopy {
-  completed: string
-  cancelled: string
-  readyPickup: string
-  readyDelivery: string
-  onWay: string
-  pickupFallback: string
-  deliveryFallback: string
-  minute: (minutes: number) => string
-  pickup: (duration: string) => string
-  delivery: (duration: string) => string
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
@@ -107,7 +94,6 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
       }
     : null
 
-  const isTerminal = order && ['delivered', 'completed', 'cancelled', 'payment_failed'].includes(order.status)
 
   return (
     <div className="min-h-screen bg-brand-black">

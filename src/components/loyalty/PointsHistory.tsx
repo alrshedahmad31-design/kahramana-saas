@@ -10,12 +10,6 @@ interface Props {
 
 const PAGE_SIZE = 10
 
-const TYPE_STYLES: Record<PointsTransactionType, string> = {
-  earned:   'text-brand-success',
-  redeemed: 'text-brand-gold',
-  expired:  'text-brand-error',
-  bonus:    'text-brand-gold',
-}
 
 export default function PointsHistory({ transactions }: Props) {
   const t      = useTranslations('account')

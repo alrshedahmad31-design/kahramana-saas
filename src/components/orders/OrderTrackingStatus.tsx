@@ -35,7 +35,7 @@ export default function OrderTrackingStatus({ initialOrder, branchEstimatedMinut
           console.info('Order update received:', payload.new)
           const newStatus = payload.new.status as OrderStatus
           
-          setOrder((prev) => ({ ...prev, ...(payload.new as any) }))
+          setOrder((prev) => ({ ...prev, ...(payload.new as Partial<OrderWithItems>) }))
 
           // 2. If completed, check for loyalty points
           if (newStatus === 'completed') {
