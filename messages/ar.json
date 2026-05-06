@@ -1070,7 +1070,9 @@
     "urgent": "عاجل",
     "mute": "كتم",
     "unmute": "صوت",
-    "loading": "تحميل..."
+    "loading": "تحميل...",
+    "showMore": "عرض {count} أصناف أخرى",
+    "showLess": "عرض أقل"
   },
   "driver": {
     "title": "توصيلاتي",

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import type { KDSOrder } from '@/lib/supabase/custom-types'
 import { getAgeStatus, formatElapsed } from '@/lib/kds/priorities'
 
@@ -54,10 +55,14 @@ const BTN: Record<ActiveStatus, { en: string; ar: string; cls: string }> = {
   ready:     { en: 'Complete',   ar: 'تم',             cls: 'bg-brand-surface-2 text-brand-muted border border-brand-border' },
 }
 
+const ITEMS_PREVIEW = 4
+
 export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {} }: Props) {
+  const t = useTranslations('kds')
   const [elapsed,   setElapsed]   = useState(() => formatElapsed(order.created_at))
   const [ageStatus, setAgeStatus] = useState(() => getAgeStatus(order.created_at))
   const [bumping,   setBumping]   = useState(false)
+  const [expanded,  setExpanded]  = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -79,11 +84,16 @@ export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {
   const shortId   = order.id.slice(-4).toUpperCase()
   const font      = isRTL ? 'font-almarai' : 'font-satoshi'
 
+  const items        = order.order_items ?? []
+  const hasMore      = items.length > ITEMS_PREVIEW
+  const visibleItems = expanded ? items : items.slice(0, ITEMS_PREVIEW)
+  const hiddenCount  = items.length - ITEMS_PREVIEW
+
   return (
     <article
       className={`
         flex flex-col rounded-2xl border-4 bg-brand-surface overflow-hidden
-        transition-all duration-300
+        transition-all duration-300 max-h-[480px]
         ${AGE_BORDER[ageStatus]}
         ${isOverdue ? 'shadow-2xl shadow-brand-error/20' : ''}
       `}
@@ -93,105 +103,119 @@ export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {
         <div className="h-1.5 w-full bg-brand-error animate-pulse shrink-0" />
       )}
 
-      {/* ── Header: timer + order# ─────────────────────────────────────── */}
-      <div className={`flex items-start justify-between gap-4 px-5 pt-4 pb-3 ${AGE_HEADER[ageStatus]}`}>
-        {/* Timer — 6 rem, readable from 3 m */}
-        <div className="flex flex-col">
-          <span
-            className={`font-satoshi font-black tabular-nums leading-none ${AGE_TIMER[ageStatus]}
-              ${isOverdue ? 'animate-pulse' : ''} text-8xl`}
-          >
-            {elapsed}
-          </span>
-          {isOverdue && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <AlertIcon className="w-6 h-6 text-brand-error shrink-0" />
-              <span className={`font-black text-brand-error text-xl uppercase tracking-wider ${font}`}>
-                {isRTL ? 'عاجل!' : 'URGENT!'}
+      {/* ── Scrollable section: header + items ────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+
+        {/* Header: timer + order# */}
+        <div className={`flex items-start justify-between gap-4 px-5 pt-4 pb-3 shrink-0 ${AGE_HEADER[ageStatus]}`}>
+          <div className="flex flex-col">
+            <span
+              className={`font-satoshi font-black tabular-nums leading-none ${AGE_TIMER[ageStatus]}
+                ${isOverdue ? 'animate-pulse' : ''} text-8xl`}
+            >
+              {elapsed}
+            </span>
+            {isOverdue && (
+              <div className="flex items-center gap-1.5 mt-2">
+                <AlertIcon className="w-6 h-6 text-brand-error shrink-0" />
+                <span className={`font-black text-brand-error text-xl uppercase tracking-wider ${font}`}>
+                  {isRTL ? 'عاجل!' : 'URGENT!'}
+                </span>
+              </div>
+            )}
+            {ageStatus === 'warning' && (
+              <span className={`text-brand-gold text-base font-bold mt-1 ${font}`}>
+                {isRTL ? '⚠ تأخر تحذيري' : '⚠ Running late'}
+              </span>
+            )}
+          </div>
+
+          {/* Order number */}
+          <div className="text-end shrink-0">
+            <div className="font-satoshi font-black text-5xl text-brand-text tabular-nums leading-none">
+              #{shortId}
+            </div>
+            {order.customer_name && (
+              <div className={`text-xl text-brand-muted mt-1 truncate max-w-[160px] ${font}`}>
+                {order.customer_name}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="h-px bg-brand-border/60 mx-5 shrink-0" />
+
+        {/* Items */}
+        <div className="flex flex-col gap-3 px-5 py-4">
+          {visibleItems.map((item, i) => (
+            <div key={item.id ?? i} className="flex items-start gap-4 rounded-xl bg-brand-surface-2 border border-brand-border px-4 py-3">
+              <div className="w-16 h-16 rounded-xl bg-brand-gold text-brand-black font-satoshi font-black text-3xl tabular-nums flex items-center justify-center shrink-0">
+                ×{item.quantity}
+              </div>
+              <div className="flex-1 min-w-0 pt-1">
+                <div className="font-cairo font-black text-2xl text-brand-text leading-tight flex items-center gap-1.5">
+                  {item.name_ar}
+                  <StockDot status={item.menu_item_slug ? slugStockMap[item.menu_item_slug] : undefined} />
+                </div>
+                <div className="font-satoshi text-lg text-brand-muted mt-0.5 leading-tight">
+                  {item.name_en}
+                </div>
+                {(item.selected_size || item.selected_variant) && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {item.selected_size && (
+                      <span className="bg-brand-gold/20 border border-brand-gold/40 text-brand-gold font-satoshi font-bold text-sm px-3 py-1 rounded-lg">
+                        {item.selected_size}
+                      </span>
+                    )}
+                    {item.selected_variant && (
+                      <span className={`bg-brand-gold/20 border border-brand-gold/40 text-brand-gold font-bold text-sm px-3 py-1 rounded-lg ${font}`}>
+                        {item.selected_variant}
+                      </span>
+                    )}
+                    {item.notes && (
+                      <span className={`bg-brand-error/10 border border-brand-error/40 text-brand-error font-bold text-sm px-3 py-1 rounded-lg ${font}`}>
+                        {isRTL ? 'ملاحظة: ' : 'Note: '}{item.notes}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Expand / collapse toggle */}
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setExpanded(v => !v)}
+              className={`text-xs text-brand-muted/70 hover:text-brand-gold transition-colors py-1 text-center ${font}`}
+            >
+              {expanded
+                ? t('showLess')
+                : t('showMore', { count: hiddenCount })}
+            </button>
+          )}
+        </div>
+
+        {/* Special request */}
+        {order.notes && (
+          <div className="mx-5 mb-4 rounded-xl border-2 border-brand-error bg-brand-error/10 px-4 py-3">
+            <div className="flex items-center gap-2 mb-1">
+              <FlameIcon className="w-5 h-5 text-brand-error shrink-0" />
+              <span className={`font-black text-brand-error text-sm uppercase tracking-wider ${font}`}>
+                {isRTL ? 'ملاحظة خاصة:' : 'Special Request:'}
               </span>
             </div>
-          )}
-          {ageStatus === 'warning' && (
-            <span className={`text-brand-gold text-base font-bold mt-1 ${font}`}>
-              {isRTL ? '⚠ تأخر تحذيري' : '⚠ Running late'}
-            </span>
-          )}
-        </div>
-
-        {/* Order number — 3 rem */}
-        <div className="text-end shrink-0">
-          <div className="font-satoshi font-black text-5xl text-brand-text tabular-nums leading-none">
-            #{shortId}
+            <p className={`text-brand-text text-xl leading-snug ${font}`}>
+              {order.notes}
+            </p>
           </div>
-          {order.customer_name && (
-            <div className={`text-xl text-brand-muted mt-1 truncate max-w-[160px] ${font}`}>
-              {order.customer_name}
-            </div>
-          )}
-        </div>
+        )}
+
       </div>
 
-      <div className="h-px bg-brand-border/60 mx-5" />
-
-      {/* ── Items — 1.5 rem ────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 px-5 py-4">
-        {(order.order_items ?? []).map((item, i) => (
-          <div key={item.id ?? i} className="flex items-start gap-4 rounded-xl bg-brand-surface-2 border border-brand-border px-4 py-3">
-            {/* Quantity badge */}
-            <div className="w-16 h-16 rounded-xl bg-brand-gold text-brand-black font-satoshi font-black text-3xl tabular-nums flex items-center justify-center shrink-0">
-              ×{item.quantity}
-            </div>
-
-            {/* Name + modifiers */}
-            <div className="flex-1 min-w-0 pt-1">
-              <div className="font-cairo font-black text-2xl text-brand-text leading-tight flex items-center gap-1.5">
-                {item.name_ar}
-                <StockDot status={item.menu_item_slug ? slugStockMap[item.menu_item_slug] : undefined} />
-              </div>
-              <div className={`font-satoshi text-lg text-brand-muted mt-0.5 leading-tight`}>
-                {item.name_en}
-              </div>
-              {(item.selected_size || item.selected_variant) && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {item.selected_size && (
-                    <span className="bg-brand-gold/20 border border-brand-gold/40 text-brand-gold font-satoshi font-bold text-sm px-3 py-1 rounded-lg">
-                      {item.selected_size}
-                    </span>
-                  )}
-                  {item.selected_variant && (
-                    <span className={`bg-brand-gold/20 border border-brand-gold/40 text-brand-gold font-bold text-sm px-3 py-1 rounded-lg ${font}`}>
-                      {item.selected_variant}
-                    </span>
-                  )}
-                  {item.notes && (
-                    <span className={`bg-brand-error/10 border border-brand-error/40 text-brand-error font-bold text-sm px-3 py-1 rounded-lg ${font}`}>
-                      {isRTL ? 'ملاحظة: ' : 'Note: '}{item.notes}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Special request (notes) — red highlighted box ────────────── */}
-      {order.notes && (
-        <div className="mx-5 mb-4 rounded-xl border-2 border-brand-error bg-brand-error/10 px-4 py-3">
-          <div className="flex items-center gap-2 mb-1">
-            <FlameIcon className="w-5 h-5 text-brand-error shrink-0" />
-            <span className={`font-black text-brand-error text-sm uppercase tracking-wider ${font}`}>
-              {isRTL ? 'ملاحظة خاصة:' : 'Special Request:'}
-            </span>
-          </div>
-          <p className={`text-brand-text text-xl leading-snug ${font}`}>
-            {order.notes}
-          </p>
-        </div>
-      )}
-
-      {/* ── Bump button — huge ─────────────────────────────────────────── */}
-      <div className="px-5 pb-5 pt-1">
+      {/* ── Fixed action button ────────────────────────────────────────────── */}
+      <div className="shrink-0 px-5 pb-5 pt-3 border-t border-brand-border/60 bg-brand-surface">
         {order.status === 'ready' && order.order_type === 'delivery' ? (
           <div className={`
             w-full min-h-[80px] rounded-2xl flex items-center justify-center gap-3

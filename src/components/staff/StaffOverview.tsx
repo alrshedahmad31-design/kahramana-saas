@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { BRANCHES }                from '@/constants/contact'
 import { useTranslations }        from 'next-intl'
 import { updateStaffProfile }      from '@/app/[locale]/dashboard/staff/[id]/actions'
-import type { StaffExtendedRow, EmploymentType, StaffRole } from '@/lib/supabase/custom-types'
+import type { StaffExtendedRow, EmploymentType } from '@/lib/supabase/custom-types'
 
 interface Props {
   staff:       StaffExtendedRow

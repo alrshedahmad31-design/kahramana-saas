@@ -151,7 +151,9 @@
       "PowerShell(\\(Get-Content \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\node_modules\\\\next\\\\package.json\" | ConvertFrom-Json\\).version)",
       "Bash(grep -E \"locale\\\\]$|locale\\\\]/page|/ar$|First Load JS\")",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\app\\\\[locale]\\\\dashboard\\\\payments\")",
-      "Bash(grep -v \"//.*purple\\\\|//.*violet\\\\|//.*indigo\")"
+      "Bash(grep -v \"//.*purple\\\\|//.*violet\\\\|//.*indigo\")",
+      "Bash(Get-Content src/app/globals.css)",
+      "Bash(Select-Object -First 40)"
     ]
   }
 }

@@ -60,15 +60,15 @@ async function fetchInventorySummary(branchId: string | null): Promise<Inventory
   ])
 
   const foodCostBhd = (foodCostRes.data ?? []).reduce(
-    (s: number, r: any) => s + (r.unit_cost ?? 0) * r.quantity,
+    (s: number, r: { unit_cost: number | null; quantity: number }) => s + (r.unit_cost ?? 0) * r.quantity,
     0,
   )
   const wasteBhd = (wasteRes.data ?? []).reduce(
-    (s: number, r: any) => s + (r.cost_bhd ?? 0),
+    (s: number, r: { cost_bhd: number | null }) => s + (r.cost_bhd ?? 0),
     0,
   )
   const revenueBhd = (revenueRes.data ?? []).reduce(
-    (s: number, r: any) => s + r.total_bhd,
+    (s: number, r: { total_bhd: number }) => s + r.total_bhd,
     0,
   )
   

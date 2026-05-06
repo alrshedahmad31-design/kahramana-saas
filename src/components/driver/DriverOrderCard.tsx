@@ -457,7 +457,6 @@ export default function DriverOrderCard({
                     w-full min-h-[60px] rounded-2xl font-black text-lg
                     transition-all duration-150 active:scale-[0.98]
                     disabled:opacity-50 disabled:cursor-not-allowed
-                    ${isRTL ? 'font-cairo' : 'font-satoshi'}
                     ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-gold text-brand-black'}
                   `}
                 >
@@ -475,7 +474,6 @@ export default function DriverOrderCard({
                     w-full min-h-[60px] rounded-2xl font-black text-lg
                     transition-all duration-150 active:scale-[0.98]
                     disabled:opacity-50 disabled:cursor-not-allowed
-                    ${isRTL ? 'font-cairo' : 'font-satoshi'}
                     ${busy
                       ? 'bg-brand-surface-2 text-brand-muted'
                       : 'bg-blue-500/20 border-2 border-blue-500/60 text-blue-400'
@@ -547,7 +545,7 @@ export default function DriverOrderCard({
                           type="button"
                           onClick={handleDeliver}
                           disabled={busy}
-                          className={`flex-[2] rounded-xl py-2 bg-brand-success text-brand-black text-sm font-black ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                          className="flex-[2] rounded-xl py-2 bg-brand-success text-brand-black text-sm font-black"
                         >
                           {busy ? '…' : (isRTL ? 'نعم، تم التسليم ✓' : 'Yes, Delivered ✓')}
                         </button>
@@ -564,7 +562,6 @@ export default function DriverOrderCard({
                         w-full min-h-[60px] rounded-2xl font-black text-lg
                         transition-all duration-150 active:scale-[0.98]
                         disabled:opacity-50 disabled:cursor-not-allowed
-                        ${isRTL ? 'font-cairo' : 'font-satoshi'}
                         ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-success text-brand-black'}
                       `}
                     >

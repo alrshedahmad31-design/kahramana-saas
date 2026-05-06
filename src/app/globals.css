@@ -13,6 +13,16 @@
     scrollbar-gutter: stable;
   }
 
+  html[lang="ar"],
+  html[lang="ar"] body {
+    font-family: theme('fontFamily.cairo');
+  }
+
+  html[lang="en"],
+  html[lang="en"] body {
+    font-family: theme('fontFamily.satoshi');
+  }
+
   html, body {
     overflow-x: hidden;
     max-width: 100%;

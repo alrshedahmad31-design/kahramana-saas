@@ -44,7 +44,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export default function ImportDropzone({ locale, branches, menuSlugs }: Props) {
+export default function ImportDropzone({ locale }: Props) {
   const t = useTranslations('inventory.import')
   const isAr = locale === 'ar'
   const fileInputRef = useRef<HTMLInputElement>(null)

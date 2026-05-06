@@ -1070,7 +1070,9 @@
     "urgent": "URGENT",
     "mute": "Mute",
     "unmute": "Unmute",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "showMore": "Show {count} more items",
+    "showLess": "Show less"
   },
   "driver": {
     "title": "My Deliveries",

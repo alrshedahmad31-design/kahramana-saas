@@ -35,7 +35,7 @@ function CustomTooltip({ active, payload, label, currency }: TooltipProps) {
   )
 }
 
-export default function TodayRevenueChart({ hourlyPoints, currency, isRTL }: Props) {
+export default function TodayRevenueChart({ hourlyPoints, currency }: Props) {
   const t = useTranslations('inventory.analytics')
   const maxRevenue = Math.max(...hourlyPoints.map(p => p.revenue))
   const totalToday = hourlyPoints.reduce((s, p) => s + p.revenue, 0)
