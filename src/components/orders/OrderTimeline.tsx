@@ -57,7 +57,7 @@ export default function OrderTimeline({ status, createdAt, updatedAt, isRTL }: P
                 w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
                 ${isDone
                   ? isCurrent
-                    ? 'border-brand-gold bg-brand-gold'
+                    ? 'border-brand-gold bg-brand-gold animate-pulse shadow-[0_0_12px_rgba(200,146,42,0.4)]'
                     : 'border-brand-success bg-brand-success/20'
                   : 'border-brand-border bg-brand-surface-2'
                 }
@@ -66,7 +66,13 @@ export default function OrderTimeline({ status, createdAt, updatedAt, isRTL }: P
                 {isCurrent && <DotIcon />}
               </div>
               {!isLast && (
-                <div className={`w-0.5 h-6 mt-0.5 ${i < currentIndex && !isCancelled ? 'bg-brand-success/40' : 'bg-brand-border'}`} />
+                <div className={`w-0.5 h-6 mt-0.5 ${
+                  i < currentIndex && !isCancelled 
+                    ? 'bg-brand-success/40' 
+                    : isCurrent 
+                      ? 'bg-gradient-to-b from-brand-gold to-brand-border' 
+                      : 'bg-brand-border'
+                }`} />
               )}
             </div>
 

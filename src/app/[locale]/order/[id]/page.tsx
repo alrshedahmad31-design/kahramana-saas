@@ -10,7 +10,7 @@ import { verifyOrderAccessToken } from '@/lib/auth/order-access'
 import type { OrderWithItems } from '@/lib/supabase/custom-types'
 import { formatPrice } from '@/lib/format'
 import { BRANCHES } from '@/constants/contact'
-import AutoRefresh from '@/components/ui/AutoRefresh'
+import OrderTrackingStatus from '@/components/orders/OrderTrackingStatus'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -31,36 +31,6 @@ interface EtaCopy {
   minute: (minutes: number) => string
   pickup: (duration: string) => string
   delivery: (duration: string) => string
-}
-
-function getEtaText(order: OrderEtaInput | null, estimatedMinutes: number | null, copy: EtaCopy) {
-  if (!order) return null
-
-  if (['delivered', 'completed'].includes(order.status)) {
-    return copy.completed
-  }
-  if (order.status === 'cancelled') {
-    return copy.cancelled
-  }
-  if (order.status === 'ready') {
-    return order.order_type === 'pickup'
-      ? copy.readyPickup
-      : copy.readyDelivery
-  }
-  if (order.status === 'out_for_delivery') {
-    return copy.onWay
-  }
-
-  const fallback = order.order_type === 'pickup'
-    ? copy.pickupFallback
-    : copy.deliveryFallback
-  const duration = estimatedMinutes
-    ? copy.minute(estimatedMinutes)
-    : fallback
-
-  return order.order_type === 'pickup'
-    ? copy.pickup(duration)
-    : copy.delivery(duration)
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -123,18 +93,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const nonce   = (await headers()).get('x-nonce') ?? undefined
   const shortId = id.slice(-8).toUpperCase()
   const branch  = order ? BRANCHES[order.branch_id as keyof typeof BRANCHES] ?? null : null
-  const etaText = getEtaText(order, branchEstimatedMinutes, {
-    completed: t('eta.completed'),
-    cancelled: t('eta.cancelled'),
-    readyPickup: t('eta.readyPickup'),
-    readyDelivery: t('eta.readyDelivery'),
-    onWay: t('eta.onWay'),
-    pickupFallback: t('eta.pickupFallback'),
-    deliveryFallback: t('eta.deliveryFallback'),
-    minute: (minutes) => t('eta.minutes', { minutes }),
-    pickup: (duration) => t('eta.pickup', { duration }),
-    delivery: (duration) => t('eta.delivery', { duration }),
-  })
+
 
   const schemaOrg = order
     ? {
@@ -152,7 +111,6 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
 
   return (
     <div className="min-h-screen bg-brand-black">
-      {!isTerminal && <AutoRefresh intervalMs={30_000} />}
       {schemaOrg && (
         <script
           type="application/ld+json"
@@ -186,22 +144,25 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         {/* ── Order card ────────────────────────────────────────────── */}
         <div className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden mb-6">
 
-          {/* Order number + status */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border">
-            <div className="text-start">
-              <p className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-0.5
-                ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {t('orderNumber')}
-              </p>
-              <p className="font-satoshi font-bold text-brand-text text-xl tabular-nums">
-                #{shortId}
-              </p>
-            </div>
-            <StatusBadge
-              status={order?.status ?? 'new'}
-              label={t(`status.${order?.status ?? 'new'}`)}
+          {order ? (
+            <OrderTrackingStatus
+              initialOrder={order}
+              branchEstimatedMinutes={branchEstimatedMinutes}
+              locale={locale}
             />
-          </div>
+          ) : (
+            <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border">
+              <div className="text-start">
+                <p className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-0.5
+                  ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {t('orderNumber')}
+                </p>
+                <p className="font-satoshi font-bold text-brand-text text-xl tabular-nums">
+                  #{shortId}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Branch */}
           {branch && (
@@ -216,19 +177,6 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                   {isAr ? branch.hours.ar : branch.hours.en}
                 </p>
               </div>
-            </div>
-          )}
-
-          {etaText && (
-            <div className="px-5 py-3 border-b border-brand-border text-start">
-              <p className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-0.5
-                ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                {t('estimatedTime')}
-              </p>
-              <p className={`text-sm font-bold text-brand-gold
-                ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-                {etaText}
-              </p>
             </div>
           )}
 
@@ -339,34 +287,6 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         </Link>
       </div>
     </div>
-  )
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-const STATUS_STYLES: Record<string, { bgClass: string; textClass: string }> = {
-  pending_payment: { bgClass: 'bg-brand-gold/15',     textClass: 'text-brand-gold'        },
-  confirmed:       { bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
-  new:             { bgClass: 'bg-brand-gold/15',     textClass: 'text-brand-gold'        },
-  under_review:    { bgClass: 'bg-brand-gold/15',     textClass: 'text-brand-gold'        },
-  accepted:        { bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
-  preparing:       { bgClass: 'bg-brand-gold/15',     textClass: 'text-brand-gold'        },
-  ready:           { bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
-  out_for_delivery:{ bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
-  delivered:       { bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
-  completed:       { bgClass: 'bg-brand-success/15',  textClass: 'text-brand-success'     },
-  cancelled:       { bgClass: 'bg-brand-error/15',    textClass: 'text-brand-error'       },
-  payment_failed:  { bgClass: 'bg-brand-error/15',    textClass: 'text-brand-error'       },
-}
-
-function StatusBadge({ status, label }: { status: string; label: string }) {
-  const style = STATUS_STYLES[status] ?? STATUS_STYLES['new']
-  return (
-    <span className={`font-satoshi text-xs font-bold rounded-lg
-                     ps-3 pe-3 pt-1.5 pb-1.5
-                     ${style.bgClass} ${style.textClass}`}>
-      {label}
-    </span>
   )
 }
 
