@@ -35,7 +35,7 @@ export default async function MenuDashboardPage({ params }: { params: Promise<{ 
               className="inline-flex items-center gap-2 rounded-md bg-secondary px-4 py-2 text-sm font-medium hover:bg-secondary/80"
             >
               <ShoppingBag className="h-4 w-4" />
-              {locale === 'ar' ? 'تزامن البيانات' : 'Sync with DB'}
+              {t('sync_data')}
             </button>
           </form>
 

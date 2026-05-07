@@ -41,8 +41,8 @@
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git â€” CONNECTED, master pushed",
-                       "last_git_commit":  "1a4d80b â€” feat: order access tokens, clock PIN security, RTL fixes, i18n cleanup",
-                       "vercel_push_pending":  false,
+                       “last_git_commit”:  “cd92a8a — fix: null byte + EOF truncation cleanup — TSC 0 errors (79 files, 2277 insertions)”,
+                       “vercel_push_pending”:  false,
                        "supabase_key_rotation_required":  false,
                        "driver_page_fix":  "verified on production",
                        "seo_status":  {
