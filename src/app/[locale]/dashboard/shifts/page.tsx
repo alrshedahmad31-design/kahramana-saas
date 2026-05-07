@@ -11,7 +11,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Wallet, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { Wallet, TrendingUp, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react'
+import Link from 'next/link'
 
 interface ShiftClosingData {
   id: string
@@ -32,8 +33,15 @@ interface ShiftClosingData {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const shiftClosings = (sb: any) => sb.from('shift_closings')
 
-export default async function ShiftsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function ShiftsPage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ locale: string }>,
+  searchParams: Promise<{ branch?: string }> 
+}) {
   const { locale } = await params
+  const { branch: selectedBranchId } = await searchParams
   const t = await getTranslations('dashboard')
   const supabase = await createClient()
 
@@ -47,6 +55,12 @@ export default async function ShiftsPage({ params }: { params: Promise<{ locale:
   const branchId: string | null = staff?.branch_id ?? null
   const isGlobal = ['owner', 'general_manager'].includes(staff?.role ?? '')
 
+  // For global users, use the selected branch from URL or the staff branch
+  const activeBranchId = isGlobal ? (selectedBranchId || branchId) : branchId
+
+  // Fetch branches for the selector
+  const { data: branches } = await supabase.from('branches').select('id, name_ar, name_en')
+
   let query = shiftClosings(supabase).select(`
     *,
     closed_by_staff:closed_by (name_ar, name_en),
@@ -55,6 +69,8 @@ export default async function ShiftsPage({ params }: { params: Promise<{ locale:
 
   if (!isGlobal && branchId) {
     query = query.eq('branch_id', branchId)
+  } else if (activeBranchId) {
+    query = query.eq('branch_id', activeBranchId)
   }
 
   const { data: shiftsData } = await query
@@ -95,9 +111,30 @@ export default async function ShiftsPage({ params }: { params: Promise<{ locale:
           <h1 className="text-3xl font-bold tracking-tight">{t('shift_management')}</h1>
           <p className="text-muted-foreground">{t('manage_shifts_description')}</p>
         </div>
-        {branchId && (
-          <CloseShiftDialog branchId={branchId} translations={clientTranslations} />
-        )}
+        <div className="flex flex-wrap items-center gap-4">
+          {isGlobal && branches && (
+            <div className="flex flex-wrap items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground me-1" />
+              {branches.map((b) => (
+                <Link 
+                  key={b.id} 
+                  href={`/${locale}/dashboard/shifts?branch=${b.id}`}
+                  className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                    activeBranchId === b.id 
+                      ? 'bg-secondary text-secondary-foreground border-secondary font-bold' 
+                      : 'bg-background hover:bg-muted border-input'
+                  }`}
+                >
+                  {locale === 'ar' ? b.name_ar : b.name_en}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {activeBranchId && (
+            <CloseShiftDialog branchId={activeBranchId} translations={clientTranslations} />
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

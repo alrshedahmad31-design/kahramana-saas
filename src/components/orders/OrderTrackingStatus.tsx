@@ -4,8 +4,10 @@ import { useEffect, useState, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import type { OrderWithItems, OrderStatus } from '@/lib/supabase/custom-types'
+import dynamic from 'next/dynamic'
 import OrderTimeline from '@/components/orders/OrderTimeline'
-import OrderDriverMap from '@/components/orders/OrderDriverMap'
+
+const OrderDriverMap = dynamic(() => import('@/components/orders/OrderDriverMap'), { ssr: false })
 
 interface Props {
   initialOrder: OrderWithItems
