@@ -3,13 +3,7 @@ import { createHmac, timingSafeEqual } from 'crypto'
 const EXPIRY_SECONDS = 72 * 3600 // 72 hours
 
 function getOrderAccessSecret(): string | null {
-  return (
-    process.env.ORDER_TOKEN_SECRET ||
-    process.env.ORDER_ACCESS_SECRET ||
-    process.env.PAYMENT_WEBHOOK_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    null
-  )
+  return process.env.ORDER_TOKEN_SECRET || process.env.ORDER_ACCESS_SECRET || null
 }
 
 export function createOrderAccessToken(orderId: string): string {

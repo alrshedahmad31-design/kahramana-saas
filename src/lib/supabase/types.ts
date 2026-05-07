@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       audit_logs: {
@@ -1841,18 +1866,6 @@ export type Database = {
           },
         ]
       }
-      jetski_test: {
-        Row: {
-          id: number
-        }
-        Insert: {
-          id?: number
-        }
-        Update: {
-          id?: number
-        }
-        Relationships: []
-      }
       kds_queue: {
         Row: {
           assigned_to: string | null
@@ -2997,7 +3010,7 @@ export type Database = {
           address: string | null
           availability_status: string | null
           branch_id: string | null
-          clock_pin: string | null
+          clock_pin_hash: string | null
           created_at: string
           date_of_birth: string | null
           emergency_contact_name: string | null
@@ -3018,7 +3031,7 @@ export type Database = {
           address?: string | null
           availability_status?: string | null
           branch_id?: string | null
-          clock_pin?: string | null
+          clock_pin_hash?: string | null
           created_at?: string
           date_of_birth?: string | null
           emergency_contact_name?: string | null
@@ -3039,7 +3052,7 @@ export type Database = {
           address?: string | null
           availability_status?: string | null
           branch_id?: string | null
-          clock_pin?: string | null
+          clock_pin_hash?: string | null
           created_at?: string
           date_of_birth?: string | null
           emergency_contact_name?: string | null
@@ -4230,68 +4243,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      abc_class: ["A", "B", "C"],
-      coupon_type: ["percentage", "fixed_amount"],
-      inventory_movement_type: [
-        "reservation",
-        "consumption",
-        "release",
-        "purchase",
-        "count_adjust",
-        "waste",
-        "transfer_in",
-        "transfer_out",
-        "prep_production",
-        "prep_consumption",
-        "catering_reserve",
-        "catering_release",
-        "opening_balance",
-        "adjustment",
-      ],
-      kds_station: ["grill", "fry", "salads", "desserts", "drinks", "packing"],
-      loyalty_tier: ["bronze", "silver", "gold", "platinum"],
-      order_status: [
-        "new",
-        "under_review",
-        "accepted",
-        "preparing",
-        "ready",
-        "out_for_delivery",
-        "delivery_failed",
-        "delivered",
-        "completed",
-        "cancelled",
-        "payment_failed",
-        "pending_payment",
-        "confirmed",
-        "returned",
-      ],
-      payment_method: ["cash", "benefit_qr", "tap_card", "tap_knet"],
-      payment_status: [
-        "pending",
-        "processing",
-        "completed",
-        "failed",
-        "refunded",
-        "pending_cod",
-        "awaiting_manual_review",
-      ],
-      staff_role: [
-        "owner",
-        "general_manager",
-        "branch_manager",
-        "cashier",
-        "kitchen",
-        "driver",
-        "inventory",
-        "marketing",
-        "support",
-        "inventory_manager",
-      ],
-    },
-  },
-} as const

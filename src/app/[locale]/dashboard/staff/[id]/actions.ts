@@ -1,5 +1,7 @@
 'use server'
 
+import { createHash } from 'crypto'
+
 import { revalidatePath }      from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession }          from '@/lib/auth/session'
@@ -55,7 +57,7 @@ export async function updateStaffProfile(input: UpdateProfileInput): Promise<Act
   if (input.emergency_contact_name  !== undefined) updates.emergency_contact_name  = input.emergency_contact_name || null
   if (input.emergency_contact_phone !== undefined) updates.emergency_contact_phone = input.emergency_contact_phone || null
   if (input.address                 !== undefined) updates.address                 = input.address || null
-  if (input.clock_pin               !== undefined) updates.clock_pin               = input.clock_pin || null
+  if (input.clock_pin               !== undefined) updates.clock_pin_hash           = input.clock_pin ? createHash('sha256').update(input.clock_pin).digest('hex') : null
   if (input.staff_notes             !== undefined) updates.staff_notes             = input.staff_notes || null
 
   const { error } = await service.from('staff_basic').update(updates).eq('id', input.id)

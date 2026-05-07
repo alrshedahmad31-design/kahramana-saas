@@ -1,5 +1,7 @@
 'use server'
 
+import { createHash } from 'crypto'
+
 import { revalidatePath } from 'next/cache'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { assertCanManageTargetStaff, getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
@@ -239,7 +241,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
   if (input.hourly_rate != null)     profile.hourly_rate             = input.hourly_rate
   if (input.emergency_contact_name)  profile.emergency_contact_name  = input.emergency_contact_name
   if (input.emergency_contact_phone) profile.emergency_contact_phone = input.emergency_contact_phone
-  if (input.clock_pin)               profile.clock_pin               = input.clock_pin
+  if (input.clock_pin)               profile.clock_pin_hash          = createHash('sha256').update(input.clock_pin).digest('hex')
   if (input.staff_notes)             profile.staff_notes             = input.staff_notes
 
   if (Object.keys(profile).length > 0) {

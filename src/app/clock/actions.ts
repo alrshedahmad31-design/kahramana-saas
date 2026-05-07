@@ -1,7 +1,10 @@
 'use server'
 
-import { createServiceClient }        from '@/lib/supabase/server'
-import { headers }                    from 'next/headers'
+import { createHash }                from 'crypto'
+import { createServiceClient }       from '@/lib/supabase/server'
+import { headers }                   from 'next/headers'
+import { Ratelimit }                 from '@upstash/ratelimit'
+import { Redis }                     from '@upstash/redis'
 import { calcTotalHours, calcOvertimeHours } from '@/lib/staff/calculations'
 import type { StaffBasicRow, StaffRole } from '@/lib/supabase/custom-types'
 
@@ -9,33 +12,37 @@ export type ClockResult =
   | { success: true;  staff: Pick<StaffBasicRow, 'id' | 'name' | 'role' | 'branch_id'>; activeEntry: string | null }
   | { success: false; error: string }
 
-const failedPinAttempts = new Map<string, { count: number; resetAt: number }>()
-const MAX_PIN_ATTEMPTS = 5
-const PIN_WINDOW_MS = 60_000
+// ── PIN hashing ─────────────────────────────────────────────────────────────
+function hashPin(pin: string): string {
+  return createHash('sha256').update(pin).digest('hex')
+}
+
+// ── Rate limiting (Upstash Redis — works across Vercel serverless instances) ──
+let ratelimit: Ratelimit | null = null
+
+function getRatelimit(): Ratelimit | null {
+  if (ratelimit) return ratelimit
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null // graceful degradation if Redis not configured
+  }
+  ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(5, '60 s'),
+    prefix:  'clock_pin',
+  })
+  return ratelimit
+}
 
 async function getAttemptKey(): Promise<string> {
   const h = await headers()
   return h.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
 }
 
-function isBlocked(key: string): boolean {
-  const attempt = failedPinAttempts.get(key)
-  if (!attempt) return false
-  if (Date.now() > attempt.resetAt) {
-    failedPinAttempts.delete(key)
-    return false
-  }
-  return attempt.count >= MAX_PIN_ATTEMPTS
-}
-
-function recordPinFailure(key: string): void {
-  const now = Date.now()
-  const current = failedPinAttempts.get(key)
-  if (!current || now > current.resetAt) {
-    failedPinAttempts.set(key, { count: 1, resetAt: now + PIN_WINDOW_MS })
-    return
-  }
-  failedPinAttempts.set(key, { count: current.count + 1, resetAt: current.resetAt })
+async function checkRateLimit(key: string): Promise<{ allowed: boolean }> {
+  const rl = getRatelimit()
+  if (!rl) return { allowed: true }
+  const { success } = await rl.limit(key)
+  return { allowed: success }
 }
 
 async function assertStaffPin(staffId: string, pin: string): Promise<boolean> {
@@ -46,7 +53,7 @@ async function assertStaffPin(staffId: string, pin: string): Promise<boolean> {
     .from('staff_basic')
     .select('id')
     .eq('id', staffId)
-    .eq('clock_pin', pin)
+    .eq('clock_pin_hash', hashPin(pin))
     .eq('is_active', true)
     .maybeSingle()
 
@@ -58,22 +65,20 @@ async function assertStaffPin(staffId: string, pin: string): Promise<boolean> {
 export async function verifyPin(pin: string): Promise<ClockResult> {
   if (!/^\d{4}$/.test(pin)) return { success: false, error: 'Invalid PIN format' }
   const attemptKey = await getAttemptKey()
-  if (isBlocked(attemptKey)) return { success: false, error: 'Too many attempts. Try again shortly.' }
+  const { allowed } = await checkRateLimit(attemptKey)
+  if (!allowed) return { success: false, error: 'Too many attempts. Try again shortly.' }
 
   const service = await createServiceClient()
   const { data, error } = await service
     .from('staff_basic')
     .select('id, name, role, branch_id, is_active')
-    .eq('clock_pin', pin)
+    .eq('clock_pin_hash', hashPin(pin))
     .eq('is_active', true)
     .maybeSingle()
 
   if (error || !data) {
-    recordPinFailure(attemptKey)
     return { success: false, error: 'PIN not found' }
   }
-
-  failedPinAttempts.delete(attemptKey)
 
   const staff = data as { id: string; name: string; role: StaffRole; branch_id: string | null }
 

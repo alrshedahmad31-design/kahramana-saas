@@ -31,7 +31,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
     emergency_contact_name:  staff.emergency_contact_name  ?? '',
     emergency_contact_phone: staff.emergency_contact_phone ?? '',
     address:                 staff.address                 ?? '',
-    clock_pin:               staff.clock_pin               ?? '',
+    clock_pin:               '',  // never pre-fill — user enters new PIN if changing
     staff_notes:             staff.staff_notes             ?? '',
   })
 
@@ -139,7 +139,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
           <div className="sm:col-span-2">
             <InfoCard label={t('staff.address')} value={staff.address} isRTL={isRTL} />
           </div>
-          <InfoCard label={t('staff.clockPin')} value={staff.clock_pin ? '••••' : null} isRTL={isRTL} />
+          <InfoCard label={t('staff.clockPin')} value={staff.clock_pin_hash ? '••••' : null} isRTL={isRTL} />
           <div className="sm:col-span-2">
             <InfoCard label={t('staff.notes')} value={staff.staff_notes} isRTL={isRTL} />
           </div>

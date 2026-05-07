@@ -320,15 +320,11 @@ async function ensureCheckoutBranch(
 }
 
 // ── Server-side subtotal ──────────────────────────────────────────────────────
-// Re-derive subtotal from the items array to catch tampered item totals.
-// unit_price_bhd is still client-supplied (sizes/variants have no DB price),
-// but we recompute each item_total = quantity × unit_price and sum them,
-// so a tampered item_total_bhd cannot lower the charged amount.
+// Use item_total_bhd which is already computed as quantity × unitPriceBhd
+// inside repriceCheckoutItems (server-resolved price). This prevents a
+// client-tampered unit_price_bhd from silently under-billing on edge cases.
 function computeSubtotal(items: PricedItemBase[]): number {
-  return items.reduce((sum, item) => {
-    if (item.quantity <= 0 || item.unit_price_bhd <= 0) return sum
-    return sum + item.quantity * item.unit_price_bhd
-  }, 0)
+  return items.reduce((sum, item) => sum + item.item_total_bhd, 0)
 }
 
 function repriceCheckoutItems(
