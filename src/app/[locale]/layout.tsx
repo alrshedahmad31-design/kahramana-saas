@@ -16,6 +16,7 @@ import Footer from '@/components/layout/Footer'
 import ConditionalFooter from '@/components/layout/ConditionalFooter'
 import { CookieBanner } from '@/components/layout/CookieBanner'
 import CartDrawer from '@/components/cart/CartDrawerDynamic'
+import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import '../globals.css'
 
 // ── Arabic fonts via next/font/google (self-host when files available) ────────
@@ -35,7 +36,7 @@ const almarai = Almarai({
   weight: ['400', '700'],
   variable: '--almarai',
   display: 'swap',
-  preload: true,
+  preload: false,
   // Adjusts fallback font metrics to minimise layout shift before Almarai loads
   adjustFontFallback: true,
   fallback: ['Tahoma', 'Arial', 'sans-serif'],
@@ -52,7 +53,7 @@ const editorialNew = localFont({
   ],
   variable: '--editorial',
   display: 'swap',
-  preload: true,
+  preload: false,
   // Generates size-adjust/ascent-override CSS for the fallback font so the
   // text box dimensions don't change when EditorialNew loads → eliminates CLS
   adjustFontFallback: 'Times New Roman',
@@ -65,7 +66,7 @@ const satoshi = localFont({
   ],
   variable: '--satoshi',
   display: 'swap',
-  preload: true,
+  preload: false,
   adjustFontFallback: 'Arial',
 })
 
@@ -92,7 +93,7 @@ export async function generateMetadata(
     },
     description: isAr
       ? "اكتشف نكهات بغداد الأصيلة في البحرين. 168 طبقا عراقيا: مسكوف قوزي دولمة مشاوي. فرعان في الرفاع وقلالي. اطلب الآن عبر واتساب."
-      : "Kahramana Baghdad — Bahrain's authentic Iraqi restaurant. 168+ dishes: Masgouf, grills, Quzi, Baghdadi breakfast, Iraqi shawarma. Branches in Riffa and Qallali.",
+      : "Kahramana Baghdad — Bahrain's authentic Iraqi restaurant. 168+ dishes: Masgouf, grills, Quzi, and Baghdadi breakfast. Branches in Riffa and Qallali.",
     keywords: isAr
       ? [
           "مطعم عراقي البحرين", "كهرمانة بغداد", "مسكوف البحرين",
@@ -131,7 +132,7 @@ export async function generateMetadata(
         'ar-SA': BASE,
         'ar-AE': BASE,
         'ar-KW': BASE,
-        'en':    `${BASE}/en`,
+        'en-BH': `${BASE}/en`,
         'x-default': BASE,
       },
     },
@@ -256,17 +257,31 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         {/* DNS prefetch for WhatsApp */}
         <link rel="dns-prefetch" href="https://wa.me" />
       </head>
-      <body className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col">
+      <body
+        className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col"
+        style={{
+          margin: 0,
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          minWidth: 0,
+          overflowX: 'clip',
+        }}
+      >
         <NextIntlClientProvider locale={locale} messages={clientMessages}>
           <Header />
-          <main className="flex-1 pt-20 md:pt-24">
-            {children}
+          <main className="flex-1 pt-20 md:pt-24" style={{ width: '100%', minWidth: 0 }}>
+            <div className="pb-24 md:pb-0">
+              {children}
+            </div>
           </main>
           <ConditionalFooter>
             <Footer />
           </ConditionalFooter>
           <CartDrawer />
           <CookieBanner />
+          <MobileBottomNav />
         </NextIntlClientProvider>
 
         {process.env.NEXT_PUBLIC_GA_ID && (

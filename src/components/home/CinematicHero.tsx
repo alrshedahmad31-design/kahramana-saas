@@ -17,13 +17,16 @@ export default async function CinematicHero() {
             alt={t('visualAlt')}
             fill
             priority
+            fetchPriority="high"
+            sizes="100vw"
+            unoptimized
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-brand-black/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-brand-black/40 via-transparent to-transparent" />
         </div>
 
-        <div className="relative z-10 w-full max-w-7xl mx-auto text-start">
+        <div className={`relative z-10 w-full max-w-7xl mx-auto text-start ${isRTL ? 'min-h-[360px] sm:min-h-0' : ''}`}>
           <p className="hero-eyebrow font-satoshi text-brand-gold text-xs sm:text-sm font-bold tracking-[0.3em] uppercase mb-6 opacity-80">
             {t('eyebrow')}
           </p>
@@ -37,7 +40,7 @@ export default async function CinematicHero() {
             </span>
           </h1>
 
-          <p className={`hero-desc text-brand-text/70 text-sm leading-relaxed mb-4 max-w-lg ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+          <p className={`hero-desc text-brand-text/70 text-sm leading-relaxed mb-4 max-w-lg ${isRTL ? 'font-almarai min-h-[69px] sm:min-h-0' : 'font-satoshi'}`}>
             {isRTL
               ? 'مطعم عراقي أصيل في البحرين منذ 2018 — فرعان في الرفاع وقلالي. مسگوف مشوي على الفحم، قوزي، مشاوي بغدادية، وإفطار عراقي تراثي.'
               : 'Authentic Iraqi restaurant in Bahrain since 2018 — branches in Riffa and Qallali. Charcoal Masgouf, Quzi, Iraqi grills, and Baghdadi breakfast.'}

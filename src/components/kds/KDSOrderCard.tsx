@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import type { KDSOrder } from '@/lib/supabase/custom-types'
+import { SIZE_LABELS } from '@/lib/cart'
 import { getAgeStatus, formatElapsed } from '@/lib/kds/priorities'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'
@@ -164,7 +165,7 @@ export default function KDSOrderCard({ order, isRTL, onAdvance, slugStockMap = {
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {item.selected_size && (
                       <span className="bg-brand-gold/20 border border-brand-gold/40 text-brand-gold font-satoshi font-bold text-sm px-3 py-1 rounded-lg">
-                        {item.selected_size}
+                        {SIZE_LABELS[item.selected_size]?.[isRTL ? 'ar' : 'en'] ?? item.selected_size}
                       </span>
                     )}
                     {item.selected_variant && (

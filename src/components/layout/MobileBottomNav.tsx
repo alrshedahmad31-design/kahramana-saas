@@ -1,0 +1,71 @@
+'use client'
+
+import { usePathname } from '@/i18n/navigation'
+import { useParams } from 'next/navigation'
+import { Link } from '@/i18n/navigation'
+import { UtensilsCrossed, MapPin, Star, Info, Phone } from 'lucide-react'
+
+const NAV_ITEMS = [
+  { key: 'menu',     icon: UtensilsCrossed, href: '/menu' },
+  { key: 'branches', icon: MapPin,           href: '/branches' },
+  { key: 'catering', icon: Star,             href: '/catering' },
+  { key: 'about',    icon: Info,             href: '/about' },
+  { key: 'contact',  icon: Phone,            href: '/contact' },
+] as const
+
+const EXCLUDED_PATHS = ['/dashboard', '/driver', '/login', '/set-password', '/forgot-password', '/register']
+
+export default function MobileBottomNav() {
+  const pathname = usePathname()
+  const params = useParams()
+  const locale = params?.locale as string || 'ar'
+
+  // Exclusion logic
+  const isExcluded = EXCLUDED_PATHS.some(p => pathname.includes(p))
+  if (isExcluded) return null
+
+  const isRTL = locale === 'ar'
+
+  return (
+    <nav 
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center gap-1 p-1 bg-brand-surface-2/80 backdrop-blur-md border border-brand-gold/20 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)] animate-mobile-nav"
+      aria-label={isRTL ? 'التنقل الرئيسي للهاتف' : 'Mobile Main Navigation'}
+    >
+      {NAV_ITEMS.map(({ key, icon: Icon, href }) => {
+        const isActive = pathname === href
+
+        return (
+          <Link
+            key={key}
+            href={href}
+            className={`
+              relative flex flex-col items-center justify-center w-11 h-11 rounded-full transition-all duration-300
+              ${isActive ? 'text-brand-gold' : 'text-brand-muted hover:text-brand-text'}
+              hover:scale-110 active:scale-95
+            `}
+            aria-label={getAriaLabel(key, locale)}
+          >
+            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+            
+            {/* Active Indicator */}
+            {isActive && (
+              <span className="absolute bottom-1.5 w-1 h-1 bg-brand-gold rounded-full shadow-[0_0_8px_rgba(200,146,42,0.8)]" />
+            )}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}
+
+function getAriaLabel(key: string, locale: string): string {
+  const isAr = locale === 'ar'
+  switch (key) {
+    case 'menu':     return isAr ? 'المنيو' : 'Menu'
+    case 'branches': return isAr ? 'الفروع' : 'Branches'
+    case 'catering': return isAr ? 'المناسبات' : 'Catering'
+    case 'about':    return isAr ? 'من نحن' : 'About'
+    case 'contact':  return isAr ? 'تواصل' : 'Contact'
+    default:         return ''
+  }
+}

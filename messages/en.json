@@ -562,6 +562,14 @@
       "gpsDenied": "Location access denied",
       "orderCreationFailed": "Order creation failed",
       "generic": "Error: {message}"
+    },
+    "loyalty": {
+      "heading": "Loyalty Points",
+      "balance": "You have {count} points",
+      "equivalent": "worth {amount}",
+      "saving": "You save {amount} on this order",
+      "toggle": "Toggle loyalty points",
+      "needMore": "You need {count} more points to redeem"
     }
   },
   "order": {
@@ -772,6 +780,9 @@
     "twoFactorRequired": "Two-factor authentication required",
     "staffOnly": "This page is for staff only",
     "networkError": "Connection failed — check your internet and try again",
+    "invalidCredentials": "Invalid email or password",
+    "signupError": "An error occurred during registration, please try again",
+    "rateLimited": "Too many attempts, please try again shortly",
     "forgotPassword": {
       "title": "Forgot Password",
       "description": "Enter your email and we'll send you a reset link",
@@ -863,7 +874,7 @@
   },
   "seo": {
     "homeTitle": "Kahramana Baghdad — Best Iraqi Restaurant in Bahrain | Riffa & Qallali",
-    "homeDescription": "Experience authentic Iraqi food in Bahrain at Kahramana Baghdad. Specializing in traditional Masgouf, Charcoal Grills, and Baghdadi hospitality in Riffa and Qallali. Order online or book your table.",
+    "homeDescription": "Authentic Iraqi food in Bahrain at Kahramana Baghdad. Traditional Masgouf and Charcoal Grills in Riffa and Qallali. Order online or book your table now.",
     "contactTitle": "Contact Kahramana Baghdad | Iraqi Restaurant Bahrain",
     "contactDescription": "Call our Riffa or Qallali branch, or message us on WhatsApp for delivery orders and enquiries in Bahrain.",
     "aboutTitle": "Our Story — Kahramana Baghdad | Iraqi Restaurant Bahrain",
@@ -944,7 +955,7 @@
       "m2": {
         "year": "2021",
         "title": "Growing Family",
-        "desc": "Our second branch opens in Qallali, Muharraq, bringing the flavors of Baghdad closer to more communities."
+        "desc": "Our second branch opens in Qallali, bringing the flavors of Baghdad closer to more communities."
       },
       "m3": {
         "year": "2024",

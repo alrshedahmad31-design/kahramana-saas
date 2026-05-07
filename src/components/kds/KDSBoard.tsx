@@ -66,13 +66,13 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
   const supabase = useMemo(() => createClient(), [])
 
   const fetchOrders = useCallback(async () => {
+    // D-C7: kitchen role must not receive PII (phone, address, totals, coupon).
+    // Mirror the safe column list used by the KDS server page.
     let q = supabase
       .from('orders')
       .select(`
-        id, customer_name, customer_phone, branch_id, status, notes,
-        total_bhd, created_at, updated_at, source, order_type,
-        whatsapp_sent_at, coupon_id, coupon_discount_bhd, assigned_driver_id,
-        order_items(id, name_ar, name_en, quantity, selected_size, selected_variant)
+        id, branch_id, status, order_type, source, created_at, updated_at, notes, customer_name,
+        order_items(id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes)
       `)
       .in('status', ['accepted', 'preparing', 'ready'])
       .order('created_at', { ascending: true })
@@ -115,8 +115,10 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
     const channel = supabase
       .channel('kds-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
+        // D-C7: do NOT log the raw Realtime payload — it carries the full row including PII.
         if (process.env.NODE_ENV === 'development') {
-          console.info('KDS realtime event:', payload)
+          const id = (payload.new as { id?: string } | null)?.id ?? (payload.old as { id?: string } | null)?.id
+          console.info('KDS realtime event:', payload.eventType, id)
         }
         await fetchOrders()
       })

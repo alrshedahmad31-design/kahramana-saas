@@ -40,7 +40,7 @@ export default function BranchesSection({ isRTL }: { isRTL: boolean }) {
           />
           {/* Qallali */}
           <BranchCard
-            title={isRTL ? 'قلالي — محافظة المحرق' : 'Qallali — Muharraq'}
+            title={isRTL ? 'قلالي' : 'Qallali'}
             isRTL={isRTL}
             delay={0.2}
           />

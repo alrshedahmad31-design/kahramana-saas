@@ -1,7 +1,10 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 
+const EXPIRY_SECONDS = 72 * 3600 // 72 hours
+
 function getOrderAccessSecret(): string | null {
   return (
+    process.env.ORDER_TOKEN_SECRET ||
     process.env.ORDER_ACCESS_SECRET ||
     process.env.PAYMENT_WEBHOOK_SECRET ||
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -15,23 +18,40 @@ export function createOrderAccessToken(orderId: string): string {
     throw new Error('Missing ORDER_ACCESS_SECRET or fallback signing secret')
   }
 
-  return createHmac('sha256', secret)
-    .update(orderId)
-    .digest('base64url')
+  const expires = Math.floor(Date.now() / 1000) + EXPIRY_SECONDS
+  const payload = `${orderId}:${expires}`
+  const sig = createHmac('sha256', secret).update(payload).digest('base64url')
+  return Buffer.from(`${payload}:${sig}`).toString('base64url')
 }
 
 export function verifyOrderAccessToken(orderId: string, token: string | null | undefined): boolean {
   if (!token) return false
 
   try {
-    const expected = createOrderAccessToken(orderId)
-    const expectedBuffer = Buffer.from(expected)
-    const tokenBuffer = Buffer.from(token)
+    const secret = getOrderAccessSecret()
+    if (!secret) return false
 
-    return (
-      expectedBuffer.length === tokenBuffer.length &&
-      timingSafeEqual(expectedBuffer, tokenBuffer)
-    )
+    const decoded = Buffer.from(token, 'base64url').toString('utf8')
+    const firstColon  = decoded.indexOf(':')
+    const secondColon = decoded.indexOf(':', firstColon + 1)
+    if (firstColon === -1 || secondColon === -1) return false
+
+    const tokenOrderId = decoded.slice(0, firstColon)
+    const expiresStr   = decoded.slice(firstColon + 1, secondColon)
+    const sig          = decoded.slice(secondColon + 1)
+
+    if (tokenOrderId !== orderId) return false
+
+    const expires = parseInt(expiresStr, 10)
+    if (isNaN(expires) || Math.floor(Date.now() / 1000) > expires) return false
+
+    const expectedSig = createHmac('sha256', secret)
+      .update(`${orderId}:${expiresStr}`)
+      .digest('base64url')
+
+    const expectedBuf = Buffer.from(expectedSig)
+    const actualBuf   = Buffer.from(sig)
+    return expectedBuf.length === actualBuf.length && timingSafeEqual(expectedBuf, actualBuf)
   } catch {
     return false
   }

@@ -13,6 +13,7 @@ import ValuesSection from '@/components/story/ValuesSection'
 import MilestonesSection from '@/components/story/MilestonesSection'
 import BranchesSection from '@/components/story/BranchesSection'
 import StoryCTA from '@/components/story/StoryCTA'
+import AboutReveal from '@/components/about/AboutReveal'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -25,7 +26,7 @@ export async function generateMetadata(
     title:       isAr ? 'قصة كهرمانة بغداد | مطعم عراقي أصيل تأسس 2018' : 'Kahramana Baghdad Story | Authentic Iraqi Restaurant Since 2018',
     description: isAr
       ? 'منذ 2018 يحمل كهرمانة بغداد رسالة واحدة: تقديم المطبخ البغدادي الأصيل دون تنازل. اكتشف قصة المؤسس وفلسفة الضيافة العراقية في البحرين.'
-      : 'Kahramana Baghdad — authentic Iraqi restaurant in Bahrain since 2018. Founded by Eng. Asaad Al-Jubouri, serving 168+ traditional Baghdadi dishes across two branches in Riffa and Qallali.',
+      : 'Kahramana Baghdad — authentic Iraqi restaurant in Bahrain since 2018. Serving 168+ traditional Baghdadi dishes across our Riffa and Qallali branches.',
     openGraph: {
       images: [{ url: '/assets/founder/founder.webp' }],
     },
@@ -75,35 +76,21 @@ export default async function AboutPage(
         dangerouslySetInnerHTML={{ __html: JSON.stringify(founderSchemaLd) }}
       />
 
-      {/* Cinematic Hero */}
+      {/* Cinematic Hero — appears immediately, not part of the reveal */}
       <StoryHero isRTL={isAr} />
 
-      {/* Founder Section */}
-      <FounderSection isRTL={isAr} />
-
-      {/* Narrative Text */}
-      <NarrativeSection isRTL={isAr} />
-
-      {/* Taste Philosophy */}
-      <PhilosophySection isRTL={isAr} />
-
-      {/* Engineering of Heritage */}
-      <EngineeringOfHeritageSection isRTL={isAr} />
-
-      {/* Protocol Stack */}
-      <ProtocolSection isRTL={isAr} />
-
-      {/* Core Values */}
-      <ValuesSection isRTL={isAr} />
-
-      {/* Milestones Timeline */}
-      <MilestonesSection isRTL={isAr} />
-
-      {/* Branch Presence */}
-      <BranchesSection isRTL={isAr} />
-
-      {/* Final Emotional CTA */}
-      <StoryCTA isRTL={isAr} />
+      {/* Every section below fades up as it enters the viewport */}
+      <AboutReveal>
+        <FounderSection isRTL={isAr} />
+        <NarrativeSection isRTL={isAr} />
+        <PhilosophySection isRTL={isAr} />
+        <EngineeringOfHeritageSection isRTL={isAr} />
+        <ProtocolSection isRTL={isAr} />
+        <ValuesSection isRTL={isAr} />
+        <MilestonesSection isRTL={isAr} />
+        <BranchesSection isRTL={isAr} />
+        <StoryCTA isRTL={isAr} />
+      </AboutReveal>
     </div>
   )
 }

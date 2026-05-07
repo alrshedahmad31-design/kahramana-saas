@@ -1,3 +1,4 @@
+import { SIZE_LABELS } from '@/lib/cart'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
@@ -199,7 +200,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
                     </p>
                     {(item.selected_size || item.selected_variant) && (
                       <p className="font-almarai text-xs text-brand-muted mt-0.5">
-                        {[item.selected_size, item.selected_variant].filter(Boolean).join(' · ')}
+                        {[(item.selected_size ? (SIZE_LABELS[item.selected_size]?.[isAr ? 'ar' : 'en'] ?? item.selected_size) : null), item.selected_variant].filter(Boolean).join(' · ')}
                       </p>
                     )}
                     {item.notes && (

@@ -7,6 +7,7 @@ import type { PaymentMethod, PaymentStatus } from '@/lib/supabase/custom-types'
 import PaymentStatsCards from '@/components/payments/PaymentStatsCards'
 import PaymentFilters from '@/components/payments/PaymentFilters'
 import PaymentsTable from '@/components/payments/PaymentsTable'
+import CashHandoversSection, { type CashHandoverItem } from '@/components/payments/CashHandoversSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,6 +92,28 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
 
   const { data: payments, count } = await tableQ
 
+  // Cash handovers — owner/GM only
+  let cashHandovers: CashHandoverItem[] = []
+  if (isGlobalAdmin) {
+    const { data: handoversRaw } = await supabase
+      .from('cash_handovers')
+      .select('id, driver_id, expected_amount, actual_amount, difference, manager_confirmed, order_ids, created_at, staff_basic!driver_id(name)')
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cashHandovers = (handoversRaw ?? []).map((h: any) => ({
+      id:                h.id,
+      driver_name:       h.staff_basic?.name ?? h.driver_id.slice(0, 8),
+      expected_amount:   Number(h.expected_amount),
+      actual_amount:     Number(h.actual_amount),
+      difference:        h.difference != null ? Number(h.difference) : null,
+      manager_confirmed: h.manager_confirmed,
+      order_ids:         h.order_ids ?? [],
+      created_at:        h.created_at,
+    }))
+  }
+
   return (
     <PageShell isAr={isAr} prefix={prefix} isGlobalAdmin={isGlobalAdmin}>
       <PaymentStatsCards
@@ -112,6 +135,9 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
         isAr={isAr}
         prefix={prefix}
       />
+      {isGlobalAdmin && (
+        <CashHandoversSection handovers={cashHandovers} locale={locale} isAr={isAr} />
+      )}
     </PageShell>
   )
 }

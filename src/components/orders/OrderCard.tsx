@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import StatusBadge from '@/components/dashboard/StatusBadge'
 import { BRANCHES } from '@/constants/contact'
 import type { OrderStatus } from '@/lib/supabase/custom-types'
+import { SIZE_LABELS } from '@/lib/cart'
 
 export interface OrderCardItem {
   name_ar:          string
@@ -120,7 +121,8 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
       {previewItems.length > 0 && (
         <div className="px-4 pb-3 flex flex-col gap-1">
           {previewItems.map((item, i) => {
-            const variant = [item.selected_size, item.selected_variant].filter(Boolean).join(', ')
+            const sizeLabel = item.selected_size ? (SIZE_LABELS[item.selected_size]?.ar ?? item.selected_size) : null
+            const variant = [sizeLabel, item.selected_variant].filter(Boolean).join(', ')
             return (
               <div key={i} className="flex items-baseline gap-2 text-sm">
                 <span className="font-satoshi font-black text-brand-gold tabular-nums shrink-0 w-5 text-end leading-none">

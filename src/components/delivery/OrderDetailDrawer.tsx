@@ -1,4 +1,5 @@
 'use client'
+import { SIZE_LABELS } from '@/lib/cart'
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence }        from 'framer-motion'
@@ -187,9 +188,41 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                     }
                   />
                 )}
-                {order.customer_address && (
-                  <InfoRow icon={<MapPin size={13} color={DV.muted} />} label={order.customer_address} />
-                )}
+                {order.customer_address && (() => {
+                  const embeddedUrl = order.customer_address.match(/https?:\/\/[^\s]+/)?.[0] ?? null
+                  const addrText    = embeddedUrl
+                    ? order.customer_address.replace(embeddedUrl, '').trim()
+                    : order.customer_address
+
+                  // Build maps URL: coords first, then embedded URL, then text search, then hide
+                  const mapsHref = order.customer_location
+                    ? `https://www.google.com/maps?q=${order.customer_location.lat},${order.customer_location.lng}`
+                    : embeddedUrl
+                      ?? (addrText
+                          ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addrText + ', Bahrain')}`
+                          : null)
+
+                  return (
+                    <InfoRow
+                      icon={
+                        mapsHref ? (
+                          <a href={mapsHref} target="_blank" rel="noopener noreferrer" style={{ color: DV.muted, display: 'flex' }}>
+                            <MapPin size={13} color={DV.amberLight} />
+                          </a>
+                        ) : (
+                          <MapPin size={13} color={DV.muted} />
+                        )
+                      }
+                      label={
+                        mapsHref ? (
+                          <a href={mapsHref} target="_blank" rel="noopener noreferrer" style={{ color: DV.amberLight, textDecoration: 'none' }}>
+                            {addrText || order.customer_address}
+                          </a>
+                        ) : (addrText || order.customer_address)
+                      }
+                    />
+                  )
+                })()}
                 {order.notes && (
                   <div style={{
                     marginTop:    '8px',
@@ -230,7 +263,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                             {isAr ? item.name_ar : item.name_en}
                             {item.selected_size && (
                               <span style={{ fontSize: '11px', color: DV.muted, marginInlineStart: '5px' }}>
-                                ({item.selected_size})
+                                ({SIZE_LABELS[item.selected_size]?.ar ?? item.selected_size})
                               </span>
                             )}
                           </div>

@@ -8,6 +8,14 @@ import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import type { OrderRow, OrderItemRow } from '@/lib/supabase/custom-types'
 import type { OrderStatus } from '@/lib/supabase/custom-types'
+import { sendOrderStatusUpdate } from '@/lib/email/send'
+import { BRANCHES, type BranchId } from '@/constants/contact'
+
+const EMAIL_STATUSES = ['new', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'] as const
+type EmailableStatus = typeof EMAIL_STATUSES[number]
+function isEmailableStatus(s: string): s is EmailableStatus {
+  return (EMAIL_STATUSES as readonly string[]).includes(s)
+}
 
 export type OrderDetails = OrderRow & {
   order_items: Pick<OrderItemRow,
@@ -44,7 +52,7 @@ export async function updateOrderStatus(
   const supabase = await createServiceClient()
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, branch_id, status')
+    .select('id, branch_id, status, customer_name, customer_phone')
     .eq('id', orderId)
     .single()
 
@@ -67,6 +75,24 @@ export async function updateOrderStatus(
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/orders`)
   revalidatePath(`/${locale}/dashboard/delivery`)
+
+  // Fire-and-forget status update email
+  if (order.customer_phone && isEmailableStatus(nextStatus)) {
+    const { data: profile } = await supabase
+      .from('customer_profiles')
+      .select('email, name')
+      .eq('phone', order.customer_phone)
+      .maybeSingle()
+
+    if (profile?.email) {
+      sendOrderStatusUpdate(profile.email, {
+        customerName: profile.name ?? order.customer_name ?? '',
+        orderId,
+        status: nextStatus,
+        branchName: BRANCHES[order.branch_id as BranchId]?.nameAr ?? 'كهرمانة',
+      }).catch(() => {})
+    }
+  }
 
   return { success: true, status: nextStatus }
 }

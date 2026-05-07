@@ -136,3 +136,111 @@
     @apply font-editorial italic;
   }
 }
+
+@layer components {
+  /* ── Philosophy Cards — desktop grid / mobile scroll snap ─────────────────── */
+
+  .philosophy-track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .philosophy-track {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      gap: 1rem;
+      padding-bottom: 1rem;
+    }
+
+    .philosophy-track::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .philosophy-card {
+    position: relative;
+    background: #0f0a06;
+    border: 1px solid rgba(184, 147, 90, 0.2);
+    border-radius: 2px;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 220px;
+    /* Animation driven by --visible (set to 1 by IntersectionObserver) */
+    opacity: calc(var(--visible, 0) * 1);
+    transform: translateY(calc((1 - var(--visible, 0)) * 24px));
+    transition:
+      opacity  600ms ease var(--delay, 0ms),
+      transform 600ms ease var(--delay, 0ms);
+  }
+
+  @media (max-width: 768px) {
+    .philosophy-card {
+      flex: 0 0 260px;
+      scroll-snap-align: start;
+    }
+  }
+
+  /* Gold side-line: grows from 0 to 100% height after card fades in */
+  .philosophy-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    inset-inline-end: 0;
+    width: 2px;
+    background-color: #b8935a;
+    height: calc(var(--visible, 0) * 100%);
+    transition: height 700ms cubic-bezier(0.16, 1, 0.3, 1)
+                calc(var(--delay, 0ms) + 200ms);
+  }
+
+  .philosophy-card .num {
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: #b8935a;
+    font-family: monospace;
+  }
+
+  .philosophy-card .title {
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
+    font-weight: 400;
+    color: #f5ead8;
+    line-height: 1.3;
+  }
+
+  .philosophy-card .desc {
+    font-size: 0.875rem;
+    color: #a09070;
+    line-height: 1.8;
+  }
+
+  .philosophy-card .tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: #b8935a;
+    border: 0.5px solid rgba(184, 147, 90, 0.5);
+    padding: 4px 10px;
+    display: inline-block;
+    margin-top: auto;
+    align-self: flex-start;
+  }
+
+  /* Respect reduced-motion: show cards immediately, skip transitions */
+  @media (prefers-reduced-motion: reduce) {
+    .philosophy-card {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .philosophy-card::after {
+      height: 100%;
+      transition: none;
+    }
+  }
+}

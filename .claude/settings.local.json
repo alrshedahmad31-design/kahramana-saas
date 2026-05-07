@@ -154,7 +154,10 @@
       "Bash(grep -v \"//.*purple\\\\|//.*violet\\\\|//.*indigo\")",
       "Bash(Get-Content src/app/globals.css)",
       "Bash(Select-Object -First 40)",
-      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\lib\\\\supabase\\\\types.ts\"\\); \"Size: $\\($bytes.Length\\) bytes\"; \"First 4 bytes \\(hex\\): $\\($bytes[0..3] | ForEach-Object { $_.ToString\\('X2'\\) } | Join-String -Separator ' '\\)\"; $nullCount = \\($bytes | Where-Object { $_ -eq 0 }\\).Count; \"Null bytes: $nullCount\")"
+      "PowerShell($bytes = [System.IO.File]::ReadAllBytes\\(\"C:\\\\Users\\\\Espresso\\\\Desktop\\\\kahramana-platform\\\\kahramana-Saas\\\\src\\\\lib\\\\supabase\\\\types.ts\"\\); \"Size: $\\($bytes.Length\\) bytes\"; \"First 4 bytes \\(hex\\): $\\($bytes[0..3] | ForEach-Object { $_.ToString\\('X2'\\) } | Join-String -Separator ' '\\)\"; $nullCount = \\($bytes | Where-Object { $_ -eq 0 }\\).Count; \"Null bytes: $nullCount\")",
+      "Bash(Get-ChildItem supabase/ -Name)",
+      "Bash(grep -oP \"\\(\\\\w+\\)$\")",
+      "Bash(Get-ChildItem src/app/[locale]/dashboard/delivery/ -Recurse)"
     ]
   }
 }

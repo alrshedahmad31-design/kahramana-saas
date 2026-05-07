@@ -99,7 +99,13 @@ export type KDSQueueItem = KDSQueueRow & {
   orders: Pick<OrderRow, 'customer_name' | 'notes' | 'branch_id' | 'status' | 'created_at'>;
 };
 
-export type KDSOrder = Omit<OrderRow, 'status'> & {
+// D-C7: KDSOrder is intentionally narrow — kitchen role does NOT receive PII
+// (customer_phone, delivery_address, total_bhd, coupon_*, etc).
+// Only fields actually rendered by KDSOrderCard are exposed.
+export type KDSOrder = Pick<
+  OrderRow,
+  'id' | 'branch_id' | 'order_type' | 'created_at' | 'updated_at' | 'notes' | 'customer_name' | 'source'
+> & {
   status: 'accepted' | 'preparing' | 'ready';
   order_items: Array<{
     id: string;

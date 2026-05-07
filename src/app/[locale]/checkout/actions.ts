@@ -4,12 +4,23 @@ import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { BRANCHES, type BranchId } from '@/constants/contact'
-import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
+import { MIN_REDEMPTION, MAX_REDEMPTION_RATIO, pointsToCredit } from '@/lib/loyalty/calculations'
 import { calculateDiscount } from '@/lib/coupons/calculations'
 import { createOrderAccessToken } from '@/lib/auth/order-access'
-import type { PointsTransactionInsert, CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
+import type { CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
 import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
 import { buildOrderTrackingUrl, buildPricedCheckoutWhatsAppLinks } from '@/lib/whatsapp'
+import { sendOrderConfirmation } from '@/lib/email/send'
+import { geocodeBahrainAddress } from '@/lib/utils/geocode'
+
+function normalizePhone(raw: string): string {
+  const s = raw.replace(/[\s\-().]/g, '')
+  if (s.startsWith('00973')) return '+973' + s.slice(5)
+  if (s.startsWith('+973')) return s
+  if (s.startsWith('973') && s.length === 11) return '+' + s
+  if (/^\d{8}$/.test(s)) return '+973' + s
+  return s
+}
 
 // ── Server-side input validation ──────────────────────────────────────────────
 // Sanity-check the payload before touching the DB. unit_price_bhd remains
@@ -415,35 +426,15 @@ async function fetchAndComputeCouponDiscount(
   return { discount, coupon }
 }
 
-// ── Record coupon usage (atomic: increment count + insert usage row) ──────────
-async function recordCouponUsage(
-  supabase:       TypedSupabase,
-  couponId:       string,
-  customerId:     string | null,
-  orderId:        string,
-  discountAmount: number,
-) {
-  await supabase.rpc('increment_coupon_usage', { p_coupon_id: couponId })
-
-  const usage: CouponUsageInsert = {
-    coupon_id:           couponId,
-    customer_id:         customerId,
-    order_id:            orderId,
-    discount_amount_bhd: discountAmount,
-  }
-  await supabase.from('coupon_usages').insert(usage)
-
-  await supabase
-    .from('orders')
-    .update({ coupon_id: couponId, coupon_discount_bhd: discountAmount })
-    .eq('id', orderId)
-}
-
 // ── Main action ───────────────────────────────────────────────────────────────
 
 export async function createOrderWithPoints(payload: CheckoutPayload): Promise<CheckoutResult> {
-  // Validate the entire payload server-side before touching the DB
-  const parsed = checkoutSchema.safeParse(payload)
+  // Normalize phone to +973XXXXXXXX before validation so the DB lookup matches customer_profiles
+  const normalizedPayload: CheckoutPayload = payload.order.customer_phone
+    ? { ...payload, order: { ...payload.order, customer_phone: normalizePhone(payload.order.customer_phone) } }
+    : payload
+
+  const parsed = checkoutSchema.safeParse(normalizedPayload)
   if (!parsed.success) {
     return {
       orderId: '',
@@ -454,9 +445,16 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
   }
 
   try {
-    const { order: orderData, items, clientSubtotalBhd, paymentMode, idempotency_key, confirmLowStock, locale, pointsToRedeem, coupon } = parsed.data
+    const {
+      order: orderData, items, clientSubtotalBhd, paymentMode,
+      idempotency_key, confirmLowStock, locale, pointsToRedeem, coupon,
+    } = parsed.data
+
+    const pointsDiscount = pointsToCredit(pointsToRedeem ?? 0)
 
     const supabase = await createServiceClient()
+
+    // Early idempotency check — avoids the full RPC round-trip on duplicate submission
     const existingOrder = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
     if (existingOrder) return existingOrder
 
@@ -534,109 +532,164 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       }
     }
 
-  const branchResult = await ensureCheckoutBranch(supabase, orderData.branch_id)
-  if ('error' in branchResult) {
-    return { orderId: '', finalTotal: 0, error: branchResult.error }
-  }
-
-  const resolvedOrderData = {
-    ...orderData,
-    branch_id: branchResult.branchId,
-  }
-  const orderStatus = paymentMode === 'cod' ? 'new' : 'pending_payment'
-  const expiresAt = getPaymentExpiresAt(paymentMode)
-
-  // ── Server-side total computation (ignores client total_bhd) ─────────────
-  const subtotal = repriced.subtotal
-  if (subtotal <= 0) return { orderId: '', finalTotal: 0, error: 'Invalid order total' }
-
-  // ── Coupon: re-fetch and recompute server-side ────────────────────────────
-  let serverCouponDiscount = 0
-  let resolvedCouponId: string | null = null
-
-  if (coupon) {
-    if (!customerSession) {
-      return { orderId: '', finalTotal: 0, error: 'Login required to use coupons' }
-    }
-    const result = await fetchAndComputeCouponDiscount(
-      supabase,
-      coupon.couponId,
-      subtotal,
-      customerSession.id,
-      resolvedOrderData.branch_id,
-    )
-    if ('error' in result) return { orderId: '', finalTotal: 0, error: result.error }
-    serverCouponDiscount = result.discount
-    resolvedCouponId = coupon.couponId
-  }
-
-  // ── Points path ──────────────────────────────────────────────────────────
-  if (pointsToRedeem > 0) {
-    if (pointsToRedeem < MIN_REDEMPTION) {
-      return { orderId: '', finalTotal: 0, error: `Minimum redemption is ${MIN_REDEMPTION} points` }
+    const branchResult = await ensureCheckoutBranch(supabase, orderData.branch_id)
+    if ('error' in branchResult) {
+      return { orderId: '', finalTotal: 0, error: branchResult.error }
     }
 
-    const customer = customerSession ?? await getCustomerSession()
-    if (!customer) {
-      return { orderId: '', finalTotal: 0, error: 'Customer session required to redeem points' }
-    }
-    if (pointsToRedeem > customer.points_balance) {
-      return { orderId: '', finalTotal: 0, error: 'Insufficient points balance' }
+    const resolvedOrderData = {
+      ...orderData,
+      branch_id: branchResult.branchId,
     }
 
-    const pointsDiscount = pointsToCredit(pointsToRedeem)
+    // ── Nominatim geocoding (free, server-side, silent fallback) ─────────────
+    // Only runs when the customer hasn't shared GPS manually.
+    // Converts block/road/building numbers to lat/lng so the driver's
+    // Google Maps navigation opens on the exact location.
+    if (
+      resolvedOrderData.order_type === 'delivery' &&
+      resolvedOrderData.delivery_lat == null &&
+      resolvedOrderData.delivery_lng == null
+    ) {
+      const coords = await geocodeBahrainAddress({
+        block:    resolvedOrderData.delivery_area,
+        road:     resolvedOrderData.delivery_street,
+        building: resolvedOrderData.delivery_building,
+      })
+      if (coords) {
+        resolvedOrderData.delivery_lat = coords.lat
+        resolvedOrderData.delivery_lng = coords.lng
+      }
+    }
+
+    const expiresAt = getPaymentExpiresAt(paymentMode)
+
+    // ── Server-side total computation (ignores client total_bhd) ─────────────
+    const subtotal = repriced.subtotal
+    if (subtotal <= 0) return { orderId: '', finalTotal: 0, error: 'Invalid order total' }
+
+    // ── Coupon: re-fetch and recompute server-side ────────────────────────────
+    let serverCouponDiscount = 0
+    let resolvedCouponId: string | null = null
+
+    if (coupon) {
+      if (!customerSession) {
+        return { orderId: '', finalTotal: 0, error: 'Login required to use coupons' }
+      }
+      const result = await fetchAndComputeCouponDiscount(
+        supabase,
+        coupon.couponId,
+        subtotal,
+        customerSession.id,
+        resolvedOrderData.branch_id,
+      )
+      if ('error' in result) return { orderId: '', finalTotal: 0, error: result.error }
+      serverCouponDiscount = result.discount
+      resolvedCouponId = coupon.couponId
+    }
+
+    // ── Points: early balance + cap check (RPC performs the atomic final check) ─
+    if (pointsToRedeem > 0) {
+      if (pointsToRedeem < MIN_REDEMPTION) {
+        return { orderId: '', finalTotal: 0, error: `Minimum redemption is ${MIN_REDEMPTION} points` }
+      }
+
+      // C-4: enforce 50% cap server-side before hitting the RPC
+      if (pointsDiscount > subtotal * MAX_REDEMPTION_RATIO) {
+        return { orderId: '', finalTotal: 0, error: 'Points discount cannot exceed 50% of order subtotal' }
+      }
+
+      const customer = customerSession ?? await getCustomerSession()
+      if (!customer) {
+        return { orderId: '', finalTotal: 0, error: 'Customer session required to redeem points' }
+      }
+      if (pointsToRedeem > customer.points_balance) {
+        return { orderId: '', finalTotal: 0, error: 'Insufficient points balance' }
+      }
+    }
+
     const finalTotal = Math.max(0.001, subtotal - serverCouponDiscount - pointsDiscount)
 
-    const { data: order, error: orderErr } = await supabase
-      .from('orders')
-      .insert({ ...resolvedOrderData, status: orderStatus, expires_at: expiresAt, idempotency_key, total_bhd: finalTotal })
-      .select('id')
-      .single()
+    // ── Atomic RPC ────────────────────────────────────────────────────────────
+    // Idempotency guard + coupon lock/increment + loyalty deduction +
+    // order insert + order_items insert — all in one DB transaction.
+    const { data: orderId, error: rpcError } = await supabase.rpc('rpc_create_order', {
+      p_idempotency_key:      idempotency_key,
+      p_customer_name:        resolvedOrderData.customer_name ?? '',
+      p_customer_phone:       resolvedOrderData.customer_phone ?? '',
+      p_branch_id:            resolvedOrderData.branch_id,
+      p_order_type:           resolvedOrderData.order_type,
+      p_items:                repriced.items.map((i) => ({
+        menu_item_slug:   i.menu_item_slug,
+        name_ar:          i.name_ar,
+        name_en:          i.name_en,
+        selected_size:    i.selected_size    ?? null,
+        selected_variant: i.selected_variant ?? null,
+        quantity:         i.quantity,
+        notes:            i.notes            ?? null,
+        unit_price_bhd:   i.unit_price_bhd,
+        item_total_bhd:   i.item_total_bhd,
+      })),
+      p_total_bhd:            finalTotal,
+      p_notes:                resolvedOrderData.notes            ?? undefined,
+      p_customer_notes:       resolvedOrderData.customer_notes   ?? undefined,
+      p_delivery_address:     resolvedOrderData.delivery_address  ?? undefined,
+      p_delivery_building:    resolvedOrderData.delivery_building ?? undefined,
+      p_delivery_street:      resolvedOrderData.delivery_street   ?? undefined,
+      p_delivery_area:        resolvedOrderData.delivery_area     ?? undefined,
+      p_delivery_lat:         resolvedOrderData.delivery_lat      ?? undefined,
+      p_delivery_lng:         resolvedOrderData.delivery_lng      ?? undefined,
+      p_source:               resolvedOrderData.source,
+      p_coupon_id:            resolvedCouponId    ?? undefined,
+      p_coupon_discount_bhd:  serverCouponDiscount,
+      p_points_to_redeem:     pointsToRedeem,
+      // C-1: pass customer UUID so service_role call can lock the correct profile
+      p_customer_id:          customerSession?.id ?? undefined,
+    })
 
-    if (orderErr || !order) {
-      if (orderErr?.code === '23505') {
+    if (rpcError) {
+      if (rpcError.message.includes('COUPON_INVALID')) {
+        return { orderId: '', finalTotal: 0, error: 'Coupon is no longer valid' }
+      }
+      if (rpcError.message.includes('INSUFFICIENT_POINTS')) {
+        return { orderId: '', finalTotal: 0, error: 'Insufficient points balance' }
+      }
+      if (rpcError.message.includes('POINTS_OVER_CAP')) {
+        return { orderId: '', finalTotal: 0, error: 'Points discount cannot exceed 50% of order subtotal' }
+      }
+      if (rpcError.message.includes('PRICE_MISMATCH')) {
+        return { orderId: '', finalTotal: 0, error: 'Item prices have changed, please refresh and try again' }
+      }
+      if (rpcError.message.includes('AUTH_REQUIRED')) {
+        return { orderId: '', finalTotal: 0, error: 'Authentication required' }
+      }
+      if (rpcError.code === '23505') {
         const existing = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
         if (existing) return existing
       }
-      return { orderId: '', finalTotal: 0, error: orderErr?.message ?? 'Order creation failed' }
+      return { orderId: '', finalTotal: 0, error: rpcError.message ?? 'Order creation failed' }
     }
 
-    const { error: itemsErr } = await supabase
-      .from('order_items')
-      .insert(repriced.items.map((i) => ({
-        ...i,
-        order_id: order.id,
-      })))
+    if (!orderId) return { orderId: '', finalTotal: 0, error: 'Order creation failed' }
 
-    if (itemsErr) return { orderId: '', finalTotal: 0, error: itemsErr.message }
-
-    const paymentResult = await createInitialPayment(supabase, order.id, finalTotal, paymentMode, expiresAt)
+    // ── Payment record ────────────────────────────────────────────────────────
+    const paymentResult = await createInitialPayment(supabase, orderId, finalTotal, paymentMode, expiresAt)
     if (paymentResult.error) return { orderId: '', finalTotal: 0, error: paymentResult.error }
 
-    const newBalance = customer.points_balance - pointsToRedeem
-    await supabase
-      .from('customer_profiles')
-      .update({ points_balance: newBalance })
-      .eq('id', customer.id)
-
-    const tx: PointsTransactionInsert = {
-      customer_id:      customer.id,
-      order_id:         order.id,
-      points_earned:    0,
-      points_spent:     pointsToRedeem,
-      balance_after:    newBalance,
-      transaction_type: 'redeemed',
-      description:      `Redeemed for order #${String(order.id).slice(-8).toUpperCase()}`,
-    }
-    await supabase.from('points_transactions').insert(tx)
-
-    if (resolvedCouponId) {
-      await recordCouponUsage(supabase, resolvedCouponId, customer.id, order.id, serverCouponDiscount)
+    // ── Coupon usage record (increment already committed inside the RPC) ──────
+    if (resolvedCouponId && customerSession) {
+      const usage: CouponUsageInsert = {
+        coupon_id:           resolvedCouponId,
+        customer_id:         customerSession.id,
+        order_id:            orderId,
+        discount_amount_bhd: serverCouponDiscount,
+      }
+      await supabase.from('coupon_usages').insert(usage)
     }
 
-    const accessToken = createOrderAccessToken(order.id)
+    const accessToken = createOrderAccessToken(orderId)
     const links = buildCheckoutLinks(
-      order.id,
+      orderId,
       accessToken,
       locale,
       branchResult.branchId,
@@ -646,76 +699,32 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       finalTotal,
     )
 
+    // Fire-and-forget order confirmation email (logged-in customers only)
+    if (customerSession?.email) {
+      const branch = BRANCHES[branchResult.branchId]
+      sendOrderConfirmation(customerSession.email, {
+        customerName: resolvedOrderData.customer_name ?? '',
+        orderId,
+        orderItems: repriced.items.map((i) => ({
+          name:     locale === 'ar' ? i.name_ar : i.name_en,
+          quantity: i.quantity,
+          price:    i.item_total_bhd,
+        })),
+        totalBhd:     finalTotal,
+        branchName:   locale === 'ar' ? branch.nameAr : branch.nameEn,
+        deliveryType: resolvedOrderData.order_type,
+      }).catch(() => {})
+    }
+
     return {
-      orderId: order.id,
+      orderId,
       finalTotal,
       accessToken,
       restaurantWhatsAppLink: links.restaurantLink,
-      customerWhatsAppLink: links.customerLink,
-      stock_warnings: lowStockWarnings.length > 0 ? lowStockWarnings : undefined,
+      customerWhatsAppLink:   links.customerLink,
     }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unexpected error'
+    return { orderId: '', finalTotal: 0, error: message }
   }
-
-  // ── Standard path (coupon only, no points) ────────────────────────────────
-  const finalTotal = Math.max(0.001, subtotal - serverCouponDiscount)
-
-  const { data: order, error: orderErr } = await supabase
-    .from('orders')
-    .insert({ ...resolvedOrderData, status: orderStatus, expires_at: expiresAt, idempotency_key, total_bhd: finalTotal })
-    .select('id')
-    .single()
-
-  if (orderErr || !order) {
-    if (orderErr?.code === '23505') {
-      const existing = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
-      if (existing) return existing
-    }
-    return { orderId: '', finalTotal: 0, error: orderErr?.message ?? 'Order creation failed' }
-  }
-
-  const { error: itemsErr } = await supabase
-    .from('order_items')
-    .insert(repriced.items.map((i) => ({
-      ...i,
-      order_id: order.id,
-    })))
-
-  if (itemsErr) {
-    return { orderId: '', finalTotal: 0, error: itemsErr.message }
-  }
-
-  const paymentResult = await createInitialPayment(supabase, order.id, finalTotal, paymentMode, expiresAt)
-  if (paymentResult.error) return { orderId: '', finalTotal: 0, error: paymentResult.error }
-
-  if (resolvedCouponId) {
-    await recordCouponUsage(supabase, resolvedCouponId, customerSession?.id ?? null, order.id, serverCouponDiscount)
-  }
-
-  const accessToken = createOrderAccessToken(order.id)
-  const links = buildCheckoutLinks(
-    order.id,
-    accessToken,
-    locale,
-    branchResult.branchId,
-    resolvedOrderData,
-    repriced.items,
-    subtotal,
-    finalTotal,
-  )
-
-  return {
-    orderId: order.id,
-    finalTotal,
-    accessToken,
-    restaurantWhatsAppLink: links.restaurantLink,
-    customerWhatsAppLink: links.customerLink,
-    stock_warnings: lowStockWarnings.length > 0 ? lowStockWarnings : undefined,
-  }
-} catch (err) {
-  return {
-    orderId: '',
-    finalTotal: 0,
-    error: err instanceof Error ? err.message : 'A fatal server error occurred during checkout'
-  }
-}
 }

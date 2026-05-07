@@ -3,7 +3,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { assertBranchScope, getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 
-const TOLERANCE_BD  = 0.5   // discrepancies ≤ 0.500 BD → auto-verified
+const TOLERANCE_BD  = 0.5
 
 export type ReconcileResult =
   | { success: true; status: 'verified' | 'discrepancy' }
@@ -151,10 +151,13 @@ export async function disputeCashHandover(
 
   return { success: true }
 }
+
 export async function confirmCashHandover(handoverId: string): Promise<{ success: true } | { error: string }> {
   let user
   try {
-    user = await requireDashboardRole(['owner', 'general_manager', 'branch_manager'])
+    // D-C6: segregation of duties — only owner / general_manager confirm cash handovers.
+    // Branch managers must not confirm their own drivers' handovers.
+    user = await requireDashboardRole(['owner', 'general_manager'])
   } catch (error) {
     return { error: getDashboardGuardErrorMessage(error) }
   }
@@ -162,7 +165,6 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
   const service = await createServiceClient()
   const now = new Date().toISOString()
 
-  // 1. Fetch and Verify Scope
   const { data: h, error: fetchErr } = await service
     .from('cash_handovers')
     .select('id, branch_id, manager_confirmed')
@@ -171,14 +173,13 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
 
   if (fetchErr || !h) return { error: 'Handover not found' }
   if (h.manager_confirmed) return { error: 'Already confirmed' }
-  
+
   try {
     assertBranchScope(user, h.branch_id)
   } catch (error) {
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  // 2. Update
   const { error: updateErr } = await service
     .from('cash_handovers')
     .update({
@@ -190,7 +191,6 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
 
   if (updateErr) return { error: updateErr.message }
 
-  // 3. Audit
   await service.from('audit_logs').insert({
     action: 'UPDATE',
     table_name: 'cash_handovers',

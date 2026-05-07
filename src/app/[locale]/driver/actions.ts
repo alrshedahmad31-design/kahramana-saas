@@ -4,28 +4,24 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import type { DriverLocationInsert } from '@/lib/supabase/custom-types'
 
-export type DriverActionResult = { success: true } | { success: false; error: string }
+// Roles that can perform driver actions (driver + supervising management)
+const DRIVER_ACTION_ROLES = new Set(['driver', 'branch_manager', 'general_manager', 'owner'])
+// Roles with cross-branch authority (not bound by branch_id guard)
+const CROSS_BRANCH_ROLES  = new Set(['general_manager', 'owner'])
 
-// ── Bump order status (driver flow: ready → out_for_delivery → delivered) ─────
-//
-// Security checks (in order):
-//   1. Authenticated user exists
-//   2. Role is exactly 'driver'
-//   3. Order exists and current status matches the expected value
-//   4. Order.branch_id matches the driver's branch
-//   5. For out_for_delivery → delivered: order must be assigned to this driver
+export type DriverActionResult = { success: true } | { success: false; error: string }
 
 export async function driverBumpOrder(
   orderId:       string,
   currentStatus: 'ready' | 'out_for_delivery',
-  tipBhd?:       number,   // only meaningful for the delivered transition
-  actualCollected?: number, // what the customer actually paid (cash only)
+  tipBhd?:       number,
+  actualCollected?: number,
 ): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user) {
     return { success: false, error: 'Login Required' }
   }
-  if (user.role !== 'driver') {
+  if (!user.role || !DRIVER_ACTION_ROLES.has(user.role)) {
     return { success: false, error: 'Unauthorized: Driver access only' }
   }
 
@@ -39,22 +35,20 @@ export async function driverBumpOrder(
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
 
-  // Guard against race conditions: client's view of current status must match DB
   if (order.status !== currentStatus) {
     return { success: false, error: 'Unexpected order state' }
   }
 
-  // Branch guard: driver may only act on orders in their own branch
-  if (user.branch_id && order.branch_id !== user.branch_id) {
+  // D-C3: Branch guard — owners/GMs can act across branches; branch-scoped roles must match.
+  const isCrossBranch = !!user.role && CROSS_BRANCH_ROLES.has(user.role)
+  if (!isCrossBranch && (!user.branch_id || order.branch_id !== user.branch_id)) {
     return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
 
-  // Ownership guard: when delivering, the order must already be assigned to this driver
   if (currentStatus === 'out_for_delivery' && order.assigned_driver_id !== user.id) {
     return { success: false, error: 'Unauthorized: This order is assigned to another driver' }
   }
 
-  // Arrival guard: driver must mark arrived before confirming delivery
   if (currentStatus === 'out_for_delivery' && !order.arrived_at) {
     return { success: false, error: 'Must mark as arrived before delivering' }
   }
@@ -74,18 +68,18 @@ export async function driverBumpOrder(
     orderUpdate.assigned_driver_id = user.id
     orderUpdate.picked_up_at       = now
   }
-    if (currentStatus === 'out_for_delivery') {
-      orderUpdate.delivered_at = now
-      if (tipBhd && tipBhd > 0) {
-        if (tipBhd > 50) return { success: false, error: 'Tip exceeds maximum (50 BD)' }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(orderUpdate as any).tip_bhd = Number(tipBhd.toFixed(3))
-      }
-      if (actualCollected !== undefined && actualCollected !== null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(orderUpdate as any).actual_collected = Number(actualCollected.toFixed(3))
-      }
+  if (currentStatus === 'out_for_delivery') {
+    orderUpdate.delivered_at = now
+    if (tipBhd && tipBhd > 0) {
+      if (tipBhd > 50) return { success: false, error: 'Tip exceeds maximum (50 BD)' }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(orderUpdate as any).tip_bhd = Number(tipBhd.toFixed(3))
     }
+    if (actualCollected !== undefined && actualCollected !== null) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(orderUpdate as any).actual_collected = Number(actualCollected.toFixed(3))
+    }
+  }
 
   const query = supabase
     .from('orders')
@@ -93,37 +87,30 @@ export async function driverBumpOrder(
     .eq('id', orderId)
     .eq('status', currentStatus)
 
-  // If picking up a ready order, ensure it hasn't been claimed yet
   if (currentStatus === 'ready') {
     query.is('assigned_driver_id', null)
   }
 
-  const { data: updatedRows, error } = await query
-    .select('id')
+  const { data: updatedRows, error } = await query.select('id')
 
   if (error) return { success: false, error: error.message }
-  
+
   if (!updatedRows || updatedRows.length === 0) {
-    return { 
-      success: false, 
-      error: 'Order update failed. It might have been claimed by another driver or its status changed.' 
+    return {
+      success: false,
+      error: 'Order update failed. It might have been claimed by another driver or its status changed.'
     }
   }
 
   return { success: true }
 }
 
-// ── Mark driver arrived at customer location ──────────────────────────────────
-// Sets arrived_at without changing order status — used for the intermediate
-// "I arrived" step before confirming delivery.
-
 export async function markDriverArrived(orderId: string): Promise<DriverActionResult> {
   const user = await getSession()
-  if (!user || user.role !== 'driver') return { success: false, error: 'Unauthorized' }
+  if (!user || !user.role || !DRIVER_ACTION_ROLES.has(user.role)) return { success: false, error: 'Unauthorized' }
 
-  // Verify the order is in the right state and belongs to this driver
-  const supabase = await createClient()
-  const { data: order, error: fetchError } = await supabase
+  const service = createServiceClient()
+  const { data: order, error: fetchError } = await service
     .from('orders')
     .select('id, status, assigned_driver_id')
     .eq('id', orderId)
@@ -131,34 +118,30 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
   if (order.status !== 'out_for_delivery') return { success: false, error: 'Unexpected order state' }
-  if (order.assigned_driver_id !== user.id) return { success: false, error: 'Unauthorized' }
+  // Allow the assigned driver OR a supervising manager to mark arrival
+  if ((!user.role || !CROSS_BRANCH_ROLES.has(user.role)) && order.assigned_driver_id !== user.id) {
+    return { success: false, error: 'Unauthorized' }
+  }
 
-  // Use service client so RLS edge cases don't silently drop the update
-  const service = await createServiceClient()
-  const now     = new Date().toISOString()
+  const now = new Date().toISOString()
 
   const { data: updatedRows, error } = await service
     .from('orders')
     .update({ arrived_at: now, updated_at: now })
     .eq('id', orderId)
-    .eq('assigned_driver_id', user.id)
     .select('id')
 
   if (error) return { success: false, error: error.message }
-  
+
   if (!updatedRows || updatedRows.length === 0) {
-    return { 
-      success: false, 
-      error: 'Order update failed. Status might have changed.' 
+    return {
+      success: false,
+      error: 'Order update failed. Status might have changed.'
     }
   }
 
   return { success: true }
 }
-
-// ── Post GPS location update ──────────────────────────────────────────────────
-// Role is exactly 'driver'. driver_id is always overwritten server-side so
-// a tampered payload cannot spoof another driver's position.
 
 export async function postDriverLocation(
   payload: DriverLocationInsert,
@@ -170,28 +153,22 @@ export async function postDriverLocation(
 
   const supabase = await createServiceClient()
 
-  // Use UPSERT logic with the unique constraint on (driver_id, order_id)
-  // This ensures the table only holds the LATEST location for each active delivery.
   const { error } = await supabase
     .from('driver_locations')
     .upsert(
-      [{ 
-        ...payload, 
-        driver_id: user.id, 
-        updated_at: new Date().toISOString() 
-      }], 
-      { 
-        onConflict: 'driver_id,order_id' 
+      [{
+        ...payload,
+        driver_id: user.id,
+        updated_at: new Date().toISOString()
+      }],
+      {
+        onConflict: 'driver_id,order_id'
       }
     )
 
   if (error) return { success: false, error: error.message }
   return { success: true }
 }
-
-// ── Toggle driver availability (online ↔ offline) ─────────────────────────────
-// Driver self-service check-in / check-out. Persisted to staff_basic.availability_status
-// so the dispatch board reflects accurate availability without a page refresh.
 
 export async function toggleDriverAvailability(): Promise<DriverActionResult> {
   const user = await getSession()
@@ -218,12 +195,10 @@ export async function toggleDriverAvailability(): Promise<DriverActionResult> {
 
   if (error) return { success: false, error: error.message }
 
-  // Mirror availability changes to time_entries for shift hours tracking.
   const service = await createServiceClient()
   const now     = new Date().toISOString()
 
   if (next === 'online') {
-    // Close any orphaned open entry from a previous session first.
     const { data: orphan } = await service
       .from('time_entries')
       .select('id, clock_in')
@@ -241,10 +216,8 @@ export async function toggleDriverAvailability(): Promise<DriverActionResult> {
         .eq('id', orphan.id)
     }
 
-    // Open a new time entry for this shift.
     await service.from('time_entries').insert({ staff_id: user.id, clock_in: now })
   } else {
-    // Clock-out: close the most recent open entry.
     const { data: open } = await service
       .from('time_entries')
       .select('id, clock_in')
@@ -266,25 +239,15 @@ export async function toggleDriverAvailability(): Promise<DriverActionResult> {
   return { success: true }
 }
 
-// ── Submit end-of-shift cash handover ─────────────────────────────────────────
-//
-// Security checks:
-//   1. Role is exactly 'driver'
-//   2. No duplicate handover for this driver + shift date
-//   3. Every orderID must be assigned to this driver AND be a cash order
-//   4. total_cash is computed server-side from the fetched orders — the client
-//      payload is NEVER trusted (prevents tampered totals from DevTools).
-
 export async function submitCashHandover(
   orderIds:     string[],
-  actualAmount: number, // The physical cash being handed over
+  actualAmount: number,
 ): Promise<DriverActionResult & { totalExpected?: number }> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
     return { success: false, error: 'Unauthorized' }
   }
 
-  // Authoritative total — recomputed from DB.
   let totalExpected = 0
   let branchId: string | null = null
 
@@ -296,11 +259,10 @@ export async function submitCashHandover(
       .in('id', orderIds)
 
     if (!orders || orders.length === 0) return { success: false, error: 'Orders not found' }
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const typedOrders = orders as any[]
 
-    // Branch and Ownership validation
     branchId = typedOrders[0].branch_id
     const invalid = typedOrders.filter(
       o =>
@@ -311,7 +273,6 @@ export async function submitCashHandover(
     )
     if (invalid.length > 0) return { success: false, error: 'Invalid orders in handover' }
 
-    // Sum price + tips (if any)
     totalExpected = typedOrders.reduce(
       (s: number, o) => s + Number(o.actual_collected ?? o.total_bhd) + Number(o.tip_bhd ?? 0),
       0
@@ -323,7 +284,6 @@ export async function submitCashHandover(
   const service = await createServiceClient()
   const now = new Date().toISOString()
 
-  // 1. Create the handover record
   const { data: handover, error: hErr } = await service
     .from('cash_handovers')
     .insert({
@@ -339,31 +299,28 @@ export async function submitCashHandover(
 
   if (hErr || !handover) return { success: false, error: hErr?.message ?? 'Handover failed' }
 
-  // 2. Mark orders as handed over
   const { error: updateErr } = await service
     .from('orders')
     .update({
       cash_handed_over: true,
       handed_over_at:   now,
-      cash_settlement_id: handover.id // Maintain backwards compatibility if needed
+      cash_settlement_id: handover.id
     })
     .in('id', orderIds)
     .eq('assigned_driver_id', user.id)
 
   if (updateErr) {
-    // Attempt rollback
     await service.from('cash_handovers').delete().eq('id', handover.id)
     return { success: false, error: updateErr.message }
   }
 
-  // 3. Audit Log
   await service.from('audit_logs').insert({
     action: 'INSERT',
     table_name: 'cash_handovers',
     record_id: handover.id,
     user_id: user.id,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    actor_role: user.role as any, // Cast to any to avoid staff_role mismatch if needed
+    actor_role: user.role as any,
     branch_id: branchId,
     changes: {
       order_ids: orderIds,
@@ -375,14 +332,6 @@ export async function submitCashHandover(
 
   return { success: true, totalExpected }
 }
-
-// ── Submit driver issue report ────────────────────────────────────────────────
-//
-// Security checks:
-//   1. Role is exactly 'driver'
-//   2. Order exists and is in the driver's branch
-//   3. driver_id is always overwritten server-side — payload cannot spoof another driver
-//   4. Reason must be non-empty
 
 export async function submitDriverIssue(
   orderId: string,
@@ -408,12 +357,11 @@ export async function submitDriverIssue(
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
 
-  // Branch guard
-  if (user.branch_id && order.branch_id !== user.branch_id) {
+  // D-C3: Branch guard — drivers without a branch cannot act on any order.
+  if (!user.branch_id || order.branch_id !== user.branch_id) {
     return { success: false, error: 'Unauthorized' }
   }
 
-  // Ownership guard: must be assigned to this driver or be a ready order in their branch
   const isOwnedByDriver = order.assigned_driver_id === user.id
   const isClaimable     = order.status === 'ready'
   if (!isOwnedByDriver && !isClaimable) {
@@ -441,7 +389,7 @@ export async function reportDeliveryFailure(
   notes?:  string,
 ): Promise<DriverActionResult> {
   const user = await getSession()
-  if (!user || user.role !== 'driver') {
+  if (!user || !user.role || !DRIVER_ACTION_ROLES.has(user.role)) {
     return { success: false, error: 'Unauthorized' }
   }
 
@@ -459,36 +407,34 @@ export async function reportDeliveryFailure(
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
 
-  // Branch guard
-  if (user.branch_id && order.branch_id !== user.branch_id) {
+  // D-C3: Branch guard
+  const isCrossBranchFailure = !!user.role && CROSS_BRANCH_ROLES.has(user.role)
+  if (!isCrossBranchFailure && (!user.branch_id || order.branch_id !== user.branch_id)) {
     return { success: false, error: 'Unauthorized' }
   }
 
-  // Ownership guard: must be assigned to this driver and currently on route
-  if (order.assigned_driver_id !== user.id || order.status !== 'out_for_delivery') {
+  if (!isCrossBranchFailure && (order.assigned_driver_id !== user.id || order.status !== 'out_for_delivery')) {
     return { success: false, error: 'Unauthorized' }
   }
 
   const service = await createServiceClient()
 
-  // 1. Update order status to delivery_failed and append note
   const failureNote = `[فشل التوصيل]: ${reason}${notes ? ` - ${notes}` : ''}`
-  const updatedDriverNotes = order.driver_notes 
-    ? `${order.driver_notes}\n${failureNote}` 
+  const updatedDriverNotes = order.driver_notes
+    ? `${order.driver_notes}\n${failureNote}`
     : failureNote
 
   const { error: updateError } = await service
     .from('orders')
-    .update({ 
-      status: 'delivery_failed',
+    .update({
+      status:       'delivery_failed',
       driver_notes: updatedDriverNotes,
-      updated_at: new Date().toISOString()
+      updated_at:   new Date().toISOString(),
     })
     .eq('id', orderId)
 
   if (updateError) return { success: false, error: updateError.message }
 
-  // 2. Also log in driver_order_issues for reporting
   await service
     .from('driver_order_issues')
     .insert({
@@ -500,4 +446,3 @@ export async function reportDeliveryFailure(
 
   return { success: true }
 }
-

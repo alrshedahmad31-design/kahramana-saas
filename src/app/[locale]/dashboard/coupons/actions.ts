@@ -8,30 +8,55 @@ import type { CouponInsert } from '@/lib/supabase/custom-types'
 
 export type ActionResult = { success: true } | { success: false; error: string }
 
-// ── Shared ────────────────────────────────────────────────────────────────────
+// ── Server-side coupon limits ─────────────────────────────────────────────────
+// D-C1: Hard limits enforced for non-admin roles (marketing, branch_manager).
+// owner / general_manager bypass these — they create exceptional coupons themselves.
+const COUPON_LIMITS = {
+  maxPercentageValue: 30,   // %
+  maxFixedAmountBhd:  5,    // BD
+} as const
+
+type CouponLimitedFields = Pick<
+  CouponFormData,
+  'type' | 'value' | 'max_discount_bhd' | 'usage_limit'
+>
+
+function assertCouponWithinLimits(data: CouponLimitedFields): void {
+  if (data.type === 'percentage') {
+    if (data.value > COUPON_LIMITS.maxPercentageValue) {
+      throw new Error('COUPON_VALUE_EXCEEDS_LIMIT')
+    }
+    if (!data.max_discount_bhd || data.max_discount_bhd <= 0) {
+      throw new Error('COUPON_REQUIRES_CAP')
+    }
+  }
+  if (data.type === 'fixed_amount' && data.value > COUPON_LIMITS.maxFixedAmountBhd) {
+    throw new Error('COUPON_VALUE_EXCEEDS_LIMIT')
+  }
+  if (!data.usage_limit || data.usage_limit <= 0) {
+    throw new Error('COUPON_REQUIRES_USAGE_LIMIT')
+  }
+}
 
 function revalidateCoupons(locale: string) {
   revalidatePath(`/${locale}/dashboard/coupons`)
   revalidatePath('/dashboard/coupons')
 }
 
-// ── createCoupon ──────────────────────────────────────────────────────────────
-
 export type CouponFormData = {
   code:                  string
   type:                  'percentage' | 'fixed_amount'
   value:                 number
-  description_ar:       string | null
-  description_en:       string | null
-  min_order_value_bhd:  number
-  max_discount_bhd:     number | null
-  usage_limit:          number | null
-  per_customer_limit:   number
-  valid_from:           string
-  valid_until:          string | null
-  is_active:            boolean
-  locale:               string
-  // Enterprise fields
+  description_ar:        string | null
+  description_en:        string | null
+  min_order_value_bhd:   number
+  max_discount_bhd:      number | null
+  usage_limit:           number | null
+  per_customer_limit:    number
+  valid_from:            string
+  valid_until:           string | null
+  is_active:             boolean
+  locale:                string
   campaign_name?:        string | null
   discount_type?:        string | null
   max_discount_amount?:  number | null
@@ -53,6 +78,15 @@ export async function createCoupon(data: CouponFormData): Promise<ActionResult> 
 
   const code = data.code.trim().toUpperCase()
   if (!code) return { success: false, error: 'Coupon code is required' }
+
+  const isAdmin = caller.role === 'owner' || caller.role === 'general_manager'
+  if (!isAdmin) {
+    try {
+      assertCouponWithinLimits(data)
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'COUPON_INVALID' }
+    }
+  }
 
   const supabase = await createClient()
 
@@ -92,7 +126,7 @@ export async function createCoupon(data: CouponFormData): Promise<ActionResult> 
     .select('id')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error || !created) return { success: false, error: error?.message ?? 'Failed to create coupon' }
 
   await supabase.from('audit_logs').insert({
     table_name: 'coupons',
@@ -108,8 +142,6 @@ export async function createCoupon(data: CouponFormData): Promise<ActionResult> 
   return { success: true }
 }
 
-// ── updateCoupon ──────────────────────────────────────────────────────────────
-
 export async function updateCoupon(
   id:   string,
   data: CouponFormData,
@@ -120,6 +152,15 @@ export async function updateCoupon(
 
   const code = data.code.trim().toUpperCase()
   if (!code) return { success: false, error: 'Coupon code is required' }
+
+  const isAdmin = caller.role === 'owner' || caller.role === 'general_manager'
+  if (!isAdmin) {
+    try {
+      assertCouponWithinLimits(data)
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'COUPON_INVALID' }
+    }
+  }
 
   const supabase = await createClient()
 
@@ -169,8 +210,6 @@ export async function updateCoupon(
   return { success: true }
 }
 
-// ── toggleCouponActive ────────────────────────────────────────────────────────
-
 export async function toggleCouponActive(
   id:        string,
   isActive:  boolean,
@@ -203,8 +242,6 @@ export async function toggleCouponActive(
   return { success: true }
 }
 
-// ── toggleCouponPause ─────────────────────────────────────────────────────────
-
 export async function toggleCouponPause(
   id:       string,
   isPaused: boolean,
@@ -218,7 +255,7 @@ export async function toggleCouponPause(
 
   const { error } = await supabase
     .from('coupons')
-    .update({ 
+    .update({
       paused: isPaused,
       paused_at: isPaused ? new Date().toISOString() : null
     })

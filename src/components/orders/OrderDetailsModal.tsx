@@ -7,6 +7,7 @@ import OrderStatusSelect from '@/components/dashboard/OrderStatusSelect'
 import OrderTimeline from '@/components/orders/OrderTimeline'
 import { BRANCHES } from '@/constants/contact'
 import { getOrderDetails, type OrderDetails } from '@/app/[locale]/dashboard/orders/actions'
+import { SIZE_LABELS } from '@/lib/cart'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 
 interface Props {
@@ -184,7 +185,7 @@ export default function OrderDetailsModal({ orderId, isRTL, userRole, onClose, o
                           )}
                           {(item.selected_size || item.selected_variant) && (
                             <p className="font-satoshi text-xs text-brand-muted mt-0.5">
-                              {[item.selected_size, item.selected_variant].filter(Boolean).join(' · ')}
+                              {[(item.selected_size ? (SIZE_LABELS[item.selected_size]?.ar ?? item.selected_size) : null), item.selected_variant].filter(Boolean).join(' · ')}
                             </p>
                           )}
                           <p className="font-satoshi text-xs text-brand-muted/60 tabular-nums mt-0.5">

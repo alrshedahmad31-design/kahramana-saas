@@ -63,7 +63,7 @@ const BRANCH_FAQS_AR = [
   },
   {
     question: 'أين يقع مطعم كهرمانة بغداد في قلالي؟',
-    answer: 'يقع فرعنا على الشارع الرئيسي في قلالي، المحرق، البحرين.',
+    answer: 'يقع فرعنا على الشارع الرئيسي في قلالي، البحرين.',
   },
 ]
 
@@ -86,7 +86,7 @@ const BRANCH_FAQS_EN = [
   },
   {
     question: 'Where is Kahramana Baghdad located in Qallali?',
-    answer: 'Our branch is located on Main Street, Qallali, Muharraq, Bahrain.',
+    answer: 'Our branch is located on Main Street, Qallali, Bahrain.',
   },
 ]
 

@@ -2091,6 +2091,8 @@ export type Database = {
           handed_over_at: string | null
           id: string
           idempotency_key: string | null
+          loyalty_discount_bhd: number
+          loyalty_points_redeemed: number
           notes: string | null
           order_source: string
           order_type: string | null
@@ -2137,6 +2139,8 @@ export type Database = {
           handed_over_at?: string | null
           id?: string
           idempotency_key?: string | null
+          loyalty_discount_bhd?: number
+          loyalty_points_redeemed?: number
           notes?: string | null
           order_source?: string
           order_type?: string | null
@@ -2183,6 +2187,8 @@ export type Database = {
           handed_over_at?: string | null
           id?: string
           idempotency_key?: string | null
+          loyalty_discount_bhd?: number
+          loyalty_points_redeemed?: number
           notes?: string | null
           order_source?: string
           order_type?: string | null
@@ -3841,6 +3847,7 @@ export type Database = {
         Args: { p_coupon_id: string }
         Returns: undefined
       }
+      normalize_bahrain_phone: { Args: { p: string }; Returns: string }
       process_tap_webhook: {
         Args: {
           p_event_type: string
@@ -3909,6 +3916,39 @@ export type Database = {
           shortage_required: number
         }[]
       }
+      rpc_create_customer_profile: {
+        Args: { p_email?: string; p_name?: string; p_phone: string }
+        Returns: undefined
+      }
+      rpc_create_order: {
+        Args: {
+          p_branch_id: string
+          p_coupon_discount_bhd?: number
+          p_coupon_id?: string
+          p_customer_id?: string
+          p_customer_name: string
+          p_customer_notes?: string
+          p_customer_phone: string
+          p_delivery_address?: string
+          p_delivery_area?: string
+          p_delivery_building?: string
+          p_delivery_lat?: number
+          p_delivery_lng?: number
+          p_delivery_street?: string
+          p_expires_at?: string
+          p_idempotency_key: string
+          p_items: Json
+          p_loyalty_discount_bhd?: number
+          p_notes?: string
+          p_order_type: string
+          p_payment_method?: string
+          p_points_to_redeem?: number
+          p_source?: string
+          p_status?: string
+          p_total_bhd: number
+        }
+        Returns: string
+      }
       rpc_dead_stock_report: {
         Args: { p_branch_id: string; p_days_no_move?: number }
         Returns: {
@@ -3934,6 +3974,14 @@ export type Database = {
           name_en: string
           quantity_remaining: number
           stock_value_bhd: number
+        }[]
+      }
+      rpc_get_driver_location: {
+        Args: { p_order_id: string }
+        Returns: {
+          lat: number
+          lng: number
+          updated_at: string
         }[]
       }
       rpc_inventory_count_session_approve: {

@@ -45,17 +45,11 @@ export default function OrderDriverMap({ orderId, customerLocation, isAr }: Prop
   useEffect(() => {
     setIsMounted(true)
 
-    // Initial fetch
+    // Initial fetch via ownership-verified RPC (C-6 IDOR fix)
     const fetchLoc = async () => {
-      const { data } = await supabase
-        .from('driver_locations')
-        .select('lat, lng')
-        .eq('order_id', orderId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      
-      if (data) setDriverLoc({ lat: Number(data.lat), lng: Number(data.lng) })
+      const { data } = await supabase.rpc('rpc_get_driver_location', { p_order_id: orderId })
+      const row = Array.isArray(data) ? data[0] : data
+      if (row?.lat && row?.lng) setDriverLoc({ lat: Number(row.lat), lng: Number(row.lng) })
     }
     fetchLoc()
 

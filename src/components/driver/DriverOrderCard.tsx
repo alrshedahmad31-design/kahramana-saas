@@ -1,4 +1,5 @@
 'use client'
+import { SIZE_LABELS } from '@/lib/cart'
 
 import { useState, useEffect, useMemo }                       from 'react'
 import { BRANCHES }                                           from '@/constants/contact'
@@ -850,7 +851,7 @@ export default function DriverOrderCard({
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {item.selected_size && (
                               <span className="font-satoshi text-xs text-brand-muted bg-brand-black/40 rounded px-1.5 py-0.5">
-                                {item.selected_size}
+                                {SIZE_LABELS[item.selected_size]?.ar ?? item.selected_size}
                               </span>
                             )}
                             {item.selected_variant && (

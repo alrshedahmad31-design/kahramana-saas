@@ -1,18 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocale } from 'next-intl'
-import { createClient } from '@/lib/supabase/client'
-import type { CustomerProfileInsert } from '@/lib/supabase/custom-types'
+import { useLocale, useTranslations } from 'next-intl'
 import CinematicButton from '@/components/ui/CinematicButton'
+import { loginAction, registerAction } from './actions'
 
 type Mode = 'login' | 'register'
 
-export default function AccountLoginClient() {
+export default function AccountLoginClient({ initialMode }: { initialMode?: Mode } = {}) {
   const locale = useLocale()
   const isAr   = locale === 'ar'
+  const tAuth  = useTranslations('auth')
 
-  const [mode,     setMode]     = useState<Mode>('login')
+  const [mode,     setMode]     = useState<Mode>(initialMode ?? 'login')
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [phone,    setPhone]    = useState('')
@@ -27,50 +27,31 @@ export default function AccountLoginClient() {
     setSuccess(null)
     setLoading(true)
 
-    const supabase = createClient()
-
     try {
       if (mode === 'login') {
-        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
-        if (signInErr) throw new Error(signInErr.message)
+        const result = await loginAction(email, password)
+        if (!result.success) {
+          setError(result.error === 'rate_limited'
+            ? tAuth('rateLimited')
+            : tAuth('invalidCredentials'))
+          return
+        }
         window.location.href = isAr ? '/account' : '/en/account'
 
       } else {
-        // Validate phone
-        if (!phone.match(/^(\+?973)?[0-9]{8}$/)) {
-          throw new Error(isAr ? 'رقم الهاتف غير صحيح' : 'Invalid Bahrain phone number')
+        const result = await registerAction(email, password, phone, name)
+        if (!result.success) {
+          setError(result.error === 'rate_limited'
+            ? tAuth('rateLimited')
+            : tAuth('signupError'))
+          return
         }
-
-        const { data: authData, error: signUpErr } = await supabase.auth.signUp({ email, password })
-        if (signUpErr) throw new Error(signUpErr.message)
-
-        const userId = authData.user?.id
-        if (!userId) throw new Error('Registration failed')
-
-        const profileInsert: CustomerProfileInsert = {
-          id:              userId,
-          phone:           phone.replace(/\s/g, ''),
-          name:            name.trim() || null,
-          email:           email,
-          loyalty_tier:    'bronze',
-          points_balance:  0,
-          total_spent_bhd: 0,
-          total_orders:    0,
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: profileErr } = await supabase
-          .from('customer_profiles')
-          .insert(profileInsert)
-
-        if (profileErr) throw new Error(profileErr.message)
-
         setSuccess(isAr
           ? 'تم إنشاء حسابك. تحقق من بريدك الإلكتروني لتأكيد الحساب.'
           : 'Account created. Check your email to confirm your account.')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+    } catch {
+      setError(tAuth('networkError'))
     } finally {
       setLoading(false)
     }

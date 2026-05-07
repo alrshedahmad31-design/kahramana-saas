@@ -31,8 +31,6 @@ export async function createWasteLog(formData: FormData): Promise<{ error?: stri
 
   const supabase = createServiceClient()
 
-  // W1 FIX: calculate cost server-side — never trust client-submitted cost_bhd.
-  // A malicious or buggy client could submit any value (negative, inflated, zero).
   const { data: ingredient, error: ingErr } = await supabase
     .from('ingredients')
     .select('cost_per_unit')
@@ -71,7 +69,7 @@ export async function approveWaste(id: string): Promise<{ error?: string }> {
   const supabase = createServiceClient()
   const { data: waste, error: fetchError } = await supabase
     .from('waste_log')
-    .select('branch_id')
+    .select('branch_id, reported_by')
     .eq('id', id)
     .single()
 
@@ -81,6 +79,11 @@ export async function approveWaste(id: string): Promise<{ error?: string }> {
     assertBranchScope(session, waste.branch_id)
   } catch (error) {
     return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  // D-C5: segregation of duties — the approver must not be the reporter.
+  if (waste.reported_by === session.id) {
+    return { error: 'cannot_approve_own_waste' }
   }
 
   const { error } = await supabase

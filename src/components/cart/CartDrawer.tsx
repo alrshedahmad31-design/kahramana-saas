@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from '@/i18n/navigation'
-import { useCartStore, selectTotalItems, selectCartTotalFils, selectLineTotalFils, type CartItem } from '@/lib/cart'
+import { useCartStore, selectTotalItems, selectCartTotalFils, selectLineTotalFils, SIZE_LABELS, type CartItem } from '@/lib/cart'
 import { formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
@@ -315,12 +315,17 @@ function CartItemRow({ item, isRTL, locale, labels, onRemove, onUpdateQty, onUpd
         <div className="flex flex-1 flex-col justify-between py-0.5">
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-col gap-1 text-start">
-              <h4 className={`line-clamp-1 text-sm font-black text-brand-text ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+              <h4 className={`line-clamp-2 text-sm font-black text-brand-text ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
                 {name}
+                {item.selectedSize && (
+                  <span className="font-normal text-brand-gold/70 ms-1">
+                    ({SIZE_LABELS[item.selectedSize]?.[isRTL ? 'ar' : 'en'] ?? item.selectedSize})
+                  </span>
+                )}
               </h4>
-              {(item.selectedSize || item.selectedVariant) && (
+              {item.selectedVariant && (
                 <p className="font-almarai text-[10px] font-bold uppercase tracking-wider text-brand-gold/60">
-                  {[item.selectedSize, item.selectedVariant].filter(Boolean).join(' · ')}
+                  {item.selectedVariant}
                 </p>
               )}
             </div>

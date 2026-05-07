@@ -39,7 +39,7 @@ export async function generateMetadata(
         'ar-SA':     SITE_URL,
         'ar-AE':     SITE_URL,
         'ar-KW':     SITE_URL,
-        'en':        `${SITE_URL}/en`,
+        'en-BH':     `${SITE_URL}/en`,
         'x-default': SITE_URL,
       },
     },
@@ -61,14 +61,6 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero preload: raw <img> removed Next.js auto-preload; homepage-only prevents wasteful fetches on other pages */}
-      <link
-        rel="preload"
-        as="image"
-        href="/assets/hero/hero-poster.webp"
-        fetchPriority="high"
-        type="image/webp"
-      />
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -97,7 +89,7 @@ export default async function HomePage() {
         {/* B. Feature Artifacts -- lazy + ssr:false, framer-motion out of critical bundle */}
         <FeatureArtifactsWrapper />
 
-        {/* C-E. Below-fold content stays server-rendered; animation JS removed from this path */}
+        {/* C-F. Below-fold content stays server-rendered; animation JS removed from this path */}
         <PhilosophyManifesto />
         <ProtocolStack />
         <HomeFAQ />

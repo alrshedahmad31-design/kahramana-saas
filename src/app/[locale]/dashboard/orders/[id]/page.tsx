@@ -8,6 +8,7 @@ import StatusBadge from '@/components/dashboard/StatusBadge'
 import OrderStatusSelect from '@/components/dashboard/OrderStatusSelect'
 import OrderActions from '@/components/dashboard/OrderActions'
 import type { OrderRow, OrderItemRow } from '@/lib/supabase/custom-types'
+import { SIZE_LABELS } from '@/lib/cart'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -162,7 +163,12 @@ export default async function OrderDetailPage({ params }: Props) {
                 </p>
                 {(item.selected_size || item.selected_variant) && (
                   <p className="font-satoshi text-xs text-brand-muted mt-0.5">
-                    {[item.selected_size, item.selected_variant].filter(Boolean).join(' · ')}
+                    {[
+                      item.selected_size
+                        ? (SIZE_LABELS[item.selected_size]?.[isAr ? 'ar' : 'en'] ?? item.selected_size)
+                        : null,
+                      item.selected_variant,
+                    ].filter(Boolean).join(' · ')}
                   </p>
                 )}
                 {item.notes && (

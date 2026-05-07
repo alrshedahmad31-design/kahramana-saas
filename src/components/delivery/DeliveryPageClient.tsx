@@ -9,7 +9,8 @@ import type { DeliveryOrder, Driver, DeliveryMetrics, ViewMode } from '@/lib/del
 import DeliveryHeader      from './DeliveryHeader'
 import MetricsStrip        from './MetricsStrip'
 import DeliveryKanban      from './DeliveryKanban'
-import MapView             from './MapView'
+import dynamic             from 'next/dynamic'
+const  MapView = dynamic(() => import('./MapView'), { ssr: false, loading: () => <div style={{ width: '100%', height: '100%', background: 'var(--dv-bg-card)' }} /> })
 import OrderListPanel      from './OrderListPanel'
 import DriverFleetPanel    from './DriverFleetPanel'
 import OrderDetailDrawer   from './OrderDetailDrawer'
@@ -224,7 +225,7 @@ export default function DeliveryPageClient({
   // ── Realtime: driver locations ─────────────────────────────────────────────
   useEffect(() => {
     const ch = supabase.channel('delivery-locations')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'driver_locations' },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'driver_locations' },
         (payload) => {
           const { driver_id, lat, lng } = payload.new as { driver_id: string; lat: number; lng: number }
           setDrivers(prev => prev.map(d =>

@@ -42,11 +42,23 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
   const [done,     setDone]     = useState(false)
   const [error,    setError]    = useState<string | null>(null)
 
-  const available = drivers.filter(d => d.status === 'available' || d.status === 'returning')
+  // Only show drivers who can serve the order's branch (branch_id=null means global)
+  const available = drivers.filter(d => {
+    if (d.status !== 'available' && d.status !== 'returning') return false
+    if (order?.branch_id) return d.branch_id === null || d.branch_id === order.branch_id
+    return true
+  })
 
   async function handleAssign() {
-    if (!selected || !order) return
-    if (order.order_type === 'pickup') return
+    if (!order) {
+      setError(isAr ? 'لم يتم تحديد طلب — أغلق النافذة وحاول مجدداً من الطلب المطلوب' : 'No order selected — close and retry from the specific order')
+      return
+    }
+    if (!selected) return
+    if (order.order_type === 'pickup') {
+      setError(isAr ? 'طلبات الاستلام لا تحتاج إلى سائق' : 'Pickup orders do not require a driver')
+      return
+    }
     if (order.status !== 'ready') {
       setError(isAr ? 'الطلب غير جاهز — انتظر حتى يصبح جاهزاً' : 'Order not ready — wait until it reaches "Ready" status')
       return
@@ -242,7 +254,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
           </button>
           <button
             type="button"
-            disabled={!selected || loading || done}
+            disabled={!selected || !order || loading || done}
             onClick={handleAssign}
             style={{
               flex:         2,

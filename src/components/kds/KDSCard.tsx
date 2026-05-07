@@ -1,4 +1,5 @@
 'use client'
+import { SIZE_LABELS } from '@/lib/cart'
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
@@ -103,7 +104,7 @@ export default function KDSCard({ item, onBump }: Props) {
         <div className="flex flex-col gap-0.5">
           {oi.selected_size && (
             <span className="font-satoshi text-sm text-brand-muted">
-              {oi.selected_size}
+              {SIZE_LABELS[oi.selected_size]?.ar ?? oi.selected_size}
             </span>
           )}
           {oi.selected_variant && (

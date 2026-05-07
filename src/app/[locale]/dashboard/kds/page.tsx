@@ -23,10 +23,11 @@ export default async function KDSPage({ params }: Props) {
   const supabase = await createServiceClient()
   const isGlobalKitchenViewer = user.role === 'owner' || user.role === 'general_manager'
 
+  // D-C7: explicit columns only — exclude customer PII (phone, address, total, coupon, etc.)
   let query = supabase
     .from('orders')
     .select(`
-      *,
+      id, branch_id, status, order_type, source, created_at, updated_at, notes, customer_name,
       order_items(id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes)
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
@@ -38,8 +39,6 @@ export default async function KDSPage({ params }: Props) {
 
   const { data } = await query
 
-  // ── Stock status for KDS dots ─────────────────────────────────────────────
-  // Non-blocking — if it fails, KDS still works without dots.
   const slugStockMap: Record<string, StockStatus> = {}
   try {
     const branchForStock = isGlobalKitchenViewer ? null : user.branch_id ?? null
@@ -56,7 +55,6 @@ export default async function KDSPage({ params }: Props) {
     )
     const recipeRows = (recipesRes.data ?? []) as Array<{ menu_item_slug: string; ingredient_id: string | null }>
 
-    // Group recipe rows by slug
     const slugIngredients = new Map<string, string[]>()
     for (const row of recipeRows) {
       if (!row.ingredient_id) continue
@@ -65,13 +63,11 @@ export default async function KDSPage({ params }: Props) {
       slugIngredients.set(row.menu_item_slug, existing)
     }
 
-    // Build map: for each slug in recipes, check if any ingredient is low
     for (const [slug, ingredientIds] of slugIngredients.entries()) {
       const hasLow = ingredientIds.some(id => lowStockIds.has(id))
       slugStockMap[slug] = hasLow ? 'low' : 'ok'
     }
 
-    // Collect all unique slugs from current KDS orders
     for (const order of (data ?? []) as KDSOrder[]) {
       for (const item of order.order_items ?? []) {
         if (item.menu_item_slug && !(item.menu_item_slug in slugStockMap)) {

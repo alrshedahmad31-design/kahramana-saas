@@ -222,7 +222,7 @@ export function buildOrganizationSchema(locale: Locale) {
 
   return {
     '@context': 'https://schema.org',
-    '@type': ['Restaurant', 'Organization'],
+    '@type': ['Restaurant', 'LocalBusiness', 'Organization'],
     '@id': `${SITE}/#organization`,
     name: 'كهرمانة بغداد',
     alternateName: 'Kahramana Baghdad',
@@ -261,6 +261,10 @@ export function buildOrganizationSchema(locale: Locale) {
     location: activeBranches.map((b) => ({
       '@id': `${SITE}/#branch-${b.id}`,
     })),
+    aggregateRating: BRANCH_RATINGS.riffa ? {
+      '@type': 'AggregateRating',
+      ...BRANCH_RATINGS.riffa,
+    } : undefined,
     founder: buildFounderSchema(),
   }
 }

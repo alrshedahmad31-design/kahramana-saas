@@ -33,7 +33,7 @@ const STATUS_MAP: Record<StatusFilter, OrderStatus[] | null> = {
 const KANBAN_COLS = [
   {
     key:      'new',
-    statuses: ['new', 'under_review', 'pending_payment', 'confirmed', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'completed', 'cancelled', 'payment_failed'] as OrderStatus[],
+    statuses: ['new', 'under_review', 'pending_payment', 'confirmed'] as OrderStatus[],
     labelAr:  'جديد',
     labelEn:  'New',
     borderCls: 'border-brand-error',

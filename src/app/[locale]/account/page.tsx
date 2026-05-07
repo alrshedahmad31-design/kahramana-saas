@@ -9,7 +9,7 @@ import {
   pointsToCredit,
   tierProgressToNext,
   getNextTier,
-  TIER_THRESHOLDS,
+  TIER_THRESHOLDS_LEGACY as TIER_THRESHOLDS,
   TIER_BENEFITS,
 } from '@/lib/loyalty/calculations'
 import { TIER_COLORS } from '@/lib/design-tokens'

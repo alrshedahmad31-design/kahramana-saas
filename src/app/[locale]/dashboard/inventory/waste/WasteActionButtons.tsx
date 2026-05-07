@@ -18,7 +18,16 @@ export default function WasteActionButtons({ id, locale, approveAction, rejectAc
   function handleApprove() {
     startTransition(async () => {
       const result = await approveAction(id)
-      if (result.error) setError(result.error)
+      if (result.error) {
+        // D-C5: server returns 'cannot_approve_own_waste' when reporter tries to self-approve
+        if (result.error === 'cannot_approve_own_waste') {
+          setError(isAr
+            ? 'لا يمكنك الموافقة على سجل هدر قدمته بنفسك'
+            : 'You cannot approve a waste report you submitted')
+        } else {
+          setError(result.error)
+        }
+      }
     })
   }
 

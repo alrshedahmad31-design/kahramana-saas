@@ -27,9 +27,9 @@ import { useCartStore, selectCartTotalFils, selectLineTotalFils, selectTotalItem
 import { filsToBhd, formatPrice, formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
-import TierBadge from '@/components/loyalty/TierBadge'
 import CouponInput from '@/components/checkout/CouponInput'
-import { pointsToCredit, formatPoints, MIN_REDEMPTION } from '@/lib/loyalty/calculations'
+import { LoyaltyRedemptionWidget } from '@/components/loyalty/LoyaltyRedemptionWidget'
+import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
 import { createOrderWithPoints } from '@/app/[locale]/checkout/actions'
 import { createClient } from '@/lib/supabase/client'
 import { gtag } from '@/lib/gtag'
@@ -122,7 +122,6 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const locale  = useLocale()
   const isAr    = locale === 'ar'
   const t       = useTranslations('checkout')
-  const tL      = useTranslations('loyalty')
   const router  = useRouter()
   const idempotencyKeyRef = useRef(crypto.randomUUID())
 
@@ -156,8 +155,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
   // ── Points state ──────────────────────────────────────────────────────────
   const [usePoints, setUsePoints] = useState(false)
   const availablePoints = customerProfile?.points_balance ?? 0
-  const canRedeem       = availablePoints >= MIN_REDEMPTION
-  const pointsDiscount  = usePoints && canRedeem ? pointsToCredit(availablePoints) : 0
+  const pointsDiscount = usePoints ? pointsToCredit(customerProfile?.points_balance ?? 0) : 0
 
   useEffect(() => {
     if (!customerProfile) return
@@ -1010,37 +1008,19 @@ export default function CheckoutForm({ customerProfile }: Props) {
       </SectionCard>
 
       {/* Points Redemption (only if available) */}
-      {customerProfile && canRedeem && (
-        <div className="bg-brand-surface-2 border border-brand-gold/20 rounded-2xl p-4 mb-8">
-          <div className={`flex items-center justify-between gap-4 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
-            <div className={`flex items-center gap-3 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className="w-10 h-10 rounded-full bg-brand-gold/10 flex items-center justify-center shrink-0 border border-brand-gold/20">
-                <TierBadge tier={customerProfile.loyalty_tier} size="sm" locale={locale} />
-              </div>
-              <div className={isAr ? 'text-end' : 'text-start'}>
-                <p className={`text-sm font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  {formatPoints(availablePoints)} {tL('points')}
-                </p>
-                <p className={`text-[11px] text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  ≈ {formatPrice(pointsToCredit(availablePoints), locale)}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={usePoints}
-              onClick={() => setUsePoints(!usePoints)}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-all duration-300
-                         ${usePoints ? 'bg-brand-gold' : 'bg-brand-border'}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-brand-text shadow-sm transition-transform duration-300
-                           ${usePoints ? (isAr ? '-translate-x-6' : 'translate-x-6') : (isAr ? '-translate-x-1' : 'translate-x-1')}`}
-              />
-            </button>
-          </div>
-        </div>
+      {customerProfile && customerProfile.points_balance >= MIN_REDEMPTION && (
+        <section aria-labelledby="loyalty-heading">
+          <h2 id="loyalty-heading" className="mb-3 text-sm font-semibold text-brand-text-muted">
+            {t('loyalty.heading')}
+          </h2>
+          <LoyaltyRedemptionWidget
+            pointsBalance={customerProfile.points_balance}
+            isActive={usePoints}
+            onToggle={setUsePoints}
+            locale={locale}
+            t={t}
+          />
+        </section>
       )}
 
       {/* STEP 7: Complete Your Order */}
