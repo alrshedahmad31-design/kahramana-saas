@@ -55,5 +55,6 @@ export async function createTransfer(formData: FormData): Promise<{ error?: stri
   if (insertErr) return { error: insertErr.message }
 
   revalidatePath('/dashboard/inventory/transfers')
+  revalidatePath('/en/dashboard/inventory/transfers')
   return {}
 }

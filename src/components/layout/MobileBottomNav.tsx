@@ -27,10 +27,11 @@ export default function MobileBottomNav() {
   const isRTL = locale === 'ar'
 
   return (
-    <nav 
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center gap-1 p-1 bg-brand-surface-2/80 backdrop-blur-md border border-brand-gold/20 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)] animate-mobile-nav"
-      aria-label={isRTL ? 'التنقل الرئيسي للهاتف' : 'Mobile Main Navigation'}
-    >
+    <div className="fixed bottom-0 left-0 right-0 z-[100] md:hidden flex flex-col items-center pointer-events-none pb-[calc(2rem+env(safe-area-inset-bottom,0px))] px-4">
+      <nav 
+        className="pointer-events-auto flex items-center gap-1 p-1 bg-brand-surface-2/90 backdrop-blur-md border border-brand-gold/20 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)] animate-mobile-nav"
+        aria-label={isRTL ? 'التنقل الرئيسي للهاتف' : 'Mobile Main Navigation'}
+      >
       {NAV_ITEMS.map(({ key, icon: Icon, href }) => {
         const isActive = pathname === href
 
@@ -55,7 +56,8 @@ export default function MobileBottomNav() {
         )
       })}
     </nav>
-  )
+  </div>
+)
 }
 
 function getAriaLabel(key: string, locale: string): string {

@@ -1,43 +1,40 @@
-# LAST-SESSION.md — Session 46
-> SEO Audit Fixes & Production Readiness — 2026-05-02
-
-## SUMMARY
-Applied a series of prioritized SEO fixes based on a pre-launch audit. Optimized middleware matchers, cleaned up redundant schemas, improved metadata consistency, and enhanced AI search visibility. Verified a clean production build with zero TypeScript errors.
-
-## DELIVERABLES
-
-### 🔴 CRITICAL — Infrastructure & Redirection
-- **src/middleware.ts**: Updated matcher to explicitly exclude `robots.txt` and `sitemap.*.xml` from internationalization routing.
-- **next.config.ts**: Verified `Cache-Control` strategy — static assets are `immutable`, while HTML/JSON routes use daily revalidation.
-- **src/app/[locale]/layout.tsx**: Cleaned up redundant metadata and verified removal of placeholder verification tags.
-- **src/app/page.tsx**: Created root redirect component to send all traffic to `/ar` by default.
-
-### 🟠 HIGH — Local SEO & AI Visibility
-- **RestaurantSchema.tsx**: Standardized `telephone` field to `"+97317131413"` across all entities and ensured `/ar/` prefix in branch URLs for consistency.
-- **contact.ts**: Verified capitalization of `cityEn: 'Qallali'` for proper schema mapping.
-- **public/llms.txt**: Created AI visibility manifest to help LLM-based search engines crawl and understand the restaurant's structure.
-
-### 🟡 MEDIUM — Content & Security
-- **menu/page.tsx**: Shortened Arabic and English titles to < 60 characters to prevent SERP truncation.
-- **next.config.ts**: Hardened `X-Frame-Options` to `DENY` only, ensuring no duplicate header definitions.
-
-## PHASE COMPLETION CHECKS (Session 46)
-- **tsc --noEmit**: PASS
-- **pnpm build**: PASS (856 pages generated, 0 TS errors)
-- **robots.txt**: Generated & Accessible
-- **sitemap.xml**: Generated & Accessible
-- **RTL violations**: PASS
-
-## PENDING / NEXT STEPS
-- Monitor GA4/Clarity data after the next deployment to confirm event tracking.
-- Proceed with **CC-09** (SEO copy refresh) once Ahmed approves the content tone.
-
-## COMMITS THIS SESSION
-- `fix(seo): add root redirect to /ar`
-- `fix(seo): unify branch schema telephone and urls`
-- `fix(seo): shorten menu page title to avoid truncation`
-- `feat(seo): add llms.txt for AI search visibility`
-- `fix(security): sanitize X-Frame-Options headers`
+# LAST-SESSION.md — Kahramana Baghdad
+> Session 63 Summary
+> Date: 2026-05-07
 
 ---
-*End of Session 46*
+
+## 🚀 Accomplishments
+- **Feature 1: Out of Stock Toggle (Menu Availability):**
+  - Added `is_available` column to `menu_items` table (Migration 070).
+  - Created dedicated dashboard page `/dashboard/menu` for staff to toggle availability.
+  - Implemented real-time sync between DB and Menu UI.
+- **Feature 3: Dashboard Cash Reconciliation & Shift Closing:**
+  - Added `shift_closings` table (Migration 071) with branch-aware RLS.
+  - Built shift closing interface with automated cash calculation and discrepancy tracking.
+  - Integrated with `cash_handovers` for end-to-end financial audit trail.
+- **Build Stabilization & Architecture Hardening:**
+  - **Decoupled Menu Logic:** Separated client-safe functions from server-side Supabase fetches (`menu.ts` -> `menu.server.ts`).
+  - **Type Safety:** Resolved all remaining `any` types and ESLint build-blocking warnings.
+  - **Deployment Ready:** Successfully verified with `npm run build` (Exit code: 0).
+
+---
+
+## 🛠 Tech Notes
+- **Server Boundaries:** `import 'server-only'` now protects data fetching layers.
+- **Supabase Integration:** Used `rpc` and direct table access with explicit type casting to handle JSONB and missing generated types.
+- **Migrations:** `070_menu_items_availability.sql` and `071_shift_closing.sql` pushed to remote.
+
+---
+
+## 📝 Next Steps
+- [ ] Implement Feature 2 (Driver Location History/Trace) if further granularity is needed beyond current real-time tracking.
+- [ ] Connect Tap Payment Webhook secret once account details are provided.
+- [ ] Conduct final end-to-end order flow test with a live transaction.
+- [ ] Run `/complete-phase` workflow to formally close Phase 4 once the user confirms pre-launch readiness.
+
+---
+
+## 📊 Phase State
+- **Current Phase:** 4 (Operations & Pre-launch) — *Status: Stable / Build PASS*
+- **Next Phase:** 8 (AI & Advanced Analytics) — *Status: Locked*

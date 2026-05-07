@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence }        from 'framer-motion'
 import { X, Phone, MapPin, Bike, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { createClient }                   from '@/lib/supabase/client'
+import { cancelDeliveryOrder, confirmDelivery } from '@/app/[locale]/dashboard/delivery/actions'
 import { DV, DV_STATUS, STATUS_BORDER, STATUS_LABEL } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver, OrderItem } from '@/lib/delivery/types'
 
@@ -43,6 +44,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
 
   const [items,      setItems]      = useState<OrderItem[]>([])
   const [ctaLoading, setCtaLoading] = useState<'cancel' | 'confirm' | null>(null)
+  const [ctaError,   setCtaError]   = useState<string | null>(null)
 
   // Fetch order items when order changes
   useEffect(() => {
@@ -59,24 +61,20 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
   async function handleCancel() {
     if (!order) return
     setCtaLoading('cancel')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await supabase
-      .from('orders')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', order.id)
+    setCtaError(null)
+    const res = await cancelDeliveryOrder(order.id)
     setCtaLoading(null)
+    if (!res.success) { setCtaError(res.error); return }
     onClose()
   }
 
   async function handleConfirm() {
     if (!order) return
     setCtaLoading('confirm')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await supabase
-      .from('orders')
-      .update({ status: 'delivered', updated_at: new Date().toISOString() })
-      .eq('id', order.id)
+    setCtaError(null)
+    const res = await confirmDelivery(order.id)
     setCtaLoading(null)
+    if (!res.success) { setCtaError(res.error); return }
     onClose()
   }
 
@@ -442,6 +440,29 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                 </div>
               </Section>
             </div>
+
+            {/* ── CTA Error ── */}
+            {ctaError && (
+              <div style={{
+                margin:       '0 20px',
+                padding:      '8px 12px',
+                background:   'rgba(139,32,32,0.15)',
+                border:       '1px solid rgba(139,32,32,0.4)',
+                borderRadius: '7px',
+                fontSize:     '12px',
+                color:        DV_STATUS.errorText,
+                display:      'flex',
+                alignItems:   'center',
+                justifyContent: 'space-between',
+                gap:          '8px',
+              }}>
+                <span>{ctaError}</span>
+                <button type="button" onClick={() => setCtaError(null)}
+                  style={{ background: 'none', border: 'none', color: DV_STATUS.errorText, cursor: 'pointer', padding: 0 }}>
+                  ×
+                </button>
+              </div>
+            )}
 
             {/* ── Footer CTAs ── */}
             <div style={{

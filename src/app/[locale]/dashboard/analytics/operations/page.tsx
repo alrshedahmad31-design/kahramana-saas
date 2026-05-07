@@ -24,7 +24,7 @@ export default async function OperationsAnalyticsPage({ params, searchParams }: 
   const isAr       = locale === 'ar'
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessAnalytics(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
   const range    = buildDateRange(sp.range ?? '7d', sp.from, sp.to)

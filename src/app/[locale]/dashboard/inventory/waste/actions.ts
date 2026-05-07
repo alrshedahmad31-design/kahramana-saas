@@ -56,6 +56,7 @@ export async function createWasteLog(formData: FormData): Promise<{ error?: stri
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard/inventory/waste')
+  revalidatePath('/en/dashboard/inventory/waste')
   return {}
 }
 
@@ -98,7 +99,8 @@ export async function approveWaste(id: string): Promise<{ error?: string }> {
 
   if (error) return { error: error.message }
   revalidatePath('/dashboard/inventory/waste')
-  revalidatePath(`/ar/dashboard/inventory/waste/${id}`)
+  revalidatePath('/en/dashboard/inventory/waste')
+  revalidatePath(`/dashboard/inventory/waste/${id}`)
   revalidatePath(`/en/dashboard/inventory/waste/${id}`)
   return {}
 }
@@ -138,7 +140,8 @@ export async function rejectWaste(id: string, rejection_note: string): Promise<{
 
   if (error) return { error: error.message }
   revalidatePath('/dashboard/inventory/waste')
-  revalidatePath(`/ar/dashboard/inventory/waste/${id}`)
+  revalidatePath('/en/dashboard/inventory/waste')
+  revalidatePath(`/dashboard/inventory/waste/${id}`)
   revalidatePath(`/en/dashboard/inventory/waste/${id}`)
   return {}
 }

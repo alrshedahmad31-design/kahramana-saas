@@ -14,7 +14,7 @@ export default async function StaffPage({ params }: Props) {
   const { locale } = await params
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
 
   if (!canAccessStaffPage(user)) {
     redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')

@@ -20,7 +20,7 @@ export default async function DashboardLayout({ children, params }: Props) {
   const isAr = locale === 'ar'
 
   if (!user) {
-    redirect(locale === 'en' ? '/en/login' : '/login')
+    redirect(`/${locale}/login`)
   }
 
   // Defense-in-depth: drivers must never land on any dashboard route.

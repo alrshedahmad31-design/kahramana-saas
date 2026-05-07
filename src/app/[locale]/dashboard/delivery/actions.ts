@@ -141,6 +141,91 @@ export async function unassignDriver(orderId: string): Promise<DispatchActionRes
   return { success: true }
 }
 
+export async function cancelDeliveryOrder(orderId: string): Promise<DispatchActionResult> {
+  const caller = await getSession()
+  if (!caller || !caller.role || !MANAGER_ROLES.has(caller.role)) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const supabase = await createServiceClient()
+  const { data: order } = await supabase.from('orders').select('branch_id, status').eq('id', orderId).single()
+  if (!order) return { success: false, error: 'Order not found' }
+
+  if (!GLOBAL_ADMIN_ROLES.has(caller.role) && caller.branch_id !== order.branch_id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const CANCELLABLE = new Set(['accepted', 'preparing', 'ready', 'out_for_delivery'])
+  if (!CANCELLABLE.has(order.status)) {
+    return { success: false, error: 'Order cannot be cancelled at this stage' }
+  }
+
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('orders')
+    .update({ status: 'cancelled', updated_at: now })
+    .eq('id', orderId)
+
+  if (error) return { success: false, error: error.message }
+
+  await supabase.from('audit_logs').insert({
+    table_name: 'orders',
+    action:     'UPDATE',
+    user_id:    caller.id,
+    record_id:  orderId,
+    changes:    { operation: 'cancel', previous_status: order.status, new_status: 'cancelled' },
+    branch_id:  order.branch_id,
+    actor_role: caller.role,
+  })
+
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/delivery`)
+  revalidatePath(`/${locale}/dashboard/orders`)
+  return { success: true }
+}
+
+export async function confirmDelivery(orderId: string): Promise<DispatchActionResult> {
+  const caller = await getSession()
+  if (!caller || !caller.role || !MANAGER_ROLES.has(caller.role)) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const supabase = await createServiceClient()
+  const { data: order } = await supabase.from('orders').select('branch_id, status').eq('id', orderId).single()
+  if (!order) return { success: false, error: 'Order not found' }
+
+  if (!GLOBAL_ADMIN_ROLES.has(caller.role) && caller.branch_id !== order.branch_id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  if (order.status !== 'out_for_delivery') {
+    return { success: false, error: 'Order is not out for delivery' }
+  }
+
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('orders')
+    .update({ status: 'delivered', delivered_at: now, updated_at: now })
+    .eq('id', orderId)
+
+  if (error) return { success: false, error: error.message }
+
+  await supabase.from('audit_logs').insert({
+    table_name: 'orders',
+    action:     'UPDATE',
+    user_id:    caller.id,
+    record_id:  orderId,
+    changes:    { operation: 'confirm_delivery', new_status: 'delivered' },
+    branch_id:  order.branch_id,
+    actor_role: caller.role,
+  })
+
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/delivery`)
+  revalidatePath(`/${locale}/dashboard/orders`)
+  return { success: true }
+}
+
 // D-C4: reassignDriver validates the new driver same way assignDriverToOrder does
 export async function reassignDriver(orderId: string, driverId: string): Promise<DispatchActionResult> {
   const caller = await getSession()

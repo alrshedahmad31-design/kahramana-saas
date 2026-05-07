@@ -23,7 +23,7 @@ export default async function MarketingAnalyticsPage({ params, searchParams }: P
   const isAr       = locale === 'ar'
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessAnalytics(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
   const range    = buildDateRange(sp.range ?? '30d', sp.from, sp.to)

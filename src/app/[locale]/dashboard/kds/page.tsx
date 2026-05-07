@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth/session'
 import { canAccessKDS } from '@/lib/auth/rbac'
 import { createServiceClient } from '@/lib/supabase/server'
 import KDSBoard from '@/components/kds/KDSBoard'
-import type { KDSOrder, LowStockAlert } from '@/lib/supabase/custom-types'
+import type { KDSOrder, LowStockAlert, KDSStation } from '@/lib/supabase/custom-types'
 
 type StockStatus = 'ok' | 'low' | 'unmapped'
 
@@ -17,7 +17,7 @@ export default async function KDSPage({ params }: Props) {
   const { locale } = await params
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessKDS(user)) redirect(`/${locale}/dashboard`)
 
   const supabase = await createServiceClient()
@@ -38,6 +38,21 @@ export default async function KDSPage({ params }: Props) {
   }
 
   const { data } = await query
+
+  // Build slug → station map from menu_items_sync table
+  const slugStationMap: Record<string, KDSStation> = {}
+  try {
+    const { data: syncRows } = await supabase
+      .from('menu_items_sync')
+      .select('slug, station')
+    for (const row of syncRows ?? []) {
+      if (row.slug && row.station) {
+        slugStationMap[row.slug] = row.station
+      }
+    }
+  } catch {
+    // Non-critical — station filter falls back to showing all
+  }
 
   const slugStockMap: Record<string, StockStatus> = {}
   try {
@@ -87,6 +102,7 @@ export default async function KDSPage({ params }: Props) {
         branchId={isGlobalKitchenViewer ? null : user.branch_id ?? null}
         userRole={user.role}
         slugStockMap={slugStockMap}
+        slugStationMap={slugStationMap}
       />
     </div>
   )

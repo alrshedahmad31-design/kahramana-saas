@@ -14,7 +14,7 @@ interface Props {
 export default async function DriverPage({ params }: Props) {
   const { locale } = await params
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
 
   // Only drivers (and supervising managers) may access this page.
   if (!canAccessDriver(user)) {

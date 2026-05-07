@@ -115,11 +115,11 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
         }}>
           <div>
             <div style={{ fontSize: '16px', fontWeight: 700, color: DV.text }}>
-              تعيين سائق
+              {isAr ? 'تعيين سائق' : 'Assign Driver'}
             </div>
             {order && (
               <div style={{ fontSize: '12px', color: DV.muted, marginTop: '2px' }}>
-                طلب #{order.order_number} · {order.customer_name ?? '—'}
+                {isAr ? 'طلب' : 'Order'} #{order.order_number} · {order.customer_name ?? '—'}
               </div>
             )}
           </div>
@@ -141,7 +141,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
         <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
           {available.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: DV.muted, fontSize: '14px' }}>
-              لا يوجد سائقون متاحون
+              {isAr ? 'لا يوجد سائقون متاحون' : 'No drivers available'}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -195,11 +195,11 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
                         </span>
                         {driver.location && (
                           <span style={{ fontSize: '11px', color: DV.muted, display: 'flex', alignItems: 'center', gap: '2px' }}>
-                            <MapPin size={10} /> موقع متاح
+                            <MapPin size={10} /> {isAr ? 'موقع متاح' : 'Located'}
                           </span>
                         )}
                         <span style={{ fontSize: '11px', color: DV.muted, marginInlineStart: 'auto' }}>
-                          {driver.completed_today} توصيلة
+                          {driver.completed_today} {isAr ? 'توصيلة' : 'deliveries'}
                         </span>
                       </div>
                     </div>
@@ -250,7 +250,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
               fontFamily:   'IBM Plex Sans Arabic, sans-serif',
             }}
           >
-            إلغاء
+            {isAr ? 'إلغاء' : 'Cancel'}
           </button>
           <button
             type="button"
@@ -275,11 +275,11 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
             }}
           >
             {done ? (
-              <><Check size={15} /> تم التعيين</>
+              <><Check size={15} /> {isAr ? 'تم التعيين' : 'Assigned!'}</>
             ) : loading ? (
-              'جاري...'
+              isAr ? 'جاري...' : 'Assigning...'
             ) : (
-              'تأكيد التعيين'
+              isAr ? 'تأكيد التعيين' : 'Confirm Assignment'
             )}
           </button>
           </div>

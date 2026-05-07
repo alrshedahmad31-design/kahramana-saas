@@ -23,7 +23,7 @@ interface Props { params: Promise<{ locale: string }> }
 export default async function DashboardHomePage({ params }: Props) {
   const { locale } = await params
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
 
   const isAr    = locale === 'ar'
   const prefix  = locale === 'en' ? '/en' : ''

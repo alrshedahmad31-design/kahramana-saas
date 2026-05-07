@@ -20,7 +20,7 @@ export default async function StaffProfilePage({ params }: Props) {
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
 
   const supabase = await createClient()
 

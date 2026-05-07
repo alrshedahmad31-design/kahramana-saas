@@ -16,7 +16,7 @@ export default async function DriverLayout({ children, params }: Props) {
   const isAr = locale === 'ar'
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessDriver(user)) redirect(`/${locale}/dashboard`)
 
   // Managers and above get the full dashboard sidebar so they don't lose navigation.

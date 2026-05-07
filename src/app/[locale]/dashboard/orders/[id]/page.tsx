@@ -22,7 +22,7 @@ export default async function OrderDetailPage({ params }: Props) {
   if (!UUID_RE.test(id)) notFound()
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
 
   const t  = await getTranslations('dashboard')
   const tS = await getTranslations('order.status')

@@ -6,7 +6,7 @@ import { advanceOrderStatus } from '@/app/[locale]/dashboard/kds/actions'
 import { playBell } from '@/lib/audio/bells'
 import { useKitchenAlert } from '@/hooks/useKitchenAlert'
 import KDSColumn from './KDSColumn'
-import type { KDSOrder, StaffRole } from '@/lib/supabase/custom-types'
+import type { KDSOrder, StaffRole, KDSStation } from '@/lib/supabase/custom-types'
 import { BRANCH_LIST } from '@/constants/contact'
 
 type ActiveStatus = 'accepted' | 'preparing' | 'ready'
@@ -16,11 +16,12 @@ type StationFilter = 'all' | 'grill' | 'fry' | 'salads' | 'desserts' | 'drinks'
 type StockStatus = 'ok' | 'low' | 'unmapped'
 
 interface Props {
-  initialOrders: KDSOrder[]
-  locale:        string
-  branchId:      string | null
-  userRole:      StaffRole | null
-  slugStockMap?: Record<string, StockStatus>
+  initialOrders:  KDSOrder[]
+  locale:         string
+  branchId:       string | null
+  userRole:       StaffRole | null
+  slugStockMap?:  Record<string, StockStatus>
+  slugStationMap?: Record<string, KDSStation>
 }
 
 function formatClock(): string {
@@ -42,7 +43,7 @@ const STATIONS: { id: StationFilter; labelEn: string; labelAr: string; icon: str
   { id: 'drinks',   labelEn: 'Drinks',   labelAr: 'المشروبات', icon: '🥤' },
 ]
 
-export default function KDSBoard({ initialOrders, locale, branchId, userRole, slugStockMap = {} }: Props) {
+export default function KDSBoard({ initialOrders, locale, branchId, userRole, slugStockMap = {}, slugStationMap = {} }: Props) {
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
   const canSwitchBranches = userRole === 'owner' || userRole === 'general_manager'
@@ -158,9 +159,19 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
   }
 
   // Branch filter (client-side) — global roles can switch branches.
-  const filteredOrders = viewBranch
+  const branchFiltered = viewBranch
     ? orders.filter((o) => o.branch_id === viewBranch)
     : orders
+
+  // Station filter — an order is visible if at least one of its items maps to the active station.
+  // Falls back to showing all when slugStationMap is empty (no data in menu_items_sync).
+  const filteredOrders = activeStation === 'all' || Object.keys(slugStationMap).length === 0
+    ? branchFiltered
+    : branchFiltered.filter((o) =>
+        (o.order_items ?? []).some(
+          (item) => item.menu_item_slug && slugStationMap[item.menu_item_slug] === activeStation
+        )
+      )
 
   const accepted  = filteredOrders.filter((o) => o.status === 'accepted')
   const preparing = filteredOrders.filter((o) => o.status === 'preparing')
@@ -222,6 +233,15 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
           )}
           {STATIONS.map((s) => {
             const active = activeStation === s.id
+            const stationCount = s.id === 'all'
+              ? orders.length
+              : Object.keys(slugStationMap).length > 0
+                ? orders.filter((o) =>
+                    (o.order_items ?? []).some(
+                      (item) => item.menu_item_slug && slugStationMap[item.menu_item_slug] === s.id
+                    )
+                  ).length
+                : 0
             return (
               <button
                 key={s.id}
@@ -236,6 +256,12 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
               >
                 <span>{s.icon}</span>
                 <span>{isAr ? s.labelAr : s.labelEn}</span>
+                {stationCount > 0 && (
+                  <span className={`text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center tabular-nums
+                    ${active ? 'bg-brand-black/20 text-brand-black' : 'bg-brand-error text-white'}`}>
+                    {stationCount}
+                  </span>
+                )}
               </button>
             )
           })}
@@ -255,7 +281,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
             aria-label={muted ? (isAr ? 'تشغيل صوت التنبيهات' : 'Unmute kitchen alerts') : (isAr ? 'كتم صوت التنبيهات' : 'Mute kitchen alerts')}
             className="w-11 h-11 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
           >
-            {muted ? <MuteOnIcon /> : <MuteOffIcon />}
+            {muted ? <KDSMuteOnIcon /> : <KDSMuteOffIcon />}
           </button>
 
           {/* Fullscreen */}
@@ -266,7 +292,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
             aria-label={fullscreen ? (isAr ? 'الخروج من ملء الشاشة' : 'Exit fullscreen') : (isAr ? 'فتح ملء الشاشة' : 'Enter fullscreen')}
             className="w-11 h-11 flex items-center justify-center rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold transition-colors duration-150"
           >
-            {fullscreen ? <ShrinkIcon /> : <ExpandIcon />}
+            {fullscreen ? <KDSShrinkIcon /> : <KDSExpandIcon />}
           </button>
         </div>
       </header>
@@ -303,7 +329,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
 
 // ── Inline icons ──────────────────────────────────────────────────────────────
 
-function MuteOffIcon() {
+function KDSMuteOffIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6l-4 4H5v4h3l4 4V6zM18.364 5.636a9 9 0 010 12.728" />
@@ -311,7 +337,7 @@ function MuteOffIcon() {
   )
 }
 
-function MuteOnIcon() {
+function KDSMuteOnIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l-4-4m0 4l4-4" />
@@ -319,7 +345,7 @@ function MuteOnIcon() {
   )
 }
 
-function ExpandIcon() {
+function KDSExpandIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5M20 8V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5M20 16v4m0 0h-4m4 0l-5-5" />
@@ -327,7 +353,7 @@ function ExpandIcon() {
   )
 }
 
-function ShrinkIcon() {
+function KDSShrinkIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l-5 5m0-5h5V4M15 9l5 5m0-5h-5V4M9 15l-5-5m0 5h5v5M15 15l5-5m0 5h-5v5" />

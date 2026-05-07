@@ -84,6 +84,7 @@ export default function DeliveryPageClient({
   const [showDispatch, setShowDispatch] = useState(false)
   const [dispatchOrder,setDispatchOrder]= useState<DeliveryOrder | null>(null)
   const [hoveredId,    setHoveredId]    = useState<string | null>(null)
+  const [actionError,  setActionError]  = useState<string | null>(null)
   const prevCountRef   = useRef(initialOrders.length)
 
   const selectedOrder = useMemo(
@@ -274,22 +275,24 @@ export default function DeliveryPageClient({
   }
 
   async function handleUnassign(orderId: string) {
+    setActionError(null)
     const res = await unassignDriver(orderId)
     if (res.success) {
       await refreshOrders()
       await refreshDrivers()
     } else {
-      alert(res.error)
+      setActionError(res.error ?? (isAr ? 'فشل إلغاء التعيين' : 'Failed to unassign driver'))
     }
   }
 
   async function handleCancel(orderId: string, reason: string) {
+    setActionError(null)
     const res = await updateOrderWithReason(orderId, reason, 'cancelled')
     if (res.success) {
       await refreshOrders()
       await refreshDrivers()
     } else {
-      alert(res.error)
+      setActionError(res.error ?? (isAr ? 'فشل إلغاء الطلب' : 'Failed to cancel order'))
     }
   }
 
@@ -307,6 +310,28 @@ export default function DeliveryPageClient({
         flexDirection:'column',
       }}
     >
+
+      {actionError && (
+        <div style={{
+          background: 'rgba(239,68,68,0.1)',
+          borderBottom: '1px solid rgba(239,68,68,0.4)',
+          color: '#fca5a5',
+          padding: '10px 20px',
+          fontSize: '13px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+        }}>
+          <span>{actionError}</span>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}
+            aria-label={isAr ? 'إغلاق' : 'Dismiss'}
+          >×</button>
+        </div>
+      )}
       <DeliveryHeader
         view={view}
         onViewChange={setView}

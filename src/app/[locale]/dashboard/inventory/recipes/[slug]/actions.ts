@@ -58,5 +58,6 @@ export async function upsertRecipe(
 
   revalidatePath(`/dashboard/inventory/recipes/${slug}`)
   revalidatePath('/dashboard/inventory/recipes')
+  revalidatePath('/en/dashboard/inventory/recipes')
   return {}
 }

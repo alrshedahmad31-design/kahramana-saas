@@ -86,6 +86,7 @@ export async function upsertIngredient(formData: FormData): Promise<{ error?: st
   }
 
   revalidatePath('/dashboard/inventory/ingredients')
+  revalidatePath('/en/dashboard/inventory/ingredients')
   revalidatePath(`/dashboard/inventory/ingredients/${ingredientId}`)
   return { id: ingredientId ?? undefined }
 }
@@ -103,5 +104,6 @@ export async function deleteIngredient(id: string): Promise<{ error?: string }> 
     .eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/dashboard/inventory/ingredients')
+  revalidatePath('/en/dashboard/inventory/ingredients')
   return {}
 }

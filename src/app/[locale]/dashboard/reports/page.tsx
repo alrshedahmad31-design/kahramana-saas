@@ -92,7 +92,7 @@ export default async function ReportsPage({ params, searchParams }: Props) {
   const currency   = isAr ? 'د.ب' : 'BD'
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessReports(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
   const isGlobal   = user.role === 'owner' || user.role === 'general_manager'

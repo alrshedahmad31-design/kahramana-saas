@@ -25,7 +25,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
   const prefix     = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessPayments(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'

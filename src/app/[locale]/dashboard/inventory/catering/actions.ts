@@ -243,7 +243,7 @@ export async function confirmCateringOrder(
   if (error) return { poId: null, error: error.message }
 
   revalidateCatering(parsed.data.orderId)
-  revalidatePath('/ar/dashboard/inventory/purchases')
+  revalidatePath('/dashboard/inventory/purchases')
   revalidatePath('/en/dashboard/inventory/purchases')
 
   return { poId: data ?? null }

@@ -92,9 +92,9 @@ export default function StaffTable({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-border">
-                  {[t('name'), t('role'), t('branch'), t('status'), ''].map((h, i) => (
+                  {[t('name'), t('role'), t('branch'), t('status'), 'actions'].map((h) => (
                     <th
-                      key={i}
+                      key={h}
                       className="px-4 py-3 text-start font-satoshi font-medium text-brand-muted
                                  text-xs uppercase tracking-wider whitespace-nowrap"
                     >

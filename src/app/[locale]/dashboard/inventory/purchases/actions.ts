@@ -69,6 +69,7 @@ export async function createPurchaseOrder(
   }
 
   revalidatePath('/dashboard/inventory/purchases')
+  revalidatePath('/en/dashboard/inventory/purchases')
   return { id: po.id }
 }
 
@@ -108,6 +109,7 @@ export async function updatePOStatus(
 
   if (error) return { error: error.message }
   revalidatePath('/dashboard/inventory/purchases')
+  revalidatePath('/en/dashboard/inventory/purchases')
   return {}
 }
 
@@ -144,5 +146,6 @@ export async function upsertSupplier(
   }
 
   revalidatePath('/dashboard/inventory/purchases/suppliers')
+  revalidatePath('/en/dashboard/inventory/purchases/suppliers')
   return {}
 }

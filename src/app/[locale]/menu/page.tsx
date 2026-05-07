@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { getMenuData, getFeaturedSlugs, type LocaleCode } from '@/lib/menu'
+import { getMenuData, getFeaturedSlugs } from '@/lib/menu.server'
+import { type LocaleCode } from '@/lib/menu'
 import MenuPageClient from '@/components/menu/MenuPageClient'
 
 import { SITE_URL } from '@/constants/contact'

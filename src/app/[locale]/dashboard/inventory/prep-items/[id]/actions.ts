@@ -47,6 +47,7 @@ export async function upsertPrepItem(formData: FormData): Promise<{ error?: stri
   }
 
   revalidatePath('/dashboard/inventory/prep-items')
+  revalidatePath('/en/dashboard/inventory/prep-items')
   revalidatePath(`/dashboard/inventory/prep-items/${prepId}`)
   return { id: prepId ?? undefined }
 }

@@ -204,7 +204,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
     return { success: false, error: 'PIN must be exactly 4 digits' }
   }
 
-  const service = createServiceClient()
+  const service = await createServiceClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const authAdmin = (service.auth as unknown as { admin: AuthAdmin }).admin
 
@@ -287,7 +287,7 @@ export async function resendStaffInvitation(staffId: string): Promise<ActionResu
     return { success: false, error: getDashboardGuardErrorMessage(error) }
   }
 
-  const service = createServiceClient()
+  const service = await createServiceClient()
   const { data: staff, error: staffError } = await service
     .from('staff_basic')
     .select('id, role, branch_id')

@@ -244,3 +244,13 @@
     }
   }
 }
+
+/* ── Mobile Nav Animations ─────────────────────────────────────────────────── */
+@keyframes slideUp {
+  from { transform: translateY(1.5rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-mobile-nav {
+  animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}

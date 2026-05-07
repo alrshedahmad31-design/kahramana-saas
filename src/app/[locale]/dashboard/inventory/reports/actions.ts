@@ -37,5 +37,6 @@ export async function callUpdateAbcClassification(): Promise<{ error?: string }>
   if (error) return { error: error.message }
   const { revalidatePath } = await import('next/cache')
   revalidatePath('/dashboard/inventory/reports/abc-analysis')
+  revalidatePath('/en/dashboard/inventory/reports/abc-analysis')
   return {}
 }

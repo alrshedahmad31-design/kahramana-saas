@@ -43,7 +43,7 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
   const isAr       = locale === 'ar'
 
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessAnalytics(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
   const range        = buildDateRange(sp.range ?? '7d', sp.from, sp.to)
@@ -56,7 +56,7 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getDailySales(range.from, range.to, branchId),
     getTopItems(range.from, range.to, 10, branchId),
-    getHourlyDistribution(),
+    getHourlyDistribution(range.from, range.to, branchId),
     getBranchSummaries(range.from, range.to),
     getSecondaryMetrics(range.from, range.to, branchId),
   ])

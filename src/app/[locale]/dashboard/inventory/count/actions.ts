@@ -36,6 +36,7 @@ export async function submitCountSession(
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard/inventory/count')
+  revalidatePath('/en/dashboard/inventory/count')
   return {}
 }
 
@@ -65,5 +66,6 @@ export async function approveCountSession(
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard/inventory/count')
+  revalidatePath('/en/dashboard/inventory/count')
   return {}
 }

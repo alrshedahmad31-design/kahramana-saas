@@ -1,5 +1,6 @@
 import menuData from '@/data/menu.json'
 import featuredSlugsData from '@/data/featured.json'
+import { createClient } from '@/lib/supabase/server'
 
 export type LocaleCode = 'ar' | 'en'
 
@@ -228,7 +229,7 @@ const CATEGORY_PRESENTATION: Record<
   },
 }
 
-function slugify(value: string): string {
+export function slugify(value: string): string {
   return value
     .trim()
     .toLowerCase()
@@ -237,13 +238,11 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-// const EXCLUDED_CATEGORY_SLUGS: string[] = []
-
-function getRawCategories(): MenuCategory[] {
+export function getRawCategories(): MenuCategory[] {
   return menuData as MenuCategory[]
 }
 
-function getCategoryPresentation(category: MenuCategory) {
+export function getCategoryPresentation(category: MenuCategory) {
   const slug = slugify(category.category.en)
   return CATEGORY_PRESENTATION[slug] ?? {
     order: Number.MAX_SAFE_INTEGER,
@@ -254,7 +253,7 @@ function getCategoryPresentation(category: MenuCategory) {
   }
 }
 
-function getSortedRawCategories(): MenuCategory[] {
+export function getSortedRawCategories(): MenuCategory[] {
   return [...getRawCategories()].sort(
     (first, second) =>
       getCategoryPresentation(first).order - getCategoryPresentation(second).order,
@@ -323,7 +322,6 @@ export function resolveMenuItemPrice(
 
   return 0
 }
-
 
 export function resolveCheckoutMenuItemPrice(
   slug: string,
@@ -484,19 +482,4 @@ export function getCategorySlugs(): string[] {
 
 export function getItemSlugs(): string[] {
   return getAllMenuItems().map((item) => item.slug)
-}
-
-export async function getFeaturedSlugs(): Promise<string[]> {
-  // To swap for Supabase: return (await supabase.from('featured_items').select('id')).data?.map(r => r.id) ?? []
-  return featuredSlugsData
-}
-
-export async function getMenuData(): Promise<CategoryWithItems[]> {
-  const categories = getSortedRawCategories()
-  return categories.map((cat) => ({
-    id: slugify(cat.category.en),
-    nameAR: getCategoryPresentation(cat).name.ar,
-    nameEN: getCategoryPresentation(cat).name.en,
-    items: cat.items.map((item) => normalizeMenuItem(item, cat)),
-  }))
 }

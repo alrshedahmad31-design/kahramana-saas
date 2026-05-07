@@ -48,5 +48,6 @@ export async function receivePurchaseOrder(
 
   revalidatePath(`/dashboard/inventory/purchases/${poId}`)
   revalidatePath('/dashboard/inventory/purchases')
+  revalidatePath('/en/dashboard/inventory/purchases')
   return {}
 }

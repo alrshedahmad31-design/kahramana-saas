@@ -48,7 +48,7 @@ export async function upsertBudget(data: {
 
   if (error) return { error: error.message }
 
-  revalidatePath('/ar/dashboard/inventory/budget')
+  revalidatePath('/dashboard/inventory/budget')
   revalidatePath('/en/dashboard/inventory/budget')
   return {}
 }

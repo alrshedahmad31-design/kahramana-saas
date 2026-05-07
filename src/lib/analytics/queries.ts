@@ -298,15 +298,51 @@ export async function getTopItems(
 
 // ── Hourly distribution (from matview — all-time; queried by hour) ────────────
 
-export async function getHourlyDistribution(): Promise<HourlyRow[]> {
+export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: string): Promise<HourlyRow[]> {
   const sb = createServiceClient()
-  const { data, error } = await sb
-    .from('hourly_order_distribution')
-    .select('*')
-    .order('hour_of_day', { ascending: true })
 
+  // If no date range provided fall back to the pre-aggregated view (all-time)
+  if (!from || !to) {
+    const { data, error } = await sb
+      .from('hourly_order_distribution')
+      .select('*')
+      .order('hour_of_day', { ascending: true })
+    if (error || !data) return []
+    return data as HourlyRow[]
+  }
+
+  // Query orders directly so we can filter by date range (and optionally branch)
+  let q = sb
+    .from('orders')
+    .select('created_at, total_bhd')
+    .not('status', 'in', `(${excludedStatuses().join(',')})`)
+    .gte('created_at', toISO(from))
+    .lte('created_at', toISO(to))
+
+  if (branchId) q = q.eq('branch_id', branchId)
+
+  const { data, error } = await q
   if (error || !data) return []
-  return data as HourlyRow[]
+
+  // Aggregate client-side by Bahrain hour (UTC+3)
+  const buckets = new Map<number, { count: number; revenue: number }>()
+  for (const row of data) {
+    const hour = (new Date(row.created_at).getUTCHours() + 3) % 24
+    const b = buckets.get(hour) ?? { count: 0, revenue: 0 }
+    b.count   += 1
+    b.revenue += Number(row.total_bhd ?? 0)
+    buckets.set(hour, b)
+  }
+
+  return Array.from({ length: 24 }, (_, h) => {
+    const b = buckets.get(h) ?? { count: 0, revenue: 0 }
+    return {
+      hour_of_day:         h,
+      order_count:         b.count,
+      total_revenue_bhd:   b.revenue,
+      avg_order_value_bhd: b.count > 0 ? b.revenue / b.count : 0,
+    }
+  })
 }
 
 // ── Branch comparison (summary per branch in the date range) ──────────────────

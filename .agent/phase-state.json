@@ -1,9 +1,9 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-07 (session 62 � QA Audit \u0026 Production Release: 7-phase flow verified, 10+ bugs reported, loyalty trigger fix (067) deployed, production build live)",
+    "last_updated":  "2026-05-07 (session 64 — TSC cleanup: fixed null bytes + EOF truncations in 12 files, tsconfig sync loop resolved, 0 TSC errors, build artifacts confirmed 201 JS files)",
     "current_phase":  4,
     "next_phase":  8,
-    "overall_status":  "production_live",
+    "overall_status":  "pre_launch_operational",
     "deployment":  {
                        "status":  "deployed",
                        "url":  "https://kahramanat.com",
@@ -16,44 +16,46 @@
                        "pending_db_migrations":  [
 
                                                  ],
-                       "migration_status":  "064 APPLIED � Security hardening: column-level UPDATE restrictions, rpc_create_customer_profile, rpc_get_driver_location, rpc_create_order v2 with auth gate + price validation + phone override + 50% points cap.",
+                       "migration_status":  "064 APPLIED — Security hardening: column-level UPDATE restrictions, rpc_create_customer_profile, rpc_get_driver_location, rpc_create_order v2 with auth gate + price validation + phone override + 50% points cap.",
                        "applied_db_migrations":  [
-                                                     "019_report_audit_log.sql — applied 2026-04-29",
-                                                     "020_restaurant_profile.sql — applied 2026-04-29",
-                                                     "022_staff_complete.sql — applied 2026-04-29",
-                                                     "023_settings_schema.sql — applied 2026-04-29",
-                                                     "025_delivery_notes_columns.sql — applied 2026-04-29",
-                                                     "028_security_lockdown.sql — applied 2026-04-30",
-                                                     "033_order_type_and_driver_earnings_fix.sql — applied 2026-05-01",
-                                                     "034_driver_order_issues.sql — applied 2026-05-01",
-                                                     "035_inventory_core.sql — applied 2026-05-01 (19 inventory tables, pg_cron jobs, RLS)",
-                                                     "036_multiple_cash_handovers.sql — applied 2026-05-01 (driver_cash_handover_orders link table)",
-                                                     "037_orders_cash_settlement.sql — applied 2026-05-01 (cash_settled_at, cash_settlement_id on orders)",
-                                                     "038_cash_reconciliation_discrepancy.sql — applied 2026-05-01 (discrepancy workflow on handovers)",
-                                                     "039_driver_locations_retention.sql — applied 2026-05-01 (pg_cron cleanup, 7-day retention)",
-                                                     "040_tips.sql — applied 2026-05-01 (tip_bhd on orders)",
-                                                     "056_cash_flow_system.sql — applied 2026-05-05 (cash_handovers table, difference calculation, manager verification)",
-                                                     "060_driver_locations_rls.sql — applied 2026-05-06 (hardened tracking security)",
-                                                     "061_orders_loyalty_columns.sql — applied 2026-05-06 (loyalty_points_redeemed INTEGER, loyalty_discount_bhd NUMERIC(10,3) on orders)",
-                                                     "067_fix_loyalty_trigger_for_delivery.sql � applied 2026-05-07"
+                                                     "019_report_audit_log.sql â€” applied 2026-04-29",
+                                                     "020_restaurant_profile.sql â€” applied 2026-04-29",
+                                                     "022_staff_complete.sql â€” applied 2026-04-29",
+                                                     "023_settings_schema.sql â€” applied 2026-04-29",
+                                                     "025_delivery_notes_columns.sql â€” applied 2026-04-29",
+                                                     "028_security_lockdown.sql â€” applied 2026-04-30",
+                                                     "033_order_type_and_driver_earnings_fix.sql â€” applied 2026-05-01",
+                                                     "034_driver_order_issues.sql â€” applied 2026-05-01",
+                                                     "035_inventory_core.sql â€” applied 2026-05-01 (19 inventory tables, pg_cron jobs, RLS)",
+                                                     "036_multiple_cash_handovers.sql â€” applied 2026-05-01 (driver_cash_handover_orders link table)",
+                                                     "037_orders_cash_settlement.sql â€” applied 2026-05-01 (cash_settled_at, cash_settlement_id on orders)",
+                                                     "038_cash_reconciliation_discrepancy.sql â€” applied 2026-05-01 (discrepancy workflow on handovers)",
+                                                     "039_driver_locations_retention.sql â€” applied 2026-05-01 (pg_cron cleanup, 7-day retention)",
+                                                     "040_tips.sql â€” applied 2026-05-01 (tip_bhd on orders)",
+                                                     "056_cash_flow_system.sql â€” applied 2026-05-05 (cash_handovers table, difference calculation, manager verification)",
+                                                     "060_driver_locations_rls.sql â€” applied 2026-05-06 (hardened tracking security)",
+                                                     "061_orders_loyalty_columns.sql â€” applied 2026-05-06 (loyalty_points_redeemed INTEGER, loyalty_discount_bhd NUMERIC(10,3) on orders)",
+                                                     "067_fix_loyalty_trigger_for_delivery.sql — applied 2026-05-07",
+                                                     "070_menu_items_availability.sql — applied 2026-05-07 (Availability Toggle)",
+                                                     "071_shift_closing.sql — applied 2026-05-07 (Cash Reconciliation)"
                                                  ],
                        "settings_page":  "deployed",
-                       "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-                       "last_git_commit":  "1a4d80b — feat: order access tokens, clock PIN security, RTL fixes, i18n cleanup",
+                       "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git â€” CONNECTED, master pushed",
+                       "last_git_commit":  "1a4d80b â€” feat: order access tokens, clock PIN security, RTL fixes, i18n cleanup",
                        "vercel_push_pending":  false,
                        "supabase_key_rotation_required":  false,
                        "driver_page_fix":  "verified on production",
                        "seo_status":  {
-                                          "google_search_console":  "registered — sitemap submitted",
-                                          "bing_webmaster":  "registered — meta tag in layout.tsx (B17AC8B01413ADA36191E083B8C09562)",
-                                          "google_business_profile":  "verified — Riffa + Qallali locations active",
-                                          "ga4":  "configured — G-521712793 added to env, pending redeploy",
-                                          "clarity":  "configured — vzlrozut31 added to env, pending redeploy",
-                                          "speed_insights":  "live — @vercel/speed-insights installed + \u003cSpeedInsights /\u003e in layout",
-                                          "schema_org":  "complete — Organization (telephone+address added), LocalBusiness per-branch, MenuItem, FAQPage, BreadcrumbList",
-                                          "branch_pages":  "live — /branches/riffa + /branches/qallali with full LocalBusiness schema",
-                                          "metadata_api":  "fixed — static export const metadata in layout; no leaked canonical",
-                                          "mobile_lcp":  "optimised — Next.js Image priority on hero (186KB -\u003e ~40KB mobile)"
+                                          "google_search_console":  "registered â€” sitemap submitted",
+                                          "bing_webmaster":  "registered â€” meta tag in layout.tsx (B17AC8B01413ADA36191E083B8C09562)",
+                                          "google_business_profile":  "verified â€” Riffa + Qallali locations active",
+                                          "ga4":  "configured â€” G-521712793 added to env, pending redeploy",
+                                          "clarity":  "configured â€” vzlrozut31 added to env, pending redeploy",
+                                          "speed_insights":  "live â€” @vercel/speed-insights installed + \u003cSpeedInsights /\u003e in layout",
+                                          "schema_org":  "complete â€” Organization (telephone+address added), LocalBusiness per-branch, MenuItem, FAQPage, BreadcrumbList",
+                                          "branch_pages":  "live â€” /branches/riffa + /branches/qallali with full LocalBusiness schema",
+                                          "metadata_api":  "fixed â€” static export const metadata in layout; no leaked canonical",
+                                          "mobile_lcp":  "optimised â€” Next.js Image priority on hero (186KB -\u003e ~40KB mobile)"
                                       },
                        "env_vars_production":  {
                                                    "NEXT_PUBLIC_SUPABASE_URL":  "set",
@@ -64,8 +66,8 @@
                                                    "EMAIL_FROM":  "noreply@kahramanat.com",
                                                    "NEXT_PUBLIC_GA_ID":  "G-521712793",
                                                    "NEXT_PUBLIC_CLARITY_ID":  "vzlrozut31",
-                                                   "TAP_SECRET_KEY":  "DEFERRED — waiting on Ahmed\u0027s Tap account",
-                                                   "PAYMENT_WEBHOOK_SECRET":  "DEFERRED — waiting on Ahmed\u0027s Tap account"
+                                                   "TAP_SECRET_KEY":  "DEFERRED â€” waiting on Ahmed\u0027s Tap account",
+                                                   "PAYMENT_WEBHOOK_SECRET":  "DEFERRED â€” waiting on Ahmed\u0027s Tap account"
                                                }
                    },
     "phases":  {
@@ -174,7 +176,7 @@
                                                         "hardcoded_phones":  "PASS",
                                                         "raw_hex_colors":  "PASS",
                                                         "i18n_completeness":  "PASS",
-                                                        "npm_run_build":  "PASS — 387 pages, 0 errors"
+                                                        "npm_run_build":  "PASS â€” 387 pages, 0 errors"
                                                     },
                              "notes":  "Midnight Mesopotamian Luxe cinematic redesign complete 2026-04-28."
                          },
@@ -222,7 +224,7 @@
                                                         "hardcoded_phones":  "PASS",
                                                         "raw_hex_colors":  "PASS",
                                                         "i18n_completeness":  "PASS",
-                                                        "npm_run_build":  "PASS — 391 pages, 0 errors"
+                                                        "npm_run_build":  "PASS â€” 391 pages, 0 errors"
                                                     },
                              "notes":  "Phase 2 complete 2026-04-28. Full KDS, staff management, RBAC, audit logs."
                          },
@@ -234,45 +236,45 @@
                              "completed_at":  "2026-05-01",
                              "deliverables_verified":  true,
                              "deliverables_completed":  [
-                                                            "src/lib/inventory/excel-template.ts — 6-sheet template generator with dropdowns",
-                                                            "src/lib/inventory/excel-parser.ts — parser with full validation + errors/warnings",
-                                                            "src/lib/inventory/export.ts — export current DB to same format",
-                                                            "src/app/api/inventory/template/route.ts — GET download route",
-                                                            "src/app/api/inventory/export/route.ts — GET export route",
-                                                            "src/app/[locale]/dashboard/inventory/import/actions.ts — server action",
-                                                            "src/app/[locale]/dashboard/inventory/import/page.tsx — import page",
-                                                            "src/components/inventory/ImportDropzone.tsx — drag-drop UI",
-                                                            "src/components/inventory/ImportPreview.tsx — results display",
-                                                            "src/app/[locale]/dashboard/inventory/page.tsx — overview KPIs + low stock + expiry + alerts",
+                                                            "src/lib/inventory/excel-template.ts â€” 6-sheet template generator with dropdowns",
+                                                            "src/lib/inventory/excel-parser.ts â€” parser with full validation + errors/warnings",
+                                                            "src/lib/inventory/export.ts â€” export current DB to same format",
+                                                            "src/app/api/inventory/template/route.ts â€” GET download route",
+                                                            "src/app/api/inventory/export/route.ts â€” GET export route",
+                                                            "src/app/[locale]/dashboard/inventory/import/actions.ts â€” server action",
+                                                            "src/app/[locale]/dashboard/inventory/import/page.tsx â€” import page",
+                                                            "src/components/inventory/ImportDropzone.tsx â€” drag-drop UI",
+                                                            "src/components/inventory/ImportPreview.tsx â€” results display",
+                                                            "src/app/[locale]/dashboard/inventory/page.tsx â€” overview KPIs + low stock + expiry + alerts",
                                                             "src/app/[locale]/dashboard/inventory/loading.tsx",
-                                                            "src/app/[locale]/dashboard/inventory/ingredients/page.tsx — list with search/filter/pagination",
+                                                            "src/app/[locale]/dashboard/inventory/ingredients/page.tsx â€” list with search/filter/pagination",
                                                             "src/app/[locale]/dashboard/inventory/ingredients/new/page.tsx",
-                                                            "src/app/[locale]/dashboard/inventory/ingredients/[id]/page.tsx — edit + price history + movements",
-                                                            "src/app/[locale]/dashboard/inventory/ingredients/[id]/actions.ts — upsertIngredient + deleteIngredient",
+                                                            "src/app/[locale]/dashboard/inventory/ingredients/[id]/page.tsx â€” edit + price history + movements",
+                                                            "src/app/[locale]/dashboard/inventory/ingredients/[id]/actions.ts â€” upsertIngredient + deleteIngredient",
                                                             "src/app/[locale]/dashboard/inventory/prep-items/page.tsx",
                                                             "src/app/[locale]/dashboard/inventory/prep-items/new/page.tsx",
-                                                            "src/app/[locale]/dashboard/inventory/prep-items/[id]/page.tsx — edit + ingredient editor",
+                                                            "src/app/[locale]/dashboard/inventory/prep-items/[id]/page.tsx â€” edit + ingredient editor",
                                                             "src/app/[locale]/dashboard/inventory/prep-items/[id]/actions.ts",
-                                                            "src/app/[locale]/dashboard/inventory/recipes/page.tsx — v_dish_cogs list with margin colors",
-                                                            "src/app/[locale]/dashboard/inventory/recipes/[slug]/page.tsx — BOM editor",
-                                                            "src/app/[locale]/dashboard/inventory/recipes/[slug]/actions.ts — upsertRecipe",
-                                                            "src/app/[locale]/dashboard/inventory/stock/page.tsx — branch valuation cards",
-                                                            "src/app/[locale]/dashboard/inventory/stock/[branchId]/page.tsx — branch stock detail",
-                                                            "src/app/[locale]/dashboard/inventory/stock/[branchId]/actions.ts — recordOpeningBalance",
-                                                            "src/app/[locale]/dashboard/inventory/par-levels/page.tsx — inline editable par levels",
+                                                            "src/app/[locale]/dashboard/inventory/recipes/page.tsx â€” v_dish_cogs list with margin colors",
+                                                            "src/app/[locale]/dashboard/inventory/recipes/[slug]/page.tsx â€” BOM editor",
+                                                            "src/app/[locale]/dashboard/inventory/recipes/[slug]/actions.ts â€” upsertRecipe",
+                                                            "src/app/[locale]/dashboard/inventory/stock/page.tsx â€” branch valuation cards",
+                                                            "src/app/[locale]/dashboard/inventory/stock/[branchId]/page.tsx â€” branch stock detail",
+                                                            "src/app/[locale]/dashboard/inventory/stock/[branchId]/actions.ts â€” recordOpeningBalance",
+                                                            "src/app/[locale]/dashboard/inventory/par-levels/page.tsx â€” inline editable par levels",
                                                             "src/app/[locale]/dashboard/inventory/par-levels/actions.ts",
-                                                            "src/components/inventory/AllergenSelector.tsx — 14-allergen checkbox grid bilingual",
-                                                            "src/components/inventory/StockTable.tsx — sortable color-coded stock table",
-                                                            "src/components/inventory/LowStockWidget.tsx — compact widget server component",
-                                                            "src/components/inventory/IngredientForm.tsx — full 15-field form",
+                                                            "src/components/inventory/AllergenSelector.tsx â€” 14-allergen checkbox grid bilingual",
+                                                            "src/components/inventory/StockTable.tsx â€” sortable color-coded stock table",
+                                                            "src/components/inventory/LowStockWidget.tsx â€” compact widget server component",
+                                                            "src/components/inventory/IngredientForm.tsx â€” full 15-field form",
                                                             "src/components/inventory/PrepItemForm.tsx",
-                                                            "src/components/inventory/RecipeEditor.tsx — BOM editor with live COGS+margin",
+                                                            "src/components/inventory/RecipeEditor.tsx â€” BOM editor with live COGS+margin",
                                                             "src/components/inventory/PrepItemIngredientEditor.tsx",
                                                             "src/components/inventory/OpeningBalanceModal.tsx",
                                                             "src/components/inventory/ParLevelEditor.tsx",
-                                                            "src/lib/supabase/custom-types.ts — 19 inventory types added",
-                                                            "src/lib/auth/rbac-ui.ts — inventory/inventory_ingredients/inventory_recipes sections",
-                                                            "src/components/dashboard/DashboardSidebar.tsx — collapsible inventory nav group"
+                                                            "src/lib/supabase/custom-types.ts â€” 19 inventory types added",
+                                                            "src/lib/auth/rbac-ui.ts â€” inventory/inventory_ingredients/inventory_recipes sections",
+                                                            "src/components/dashboard/DashboardSidebar.tsx â€” collapsible inventory nav group"
                                                         ],
                              "deliverables_pending":  [
 
@@ -288,8 +290,8 @@
                                                         "currency_display":  "PASS",
                                                         "hardcoded_phones":  "PASS",
                                                         "raw_hex_colors":  "PASS",
-                                                        "i18n_completeness":  "WARN — manual check only (script not created)",
-                                                        "npm_run_build":  "PASS — clean build, 0 errors"
+                                                        "i18n_completeness":  "WARN â€” manual check only (script not created)",
+                                                        "npm_run_build":  "PASS â€” clean build, 0 errors"
                                                     },
                              "notes":  "Phase 3 complete 2026-05-01 (session 38). Excel import system + full dashboard UI: 6 route groups, 9 shared components, all server actions. Live COGS calculation in RecipeEditor. Chef still needs to fill Excel template to populate real recipe data."
                          },
@@ -327,7 +329,7 @@
                                                         "hardcoded_phones":  "PASS",
                                                         "raw_hex_colors":  "PASS",
                                                         "i18n_completeness":  "PASS",
-                                                        "npm_run_build":  "PASS — 391 pages, 0 errors"
+                                                        "npm_run_build":  "PASS â€” 391 pages, 0 errors"
                                                     },
                              "notes":  "Driver PWA complete 2026-04-28. Session 56 (2026-05-06): Integrated real-time GPS watchPosition (15s interval), Leaflet-based mapping for managers and customers, and hardened RLS for driver_locations."
                          },
@@ -357,13 +359,13 @@
                                                             "src/components/coupons/CouponTemplatesModal.tsx",
                                                             "src/components/coupons/CouponAnalyticsModal.tsx",
                                                             "src/components/coupons/CouponQRCode.tsx",
-                                                            "supabase/migrations/061_orders_loyalty_columns.sql — loyalty_points_redeemed + loyalty_discount_bhd on orders",
-                                                            "src/lib/loyalty/calculations.ts — POINTS_PER_BHD synced to 10 (was 5); TIER_THRESHOLDS_LEGACY + compat exports",
-                                                            "src/components/loyalty/LoyaltyRedemptionWidget.tsx — new widget replacing old inline toggle",
-                                                            "src/components/checkout/CheckoutForm.tsx — widget integration, pointsDiscount fixed, tL/canRedeem removed",
-                                                            "src/app/[locale]/checkout/actions.ts — pointsDiscount hoisted to outer scope; loyalty columns in both inserts",
-                                                            "messages/ar.json + en.json — checkout.loyalty.* keys added",
-                                                            "src/lib/supabase/types.ts — regenerated, loyalty columns confirmed in Row/Insert/Update"
+                                                            "supabase/migrations/061_orders_loyalty_columns.sql â€” loyalty_points_redeemed + loyalty_discount_bhd on orders",
+                                                            "src/lib/loyalty/calculations.ts â€” POINTS_PER_BHD synced to 10 (was 5); TIER_THRESHOLDS_LEGACY + compat exports",
+                                                            "src/components/loyalty/LoyaltyRedemptionWidget.tsx â€” new widget replacing old inline toggle",
+                                                            "src/components/checkout/CheckoutForm.tsx â€” widget integration, pointsDiscount fixed, tL/canRedeem removed",
+                                                            "src/app/[locale]/checkout/actions.ts â€” pointsDiscount hoisted to outer scope; loyalty columns in both inserts",
+                                                            "messages/ar.json + en.json â€” checkout.loyalty.* keys added",
+                                                            "src/lib/supabase/types.ts â€” regenerated, loyalty columns confirmed in Row/Insert/Update"
                                                         ],
                              "deliverables_pending":  [
 
@@ -372,10 +374,10 @@
 
                                           ],
                              "phase_gate_results":  {
-                                                        "tsc_noEmit":  "PASS — 0 errors (2026-05-06)",
-                                                        "npm_run_build":  "PASS — 522 pages, 0 errors (2026-05-06)"
+                                                        "tsc_noEmit":  "PASS â€” 0 errors (2026-05-06)",
+                                                        "npm_run_build":  "PASS â€” 522 pages, 0 errors (2026-05-06)"
                                                     },
-                             "notes":  "Phase 5 upgraded to Enterprise Standards 2026-04-29. Session 57 (2026-05-06): Loyalty redemption at checkout fully wired — DB columns, widget, action, i18n, types all clean. POINTS_PER_BHD synced 5→10 to match DB trigger. TIER_THRESHOLDS_LEGACY thresholds corrected (silver 5/50, gold 15/200, platinum 30/500)."
+                             "notes":  "Phase 5 upgraded to Enterprise Standards 2026-04-29. Session 57 (2026-05-06): Loyalty redemption at checkout fully wired â€” DB columns, widget, action, i18n, types all clean. POINTS_PER_BHD synced 5â†’10 to match DB trigger. TIER_THRESHOLDS_LEGACY thresholds corrected (silver 5/50, gold 15/200, platinum 30/500)."
                          },
                    "6":  {
                              "name":  "Payment \u0026 WhatsApp API",
@@ -398,17 +400,17 @@
                                                             "src/app/[locale]/payment/[orderId]/error.tsx",
                                                             "src/lib/supabase/types.ts (PaymentMethod, PaymentStatus, PaymentRow, PaymentWebhookRow)",
                                                             "messages/en.json + ar.json (payment namespace)",
-                                                            "src/components/checkout/CheckoutForm.tsx (redirect → /payment/[orderId])"
+                                                            "src/components/checkout/CheckoutForm.tsx (redirect â†’ /payment/[orderId])"
                                                         ],
                              "deliverables_pending":  [
-                                                          "app/(dashboard)/payments/ — payment dashboard for staff",
+                                                          "app/(dashboard)/payments/ â€” payment dashboard for staff",
                                                           "Sprint 6B: WhatsApp API integration (blocked on Meta verification)",
                                                           "Sprint 6C: Benefit Pay API upgrade (blocked on merchant approval)"
                                                       ],
                              "blockers":  [
                                               "Benefit Pay merchant approval: 2-4 months via CBB - START PAPERWORK AT PHASE 1 LAUNCH",
                                               "Meta Business Verification required for WhatsApp API",
-                                              "ARCH-004 (atomic checkout RPC) — still pending"
+                                              "ARCH-004 (atomic checkout RPC) â€” still pending"
                                           ],
                              "notes":  "Sprint 6A complete 2026-04-28. Full payment infrastructure established."
                          },
@@ -433,33 +435,33 @@
                              "notes":  "Sprint 7A complete 2026-04-28. Full analytics dashboard integrated."
                          },
                    "6b":  {
-                              "name":  "Dashboard Integration — Inventory Widgets",
+                              "name":  "Dashboard Integration â€” Inventory Widgets",
                               "status":  "done",
                               "prerequisite":  "phase_5_inventory_reports_done",
                               "started_at":  "2026-05-02",
                               "completed_at":  "2026-05-02",
                               "deliverables_verified":  true,
                               "deliverables_completed":  [
-                                                             "src/components/inventory/LowStockWidget.tsx — enhanced with pulsing dot + \u0027عرض الكل\u0027 link",
-                                                             "src/components/inventory/ExpiryCalendarWidget.tsx — NEW: expired/today/week counts + top 3 urgent",
-                                                             "src/components/inventory/WasteEscalationWidget.tsx — NEW: pending waste by escalation level",
-                                                             "src/components/inventory/StockValueWidget.tsx — NEW: total stock value + 14-day recharts trend",
-                                                             "src/components/inventory/InventoryAlertsListener.tsx — NEW: realtime Supabase alerts toast",
-                                                             "src/components/inventory/BranchContext.tsx — NEW: client context provider for branch selection",
-                                                             "src/components/inventory/InventoryWidgetsSection.tsx — NEW: server component fetching all widget data",
-                                                             "src/components/inventory/InventoryWidgetsSkeleton.tsx — NEW: loading skeleton",
-                                                             "src/components/inventory/InventoryBreadcrumb.tsx — NEW: breadcrumb nav",
-                                                             "src/app/[locale]/dashboard/inventory/layout.tsx — NEW: BranchProvider + InventoryAlertsListener",
-                                                             "src/app/[locale]/dashboard/page.tsx — UPDATED: inventory section with Suspense",
-                                                             "src/app/[locale]/dashboard/layout.tsx — UPDATED: InventoryAlertsListener for inventory roles",
-                                                             "src/app/[locale]/dashboard/reports/page.tsx — UPDATED: inventory summary section",
-                                                             "src/app/[locale]/dashboard/kds/page.tsx — UPDATED: stock dots via slugStockMap",
-                                                             "src/components/kds/KDSBoard.tsx — UPDATED: slugStockMap prop thread",
-                                                             "src/components/kds/KDSColumn.tsx — UPDATED: slugStockMap prop thread",
-                                                             "src/components/kds/KDSOrderCard.tsx — UPDATED: StockDot component per item",
-                                                             "src/app/[locale]/checkout/actions.ts — UPDATED: non-blocking rpc_check_stock_for_cart",
-                                                             "src/components/checkout/CheckoutForm.tsx — UPDATED: stock warning banner",
-                                                             "src/lib/supabase/custom-types.ts — UPDATED: menu_item_slug added to KDSOrder.order_items"
+                                                             "src/components/inventory/LowStockWidget.tsx â€” enhanced with pulsing dot + \u0027Ø¹Ø±Ø¶ Ø§Ù„ÙƒÙ„\u0027 link",
+                                                             "src/components/inventory/ExpiryCalendarWidget.tsx â€” NEW: expired/today/week counts + top 3 urgent",
+                                                             "src/components/inventory/WasteEscalationWidget.tsx â€” NEW: pending waste by escalation level",
+                                                             "src/components/inventory/StockValueWidget.tsx â€” NEW: total stock value + 14-day recharts trend",
+                                                             "src/components/inventory/InventoryAlertsListener.tsx â€” NEW: realtime Supabase alerts toast",
+                                                             "src/components/inventory/BranchContext.tsx â€” NEW: client context provider for branch selection",
+                                                             "src/components/inventory/InventoryWidgetsSection.tsx â€” NEW: server component fetching all widget data",
+                                                             "src/components/inventory/InventoryWidgetsSkeleton.tsx â€” NEW: loading skeleton",
+                                                             "src/components/inventory/InventoryBreadcrumb.tsx â€” NEW: breadcrumb nav",
+                                                             "src/app/[locale]/dashboard/inventory/layout.tsx â€” NEW: BranchProvider + InventoryAlertsListener",
+                                                             "src/app/[locale]/dashboard/page.tsx â€” UPDATED: inventory section with Suspense",
+                                                             "src/app/[locale]/dashboard/layout.tsx â€” UPDATED: InventoryAlertsListener for inventory roles",
+                                                             "src/app/[locale]/dashboard/reports/page.tsx â€” UPDATED: inventory summary section",
+                                                             "src/app/[locale]/dashboard/kds/page.tsx â€” UPDATED: stock dots via slugStockMap",
+                                                             "src/components/kds/KDSBoard.tsx â€” UPDATED: slugStockMap prop thread",
+                                                             "src/components/kds/KDSColumn.tsx â€” UPDATED: slugStockMap prop thread",
+                                                             "src/components/kds/KDSOrderCard.tsx â€” UPDATED: StockDot component per item",
+                                                             "src/app/[locale]/checkout/actions.ts â€” UPDATED: non-blocking rpc_check_stock_for_cart",
+                                                             "src/components/checkout/CheckoutForm.tsx â€” UPDATED: stock warning banner",
+                                                             "src/lib/supabase/custom-types.ts â€” UPDATED: menu_item_slug added to KDSOrder.order_items"
                                                          ],
                               "deliverables_pending":  [
 
@@ -468,15 +470,15 @@
 
                                            ],
                               "phase_gate_results":  {
-                                                         "tsc_noEmit":  "PASS — 0 errors",
+                                                         "tsc_noEmit":  "PASS â€” 0 errors",
                                                          "rtl_violations":  "PASS",
                                                          "forbidden_fonts":  "PASS",
                                                          "forbidden_colors":  "PASS",
                                                          "currency_display":  "PASS",
                                                          "hardcoded_phones":  "PASS",
                                                          "raw_hex_colors":  "PASS",
-                                                         "i18n_completeness":  "WARN — manual check only",
-                                                         "npm_run_build":  "PASS — 845 pages, 0 errors"
+                                                         "i18n_completeness":  "WARN â€” manual check only",
+                                                         "npm_run_build":  "PASS â€” 845 pages, 0 errors"
                                                      },
                               "notes":  "Phase 6b complete 2026-05-02 (session 41). Dashboard integration: 4 new inventory widgets, realtime alerts, Suspense loading, non-blocking checkout stock check, KDS stock dots, reports inventory summary. All roles respected (inventory section hidden from kitchen/cashier/driver/marketing on home)."
                           },
@@ -532,3 +534,4 @@
                                   "pos_api_docs":  "not_started"
                               }
 }
+

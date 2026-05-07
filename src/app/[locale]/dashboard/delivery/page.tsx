@@ -11,7 +11,7 @@ interface Props {
 export default async function DeliveryPage({ params }: Props) {
   const { locale } = await params
   const user = await getSession()
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
 
   // Delivery board is a dispatch tool for managers only.
   // Drivers use /driver, not this page.

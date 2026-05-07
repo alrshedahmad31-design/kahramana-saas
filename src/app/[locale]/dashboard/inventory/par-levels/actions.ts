@@ -42,5 +42,6 @@ export async function upsertParLevel(
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard/inventory/par-levels')
+  revalidatePath('/en/dashboard/inventory/par-levels')
   return {}
 }

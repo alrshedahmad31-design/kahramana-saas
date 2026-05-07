@@ -138,9 +138,9 @@ export default function MetricsStrip({ metrics, isAr }: Props) {
       background:          DV.border,
       borderBottom:        `1px solid ${DV.border}`,
     }}>
-      {cards.map((card, i) => (
+      {cards.map((card) => (
         <div
-          key={i}
+          key={card.labelEn}
           style={{
             background:  DV.bgSurface,
             padding:     '14px 16px',

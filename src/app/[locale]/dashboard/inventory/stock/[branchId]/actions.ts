@@ -36,6 +36,7 @@ export async function recordOpeningBalance(
 
   if (delta === 0) {
     revalidatePath(`/dashboard/inventory/stock/${branchId}`)
+    revalidatePath(`/en/dashboard/inventory/stock/${branchId}`)
     return {}
   }
 
@@ -68,5 +69,6 @@ export async function recordOpeningBalance(
   if (stockError) return { error: stockError.message }
 
   revalidatePath(`/dashboard/inventory/stock/${branchId}`)
+  revalidatePath(`/en/dashboard/inventory/stock/${branchId}`)
   return {}
 }

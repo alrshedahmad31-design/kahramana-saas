@@ -38,9 +38,9 @@ function assertCouponWithinLimits(data: CouponLimitedFields): void {
   }
 }
 
-function revalidateCoupons(locale: string) {
-  revalidatePath(`/${locale}/dashboard/coupons`)
+function revalidateCoupons(_locale: string) {
   revalidatePath('/dashboard/coupons')
+  revalidatePath('/en/dashboard/coupons')
 }
 
 export type CouponFormData = {

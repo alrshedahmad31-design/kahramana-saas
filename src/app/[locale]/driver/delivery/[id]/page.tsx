@@ -18,7 +18,7 @@ export default async function DriverDeliveryDetailPage({ params }: Props) {
   const { locale } = await params
   const user = await getSession()
 
-  if (!user) redirect(locale === 'en' ? '/en/login' : '/login')
+  if (!user) redirect(`/${locale}/login`)
   if (!canAccessDriver(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
   redirect(locale === 'en' ? '/en/driver' : '/driver')

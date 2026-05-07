@@ -1,4 +1,3 @@
-// Force rebuild - status mapping fix
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -32,7 +31,6 @@ export default function OrderStatsBar() {
         .gte('created_at', today.toISOString())
 
       if (!data) return
-      console.log('OrderStatsBar Data at', new Date().toLocaleTimeString(), ':', data.map(o => o.status))
 
       const done = data.filter(o => ['delivered', 'completed'].includes(String(o.status).trim()))
       setStats({
