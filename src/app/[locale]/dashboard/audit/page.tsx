@@ -25,7 +25,6 @@ interface AuditLogData {
 
 export default async function AuditLogPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: _locale } = await params
-  const t = await getTranslations('dashboard')
   const at = await getTranslations('dashboard.audit')
   
   const supabase = await createClient()
@@ -44,10 +43,10 @@ export default async function AuditLogPage({ params }: { params: Promise<{ local
 
   const getActionColor = (action: string) => {
     switch (action.toUpperCase()) {
-      case 'INSERT': return 'bg-green-100 text-green-700 border-green-200'
-      case 'UPDATE': return 'bg-blue-100 text-blue-700 border-blue-200'
-      case 'DELETE': return 'bg-red-100 text-red-700 border-red-200'
-      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+      case 'INSERT': return 'bg-green-500/10 text-green-400 border border-green-500/20'
+      case 'UPDATE': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+      case 'DELETE': return 'bg-red-500/10 text-red-400 border border-red-500/20'
+      default: return 'bg-brand-surface-2 text-brand-muted border border-brand-border'
     }
   }
 

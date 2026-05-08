@@ -286,22 +286,32 @@ function KanbanCard({
             )}
 
             {order.status === 'ready' && !order.driver_id && (
-              <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                padding: '6px 0',
-                background: 'rgba(45,122,79,0.12)',
-                border: `1px dashed ${DV_STATUS.successBg}`,
-                borderRadius: '7px',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: DV_STATUS.successText,
-              }}>
-                {isAr ? 'بانتظار سائق...' : 'Waiting for driver...'}
-              </div>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onDispatch() }}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  padding: '6px 0',
+                  background: 'rgba(45,122,79,0.12)',
+                  border: `1px dashed ${DV_STATUS.successBg}`,
+                  borderRadius: '7px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: DV_STATUS.successText,
+                  cursor: 'pointer',
+                  fontFamily: 'IBM Plex Sans Arabic, sans-serif',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(45,122,79,0.22)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(45,122,79,0.12)' }}
+              >
+                <UserPlus size={11} />
+                {isAr ? 'تعيين سائق' : 'Assign Driver'}
+              </button>
             )}
 
             <button

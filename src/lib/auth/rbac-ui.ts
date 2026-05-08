@@ -31,6 +31,7 @@ export type DashboardSection =
   | 'menu'
   | 'audit'
   | 'shifts'
+  | 'pos'
 
 const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   home:             null,  // unrestricted — dashboard overview for all staff
@@ -59,6 +60,7 @@ const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   menu:                   ['owner', 'general_manager', 'branch_manager', 'inventory_manager'],
   audit:                  ['owner', 'general_manager'],
   shifts:                 ['owner', 'general_manager', 'branch_manager', 'cashier'],
+  pos:                    ['owner', 'general_manager', 'branch_manager', 'cashier'],
 }
 
 export function canAccessSection(

@@ -1,13 +1,12 @@
 import type { KDSStation } from '@/lib/supabase/custom-types'
 
 // Stations that take longer to prepare get higher urgency earlier
-const STATION_COMPLEXITY: Record<KDSStation, number> = {
-  grill:    3,
-  fry:      2,
-  salads:   1,
-  desserts: 1,
-  drinks:   1,
-  packing:  1,
+const STATION_COMPLEXITY: Partial<Record<KDSStation, number>> = {
+  shawarma: 3,
+  bakery:   4,
+  appetizer_drinks: 2,
+  grill:    5,
+  main:     3,
 }
 
 // Returns priority 1–5 (5 = most urgent)
@@ -17,7 +16,8 @@ export function calculatePriority(
   quantity = 1,
 ): number {
   const ageMinutes = (Date.now() - new Date(orderCreatedAt).getTime()) / 60_000
-  let score = ageMinutes / 2 + STATION_COMPLEXITY[station] * 0.5
+  const complexity = STATION_COMPLEXITY[station] ?? 2
+  let score = ageMinutes / 2 + complexity * 0.5
   if (quantity >= 3) score += 1
   return Math.min(5, Math.max(1, Math.round(score)))
 }

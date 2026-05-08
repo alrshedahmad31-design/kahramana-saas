@@ -243,9 +243,28 @@
       transition: none;
     }
   }
+
+  /* ── POS Layout ─────────────────────────────────────────────────────────── */
+  .pos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 1024px) {
+    .pos-grid {
+      grid-template-columns: minmax(0, 1fr) 360px;
+    }
+
+    .pos-order-col {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+  }
 }
 
-/* ── Mobile Nav Animations ─────────────────────────────────────────────────── */
+/* ── Mobile Nav Animations ──────────────────────────────────────────────── */
 @keyframes slideUp {
   from { transform: translateY(1.5rem); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }

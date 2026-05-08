@@ -10,8 +10,9 @@ import {
   getMenuItemBySlug,
   type LocaleCode,
 } from '@/lib/menu'
-import dynamic from 'next/dynamic'
-const MenuExperience = dynamic(() => import('@/components/menu/menu-experience'), { ssr: true })
+import { getMenuAvailabilityMap } from '@/lib/menu.server'
+import nextDynamic from 'next/dynamic'
+const MenuExperience = nextDynamic(() => import('@/components/menu/menu-experience'), { ssr: true })
 import MenuHero from '@/components/menu/menu-hero'
 import { buildCategoryBreadcrumb } from '@/lib/seo/schemas'
 
@@ -21,6 +22,11 @@ type Props = {
     slug: string
   }>
 }
+
+// Force dynamic rendering so the customer menu reflects the dashboard's
+// is_available toggle without waiting for a redeploy. The page payload is
+// small; a fresh DB read per request is acceptable here.
+export const dynamic = 'force-dynamic'
 
 export function generateStaticParams() {
   return getCategorySlugs().map((slug) => ({ slug }))
@@ -59,6 +65,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     },
   }
+}
+
+async function mergeAvailability<T extends { slug: string; available: boolean }>(
+  items: T[],
+): Promise<T[]> {
+  const map = await getMenuAvailabilityMap()
+  if (map.size === 0) return items
+  return items.map((item) =>
+    map.has(item.slug) ? { ...item, available: map.get(item.slug)! } : item,
+  )
 }
 
 export default async function MenuCategoryPage({ params }: Props) {
@@ -104,7 +120,7 @@ export default async function MenuCategoryPage({ params }: Props) {
       />
       <MenuExperience
         categories={getMenuCategories()}
-        items={getAllMenuItems()}
+        items={await mergeAvailability(getAllMenuItems())}
         initialCategory={slug}
         isRTL={isRTL}
       />

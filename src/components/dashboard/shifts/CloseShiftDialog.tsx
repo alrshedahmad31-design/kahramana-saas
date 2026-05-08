@@ -106,7 +106,7 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-brand-gold hover:bg-brand-gold/90 text-black font-bold">
+        <Button className="bg-brand-gold hover:bg-brand-gold/90 text-brand-surface font-bold">
           {t.close_shift}
         </Button>
       </DialogTrigger>

@@ -1,0 +1,328 @@
+'use server'
+
+import { z } from 'zod'
+import { randomUUID } from 'crypto'
+import { revalidatePath } from 'next/cache'
+import { getLocale } from 'next-intl/server'
+import { createServiceClient } from '@/lib/supabase/server'
+import { getSession } from '@/lib/auth/session'
+import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
+import { BRANCHES, type BranchId } from '@/constants/contact'
+import type { StaffRole } from '@/lib/supabase/custom-types'
+
+const POS_ROLES: readonly StaffRole[] = [
+  'owner',
+  'general_manager',
+  'branch_manager',
+  'cashier',
+] as const
+
+const ORDER_TYPES = ['dine_in', 'pickup', 'delivery', 'phone'] as const
+const PAYMENT_METHODS = ['cash', 'card', 'tap'] as const
+
+const BAHRAIN_PHONE_RE = /^(\+?973)?[36]\d{7}$/
+
+function normalizePhone(raw: string): string {
+  const s = raw.replace(/[\s\-().]/g, '')
+  if (s.startsWith('00973')) return '+973' + s.slice(5)
+  if (s.startsWith('+973')) return s
+  if (s.startsWith('973') && s.length === 11) return '+' + s
+  if (/^\d{8}$/.test(s)) return '+973' + s
+  return s
+}
+
+const itemSchema = z.object({
+  menuItemId:    z.string().min(1).max(120),
+  quantity:      z.number().int().min(1).max(50),
+  variantName:   z.string().max(80).nullable().optional(),
+  sizeName:      z.string().max(40).nullable().optional(),
+  unitPriceBhd:  z.number().min(0).max(10_000),
+  itemNotes:     z.string().max(200).nullable().optional(),
+})
+
+const addressSchema = z.object({
+  city:     z.string().max(80).nullable().optional(),
+  block:    z.string().max(80).nullable().optional(),
+  road:     z.string().max(120).nullable().optional(),
+  building: z.string().max(80).nullable().optional(),
+  flat:     z.string().max(40).nullable().optional(),
+})
+
+const payloadSchema = z.object({
+  branchId:        z.string().min(1).max(50),
+  orderType:       z.enum(ORDER_TYPES),
+  customerName:    z.string().min(1).max(120),
+  customerPhone:   z.string().min(6).max(20),
+  items:           z.array(itemSchema).min(1).max(60),
+  notes:           z.string().max(500).nullable().optional(),
+  paymentMethod:   z.enum(PAYMENT_METHODS),
+  deliveryAddress: addressSchema.nullable().optional(),
+  deliveryLat:     z.number().min(-90).max(90).nullable().optional(),
+  deliveryLng:     z.number().min(-180).max(180).nullable().optional(),
+})
+
+export type ManualOrderPayload = z.infer<typeof payloadSchema>
+
+export interface CreateManualOrderResult {
+  orderId?: string
+  error?:   string
+}
+
+function isBranchId(value: string): value is BranchId {
+  return value in BRANCHES
+}
+
+export async function createManualOrder(
+  payload: ManualOrderPayload,
+): Promise<CreateManualOrderResult> {
+  const caller = await getSession()
+  if (!caller || !caller.role || !POS_ROLES.includes(caller.role)) {
+    return { error: 'Unauthorized' }
+  }
+
+  const parsed = payloadSchema.safeParse(payload)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid payload' }
+  }
+
+  const data = parsed.data
+  const normalizedPhone = normalizePhone(data.customerPhone)
+  if (!BAHRAIN_PHONE_RE.test(normalizedPhone.replace(/\s+/g, ''))) {
+    return { error: 'Invalid phone number' }
+  }
+
+  if (!isBranchId(data.branchId)) {
+    return { error: 'Invalid branch' }
+  }
+
+  // Branch managers and cashiers may only create orders for their own branch
+  if (
+    caller.role === 'branch_manager' || caller.role === 'cashier'
+  ) {
+    if (caller.branch_id && caller.branch_id !== data.branchId) {
+      return { error: 'Forbidden: branch scope violation' }
+    }
+  }
+
+  if (data.orderType === 'delivery') {
+    const addr = data.deliveryAddress
+    if (
+      !addr || !addr.block?.trim() || !addr.road?.trim() || !addr.building?.trim()
+    ) {
+      return { error: 'Delivery address is incomplete' }
+    }
+  }
+
+  // ── Server-side price resolution (NEVER trust client-submitted prices) ──
+  type PricedItem = {
+    menu_item_slug:   string
+    name_ar:          string
+    name_en:          string
+    selected_size:    string | null
+    selected_variant: string | null
+    quantity:         number
+    notes:            string | null
+    unit_price_bhd:   number
+    item_total_bhd:   number
+  }
+
+  const pricedItems: PricedItem[] = []
+  for (const item of data.items) {
+    const resolved = resolveCheckoutMenuItemPrice(item.menuItemId, {
+      size:    item.sizeName?.trim() || undefined,
+      variant: item.variantName?.trim() || undefined,
+    })
+
+    if ('error' in resolved) {
+      return { error: resolved.error }
+    }
+
+    const unit = Number(resolved.unitPriceBhd)
+    pricedItems.push({
+      menu_item_slug:   resolved.item.slug,
+      name_ar:          resolved.item.name.ar,
+      name_en:          resolved.item.name.en,
+      selected_size:    item.sizeName?.trim() || null,
+      selected_variant: resolved.selectedVariant,
+      quantity:         item.quantity,
+      notes:            item.itemNotes?.trim() || null,
+      unit_price_bhd:   unit,
+      item_total_bhd:   Number((unit * item.quantity).toFixed(3)),
+    })
+  }
+
+  const subtotal = Number(
+    pricedItems.reduce((s, i) => s + i.item_total_bhd, 0).toFixed(3),
+  )
+  if (subtotal < 0.001) {
+    return { error: 'Order subtotal is zero' }
+  }
+
+  const supabase = await createServiceClient()
+
+  // Ensure branch row exists (mirrors checkout flow)
+  const branch = BRANCHES[data.branchId]
+  await supabase
+    .from('branches')
+    .upsert(
+      {
+        id:        branch.id,
+        name_ar:   branch.nameAr,
+        name_en:   branch.nameEn,
+        phone:     branch.phone,
+        whatsapp:  branch.whatsapp,
+        wa_link:   branch.waLink,
+        maps_url:  branch.mapsUrl,
+        is_active: branch.status === 'active',
+      },
+      { onConflict: 'id' },
+    )
+
+  // Map POS order types to schema-supported values.
+  // The orders table supports 'pickup' and 'delivery'; phone/dine_in are mapped
+  // to 'pickup' and tagged via source='manual' + notes for clarity.
+  const dbOrderType: 'pickup' | 'delivery' =
+    data.orderType === 'delivery' ? 'delivery' : 'pickup'
+
+  const orderTypeNote =
+    data.orderType === 'dine_in'
+      ? '[POS] Dine-in'
+      : data.orderType === 'phone'
+        ? '[POS] Phone order'
+        : data.orderType === 'pickup'
+          ? '[POS] Walk-in pickup'
+          : '[POS] Manual delivery'
+
+  const combinedNotes = data.notes?.trim()
+    ? `${orderTypeNote} — ${data.notes.trim()}`
+    : orderTypeNote
+
+  const addr = data.deliveryAddress
+  const deliveryAddressLine =
+    data.orderType === 'delivery' && addr
+      ? [addr.city, addr.block, addr.road, addr.building, addr.flat]
+          .map((v) => v?.trim())
+          .filter(Boolean)
+          .join(', ')
+      : null
+
+  const idempotencyKey = randomUUID()
+
+  // RPC supports 'cash' and online methods. Map card/tap appropriately.
+  // For card+tap online flows we keep status 'new' (in-store payment), so we
+  // pass 'cash' for the RPC's status branching. The actual chosen method is
+  // recorded on the payment record.
+  const rpcPaymentMethod = 'cash' as const
+
+  const { data: orderId, error: rpcError } = await supabase.rpc('rpc_create_order', {
+    p_idempotency_key:   idempotencyKey,
+    p_customer_name:     data.customerName.trim(),
+    p_customer_phone:    normalizedPhone,
+    p_branch_id:         data.branchId,
+    p_order_type:        dbOrderType,
+    p_items:             pricedItems,
+    p_total_bhd:         subtotal,
+    p_notes:             combinedNotes,
+    p_delivery_address:  deliveryAddressLine ?? undefined,
+    p_delivery_city:     addr?.city?.trim() || undefined,
+    p_delivery_building: addr?.building?.trim() || undefined,
+    p_delivery_street:   addr?.road?.trim() || undefined,
+    p_delivery_area:     addr?.block?.trim() || undefined,
+    p_source:            'manual',
+    p_coupon_discount_bhd: 0,
+    p_points_to_redeem:  0,
+    p_payment_method:    rpcPaymentMethod,
+    // POS orders are confirmed by staff at the counter — skip 'new' and go
+    // straight to 'accepted' so the KDS picks them up immediately.
+    p_status:            'accepted',
+  })
+
+  if (rpcError || !orderId) {
+    return { error: rpcError?.message ?? 'Order creation failed' }
+  }
+
+  // ── Payment record ─────────────────────────────────────────────────────
+  // Map POS payment selection to schema-supported method codes.
+  const paymentMethodForRecord: 'cash' | 'tap_card' =
+    data.paymentMethod === 'cash' ? 'cash' : 'tap_card'
+  await supabase.from('payments').insert({
+    order_id:   orderId,
+    amount_bhd: subtotal,
+    method:     paymentMethodForRecord,
+    status:     data.paymentMethod === 'cash' ? 'pending_cod' : 'pending',
+  })
+
+  // ── Audit log ─────────────────────────────────────────────────────────
+  await supabase.from('audit_logs').insert({
+    table_name: 'orders',
+    action:     'INSERT',
+    user_id:    caller.id,
+    record_id:  orderId,
+    actor_role: caller.role,
+    branch_id:  data.branchId,
+    changes:    {
+      action:        'manual_order_created',
+      order_id:      orderId,
+      created_by:    caller.id,
+      total_bhd:     subtotal,
+      pos_order_type: data.orderType,
+      payment_method: data.paymentMethod,
+      item_count:    pricedItems.length,
+    },
+  })
+
+  // ── Persist user-pinned coordinates OR fall back to Nominatim geocoding ──
+  if (data.orderType === 'delivery') {
+    if (data.deliveryLat != null && data.deliveryLng != null) {
+      // User pinned an exact location on the map — persist immediately, no API call needed
+      await supabase
+        .from('orders')
+        .update({ delivery_lat: data.deliveryLat, delivery_lng: data.deliveryLng })
+        .eq('id', orderId)
+    } else if (addr) {
+      // Fall back to Nominatim (fire-and-forget, best-effort)
+      geocodeBahrainAddress(orderId, addr).catch(() => {})
+    }
+  }
+
+  const locale = await getLocale()
+  revalidatePath(`/${locale}/dashboard/orders`)
+  revalidatePath(`/${locale}/dashboard/pos`)
+
+  return { orderId }
+}
+
+// ── Nominatim geocoder for Bahrain numbered addresses ─────────────────────────
+// Runs after order creation — does not block the response.
+async function geocodeBahrainAddress(
+  orderId: string,
+  addr: { city?: string | null; block?: string | null; road?: string | null; building?: string | null },
+) {
+  const parts: string[] = []
+  if (addr.building) parts.push(`Building ${addr.building}`)
+  if (addr.road)     parts.push(`Road ${addr.road}`)
+  if (addr.block)    parts.push(`Block ${addr.block}`)
+  if (addr.city)     parts.push(addr.city)
+  parts.push('Bahrain')
+
+  const query = parts.join(', ')
+  const url   = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=bh&limit=1&q=${encodeURIComponent(query)}`
+
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'KahramanaBaghdad-POS/1.0 (contact@kahramana.bh)' },
+    signal:  AbortSignal.timeout(5000),
+  })
+
+  if (!res.ok) return
+
+  const results = await res.json() as Array<{ lat: string; lon: string }>
+  if (!results.length) return
+
+  const { lat, lon } = results[0]
+  const supabase = await createServiceClient()
+  await supabase
+    .from('orders')
+    .update({ delivery_lat: parseFloat(lat), delivery_lng: parseFloat(lon) })
+    .eq('id', orderId)
+}

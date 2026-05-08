@@ -156,6 +156,16 @@ function AuditIcon() {
   )
 }
 
+function POSIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1.5 11a1 1 0 01-1 1.13H4.5a1 1 0 01-1-1.13L5 9z" />
+      <circle cx="9" cy="14" r="0.8" fill="currentColor" />
+      <circle cx="15" cy="14" r="0.8" fill="currentColor" />
+    </svg>
+  )
+}
+
 function ShiftIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -212,6 +222,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
   const NAV_ITEMS: NavItem[] = [
     { key: 'home',      href: `${prefix}/dashboard`,            icon: <HomeIcon />,      section: 'home' },
     { key: 'orders',    href: `${prefix}/dashboard/orders`,     icon: <OrdersIcon />,    section: 'orders' },
+    { key: 'pos',       href: `${prefix}/dashboard/pos`,        icon: <POSIcon />,       section: 'pos' },
     { key: 'driver',    href: `${prefix}/driver`,                         icon: <DriverIcon />,    section: 'driver' },
     { key: 'delivery',  href: `${prefix}/dashboard/delivery`,            icon: <DeliveryBoardIcon />, section: 'delivery' },
     { key: 'kds',       href: `${prefix}/dashboard/kds`,                 icon: <KDSIcon />,       section: 'kds' },
@@ -256,6 +267,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     shifts:          t('shifts'),
     audit:           t('audit'),
     settings:        t('settings'),
+    pos:             t('pos'),
   }
 
   const INVENTORY_SUB_ITEMS = [

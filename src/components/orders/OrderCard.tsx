@@ -28,6 +28,7 @@ export interface OrderCardData {
   delivery_address?:  string | null
   delivery_building?: string | null
   delivery_street?:   string | null
+  source?:         string | null
   order_items:     OrderCardItem[]
 }
 
@@ -59,9 +60,16 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
 
       {/* Header: ID + status */}
       <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3">
-        <span className="font-satoshi font-black text-base text-brand-text tabular-nums tracking-tight">
-          #{shortId}
-        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-satoshi font-black text-base text-brand-text tabular-nums tracking-tight">
+            #{shortId}
+          </span>
+          {order.source && order.source !== 'website' && order.source !== 'direct' && (
+            <span className={`shrink-0 inline-flex items-center text-[10px] font-bold uppercase tracking-wide rounded bg-brand-gold/15 text-brand-gold border border-brand-gold/30 px-1.5 py-0.5 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+              {isRTL ? 'يدوي' : 'Manual'}
+            </span>
+          )}
+        </div>
         <StatusBadge status={order.status} label={tS(order.status)} />
       </div>
 

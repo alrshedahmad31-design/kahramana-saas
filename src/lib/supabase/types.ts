@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       audit_logs: {
@@ -1987,6 +1962,51 @@ export type Database = {
           },
         ]
       }
+      menu_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          description_ar: string | null
+          description_en: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean
+          name_ar: string
+          name_en: string
+          price_bhd: number | null
+          station: Database["public"]["Enums"]["kds_station"] | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          id: string
+          image_url?: string | null
+          is_available?: boolean
+          name_ar: string
+          name_en: string
+          price_bhd?: number | null
+          station?: Database["public"]["Enums"]["kds_station"] | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name_ar?: string
+          name_en?: string
+          price_bhd?: number | null
+          station?: Database["public"]["Enums"]["kds_station"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_items_sync: {
         Row: {
           last_synced_at: string
@@ -2016,6 +2036,48 @@ export type Database = {
           sync_source?: string
         }
         Relationships: []
+      }
+      order_item_station_status: {
+        Row: {
+          id: string
+          item_id: string | null
+          order_id: string | null
+          station: Database["public"]["Enums"]["kds_station"]
+          status: Database["public"]["Enums"]["kds_item_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          item_id?: string | null
+          order_id?: string | null
+          station: Database["public"]["Enums"]["kds_station"]
+          status?: Database["public"]["Enums"]["kds_item_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          item_id?: string | null
+          order_id?: string | null
+          station?: Database["public"]["Enums"]["kds_station"]
+          status?: Database["public"]["Enums"]["kds_item_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_item_station_status_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_item_station_status_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -2092,6 +2154,7 @@ export type Database = {
           delivery_apartment: string | null
           delivery_area: string | null
           delivery_building: string | null
+          delivery_city: string | null
           delivery_instructions: string | null
           delivery_lat: number | null
           delivery_lng: number | null
@@ -2140,6 +2203,7 @@ export type Database = {
           delivery_apartment?: string | null
           delivery_area?: string | null
           delivery_building?: string | null
+          delivery_city?: string | null
           delivery_instructions?: string | null
           delivery_lat?: number | null
           delivery_lng?: number | null
@@ -2188,6 +2252,7 @@ export type Database = {
           delivery_apartment?: string | null
           delivery_area?: string | null
           delivery_building?: string | null
+          delivery_city?: string | null
           delivery_instructions?: string | null
           delivery_lat?: number | null
           delivery_lng?: number | null
@@ -2865,6 +2930,95 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      shift_closings: {
+        Row: {
+          actual_cash_bhd: number
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          closed_by: string
+          created_at: string
+          difference_bhd: number | null
+          discrepancy_reason: string | null
+          expected_cash_bhd: number
+          id: string
+          manager_signature: string | null
+          notes: string | null
+          shift_date: string
+          shift_type: string
+          status: string
+          total_orders: number
+          total_revenue_bhd: number
+        }
+        Insert: {
+          actual_cash_bhd?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          closed_by: string
+          created_at?: string
+          difference_bhd?: number | null
+          discrepancy_reason?: string | null
+          expected_cash_bhd?: number
+          id?: string
+          manager_signature?: string | null
+          notes?: string | null
+          shift_date: string
+          shift_type: string
+          status?: string
+          total_orders?: number
+          total_revenue_bhd?: number
+        }
+        Update: {
+          actual_cash_bhd?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          closed_by?: string
+          created_at?: string
+          difference_bhd?: number | null
+          discrepancy_reason?: string | null
+          expected_cash_bhd?: number
+          id?: string
+          manager_signature?: string | null
+          notes?: string | null
+          shift_date?: string
+          shift_type?: string
+          status?: string
+          total_orders?: number
+          total_revenue_bhd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_closings_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_closings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_closings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "shift_closings_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "staff_basic"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shift_swap_requests: {
         Row: {
@@ -3821,6 +3975,58 @@ export type Database = {
         }
         Relationships: []
       }
+      v_kds_station_items: {
+        Row: {
+          branch_id: string | null
+          customer_name: string | null
+          item_id: string | null
+          item_notes: string | null
+          item_station_status:
+            | Database["public"]["Enums"]["kds_item_status"]
+            | null
+          name_ar: string | null
+          name_en: string | null
+          order_created_at: string | null
+          order_id: string | null
+          order_status: Database["public"]["Enums"]["order_status"] | null
+          order_type: string | null
+          quantity: number | null
+          selected_size: string | null
+          selected_variant: string | null
+          station: Database["public"]["Enums"]["kds_station"] | null
+          status_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_item_station_status_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_item_station_status_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
+      }
       v_vendor_performance: {
         Row: {
           avg_delay_days: number | null
@@ -4058,6 +4264,15 @@ export type Database = {
         Returns: undefined
       }
       rpc_update_abc_classification: { Args: never; Returns: undefined }
+      update_order_item_station_status: {
+        Args: {
+          p_item_id: string
+          p_order_id: string
+          p_station: Database["public"]["Enums"]["kds_station"]
+          p_status: Database["public"]["Enums"]["kds_item_status"]
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       abc_class: "A" | "B" | "C"
@@ -4077,6 +4292,7 @@ export type Database = {
         | "catering_release"
         | "opening_balance"
         | "adjustment"
+      kds_item_status: "pending" | "preparing" | "ready" | "completed"
       kds_station:
         | "grill"
         | "fry"
@@ -4084,6 +4300,10 @@ export type Database = {
         | "desserts"
         | "drinks"
         | "packing"
+        | "shawarma"
+        | "bakery"
+        | "appetizer_drinks"
+        | "main"
       loyalty_tier: "bronze" | "silver" | "gold" | "platinum"
       order_status:
         | "new"
@@ -4243,3 +4463,80 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      abc_class: ["A", "B", "C"],
+      coupon_type: ["percentage", "fixed_amount"],
+      inventory_movement_type: [
+        "reservation",
+        "consumption",
+        "release",
+        "purchase",
+        "count_adjust",
+        "waste",
+        "transfer_in",
+        "transfer_out",
+        "prep_production",
+        "prep_consumption",
+        "catering_reserve",
+        "catering_release",
+        "opening_balance",
+        "adjustment",
+      ],
+      kds_item_status: ["pending", "preparing", "ready", "completed"],
+      kds_station: [
+        "grill",
+        "fry",
+        "salads",
+        "desserts",
+        "drinks",
+        "packing",
+        "shawarma",
+        "bakery",
+        "appetizer_drinks",
+        "main",
+      ],
+      loyalty_tier: ["bronze", "silver", "gold", "platinum"],
+      order_status: [
+        "new",
+        "under_review",
+        "accepted",
+        "preparing",
+        "ready",
+        "out_for_delivery",
+        "delivery_failed",
+        "delivered",
+        "completed",
+        "cancelled",
+        "payment_failed",
+        "pending_payment",
+        "confirmed",
+        "returned",
+      ],
+      payment_method: ["cash", "benefit_qr", "tap_card", "tap_knet"],
+      payment_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "refunded",
+        "pending_cod",
+        "awaiting_manual_review",
+      ],
+      staff_role: [
+        "owner",
+        "general_manager",
+        "branch_manager",
+        "cashier",
+        "kitchen",
+        "driver",
+        "inventory",
+        "marketing",
+        "support",
+        "inventory_manager",
+      ],
+    },
+  },
+} as const

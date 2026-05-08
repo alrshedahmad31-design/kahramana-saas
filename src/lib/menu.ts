@@ -1,6 +1,4 @@
 import menuData from '@/data/menu.json'
-import featuredSlugsData from '@/data/featured.json'
-import { createClient } from '@/lib/supabase/server'
 
 export type LocaleCode = 'ar' | 'en'
 
@@ -45,6 +43,8 @@ export interface MenuItem {
   sizes?: MenuSizeMap
   variants?: MenuVariantOption[]
   tags?: string[]
+  station?: 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'main'
+  ingredients?: string[]
 }
 
 export interface MenuCategory {
@@ -83,6 +83,8 @@ export interface NormalizedMenuItem extends MenuItem {
   hasMultiplePrices: boolean
   pricingKind: 'single' | 'sizes' | 'variants' | 'sizes_variants' | 'unpriced'
   image: string
+  station?: 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'main'
+  ingredients: string[]
 }
 
 export interface CategoryWithItems {
@@ -400,6 +402,7 @@ export function normalizeMenuItem(
               ? 'single'
               : 'unpriced',
     image: getItemImageOrFallback(item),
+    ingredients: item.ingredients || [],
   }
 }
 

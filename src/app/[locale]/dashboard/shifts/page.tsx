@@ -29,10 +29,6 @@ interface ShiftClosingData {
   }
 }
 
-// shift_closings is not yet in generated types
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const shiftClosings = (sb: any) => sb.from('shift_closings')
-
 export default async function ShiftsPage({ 
   params,
   searchParams 
@@ -61,7 +57,7 @@ export default async function ShiftsPage({
   // Fetch branches for the selector
   const { data: branches } = await supabase.from('branches').select('id, name_ar, name_en')
 
-  let query = shiftClosings(supabase).select(`
+  let query = supabase.from('shift_closings').select(`
     *,
     closed_by_staff:closed_by (name_ar, name_en),
     approved_by_staff:approved_by (name_ar, name_en)

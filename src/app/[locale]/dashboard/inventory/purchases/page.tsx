@@ -12,7 +12,7 @@ const STATUS_BADGE: Record<string, string> = {
   draft:     'bg-brand-surface-2 text-brand-muted',
   sent:      'bg-blue-500/10 text-blue-400',
   confirmed: 'bg-brand-gold/10 text-brand-gold',
-  partial:   'bg-orange-500/10 text-orange-400',
+  partial:   'bg-blue-500/10 text-blue-400',
   received:  'bg-green-500/10 text-green-400',
   cancelled: 'bg-red-500/10 text-red-400',
 }

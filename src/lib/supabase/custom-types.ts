@@ -11,7 +11,8 @@ export type { Database, Tables, TablesInsert, TablesUpdate, Enums, Json } from '
 
 export type OrderStatus    = Enums<'order_status'>;
 export type StaffRole      = Enums<'staff_role'>;
-export type KDSStation     = Enums<'kds_station'>;
+export type KDSStation     = 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'main' | 'fry' | 'salads' | 'desserts' | 'drinks' | 'packing';
+export type KDSItemStatus  = 'pending' | 'preparing' | 'ready' | 'completed';
 export type LoyaltyTier    = Enums<'loyalty_tier'>;
 export type CouponType     = Enums<'coupon_type'>;
 export type PaymentMethod  = Enums<'payment_method'>;
@@ -116,6 +117,8 @@ export type KDSOrder = Pick<
     selected_variant: string | null;
     menu_item_slug: string | null;
     notes: string | null;
+    station?: KDSStation;
+    station_status?: KDSItemStatus;
   }>;
 };
 

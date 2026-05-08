@@ -4,9 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { startOfDay, endOfDay } from 'date-fns'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const shiftClosings = (sb: any) => sb.from('shift_closings')
-
 export async function getShiftSummary(branchId: string, date: string) {
   const supabase = await createClient()
 
@@ -44,7 +41,7 @@ export async function closeShift(data: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { error } = await shiftClosings(supabase).insert({
+  const { error } = await supabase.from('shift_closings').insert({
     ...data,
     closed_by: user.id,
     status: Math.abs(data.actual_cash_bhd - data.expected_cash_bhd) > 0.005
@@ -68,7 +65,7 @@ export async function approveShift(shiftId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { error } = await shiftClosings(supabase)
+  const { error } = await supabase.from('shift_closings')
     .update({
       status:      'approved',
       approved_by: user.id,

@@ -206,10 +206,14 @@ export default function DriverOrderCard({
 
   const mapsSearchQuery = (() => {
     if (order.delivery_lat != null && order.delivery_lng != null) return null
-    const parts = []
-    if (order.delivery_building) parts.push(`Bldg ${order.delivery_building}`)
-    if (order.delivery_street)   parts.push(`Rd ${order.delivery_street}`)
+    // Bahrain address format: Block → Road → Building → City
+    const parts: string[] = []
     if (order.delivery_area)     parts.push(`Block ${order.delivery_area}`)
+    if (order.delivery_street)   parts.push(`Road ${order.delivery_street}`)
+    if (order.delivery_building) parts.push(`Building ${order.delivery_building}`)
+    // Include city if stored (delivery_city added in migration 076)
+    const city = (order as Record<string, unknown>).delivery_city as string | null | undefined
+    if (city)                    parts.push(city)
     if (parts.length === 0) return deliveryAddrText || ''
     return parts.join(', ')
   })()

@@ -1,47 +1,57 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import featuredSlugsData from '@/data/featured.json'
-import { 
-  getSortedRawCategories, 
-  slugify, 
-  getCategoryPresentation, 
+import {
+  getSortedRawCategories,
+  slugify,
+  getCategoryPresentation,
   normalizeMenuItem,
-  type CategoryWithItems 
+  type CategoryWithItems,
 } from './menu'
 
 export async function getFeaturedSlugs(): Promise<string[]> {
-  // To swap for Supabase: return (await supabase.from('featured_items').select('id')).data?.map(r => r.id) ?? []
   return featuredSlugsData
 }
 
+export async function getMenuAvailabilityMap(): Promise<Map<string, boolean>> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('menu_items')
+      .select('id, is_available')
+    if (error || !data) return new Map()
+    const map = new Map<string, boolean>()
+    for (const row of data) {
+      if (typeof row.id === 'string' && typeof row.is_available === 'boolean') {
+        map.set(row.id, row.is_available)
+      }
+    }
+    return map
+  } catch (err) {
+    console.error('[menu] getMenuAvailabilityMap failed:', err)
+    return new Map()
+  }
+}
+
 export async function getMenuData(): Promise<CategoryWithItems[]> {
-  const categories = getSortedRawCategories()
-  
-  // Fetch availability from Supabase
-  const supabase = await createClient()
-  // menu_items is not in generated types yet (table exists in DB)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: availabilityData } = await (supabase as any)
-    .from('menu_items')
-    .select('id, is_available')
-
-  const availabilityMap = new Map<string, boolean>(
-    (availabilityData as { id: string; is_available: boolean }[] | null)?.map(
-      (r: { id: string; is_available: boolean }) => [r.id, r.is_available]
-    ) ?? []
-  )
-
-  return categories.map((cat) => ({
-    id: slugify(cat.category.en),
+  const rawCategories = getSortedRawCategories()
+  const jsonCategories: CategoryWithItems[] = rawCategories.map((cat) => ({
+    id:     slugify(cat.category.en),
     nameAR: getCategoryPresentation(cat).name.ar,
     nameEN: getCategoryPresentation(cat).name.en,
-    items: cat.items.map((item) => {
-      const normalized = normalizeMenuItem(item, cat)
-      // Override with DB availability if exists
-      if (availabilityMap.has(item.id)) {
-        normalized.available = availabilityMap.get(item.id)!
-      }
-      return normalized
-    }),
+    items:  cat.items.map((item) => normalizeMenuItem(item, cat)),
+  }))
+
+  const availabilityMap = await getMenuAvailabilityMap()
+  if (availabilityMap.size === 0) return jsonCategories
+
+  return jsonCategories.map((cat) => ({
+    ...cat,
+    items: cat.items.map((item) => ({
+      ...item,
+      available: availabilityMap.has(item.slug)
+        ? availabilityMap.get(item.slug)!
+        : item.available,
+    })),
   }))
 }

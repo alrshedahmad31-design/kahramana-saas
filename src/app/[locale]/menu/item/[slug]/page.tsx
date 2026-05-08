@@ -8,8 +8,9 @@ import {
   getRelatedItems,
   type LocaleCode,
 } from '@/lib/menu'
-import dynamic from 'next/dynamic'
-const ItemDetailHero = dynamic(() => import('@/components/menu/item-detail-hero'), { ssr: true })
+import { getMenuAvailabilityMap } from '@/lib/menu.server'
+import nextDynamic from 'next/dynamic'
+const ItemDetailHero = nextDynamic(() => import('@/components/menu/item-detail-hero'), { ssr: true })
 import RelatedItems from '@/components/menu/related-items'
 
 import { SITE_URL } from '@/constants/contact'
@@ -24,6 +25,10 @@ type Props = {
     slug: string
   }>
 }
+
+// Force dynamic rendering so the item detail page reflects the dashboard's
+// is_available toggle without waiting for a redeploy.
+export const dynamic = 'force-dynamic'
 
 export function generateStaticParams() {
   return getItemSlugs().map((slug) => ({ slug }))
@@ -90,14 +95,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MenuItemPage({ params }: Props) {
   const { locale, slug } = await params
-  const item = getMenuItemBySlug(slug)
-  if (!item) notFound()
+  const baseItem = getMenuItemBySlug(slug)
+  if (!baseItem) notFound()
+
+  // Merge live availability from menu_items so the dashboard out-of-stock
+  // toggle is honoured immediately on the public detail page.
+  const availabilityMap = await getMenuAvailabilityMap()
+  const item = availabilityMap.has(baseItem.slug)
+    ? { ...baseItem, available: availabilityMap.get(baseItem.slug)! }
+    : baseItem
 
   const isRTL = locale === 'ar'
   const t = await getTranslations({ locale, namespace: 'menu' })
   const tCommon = await getTranslations({ locale, namespace: 'common' })
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  const relatedItems = getRelatedItems(item.slug, 3)
+  const relatedItems = getRelatedItems(item.slug, 3).map((r) =>
+    availabilityMap.has(r.slug)
+      ? { ...r, available: availabilityMap.get(r.slug)! }
+      : r,
+  )
   
   const itemSchema = buildDishSchema({
     slug: item.slug,

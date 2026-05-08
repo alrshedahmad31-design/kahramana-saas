@@ -16,7 +16,9 @@
     "test:e2e:realtime": "playwright test tests/e2e/realtime-rls.spec.ts",
     "test:e2e": "playwright test",
     "email:dev": "email dev --dir emails/templates --port 3001",
-    "email:export": "npx tsx emails/scripts/render-for-supabase.ts"
+    "email:export": "npx tsx emails/scripts/render-for-supabase.ts",
+    "seed:menu": "npx tsx scripts/seed-menu-items-sync.ts",
+    "seed:menu:dry": "npx tsx scripts/seed-menu-items-sync.ts --dry-run"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
@@ -62,6 +64,7 @@
     "postcss": "^8.4.31",
     "react-email": "^6.0.5",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.21.0",
     "typescript": "^5.6.0"
   },
   "engines": {
