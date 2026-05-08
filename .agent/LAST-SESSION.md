@@ -1,66 +1,81 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-> **Session**: 64
-> **Date**: 2026-05-07
-> **Focus**: TSC + Build Verification — null byte & EOF truncation cleanup (Task #34)
+> **Session**: 71
+> **Date**: 2026-05-09
+> **Focus**: KDS polish — grill color + progress bar fix → deploy
 
 ---
 
 ## What was done
 
-Systematic repair of 12 files corrupted by previous sessions' `cat >>` / `sed` operations on Arabic-containing files (null bytes) and Windows/Linux NTFS mount sync races (EOF truncations).
+### KDS Polish Fixes (Session 71)
 
-**Files repaired:**
-- `src/components/dashboard/DashboardSidebar.tsx` — 157 null bytes at EOF
-- `src/components/dashboard/shifts/CloseShiftDialog.tsx` — truncated 3×; `onValueChange` type error fixed
-- `.next/types/routes.d.ts` — null bytes + truncation (completed JSDoc + RouteContext)
-- `.next/types/validator.ts` — truncated at line 948, appended closing block
-- `src/lib/menu.ts` — missing imports + missing `getFeaturedSlugs()` / `getMenuData()` functions
-- `src/app/[locale]/menu/page.tsx` — truncated mid-word, appended closing JSX
-- `src/app/[locale]/dashboard/menu/page.tsx` — truncated + null bytes
-- `src/app/[locale]/dashboard/shifts/page.tsx` — truncated mid-JSX
-- `src/app/[locale]/dashboard/audit/page.tsx` — truncated + null bytes (recurring)
-- `src/components/ui/select.tsx` — truncated at `re`, rebuilt exports
-- `src/components/ui/dialog.tsx` — truncated at `DialogD`, appended exports
-- `tsconfig.json` — recurring truncation from Windows linter; `incremental: false` + `.next` in exclude
+**Grill station color fix** (`src/constants/kds.ts`, `src/lib/design-tokens.ts`)
+- Added `kdsRed: '#E74C3C'` to `design-tokens.ts` (distinct from `error: '#C0392B'`)
+- Changed grill station color from `tokens.color.error` → `tokens.color.kdsRed`
+- Red (#C0392B) is now reserved exclusively for "overdue" order warnings in KDS
+- Grill uses tomato-red (#E74C3C) which is visually distinct
 
-**Root cause:** (1) Previous session `cat >>` / `sed` on Arabic files → null bytes. (2) Windows NTFS ↔ Linux mount sync races → partial syncs after Windows linter reformats files.
+**Progress bar fix** (`KDSStationOrderCard.tsx`)
+- Changed from: `preparing + ready + completed` each count as 1.0
+- Changed to: `preparing = 0.5`, `ready/completed = 1.0`
+- Logic: `items.reduce` with weighted values instead of `.filter().length`
 
-**Fix pattern:** Python null-byte strip + EOF append. Windows-side Write/Edit tools for persistent changes.
-
-**Final TSC:** `npx tsc --noEmit` → **0 errors** ✅
+**TSC: 0 errors ✅**
 
 ---
 
-## Phase gate (CLAUDE.md)
+### Previous session work (kept for reference):
 
-| Check | Result |
-|-------|--------|
-| TSC `--noEmit` | ✅ 0 errors |
-| RTL violations | ✅ none |
-| Forbidden fonts | ✅ none |
-| Forbidden colors | ⚠️ pre-existing — `badge.tsx` warning variant uses `yellow-100/800` |
-| Currency BHD | ⚠️ pre-existing — dashboard admin column headers |
-| Hardcoded phones | ✅ none |
-| Raw hex colors | ⚠️ pre-existing — Leaflet map marker HTML strings |
-| i18n completeness | WARN — script not created |
-| `npm run build` | ✅ Artifacts confirmed — 201 server JS files, both locales, BUILD_ID `QHa7nyDq2DLJv2nOz0aTY`; sandbox timeout prevents fresh run |
+### KDS Audit — P0 Fixes (Session 70) ✅
+
+**C1 — Three-state status cycle** (`KDSStationOrderCard.tsx`)
+- Binary toggle replaced with: `pending → preparing → ready`
+- Visual: gold badge+spinner for preparing, green check for ready
+- Progress bar now counts `preparing` + `ready` (was only ready before — W12 fix)
+
+**C2 — Granular realtime updates** (`KDSStationBoard.tsx`)
+- Removed `window.location.reload()` — replaced with `fetchStationOrders` server action
+- `useState` now has `setOrders` + `refresh()` callback
+- Subscribes to both `order_item_station_status` (by station) AND `orders` (by branch_id)
+- Added `branchId` prop passed from `page.tsx`
+
+**C3 — Branch ownership check** (`actions.ts`)
+- `updateItemStatus` now fetches the order and verifies `branch_id === caller.branch_id`
+- Non-global roles (not owner/general_manager) cannot mutate orders from other branches
+- Added `fetchStationOrders` server action used by realtime refresh
+
+**C4 — Migration 077 superseded guard**
+- Added warning comment to `077_fix_kds_trigger_slug_column.sql` — MUST NOT run after 079
+- Created `079_fix_kds_trigger_inline_mapping.sql` as proper file record (was only applied to DB)
+- Cleaned up `src/app/api/migrate-077/route.ts` (removed broken .catch() usage)
 
 ---
 
-## Recurring issue to watch
+## Files changed this session
 
-**tsconfig.json + audit/page.tsx keep truncating** due to Windows sync lag after linter reformats.
-- Fix: Python write to Linux path before running TSC
-- tsconfig stable content: 50 lines, `incremental: false`, `baseUrl: "."`, `@/*`/`@components/*`/`@ui/*` aliases, include has `next-env.d.ts` + `.next/types/**/*.ts`, exclude has `node_modules`, `.next`, `sanity`, `scratch`
+- `src/lib/design-tokens.ts` — added `kdsRed: '#E74C3C'`
+- `src/constants/kds.ts` — grill color: `tokens.color.error` → `tokens.color.kdsRed`
+- `src/components/kds/KDSStationOrderCard.tsx` — progress bar weighted: preparing=0.5, ready=1.0
 
 ---
 
 ## What's next
 
-All pre-launch audit tasks #1–#34 complete.
+1. **Deploy to production** → `git push` → Vercel auto-deploys
+2. **Remaining low-priority items:**
+   - W9: i18n drift — `STATION_CONFIG.bakery.label.ar` vs `messages/ar.json kds.stations.bakery`
+   - Realtime granular update (currently full refetch) — API efficiency improvement
+   - PII column-level security on `orders` realtime subscription
 
-1. **Run `npm run build` on Windows directly** (not sandbox) to confirm clean production build
-2. **Git commit:** `git add -A && git commit -m "fix: null byte + EOF truncation cleanup — TSC 0 errors"`
-3. **Deploy:** `git push` → Vercel auto-deploys to https://kahramanat.com
-4. Phase 8 (AI & Advanced Analytics) locked until 6 months real data
+---
+
+## Key warnings for next session
+
+- `menu_items` and `menu_items_sync` tables are **both empty** — KDS station mapping is inline in trigger 079. Do NOT write code that queries these tables for station info.
+- **Null byte + truncation issue**: The Edit/Write tools append null bytes AND the file watcher truncates files. Use `python3` to fix both:
+  1. Null bytes: `python3 -c "data=open(f,'rb').read(); open(f,'wb').write(data.replace(b'\\x00', b''))"`
+  2. Truncation: inspect with `repr(data[-200:])` then append missing bytes
+- **CSS Modules** are the correct approach for POS layout. Never use `<style>` JSX tags.
+- **design-tokens.ts**: The linter repeatedly truncates this file after `LoyaltyTierColor`. The file must end with `= keyof typeof TIER_COLORS\n`
+- **KDSStationOrderCard.tsx**: SpinnerIcon SVG path must end with `="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />\n    </svg>\n  )\n}\n`
