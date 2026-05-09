@@ -1,8 +1,8 @@
 {
-  "name": "Kahramana Drivers",
-  "short_name": "Drivers",
-  "description": "Driver app for Kahramana Baghdad — manage deliveries and update order status",
-  "start_url": "/ar/driver",
+  "name": "Kahramana Staff",
+  "short_name": "Kahramana",
+  "description": "Staff app for Kahramana Baghdad — drivers, waiters and dashboard staff",
+  "start_url": "/ar/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -22,6 +22,34 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Driver",
+      "short_name": "Driver",
+      "description": "Driver delivery app",
+      "url": "/ar/driver",
+      "icons": [
+        {
+          "src": "/assets/favicon/web-app-manifest-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Waiter",
+      "short_name": "Waiter",
+      "description": "Take dine-in orders at the table",
+      "url": "/ar/waiter",
+      "icons": [
+        {
+          "src": "/assets/favicon/web-app-manifest-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

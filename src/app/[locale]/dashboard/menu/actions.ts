@@ -88,7 +88,7 @@ function bustMenuCaches(slug?: string) {
 
   // Customer-facing menu surfaces (both locales)
   for (const locale of ['ar', 'en'] as const) {
-    const prefix = locale === 'ar' ? '' : '/en'
+    const prefix = locale === 'ar' ? '/ar' : '/en'
     revalidatePath(`${prefix}/menu`)
     if (slug) {
       revalidatePath(`${prefix}/menu/${slug}`)
@@ -381,6 +381,12 @@ export async function listMenuOptionGroups(slug: string): Promise<{
   groups?: MenuOptionGroupRow[]
   error?: string
 }> {
+  try {
+    await requireDashboardSection('menu')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+
   if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
     return { success: false, error: 'Invalid slug' }
   }

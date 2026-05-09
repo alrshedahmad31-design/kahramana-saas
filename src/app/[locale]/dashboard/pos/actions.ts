@@ -9,6 +9,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
 import { BRANCHES, type BranchId } from '@/constants/contact'
+import { resolveBestPromotion } from '@/lib/promotions/server'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 
 const POS_ROLES: readonly StaffRole[] = [
@@ -276,27 +277,39 @@ export async function createManualOrder(
   // recorded on the payment record.
   const rpcPaymentMethod = 'cash' as const
 
+  // Best-effort promotion match — never blocks POS order creation.
+  const promo = await resolveBestPromotion(
+    data.branchId,
+    pricedItems.map((p) => ({
+      menu_item_slug: p.menu_item_slug,
+      quantity:       p.quantity,
+      unit_price_bhd: p.unit_price_bhd,
+    })),
+  )
+
   const { data: orderId, error: rpcError } = await supabase.rpc('rpc_create_order', {
-    p_idempotency_key:   idempotencyKey,
-    p_customer_name:     data.customerName.trim(),
-    p_customer_phone:    normalizedPhone,
-    p_branch_id:         data.branchId,
-    p_order_type:        dbOrderType,
-    p_items:             pricedItems,
-    p_total_bhd:         subtotal,
-    p_notes:             combinedNotes,
-    p_delivery_address:  deliveryAddressLine ?? undefined,
-    p_delivery_city:     addr?.city?.trim() || undefined,
-    p_delivery_building: addr?.building?.trim() || undefined,
-    p_delivery_street:   addr?.road?.trim() || undefined,
-    p_delivery_area:     addr?.block?.trim() || undefined,
-    p_source:            'manual',
-    p_coupon_discount_bhd: 0,
-    p_points_to_redeem:  0,
-    p_payment_method:    rpcPaymentMethod,
+    p_idempotency_key:        idempotencyKey,
+    p_customer_name:          data.customerName.trim(),
+    p_customer_phone:         normalizedPhone,
+    p_branch_id:              data.branchId,
+    p_order_type:             dbOrderType,
+    p_items:                  pricedItems,
+    p_total_bhd:              subtotal,
+    p_notes:                  combinedNotes,
+    p_delivery_address:       deliveryAddressLine ?? undefined,
+    p_delivery_city:          addr?.city?.trim() || undefined,
+    p_delivery_building:      addr?.building?.trim() || undefined,
+    p_delivery_street:        addr?.road?.trim() || undefined,
+    p_delivery_area:          addr?.block?.trim() || undefined,
+    p_source:                 'manual',
+    p_coupon_discount_bhd:    0,
+    p_points_to_redeem:       0,
+    p_payment_method:         rpcPaymentMethod,
     // POS orders are confirmed by staff at the counter — skip 'new' and go
     // straight to 'accepted' so the KDS picks them up immediately.
-    p_status:            'accepted',
+    p_status:                 'accepted',
+    p_promotion_id:           promo?.promotion_id ?? null,
+    p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
   })
 
   if (rpcError || !orderId) {

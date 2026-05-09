@@ -26,13 +26,14 @@ interface DeleteTranslations {
 }
 
 interface Props {
-  id: string
-  name: string
+  id:           string
+  name:         string
   translations: DeleteTranslations
+  onSuccess?:   () => void
 }
 
-export default function DeleteMenuItemConfirm({ id, name, translations: t }: Props) {
-  const [open, setOpen] = useState(false)
+export default function DeleteMenuItemConfirm({ id, name, translations: t, onSuccess }: Props) {
+  const [open, setOpen]       = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleDelete = async () => {
@@ -42,8 +43,9 @@ export default function DeleteMenuItemConfirm({ id, name, translations: t }: Pro
       if (res.success) {
         toast.success(t.delete_success)
         setOpen(false)
+        onSuccess?.()
       } else {
-        toast.error(res.error || t.error)
+        toast.error(res.error ?? t.error)
       }
     } catch {
       toast.error(t.error)
@@ -55,7 +57,11 @@ export default function DeleteMenuItemConfirm({ id, name, translations: t }: Pro
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
           <Trash2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>

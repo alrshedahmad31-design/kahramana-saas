@@ -113,7 +113,7 @@ export default function OrderDetailsModal({ orderId, isRTL, userRole, onClose, o
           {loading || !order ? (
             <ModalSkeleton />
           ) : (
-            <div className="flex flex-col divide-y divide-brand-border">
+            <div className="flex flex-col divide-y divide-brand-border printable-content">
 
               {/* Customer */}
               <section className="px-5 py-5">
@@ -224,8 +224,8 @@ export default function OrderDetailsModal({ orderId, isRTL, userRole, onClose, o
                 </div>
               </section>
 
-              {/* Timeline */}
-              <section className="px-5 py-5">
+              {/* Timeline — Hidden on print */}
+              <section className="px-5 py-5 print:hidden">
                 <SectionTitle isRTL={isRTL}>{t('statusTimeline')}</SectionTitle>
                 <div className="mt-4">
                   <OrderTimeline
@@ -237,8 +237,8 @@ export default function OrderDetailsModal({ orderId, isRTL, userRole, onClose, o
                 </div>
               </section>
 
-              {/* Status update */}
-              <section className="px-5 py-5">
+              {/* Status update — Hidden on print */}
+              <section className="px-5 py-5 print:hidden">
                 <SectionTitle isRTL={isRTL}>{t('updateStatus')}</SectionTitle>
                 <div className="mt-4">
                   <OrderStatusSelect

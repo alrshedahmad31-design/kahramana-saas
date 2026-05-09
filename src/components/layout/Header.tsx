@@ -51,11 +51,16 @@ export default function Header() {
     setIsOpen(false)
   }
 
-  // Hide header on dashboard and driver routes
-  if (pathname.includes('/dashboard') || pathname.includes('/driver')) return null
+  // Hide header on staff app and QR table routes
+  if (
+    pathname.includes('/dashboard') ||
+    pathname.includes('/driver') ||
+    pathname.includes('/waiter') ||
+    pathname.includes('/table/')
+  ) return null
 
   return (
-    <div className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none pt-4 sm:pt-6">
+    <div data-public-header className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none pt-4 sm:pt-6">
       <header 
         className={`
           relative flex items-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
@@ -78,9 +83,11 @@ export default function Header() {
             <Image
               src="/assets/logo.svg"
               alt={isRTL ? 'كهرمانة بغداد' : 'Kahramana Baghdad'}
-              width={120}
-              height={36}
+              width={326}
+              height={766}
+              priority
               className={`transition-all duration-500 ${isScrolled ? 'h-7 w-auto' : 'h-9 w-auto'}`}
+              style={{ height: 'auto' }}
             />
           </Link>
 

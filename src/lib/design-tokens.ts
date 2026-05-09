@@ -19,6 +19,8 @@ export const tokens = {
     kdsOrange:  '#D35400',
     kdsBlue:    '#2980B9',
     kdsRed:     '#E74C3C',
+    kdsAmber:   '#D97706',
+    kdsIndigo:  '#4F46E5',
     qrInk:      '#0A0A0A',
     qrPaper:    '#F5F5F5',
   },

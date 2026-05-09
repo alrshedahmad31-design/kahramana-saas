@@ -10,6 +10,7 @@ import { calculateDiscount } from '@/lib/coupons/calculations'
 import { createOrderAccessToken } from '@/lib/auth/order-access'
 import type { CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
 import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
+import { resolveBestPromotion } from '@/lib/promotions/server'
 import { buildOrderTrackingUrl, buildPricedCheckoutWhatsAppLinks } from '@/lib/whatsapp'
 import { sendOrderConfirmation } from '@/lib/email/send'
 import { geocodeBahrainAddress } from '@/lib/utils/geocode'
@@ -609,15 +610,25 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     const finalTotal = Math.max(0.001, subtotal - serverCouponDiscount - pointsDiscount)
 
     // ── Atomic RPC ────────────────────────────────────────────────────────────
+    // Best-effort promotion match — never blocks order creation.
+    const promo = await resolveBestPromotion(
+      resolvedOrderData.branch_id,
+      repriced.items.map((i) => ({
+        menu_item_slug: i.menu_item_slug,
+        quantity:       i.quantity,
+        unit_price_bhd: i.unit_price_bhd,
+      })),
+    )
+
     // Idempotency guard + coupon lock/increment + loyalty deduction +
     // order insert + order_items insert — all in one DB transaction.
     const { data: orderId, error: rpcError } = await supabase.rpc('rpc_create_order', {
-      p_idempotency_key:      idempotency_key,
-      p_customer_name:        resolvedOrderData.customer_name ?? '',
-      p_customer_phone:       resolvedOrderData.customer_phone ?? '',
-      p_branch_id:            resolvedOrderData.branch_id,
-      p_order_type:           resolvedOrderData.order_type,
-      p_items:                repriced.items.map((i) => ({
+      p_idempotency_key:        idempotency_key,
+      p_customer_name:          resolvedOrderData.customer_name ?? '',
+      p_customer_phone:         resolvedOrderData.customer_phone ?? '',
+      p_branch_id:              resolvedOrderData.branch_id,
+      p_order_type:             resolvedOrderData.order_type,
+      p_items:                  repriced.items.map((i) => ({
         menu_item_slug:   i.menu_item_slug,
         name_ar:          i.name_ar,
         name_en:          i.name_en,
@@ -628,21 +639,23 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
         unit_price_bhd:   i.unit_price_bhd,
         item_total_bhd:   i.item_total_bhd,
       })),
-      p_total_bhd:            finalTotal,
-      p_notes:                resolvedOrderData.notes            ?? undefined,
-      p_customer_notes:       resolvedOrderData.customer_notes   ?? undefined,
-      p_delivery_address:     resolvedOrderData.delivery_address  ?? undefined,
-      p_delivery_building:    resolvedOrderData.delivery_building ?? undefined,
-      p_delivery_street:      resolvedOrderData.delivery_street   ?? undefined,
-      p_delivery_area:        resolvedOrderData.delivery_area     ?? undefined,
-      p_delivery_lat:         resolvedOrderData.delivery_lat      ?? undefined,
-      p_delivery_lng:         resolvedOrderData.delivery_lng      ?? undefined,
-      p_source:               resolvedOrderData.source,
-      p_coupon_id:            resolvedCouponId    ?? undefined,
-      p_coupon_discount_bhd:  serverCouponDiscount,
-      p_points_to_redeem:     pointsToRedeem,
+      p_total_bhd:              finalTotal,
+      p_notes:                  resolvedOrderData.notes            ?? undefined,
+      p_customer_notes:         resolvedOrderData.customer_notes   ?? undefined,
+      p_delivery_address:       resolvedOrderData.delivery_address  ?? undefined,
+      p_delivery_building:      resolvedOrderData.delivery_building ?? undefined,
+      p_delivery_street:        resolvedOrderData.delivery_street   ?? undefined,
+      p_delivery_area:          resolvedOrderData.delivery_area     ?? undefined,
+      p_delivery_lat:           resolvedOrderData.delivery_lat      ?? undefined,
+      p_delivery_lng:           resolvedOrderData.delivery_lng      ?? undefined,
+      p_source:                 resolvedOrderData.source,
+      p_coupon_id:              resolvedCouponId    ?? undefined,
+      p_coupon_discount_bhd:    serverCouponDiscount,
+      p_points_to_redeem:       pointsToRedeem,
       // C-1: pass customer UUID so service_role call can lock the correct profile
-      p_customer_id:          customerSession?.id ?? undefined,
+      p_customer_id:            customerSession?.id ?? undefined,
+      p_promotion_id:           promo?.promotion_id ?? null,
+      p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
     })
 
     if (rpcError) {

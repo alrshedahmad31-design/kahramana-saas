@@ -70,6 +70,9 @@ export default function KDSStationBoard({
   const [bumpedToday, setBumpedToday]   = useState(0)
   const [bumpedStack, setBumpedStack]   = useState<string[]>([])
   const [isRecalling, setIsRecalling]   = useState(false)
+  const [now, setNow]                   = useState(Date.now())
+  const [isSyncing, setIsSyncing]       = useState(false)
+  const [isConnected, setIsConnected]   = useState(true)
 
   const t             = useTranslations('kds')
   const router        = useRouter()
@@ -80,8 +83,7 @@ export default function KDSStationBoard({
   useEffect(() => { soundRef.current = soundEnabled }, [soundEnabled])
 
   const refresh = useCallback(async () => {
-    if (isFetching.current) return
-    isFetching.current = true
+    setIsSyncing(true)
     try {
       const result = await fetchStationOrders(station)
       if ('orders' in result) {
@@ -93,6 +95,7 @@ export default function KDSStationBoard({
     } catch {
       setRefreshError('Network error')
     } finally {
+      setIsSyncing(false)
       isFetching.current = false
     }
   }, [station])
@@ -122,6 +125,11 @@ export default function KDSStationBoard({
       setIsRecalling(false)
     }
   }, [bumpedStack, station, refresh, isRecalling])
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -185,7 +193,9 @@ export default function KDSStationBoard({
       () => { refresh() }
     )
 
-    channel.subscribe()
+    channel.subscribe((status) => {
+      setIsConnected(status === 'SUBSCRIBED')
+    })
     return () => { supabase.removeChannel(channel) }
   }, [station, branchId, refresh])
 
@@ -217,7 +227,22 @@ export default function KDSStationBoard({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface2 border border-border">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-success' : 'bg-error animate-pulse'}`} />
+            <span className="text-[10px] font-bold text-muted uppercase tracking-wider">
+              {isConnected ? (isAr ? 'متصل' : 'LIVE') : (isAr ? 'منقطع' : 'OFFLINE')}
+            </span>
+          </div>
+
+          <button
+            onClick={() => refresh()}
+            disabled={isSyncing}
+            className={`p-2 hover:bg-surface2 rounded-lg transition-all ${isSyncing ? 'animate-spin text-gold' : 'text-muted hover:text-gold'}`}
+            title={isAr ? 'تحديث' : 'Sync'}
+          >
+            <RefreshIcon className="w-5 h-5" />
+          </button>
           {bumpedToday > 0 && (
             <div className="flex flex-col items-center min-w-[48px]">
               <div className="text-[10px] text-muted uppercase tracking-widest leading-none mb-1">
@@ -266,7 +291,7 @@ export default function KDSStationBoard({
           </div>
 
           <div className="w-px h-10 bg-border" />
-          <Clock locale={locale} />
+          <Clock locale={locale} now={now} />
         </div>
       </header>
 
@@ -311,6 +336,7 @@ export default function KDSStationBoard({
                   station={station}
                   locale={locale}
                   onBump={handleBump}
+                  now={now}
                 />
               </motion.div>
             ))}
@@ -342,12 +368,8 @@ export default function KDSStationBoard({
   )
 }
 
-function Clock({ locale }: { locale: string }) {
-  const [time, setTime] = useState(new Date())
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [])
+function Clock({ locale, now }: { locale: string; now: number }) {
+  const time = new Date(now)
   return (
     <div className="font-black text-2xl tabular-nums text-white min-w-[90px] text-center">
       {time.toLocaleTimeString(locale === 'ar' ? 'ar-BH' : 'en-US', {
@@ -397,6 +419,13 @@ function WarningIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  )
+}
+function RefreshIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
     </svg>
   )
 }

@@ -21,10 +21,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { STATION_CONFIG } from '@/constants/kds'
+import { ALL_STATIONS } from '@/lib/kds/constants'
 import { MENU_CATEGORIES, type MenuCategoryId } from '@/constants/menu-categories'
 import type { KDSStation } from '@/lib/supabase/custom-types'
-
-const STATIONS: KDSStation[] = ['main', 'grill', 'shawarma', 'bakery', 'appetizer_drinks']
 
 interface EditableItem {
   id:             string
@@ -36,14 +35,16 @@ interface EditableItem {
   category:       string
   image_url:      string
   station:        string
+  is_available:   boolean
 }
 
 interface Props {
-  item:   EditableItem
-  locale: 'ar' | 'en'
+  item:      EditableItem
+  locale:    'ar' | 'en'
+  onSuccess?: () => void
 }
 
-export default function EditMenuItemDialog({ item, locale }: Props) {
+export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
   const t = useTranslations('dashboard')
   const isAr = locale === 'ar'
   const [open, setOpen] = useState(false)
@@ -59,7 +60,7 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
     }
   }, [open, item, isAr])
 
-  const stationKey = (STATIONS.includes(form.station as KDSStation)
+  const stationKey = (ALL_STATIONS.includes(form.station as KDSStation)
     ? form.station
     : 'main') as KDSStation
   const stationCfg = STATION_CONFIG[stationKey] ?? STATION_CONFIG['main']!
@@ -91,6 +92,7 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
       if (result.success) {
         toast.success(t('update_success'))
         setOpen(false)
+        onSuccess?.()
       } else {
         toast.error(result.error ?? t('error'))
       }
@@ -266,7 +268,7 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
               onChange={(e) => setForm({ ...form, station: e.target.value })}
               className="flex h-10 w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-sm text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
             >
-              {STATIONS.map((s) => {
+              {ALL_STATIONS.map((s) => {
                 const cfg = STATION_CONFIG[s] ?? STATION_CONFIG['main']!
                 return (
                   <option key={s} value={s}>

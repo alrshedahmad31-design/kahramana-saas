@@ -1962,6 +1962,51 @@ export type Database = {
           },
         ]
       }
+      loyalty_config: {
+        Row: {
+          branch_id: string | null
+          id: string
+          is_active: boolean
+          max_redemption_ratio: number
+          min_redemption_points: number
+          point_value_bhd: number
+          points_expiry_months: number
+          points_per_bhd: number
+          tier_gold_threshold: number
+          tier_platinum_threshold: number
+          tier_silver_threshold: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemption_ratio?: number
+          min_redemption_points?: number
+          point_value_bhd?: number
+          points_expiry_months?: number
+          points_per_bhd?: number
+          tier_gold_threshold?: number
+          tier_platinum_threshold?: number
+          tier_silver_threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemption_ratio?: number
+          min_redemption_points?: number
+          point_value_bhd?: number
+          points_expiry_months?: number
+          points_per_bhd?: number
+          tier_gold_threshold?: number
+          tier_platinum_threshold?: number
+          tier_silver_threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_items: {
         Row: {
           category: string | null
@@ -2037,6 +2082,98 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_option_groups: {
+        Row: {
+          created_at: string
+          id: string
+          menu_item_slug: string
+          multi_select: boolean
+          name_ar: string
+          name_en: string
+          required: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_item_slug: string
+          multi_select?: boolean
+          name_ar: string
+          name_en: string
+          required?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_item_slug?: string
+          multi_select?: boolean
+          name_ar?: string
+          name_en?: string
+          required?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_option_groups_menu_item_slug_fkey"
+            columns: ["menu_item_slug"]
+            isOneToOne: false
+            referencedRelation: "menu_items_sync"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "menu_option_groups_menu_item_slug_fkey"
+            columns: ["menu_item_slug"]
+            isOneToOne: false
+            referencedRelation: "v_dish_cogs"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      menu_options: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          is_available: boolean
+          name_ar: string
+          name_en: string
+          price_modifier: number
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          is_available?: boolean
+          name_ar: string
+          name_en: string
+          price_modifier?: number
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          is_available?: boolean
+          name_ar?: string
+          name_en?: string
+          price_modifier?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_options_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "menu_option_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_item_station_status: {
         Row: {
           id: string
@@ -2085,6 +2222,7 @@ export type Database = {
           id: string
           item_total_bhd: number
           menu_item_slug: string
+          modifiers: Json
           name_ar: string
           name_en: string
           notes: string | null
@@ -2099,6 +2237,7 @@ export type Database = {
           id?: string
           item_total_bhd: number
           menu_item_slug: string
+          modifiers?: Json
           name_ar: string
           name_en: string
           notes?: string | null
@@ -2113,6 +2252,7 @@ export type Database = {
           id?: string
           item_total_bhd?: number
           menu_item_slug?: string
+          modifiers?: Json
           name_ar?: string
           name_en?: string
           notes?: string | null
@@ -4151,6 +4291,7 @@ export type Database = {
           p_delivery_address?: string
           p_delivery_area?: string
           p_delivery_building?: string
+          p_delivery_city?: string
           p_delivery_lat?: number
           p_delivery_lng?: number
           p_delivery_street?: string

@@ -110,9 +110,11 @@ const DialogTrigger = ({
 const DialogContent = ({
   className,
   children,
+  dir,
 }: {
   className?: string
   children:   React.ReactNode
+  dir?:       'rtl' | 'ltr'
 }) => {
   const { open, setOpen } = useDialogContext('DialogContent')
   if (!open) return null
@@ -126,6 +128,7 @@ const DialogContent = ({
       aria-modal="true"
     >
       <div
+        dir={dir}
         className={`relative bg-brand-surface text-brand-text border border-brand-border rounded-lg shadow-2xl w-full max-w-lg p-6 ${className || ''}`}
         onClick={(e) => e.stopPropagation()}
       >

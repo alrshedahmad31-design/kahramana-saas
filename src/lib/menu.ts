@@ -255,6 +255,17 @@ export function getCategoryPresentation(category: MenuCategory) {
   }
 }
 
+/** Look up category display name + sort order directly by slug string. */
+export function getCategoryPresentationBySlug(slug: string): {
+  order: number
+  name: { ar: string; en: string }
+} {
+  return CATEGORY_PRESENTATION[slug] ?? {
+    order: Number.MAX_SAFE_INTEGER,
+    name: { ar: slug, en: slug },
+  }
+}
+
 export function getSortedRawCategories(): MenuCategory[] {
   return [...getRawCategories()].sort(
     (first, second) =>

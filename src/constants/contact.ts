@@ -141,6 +141,15 @@ export const DEFAULT_BRANCH = BRANCHES[DEFAULT_BRANCH_ID]
 export const WHATSAPP_BASE_URL = 'https://wa.me'
 
 /**
+ * Sentinel phone used for orders that have no real customer phone (waiter
+ * dine-in orders, QR table orders without contact). The schema requires
+ * customer_phone NOT NULL; this satisfies it without leaking a real number
+ * and is filtered out by reporting / WhatsApp flows. Bahrain prefix +973
+ * with all-zero subscriber digits — reserved/never-allocated.
+ */
+export const WAITER_PLACEHOLDER_PHONE = '+97300000000'
+
+/**
  * Canonical site URL for SEO, schema.org, sitemap, and OG metadata.
  * Set NEXT_PUBLIC_SITE_URL=https://kahramanat.com in Vercel production env vars.
  * Falls back to the Vercel preview URL so staging Lighthouse tests measure the correct domain.

@@ -23,7 +23,7 @@ export const STATION_CONFIG: Partial<Record<KDSStation, {
   },
   grill: {
     icon: '🔥',
-    color: tokens.color.kdsRed,
+    color: tokens.color.kdsAmber,
     label: { ar: 'المشاوي', en: 'Grill' },
   },
   main: {

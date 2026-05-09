@@ -7,9 +7,9 @@ import type { StaffRole } from '@/lib/supabase/custom-types'
 
 const intlMiddleware = createMiddleware(routing)
 
-const DASHBOARD_PATTERN   = /^(\/en)?\/dashboard(\/.*)?$/
-const LOGIN_PATTERN        = /^(\/en)?\/login$/
-const STAFF_ROUTE_PATTERN  = /^(\/en)?\/dashboard\/staff(\/.*)?$/
+const DASHBOARD_PATTERN   = /^(\/(ar|en))?\/dashboard(\/.*)?$/
+const LOGIN_PATTERN        = /^(\/(ar|en))?\/login$/
+const STAFF_ROUTE_PATTERN  = /^(\/(ar|en))?\/dashboard\/staff(\/.*)?$/
 
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
 

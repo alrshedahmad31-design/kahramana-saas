@@ -133,6 +133,9 @@ export default function MenuImageInput({ value, onChange, label, isAr = true }: 
         return
       }
 
+      // Clear the blob preview so the Supabase URL is shown instead
+      URL.revokeObjectURL(localPreview)
+      setLocalPrev('')
       onChange(res.url)
       toast.success(isAr ? 'تم رفع الصورة' : 'Image uploaded')
     } catch (err) {

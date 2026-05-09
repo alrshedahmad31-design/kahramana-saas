@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { key: 'contact',  icon: Phone,            href: '/contact' },
 ] as const
 
-const EXCLUDED_PATHS = ['/dashboard', '/driver', '/login', '/set-password', '/forgot-password', '/register']
+const EXCLUDED_PATHS = ['/dashboard', '/driver', '/waiter', '/table/', '/login', '/set-password', '/forgot-password', '/register']
 
 export default function MobileBottomNav() {
   const pathname = usePathname()
@@ -27,7 +27,7 @@ export default function MobileBottomNav() {
   const isRTL = locale === 'ar'
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[100] md:hidden flex flex-col items-center pointer-events-none pb-[calc(2rem+env(safe-area-inset-bottom,0px))] px-4">
+    <div data-public-bottom-nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden flex flex-col items-center pointer-events-none pb-[calc(2rem+env(safe-area-inset-bottom,0px))] px-4">
       <nav 
         className="pointer-events-auto flex items-center gap-1 p-1 bg-brand-surface-2/90 backdrop-blur-md border border-brand-gold/20 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)] animate-mobile-nav"
         aria-label={isRTL ? 'التنقل الرئيسي للهاتف' : 'Mobile Main Navigation'}

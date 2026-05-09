@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import {
   listMenuOptionGroups,
@@ -26,6 +26,11 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
   const [busy, setBusy]       = useState(false)
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
 
+  // Ref always holds the latest groups state — avoids stale-closure bugs in
+  // onBlur handlers that capture the group value at render time.
+  const groupsRef = useRef<MenuOptionGroupRow[]>(groups)
+  useEffect(() => { groupsRef.current = groups }, [groups])
+
   async function reload() {
     setLoading(true)
     const res = await listMenuOptionGroups(menuItemSlug)
@@ -39,18 +44,19 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
 
   useEffect(() => {
     void reload()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // reload is intentionally stable — menuItemSlug is the only real dep
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuItemSlug])
 
   async function addGroup() {
     setBusy(true)
     const res = await upsertMenuOptionGroup({
       menu_item_slug: menuItemSlug,
-      name_ar: isAr ? 'مجموعة جديدة' : 'New group',
-      name_en: 'New group',
-      required: false,
-      multi_select: false,
-      sort_order: groups.length,
+      name_ar:        isAr ? 'مجموعة جديدة' : 'New group',
+      name_en:        'New group',
+      required:       false,
+      multi_select:   false,
+      sort_order:     groupsRef.current.length,
     })
     setBusy(false)
     if (res.success) {
@@ -61,7 +67,10 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
     }
   }
 
-  async function saveGroup(g: MenuOptionGroupRow) {
+  /** Save a group by reading the LATEST state from the ref to avoid stale closures. */
+  async function saveGroupById(id: string) {
+    const g = groupsRef.current.find((x) => x.id === id)
+    if (!g) return
     setBusy(true)
     const res = await upsertMenuOptionGroup({
       id:             g.id,
@@ -110,7 +119,11 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
     }
   }
 
-  async function saveOption(o: MenuOptionGroupRow['options'][number]) {
+  /** Save an option by reading the LATEST state from the ref. */
+  async function saveOptionById(groupId: string, optionId: string) {
+    const g = groupsRef.current.find((x) => x.id === groupId)
+    const o = g?.options.find((x) => x.id === optionId)
+    if (!o) return
     setBusy(true)
     const res = await upsertMenuOption({
       id:             o.id,
@@ -145,7 +158,11 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
     setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, ...patch } : g)))
   }
 
-  function patchOption(groupId: string, optionId: string, patch: Partial<MenuOptionGroupRow['options'][number]>) {
+  function patchOption(
+    groupId:  string,
+    optionId: string,
+    patch:    Partial<MenuOptionGroupRow['options'][number]>,
+  ) {
     setGroups((prev) =>
       prev.map((g) =>
         g.id !== groupId ? g : {
@@ -214,7 +231,7 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                   <Input
                     value={g.name_ar}
                     onChange={(e) => patchGroup(g.id, { name_ar: e.target.value })}
-                    onBlur={() => void saveGroup(g)}
+                    onBlur={() => void saveGroupById(g.id)}
                     maxLength={120}
                   />
                 </div>
@@ -223,7 +240,7 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                   <Input
                     value={g.name_en}
                     onChange={(e) => patchGroup(g.id, { name_en: e.target.value })}
-                    onBlur={() => void saveGroup(g)}
+                    onBlur={() => void saveGroupById(g.id)}
                     maxLength={120}
                   />
                 </div>
@@ -233,7 +250,7 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                     checked={g.required}
                     onChange={(e) => {
                       patchGroup(g.id, { required: e.target.checked })
-                      void saveGroup({ ...g, required: e.target.checked })
+                      void saveGroupById(g.id)
                     }}
                   />
                   {isAr ? 'إلزامي' : 'Required'}
@@ -244,7 +261,7 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                     checked={g.multi_select}
                     onChange={(e) => {
                       patchGroup(g.id, { multi_select: e.target.checked })
-                      void saveGroup({ ...g, multi_select: e.target.checked })
+                      void saveGroupById(g.id)
                     }}
                   />
                   {isAr ? 'اختيار متعدد' : 'Multi-select'}
@@ -277,7 +294,7 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                     <Input
                       value={o.name_ar}
                       onChange={(e) => patchOption(g.id, o.id, { name_ar: e.target.value })}
-                      onBlur={() => void saveOption(o)}
+                      onBlur={() => void saveOptionById(g.id, o.id)}
                       placeholder={isAr ? 'عربي' : 'AR'}
                       className="font-almarai"
                       maxLength={120}
@@ -285,7 +302,7 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                     <Input
                       value={o.name_en}
                       onChange={(e) => patchOption(g.id, o.id, { name_en: e.target.value })}
-                      onBlur={() => void saveOption(o)}
+                      onBlur={() => void saveOptionById(g.id, o.id)}
                       placeholder="EN"
                       maxLength={120}
                     />
@@ -293,8 +310,10 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                       type="number"
                       step="0.001"
                       value={o.price_modifier}
-                      onChange={(e) => patchOption(g.id, o.id, { price_modifier: Number(e.target.value) || 0 })}
-                      onBlur={() => void saveOption(o)}
+                      onChange={(e) =>
+                        patchOption(g.id, o.id, { price_modifier: Number(e.target.value) || 0 })
+                      }
+                      onBlur={() => void saveOptionById(g.id, o.id)}
                       className="w-24 tabular-nums text-end"
                       placeholder="+0.000"
                     />

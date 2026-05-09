@@ -15,6 +15,7 @@ interface Props {
   station: KDSStation
   locale:  string
   onBump:  (orderId: string) => void
+  now:     number
 }
 
 function nextStatusFor(current?: KDSItemStatus): KDSItemStatus {
@@ -29,27 +30,22 @@ function ageBorderClass(age: 'fresh' | 'warning' | 'overdue') {
   return 'border-border'
 }
 
-export default function KDSStationOrderCard({ order, station, locale, onBump }: Props) {
+export default function KDSStationOrderCard({ order, station, locale, onBump, now }: Props) {
   const isRTL = locale === 'ar'
   const t     = useTranslations('kds')
   const stationConfig = getStationConfig(station)
   const font = isRTL ? 'font-almarai' : 'font-satoshi'
+  const shortId = order.id.slice(-4).toUpperCase()
 
-  const [elapsed,    setElapsed]    = useState(() => formatElapsed(order.created_at))
-  const [ageStatus,  setAgeStatus]  = useState(() => getAgeStatus(order.created_at))
+  const elapsed    = formatElapsed(order.created_at, now)
+  const ageStatus  = getAgeStatus(order.created_at, now)
+
   const [optimistic, setOptimistic] = useState<Record<string, KDSItemStatus>>({})
   const [updating,   setUpdating]   = useState<string | null>(null)
   const [pendingUndo, setPendingUndo] = useState<string | null>(null)
   const [bumping,    setBumping]    = useState(false)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setElapsed(formatElapsed(order.created_at))
-      setAgeStatus(getAgeStatus(order.created_at))
-    }, 1000)
-    return () => clearInterval(id)
-  }, [order.created_at])
 
   useEffect(() => () => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current) }, [])
 
@@ -64,7 +60,7 @@ export default function KDSStationOrderCard({ order, station, locale, onBump }: 
   const progressValue = items.reduce((acc, item) => {
     const st = effectiveStatus(item)
     if (st === 'ready' || st === 'completed') return acc + 1
-    if (st === 'preparing')                   return acc + 0.5
+    if (st === 'preparing')                   return acc + 0.3
     return acc
   }, 0)
   const progress  = items.length > 0 ? (progressValue / items.length) * 100 : 0
@@ -111,7 +107,6 @@ export default function KDSStationOrderCard({ order, station, locale, onBump }: 
     finally { setBumping(false) }
   }
 
-  const shortId = order.id.slice(-4).toUpperCase()
 
   return (
     <article
@@ -172,7 +167,7 @@ export default function KDSStationOrderCard({ order, station, locale, onBump }: 
                 onClick={() => handleItemToggle(item.id, st)}
                 disabled={!!updating && !isUpdating}
                 className={[
-                  'relative flex items-center gap-3 p-3 rounded-xl border',
+                  'relative flex items-center gap-4 p-4 rounded-xl border',
                   'transition-all duration-200 text-start w-full active:scale-[0.98]',
                   isReady     ? 'bg-success/10 border-success/30' :
                   isPreparing ? 'bg-gold/10 border-gold/40' :
@@ -194,7 +189,7 @@ export default function KDSStationOrderCard({ order, station, locale, onBump }: 
                 {/* Name + extras */}
                 <div className="flex-1 min-w-0">
                   <div className={[
-                    'text-base font-bold leading-tight',
+                    'text-lg font-black leading-tight tracking-tight',
                     isReady ? 'line-through text-muted' : 'text-white',
                   ].join(' ')}>
                     {isRTL ? item.name_ar : item.name_en}

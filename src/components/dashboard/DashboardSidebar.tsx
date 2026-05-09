@@ -8,6 +8,9 @@ import type { StaffRole } from '@/lib/supabase/custom-types'
 import { canAccessSection, type DashboardSection } from '@/lib/auth/rbac-ui'
 import LanguageToggle from '@/components/dashboard/LanguageToggle'
 
+const cn = (...classes: (string | undefined | boolean)[]) => 
+  classes.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
+
 interface NavItem {
   key: string
   href: string
@@ -66,7 +69,7 @@ function DeliveryBoardIcon() {
 function SettingsIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 00-2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   )
@@ -202,10 +205,40 @@ function CloseIcon() {
   )
 }
 
+interface NavItem {
+  key: string
+  href: string
+  icon: React.ReactNode
+  section?: DashboardSection
+}
+
 interface SidebarProps {
   userName: string | null
   userRole: StaffRole | null
 }
+
+const getNavItems = (prefix: string): NavItem[] => [
+  { key: 'home',      href: `${prefix}/dashboard`,            icon: <HomeIcon />,      section: 'home' },
+  { key: 'orders',    href: `${prefix}/dashboard/orders`,     icon: <OrdersIcon />,    section: 'orders' },
+  { key: 'pos',       href: `${prefix}/dashboard/pos`,        icon: <POSIcon />,       section: 'pos' },
+  { key: 'waiter',    href: `${prefix}/waiter`,               icon: <POSIcon />,       section: 'waiter' },
+  { key: 'tables',    href: `${prefix}/dashboard/tables`,     icon: <POSIcon />,       section: 'tables' },
+  { key: 'driver',    href: `${prefix}/driver`,               icon: <DriverIcon />,    section: 'driver' },
+  { key: 'delivery',  href: `${prefix}/dashboard/delivery`,   icon: <DeliveryBoardIcon />, section: 'delivery' },
+  { key: 'kds',       href: `${prefix}/dashboard/kds`,        icon: <KDSIcon />,       section: 'kds' },
+  { key: 'staff',     href: `${prefix}/dashboard/staff`,      icon: <StaffIcon />,     section: 'staff' },
+  { key: 'coupons',   href: `${prefix}/dashboard/coupons`,    icon: <CouponsIcon />,   section: 'coupons' },
+  { key: 'promotions', href: `${prefix}/dashboard/promotions`, icon: <CouponsIcon />,   section: 'promotions' },
+  { key: 'analytics', href: `${prefix}/dashboard/analytics`,  icon: <AnalyticsIcon />, section: 'analytics' },
+  { key: 'payments',  href: `${prefix}/dashboard/payments`,   icon: <PaymentsIcon />,  section: 'payments' },
+  { key: 'reports',   href: `${prefix}/dashboard/reports`,    icon: <ReportsIcon />,   section: 'reports' },
+  { key: 'schedule',         href: `${prefix}/dashboard/schedule`,          icon: <ScheduleIcon />,         section: 'schedule' },
+  { key: 'inventoryImport',  href: `${prefix}/dashboard/inventory/import`,   icon: <InventoryImportIcon />,  section: 'inventory_import' },
+  { key: 'menu',             href: `${prefix}/dashboard/menu`,               icon: <MenuIcon />,             section: 'menu' },
+  { key: 'shifts',           href: `${prefix}/dashboard/shifts`,             icon: <ShiftIcon />,            section: 'shifts' },
+  { key: 'audit',            href: `${prefix}/dashboard/audit`,              icon: <AuditIcon />,            section: 'audit' },
+  { key: 'settings',         href: `${prefix}/dashboard/settings`,           icon: <SettingsIcon />,         section: 'settings' },
+]
 
 export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
   const t      = useTranslations('dashboard.nav')
@@ -218,28 +251,9 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
   const [inventoryOpen, setInventoryOpen] = useState(false)
 
   const prefix = locale === 'en' ? '/en' : ''
+  const navItems = getNavItems(prefix)
 
-  const NAV_ITEMS: NavItem[] = [
-    { key: 'home',      href: `${prefix}/dashboard`,            icon: <HomeIcon />,      section: 'home' },
-    { key: 'orders',    href: `${prefix}/dashboard/orders`,     icon: <OrdersIcon />,    section: 'orders' },
-    { key: 'pos',       href: `${prefix}/dashboard/pos`,        icon: <POSIcon />,       section: 'pos' },
-    { key: 'driver',    href: `${prefix}/driver`,                         icon: <DriverIcon />,    section: 'driver' },
-    { key: 'delivery',  href: `${prefix}/dashboard/delivery`,            icon: <DeliveryBoardIcon />, section: 'delivery' },
-    { key: 'kds',       href: `${prefix}/dashboard/kds`,                 icon: <KDSIcon />,       section: 'kds' },
-    { key: 'staff',     href: `${prefix}/dashboard/staff`,      icon: <StaffIcon />,     section: 'staff' },
-    { key: 'coupons',   href: `${prefix}/dashboard/coupons`,    icon: <CouponsIcon />,   section: 'coupons' },
-    { key: 'analytics', href: `${prefix}/dashboard/analytics`,  icon: <AnalyticsIcon />, section: 'analytics' },
-    { key: 'payments',  href: `${prefix}/dashboard/payments`,   icon: <PaymentsIcon />,  section: 'payments' },
-    { key: 'reports',   href: `${prefix}/dashboard/reports`,    icon: <ReportsIcon />,   section: 'reports' },
-    { key: 'schedule',         href: `${prefix}/dashboard/schedule`,          icon: <ScheduleIcon />,         section: 'schedule' },
-    { key: 'inventoryImport',  href: `${prefix}/dashboard/inventory/import`,   icon: <InventoryImportIcon />,  section: 'inventory_import' },
-    { key: 'menu',             href: `${prefix}/dashboard/menu`,               icon: <MenuIcon />,             section: 'menu' },
-    { key: 'shifts',           href: `${prefix}/dashboard/shifts`,             icon: <ShiftIcon />,            section: 'shifts' },
-    { key: 'audit',            href: `${prefix}/dashboard/audit`,              icon: <AuditIcon />,            section: 'audit' },
-    { key: 'settings',         href: `${prefix}/dashboard/settings`,           icon: <SettingsIcon />,         section: 'settings' },
-  ]
-
-  const visible = NAV_ITEMS.filter(
+  const visible = navItems.filter(
     (item) => !item.section || canAccessSection(userRole, item.section),
   )
 
@@ -253,6 +267,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
   const navLabels: Record<string, string> = {
     home:            t('home'),
     orders:          t('orders'),
+    pos:             t('pos'),
     driver:          t('driver'),
     delivery:        t('delivery'),
     kds:             t('kds'),
@@ -267,7 +282,6 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     shifts:          t('shifts'),
     audit:           t('audit'),
     settings:        t('settings'),
-    pos:             t('pos'),
   }
 
   const INVENTORY_SUB_ITEMS = [
@@ -289,84 +303,13 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
 
   const isInInventory = pathname.startsWith(`${prefix}/dashboard/inventory`)
 
-  const NavLinks = () => (
-    <nav className="flex flex-col gap-1">
-      {visible.map((item) => {
-        // Skip the inventoryImport item — it lives inside the collapsible group now
-        if (item.key === 'inventoryImport') return null
-        const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-        return (
-          <a
-            key={item.key}
-            href={item.href}
-            onClick={() => setOpen(false)}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5
-              font-satoshi text-sm font-medium transition-colors duration-150
-              min-h-[44px]
-              ${isActive
-                ? 'bg-brand-gold/10 text-brand-gold'
-                : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
-              }`}
-          >
-            {item.icon}
-            {navLabels[item.key] ?? item.key}
-          </a>
-        )
-      })}
-
-      {/* Inventory collapsible group */}
-      {canAccessSection(userRole, 'inventory') && (
-        <div>
-          <button
-            type="button"
-            onClick={() => setInventoryOpen((v) => !v)}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 w-full
-              font-satoshi text-sm font-medium transition-colors duration-150
-              min-h-[44px]
-              ${isInInventory
-                ? 'bg-brand-gold/10 text-brand-gold'
-                : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
-              }`}
-          >
-            <InventoryIcon />
-            <span className="flex-1 text-start">{isAr ? 'المخزون' : 'Inventory'}</span>
-            <ChevronDownIcon open={inventoryOpen || isInInventory} />
-          </button>
-
-          {(inventoryOpen || isInInventory) && (
-            <div className="ms-6 mt-0.5 flex flex-col gap-0.5 border-s border-brand-border ps-3">
-              {INVENTORY_SUB_ITEMS.map((sub) => {
-                const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/')
-                return (
-                  <a
-                    key={sub.key}
-                    href={sub.href}
-                    onClick={() => setOpen(false)}
-                    className={`flex items-center rounded-lg px-3 py-2 font-satoshi text-sm
-                      font-medium transition-colors duration-150 min-h-[40px]
-                      ${isSubActive
-                        ? 'text-brand-gold bg-brand-gold/10'
-                        : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
-                      }`}
-                  >
-                    {sub.label}
-                  </a>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-    </nav>
-  )
-
   const UserInfo = () => (
-    <div className="px-3 py-2 border-t border-brand-border">
-      <p className="font-satoshi text-sm text-brand-text truncate">
-        {userName ?? '—'}
+    <div className={cn('px-3 py-2 border-t border-brand-border')}>
+      <p className={cn('font-satoshi text-sm text-brand-text truncate')}>
+        {userName || '-'}
       </p>
       {userRole && (
-        <p className="font-satoshi text-xs text-brand-muted capitalize">
+        <p className={cn('font-satoshi text-xs text-brand-muted capitalize')}>
           {userRole.replace('_', ' ')}
         </p>
       )}
@@ -377,10 +320,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     <button
       type="button"
       onClick={handleLogout}
-      className="flex items-center gap-3 rounded-lg px-3 py-2.5 w-full
-                 font-satoshi text-sm font-medium text-brand-muted
-                 hover:bg-brand-surface-2 hover:text-brand-error
-                 transition-colors duration-150 min-h-[44px]"
+      className={cn('flex items-center gap-3 rounded-lg px-3 py-2.5 w-full font-satoshi text-sm font-medium text-brand-muted hover:bg-brand-surface-2 hover:text-brand-error transition-colors duration-150 min-h-[44px]')}
     >
       <LogoutIcon />
       {t('logout')}
@@ -394,11 +334,9 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
         type="button"
         onClick={() => setOpen(!open)}
         aria-label={open ? 'Close menu' : 'Open menu'}
-        className="lg:hidden fixed top-4 start-4 z-50
-                   w-10 h-10 flex items-center justify-center rounded-lg
-                   bg-brand-surface border border-brand-border
-                   text-brand-text hover:border-brand-gold
-                   transition-colors duration-150"
+        className={cn(
+          'lg:hidden fixed top-4 start-4 z-50 w-10 h-10 flex items-center justify-center rounded-lg bg-brand-surface border border-brand-border text-brand-text hover:border-brand-gold transition-colors duration-150'
+        )}
       >
         {open ? <CloseIcon /> : <HamburgerIcon />}
       </button>
@@ -406,7 +344,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
       {/* Mobile overlay */}
       {open && (
         <div
-          className="lg:hidden fixed inset-0 z-40 bg-brand-black/60 backdrop-blur-sm"
+          className={cn('lg:hidden fixed inset-0 z-40 bg-brand-black/60 backdrop-blur-sm')}
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -415,38 +353,88 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
       {/* Sidebar */}
       <aside
         dir={isAr ? 'rtl' : 'ltr'}
-        className={`fixed top-0 z-40 h-full w-64
-                    bg-brand-surface border-e border-brand-border
-                    flex flex-col
-                    transition-transform duration-300 ease-in-out
-                    lg:translate-x-0 lg:static lg:z-auto
-                    start-0
-                    ${open
-                      ? 'translate-x-0'
-                      : isAr
-                        ? 'translate-x-full'
-                        : '-translate-x-full'
-                    }`}
+        suppressHydrationWarning={true}
+        className={cn(
+          'fixed top-0 z-40 h-full w-64 bg-brand-surface border-e border-brand-border flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto start-0',
+          open ? 'translate-x-0' : (isAr ? 'translate-x-full' : '-translate-x-full')
+        )}
       >
         {/* Logo / brand */}
-        <div className="h-16 flex items-center px-4 border-b border-brand-border shrink-0">
-          <span className="font-cairo text-lg font-black text-brand-gold">
+        <div className={cn('h-16 flex items-center px-4 border-b border-brand-border shrink-0')}>
+          <span className={cn('font-cairo text-lg font-black text-brand-gold')}>
             كهرمانة
           </span>
-          <span className="ms-2 font-satoshi text-xs text-brand-muted bg-brand-surface-2 px-2 py-0.5 rounded-lg">
+          <span className={cn('ms-2 font-satoshi text-xs text-brand-muted bg-brand-surface-2 px-2 py-0.5 rounded-lg')}>
             Dashboard
           </span>
         </div>
 
         {/* Nav */}
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          <NavLinks />
+        <div className={cn('flex-1 overflow-y-auto px-3 py-4')}>
+          <nav className={cn('flex flex-col gap-1')} suppressHydrationWarning={true}>
+            {visible.map((item) => {
+              if (item.key === 'inventoryImport') return null
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              return (
+                <a
+                  key={item.key}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 font-satoshi text-sm font-medium transition-colors duration-150 min-h-[44px]',
+                    isActive ? 'bg-brand-gold/10 text-brand-gold' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+                  )}
+                >
+                  {item.icon}
+                  {navLabels[item.key] ?? item.key}
+                </a>
+              )
+            })}
+
+            {canAccessSection(userRole, 'inventory') && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setInventoryOpen((v) => !v)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 w-full font-satoshi text-sm font-medium transition-colors duration-150 min-h-[44px]',
+                    isInInventory ? 'bg-brand-gold/10 text-brand-gold' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+                  )}
+                >
+                  <InventoryIcon />
+                  <span className="flex-1 text-start">{isAr ? 'المخزون' : 'Inventory'}</span>
+                  <ChevronDownIcon open={inventoryOpen || isInInventory} />
+                </button>
+
+                {(inventoryOpen || isInInventory) && (
+                  <div className={cn('ms-6 mt-0.5 flex flex-col gap-0.5 border-s border-brand-border ps-3')}>
+                    {INVENTORY_SUB_ITEMS.map((sub) => {
+                      const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/')
+                      return (
+                        <a
+                          key={sub.key}
+                          href={sub.href}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            'flex items-center rounded-lg px-3 py-2 font-satoshi text-sm font-medium transition-colors duration-150 min-h-[40px]',
+                            isSubActive ? 'text-brand-gold bg-brand-gold/10' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+                          )}
+                        >
+                          {sub.label}
+                        </a>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </nav>
         </div>
 
         {/* Footer: user info + language toggle + logout */}
-        <div className="shrink-0 pb-2 px-0">
+        <div className={cn('shrink-0 pb-2 px-0')}>
           <UserInfo />
-          <div className="px-3 pt-1 flex flex-col gap-0.5">
+          <div className={cn('px-3 pt-1 flex flex-col gap-0.5')}>
             <LanguageToggle />
             <LogoutButton />
           </div>
