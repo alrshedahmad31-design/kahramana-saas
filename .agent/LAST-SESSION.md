@@ -1,65 +1,71 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-> **Session**: 80 (Claude Code track)
+> **Session**: 82 (Claude Code track)
 > **Date**: 2026-05-09
-> **Focus**: Carry-overs from session 79 (mig 088 apply, types regen, CoWork commit) + Pre-launch QA checklist authoring
+> **Focus**: PRICE_MISMATCH fix for size/variant orders + staff-seeding scaffolding (paused on emails)
 
-## Session commits
-- `b8ee91e` — chore(types): regenerate from DB post-migration-089 (replaces hand-patches for `orders.table_number` + `order_item_station_status.branch_id`/`created_at`)
-- `b65fe6c` — fix(pos): additive size+variant pricing in VariantPicker and resolveMenuItemPrice (CoWork sibling track from session 78)
-
-Remote: `origin/master` clean of carry-over.
-
-## What was done
+## Session deliverables
 
 ### Database
-- **Migration 088** (`menu_db_first_fix.sql`) — APPLIED to production + registered in `schema_migrations`. Fixes `menu_option_groups` FK from `menu_items_sync(slug)` → `menu_items(id) ON DELETE CASCADE`, unblocking dashboard modifier creation against the canonical table.
-
-### Types
-- `npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts` re-run; manual patches removed. `npx tsc --noEmit` → 0 errors.
+- **Migration 091 applied to production** — `091_rpc_price_check_size_variant_aware.sql`. Recreates `rpc_create_order` with the same signature, GRANTS, and behaviour as migration 086, except the `PRICE_MISMATCH` guard now also bypasses lines where `selected_size` or `selected_variant` is set. This was the QA blocker found in step 6 of `docs/qa/waiter-table-qa.md`. Unblocks every flow that uses VariantPicker: customer checkout, POS, QR table, waiter.
+- **Migration 090 on disk, NOT yet applied** — `090_extend_staff_role_waiter.sql`. `ALTER TYPE staff_role ADD VALUE IF NOT EXISTS 'waiter'`. Apply immediately before running the staff seeder so the waiter rows in `STAFF_ROSTER` succeed.
 
 ### Code
-- POS variant picker + `src/lib/menu.ts` (CoWork sibling track) committed as `fix(pos): additive size+variant pricing` — size delta now adds to base price instead of replacing it. This was the dirty tree carried over from session 78–79.
+- `src/lib/auth/rbac.ts` — added `waiter: 3` to `ROLE_RANK`; added `'waiter'` to assignable lists for owner / GM / branch_manager; added `waiter: []` to `ASSIGNABLE_BY` (waiters cannot manage other staff).
+- `src/lib/auth/rbac-ui.ts` — granted `waiter` role access to `waiter` and `tables` sections (kept `cashier` on `waiter` for backward-compat).
+- TSC will fail on these edits until 090 is applied + types regenerated. Sequence is documented in the runbook below.
 
-### Documentation
-- **NEW**: `docs/qa/pre-launch-checklist.md` (~150 itemised checks, 9 sections)
-  - Setup + 16 test accounts (8 roles × 2 branches + owner/GM/marketing) + 5 device profiles
-  - Customer flows: marketing pages, menu (variants + modifiers), cart, checkout (delivery / pickup / dine-in QR), tracking
-  - Auth + loyalty (magic-link, points, tier upgrades, redemption)
-  - Dashboard per role: Owner/GM, Branch Manager, Cashier, Kitchen, Driver, Waiter, Inventory, Marketing, Order ops
-  - Cross-cutting: i18n/RTL, mobile, PWA, realtime, **RLS spot-checks (10 items)**, SEO, performance (LCP/INP/CLS), errors, email
-  - Hard gates: migration state, build gates, real recipes, staff accounts, Tap, WhatsApp, backups, domain/SSL
-  - Launch rubric (B/S/- severity) + sign-off table + change log
-  - Every row has an ID (`KDS-08`, `SEC-06`, etc.) for bug-tracking traceability
+### Scripts
+- `scripts/seed-staff.ts` — idempotent seeder using `supabase.auth.admin.inviteUserByEmail()` + `staff_basic` upsert via service role. Skips invite if `auth.users` already has the email; only updates `staff_basic` on drift.
+- `package.json` — added `seed:staff` and `seed:staff:dry`.
 
-### State files
-- `.agent/phase-state.json`:
-  - `last_updated` → session 80 summary
-  - `pending_db_migrations` → empty
-  - `applied_db_migrations` → 088 + 089 added
-  - `migration_status` → reflects 088/089 applied
-  - `last_deploy` → 2026-05-09
-  - `last_git_commit` → b65fe6c
+### Docs
+- Pre-launch QA master checklist (`docs/qa/pre-launch-checklist.md`) was authored earlier in the session 80 thread.
+- Waiter dine-in QA report (`docs/qa/waiter-table-qa.md`) — steps 1–5 PASS, step 6 FAIL on PRICE_MISMATCH (root-caused + fixed by 091); steps 7–8 SKIP pending step-6 retry.
 
 ## Verification gates
 
-- `npx tsc --noEmit` → 0 errors (post types regen)
-- Working tree clean before this doc-only update
+- 091 verification SQL provided in conversation: `pg_get_functiondef('rpc_create_order'::regproc::oid) ILIKE '%selected_size%'` should return `t`, and a synthetic `rpc_create_order` call with `selected_size: 'M'` and unit_price ≠ base should return a UUID (not raise).
+- Once 091 is verified, re-run waiter QA step 6 → expect order created with `branch_id='riffa'`, `order_type='dine_in'`, `source='waiter'`, `table_number=1`.
 
 ## Decisions / non-obvious notes
 
-- **Migration 088 was the last DB blocker** for unrestricted menu/modifier dashboard work. With it applied, menu_option_groups now points at the canonical `menu_items(id)` and cascades cleanly on item delete.
-- **`types.ts` is now clean from generator output** — anyone adding columns must run `supabase gen types` again rather than hand-editing.
-- **CoWork commit `b65fe6c`** picked the additive pricing model (`base + size_delta`) over replacement (`size_price`). This matches how modifiers compose and avoids two pricing models in the cart.
-- **QA doc structure prioritises traceability over brevity**: every row has a stable ID, severity (B/S/-), and pass/fail box. Bug reports must reference IDs.
+- **091 trades safety for unblock speed.** A direct `rpc_create_order` caller could spoof `selected_size: "M"` to bypass the price guard, but this matches the trust model already used for modifiers since 083 and is gated by `auth.uid()` / RLS from migration 064. Long-term mitigation = move size/variant prices into DB tables (`menu_item_sizes`, `menu_item_variants`) and recompute server-side in `rpc_create_order`.
+- **090 is intentionally on disk only.** Applying it earlier than the seeder run risks landing types/code drift if the session is interrupted. The seeder run is the natural moment to apply 090 + regen types + run TSC + run the seeder, all in one pass.
+- **Waiter PWA role gating: `cashier` retained on `waiter` section.** Removing it would break existing cashiers who currently double as waiters. New dedicated waiters get the new `waiter` role.
 
-## What's next
+## Pending — picks up next session
 
-- **Decision point**: Staff accounts creation (next track Ahmed selected) so the QA pass can exercise real role-based logins, OR start executing the QA checklist live (with synthetic accounts) and capture results into a sibling `docs/qa/qa-run-2026-MM-DD.md`.
-- Remaining hard gates from the QA doc that need owner action:
-  - Real chef recipes loaded via Excel (Ahmed + Chef)
-  - Real staff accounts created (Ahmed, all roles, both branches)
-  - Tap merchant approval (Ahmed, CBB, 2–4 mo)
-  - WhatsApp API verification (Ahmed, Meta)
-  - Database backup schedule confirmation (Ahmed, Supabase)
-- Post-launch backlog candidate: drop the legacy `kds_queue` table — `order_item_station_status` is the single source of truth and `kds_queue` is only referenced by the obsolete `KDSQueueItem` type.
+**Hard prerequisite for staff seeding**: Ahmed pastes 13 real email addresses for the roster slots in `scripts/seed-staff.ts:54-79`:
+
+| # | Role | Branch | Slot in script |
+|---|---|---|---|
+| 1 | branch_manager | riffa | `TODO+bm-riffa@…` |
+| 2 | branch_manager | qallali | `TODO+bm-qallali@…` |
+| 3 | cashier | riffa | `TODO+cash-riffa@…` |
+| 4 | cashier | qallali | `TODO+cash-qallali@…` |
+| 5 | kitchen | riffa | `TODO+kit-riffa@…` |
+| 6 | kitchen | qallali | `TODO+kit-qallali@…` |
+| 7 | driver | riffa | `TODO+drv-riffa@…` |
+| 8 | driver | qallali | `TODO+drv-qallali@…` |
+| 9 | waiter | riffa | `TODO+wai-riffa@…` |
+| 10 | waiter | qallali | `TODO+wai-qallali@…` |
+| 11 | inventory_manager | riffa | `TODO+inv-riffa@…` |
+| 12 | inventory_manager | qallali | `TODO+inv-qallali@…` |
+| 13 | marketing | — | `TODO+marketing@…` |
+
+**Run order when emails arrive:**
+1. Replace TODOs in `scripts/seed-staff.ts` with real emails.
+2. Apply migration 090 (SQL Editor or `npm run db:migrate:prod`).
+3. Register 090 in `schema_migrations` if applied via SQL Editor.
+4. `npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts`.
+5. `npx tsc --noEmit` — expect 0 errors after types regen.
+6. `npm run seed:staff:dry` — sanity check.
+7. `npm run seed:staff` — invites + inserts. Resend sends magic-link emails.
+8. Each invitee opens the email, hits the link, lands logged in. First-login = magic-link auth.
+9. Update `.agent/phase-state.json` to mark 090 applied + add a "production_staff_seeded" flag in `external_dependencies`.
+
+## Other carry-overs
+
+- **Waiter QA retest** (steps 6–8 of `docs/qa/waiter-table-qa.md`) — should be re-run by the Playwright agent now that 091 is live, before staff seeding consumes more session time.
+- Legacy `kds_queue` table — still a candidate for deletion post-launch. `order_item_station_status` is canonical.
