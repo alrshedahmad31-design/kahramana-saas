@@ -2121,15 +2121,8 @@ export type Database = {
             foreignKeyName: "menu_option_groups_menu_item_slug_fkey"
             columns: ["menu_item_slug"]
             isOneToOne: false
-            referencedRelation: "menu_items_sync"
-            referencedColumns: ["slug"]
-          },
-          {
-            foreignKeyName: "menu_option_groups_menu_item_slug_fkey"
-            columns: ["menu_item_slug"]
-            isOneToOne: false
-            referencedRelation: "v_dish_cogs"
-            referencedColumns: ["slug"]
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2209,7 +2202,7 @@ export type Database = {
           {
             foreignKeyName: "order_item_station_status_item_id_fkey"
             columns: ["item_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
@@ -2320,6 +2313,8 @@ export type Database = {
           order_type: string | null
           picked_up_at: string | null
           platform_order_id: string | null
+          promotion_discount_bhd: number
+          promotion_id: string | null
           restaurant_location: Json | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
@@ -2370,6 +2365,8 @@ export type Database = {
           order_type?: string | null
           picked_up_at?: string | null
           platform_order_id?: string | null
+          promotion_discount_bhd?: number
+          promotion_id?: string | null
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
@@ -2420,6 +2417,8 @@ export type Database = {
           order_type?: string | null
           picked_up_at?: string | null
           platform_order_id?: string | null
+          promotion_discount_bhd?: number
+          promotion_id?: string | null
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
@@ -2470,6 +2469,13 @@ export type Database = {
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
             referencedColumns: ["id"]
           },
         ]
@@ -2754,6 +2760,72 @@ export type Database = {
           unit?: string
         }
         Relationships: []
+      }
+      promotions: {
+        Row: {
+          branch_id: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          name_ar: string
+          name_en: string
+          starts_at: string | null
+          type: Database["public"]["Enums"]["promotion_type"]
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          branch_id?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          name_ar: string
+          name_en: string
+          starts_at?: string | null
+          type: Database["public"]["Enums"]["promotion_type"]
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          branch_id?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          name_ar?: string
+          name_en?: string
+          starts_at?: string | null
+          type?: Database["public"]["Enums"]["promotion_type"]
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
       }
       purchase_order_items: {
         Row: {
@@ -3079,6 +3151,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      restaurant_tables: {
+        Row: {
+          branch_id: string
+          capacity: number
+          created_at: string
+          id: string
+          is_active: boolean
+          label_ar: string | null
+          label_en: string | null
+          table_number: number
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_ar?: string | null
+          label_en?: string | null
+          table_number: number
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_ar?: string | null
+          label_en?: string | null
+          table_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_tables_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurant_tables_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
       }
       shift_closings: {
         Row: {
@@ -4149,7 +4272,7 @@ export type Database = {
           {
             foreignKeyName: "order_item_station_status_item_id_fkey"
             columns: ["item_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
@@ -4288,36 +4411,101 @@ export type Database = {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined
       }
-      rpc_create_order: {
-        Args: {
-          p_branch_id: string
-          p_coupon_discount_bhd?: number
-          p_coupon_id?: string
-          p_customer_id?: string
-          p_customer_name: string
-          p_customer_notes?: string
-          p_customer_phone: string
-          p_delivery_address?: string
-          p_delivery_area?: string
-          p_delivery_building?: string
-          p_delivery_city?: string
-          p_delivery_lat?: number
-          p_delivery_lng?: number
-          p_delivery_street?: string
-          p_expires_at?: string
-          p_idempotency_key: string
-          p_items: Json
-          p_loyalty_discount_bhd?: number
-          p_notes?: string
-          p_order_type: string
-          p_payment_method?: string
-          p_points_to_redeem?: number
-          p_source?: string
-          p_status?: string
-          p_total_bhd: number
-        }
-        Returns: string
-      }
+      rpc_create_order:
+        | {
+            Args: {
+              p_branch_id: string
+              p_coupon_discount_bhd?: number
+              p_coupon_id?: string
+              p_customer_id?: string
+              p_customer_name: string
+              p_customer_notes?: string
+              p_customer_phone: string
+              p_delivery_address?: string
+              p_delivery_area?: string
+              p_delivery_building?: string
+              p_delivery_city?: string
+              p_delivery_lat?: number
+              p_delivery_lng?: number
+              p_delivery_street?: string
+              p_expires_at?: string
+              p_idempotency_key: string
+              p_items: Json
+              p_loyalty_discount_bhd?: number
+              p_notes?: string
+              p_order_type: string
+              p_payment_method?: string
+              p_points_to_redeem?: number
+              p_source?: string
+              p_status?: string
+              p_total_bhd: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_branch_id: string
+              p_coupon_discount_bhd?: number
+              p_coupon_id?: string
+              p_customer_id?: string
+              p_customer_name: string
+              p_customer_notes?: string
+              p_customer_phone: string
+              p_delivery_address?: string
+              p_delivery_area?: string
+              p_delivery_building?: string
+              p_delivery_city?: string
+              p_delivery_lat?: number
+              p_delivery_lng?: number
+              p_delivery_street?: string
+              p_expires_at?: string
+              p_idempotency_key: string
+              p_items: Json
+              p_loyalty_discount_bhd?: number
+              p_notes?: string
+              p_order_type: string
+              p_payment_method?: string
+              p_points_to_redeem?: number
+              p_source?: string
+              p_status?: string
+              p_table_number?: number
+              p_total_bhd: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_branch_id: string
+              p_coupon_discount_bhd?: number
+              p_coupon_id?: string
+              p_customer_id?: string
+              p_customer_name: string
+              p_customer_notes?: string
+              p_customer_phone: string
+              p_delivery_address?: string
+              p_delivery_area?: string
+              p_delivery_building?: string
+              p_delivery_city?: string
+              p_delivery_lat?: number
+              p_delivery_lng?: number
+              p_delivery_street?: string
+              p_expires_at?: string
+              p_idempotency_key: string
+              p_items: Json
+              p_loyalty_discount_bhd?: number
+              p_notes?: string
+              p_order_type: string
+              p_payment_method?: string
+              p_points_to_redeem?: number
+              p_promotion_discount_bhd?: number
+              p_promotion_id?: string
+              p_source?: string
+              p_status?: string
+              p_table_number?: number
+              p_total_bhd: number
+            }
+            Returns: string
+          }
       rpc_dead_stock_report: {
         Args: { p_branch_id: string; p_days_no_move?: number }
         Returns: {
@@ -4479,6 +4667,12 @@ export type Database = {
         | "refunded"
         | "pending_cod"
         | "awaiting_manual_review"
+      promotion_type:
+        | "bogo"
+        | "bundle"
+        | "time_discount"
+        | "item_discount"
+        | "spend_discount"
       staff_role:
         | "owner"
         | "general_manager"
@@ -4674,6 +4868,13 @@ export const Constants = {
         "refunded",
         "pending_cod",
         "awaiting_manual_review",
+      ],
+      promotion_type: [
+        "bogo",
+        "bundle",
+        "time_discount",
+        "item_discount",
+        "spend_discount",
       ],
       staff_role: [
         "owner",
