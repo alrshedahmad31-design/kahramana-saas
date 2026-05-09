@@ -161,7 +161,6 @@ export default function KDSStationOrderCard({ order, station, locale, onBump }: 
         <div className="flex flex-col gap-2">
           {items.map((item) => {
             const st          = effectiveStatus(item)
-            const isPending   = !st || st === 'pending'
             const isPreparing = st === 'preparing'
             const isReady     = st === 'ready' || st === 'completed'
             const isUpdating  = updating === item.id
