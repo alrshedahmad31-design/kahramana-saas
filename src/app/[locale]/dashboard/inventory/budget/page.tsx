@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import type { BudgetVsActual, InventoryBudgetRow } from '@/lib/supabase/custom-types'
 import BudgetProgressBar from '@/components/inventory/budget/BudgetProgressBar'
 import BudgetAlertBanner from '@/components/inventory/budget/BudgetAlertBanner'
@@ -42,11 +43,7 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
   const supabase = createServiceClient()
 
   // Fetch branches
-  const { data: branches } = await supabase
-    .from('branches')
-    .select('id, name_ar, name_en')
-    .eq('is_active', true)
-    .order('name_ar')
+  const branches = await getActiveBranches()
 
   const activeBranchId: string | null = isGlobal
     ? (branch ?? branches?.[0]?.id ?? null)

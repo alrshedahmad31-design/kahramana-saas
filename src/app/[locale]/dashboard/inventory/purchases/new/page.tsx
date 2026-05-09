@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import { getSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import POForm from '@/components/inventory/POForm'
@@ -23,12 +24,12 @@ export default async function PurchaseNewPage({ params }: PageProps) {
 
   const [
     { data: suppliers },
-    { data: branches },
+    branches,
     { data: ingredients },
     { data: lowStockRaw },
   ] = await Promise.all([
     supabase.from('suppliers').select('id, name_ar').eq('is_active', true).order('name_ar'),
-    supabase.from('branches').select('id, name_ar').order('name_ar'),
+    getActiveBranches(),
     supabase
       .from('ingredients')
       .select('id, name_ar, unit, cost_per_unit, reorder_qty')
@@ -69,7 +70,7 @@ export default async function PurchaseNewPage({ params }: PageProps) {
 
       <POForm
         suppliers={suppliers ?? []}
-        branches={branches ?? []}
+        branches={branches}
         ingredients={(ingredients ?? []) as Array<{ id: string; name_ar: string; unit: string; cost_per_unit: number; reorder_qty: number | null }>}
         lowStockSuggestions={lowStockSuggestions}
         locale={locale}

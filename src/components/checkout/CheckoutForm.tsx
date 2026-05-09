@@ -25,7 +25,7 @@ import {
 } from 'lucide-react'
 import { useCartStore, selectCartTotalFils, selectLineTotalFils, selectTotalItems } from '@/lib/cart'
 import { filsToBhd, formatPrice, formatPriceFils } from '@/lib/format'
-import { BRANCH_LIST, type BranchId } from '@/constants/contact'
+import { BRANCH_LIST, BRANCHES, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import CouponInput from '@/components/checkout/CouponInput'
 import { LoyaltyRedemptionWidget } from '@/components/loyalty/LoyaltyRedemptionWidget'
@@ -92,7 +92,7 @@ const checkoutSchema = z.object({
     .optional()
     .transform((v) => v?.trim() || undefined),
 
-  branchId: z.enum(['riffa', 'qallali', 'badi']),
+  branchId: z.string().min(1),
 })
 
 type CheckoutValues = z.infer<typeof checkoutSchema>
@@ -176,8 +176,9 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
       const nextSupport: Partial<Record<BranchId, BranchSupport>> = {}
       for (const branch of data) {
-        if (branch.id === 'riffa' || branch.id === 'qallali' || branch.id === 'badi') {
-          nextSupport[branch.id] = {
+        const id = branch.id as BranchId
+        if (id in BRANCHES) {
+          nextSupport[id] = {
             phone: branch.phone,
             waLink: branch.wa_link,
           }

@@ -47,7 +47,7 @@ export default async function CinematicHero() {
           </p>
 
           <p className="hero-trust text-brand-gold/60 text-xs font-bold tracking-wider mb-6">
-            {isRTL ? '★★★★★ ٤٫٥ — ١٥٣١+ تقييم جوجل · منذ ٢٠١٨' : '★★★★★ 4.5 — 1,531+ Google Reviews · Since 2018'}
+            {isRTL ? '★★★★★ ٤٫٦ — ١٦٨٥+ تقييم جوجل · منذ ٢٠١٨' : '★★★★★ 4.6 — 1,685+ Google Reviews · Since 2018'}
           </p>
 
           <div className="hero-cta flex flex-wrap gap-4 justify-start">

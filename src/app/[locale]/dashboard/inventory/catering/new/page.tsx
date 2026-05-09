@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getActiveBranches }   from '@/lib/branches/queries'
+import { isHiddenBranch }    from '@/constants/contact'
 import CateringOrderForm from '@/components/inventory/catering/CateringOrderForm'
 import type { CateringPackageRow } from '@/lib/supabase/custom-types'
 
@@ -28,14 +30,13 @@ export default async function NewCateringOrderPage({ params }: PageProps) {
   const isGlobal = user.role === 'owner' || user.role === 'general_manager'
 
   let branchId = user.branch_id ?? null
+  if (branchId && isHiddenBranch(branchId)) {
+    redirect(`${prefix}/dashboard/inventory/catering`)
+  }
+
   if (isGlobal && !branchId) {
-    const { data: firstBranch } = await supabase
-      .from('branches')
-      .select('id')
-      .eq('is_active', true)
-      .limit(1)
-      .single()
-    branchId = firstBranch?.id ?? null
+    const branches = await getActiveBranches()
+    branchId = branches?.[0]?.id ?? null
   }
 
   if (!branchId) redirect(`${prefix}/dashboard/inventory/catering`)

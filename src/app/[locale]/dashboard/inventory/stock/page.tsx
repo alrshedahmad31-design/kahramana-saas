@@ -25,13 +25,13 @@ export default async function StockPage({ params }: PageProps) {
   const t = await getTranslations('inventory.valuation')
   const supabase = await createClient()
 
-  const [valuationResult, branchesResult] = await Promise.all([
+  const { getActiveBranches } = await import('@/lib/branches/queries')
+  const [valuationResult, branches] = await Promise.all([
     supabase.from('v_inventory_valuation').select('*').order('branch_id'),
-    supabase.from('branches').select('id,name_ar,name_en').eq('is_active', true).order('name_ar'),
+    getActiveBranches(),
   ])
 
   const valuation = (valuationResult.data ?? []) as unknown as InventoryValuationRow[]
-  const branches = branchesResult.data ?? []
 
   // Group valuation by branch
   const byBranch = new Map<string, InventoryValuationRow[]>()

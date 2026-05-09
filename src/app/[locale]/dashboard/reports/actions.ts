@@ -105,6 +105,8 @@ function sign(n: number): string {
 
 // ── Public actions ────────────────────────────────────────────────────────────
 
+import { isHiddenBranch } from '@/constants/contact'
+
 export async function getBranches(): Promise<{ id: string; name_en: string; name_ar: string }[]> {
   const user = await getSession()
   if (!user || !canAccessReports(user)) return []
@@ -116,7 +118,7 @@ export async function getBranches(): Promise<{ id: string; name_en: string; name
     .eq('is_active', true)
     .order('name_en')
 
-  return data ?? []
+  return (data ?? []).filter((b) => !isHiddenBranch(b.id))
 }
 
 export async function getReportHistory(limit = 25): Promise<ReportHistoryRow[]> {

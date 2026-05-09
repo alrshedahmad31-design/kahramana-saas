@@ -3,6 +3,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 import { parseInventoryExcel } from '@/lib/inventory/excel-parser'
+import { getActiveBranches } from '@/lib/branches/queries'
 import type { ImportError, ImportWarning, ParsedIngredient } from '@/lib/inventory/excel-parser'
 import type { TablesInsert } from '@/lib/supabase/custom-types'
 
@@ -59,8 +60,8 @@ export async function importInventoryExcel(formData: FormData): Promise<ImportAc
   const db = createServiceClient()
 
   // Fetch reference data for validation
-  const [{ data: branches }, { data: slugRows }] = await Promise.all([
-    db.from('branches').select('id, name_ar').eq('is_active', true),
+  const [branches, { data: slugRows }] = await Promise.all([
+    getActiveBranches(),
     db.from('menu_items_sync').select('slug'),
   ])
 

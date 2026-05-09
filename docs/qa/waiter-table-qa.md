@@ -15,7 +15,30 @@ User: `e2e-owner@test.kahramana`
   - `docs/qa/waiter-table-cart.png`
   - `docs/qa/waiter-table-submit.png`
 
-## Results
+## Retest - 2026-05-09
+
+Command:
+
+```powershell
+cmd /c npx playwright test tests/e2e/waiter/dine-in.spec.ts
+```
+
+Target from `.env.test`: `https://kahramana.vercel.app`
+
+Result: PASS - `1 passed (21.3s)`.
+
+Verified after migration 091:
+
+- Waiter Riffa table 1 page loads in Arabic RTL.
+- `قوزي` size picker accepts size `M`.
+- Cart/dialog pricing shows `2.500`.
+- Submit no longer shows `PRICE_MISMATCH`.
+- New order row is created with `branch_id=riffa`, `order_type=dine_in`, `source=waiter`, `table_number=1`.
+- Order item row persists `selected_size=M` and `unit_price_bhd=2.500`.
+- KDS station rows are created with `branch_id=riffa`.
+- The test order and child rows were deleted during teardown cleanup.
+
+## Original Results
 
 | Step | Status | Evidence |
 | --- | --- | --- |

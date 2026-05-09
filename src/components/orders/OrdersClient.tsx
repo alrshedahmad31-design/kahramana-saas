@@ -14,7 +14,7 @@ import OrderDetailsModal from '@/components/orders/OrderDetailsModal'
 import KanbanOrderCard from '@/components/orders/KanbanOrderCard'
 import type { OrderCardData } from '@/components/orders/OrderCard'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
-import { BRANCHES } from '@/constants/contact'
+import { BRANCHES, HIDDEN_BRANCHES } from '@/constants/contact'
 
 const PAGE_SIZE = 20
 
@@ -152,14 +152,22 @@ export default function OrdersClient({
     const activeBranch = userBranchId ?? (branchFilter !== 'all' ? branchFilter : null)
 
     if (statuses)      q = q.in('status', statuses)
-    if (activeBranch)  q = q.eq('branch_id', activeBranch)
+    if (activeBranch) {
+      q = q.eq('branch_id', activeBranch)
+    } else if (HIDDEN_BRANCHES.length > 0) {
+      q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+    }
     if (search.trim()) q = q.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%,id.ilike.%${search.trim()}%`)
     if (range?.from)   q = q.gte('created_at', range.from)
     if (range?.to)     q = q.lt('created_at', range.to)
 
     let tq = supabase.from('orders').select('total_bhd')
     if (statuses)      tq = tq.in('status', statuses)
-    if (activeBranch)  tq = tq.eq('branch_id', activeBranch)
+    if (activeBranch) {
+      tq = tq.eq('branch_id', activeBranch)
+    } else if (HIDDEN_BRANCHES.length > 0) {
+      tq = tq.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+    }
     if (search.trim()) tq = tq.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%`)
     if (range?.from)   tq = tq.gte('created_at', range.from)
     if (range?.to)     tq = tq.lt('created_at', range.to)

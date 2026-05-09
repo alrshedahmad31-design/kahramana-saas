@@ -4,11 +4,16 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
+import { isHiddenBranch } from '@/constants/contact'
+
 export async function recordOpeningBalance(
   branchId: string,
   ingredientId: string,
   quantity: number
 ): Promise<{ error?: string }> {
+  if (isHiddenBranch(branchId)) {
+    return { error: 'Invalid branch' }
+  }
   let session
   try {
     session = await requireDashboardSession()

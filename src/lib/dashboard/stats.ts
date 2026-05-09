@@ -74,6 +74,8 @@ function hourLabel(h: number): string {
 
 import type { OrderStatus } from '@/lib/supabase/custom-types'
 
+import { HIDDEN_BRANCHES } from '@/constants/contact'
+
 const ACTIVE_STATUSES   = ['new', 'under_review', 'accepted', 'preparing', 'ready', 'out_for_delivery']
 const DONE_STATUSES: OrderStatus[] = ['delivered', 'completed']
 const EXCLUDED_CSV      = '(cancelled,payment_failed,returned)'
@@ -92,7 +94,12 @@ export async function getDashboardData(branchId?: string | null): Promise<Dashbo
     .select('id, status, total_bhd, customer_name, branch_id, created_at, updated_at')
     .gte('created_at', todayStart.toISOString())
     .not('status', 'in', EXCLUDED_CSV)
-  if (branchId) todayQ = todayQ.eq('branch_id', branchId)
+
+  if (branchId) {
+    todayQ = todayQ.eq('branch_id', branchId)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    todayQ = todayQ.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
 
   // Yesterday completed — for revenue trend
   let yestQ = sb
@@ -101,7 +108,12 @@ export async function getDashboardData(branchId?: string | null): Promise<Dashbo
     .gte('created_at', yestStart.toISOString())
     .lt('created_at', yestEnd.toISOString())
     .in('status', DONE_STATUSES)
-  if (branchId) yestQ = yestQ.eq('branch_id', branchId)
+
+  if (branchId) {
+    yestQ = yestQ.eq('branch_id', branchId)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    yestQ = yestQ.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
 
   // Top items today (order_items joined to orders)
   let itemsQ = sb
@@ -109,7 +121,12 @@ export async function getDashboardData(branchId?: string | null): Promise<Dashbo
     .select('name_ar, name_en, quantity, orders!inner(created_at, status, branch_id)')
     .gte('orders.created_at', todayStart.toISOString())
     .not('orders.status', 'in', EXCLUDED_CSV)
-  if (branchId) itemsQ = itemsQ.eq('orders.branch_id', branchId)
+
+  if (branchId) {
+    itemsQ = itemsQ.eq('orders.branch_id', branchId)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    itemsQ = itemsQ.not('orders.branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
 
   const [
     { data: todayRows },

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import { getSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import CountSheet from '@/components/inventory/CountSheet'
@@ -21,8 +22,8 @@ export default async function CountNewPage({ params }: PageProps) {
 
   const supabase = await createClient()
 
-  const [{ data: branches }, { data: stock }] = await Promise.all([
-    supabase.from('branches').select('id, name_ar').order('name_ar'),
+  const [branches, { data: stock }] = await Promise.all([
+    getActiveBranches(),
     supabase
       .from('inventory_stock')
       .select(

@@ -2,6 +2,8 @@ import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
+import { isHiddenBranch } from '@/constants/contact'
 import type { InventoryValuationRow } from '@/lib/supabase/custom-types'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
@@ -31,13 +33,16 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
   const branchFilter = sp.branch ?? 'all'
 
   const supabase = await createClient()
-  const [{ data: valuation }, { data: branches }] = await Promise.all([
+  const [{ data: valuation }, branches] = await Promise.all([
     supabase.from('v_inventory_valuation').select('*').order('total_value_bhd', { ascending: false }),
-    supabase.from('branches').select('id, name_ar, name_en').eq('is_active', true),
+    getActiveBranches(),
   ])
 
   // v_inventory_valuation is branch+category aggregated view
-  const safeData = (valuation ?? []) as unknown as InventoryValuationRow[]
+  const allData = (valuation ?? []) as unknown as InventoryValuationRow[]
+  // Filter out hidden branches from the view data
+  const safeData = allData.filter((r) => !isHiddenBranch(r.branch_id))
+
   const filtered = isGlobal && branchFilter !== 'all'
     ? safeData.filter((r) => r.branch_id === branchFilter)
     : safeData

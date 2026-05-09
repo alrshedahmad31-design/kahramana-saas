@@ -8,6 +8,7 @@ import type {
   InventoryAlertRow,
 } from '@/lib/supabase/custom-types'
 import LowStockWidget from '@/components/inventory/LowStockWidget'
+import { HIDDEN_BRANCHES } from '@/constants/contact'
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -42,12 +43,8 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
 
   const supabase = await createClient()
 
-  // Fetch branches list (for global selector)
-  const { data: branches } = await supabase
-    .from('branches')
-    .select('id, name_ar, name_en')
-    .eq('is_active', true)
-    .order('name_ar')
+  const { getActiveBranches } = await import('@/lib/branches/queries')
+  const branches = await getActiveBranches()
 
   // Determine active branch
   const activeBranchId = branch ?? branches?.[0]?.id ?? null
@@ -66,12 +63,20 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
     activeBranchId
       ? supabase.rpc('rpc_expiry_report', { p_branch_id: activeBranchId, p_days_ahead: 7 })
       : Promise.resolve({ data: [] as ExpiryReportRow[], error: null }),
-    supabase
-      .from('inventory_alerts')
-      .select('*')
-      .eq('is_read', false)
-      .order('created_at', { ascending: false })
-      .limit(10),
+    (HIDDEN_BRANCHES.length > 0
+      ? supabase
+          .from('inventory_alerts')
+          .select('*')
+          .eq('is_read', false)
+          .not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+          .order('created_at', { ascending: false })
+          .limit(10)
+      : supabase
+          .from('inventory_alerts')
+          .select('*')
+          .eq('is_read', false)
+          .order('created_at', { ascending: false })
+          .limit(10)),
     activeBranchId
       ? supabase
           .from('inventory_stock')

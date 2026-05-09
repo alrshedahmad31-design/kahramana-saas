@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
+import { isHiddenBranch } from '@/constants/contact'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
 import VarianceClient from './VarianceClient'
@@ -24,9 +26,9 @@ export default async function VariancePage({ params }: PageProps) {
   const isGlobal = user.role === 'owner' || user.role === 'general_manager'
   const supabase = await createClient()
 
-  const [{ data: rawRows }, { data: branches }] = await Promise.all([
+  const [{ data: rawRows }, branches] = await Promise.all([
     supabase.from('mv_variance_report').select('*').order('variance_cost_bhd', { ascending: false }),
-    supabase.from('branches').select('id, name_ar').eq('is_active', true),
+    getActiveBranches(),
   ])
 
   // Cast materialized view result to our inline VarianceRow type
@@ -36,7 +38,9 @@ export default async function VariancePage({ params }: PageProps) {
     theoretical_usage: number; actual_usage: number
     variance: number; variance_pct: number | null; variance_cost_bhd: number
   }
-  const rows = (rawRows ?? []) as VarianceRow[]
+  const allRows = (rawRows ?? []) as VarianceRow[]
+  // Filter out hidden branches from the data
+  const rows = allRows.filter((r) => !isHiddenBranch(r.branch_id))
 
   return (
     <div className="space-y-6">

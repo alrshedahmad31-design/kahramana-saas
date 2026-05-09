@@ -3,6 +3,7 @@ import { getSession }           from '@/lib/auth/session'
 import { createClient }         from '@/lib/supabase/server'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 import DeliveryPageClient       from '@/components/delivery/DeliveryPageClient'
+import { HIDDEN_BRANCHES }    from '@/constants/contact'
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -44,7 +45,11 @@ export default async function DeliveryPage({ params }: Props) {
     .neq('order_type', 'pickup')
     .order('created_at', { ascending: true })
 
-  if (branchScope) activeOrdersQuery = activeOrdersQuery.eq('branch_id', branchScope)
+  if (branchScope) {
+    activeOrdersQuery = activeOrdersQuery.eq('branch_id', branchScope)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    activeOrdersQuery = activeOrdersQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
   const { data: ordersRaw } = await activeOrdersQuery
 
   // Completed today (for metrics + per-driver count + on-time rate)
@@ -55,7 +60,11 @@ export default async function DeliveryPage({ params }: Props) {
     .gte('created_at', todayStart)
     .lte('created_at', todayEnd)
 
-  if (branchScope) completedQuery = completedQuery.eq('branch_id', branchScope)
+  if (branchScope) {
+    completedQuery = completedQuery.eq('branch_id', branchScope)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    completedQuery = completedQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
   const { data: completedRaw } = await completedQuery
 
   // Drivers (staff with role='driver', active)
@@ -65,7 +74,11 @@ export default async function DeliveryPage({ params }: Props) {
     .eq('role', 'driver')
     .eq('is_active', true)
 
-  if (branchScope) driversQuery = driversQuery.eq('branch_id', branchScope)
+  if (branchScope) {
+    driversQuery = driversQuery.eq('branch_id', branchScope)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    driversQuery = driversQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
   const { data: driversRaw } = await driversQuery
 
   // Latest driver locations

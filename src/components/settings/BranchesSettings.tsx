@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { isHiddenBranch } from '@/constants/contact'
 
 interface Branch {
   id:        string
@@ -35,7 +36,10 @@ export default function BranchesSettings() {
         .from('branches')
         .select('*')
         .order('created_at', { ascending: true })
-      if (data) setBranches(data as Branch[])
+      if (data) {
+        const filtered = (data as Branch[]).filter(b => !isHiddenBranch(b.id))
+        setBranches(filtered)
+      }
       setLoading(false)
     }
     load()

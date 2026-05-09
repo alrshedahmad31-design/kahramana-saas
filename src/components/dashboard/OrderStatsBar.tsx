@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { HIDDEN_BRANCHES } from '@/constants/contact'
 
 interface Stats {
   newCount:       number
@@ -25,10 +26,16 @@ export default function OrderStatsBar() {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      const { data } = await supabase
+      let q = supabase
         .from('orders')
         .select('status, total_bhd')
         .gte('created_at', today.toISOString())
+
+      if (HIDDEN_BRANCHES.length > 0) {
+        q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+      }
+
+      const { data } = await q
 
       if (!data) return
 

@@ -161,7 +161,13 @@
       "Bash(git check-ignore *)",
       "Bash(vercel env *)",
       "Bash(echo \"EXIT=$?\")",
-      "Bash(npm ls *)"
+      "Bash(npm ls *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(cmd /c \"tasklist /FI \\\\\"PID eq 9784\\\\\"\")",
+      "Bash(cmd /c \"netstat -ano\")",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(npx playwright test tests/e2e/waiter/dine-in.spec.ts --workers=1 --reporter=list 2>&1)"
     ]
   }
 }

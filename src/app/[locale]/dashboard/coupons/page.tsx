@@ -17,13 +17,13 @@ export default async function CouponsPage({ params }: Props) {
 
   const supabase = await createClient()
   
-  const [couponsRes, branchesRes] = await Promise.all([
+  const { getActiveBranches } = await import('@/lib/branches/queries')
+  const [couponsRes, branches] = await Promise.all([
     supabase.from('coupons').select('*').order('created_at', { ascending: false }),
-    supabase.from('branches').select('*').order('name_en')
+    getActiveBranches()
   ])
 
   const coupons = (couponsRes.data ?? []) as CouponRow[]
-  const branches = (branchesRes.data ?? []) as BranchRow[]
 
-  return <CouponsClient coupons={coupons} branches={branches} />
+  return <CouponsClient coupons={coupons} branches={branches as unknown as BranchRow[]} />
 }

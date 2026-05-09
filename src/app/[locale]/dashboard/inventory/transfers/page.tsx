@@ -55,9 +55,10 @@ export default async function TransfersPage({ params, searchParams }: PageProps)
 
   const { data: transfers, count } = await query
 
+  const { getActiveBranches } = await import('@/lib/branches/queries')
   // Fetch branches and stock for the transfer form
-  const [{ data: branches }, { data: stock }] = await Promise.all([
-    supabase.from('branches').select('id, name_ar').order('name_ar'),
+  const [branches, { data: stock }] = await Promise.all([
+    getActiveBranches(),
     supabase.from('inventory_stock').select('branch_id, ingredient_id, on_hand'),
   ])
 

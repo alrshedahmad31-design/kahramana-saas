@@ -34,7 +34,7 @@ const plannedBranches = BRANCH_LIST.filter((b) => b.status === 'planned')
 
 // Only include ratings confirmed via GBP dashboard. Qallali review count unconfirmed — omitted.
 const BRANCH_RATINGS: Partial<Record<string, { ratingValue: string; reviewCount: string; bestRating: string; worstRating: string }>> = {
-  riffa: { ratingValue: '4.5', reviewCount: '1531', bestRating: '5', worstRating: '1' },
+  riffa: { ratingValue: '4.6', reviewCount: '1685', bestRating: '5', worstRating: '1' },
 }
 
 // Schema.org requires "25:00" format when closing time crosses midnight.
@@ -228,8 +228,8 @@ export function buildOrganizationSchema(locale: Locale) {
     alternateName: 'Kahramana Baghdad',
     description: localized(
       locale,
-      'كهرمانة بغداد مطعم عراقي أصيل في البحرين، يقدم أكثر من 168 طبقاً بغدادياً في فرعين: الرفاع وقلالي. تشمل أبرز الأطباق: سمك المسگوف المشوي على الفحم، القوزي، المشاوي العراقية، والإفطار البغدادي. تقييم ٤٫٥ من ٥ بناءً على أكثر من ١٥٣١ تقييم على جوجل في فرع الرفاع. يتوفر جلسات عائلية وخدمة التموين للمناسبات.',
-      'Kahramana Baghdad is an authentic Iraqi restaurant in Bahrain, serving over 168 traditional Baghdadi dishes across two branches in Riffa and Qallali. Signature dishes include Masgouf (charcoal-grilled fish), Quzi (slow-cooked lamb), Iraqi kebab, and Baghdadi breakfast. Rated 4.5 stars from 1,531 Google reviews at the Riffa branch. Family seating and event catering available.'
+      'كهرمانة بغداد مطعم عراقي أصيل في البحرين، يقدم أكثر من 168 طبقاً بغدادياً في فرعين: الرفاع وقلالي. تشمل أبرز الأطباق: سمك المسگوف المشوي على الفحم، القوزي، المشاوي العراقية، والإفطار البغدادي. تقييم ٤٫٦ من ٥ بناءً على أكثر من ١٦٨٥ تقييم على جوجل في فرع الرفاع. يتوفر جلسات عائلية وخدمة التموين للمناسبات.',
+      'Kahramana Baghdad is an authentic Iraqi restaurant in Bahrain, serving over 168 traditional Baghdadi dishes across two branches in Riffa and Qallali. Signature dishes include Masgouf (charcoal-grilled fish), Quzi (slow-cooked lamb), Iraqi kebab, and Baghdadi breakfast. Rated 4.6 stars from 1,685 Google reviews at the Riffa branch. Family seating and event catering available.'
     ),
     url: SITE,
     telephone: primaryBranch.phone,

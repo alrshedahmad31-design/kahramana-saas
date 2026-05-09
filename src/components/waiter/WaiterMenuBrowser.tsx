@@ -56,7 +56,7 @@ export default function WaiterMenuBrowser({ categories, isAr, onAdd }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* Sticky search + category bar */}
-      <div className="sticky top-0 z-20 bg-brand-black border-b border-brand-border px-3 py-2">
+      <div className="sticky top-0 z-20 bg-brand-black border-b border-brand-border px-4 py-3">
         <div className="relative">
           <span className="absolute inset-y-0 start-3 flex items-center text-brand-muted">
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -69,10 +69,10 @@ export default function WaiterMenuBrowser({ categories, isAr, onAdd }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('search')}
-            className="w-full min-h-[40px] rounded-lg bg-brand-surface border border-brand-border ps-9 pe-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
+            className="w-full min-h-[44px] rounded-lg bg-brand-surface border border-brand-border ps-9 pe-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
           />
         </div>
-        <div className="mt-2 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
           <CatButton
             active={activeCat === ALL}
             label={t('allCategories')}
@@ -102,7 +102,7 @@ export default function WaiterMenuBrowser({ categories, isAr, onAdd }: Props) {
               ref={(el) => { sectionRefs.current.set(cat.id, el) }}
               className="mb-4 scroll-mt-[120px]"
             >
-              <h3 className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-2 ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+              <h3 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-3 ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
                 {isAr ? cat.nameAr : cat.nameEn}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -179,19 +179,23 @@ function ItemCard({
           </span>
         )}
       </div>
-      <div className="p-3 flex flex-col flex-1 w-full">
-        <h4 className={`text-sm font-bold text-brand-text line-clamp-2 leading-snug mb-1
-          ${isAr ? 'font-cairo' : 'font-satoshi'}`}
+      <div className="p-2.5 flex flex-col gap-1.5 flex-1">
+        <span className={`text-sm font-bold leading-tight line-clamp-2 text-brand-text
+          ${isAr ? 'font-almarai' : 'font-satoshi'}`}
         >
           {isAr ? item.nameAr : item.nameEn}
-        </h4>
-        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-          <span className="font-satoshi font-black text-brand-gold tabular-nums text-sm">
+        </span>
+        <div className="mt-auto flex items-center justify-between gap-2">
+          <span className="font-satoshi font-bold text-brand-gold text-sm tabular-nums">
             {price.toFixed(3)}
           </span>
-          <span className="shrink-0 w-6 h-6 rounded bg-brand-surface-2 text-brand-muted flex items-center justify-center group-hover:bg-brand-gold group-hover:text-brand-black transition-colors">
-            <Plus size={14} strokeWidth={3} />
-          </span>
+          {!disabled && (
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-brand-gold/10 text-brand-gold group-hover:bg-brand-gold group-hover:text-brand-black transition-colors">
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+              </svg>
+            </span>
+          )}
         </div>
       </div>
     </button>

@@ -1,4 +1,4 @@
-import { BRANCHES as CONTACT_BRANCHES } from '@/constants/contact'
+import { BRANCHES as CONTACT_BRANCHES, isHiddenBranch } from '@/constants/contact'
 
 export const BRANCHES = [
   {
@@ -58,7 +58,7 @@ export const BRANCHES = [
     googleMaps: null,
     status: 'coming_soon' as const,
   },
-] as const
+].filter((branch) => !isHiddenBranch(branch.id))
 
 export type Branch = typeof BRANCHES[number]
 

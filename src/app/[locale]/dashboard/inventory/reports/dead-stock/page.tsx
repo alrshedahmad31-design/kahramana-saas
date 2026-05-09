@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 
 interface DeadStockRow {
@@ -39,7 +40,7 @@ export default async function DeadStockPage({ params, searchParams }: PageProps)
   const days = Number(sp.days ?? 30)
   const supabase = await createClient()
 
-  const { data: branches } = await supabase.from('branches').select('id, name_ar').eq('is_active', true)
+  const branches = await getActiveBranches()
   const branchId = isGlobal
     ? (sp.branch ?? branches?.[0]?.id ?? '')
     : (user.branch_id ?? '')

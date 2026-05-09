@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server'
+import { HIDDEN_BRANCHES }    from '@/constants/contact'
 import LowStockWidget      from './LowStockWidget'
 import ExpiryCalendarWidget from './ExpiryCalendarWidget'
 import WasteEscalationWidget from './WasteEscalationWidget'
@@ -38,7 +39,9 @@ async function fetchInventoryDashboardData(branchId: string | null) {
 
   const wastePromise = branchId
     ? wasteQuery.eq('branch_id', branchId)
-    : wasteQuery
+    : HIDDEN_BRANCHES.length > 0
+      ? wasteQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+      : wasteQuery
 
   const valuationQuery = supabase
     .from('v_inventory_valuation')
@@ -47,7 +50,9 @@ async function fetchInventoryDashboardData(branchId: string | null) {
 
   const valuationPromise = branchId
     ? valuationQuery.eq('branch_id', branchId)
-    : valuationQuery
+    : HIDDEN_BRANCHES.length > 0
+      ? valuationQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+      : valuationQuery
 
   // Trend: daily purchase totals last 14 days
   const twoWeeksAgo = new Date()
@@ -61,7 +66,9 @@ async function fetchInventoryDashboardData(branchId: string | null) {
 
   const trendPromise = branchId
     ? trendQuery.eq('branch_id', branchId)
-    : trendQuery
+    : HIDDEN_BRANCHES.length > 0
+      ? trendQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+      : trendQuery
 
   const [lowStockRes, expiryRes, wasteRes, valuationRes, trendRes] = await Promise.all([
     lowStockPromise,
@@ -122,7 +129,9 @@ async function fetchInventoryDashboardData(branchId: string | null) {
 
   const { data: foodCostRows } = branchId
     ? await foodCostQuery.eq('branch_id', branchId)
-    : await foodCostQuery
+    : HIDDEN_BRANCHES.length > 0
+      ? await foodCostQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+      : await foodCostQuery
 
   const foodCostToday = (foodCostRows ?? []).reduce(
     (s: number, r: { unit_cost: number | null; quantity: number }) => s + (r.unit_cost ?? 0) * r.quantity,

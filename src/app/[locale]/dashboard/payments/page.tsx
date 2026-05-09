@@ -8,6 +8,7 @@ import PaymentStatsCards from '@/components/payments/PaymentStatsCards'
 import PaymentFilters from '@/components/payments/PaymentFilters'
 import PaymentsTable from '@/components/payments/PaymentsTable'
 import CashHandoversSection, { type CashHandoverItem } from '@/components/payments/CashHandoversSection'
+import { HIDDEN_BRANCHES } from '@/constants/contact'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,8 +40,9 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
 
   const supabase = await createClient()
 
-  // Branch-scope: get order IDs for this branch (branch_manager only)
+  // Branch-scope: get order IDs for this branch (branch_manager) or hidden-branch IDs to exclude (global admin)
   let scopedOrderIds: string[] | null = null
+  let excludedOrderIds: string[] = []
   if (!isGlobalAdmin && user.branch_id) {
     const { data: branchOrders } = await supabase
       .from('orders')
@@ -62,11 +64,18 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
         </PageShell>
       )
     }
+  } else if (isGlobalAdmin && HIDDEN_BRANCHES.length > 0) {
+    const { data: hiddenOrders } = await supabase
+      .from('orders')
+      .select('id')
+      .in('branch_id', HIDDEN_BRANCHES)
+    excludedOrderIds = hiddenOrders?.map((o) => o.id) ?? []
   }
 
   // Stats: all time, branch-scoped
   let statsQ = supabase.from('payments').select('status, amount_bhd')
   if (scopedOrderIds !== null) statsQ = statsQ.in('order_id', scopedOrderIds)
+  if (excludedOrderIds.length > 0) statsQ = statsQ.not('order_id', 'in', `(${excludedOrderIds.join(',')})`)
   const { data: allPayments } = await statsQ
 
   const totalTx   = allPayments?.length ?? 0
@@ -86,9 +95,10 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
     .order('created_at', { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1)
 
-  if (scopedOrderIds !== null) tableQ = tableQ.in('order_id', scopedOrderIds)
-  if (filterMethod)            tableQ = tableQ.eq('method', filterMethod)
-  if (filterStatus)            tableQ = tableQ.eq('status', filterStatus)
+  if (scopedOrderIds !== null)       tableQ = tableQ.in('order_id', scopedOrderIds)
+  if (excludedOrderIds.length > 0)   tableQ = tableQ.not('order_id', 'in', `(${excludedOrderIds.join(',')})`)
+  if (filterMethod)                  tableQ = tableQ.eq('method', filterMethod)
+  if (filterStatus)                  tableQ = tableQ.eq('status', filterStatus)
 
   const { data: payments, count } = await tableQ
 

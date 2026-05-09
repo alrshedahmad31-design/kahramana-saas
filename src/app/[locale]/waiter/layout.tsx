@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { requireDashboardSection, isDashboardGuardError } from '@/lib/auth/dashboard-guards'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
-import WaiterPWAShell from '@/components/waiter/WaiterPWAShell'
 
 interface Props {
   children: React.ReactNode
@@ -25,23 +24,15 @@ export default async function WaiterLayout({ children, params }: Props) {
     redirect(`${prefix}/dashboard`)
   }
 
-  // Floor staff (cashier + branch_manager) get the lightweight PWA shell —
-  // they're typically on phones/tablets at the table. Owner / GM keep the
-  // full dashboard sidebar so they can navigate freely while supervising.
-  const PWA_ROLES = ['cashier', 'branch_manager'] as const
-  if (user.role && (PWA_ROLES as readonly string[]).includes(user.role)) {
-    return (
-      <WaiterPWAShell locale={locale}>
-        {children}
-      </WaiterPWAShell>
-    )
-  }
-
+  // Single shell for every role — same as the dashboard layout used on /pos,
+  // /kds, /orders, etc. Consistency over role-specific chrome.
   return (
-    <div data-staff-shell className="min-h-screen bg-brand-black flex" dir={isAr ? 'rtl' : 'ltr'}>
+    <div data-staff-shell className="-mt-20 md:-mt-24 min-h-screen bg-brand-black flex" dir={isAr ? 'rtl' : 'ltr'}>
       <DashboardSidebar userName={user.name} userRole={user.role} />
       <main className="flex-1 min-w-0 pt-16 lg:pt-0">
-        {children}
+        <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   )

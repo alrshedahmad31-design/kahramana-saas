@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { isHiddenBranch } from '@/constants/contact'
 import { translateUnit } from '@/lib/inventory/units'
 import OpeningBalanceModal from '@/components/inventory/OpeningBalanceModal'
 import { recordOpeningBalance } from './actions'
@@ -45,6 +46,9 @@ function availableTextClass(available: number, reorderPoint: number | null): str
 
 export default async function BranchStockPage({ params, searchParams }: PageProps) {
   const { locale, branchId } = await params
+  if (isHiddenBranch(branchId)) {
+    notFound()
+  }
   const { search, category } = await searchParams
   const isAr = locale !== 'en'
   const prefix = locale === 'en' ? '/en' : ''

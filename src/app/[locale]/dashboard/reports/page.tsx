@@ -3,6 +3,7 @@ import Link         from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { canAccessReports } from '@/lib/auth/rbac'
 import { createServiceClient } from '@/lib/supabase/server'
+import { HIDDEN_BRANCHES } from '@/constants/contact'
 import ReportsClient from './ReportsClient'
 import type { DishCogsRow } from '@/lib/supabase/custom-types'
 
@@ -33,21 +34,33 @@ async function fetchInventorySummary(branchId: string | null): Promise<Inventory
     .select('unit_cost, quantity')
     .eq('movement_type', 'consumption')
     .gte('performed_at', monthStartIso)
-  if (branchId) foodCostQuery = foodCostQuery.eq('branch_id', branchId)
+  if (branchId) {
+    foodCostQuery = foodCostQuery.eq('branch_id', branchId)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    foodCostQuery = foodCostQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
 
   let wasteQuery = supabase
     .from('waste_log')
     .select('cost_bhd')
     .not('approved_by', 'is', null)
     .gte('reported_at', monthStartIso)
-  if (branchId) wasteQuery = wasteQuery.eq('branch_id', branchId)
+  if (branchId) {
+    wasteQuery = wasteQuery.eq('branch_id', branchId)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    wasteQuery = wasteQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
 
   let revenueQuery = supabase
     .from('orders')
     .select('total_bhd')
     .in('status', ['delivered', 'completed'])
     .gte('created_at', monthStartIso)
-  if (branchId) revenueQuery = revenueQuery.eq('branch_id', branchId)
+  if (branchId) {
+    revenueQuery = revenueQuery.eq('branch_id', branchId)
+  } else if (HIDDEN_BRANCHES.length > 0) {
+    revenueQuery = revenueQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+  }
 
   const cogsQuery = supabase
     .from('v_dish_cogs')

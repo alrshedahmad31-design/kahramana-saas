@@ -1,6 +1,7 @@
 import { redirect }        from 'next/navigation'
 import { getSession }      from '@/lib/auth/session'
 import { createClient }    from '@/lib/supabase/server'
+import { getActiveBranches }   from '@/lib/branches/queries'
 import ImportDropzone      from '@/components/inventory/ImportDropzone'
 
 export const dynamic = 'force-dynamic'
@@ -20,8 +21,8 @@ export default async function InventoryImportPage({ params }: Props) {
 
   const supabase = await createClient()
 
-  const [{ data: branches }, { data: slugRows }] = await Promise.all([
-    supabase.from('branches').select('id, name_ar, name_en').eq('is_active', true),
+  const [branches, { data: slugRows }] = await Promise.all([
+    getActiveBranches(),
     supabase.from('menu_items_sync').select('slug, name_ar').order('name_ar'),
   ])
 

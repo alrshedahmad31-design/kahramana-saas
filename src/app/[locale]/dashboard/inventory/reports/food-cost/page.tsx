@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { HIDDEN_BRANCHES } from '@/constants/contact'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
@@ -31,13 +32,17 @@ export default async function FoodCostPage({ params, searchParams }: PageProps) 
   const supabase = await createClient()
 
   // Revenue from completed orders
+  const ordersQuery = supabase
+    .from('orders')
+    .select('total_bhd, created_at')
+    .in('status', ['delivered', 'completed'])
+    .gte('created_at', dateFrom)
+    .lte('created_at', dateTo + 'T23:59:59')
+
   const [{ data: orderData }, { data: soldItems }, { data: cogsByDish }] = await Promise.all([
-    supabase
-      .from('orders')
-      .select('total_bhd, created_at')
-      .in('status', ['delivered', 'completed'])
-      .gte('created_at', dateFrom)
-      .lte('created_at', dateTo + 'T23:59:59'),
+    HIDDEN_BRANCHES.length > 0
+      ? ordersQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
+      : ordersQuery,
     // Theoretical COGS: approximate using all order_items (not date-filtered at DB level)
     // This is a known approximation — see note below
     supabase

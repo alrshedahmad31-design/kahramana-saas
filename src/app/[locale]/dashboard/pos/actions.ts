@@ -8,7 +8,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
-import { BRANCHES, type BranchId } from '@/constants/contact'
+import { isHiddenBranch, BRANCHES, type BranchId } from '@/constants/contact'
 import { resolveBestPromotion } from '@/lib/promotions/server'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 
@@ -108,7 +108,7 @@ export async function createManualOrder(
     return { error: 'Invalid phone number' }
   }
 
-  if (!isBranchId(data.branchId)) {
+  if (!isBranchId(data.branchId) || isHiddenBranch(data.branchId)) {
     return { error: 'Invalid branch' }
   }
 

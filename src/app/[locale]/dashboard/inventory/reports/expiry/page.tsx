@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import type { ExpiryReportRow } from '@/lib/supabase/custom-types'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
@@ -46,8 +47,7 @@ export default async function ExpiryReportPage({ params, searchParams }: PagePro
   const isGlobal = user.role === 'owner' || user.role === 'general_manager'
   const days = Number(sp.days ?? 7)
   const supabase = await createClient()
-
-  const { data: branches } = await supabase.from('branches').select('id, name_ar').eq('is_active', true)
+  const branches = await getActiveBranches()
   const branchId = isGlobal
     ? (sp.branch ?? branches?.[0]?.id ?? '')
     : (user.branch_id ?? '')

@@ -1,5 +1,54 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
+> **Session**: 83 (Claude Code track)
+> **Date**: 2026-05-09
+> **Focus**: Waiter dine-in QA retest (steps 6–8) codified as Playwright spec; verified migration 091 unblocked PRICE_MISMATCH end-to-end.
+
+## Session 83 deliverables
+
+### Tests
+- **`tests/e2e/waiter/dine-in.spec.ts`** — codifies steps 1–8 of `docs/qa/waiter-table-qa.md`. Logs in as `e2e-owner`, hits `/waiter/table/1?branch=riffa` (AR locale, desktop viewport), searches `quzi`, picks size M via `VariantPicker`, submits, asserts no PRICE_MISMATCH banner, then verifies `orders` + `order_items` (`selected_size='M'`, `unit_price_bhd=2.500`) + `order_item_station_status` rows via service-role client. Cleans up the test order + all child rows on success.
+- **`playwright.config.ts`** — added `dotenv.config({ path: '.env.test' })`, `globalSetup` + `globalTeardown` hooks (previously orphaned but never wired up), env-driven `baseURL`, and a `webServer` block that auto-starts `npm run dev` when `E2E_BASE_URL` is local.
+- **`.env.test`** — flipped `E2E_BASE_URL` from `https://kahramana.vercel.app` → `http://localhost:3000` per current debugging default; comment shows how to switch back.
+
+### QA report
+- **`docs/qa/waiter-table-qa.md`** — CoWork sibling agent added the retest section (vercel.app, PASS 21.3s); this session's localhost run also passed (11.5s). Steps 6–8 now PASS.
+
+## Verification
+
+```
+✓ tests/e2e/waiter/dine-in.spec.ts (1 passed, 11.5s) — local :3000
+✓ tests/e2e/waiter/dine-in.spec.ts (1 passed, 21.3s) — vercel.app (CoWork)
+```
+
+DB state after run: clean (cleanup deletes the test order + payments + items + audit + station rows).
+
+## Carry-overs from session 82 (still pending — not touched)
+
+**Hard prereq for staff seeding**: Ahmed pastes 13 real email addresses for the roster slots in `scripts/seed-staff.ts:54-79`. See session 82 runbook below for full sequence (apply migration 090 → regen types → tsc → seed:staff:dry → seed:staff → invitees consume magic links).
+
+| # | Role | Branch |
+|---|---|---|
+| 1 | branch_manager | riffa |
+| 2 | branch_manager | qallali |
+| 3 | cashier | riffa |
+| 4 | cashier | qallali |
+| 5 | kitchen | riffa |
+| 6 | kitchen | qallali |
+| 7 | driver | riffa |
+| 8 | driver | qallali |
+| 9 | waiter | riffa |
+| 10 | waiter | qallali |
+| 11 | inventory_manager | riffa |
+| 12 | inventory_manager | qallali |
+| 13 | marketing | — |
+
+Migration 090 still on disk only; types regen + TSC clean still depend on its apply.
+
+---
+
+# Session 82 — superseded notes below
+
 > **Session**: 82 (Claude Code track)
 > **Date**: 2026-05-09
 > **Focus**: PRICE_MISMATCH fix for size/variant orders + staff-seeding scaffolding (paused on emails)

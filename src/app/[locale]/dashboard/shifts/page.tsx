@@ -54,8 +54,8 @@ export default async function ShiftsPage({
   // For global users, use the selected branch from URL or the staff branch
   const activeBranchId = isGlobal ? (selectedBranchId || branchId) : branchId
 
-  // Fetch branches for the selector
-  const { data: branches } = await supabase.from('branches').select('id, name_ar, name_en')
+  const { getActiveBranches } = await import('@/lib/branches/queries')
+  const branches = await getActiveBranches()
 
   let query = supabase.from('shift_closings').select(`
     *,

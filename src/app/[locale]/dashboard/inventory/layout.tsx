@@ -1,6 +1,6 @@
 import { redirect }       from 'next/navigation'
 import { getSession }      from '@/lib/auth/session'
-import { createClient }    from '@/lib/supabase/server'
+import { getActiveBranches }   from '@/lib/branches/queries'
 import { BranchProvider }  from '@/components/inventory/BranchContext'
 import InventoryBreadcrumb from '@/components/inventory/InventoryBreadcrumb'
 
@@ -23,14 +23,7 @@ export default async function InventoryLayout({ children, params }: Props) {
 
   const isGlobal = user.role === 'owner' || user.role === 'general_manager'
 
-  const supabase = await createClient()
-  const { data: branches } = await supabase
-    .from('branches')
-    .select('id, name_ar, name_en')
-    .eq('is_active', true)
-    .order('name_ar')
-
-  const branchList = branches ?? []
+  const branchList = await getActiveBranches()
   const defaultBranchId = isGlobal
     ? (branchList[0]?.id ?? null)
     : (user.branch_id ?? null)

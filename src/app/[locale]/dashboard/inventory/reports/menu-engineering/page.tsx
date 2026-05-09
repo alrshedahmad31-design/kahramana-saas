@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
 import MenuEngineeringMatrix from './MenuEngineeringMatrix'
@@ -41,7 +42,7 @@ export default async function MenuEngineeringPage({ params, searchParams }: Page
   const period = Number(sp.period ?? 30)
   const supabase = await createClient()
 
-  const { data: branches } = await supabase.from('branches').select('id, name_ar').eq('is_active', true)
+  const branches = await getActiveBranches()
 
   const branchId = isGlobal
     ? (sp.branch ?? branches?.[0]?.id ?? '')

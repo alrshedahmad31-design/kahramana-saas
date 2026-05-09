@@ -15,6 +15,7 @@ import InventoryWidgetsSection from '@/components/inventory/InventoryWidgetsSect
 import InventoryWidgetsSkeleton from '@/components/inventory/InventoryWidgetsSkeleton'
 import OnboardingAlerts        from '@/components/dashboard/OnboardingAlerts'
 import { createClient }        from '@/lib/supabase/server'
+import { isHiddenBranch }    from '@/constants/contact'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,10 +36,12 @@ export default async function DashboardHomePage({ params }: Props) {
   const showInventory  = canAccessSection(user.role, 'inventory')
 
   const supabase = await createClient()
-  const { data: branches } = await supabase
+  const { data: branchesRaw } = await supabase
     .from('branches')
     .select('id, name_ar, name_en')
     .eq('is_active', true)
+  
+  const branches = (branchesRaw ?? []).filter(b => !isHiddenBranch(b.id))
 
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-5">

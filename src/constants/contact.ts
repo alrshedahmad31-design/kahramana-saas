@@ -11,6 +11,18 @@
  */
 
 export type BranchId = 'riffa' | 'qallali' | 'badi'
+/**
+ * Branch IDs that should be hidden from the platform.
+ * These branches are still in the database for historical data but should not be shown in UI.
+ */
+export const HIDDEN_BRANCHES: BranchId[] = ['badi']
+
+/** Type-safe check for hidden branches. Accepts any string (e.g. DB row id). */
+export function isHiddenBranch(id: string | null | undefined): boolean {
+  if (!id) return false
+  return (HIDDEN_BRANCHES as readonly string[]).includes(id)
+}
+
 
 export interface Branch {
   id: BranchId
@@ -133,7 +145,10 @@ export const BRANCHES: Record<BranchId, Branch> = {
   },
 } as const
 
-export const BRANCH_LIST = Object.values(BRANCHES)
+export const BRANCH_LIST = Object.values(BRANCHES).filter(
+  (branch) => !HIDDEN_BRANCHES.includes(branch.id)
+)
+
 
 /** Default branch for homepage hero CTA and pre-filled wa.me links */
 export const DEFAULT_BRANCH_ID: BranchId = 'riffa'

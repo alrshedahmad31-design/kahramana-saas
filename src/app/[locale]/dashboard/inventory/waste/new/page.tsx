@@ -21,8 +21,9 @@ export default async function WasteNewPage({ params }: PageProps) {
 
   const supabase = await createClient()
 
-  const [{ data: branches }, { data: ingredients }] = await Promise.all([
-    supabase.from('branches').select('id, name_ar').order('name_ar'),
+  const { getActiveBranches } = await import('@/lib/branches/queries')
+  const [branches, { data: ingredients }] = await Promise.all([
+    getActiveBranches(),
     supabase
       .from('ingredients')
       .select('id, name_ar, name_en, unit, cost_per_unit')
