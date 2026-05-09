@@ -20,8 +20,8 @@ export const MENU_CATEGORIES = [
   { id: 'traditional-sandwiches',         ar: 'سندويشات بغدادية',               en: 'Traditional Sandwiches',         slugPrefix: 'sandwiches' },
   { id: 'the-heritage-breakfast',         ar: 'الفطور البغدادي التراثي',        en: 'The Heritage Breakfast',         slugPrefix: 'breakfast' },
   { id: 'the-sweet-finale',               ar: 'ختامها مسك (الحلويات)',          en: 'The Sweet Finale',               slugPrefix: 'desserts' },
-  { id: 'fresh-signature-juices',         ar: 'عصائر كهرمانة الطبيعية',         en: 'Fresh Signature Juices',         slugPrefix: 'drinks' },
-  { id: 'the-heritage-tea-and-coffee',    ar: 'ركن الشاي والقهوة العريق',       en: 'The Heritage Tea & Coffee',      slugPrefix: 'drinks' },
+  { id: 'fresh-signature-juices',         ar: 'عصائر كهرمانة الطبيعية',         en: 'Fresh Signature Juices',         slugPrefix: 'juice' },
+  { id: 'the-heritage-tea-and-coffee',    ar: 'ركن الشاي والقهوة العريق',       en: 'The Heritage Tea & Coffee',      slugPrefix: 'tea' },
 ] as const
 
 export type MenuCategoryId = typeof MENU_CATEGORIES[number]['id']
