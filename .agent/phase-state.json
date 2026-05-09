@@ -1,22 +1,22 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-09 (session 78 — Dashboard/Menu full self-management + DB-first architecture. 15 files fixed/rewritten, migration 088 created. TSC 0 errors. Migration 088 PENDING production apply.)",
+    "last_updated":  "2026-05-09 (session 81 — POS/Waiter hydration mismatch fixed. Added mounted state and aria-labels to ItemCard. Verified zero console errors. types.ts regenerated clean.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",
     "deployment":  {
                        "status":  "deployed",
                        "url":  "https://kahramanat.com",
-                       "last_deploy":  "2026-05-07",
+                       "last_deploy":  "2026-05-09",
                        "platform":  "vercel",
                        "region":  "sin1",
                        "database":  "supabase_production",
                        "build_pages":  540,
                        "git_tag":  "v1.6-realtime-logistics",
                        "pending_db_migrations":  [
-                                                     "088_menu_db_first_fix.sql — fixes menu_option_groups FK from menu_items_sync(slug) to menu_items(id) ON DELETE CASCADE. MUST apply before testing dashboard modifier creation."
+
                                                  ],
-                       "migration_status":  "087 APPLIED — Sprint: Waiter App + QR Ordering + Promotions. Migrations 085 (restaurant_tables + orders.table_number + orders.source CHECK + rpc_create_order p_table_number + waiter/qr auto-accept), 086 (promotions table + promotion_type ENUM + orders.promotion_id + orders.promotion_discount_bhd + rpc_create_order p_promotion_id/p_promotion_discount_bhd), and 087 (orders.order_type CHECK adds 'dine_in') applied via Supabase SQL Editor on 2026-05-09.",
+                       "migration_status":  "089 APPLIED — KDS hardening: branch-scoped RLS on order_item_station_status, UNIQUE(item_id), denormalised branch_id for realtime filter, explicit created_at for SLA timer. Migration 088 (menu_db_first_fix — menu_option_groups FK from menu_items_sync(slug) to menu_items(id) ON DELETE CASCADE) APPLIED 2026-05-09 + registered in schema_migrations.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -48,11 +48,13 @@
                                                      "084_loyalty_config.sql — applied 2026-05-09 (DB-driven loyalty rules; defaults seeded; partial unique index on global active row)",
                                                      "085_waiter_tables_and_qr_source.sql — applied 2026-05-09 (restaurant_tables registry + 40 seeded tables + orders.table_number + orders_source_check for direct/online/manual/waiter/kiosk/qr + rpc_create_order p_table_number param + manual/waiter/qr auto-accept)",
                                                      "086_promotions.sql — applied 2026-05-09 (promotion_type ENUM + promotions table + orders.promotion_id + orders.promotion_discount_bhd + rpc_create_order p_promotion_id/p_promotion_discount_bhd with atomic use_count increment)",
-                                                     "087_dine_in_order_type.sql — applied 2026-05-09 (orders.order_type CHECK now allows 'dine_in' alongside 'delivery'/'pickup' — required by waiter + QR flows)"
+                                                     "087_dine_in_order_type.sql — applied 2026-05-09 (orders.order_type CHECK now allows 'dine_in' alongside 'delivery'/'pickup' — required by waiter + QR flows)",
+                                                     "088_menu_db_first_fix.sql — applied 2026-05-09 (menu_option_groups FK from menu_items_sync(slug) to menu_items(id) ON DELETE CASCADE; registered in schema_migrations)",
+                                                     "089_kds_rls_hardening.sql — applied 2026-05-09 (branch-scoped RLS on order_item_station_status, UNIQUE(item_id), denormalised branch_id for realtime, created_at for SLA timer baseline, BRANCH_MISMATCH defence-in-depth in update_order_item_station_status RPC)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-                       "last_git_commit":  "cd92a8a — fix: null byte + EOF truncation cleanup — TSC 0 errors (79 files, 2277 insertions)",
+                       "last_git_commit":  "b65fe6c — fix(pos): additive size+variant pricing in VariantPicker and resolveMenuItemPrice (preceded by b8ee91e chore(types): regenerate from DB post-migration-089)",
                        "vercel_push_pending":  false,
                        "supabase_key_rotation_required":  false,
                        "driver_page_fix":  "verified on production",
@@ -323,7 +325,9 @@
                                                             "src/components/driver/DriverOrderCard.tsx",
                                                             "src/components/driver/DriverPWAShell.tsx",
                                                             "public/manifest.json",
-                                                            "supabase/migrations/006_seed_test_staff.sql (driver user)"
+                                                            "supabase/migrations/006_seed_test_staff.sql (driver user)",
+                                                            "src/components/pos/MenuBrowser.tsx (Hydration Fix + A11y)",
+                                                            "src/components/waiter/WaiterMenuBrowser.tsx (Hydration Fix + A11y)"
                                                         ],
                              "deliverables_pending":  [
 

@@ -42,6 +42,30 @@ export interface POSItem {
   modifierGroups:  POSModifierGroup[]
 }
 
+/**
+ * Pure function to resolve the display "from" price for a POS item.
+ * Used in lazy state initializers to prevent hydration mismatch while avoiding CLS.
+ */
+export function resolveMenuItemPrice(item: POSItem): number {
+  if (typeof item.priceBhd === 'number' && item.priceBhd > 0) {
+    return item.priceBhd
+  }
+  
+  const prices: number[] = []
+  if (item.sizes.length > 0) {
+    prices.push(...item.sizes.map((s) => s.priceBhd))
+  }
+  if (item.variants.length > 0) {
+    prices.push(...item.variants.map((v) => v.priceBhd))
+  }
+  
+  if (prices.length > 0) {
+    return Math.min(...prices)
+  }
+  
+  return item.fromPriceBhd || 0
+}
+
 /** Snapshot of one selected option, persisted into order_items.modifiers JSONB. */
 export interface CartModifier {
   group_id:        string

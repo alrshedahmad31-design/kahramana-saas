@@ -1,0 +1,28 @@
+-- ============================================================
+-- Kahramana Baghdad — Extend staff_role enum with 'waiter'
+-- Migration: 090_extend_staff_role_waiter.sql
+-- Purpose:   Provision dedicated waiter accounts (front-of-house dine-in)
+--            instead of overloading the 'cashier' role.
+-- ============================================================
+--
+-- Notes:
+--   - ALTER TYPE ... ADD VALUE cannot be used in the same transaction
+--     it was added in. This file contains ONLY the enum extension so
+--     future code that references 'waiter' compiles after the migration
+--     is committed.
+--   - Section access for the new role is enforced in code
+--     (src/lib/auth/rbac-ui.ts SECTION_ROLES + src/lib/auth/rbac.ts
+--     ROLE_RANK / ASSIGNABLE_BY) — no further DB changes required.
+--   - After applying, regenerate types:
+--       npx supabase gen types typescript --linked --schema public \
+--         > src/lib/supabase/types.ts
+--
+-- ROLLBACK:
+--   Postgres does not support removing an enum value once it has been
+--   used in a column. The only safe rollback is:
+--     1. Reassign all rows where role = 'waiter' to another role.
+--     2. Create a new enum without 'waiter', cast the column, drop the old type.
+--   Avoid unless necessary.
+-- ============================================================
+
+ALTER TYPE staff_role ADD VALUE IF NOT EXISTS 'waiter';

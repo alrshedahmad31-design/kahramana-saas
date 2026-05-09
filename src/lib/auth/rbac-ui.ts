@@ -64,9 +64,9 @@ const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   audit:                  ['owner', 'general_manager'],
   shifts:                 ['owner', 'general_manager', 'branch_manager', 'cashier'],
   pos:                    ['owner', 'general_manager', 'branch_manager', 'cashier'],
-  waiter:                 ['owner', 'general_manager', 'branch_manager', 'cashier'],
+  waiter:                 ['owner', 'general_manager', 'branch_manager', 'cashier', 'waiter'],
   promotions:             ['owner', 'general_manager', 'branch_manager', 'marketing'],
-  tables:                 ['owner', 'general_manager', 'branch_manager'],
+  tables:                 ['owner', 'general_manager', 'branch_manager', 'waiter'],
 }
 
 export function canAccessSection(

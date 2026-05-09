@@ -18,7 +18,9 @@
     "email:dev": "email dev --dir emails/templates --port 3001",
     "email:export": "npx tsx emails/scripts/render-for-supabase.ts",
     "seed:menu": "npx tsx scripts/seed-menu-items-sync.ts",
-    "seed:menu:dry": "npx tsx scripts/seed-menu-items-sync.ts --dry-run"
+    "seed:menu:dry": "npx tsx scripts/seed-menu-items-sync.ts --dry-run",
+    "seed:staff": "npx tsx scripts/seed-staff.ts",
+    "seed:staff:dry": "npx tsx scripts/seed-staff.ts --dry"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",

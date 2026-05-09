@@ -10,6 +10,7 @@ export const ROLE_RANK: Record<StaffRole, number> = {
   branch_manager:    7,
   cashier:           3,
   kitchen:           3,
+  waiter:            3,
   driver:            2,
   inventory:         2,
   inventory_manager: 4,
@@ -116,15 +117,16 @@ export function canManageStaff(
 const ASSIGNABLE_BY: Record<StaffRole, StaffRole[]> = {
   owner: [
     'general_manager', 'branch_manager',
-    'cashier', 'kitchen', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support',
+    'cashier', 'kitchen', 'waiter', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support',
   ],
   general_manager: [
     'branch_manager',
-    'cashier', 'kitchen', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support',
+    'cashier', 'kitchen', 'waiter', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support',
   ],
-  branch_manager:    ['cashier', 'kitchen', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support'],
+  branch_manager:    ['cashier', 'kitchen', 'waiter', 'driver', 'inventory', 'inventory_manager', 'marketing', 'support'],
   cashier:           [],
   kitchen:           [],
+  waiter:            [],
   driver:            [],
   inventory:         [],
   inventory_manager: [],
