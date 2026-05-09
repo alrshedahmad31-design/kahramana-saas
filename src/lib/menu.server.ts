@@ -45,14 +45,17 @@ function buildJsonLookup(): Map<string, { item: MenuItem; category: MenuCategory
 }
 
 function getPriceValues(item: Pick<MenuItem, 'price_bhd' | 'sizes' | 'variants'>): number[] {
-  if (typeof item.price_bhd === 'number') return [item.price_bhd]
+  const prices: number[] = []
+  if (typeof item.price_bhd === 'number' && item.price_bhd > 0) {
+    prices.push(item.price_bhd)
+  }
   if (item.sizes) {
-    return Object.values(item.sizes).filter((p): p is number => typeof p === 'number')
+    prices.push(...Object.values(item.sizes).filter((p): p is number => typeof p === 'number' && p > 0))
   }
   if (item.variants) {
-    return item.variants.map((v) => v.price_bhd).filter((p): p is number => typeof p === 'number')
+    prices.push(...item.variants.map((v) => v.price_bhd).filter((p): p is number => typeof p === 'number' && p > 0))
   }
-  return []
+  return prices
 }
 
 /**
@@ -66,13 +69,20 @@ function dbRowToNormalized(
 ): NormalizedMenuItem {
   const categoryPresentation = getCategoryPresentationBySlug(row.category)
 
+  // PostgREST returns NUMERIC columns as JS strings — coerce once here so
+  // every downstream `typeof === 'number'` check and Math.min comparison
+  // sees a real number. NaN guarded back to null so unpriced items stay so.
+  const rawPrice = row.price_bhd as unknown
+  const numPrice = rawPrice == null ? null : Number(rawPrice)
+  const safePrice = numPrice != null && Number.isFinite(numPrice) ? numPrice : null
+
   const merged: MenuItem = {
     id:          row.id,
     name:        { ar: row.name_ar, en: row.name_en },
     description: row.description_ar || row.description_en
       ? { ar: row.description_ar ?? '', en: row.description_en ?? '' }
       : jsonEntry?.item.description,
-    price_bhd:   row.price_bhd,
+    price_bhd:   safePrice,
     image_url:   row.image_url ?? undefined,
     available:   row.is_available,
     station:     (row.station ?? 'main') as MenuItem['station'],
@@ -93,13 +103,13 @@ function dbRowToNormalized(
     slug:              row.id,
     categorySlug:      row.category,
     categoryName:      categoryPresentation.name,
-    fromPrice:         priceValues.length > 0 ? Math.min(...priceValues) : (row.price_bhd ?? 0),
+    fromPrice:         priceValues.length > 0 ? Math.min(...priceValues) : (safePrice ?? 0),
     hasMultiplePrices: priceValues.length > 1 && new Set(priceValues.map((p) => p.toFixed(3))).size > 1,
     pricingKind:
       hasSizes && hasVariants ? 'sizes_variants'
       : hasSizes              ? 'sizes'
       : hasVariants           ? 'variants'
-      : typeof row.price_bhd === 'number' ? 'single'
+      : typeof safePrice === 'number' ? 'single'
       : 'unpriced',
     image:       row.image_url?.trim() || FALLBACK_IMAGE,
     ingredients: jsonEntry?.item.ingredients ?? [],

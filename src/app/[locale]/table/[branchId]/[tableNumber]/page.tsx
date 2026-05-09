@@ -131,18 +131,20 @@ export default async function QRTablePage({ params }: PageProps) {
       nameAr: cat.nameAR,
       nameEn: cat.nameEN ?? cat.nameAR,
       items:  cat.items.map((item) => ({
-        id:        item.slug,
-        nameAr:    item.name.ar,
-        nameEn:    item.name.en,
-        image:     item.image,
-        available: item.available,
-        priceBhd:  typeof item.price_bhd === 'number' ? item.price_bhd : null,
-        sizes:     item.sizes
+        id:           item.slug,
+        nameAr:       item.name.ar,
+        nameEn:       item.name.en,
+        image:        item.image,
+        available:    item.available,
+        priceBhd:     typeof item.price_bhd === 'number' ? item.price_bhd : null,
+        // Server-precomputed display price so SSR and CSR agree.
+        fromPriceBhd: item.fromPrice,
+        sizes:        item.sizes
           ? Object.entries(item.sizes)
               .filter(([, p]) => typeof p === 'number')
               .map(([label, p]) => ({ label, priceBhd: p as number }))
           : [],
-        variants:  (item.variants ?? [])
+        variants:     (item.variants ?? [])
           .filter((v) => typeof v.price_bhd === 'number')
           .map((v) => ({
             labelAr:  v.label.ar,

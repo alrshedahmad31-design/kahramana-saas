@@ -33,6 +33,10 @@ export interface POSItem {
   image:           string
   available:       boolean
   priceBhd:        number | null
+  // Pre-computed on the server (NormalizedMenuItem.fromPrice). Used as the
+  // display "from" price so the client never re-derives it and risks
+  // disagreeing with the SSR HTML.
+  fromPriceBhd:    number
   sizes:           POSSize[]
   variants:        POSVariant[]
   modifierGroups:  POSModifierGroup[]

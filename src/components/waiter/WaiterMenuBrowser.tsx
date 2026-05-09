@@ -104,16 +104,16 @@ export default function WaiterMenuBrowser({ categories, isAr, onAdd }: Props) {
               <h3 className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-2 ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
                 {isAr ? cat.nameAr : cat.nameEn}
               </h3>
-              <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
                 {cat.items.map((item) => (
-                  <CompactItemRow
+                  <ItemCard
                     key={item.id}
                     item={item}
                     isAr={isAr}
                     onAdd={() => onAdd(item)}
                   />
                 ))}
-              </ul>
+              </div>
             </section>
           ))
         )}
@@ -140,68 +140,57 @@ function CatButton({
   )
 }
 
-function CompactItemRow({
+function ItemCard({
   item, isAr, onAdd,
 }: { item: POSItem; isAr: boolean; onAdd: () => void }) {
   const t = useTranslations('waiter')
-  const fromPrice = useMemo(() => {
-    if (typeof item.priceBhd === 'number') return item.priceBhd
-    const sizes    = item.sizes.map((s) => s.priceBhd)
-    const variants = item.variants.map((v) => v.priceBhd)
-    const all = [...sizes, ...variants]
-    return all.length > 0 ? Math.min(...all) : 0
-  }, [item])
+  // Server-precomputed (page.tsx maps from NormalizedMenuItem.fromPrice).
+  // Re-deriving on the client risked SSR/CSR drift on items where
+  // `priceBhd` came back from PostgREST as a string — see commit log.
+  const fromPrice = item.fromPriceBhd
 
   const disabled = !item.available
 
   return (
-    <li>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onAdd}
-        className={`group flex items-stretch gap-3 w-full rounded-xl border bg-brand-surface text-start overflow-hidden transition-colors min-h-[96px] ${
-          disabled
-            ? 'border-brand-border opacity-50 cursor-not-allowed'
-            : 'border-brand-border hover:border-brand-gold/50'
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onAdd}
+      className={`group flex flex-col rounded-xl border bg-brand-surface text-start overflow-hidden transition-colors
+        ${disabled
+          ? 'border-brand-border opacity-50 cursor-not-allowed'
+          : 'border-brand-border hover:border-brand-gold/50'
         }`}
-      >
-        {/* Image — h-24 (96px) */}
-        <div className="relative shrink-0 w-24 h-24 bg-brand-surface-2">
-          <Image
-            src={item.image}
-            alt={isAr ? item.nameAr : item.nameEn}
-            fill
-            sizes="96px"
-            className="object-cover"
-          />
-          {disabled && (
-            <span className="absolute top-1 start-1 text-[9px] font-bold uppercase tracking-wide rounded bg-brand-error/90 text-brand-black px-1.5 py-0.5">
-              {t('outOfStock')}
-            </span>
-          )}
+    >
+      <div className="relative w-full aspect-square bg-brand-surface-2">
+        <Image
+          src={item.image}
+          alt={isAr ? item.nameAr : item.nameEn}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 200px"
+          className="object-cover"
+        />
+        {disabled && (
+          <span className="absolute top-2 start-2 text-[10px] font-bold uppercase tracking-wide rounded bg-brand-error/90 text-brand-black px-2 py-0.5">
+            {t('outOfStock')}
+          </span>
+        )}
+      </div>
+      <div className="p-3 flex flex-col flex-1 w-full">
+        <h4 className={`text-sm font-bold text-brand-text line-clamp-2 leading-snug mb-1
+          ${isAr ? 'font-cairo' : 'font-satoshi'}`}
+        >
+          {isAr ? item.nameAr : item.nameEn}
+        </h4>
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+          <span className="font-satoshi font-black text-brand-gold tabular-nums text-sm">
+            {fromPrice.toFixed(3)}
+          </span>
+          <span className="shrink-0 w-6 h-6 rounded bg-brand-surface-2 text-brand-muted flex items-center justify-center group-hover:bg-brand-gold group-hover:text-brand-black transition-colors">
+            <Plus size={14} strokeWidth={3} />
+          </span>
         </div>
-
-        {/* Name + price + plus — single horizontal row */}
-        <div className="flex-1 min-w-0 flex items-center gap-3 pe-3 py-2">
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-bold leading-tight line-clamp-2 text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? item.nameAr : item.nameEn}
-            </p>
-            <p className="font-satoshi font-black text-brand-gold text-sm tabular-nums mt-1">
-              {fromPrice.toFixed(3)} {isAr ? 'د.ب' : 'BHD'}
-            </p>
-          </div>
-          {!disabled && (
-            <span
-              aria-hidden="true"
-              className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-brand-gold/10 text-brand-gold group-hover:bg-brand-gold group-hover:text-brand-black transition-colors"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-            </span>
-          )}
-        </div>
-      </button>
-    </li>
+      </div>
+    </button>
   )
 }

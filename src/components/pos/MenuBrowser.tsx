@@ -126,13 +126,9 @@ function ItemCard({
   item, isAr, onAdd,
 }: { item: POSItem; isAr: boolean; onAdd: () => void }) {
   const t = useTranslations('pos')
-  const fromPrice = useMemo(() => {
-    if (typeof item.priceBhd === 'number') return item.priceBhd
-    const sizes = item.sizes.map((s) => s.priceBhd)
-    const variants = item.variants.map((v) => v.priceBhd)
-    const all = [...sizes, ...variants]
-    return all.length > 0 ? Math.min(...all) : 0
-  }, [item])
+  // Server-precomputed (page.tsx maps from NormalizedMenuItem.fromPrice) so
+  // SSR and client renders never disagree.
+  const fromPrice = item.fromPriceBhd
 
   const disabled = !item.available
 

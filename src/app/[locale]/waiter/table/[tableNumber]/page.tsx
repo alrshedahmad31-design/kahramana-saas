@@ -144,23 +144,24 @@ export default async function WaiterTablePage({ params, searchParams }: PageProp
       nameAr: cat.nameAR,
       nameEn: cat.nameEN ?? cat.nameAR,
       items:  cat.items.map((item) => ({
-        id:        item.slug,
-        nameAr:    item.name.ar,
-        nameEn:    item.name.en,
-        image:     item.image,
-        available: item.available,
-        priceBhd:  typeof item.price_bhd === 'number' ? item.price_bhd : null,
-        sizes:     item.sizes
+        id:           item.slug,
+        nameAr:       item.name.ar,
+        nameEn:       item.name.en,
+        image:        item.image,
+        available:    item.available,
+        priceBhd:     (typeof item.price_bhd === 'number' && item.price_bhd > 0) ? item.price_bhd : null,
+        // Use the server-precomputed display price so SSR and CSR agree.
+        fromPriceBhd: item.fromPrice,
+        sizes:        item.sizes
           ? Object.entries(item.sizes)
               .filter(([, p]) => typeof p === 'number')
               .map(([label, p]) => ({ label, priceBhd: p as number }))
           : [],
-        variants:  (item.variants ?? [])
-          .filter((v) => typeof v.price_bhd === 'number')
+        variants:     (item.variants ?? [])
           .map((v) => ({
             labelAr:  v.label.ar,
             labelEn:  v.label.en,
-            priceBhd: v.price_bhd as number,
+            priceBhd: v.price_bhd ?? 0,
           })),
         modifierGroups: modifiersBySlug.get(item.slug) ?? [],
       })),

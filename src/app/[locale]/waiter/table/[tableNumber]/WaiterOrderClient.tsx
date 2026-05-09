@@ -14,7 +14,7 @@ import type {
   POSItem,
 } from '@/components/pos/types'
 import { createWaiterOrder } from '@/app/[locale]/waiter/actions'
-
+import styles from '@/components/pos/POSClient.module.css'
 interface Props {
   categories:  POSCategory[]
   branchId:    string
@@ -178,10 +178,121 @@ export default function WaiterOrderClient({
 
   const tableLabel = isAr ? labelAr : labelEn
 
+  const cartLinesContent = (
+    <>
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        {cart.length === 0 ? (
+          <p className={`text-center text-brand-muted text-sm py-8 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+            {isAr ? 'السلة فارغة' : 'Cart is empty'}
+          </p>
+        ) : cart.map((line) => (
+          <div key={line.key} className="bg-brand-black/40 border border-brand-border rounded-lg p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className={`font-bold text-brand-text text-sm ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                  {isAr ? line.nameAr : line.nameEn}
+                </p>
+                {(line.size || line.variantAr || line.modifiers.length > 0) && (
+                  <p className={`text-xs text-brand-muted mt-0.5 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                    {[
+                      line.size,
+                      isAr ? line.variantAr : line.variantEn,
+                      ...line.modifiers.map((m) => isAr ? m.option_name_ar : m.option_name_en),
+                    ].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => removeLine(line.key)}
+                className="text-brand-error/70 hover:text-brand-error text-xs"
+                aria-label={t('removeItem')}
+              >
+                {t('removeItem')}
+              </button>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => changeQty(line.key, -1)}
+                  className="w-7 h-7 rounded bg-brand-surface border border-brand-border text-brand-text font-bold"
+                  aria-label="decrement"
+                >−</button>
+                <span className="min-w-[32px] text-center font-satoshi font-bold tabular-nums">
+                  {line.quantity}
+                </span>
+                <button
+                  onClick={() => changeQty(line.key, 1)}
+                  className="w-7 h-7 rounded bg-brand-surface border border-brand-border text-brand-text font-bold"
+                  aria-label="increment"
+                >+</button>
+              </div>
+              <span className="font-satoshi font-black text-brand-gold text-sm tabular-nums">
+                {(line.unitPriceBhd * line.quantity).toFixed(3)}
+              </span>
+            </div>
+            <input
+              type="text"
+              value={line.itemNotes}
+              onChange={(e) => setLineNotes(line.key, e.target.value)}
+              placeholder={t('itemNotes')}
+              className="mt-2 w-full bg-brand-surface border border-brand-border rounded-md px-2 py-1.5 text-xs text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 font-satoshi"
+              maxLength={200}
+            />
+          </div>
+        ))}
+
+        {cart.length > 0 && (
+          <div>
+            <label className={`block text-xs text-brand-muted mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? 'ملاحظات الطلب' : 'Order notes'}
+            </label>
+            <textarea
+              value={orderNotes}
+              onChange={(e) => setOrderNotes(e.target.value)}
+              rows={2}
+              maxLength={500}
+              className="w-full bg-brand-black/40 border border-brand-border rounded-md px-2 py-1.5 text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 font-satoshi resize-none"
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-brand-border px-4 py-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className={`text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+            {t('subtotal')}
+          </span>
+          <span className="font-satoshi font-black text-brand-gold text-lg tabular-nums">
+            {subtotal.toFixed(3)} {isAr ? 'د.ب' : 'BHD'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={cart.length === 0 || isPending || !isOnline}
+          className={`w-full min-h-[48px] rounded-lg font-black text-base transition-colors flex items-center justify-center gap-2 ${
+            cart.length === 0 || isPending || !isOnline
+              ? 'bg-brand-surface text-brand-muted cursor-not-allowed'
+              : 'bg-brand-gold text-brand-black hover:bg-brand-gold/90'
+          } ${isAr ? 'font-cairo' : 'font-satoshi'}`}
+        >
+          {isPending ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              {t('sending')}
+            </>
+          ) : (
+            t('sendToKitchen')
+          )}
+        </button>
+      </div>
+    </>
+  )
+
   return (
-    <div className="flex flex-col h-[calc(100dvh-60px)]" dir={isAr ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <div className="shrink-0 px-4 py-3 border-b border-brand-border bg-brand-surface flex items-center justify-between gap-3">
+    <div className="flex flex-col h-[calc(100dvh-60px)] lg:h-auto lg:block lg:-mx-6 lg:-my-6" dir={isAr ? 'rtl' : 'ltr'}>
+      {/* Mobile Header */}
+      <div className="lg:hidden shrink-0 px-4 py-3 border-b border-brand-border bg-brand-surface flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => router.push(`${prefix}/waiter`)}
@@ -196,39 +307,60 @@ export default function WaiterOrderClient({
       </div>
 
       {/* Status banners */}
-      {error && (
-        <div className="shrink-0 bg-brand-error/15 border-b border-brand-error/40 px-4 py-2 flex items-center justify-between gap-2">
-          <span className={`text-sm text-brand-error ${isAr ? 'font-almarai' : 'font-satoshi'}`}>{error}</span>
-          <button onClick={() => setError(null)} aria-label="dismiss" className="text-brand-error">
-            <X size={16} />
-          </button>
-        </div>
-      )}
-      {success && (
-        <div className="shrink-0 bg-brand-success/15 border-b border-brand-success/40 px-4 py-2 text-center">
-          <span className={`text-sm font-bold text-brand-success ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {success}
-          </span>
-        </div>
-      )}
-      {!isOnline && (
-        <div className="shrink-0 bg-brand-error/90 px-4 py-2">
-          <span className={`text-sm font-bold text-white ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {t('offline')} — {t('submitDisabledOffline')}
-          </span>
-        </div>
-      )}
-
-      {/* Menu */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <WaiterMenuBrowser categories={categories} isAr={isAr} onAdd={handleAdd} />
+      <div className="lg:mb-0 shrink-0">
+        {error && (
+          <div className="bg-brand-error/15 border-b border-brand-error/40 px-4 py-2 flex items-center justify-between gap-2">
+            <span className={`text-sm text-brand-error ${isAr ? 'font-almarai' : 'font-satoshi'}`}>{error}</span>
+            <button onClick={() => setError(null)} aria-label="dismiss" className="text-brand-error">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {success && (
+          <div className="bg-brand-success/15 border-b border-brand-success/40 px-4 py-2 text-center">
+            <span className={`text-sm font-bold text-brand-success ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {success}
+            </span>
+          </div>
+        )}
+        {!isOnline && (
+          <div className="bg-brand-error/90 px-4 py-2">
+            <span className={`text-sm font-bold text-white ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {t('offline')} — {t('submitDisabledOffline')}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Sticky cart bar — always visible, opens drawer */}
+      <div className={`flex-1 flex flex-col min-h-0 lg:block ${styles.grid}`}>
+        {/* Right Panel: Menu Browser */}
+        <div className="flex-1 min-h-0 overflow-hidden lg:overflow-visible">
+          <WaiterMenuBrowser categories={categories} isAr={isAr} onAdd={handleAdd} />
+        </div>
+
+        {/* Left Panel: Desktop Cart Sidebar */}
+        <div className={`
+          hidden lg:flex lg:flex-col
+          ${styles.sidebar}
+          border-s border-brand-border bg-brand-surface
+        `}>
+          <div className="shrink-0 flex items-center justify-between px-4 py-4 border-b border-brand-border">
+            <h2 className={`text-xl font-black text-brand-gold ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+              {tableLabel}
+            </h2>
+            <span className={`text-xs font-bold px-2 py-1 rounded bg-brand-surface-2 text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? 'طلب طاولة' : 'Dine in'}
+            </span>
+          </div>
+          {cartLinesContent}
+        </div>
+      </div>
+
+      {/* Sticky cart bar (Mobile) — always visible, opens drawer */}
       <button
         type="button"
         onClick={() => setDrawerOpen(true)}
-        className={`shrink-0 flex items-center justify-between gap-3 border-t-2 border-brand-gold/60 px-4 py-3 transition-colors ${
+        className={`lg:hidden shrink-0 flex items-center justify-between gap-3 border-t-2 border-brand-gold/60 px-4 py-3 transition-colors ${
           cart.length === 0
             ? 'bg-brand-surface text-brand-muted hover:bg-brand-surface'
             : 'bg-brand-gold text-brand-black hover:bg-brand-gold/90'
@@ -248,14 +380,14 @@ export default function WaiterOrderClient({
         </span>
       </button>
 
-      {/* Cart drawer */}
+      {/* Cart drawer (Mobile) */}
       {drawerOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center"
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-end justify-center"
           onClick={() => setDrawerOpen(false)}
         >
           <div
-            className="bg-brand-surface w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl border-t sm:border border-brand-border max-h-[90dvh] flex flex-col"
+            className="bg-brand-surface w-full rounded-t-2xl border-t border-brand-border max-h-[90dvh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
             dir={isAr ? 'rtl' : 'ltr'}
           >
@@ -267,113 +399,7 @@ export default function WaiterOrderClient({
                 <X size={20} />
               </button>
             </div>
-
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-              {cart.length === 0 ? (
-                <p className={`text-center text-brand-muted text-sm py-8 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  {isAr ? 'السلة فارغة' : 'Cart is empty'}
-                </p>
-              ) : cart.map((line) => (
-                <div key={line.key} className="bg-brand-black/40 border border-brand-border rounded-lg p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className={`font-bold text-brand-text text-sm ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                        {isAr ? line.nameAr : line.nameEn}
-                      </p>
-                      {(line.size || line.variantAr || line.modifiers.length > 0) && (
-                        <p className={`text-xs text-brand-muted mt-0.5 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                          {[
-                            line.size,
-                            isAr ? line.variantAr : line.variantEn,
-                            ...line.modifiers.map((m) => isAr ? m.option_name_ar : m.option_name_en),
-                          ].filter(Boolean).join(' · ')}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => removeLine(line.key)}
-                      className="text-brand-error/70 hover:text-brand-error text-xs"
-                      aria-label={t('removeItem')}
-                    >
-                      {t('removeItem')}
-                    </button>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => changeQty(line.key, -1)}
-                        className="w-7 h-7 rounded bg-brand-surface border border-brand-border text-brand-text font-bold"
-                        aria-label="decrement"
-                      >−</button>
-                      <span className="min-w-[32px] text-center font-satoshi font-bold tabular-nums">
-                        {line.quantity}
-                      </span>
-                      <button
-                        onClick={() => changeQty(line.key, 1)}
-                        className="w-7 h-7 rounded bg-brand-surface border border-brand-border text-brand-text font-bold"
-                        aria-label="increment"
-                      >+</button>
-                    </div>
-                    <span className="font-satoshi font-black text-brand-gold text-sm tabular-nums">
-                      {(line.unitPriceBhd * line.quantity).toFixed(3)}
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={line.itemNotes}
-                    onChange={(e) => setLineNotes(line.key, e.target.value)}
-                    placeholder={t('itemNotes')}
-                    className="mt-2 w-full bg-brand-surface border border-brand-border rounded-md px-2 py-1.5 text-xs text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 font-satoshi"
-                    maxLength={200}
-                  />
-                </div>
-              ))}
-
-              {cart.length > 0 && (
-                <div>
-                  <label className={`block text-xs text-brand-muted mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                    {isAr ? 'ملاحظات الطلب' : 'Order notes'}
-                  </label>
-                  <textarea
-                    value={orderNotes}
-                    onChange={(e) => setOrderNotes(e.target.value)}
-                    rows={2}
-                    maxLength={500}
-                    className="w-full bg-brand-black/40 border border-brand-border rounded-md px-2 py-1.5 text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 font-satoshi resize-none"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="shrink-0 border-t border-brand-border px-4 py-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className={`text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                  {t('subtotal')}
-                </span>
-                <span className="font-satoshi font-black text-brand-gold text-lg tabular-nums">
-                  {subtotal.toFixed(3)} {isAr ? 'د.ب' : 'BHD'}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={cart.length === 0 || isPending || !isOnline}
-                className={`w-full min-h-[48px] rounded-lg font-black text-base transition-colors flex items-center justify-center gap-2 ${
-                  cart.length === 0 || isPending || !isOnline
-                    ? 'bg-brand-surface text-brand-muted cursor-not-allowed'
-                    : 'bg-brand-gold text-brand-black hover:bg-brand-gold/90'
-                } ${isAr ? 'font-cairo' : 'font-satoshi'}`}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    {t('sending')}
-                  </>
-                ) : (
-                  t('sendToKitchen')
-                )}
-              </button>
-            </div>
+            {cartLinesContent}
           </div>
         </div>
       )}
