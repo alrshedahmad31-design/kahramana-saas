@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
-import { KDSOrder, KDSStation } from '@/lib/supabase/custom-types'
+import { KDSOrder, KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
 import { STATION_CONFIG } from '@/constants/kds'
 import KDSStationOrderCard from './KDSStationOrderCard'
 import { fetchStationOrders } from '@/app/[locale]/dashboard/kds/actions'
@@ -34,19 +34,57 @@ export default function KDSStationBoard({ initialOrders, station, branchId, loca
     }
   }, [station])
 
-  // Realtime subscription — granular updates, no page reload
+  // Realtime subscription — payload-based for UPDATE/DELETE, fetch only on INSERT.
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase.channel(`kds-station-${station}`)
 
-    // Listen to item-status changes for this station
+    // UPDATE: payload from order_item_station_status carries no PII — apply directly.
     channel.on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'order_item_station_status', filter: `station=eq.${station}` },
+      { event: 'UPDATE', schema: 'public', table: 'order_item_station_status', filter: `station=eq.${station}` },
+      (payload) => {
+        const row = payload.new as { item_id: string; status: KDSItemStatus } | null
+        if (!row?.item_id) return
+        setOrders(prev => prev.map(order => ({
+          ...order,
+          order_items: order.order_items.map(item =>
+            item.id === row.item_id ? { ...item, station_status: row.status } : item
+          ),
+        })))
+      }
+    )
+
+    // INSERT: a brand-new station-status row → need full order context, do one fetch.
+    channel.on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'order_item_station_status', filter: `station=eq.${station}` },
       () => { refresh() }
     )
 
-    // Listen to new orders arriving (branch-scoped if possible)
+    // DELETE: drop the item from local state. Payload.old may be sparse without
+    // REPLICA IDENTITY FULL — fall back to refresh when item_id is missing.
+    channel.on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'order_item_station_status', filter: `station=eq.${station}` },
+      (payload) => {
+        const old = payload.old as { item_id?: string } | null
+        if (!old?.item_id) { refresh(); return }
+        const itemId = old.item_id
+        setOrders(prev => prev
+          .map(order => ({
+            ...order,
+            order_items: order.order_items.filter(item => item.id !== itemId),
+          }))
+          .filter(order => order.order_items.length > 0)
+        )
+      }
+    )
+
+    // PII guard — never read customer fields (customer_phone, customer_name,
+    // delivery_*, total_bhd, coupon_*) from the orders realtime payload.
+    // Status / arrival changes route through a server fetch which selects
+    // explicit non-PII columns only.
     const ordersFilter = branchId ? `branch_id=eq.${branchId}` : undefined
     channel.on(
       'postgres_changes',

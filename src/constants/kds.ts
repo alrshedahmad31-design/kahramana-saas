@@ -14,12 +14,12 @@ export const STATION_CONFIG: Partial<Record<KDSStation, {
   bakery: {
     icon: '🥖',
     color: tokens.color.kdsOrange,
-    label: { ar: 'الخبز والمعجنات', en: 'Bakery & Bread' }
+    label: { ar: 'البيتزا والمعجنات', en: 'Pizza & Pastry' }
   },
   appetizer_drinks: { 
     icon: '🥗', 
     color: tokens.color.success, 
-    label: { ar: 'المقبلات والعصائر', en: 'Appetizers & Drinks' } 
+    label: { ar: 'المقبلات والمشروبات', en: 'Starters & Drinks' }
   },
   grill: {
     icon: '🔥',

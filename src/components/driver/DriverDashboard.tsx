@@ -138,9 +138,10 @@ export default function DriverDashboard({
   useEffect(() => {
     const channel = supabase
       .channel('driver-live')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
+      // PII guard — do not read customer fields from realtime payload. Handler refetches via server.
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
         table: 'orders',
         filter: branchId ? `branch_id=eq.${branchId}` : undefined
       }, () => {

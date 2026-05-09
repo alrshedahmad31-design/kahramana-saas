@@ -194,8 +194,13 @@ export default function OrdersClient({
     const channel = supabase
       .channel('orders-dashboard-v2')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
-        console.info('Order realtime event:', payload)
-        
+        // PII guard — do not read customer fields from realtime payload.
+        // Only allowed direct reads: id, status, branch_id, source, created_at, updated_at.
+        if (process.env.NODE_ENV === 'development') {
+          const id = (payload.new as { id?: string } | null)?.id ?? (payload.old as { id?: string } | null)?.id
+          console.info('Order realtime event:', payload.eventType, id)
+        }
+
         if (payload.eventType === 'INSERT') {
           bellAlert('new')
           // For new orders, we MUST re-fetch to get joined order_items which aren't in the payload
@@ -204,11 +209,13 @@ export default function OrdersClient({
         }
 
         if (payload.eventType === 'UPDATE') {
-          const updated = payload.new as Partial<OrderCardData>
+          const safe = payload.new as { id?: string; status?: string; updated_at?: string }
+          if (!safe.id) return
           setOrders(prev => {
-            // If the order isn't in our current list (e.g. filtered out), don't add it
-            if (!prev.some(o => o.id === updated.id)) return prev
-            return prev.map(o => o.id === updated.id ? { ...o, ...updated } : o)
+            if (!prev.some(o => o.id === safe.id)) return prev
+            return prev.map(o => o.id === safe.id
+              ? { ...o, ...(safe.status ? { status: safe.status as OrderCardData['status'] } : {}), ...(safe.updated_at ? { updated_at: safe.updated_at } : {}) }
+              : o)
           })
           return
         }

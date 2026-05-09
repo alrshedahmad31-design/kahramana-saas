@@ -46,6 +46,7 @@ export default function OrderStatsBar() {
 
     const ch = supabase
       .channel('order-stats-bar')
+      // PII guard — do not read customer fields from realtime payload. Handler refetches.
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchStats)
       .subscribe()
 

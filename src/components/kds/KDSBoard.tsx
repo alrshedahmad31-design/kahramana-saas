@@ -116,7 +116,7 @@ export default function KDSBoard({ initialOrders, locale, branchId, userRole, sl
     const channel = supabase
       .channel('kds-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
-        // D-C7: do NOT log the raw Realtime payload — it carries the full row including PII.
+        // PII guard — do not read customer fields from realtime payload. Handler refetches via server with explicit non-PII columns.
         if (process.env.NODE_ENV === 'development') {
           const id = (payload.new as { id?: string } | null)?.id ?? (payload.old as { id?: string } | null)?.id
           console.info('KDS realtime event:', payload.eventType, id)

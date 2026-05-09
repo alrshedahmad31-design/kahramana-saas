@@ -963,10 +963,10 @@
     "advanceNext": "Advance Order",
     "stations": {
       "shawarma": "Shawarma",
-      "bakery": "Bakery",
-      "appetizer_drinks": "Appetizers & Drinks",
+      "bakery": "Pizza & Pastry",
+      "appetizer_drinks": "Starters & Drinks",
       "grill": "Grill",
-      "main": "Main Kitchen"
+      "main": "Main Dishes"
     }
   },
   "driver": {

@@ -213,7 +213,12 @@ export default function DeliveryPageClient({
   useEffect(() => {
     const ch = supabase.channel('delivery-orders')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
-        console.info('Delivery order realtime event:', payload)
+        // PII guard — do not read customer fields from realtime payload.
+        // Refetch via server which selects explicit non-PII columns.
+        if (process.env.NODE_ENV === 'development') {
+          const id = (payload.new as { id?: string } | null)?.id ?? (payload.old as { id?: string } | null)?.id
+          console.info('Delivery order realtime event:', payload.eventType, id)
+        }
         await refreshOrders()
         await refreshDrivers()
       })

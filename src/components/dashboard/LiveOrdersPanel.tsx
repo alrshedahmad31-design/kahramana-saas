@@ -31,6 +31,7 @@ export default function LiveOrdersPanel({ counts, avgPrepMins, prefix, isRTL }: 
   useEffect(() => {
     const ch = supabase
       .channel('dash-live-orders')
+      // PII guard — do not read customer fields from realtime payload. Server refresh re-selects safe columns.
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
         router.refresh()
       })

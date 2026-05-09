@@ -963,8 +963,8 @@
     "advanceNext": "تقديم الطلب",
     "stations": {
       "shawarma": "الشاورما",
-      "bakery": "المعجنات",
-      "appetizer_drinks": "المقبلات والعصائر",
+      "bakery": "البيتزا والمعجنات",
+      "appetizer_drinks": "المقبلات والمشروبات",
       "grill": "المشاوي",
       "main": "الأطباق الرئيسية"
     }
