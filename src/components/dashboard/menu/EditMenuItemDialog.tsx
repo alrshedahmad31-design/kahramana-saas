@@ -20,10 +20,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { STATION_CONFIG } from '@/constants/kds'
+import { ALL_STATIONS } from '@/lib/kds/constants'
 import { MENU_CATEGORIES, type MenuCategoryId } from '@/constants/menu-categories'
+import { isSafeImageUrl, IMAGE_URL_ERROR } from '@/lib/security/image-url'
 import type { KDSStation } from '@/lib/supabase/custom-types'
-
-const STATIONS: KDSStation[] = ['main', 'grill', 'shawarma', 'bakery', 'appetizer_drinks']
 
 interface EditableItem {
   id:             string
@@ -58,10 +58,12 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
     }
   }, [open, item, isAr])
 
-  const stationKey = (STATIONS.includes(form.station as KDSStation)
+  const stationKey = (ALL_STATIONS.includes(form.station as KDSStation)
     ? form.station
     : 'main') as KDSStation
   const stationCfg = STATION_CONFIG[stationKey] ?? STATION_CONFIG['main']!
+
+  const imageUrlError = isSafeImageUrl(form.image_url) ? '' : IMAGE_URL_ERROR
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,6 +73,10 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
     }
     if (!Number.isFinite(form.price_bhd) || form.price_bhd <= 0) {
       toast.error(t('error'))
+      return
+    }
+    if (imageUrlError) {
+      toast.error(imageUrlError)
       return
     }
 
@@ -268,7 +274,7 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
               onChange={(e) => setForm({ ...form, station: e.target.value })}
               className="flex h-10 w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-sm text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
             >
-              {STATIONS.map((s) => {
+              {ALL_STATIONS.map((s) => {
                 const cfg = STATION_CONFIG[s] ?? STATION_CONFIG['main']!
                 return (
                   <option key={s} value={s}>
@@ -299,6 +305,7 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
                 placeholder="/assets/gallery/image.webp"
                 maxLength={500}
                 value={form.image_url}
+                aria-invalid={!!imageUrlError}
                 onChange={(e) => setForm({ ...form, image_url: e.target.value })}
               />
               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-brand-gold/20 bg-brand-surface-2">
@@ -314,6 +321,9 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
                 ) : null}
               </div>
             </div>
+            {imageUrlError && (
+              <p className="text-xs text-brand-error">{imageUrlError}</p>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-2 pt-2">
@@ -327,7 +337,7 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
             </Button>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || !!imageUrlError}
               className="bg-brand-gold text-brand-surface hover:bg-brand-gold/90"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('save')}

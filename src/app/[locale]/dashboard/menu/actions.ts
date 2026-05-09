@@ -10,6 +10,8 @@ import {
 import { slugify } from '@/lib/menu'
 import menuData from '@/data/menu.json'
 import { MENU_CATEGORY_IDS, getSlugPrefix } from '@/constants/menu-categories'
+import { ALL_STATIONS } from '@/lib/kds/constants'
+import { isSafeImageUrl, IMAGE_URL_ERROR } from '@/lib/security/image-url'
 import type { StaffRole, KDSStation } from '@/lib/supabase/custom-types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -26,7 +28,9 @@ interface RawMenuCategory {
   }[]
 }
 
-const STATIONS = ['main', 'grill', 'shawarma', 'bakery', 'appetizer_drinks'] as const
+// Station list is single-source via STATION_CONFIG (constants/kds.ts).
+// zod requires a tuple — assert ALL_STATIONS has at least one element.
+const STATIONS = ALL_STATIONS as [KDSStation, ...KDSStation[]]
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -42,7 +46,7 @@ const itemPayloadSchema = z.object({
     (v) => MENU_CATEGORY_IDS.includes(v),
     { message: 'category must be one of MENU_CATEGORIES' },
   ),
-  image_url:      z.string().trim().max(500).optional().default(''),
+  image_url:      z.string().trim().max(500).optional().default('').refine(isSafeImageUrl, IMAGE_URL_ERROR),
   station:        z.enum(STATIONS),
   is_available:   z.boolean().optional().default(true),
 })

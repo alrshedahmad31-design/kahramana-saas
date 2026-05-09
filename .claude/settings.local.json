@@ -158,7 +158,8 @@
       "Bash(Get-ChildItem supabase/ -Name)",
       "Bash(grep -oP \"\\(\\\\w+\\)$\")",
       "Bash(Get-ChildItem src/app/[locale]/dashboard/delivery/ -Recurse)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(vercel env *)"
     ]
   }
 }
