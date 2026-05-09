@@ -4,8 +4,22 @@ import { canAccessKDS } from '@/lib/auth/rbac'
 import { createServiceClient } from '@/lib/supabase/server'
 import { KDSStationSelector } from '@/components/kds/KDSStationSelector'
 import KDSStationBoard from '@/components/kds/KDSStationBoard'
-import type { KDSOrder, KDSStation } from '@/lib/supabase/custom-types'
+import type { KDSOrder, KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
 import { ALL_STATIONS } from '@/lib/kds/constants'
+
+// Migration 089 added UNIQUE(item_id) to order_item_station_status, which
+// PostgREST detects as a 1:1 relationship and returns as a single object
+// instead of an array. Older deployments may still return an array. This
+// helper normalises both shapes and returns the row matching the station.
+type StationStatusRow = { status: KDSItemStatus | null; station: KDSStation; created_at: string | null }
+function pickStationRow(
+  raw: StationStatusRow | StationStatusRow[] | null | undefined,
+  station: KDSStation,
+): StationStatusRow | undefined {
+  if (!raw) return undefined
+  if (Array.isArray(raw)) return raw.find(r => r.station === station)
+  return raw.station === station ? raw : undefined
+}
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -102,18 +116,19 @@ export default async function KDSPage({ params, searchParams }: Props) {
   // Normalize: filter items to active station, exclude bumped (completed) items
   const normalizedOrders = rawOrders.map(order => {
     const stationItems = order.order_items
-      .filter(item => {
-        const statusRow = item.order_item_station_status?.find(s => s.station === activeStation)
-        return !!statusRow && statusRow.status !== 'completed'
-      })
       .map(item => {
-        const statusRow = item.order_item_station_status?.find(s => s.station === activeStation)
-        return {
-          ...item,
-          station_status:       statusRow?.status,
-          station_assigned_at:  statusRow?.created_at ?? null,
-        }
+        const statusRow = pickStationRow(
+          item.order_item_station_status as StationStatusRow | StationStatusRow[] | null,
+          activeStation,
+        )
+        return { item, statusRow }
       })
+      .filter(({ statusRow }) => !!statusRow && statusRow.status !== 'completed')
+      .map(({ item, statusRow }) => ({
+        ...item,
+        station_status:       statusRow?.status ?? undefined,
+        station_assigned_at:  statusRow?.created_at ?? null,
+      }))
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
 

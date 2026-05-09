@@ -5,6 +5,18 @@ import { getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/au
 import { canAccessKDS, canUpdateOrderStatus } from '@/lib/auth/rbac'
 import type { OrderStatus, KDSStation, KDSItemStatus, KDSOrder } from '@/lib/supabase/custom-types'
 
+// Migration 089's UNIQUE(item_id) made order_items → order_item_station_status
+// a 1:1 relation; PostgREST returns it as an object, not an array.
+type StationStatusRow = { status: KDSItemStatus | null; station: KDSStation; created_at: string | null }
+function pickStationRow(
+  raw: StationStatusRow | StationStatusRow[] | null | undefined,
+  station: KDSStation,
+): StationStatusRow | undefined {
+  if (!raw) return undefined
+  if (Array.isArray(raw)) return raw.find(r => r.station === station)
+  return raw.station === station ? raw : undefined
+}
+
 export type AdvanceResult = { success: true } | { success: false; error: string }
 
 const ADVANCE: Partial<Record<OrderStatus, OrderStatus>> = {
@@ -209,18 +221,19 @@ export async function fetchStationOrders(
 
   const orders = (data ?? []).map((order) => {
     const stationItems = (order.order_items ?? [])
-      .filter(item => {
-        const statusRow = item.order_item_station_status?.find(s => s.station === station)
-        return !!statusRow && statusRow.status !== 'completed'
-      })
       .map(item => {
-        const statusRow = item.order_item_station_status?.find(s => s.station === station)
-        return {
-          ...item,
-          station_status:      (statusRow?.status ?? undefined) as KDSItemStatus | undefined,
-          station_assigned_at: statusRow?.created_at ?? null,
-        }
+        const statusRow = pickStationRow(
+          item.order_item_station_status as StationStatusRow | StationStatusRow[] | null,
+          station,
+        )
+        return { item, statusRow }
       })
+      .filter(({ statusRow }) => !!statusRow && statusRow.status !== 'completed')
+      .map(({ item, statusRow }) => ({
+        ...item,
+        station_status:      (statusRow?.status ?? undefined) as KDSItemStatus | undefined,
+        station_assigned_at: statusRow?.created_at ?? null,
+      }))
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
 
