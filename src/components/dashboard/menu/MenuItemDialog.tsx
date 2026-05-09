@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createMenuItem, updateMenuItem } from '@/app/[locale]/dashboard/menu/actions'
 import { toast } from '@/lib/toast'
 import { slugify } from '@/lib/menu'
-import { MENU_CATEGORIES, type MenuCategoryId } from '@/constants/menu-categories'
+import { MENU_CATEGORIES, getSlugPrefix, type MenuCategoryId } from '@/constants/menu-categories'
 import {
   Dialog,
   DialogContent,
@@ -96,7 +96,7 @@ export default function MenuItemDialog({ item, mode, translations: t }: Props) {
 
   const autoSlug = useMemo(() => {
     if (!formData.category || !formData.name_en.trim()) return ''
-    return `${formData.category}-${slugify(formData.name_en)}`
+    return `${getSlugPrefix(formData.category)}-${slugify(formData.name_en)}`
   }, [formData.category, formData.name_en])
 
   const effectiveSlug = slugEditing && slugOverride ? slugOverride : autoSlug

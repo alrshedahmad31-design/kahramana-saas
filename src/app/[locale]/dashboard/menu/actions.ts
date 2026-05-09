@@ -9,7 +9,7 @@ import {
 } from '@/lib/auth/dashboard-guards'
 import { slugify } from '@/lib/menu'
 import menuData from '@/data/menu.json'
-import { MENU_CATEGORY_IDS } from '@/constants/menu-categories'
+import { MENU_CATEGORY_IDS, getSlugPrefix } from '@/constants/menu-categories'
 import type { StaffRole, KDSStation } from '@/lib/supabase/custom-types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -201,7 +201,7 @@ export async function createMenuItem(
   // Generate slug server-side when client did not supply one.
   const generatedSlug = payload.id?.trim()
     ? payload.id.trim()
-    : `${payload.category}-${slugify(payload.name_en)}`
+    : `${getSlugPrefix(payload.category)}-${slugify(payload.name_en)}`
 
   if (!SLUG_RE.test(generatedSlug)) {
     return { success: false, error: 'id: invalid slug after auto-generation — check the English name' }
