@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { createClient } from '@/lib/supabase/client'
+import { tokens } from '@/lib/design-tokens'
 
 // Fix Leaflet marker icon issue
 const createMarkerIcon = (color: string) => L.divIcon({
@@ -16,7 +17,7 @@ const createMarkerIcon = (color: string) => L.divIcon({
 
 const DRIVER_ICON = L.divIcon({
   className: 'driver-div-icon',
-  html: `<div style="background-color: #C8922A; width: 28px; height: 28px; border-radius: 50%; border: 3px solid #0A0A0A; display: flex; items-center; justify-center; box-shadow: 0 0 15px rgba(200, 146, 42, 0.6);">
+  html: `<div style="background-color: ${tokens.color.gold}; width: 28px; height: 28px; border-radius: 50%; border: 3px solid ${tokens.color.black}; display: flex; items-center; justify-center; box-shadow: 0 0 15px rgba(200, 146, 42, 0.6);">
     <span style="font-size: 14px;">🛵</span>
   </div>`,
   iconSize: [28, 28],
@@ -96,7 +97,7 @@ export default function OrderDriverMap({ orderId, customerLocation, isAr }: Prop
         {customerLocation && (
           <Marker 
             position={[customerLocation.lat, customerLocation.lng]} 
-            icon={createMarkerIcon('#EF4444')}
+            icon={createMarkerIcon(tokens.color.error)}
           />
         )}
 

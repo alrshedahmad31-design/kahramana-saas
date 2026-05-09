@@ -20,7 +20,7 @@ const createMarkerIcon = (color: string, isHovered = false) => {
 
 const DRIVER_ICON = (color: string) => L.divIcon({
   className: 'driver-div-icon',
-  html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #0A0A0A; box-shadow: 0 0 10px ${color}80;"></div>`,
+  html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid ${DV.bgPage}; box-shadow: 0 0 10px ${color}80;"></div>`,
   iconSize: [20, 20],
   iconAnchor: [10, 10],
 })

@@ -46,7 +46,6 @@ export async function advanceOrderStatus(
     return { success: false, error: 'Unauthorized: Insufficient permissions to change status' }
   }
 
-  // Guard: Delivery orders cannot be completed by kitchen
   if (currentStatus === 'ready' && order.order_type === 'delivery') {
     return { success: false, error: 'Delivery orders must be handled by a driver.' }
   }
@@ -65,9 +64,9 @@ export async function advanceOrderStatus(
 
 export async function updateItemStatus(
   orderId: string,
-  itemId: string,
+  itemId:  string,
   station: KDSStation,
-  status: KDSItemStatus
+  status:  KDSItemStatus,
 ): Promise<AdvanceResult> {
   let caller
   try {
@@ -82,7 +81,6 @@ export async function updateItemStatus(
 
   const supabase = await createServiceClient()
 
-  // C3: Branch ownership check — mirror advanceOrderStatus pattern
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   if (!isGlobal) {
     const { data: order, error: fetchErr } = await supabase
@@ -98,10 +96,77 @@ export async function updateItemStatus(
 
   const { error } = await supabase.rpc('update_order_item_station_status', {
     p_order_id: orderId,
-    p_item_id: itemId,
-    p_station: station,
-    p_status: status
+    p_item_id:  itemId,
+    p_station:  station,
+    p_status:   status,
   })
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+export async function bumpStationOrder(
+  orderId: string,
+  station: KDSStation,
+): Promise<AdvanceResult> {
+  let caller
+  try {
+    caller = await requireDashboardSession()
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
+
+  if (!canAccessKDS(caller)) return { success: false, error: 'Unauthorized' }
+
+  const supabase = await createServiceClient()
+  const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
+  if (!isGlobal) {
+    const { data: order, error: fetchErr } = await supabase
+      .from('orders').select('branch_id').eq('id', orderId).single()
+    if (fetchErr || !order) return { success: false, error: 'Order not found' }
+    if (order.branch_id !== caller.branch_id)
+      return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
+  }
+
+  const { error } = await supabase
+    .from('order_item_station_status')
+    .update({ status: 'completed', updated_at: new Date().toISOString() })
+    .eq('order_id', orderId)
+    .eq('station', station)
+
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
+export async function recallStationOrder(
+  orderId: string,
+  station: KDSStation,
+): Promise<AdvanceResult> {
+  let caller
+  try {
+    caller = await requireDashboardSession()
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
+
+  if (!canAccessKDS(caller)) return { success: false, error: 'Unauthorized' }
+
+  const supabase = await createServiceClient()
+  const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
+  if (!isGlobal) {
+    const { data: order, error: fetchErr } = await supabase
+      .from('orders').select('branch_id').eq('id', orderId).single()
+    if (fetchErr || !order) return { success: false, error: 'Order not found' }
+    if (order.branch_id !== caller.branch_id)
+      return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
+  }
+
+  const { error } = await supabase
+    .from('order_item_station_status')
+    .update({ status: 'ready', updated_at: new Date().toISOString() })
+    .eq('order_id', orderId)
+    .eq('station', station)
+    .eq('status', 'completed')
 
   if (error) return { success: false, error: error.message }
   return { success: true }
@@ -119,8 +184,10 @@ export async function fetchStationOrders(
 
   if (!canAccessKDS(caller)) return { error: 'Unauthorized' }
 
-  const supabase = await createServiceClient()
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
+  if (!isGlobal && !caller.branch_id) return { error: 'Staff not assigned to a branch' }
+
+  const supabase = await createServiceClient()
 
   let query = supabase
     .from('orders')
@@ -133,26 +200,25 @@ export async function fetchStationOrders(
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
     .order('created_at', { ascending: true })
+    .limit(100)
 
-  if (!isGlobal && caller.branch_id) {
-    query = query.eq('branch_id', caller.branch_id)
-  }
+  if (!isGlobal) query = query.eq('branch_id', caller.branch_id!)
 
   const { data, error } = await query
   if (error) return { error: error.message }
 
   const orders = (data ?? []).map((order) => {
     const stationItems = (order.order_items ?? [])
-      .filter(item =>
-        item.order_item_station_status?.some(s => s.station === station)
-      )
+      .filter(item => {
+        const statusRow = item.order_item_station_status?.find(s => s.station === station)
+        return !!statusRow && statusRow.status !== 'completed'
+      })
       .map(item => ({
         ...item,
         station_status: (item.order_item_station_status?.find(
           s => s.station === station
         )?.status ?? undefined) as KDSItemStatus | undefined,
       }))
-
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
 

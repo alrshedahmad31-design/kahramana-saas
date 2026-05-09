@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createClient }    from '@/lib/supabase/client'
-import { CSS_VARS }        from '@/lib/delivery/tokens'
+import { CSS_VARS, DV_STATUS } from '@/lib/delivery/tokens'
 import { useAudioAlert }   from '@/hooks/useAudioAlert'
 import { playBell }        from '@/lib/audio/bells'
 import type { DeliveryOrder, Driver, DeliveryMetrics, ViewMode } from '@/lib/delivery/types'
@@ -320,7 +320,7 @@ export default function DeliveryPageClient({
         <div style={{
           background: 'rgba(239,68,68,0.1)',
           borderBottom: '1px solid rgba(239,68,68,0.4)',
-          color: '#fca5a5',
+          color: DV_STATUS.errorText,
           padding: '10px 20px',
           fontSize: '13px',
           display: 'flex',

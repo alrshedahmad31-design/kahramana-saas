@@ -38,7 +38,7 @@ export function LoyaltyRedemptionWidget({
       className={[
         'relative overflow-hidden rounded-xl border transition-all duration-300',
         isActive
-          ? 'border-brand-gold/60 bg-brand-gold/5 shadow-[0_0_0_1px_var(--color-brand-gold,#c8a96a)_inset]'
+          ? 'border-brand-gold/60 bg-brand-gold/5 shadow-[0_0_0_1px_theme(colors.brand-gold)_inset]'
           : 'border-brand-border bg-brand-surface-2',
       ].join(' ')}
     >

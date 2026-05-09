@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { KDSStationSelector } from '@/components/kds/KDSStationSelector'
 import KDSStationBoard from '@/components/kds/KDSStationBoard'
 import type { KDSOrder, KDSStation } from '@/lib/supabase/custom-types'
+import { ALL_STATIONS } from '@/lib/kds/constants'
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -15,16 +16,34 @@ export const dynamic = 'force-dynamic'
 
 export default async function KDSPage({ params, searchParams }: Props) {
   const { locale } = await params
-  const { station: activeStation } = (await searchParams) as { station?: KDSStation }
+
+  // S2: Validate station against known enum values — never trust raw URL params
+  const rawStation = (await searchParams).station
+  const activeStation = ALL_STATIONS.includes(rawStation as KDSStation)
+    ? (rawStation as KDSStation)
+    : undefined
 
   const user = await getSession()
   if (!user) redirect(`/${locale}/login`)
   if (!canAccessKDS(user)) redirect(`/${locale}/dashboard`)
 
-  const supabase = await createServiceClient()
   const isGlobalKitchenViewer = user.role === 'owner' || user.role === 'general_manager'
 
-  // D-C7: explicit columns only — exclude customer PII (phone, address, total, coupon, etc.)
+  // S1: Non-global staff must be assigned to a branch
+  if (!isGlobalKitchenViewer && !user.branch_id) {
+    redirect(`/${locale}/dashboard`)
+  }
+
+  if (!activeStation) {
+    return (
+      <div className="min-h-screen bg-brand-black">
+        <KDSStationSelector />
+      </div>
+    )
+  }
+
+  const supabase = await createServiceClient()
+
   let query = supabase
     .from('orders')
     .select(`
@@ -36,44 +55,46 @@ export default async function KDSPage({ params, searchParams }: Props) {
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
     .order('created_at', { ascending: true })
+    .limit(100)
 
-  if (!isGlobalKitchenViewer && user.branch_id) {
-    query = query.eq('branch_id', user.branch_id)
+  // S1: Always apply branch filter for non-global roles
+  if (!isGlobalKitchenViewer) {
+    query = query.eq('branch_id', user.branch_id!)
   }
 
-  const { data } = await query
+  const { data, error } = await query
+  const branchId = isGlobalKitchenViewer ? null : (user.branch_id ?? null)
 
-  // slugStationMap and slugStockMap are only used by the legacy KDSBoard (full overview).
-  // KDSStationBoard filters via order_item_station_status join — no table lookup needed.
-
-  // Normalize orders for the selected station if applicable
-  const rawOrders = data ?? []
-  
-  const normalizedOrders = rawOrders.map(order => {
-    // If no active station, return full order
-    if (!activeStation) return order as unknown as KDSOrder
-
-    // Filter items to only those belonging to this station
-    const stationItems = order.order_items.filter(item => {
-      const status = item.order_item_station_status?.find(s => s.station === activeStation)
-      return !!status
-    }).map(item => ({
-      ...item,
-      station_status: item.order_item_station_status?.find(s => s.station === activeStation)?.status
-    }))
-
-    return { ...order, order_items: stationItems } as unknown as KDSOrder
-  }).filter(order => !activeStation || order.order_items.length > 0)
-
-  if (!activeStation) {
+  // B1: Surface DB errors to the board instead of silently showing empty state
+  if (error) {
     return (
-      <div className="min-h-screen bg-brand-black">
-        <KDSStationSelector />
+      <div className="h-screen overflow-hidden bg-brand-black">
+        <KDSStationBoard
+          initialOrders={[]}
+          station={activeStation}
+          branchId={branchId}
+          locale={locale}
+          loadError={error.message}
+        />
       </div>
     )
   }
 
-  const branchId = isGlobalKitchenViewer ? null : (user.branch_id ?? null)
+  const rawOrders = data ?? []
+
+  // Normalize: filter items to active station, exclude bumped (completed) items
+  const normalizedOrders = rawOrders.map(order => {
+    const stationItems = order.order_items
+      .filter(item => {
+        const statusRow = item.order_item_station_status?.find(s => s.station === activeStation)
+        return !!statusRow && statusRow.status !== 'completed'
+      })
+      .map(item => ({
+        ...item,
+        station_status: item.order_item_station_status?.find(s => s.station === activeStation)?.status,
+      }))
+    return { ...order, order_items: stationItems } as unknown as KDSOrder
+  }).filter(order => order.order_items.length > 0)
 
   return (
     <div className="h-screen overflow-hidden bg-brand-black">

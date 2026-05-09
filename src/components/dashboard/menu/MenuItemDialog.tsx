@@ -19,9 +19,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { STATION_CONFIG } from '@/constants/kds'
-import { ALL_STATIONS } from '@/lib/kds/constants'
-import { isSafeImageUrl, IMAGE_URL_ERROR } from '@/lib/security/image-url'
 import { Loader2, Plus, Edit } from 'lucide-react'
 
 interface MenuItem {
@@ -115,14 +112,8 @@ export default function MenuItemDialog({ item, mode, translations: t }: Props) {
     }
   }, [open, mode])
 
-  const imageUrlError = isSafeImageUrl(formData.image_url) ? '' : IMAGE_URL_ERROR
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (imageUrlError) {
-      toast.error(imageUrlError)
-      return
-    }
     setLoading(true)
 
     try {
@@ -292,14 +283,11 @@ export default function MenuItemDialog({ item, mode, translations: t }: Props) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ALL_STATIONS.map((s) => {
-                    const cfg = STATION_CONFIG[s] ?? STATION_CONFIG['main']!
-                    return (
-                      <SelectItem key={s} value={s}>
-                        {`${cfg.icon}  ${cfg.label.ar}`}
-                      </SelectItem>
-                    )
-                  })}
+                  <SelectItem value="main">Main (Default)</SelectItem>
+                  <SelectItem value="grill">Grill</SelectItem>
+                  <SelectItem value="shawarma">Shawarma</SelectItem>
+                  <SelectItem value="bakery">Bakery & Pizza</SelectItem>
+                  <SelectItem value="appetizer_drinks">Appetizers & Drinks</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -310,17 +298,13 @@ export default function MenuItemDialog({ item, mode, translations: t }: Props) {
                 id="image_url"
                 placeholder="/assets/gallery/image.webp"
                 value={formData.image_url}
-                aria-invalid={!!imageUrlError}
                 onChange={(e) => setFormData({...formData, image_url: e.target.value})}
               />
-              {imageUrlError && (
-                <p className="text-xs text-brand-error">{imageUrlError}</p>
-              )}
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={loading || !submitSlug || !!imageUrlError} className="w-full">
+            <Button type="submit" disabled={loading || !submitSlug} className="w-full">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (mode === 'add' ? t.create : t.save)}
             </Button>
           </DialogFooter>
