@@ -34,23 +34,40 @@ export default async function KDSPage({ params, searchParams }: Props) {
     redirect(`/${locale}/dashboard`)
   }
 
+  const supabase = await createServiceClient()
+
   if (!activeStation) {
+    // FIX 9: per-station active-item counts (pending + preparing) for the selector.
+    let countsQuery = supabase
+      .from('order_item_station_status')
+      .select('station')
+      .in('status', ['pending', 'preparing'])
+
+    if (!isGlobalKitchenViewer) {
+      countsQuery = countsQuery.eq('branch_id', user.branch_id!)
+    }
+
+    const { data: countRows } = await countsQuery
+    const stationCounts: Partial<Record<KDSStation, number>> = {}
+    for (const row of countRows ?? []) {
+      const s = row.station as KDSStation
+      stationCounts[s] = (stationCounts[s] ?? 0) + 1
+    }
+
     return (
       <div className="min-h-screen bg-brand-black">
-        <KDSStationSelector />
+        <KDSStationSelector stationCounts={stationCounts} />
       </div>
     )
   }
 
-  const supabase = await createServiceClient()
-
   let query = supabase
     .from('orders')
     .select(`
-      id, branch_id, status, order_type, source, created_at, updated_at, notes, customer_name,
+      id, branch_id, status, order_type, source, table_number, created_at, updated_at, notes, customer_name,
       order_items(
-        id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes,
-        order_item_station_status(status, station)
+        id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes, modifiers,
+        order_item_station_status(status, station, created_at)
       )
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
@@ -89,10 +106,14 @@ export default async function KDSPage({ params, searchParams }: Props) {
         const statusRow = item.order_item_station_status?.find(s => s.station === activeStation)
         return !!statusRow && statusRow.status !== 'completed'
       })
-      .map(item => ({
-        ...item,
-        station_status: item.order_item_station_status?.find(s => s.station === activeStation)?.status,
-      }))
+      .map(item => {
+        const statusRow = item.order_item_station_status?.find(s => s.station === activeStation)
+        return {
+          ...item,
+          station_status:       statusRow?.status,
+          station_assigned_at:  statusRow?.created_at ?? null,
+        }
+      })
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
 

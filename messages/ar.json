@@ -981,6 +981,17 @@
     "soundOff": "تفعيل الصوت",
     "allReadyBump": "كل الأصناف جاهزة",
     "retry": "إعادة المحاولة",
+    "tableLabel": "طاولة {n}",
+    "btnStartPrep": "بدأ التحضير",
+    "btnReadyToServe": "جاهز للتقديم",
+    "btnDelivered": "تم التسليم",
+    "source": {
+      "qr": "QR",
+      "waiter": "نادل",
+      "manual": "POS",
+      "online": "أونلاين",
+      "kiosk": "كشك"
+    },
     "stations": {
       "shawarma": "الشاورما",
       "bakery": "البيتزا والمعجنات",

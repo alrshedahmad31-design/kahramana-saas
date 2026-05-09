@@ -133,11 +133,19 @@ export default function KDSStationBoard({
 
   useEffect(() => {
     const supabase = createClient()
-    const channel  = supabase.channel(`kds-board-${station}`)
+    const channel  = supabase.channel(`kds-board-${station}-${branchId ?? 'all'}`)
+
+    // FIX 4: scope realtime to this branch when the viewer is branch-bound.
+    // Supabase realtime filters use comma-separated `column=eq.value` clauses
+    // and only support direct columns — branch_id is denormalised onto
+    // order_item_station_status by migration 089 to make this possible.
+    const oissFilter = branchId
+      ? `station=eq.${station},branch_id=eq.${branchId}`
+      : `station=eq.${station}`
 
     channel.on(
       'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'order_item_station_status', filter: `station=eq.${station}` },
+      { event: 'UPDATE', schema: 'public', table: 'order_item_station_status', filter: oissFilter },
       (payload) => {
         const row = payload.new as { item_id: string; status: KDSItemStatus } | null
         if (!row?.item_id) return
@@ -162,7 +170,7 @@ export default function KDSStationBoard({
 
     channel.on(
       'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'order_item_station_status', filter: `station=eq.${station}` },
+      { event: 'INSERT', schema: 'public', table: 'order_item_station_status', filter: oissFilter },
       () => {
         if (soundRef.current) playTripleBeep()
         refresh()
@@ -171,7 +179,7 @@ export default function KDSStationBoard({
 
     channel.on(
       'postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'order_item_station_status', filter: `station=eq.${station}` },
+      { event: 'DELETE', schema: 'public', table: 'order_item_station_status', filter: oissFilter },
       (payload) => {
         const old = payload.old as { item_id?: string } | null
         if (!old?.item_id) { refresh(); return }
@@ -198,6 +206,15 @@ export default function KDSStationBoard({
     })
     return () => { supabase.removeChannel(channel) }
   }, [station, branchId, refresh])
+
+  // FIX 8: while realtime is disconnected, fall back to polling so the board
+  // does not silently freeze. 15s matches the longest gap a kitchen will
+  // tolerate before a missing ticket becomes a problem.
+  useEffect(() => {
+    if (isConnected) return
+    const interval = setInterval(() => { refresh() }, 15000)
+    return () => clearInterval(interval)
+  }, [isConnected, refresh])
 
   const sortedOrders = useMemo(() => {
     return [...orders].sort(

@@ -103,11 +103,25 @@ export type KDSQueueItem = KDSQueueRow & {
 // D-C7: KDSOrder is intentionally narrow — kitchen role does NOT receive PII
 // (customer_phone, delivery_address, total_bhd, coupon_*, etc).
 // Only fields actually rendered by KDSOrderCard are exposed.
+//
+// table_number is added by migration 085 but lives on `orders` as INT and is
+// not yet present in the auto-generated types.ts — re-declared inline here.
+export type KDSModifierSnapshot = {
+  group_id?: string;
+  group_name_ar?: string;
+  group_name_en?: string;
+  option_id?: string;
+  option_name_ar?: string;
+  option_name_en?: string;
+  price_modifier?: number;
+};
+
 export type KDSOrder = Pick<
   OrderRow,
   'id' | 'branch_id' | 'order_type' | 'created_at' | 'updated_at' | 'notes' | 'customer_name' | 'source'
 > & {
   status: 'accepted' | 'preparing' | 'ready';
+  table_number: number | null;
   order_items: Array<{
     id: string;
     name_ar: string;
@@ -117,8 +131,10 @@ export type KDSOrder = Pick<
     selected_variant: string | null;
     menu_item_slug: string | null;
     notes: string | null;
+    modifiers: KDSModifierSnapshot[];
     station?: KDSStation;
     station_status?: KDSItemStatus;
+    station_assigned_at?: string | null;
   }>;
 };
 

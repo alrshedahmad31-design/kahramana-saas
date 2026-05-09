@@ -2176,6 +2176,8 @@ export type Database = {
       }
       order_item_station_status: {
         Row: {
+          branch_id: string
+          created_at: string
           id: string
           item_id: string | null
           order_id: string | null
@@ -2184,6 +2186,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          branch_id: string
+          created_at?: string
           id?: string
           item_id?: string | null
           order_id?: string | null
@@ -2192,6 +2196,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          branch_id?: string
+          created_at?: string
           id?: string
           item_id?: string | null
           order_id?: string | null
@@ -2317,6 +2323,7 @@ export type Database = {
           restaurant_location: Json | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
+          table_number: number | null
           tip_bhd: number
           total_bhd: number
           updated_at: string
@@ -2366,6 +2373,7 @@ export type Database = {
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
+          table_number?: number | null
           tip_bhd?: number
           total_bhd: number
           updated_at?: string
@@ -2415,6 +2423,7 @@ export type Database = {
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
+          table_number?: number | null
           tip_bhd?: number
           total_bhd?: number
           updated_at?: string

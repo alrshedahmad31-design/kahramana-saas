@@ -192,10 +192,10 @@ export async function fetchStationOrders(
   let query = supabase
     .from('orders')
     .select(`
-      id, branch_id, status, order_type, source, created_at, updated_at, notes, customer_name,
+      id, branch_id, status, order_type, source, table_number, created_at, updated_at, notes, customer_name,
       order_items(
-        id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes,
-        order_item_station_status(status, station)
+        id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes, modifiers,
+        order_item_station_status(status, station, created_at)
       )
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
@@ -213,12 +213,14 @@ export async function fetchStationOrders(
         const statusRow = item.order_item_station_status?.find(s => s.station === station)
         return !!statusRow && statusRow.status !== 'completed'
       })
-      .map(item => ({
-        ...item,
-        station_status: (item.order_item_station_status?.find(
-          s => s.station === station
-        )?.status ?? undefined) as KDSItemStatus | undefined,
-      }))
+      .map(item => {
+        const statusRow = item.order_item_station_status?.find(s => s.station === station)
+        return {
+          ...item,
+          station_status:      (statusRow?.status ?? undefined) as KDSItemStatus | undefined,
+          station_assigned_at: statusRow?.created_at ?? null,
+        }
+      })
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
 

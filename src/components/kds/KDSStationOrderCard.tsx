@@ -24,10 +24,34 @@ function nextStatusFor(current?: KDSItemStatus): KDSItemStatus {
   return 'preparing'
 }
 
+// Per-status visual config — labels live in messages/*.json (FIX 5).
+function statusButtonStyle(st: KDSItemStatus | undefined) {
+  if (st === 'ready' || st === 'completed') {
+    return { bg: 'bg-brand-muted/30',  text: 'text-brand-text', border: 'border-brand-muted/40' }
+  }
+  if (st === 'preparing') {
+    return { bg: 'bg-brand-success',   text: 'text-brand-black', border: 'border-brand-success' }
+  }
+  // pending
+  return { bg: 'bg-brand-gold',        text: 'text-brand-black', border: 'border-brand-gold' }
+}
+
 function ageBorderClass(age: 'fresh' | 'warning' | 'overdue') {
-  if (age === 'overdue') return 'border-error ring-2 ring-error/25'
-  if (age === 'warning') return 'border-amber-500 ring-2 ring-amber-500/25'
-  return 'border-border'
+  if (age === 'overdue') return 'border-brand-error ring-2 ring-brand-error/25'
+  if (age === 'warning') return 'border-brand-gold ring-2 ring-brand-gold/25'
+  return 'border-brand-border'
+}
+
+// Pick the source colour from brand tokens — keeps FIX 10 compliant.
+function sourceBadgeStyle(source: string | null) {
+  switch (source) {
+    case 'qr':     return { color: tokens.color.kdsBlue,    label: 'qr'     }
+    case 'waiter': return { color: tokens.color.kdsAmber,   label: 'waiter' }
+    case 'manual': return { color: tokens.color.gold,       label: 'manual' }
+    case 'online': return { color: tokens.color.success,    label: 'online' }
+    case 'kiosk':  return { color: tokens.color.kdsIndigo,  label: 'kiosk'  }
+    default:       return null
+  }
 }
 
 export default function KDSStationOrderCard({ order, station, locale, onBump, now }: Props) {
@@ -37,15 +61,25 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
   const font = isRTL ? 'font-almarai' : 'font-satoshi'
   const shortId = order.id.slice(-4).toUpperCase()
 
-  const elapsed    = formatElapsed(order.created_at, now)
-  const ageStatus  = getAgeStatus(order.created_at, now)
+  // FIX 7: SLA timer baseline = earliest station_assigned_at across this card's
+  // items. Falls back to order.created_at for legacy rows where the column was
+  // not yet populated (pre-089). Kitchen timer must reflect when the work
+  // *arrived at this station*, not when the customer placed the order.
+  const items = order.order_items ?? []
+  const stationStart = items.reduce<string>((earliest, item) => {
+    const ts = item.station_assigned_at
+    if (!ts) return earliest
+    return !earliest || new Date(ts).getTime() < new Date(earliest).getTime() ? ts : earliest
+  }, '') || order.created_at
+
+  const elapsed   = formatElapsed(stationStart, now)
+  const ageStatus = getAgeStatus(stationStart, now)
 
   const [optimistic, setOptimistic] = useState<Record<string, KDSItemStatus>>({})
   const [updating,   setUpdating]   = useState<string | null>(null)
   const [pendingUndo, setPendingUndo] = useState<string | null>(null)
   const [bumping,    setBumping]    = useState(false)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
 
   useEffect(() => () => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current) }, [])
 
@@ -55,16 +89,16 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
     [optimistic]
   )
 
-  const items = order.order_items ?? []
-
-  const progressValue = items.reduce((acc, item) => {
-    const st = effectiveStatus(item)
-    if (st === 'ready' || st === 'completed') return acc + 1
-    if (st === 'preparing')                   return acc + 0.3
-    return acc
-  }, 0)
-  const progress  = items.length > 0 ? (progressValue / items.length) * 100 : 0
-  const allReady  = progress === 100 && items.length > 0
+  // FIX 6: progress bar pending=0%, preparing=50%, ready=100%.
+  const progress = items.length > 0
+    ? items.reduce((sum, item) => {
+        const st = effectiveStatus(item)
+        if (st === 'ready' || st === 'completed') return sum + 100
+        if (st === 'preparing')                   return sum + 50
+        return sum
+      }, 0) / items.length
+    : 0
+  const allReady = progress === 100 && items.length > 0
 
   async function handleItemToggle(itemId: string, currentStatus?: KDSItemStatus) {
     if (updating) return
@@ -107,17 +141,22 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
     finally { setBumping(false) }
   }
 
+  const isDineIn  = order.order_type === 'dine_in' || (!!order.table_number)
+  const sourceCfg = sourceBadgeStyle(order.source)
+  const tableLabel = isDineIn && order.table_number != null
+    ? t('tableLabel', { n: order.table_number })
+    : null
 
   return (
     <article
       className={[
-        'flex flex-col rounded-2xl border-2 bg-surface overflow-hidden',
+        'flex flex-col rounded-2xl border-2 bg-brand-surface overflow-hidden',
         'transition-colors duration-300 shadow-xl',
         ageBorderClass(ageStatus),
       ].join(' ')}
     >
       {/* Progress bar */}
-      <div className="h-2 w-full bg-surface2 overflow-hidden">
+      <div className="h-2 w-full bg-brand-surface-2 overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
@@ -131,22 +170,45 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <div className={[
-              'text-4xl font-black tabular-nums leading-none',
-              ageStatus === 'overdue' ? 'text-error' :
-              ageStatus === 'warning' ? 'text-amber-400' : 'text-white',
-            ].join(' ')}>
+            <div
+              className="text-4xl font-black tabular-nums leading-none"
+              style={{
+                color:
+                  ageStatus === 'overdue' ? tokens.color.error :
+                  ageStatus === 'warning' ? tokens.color.gold :
+                  tokens.color.text,
+              }}
+            >
               {elapsed}
             </div>
-            <div className={`text-xs text-muted mt-1 ${font}`}>
-              {order.order_type === 'delivery' ? t('delivery') : t('dineIn')}
+            <div className={`flex flex-wrap items-center gap-1.5 mt-1 ${font}`}>
+              {/* dine-in / delivery label */}
+              <span className="text-xs text-brand-muted">
+                {isDineIn
+                  ? (tableLabel ?? t('dineIn'))
+                  : (order.order_type === 'delivery' ? t('delivery') : t('dineIn'))}
+              </span>
+
+              {/* FIX 3: source badge */}
+              {sourceCfg && (
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                  style={{
+                    backgroundColor: `${sourceCfg.color}20`,
+                    color:           sourceCfg.color,
+                    border:          `1px solid ${sourceCfg.color}55`,
+                  }}
+                >
+                  {t(`source.${sourceCfg.label}` as 'source.qr')}
+                </span>
+              )}
             </div>
           </div>
           <div className="text-end">
             <div className="text-3xl font-black tabular-nums" style={{ color: stationConfig.color }}>
               #{shortId}
             </div>
-            <div className={`text-xs text-muted truncate max-w-[110px] mt-0.5 ${font}`}>
+            <div className={`text-xs text-brand-muted truncate max-w-[110px] mt-0.5 ${font}`}>
               {order.customer_name || t('guest')}
             </div>
           </div>
@@ -160,6 +222,11 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
             const isReady     = st === 'ready' || st === 'completed'
             const isUpdating  = updating === item.id
             const awaitUndo   = pendingUndo === item.id
+            const btn         = statusButtonStyle(st)
+            const buttonLabel =
+              isReady     ? t('btnDelivered')      :
+              isPreparing ? t('btnReadyToServe')   :
+                            t('btnStartPrep')
 
             return (
               <button
@@ -167,57 +234,92 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                 onClick={() => handleItemToggle(item.id, st)}
                 disabled={!!updating && !isUpdating}
                 className={[
-                  'relative flex items-center gap-4 p-4 rounded-xl border',
+                  'relative flex items-stretch gap-3 p-3 rounded-xl border',
                   'transition-all duration-200 text-start w-full active:scale-[0.98]',
-                  isReady     ? 'bg-success/10 border-success/30' :
-                  isPreparing ? 'bg-gold/10 border-gold/40' :
-                                'bg-surface2 border-border hover:border-gold/40',
+                  isReady     ? 'bg-brand-success/10 border-brand-success/30' :
+                  isPreparing ? 'bg-brand-gold/10 border-brand-gold/40' :
+                                'bg-brand-surface-2 border-brand-border hover:border-brand-gold/40',
                   isUpdating ? 'opacity-60' : '',
                 ].join(' ')}
               >
                 {/* Qty badge */}
                 <div className={[
                   'w-10 h-10 rounded-lg flex items-center justify-center',
-                  'font-black text-lg tabular-nums shrink-0 transition-colors',
-                  isReady     ? 'bg-success text-black' :
-                  isPreparing ? 'bg-gold text-black' :
-                                'bg-surface text-muted border border-border',
+                  'font-black text-lg tabular-nums shrink-0 transition-colors self-start',
+                  isReady     ? 'bg-brand-success text-brand-black' :
+                  isPreparing ? 'bg-brand-gold text-brand-black' :
+                                'bg-brand-surface text-brand-muted border border-brand-border',
                 ].join(' ')}>
                   {item.quantity}
                 </div>
 
                 {/* Name + extras */}
                 <div className="flex-1 min-w-0">
-                  <div className={[
-                    'text-lg font-black leading-tight tracking-tight',
-                    isReady ? 'line-through text-muted' : 'text-white',
-                  ].join(' ')}>
+                  <div
+                    className={[
+                      'text-lg font-black leading-tight tracking-tight',
+                      isReady ? 'line-through text-brand-muted' : 'text-brand-text',
+                    ].join(' ')}
+                  >
                     {isRTL ? item.name_ar : item.name_en}
                   </div>
                   {(item.selected_size || item.selected_variant) && (
-                    <div className="text-xs text-muted mt-0.5">
+                    <div className="text-xs text-brand-muted mt-0.5">
                       {item.selected_size && (SIZE_LABELS[item.selected_size]?.[isRTL ? 'ar' : 'en'] ?? item.selected_size)}
                       {item.selected_size && item.selected_variant && ' · '}
                       {item.selected_variant}
                     </div>
                   )}
+
+                  {/* FIX 3: modifier pills */}
+                  {item.modifiers && item.modifiers.length > 0 && (
+                    <div className={`flex flex-wrap gap-1 mt-1.5 ${font}`}>
+                      {item.modifiers.map((mod, idx) => {
+                        const label = (isRTL ? mod.option_name_ar : mod.option_name_en)
+                          ?? mod.option_name_en ?? mod.option_name_ar ?? ''
+                        if (!label) return null
+                        return (
+                          <span
+                            key={`${item.id}-mod-${idx}`}
+                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-brand-surface text-brand-muted border border-brand-border"
+                          >
+                            {label}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
+
                   {item.notes && (
-                    <div className={`text-xs text-error mt-1 font-semibold ${font}`}>
+                    <div className={`text-xs text-brand-error mt-1 font-semibold ${font}`}>
                       {t('note')}: {item.notes}
                     </div>
                   )}
+
+                  {/* FIX 5: Arabic status button label inline (badge under content) */}
+                  <div className="mt-2">
+                    <span
+                      className={[
+                        'inline-flex items-center text-[11px] font-bold uppercase tracking-wider',
+                        'px-2 py-0.5 rounded border',
+                        btn.bg, btn.text, btn.border,
+                      ].join(' ')}
+                    >
+                      {buttonLabel}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Status icon */}
-                <div className="shrink-0 w-6 h-6 flex items-center justify-center">
+                <div className="shrink-0 w-6 h-6 self-start mt-1 flex items-center justify-center">
                   {isUpdating ? (
-                    <SpinnerIcon className="w-5 h-5 text-gold animate-spin" />
+                    <SpinnerIcon className="w-5 h-5 text-brand-gold animate-spin" />
                   ) : isReady ? (
-                    <CheckIcon className="w-5 h-5 text-success" />
+                    <CheckIcon className="w-5 h-5 text-brand-success" />
                   ) : isPreparing ? (
-                    <SpinnerIcon className="w-5 h-5 text-gold" />
+                    <SpinnerIcon className="w-5 h-5 text-brand-gold" />
                   ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-border" />
+                    <div className="w-5 h-5 rounded-full border-2 border-brand-border" />
                   )}
                 </div>
 
@@ -228,9 +330,9 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute inset-0 rounded-xl bg-surface/85 flex items-center justify-center"
+                      className="absolute inset-0 rounded-xl bg-brand-surface/85 flex items-center justify-center"
                     >
-                      <span className={`text-xs font-bold text-amber-400 ${font}`}>
+                      <span className={`text-xs font-bold text-brand-gold ${font}`}>
                         {t('tapAgainToUndo')}
                       </span>
                     </motion.div>
@@ -243,8 +345,8 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
 
         {/* Order note */}
         {order.notes && (
-          <div className="mt-3 p-3 rounded-xl bg-error/10 border border-error/30">
-            <p className={`text-error text-xs font-bold ${font}`}>
+          <div className="mt-3 p-3 rounded-xl bg-brand-error/10 border border-brand-error/30">
+            <p className={`text-brand-error text-xs font-bold ${font}`}>
               {t('orderNote')}: {order.notes}
             </p>
           </div>
@@ -263,8 +365,8 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                 'mt-4 w-full py-3 rounded-xl font-black text-base',
                 'flex items-center justify-center gap-2 transition-all active:scale-[0.97]',
                 bumping
-                  ? 'bg-success/40 text-black/40 cursor-not-allowed'
-                  : 'bg-success text-black hover:bg-success/90 shadow-lg shadow-success/20',
+                  ? 'bg-brand-success/40 text-brand-black/40 cursor-not-allowed'
+                  : 'bg-brand-success text-brand-black hover:bg-brand-success/90 shadow-lg shadow-brand-success/20',
               ].join(' ')}
             >
               {bumping ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : <CheckAllIcon className="w-5 h-5" />}

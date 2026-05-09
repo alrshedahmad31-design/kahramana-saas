@@ -981,6 +981,17 @@
     "soundOff": "Unmute sound",
     "allReadyBump": "All items ready",
     "retry": "Retry",
+    "tableLabel": "Table {n}",
+    "btnStartPrep": "Start Prep",
+    "btnReadyToServe": "Ready to Serve",
+    "btnDelivered": "Delivered",
+    "source": {
+      "qr": "QR",
+      "waiter": "Waiter",
+      "manual": "POS",
+      "online": "Online",
+      "kiosk": "Kiosk"
+    },
     "stations": {
       "shawarma": "Shawarma",
       "bakery": "Pizza & Pastry",
