@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Plus, Edit } from 'lucide-react'
+import MenuImageInput from '@/components/dashboard/menu/MenuImageInput'
 
 interface MenuItem {
   id: string
@@ -292,15 +293,12 @@ export default function MenuItemDialog({ item, mode, translations: t }: Props) {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="image_url">{t.image_url}</Label>
-              <Input
-                id="image_url"
-                placeholder="/assets/gallery/image.webp"
-                value={formData.image_url}
-                onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-              />
-            </div>
+            <MenuImageInput
+              label={t.image_url}
+              value={formData.image_url}
+              onChange={(url) => setFormData({ ...formData, image_url: url })}
+              isAr
+            />
           </div>
 
           <DialogFooter>

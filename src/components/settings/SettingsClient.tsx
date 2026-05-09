@@ -12,11 +12,12 @@ import NotificationsSettings from '@/components/settings/NotificationsSettings'
 import IntegrationsSettings  from '@/components/settings/IntegrationsSettings'
 import StaffSettings         from '@/components/settings/StaffSettings'
 import AppearanceSettings    from '@/components/settings/AppearanceSettings'
+import LoyaltySettings       from '@/components/settings/LoyaltySettings'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 
 type TabId =
   | 'profile' | 'security'
-  | 'branches' | 'hours' | 'menu'
+  | 'branches' | 'hours' | 'menu' | 'loyalty'
   | 'payment'
   | 'notifications' | 'integrations'
   | 'staff'
@@ -50,6 +51,7 @@ const GROUPS: Group[] = [
       { id: 'branches', labelAr: 'الفروع',          labelEn: 'Branches',       icon: BranchIcon },
       { id: 'hours',    labelAr: 'أوقات العمل',     labelEn: 'Business Hours', icon: ClockIcon  },
       { id: 'menu',     labelAr: 'إعدادات القائمة', labelEn: 'Menu Settings',  icon: MenuIcon   },
+      { id: 'loyalty',  labelAr: 'الولاء',          labelEn: 'Loyalty',        icon: StarIcon   },
     ],
   },
   {
@@ -196,6 +198,7 @@ export default function SettingsClient({ userRole: _userRole }: Props) {
         {activeTab === 'branches'      && <BranchesSettings />}
         {activeTab === 'hours'         && <HoursSettings />}
         {activeTab === 'menu'          && <MenuSettings />}
+        {activeTab === 'loyalty'       && <LoyaltySettings />}
         {activeTab === 'payment'       && <PaymentSettings />}
         {activeTab === 'notifications' && <NotificationsSettings />}
         {activeTab === 'integrations'  && <IntegrationsSettings />}
@@ -285,6 +288,14 @@ function SearchIcon({ className }: { className?: string }) {
     </svg>
   )
 }
+function StarIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+    </svg>
+  )
+}
+
 function BurgerIcon() {
   return (
     <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">

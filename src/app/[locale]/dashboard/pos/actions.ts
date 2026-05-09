@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
@@ -31,6 +32,16 @@ function normalizePhone(raw: string): string {
   return s
 }
 
+const modifierSchema = z.object({
+  group_id:       z.string().uuid(),
+  group_name_ar:  z.string().max(120),
+  group_name_en:  z.string().max(120),
+  option_id:      z.string().uuid(),
+  option_name_ar: z.string().max(120),
+  option_name_en: z.string().max(120),
+  price_modifier: z.number().min(-1000).max(1000),
+})
+
 const itemSchema = z.object({
   menuItemId:    z.string().min(1).max(120),
   quantity:      z.number().int().min(1).max(50),
@@ -38,6 +49,7 @@ const itemSchema = z.object({
   sizeName:      z.string().max(40).nullable().optional(),
   unitPriceBhd:  z.number().min(0).max(10_000),
   itemNotes:     z.string().max(200).nullable().optional(),
+  modifiers:     z.array(modifierSchema).max(20).optional(),
 })
 
 const addressSchema = z.object({
@@ -59,6 +71,9 @@ const payloadSchema = z.object({
   deliveryAddress: addressSchema.nullable().optional(),
   deliveryLat:     z.number().min(-90).max(90).nullable().optional(),
   deliveryLng:     z.number().min(-180).max(180).nullable().optional(),
+  // Optional client-supplied idempotency key: required for offline-queued
+  // orders so flush retries return the same order_id instead of duplicating.
+  idempotencyKey:  z.string().uuid().optional(),
 })
 
 export type ManualOrderPayload = z.infer<typeof payloadSchema>
@@ -114,6 +129,42 @@ export async function createManualOrder(
     }
   }
 
+  // ── Modifier price validation (against menu_options table) ─────────────────
+  type ModifierSnapshot = z.infer<typeof modifierSchema>
+  const allOptionIds = Array.from(new Set(
+    data.items.flatMap((i) => (i.modifiers ?? []).map((m) => m.option_id)),
+  ))
+  const modifierPriceById = new Map<string, number>()
+  if (allOptionIds.length > 0) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!url || !key) return { error: 'Configuration error' }
+    const untyped = createSupabaseClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const { data: dbOpts, error } = await untyped
+      .from('menu_options')
+      .select('id, price_modifier, is_available')
+      .in('id', allOptionIds)
+    if (error) {
+      console.error('[pos] modifier validation failed:', error)
+      return { error: 'Failed to validate modifiers' }
+    }
+    type DbOpt = { id: string; price_modifier: number; is_available: boolean }
+    for (const o of (dbOpts ?? []) as DbOpt[]) {
+      if (!o.is_available) {
+        return { error: 'Selected modifier is unavailable' }
+      }
+      modifierPriceById.set(o.id, Number(o.price_modifier))
+    }
+    // Reject any submitted option that doesn't exist (orphaned/deleted)
+    for (const id of allOptionIds) {
+      if (!modifierPriceById.has(id)) {
+        return { error: 'Unknown modifier' }
+      }
+    }
+  }
+
   // ── Server-side price resolution (NEVER trust client-submitted prices) ──
   type PricedItem = {
     menu_item_slug:   string
@@ -125,6 +176,7 @@ export async function createManualOrder(
     notes:            string | null
     unit_price_bhd:   number
     item_total_bhd:   number
+    modifiers:        ModifierSnapshot[]
   }
 
   const pricedItems: PricedItem[] = []
@@ -138,7 +190,15 @@ export async function createManualOrder(
       return { error: resolved.error }
     }
 
-    const unit = Number(resolved.unitPriceBhd)
+    // Trust DB modifier prices, replace client-submitted values to defeat tampering.
+    const validatedModifiers: ModifierSnapshot[] = (item.modifiers ?? []).map((m) => ({
+      ...m,
+      price_modifier: modifierPriceById.get(m.option_id) ?? 0,
+    }))
+    const modifierTotal = validatedModifiers.reduce((s, m) => s + m.price_modifier, 0)
+
+    const base = Number(resolved.unitPriceBhd)
+    const unit = Number((base + modifierTotal).toFixed(3))
     pricedItems.push({
       menu_item_slug:   resolved.item.slug,
       name_ar:          resolved.item.name.ar,
@@ -149,6 +209,7 @@ export async function createManualOrder(
       notes:            item.itemNotes?.trim() || null,
       unit_price_bhd:   unit,
       item_total_bhd:   Number((unit * item.quantity).toFixed(3)),
+      modifiers:        validatedModifiers,
     })
   }
 
@@ -207,7 +268,7 @@ export async function createManualOrder(
           .join(', ')
       : null
 
-  const idempotencyKey = randomUUID()
+  const idempotencyKey = data.idempotencyKey ?? randomUUID()
 
   // RPC supports 'cash' and online methods. Map card/tap appropriately.
   // For card+tap online flows we keep status 'new' (in-store payment), so we

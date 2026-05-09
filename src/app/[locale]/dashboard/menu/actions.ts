@@ -2,7 +2,24 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
+
+// Untyped service client for tables added by migration but not yet in the
+// regenerated `Database` type (082_menu_modifiers). Drop this helper when
+// `npx supabase gen types` is re-run.
+function untypedServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) {
+    throw new Error(
+      'Missing Supabase env vars: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required',
+    )
+  }
+  return createSupabaseClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+}
 import {
   getDashboardGuardErrorMessage,
   requireDashboardSection,
@@ -314,6 +331,310 @@ export async function updateMenuItem(
 
   bustMenuCaches(slug)
   return { success: true }
+}
+
+// ── Menu modifiers (option groups + options) ──────────────────────────────────
+
+export interface MenuOptionRow {
+  id:              string
+  group_id:        string
+  name_ar:         string
+  name_en:         string
+  price_modifier:  number
+  is_available:    boolean
+  sort_order:      number
+}
+
+export interface MenuOptionGroupRow {
+  id:              string
+  menu_item_slug:  string
+  name_ar:         string
+  name_en:         string
+  required:        boolean
+  multi_select:    boolean
+  sort_order:      number
+  options:         MenuOptionRow[]
+}
+
+const groupSchema = z.object({
+  id:              z.string().uuid().optional(),
+  menu_item_slug:  z.string().min(1).max(120).regex(SLUG_RE, 'invalid slug'),
+  name_ar:         z.string().trim().min(1).max(120),
+  name_en:         z.string().trim().min(1).max(120),
+  required:        z.boolean().optional().default(false),
+  multi_select:    z.boolean().optional().default(false),
+  sort_order:      z.number().int().min(0).max(999).optional().default(0),
+})
+
+const optionSchema = z.object({
+  id:              z.string().uuid().optional(),
+  group_id:        z.string().uuid(),
+  name_ar:         z.string().trim().min(1).max(120),
+  name_en:         z.string().trim().min(1).max(120),
+  price_modifier:  z.number().min(-1000).max(1000),
+  is_available:    z.boolean().optional().default(true),
+  sort_order:      z.number().int().min(0).max(999).optional().default(0),
+})
+
+export async function listMenuOptionGroups(slug: string): Promise<{
+  success: boolean
+  groups?: MenuOptionGroupRow[]
+  error?: string
+}> {
+  if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
+    return { success: false, error: 'Invalid slug' }
+  }
+
+  const supabase = untypedServiceClient()
+  const { data: groups, error: groupsError } = await supabase
+    .from('menu_option_groups')
+    .select('*')
+    .eq('menu_item_slug', slug)
+    .order('sort_order', { ascending: true })
+
+  if (groupsError) {
+    console.error('[menu] listMenuOptionGroups groups failed:', groupsError)
+    return { success: false, error: groupsError.message }
+  }
+
+  const groupIds = (groups ?? []).map((g) => g.id)
+  let opts: MenuOptionRow[] = []
+  if (groupIds.length > 0) {
+    const { data, error } = await supabase
+      .from('menu_options')
+      .select('*')
+      .in('group_id', groupIds)
+      .order('sort_order', { ascending: true })
+    if (error) {
+      console.error('[menu] listMenuOptionGroups options failed:', error)
+      return { success: false, error: error.message }
+    }
+    opts = (data ?? []) as MenuOptionRow[]
+  }
+
+  const merged: MenuOptionGroupRow[] = (groups ?? []).map((g) => ({
+    ...(g as MenuOptionGroupRow),
+    options: opts.filter((o) => o.group_id === g.id),
+  }))
+
+  return { success: true, groups: merged }
+}
+
+export async function upsertMenuOptionGroup(input: unknown): Promise<{
+  success: boolean
+  id?: string
+  error?: string
+}> {
+  let caller
+  try {
+    caller = await requireDashboardSection('menu')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+  if (!DESTRUCTIVE_ROLES.includes(caller.role as StaffRole)) {
+    return { success: false, error: 'Forbidden' }
+  }
+
+  const parsed = groupSchema.safeParse(input)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { success: false, error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid payload' }
+  }
+  const payload = parsed.data
+
+  const supabase = untypedServiceClient()
+  const row = {
+    menu_item_slug: payload.menu_item_slug,
+    name_ar:        payload.name_ar,
+    name_en:        payload.name_en,
+    required:       payload.required,
+    multi_select:   payload.multi_select,
+    sort_order:     payload.sort_order,
+    updated_at:     new Date().toISOString(),
+  }
+
+  const query = payload.id
+    ? supabase.from('menu_option_groups').update(row).eq('id', payload.id).select('id').single()
+    : supabase.from('menu_option_groups').insert(row).select('id').single()
+
+  const { data, error } = await query
+  if (error) {
+    console.error('[menu] upsertMenuOptionGroup failed:', error)
+    return { success: false, error: error.message }
+  }
+
+  bustMenuCaches(payload.menu_item_slug)
+  return { success: true, id: (data as { id?: string } | null)?.id }
+}
+
+export async function deleteMenuOptionGroup(groupId: string, slug: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  let caller
+  try {
+    caller = await requireDashboardSection('menu')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+  if (!DESTRUCTIVE_ROLES.includes(caller.role as StaffRole)) {
+    return { success: false, error: 'Forbidden' }
+  }
+
+  if (!z.string().uuid().safeParse(groupId).success) {
+    return { success: false, error: 'Invalid id' }
+  }
+
+  const supabase = untypedServiceClient()
+  const { error } = await supabase.from('menu_option_groups').delete().eq('id', groupId)
+  if (error) {
+    console.error('[menu] deleteMenuOptionGroup failed:', error)
+    return { success: false, error: error.message }
+  }
+  bustMenuCaches(slug)
+  return { success: true }
+}
+
+export async function upsertMenuOption(input: unknown): Promise<{
+  success: boolean
+  id?: string
+  error?: string
+}> {
+  let caller
+  try {
+    caller = await requireDashboardSection('menu')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+  if (!DESTRUCTIVE_ROLES.includes(caller.role as StaffRole)) {
+    return { success: false, error: 'Forbidden' }
+  }
+
+  const parsed = optionSchema.safeParse(input)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { success: false, error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid payload' }
+  }
+  const payload = parsed.data
+
+  const supabase = untypedServiceClient()
+  const row = {
+    group_id:       payload.group_id,
+    name_ar:        payload.name_ar,
+    name_en:        payload.name_en,
+    price_modifier: payload.price_modifier,
+    is_available:   payload.is_available,
+    sort_order:     payload.sort_order,
+  }
+  const query = payload.id
+    ? supabase.from('menu_options').update(row).eq('id', payload.id).select('id').single()
+    : supabase.from('menu_options').insert(row).select('id').single()
+
+  const { data, error } = await query
+  if (error) {
+    console.error('[menu] upsertMenuOption failed:', error)
+    return { success: false, error: error.message }
+  }
+  bustMenuCaches()
+  return { success: true, id: (data as { id?: string } | null)?.id }
+}
+
+export async function deleteMenuOption(optionId: string): Promise<{
+  success: boolean
+  error?: string
+}> {
+  let caller
+  try {
+    caller = await requireDashboardSection('menu')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+  if (!DESTRUCTIVE_ROLES.includes(caller.role as StaffRole)) {
+    return { success: false, error: 'Forbidden' }
+  }
+
+  if (!z.string().uuid().safeParse(optionId).success) {
+    return { success: false, error: 'Invalid id' }
+  }
+
+  const supabase = untypedServiceClient()
+  const { error } = await supabase.from('menu_options').delete().eq('id', optionId)
+  if (error) {
+    console.error('[menu] deleteMenuOption failed:', error)
+    return { success: false, error: error.message }
+  }
+  bustMenuCaches()
+  return { success: true }
+}
+
+// ── Upload image to Supabase Storage ──────────────────────────────────────────
+
+const MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+const ALLOWED_MIME = new Set(['image/webp', 'image/jpeg', 'image/png'])
+
+export async function uploadMenuImage(
+  formData: FormData,
+): Promise<
+  | { success: true; url: string }
+  | { success: false; error: string }
+> {
+  let caller
+  try {
+    caller = await requireDashboardSection('menu')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+  if (!DESTRUCTIVE_ROLES.includes(caller.role as StaffRole)) {
+    return { success: false, error: 'Forbidden: only owners or general managers can upload images' }
+  }
+
+  const file = formData.get('file')
+  if (!(file instanceof File)) {
+    return { success: false, error: 'Missing file' }
+  }
+  if (file.size === 0) {
+    return { success: false, error: 'Empty file' }
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { success: false, error: 'الملف أكبر من 2 ميغابايت' }
+  }
+  if (!ALLOWED_MIME.has(file.type)) {
+    return { success: false, error: 'الصيغة غير مسموحة (WebP / JPEG / PNG فقط)' }
+  }
+
+  const ext =
+    file.type === 'image/webp' ? 'webp' :
+    file.type === 'image/png'  ? 'png'  : 'jpg'
+  const objectName = `menu/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
+
+  const supabase = createServiceClient()
+  const buffer = Buffer.from(await file.arrayBuffer())
+
+  const { error: uploadError } = await supabase.storage
+    .from('menu-images')
+    .upload(objectName, buffer, {
+      contentType: file.type,
+      cacheControl: '31536000, immutable',
+      upsert: false,
+    })
+
+  if (uploadError) {
+    console.error('[menu] uploadMenuImage failed:', uploadError)
+    return { success: false, error: uploadError.message }
+  }
+
+  const { data } = supabase.storage.from('menu-images').getPublicUrl(objectName)
+
+  await supabase.from('audit_logs').insert({
+    table_name: 'storage.objects',
+    action:     'INSERT',
+    user_id:    caller.id,
+    record_id:  objectName,
+    actor_role: caller.role,
+    changes:    { action: 'menu_image_uploaded', size: file.size, mime: file.type },
+  })
+
+  return { success: true, url: data.publicUrl }
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────

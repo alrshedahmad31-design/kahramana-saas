@@ -1,0 +1,107 @@
+'use server'
+
+import { z } from 'zod'
+import { revalidateTag } from 'next/cache'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import {
+  getDashboardGuardErrorMessage,
+  requireDashboardSection,
+} from '@/lib/auth/dashboard-guards'
+import type { StaffRole } from '@/lib/supabase/custom-types'
+import {
+  DEFAULT_LOYALTY_CONFIG,
+  getLoyaltyConfig,
+  type LoyaltyConfig,
+} from '@/lib/loyalty/config'
+
+const ALLOWED_ROLES: readonly StaffRole[] = ['owner', 'general_manager']
+
+const inputSchema = z.object({
+  pointsPerBhd:           z.number().int().min(1).max(1000),
+  maxRedemptionRatio:     z.number().min(0).max(1),
+  minRedemptionPoints:    z.number().int().min(0).max(100_000),
+  pointValueBhd:          z.number().min(0.0001).max(10),
+  pointsExpiryMonths:     z.number().int().min(1).max(120),
+  tierSilverThreshold:    z.number().int().min(0).max(1_000_000),
+  tierGoldThreshold:      z.number().int().min(0).max(1_000_000),
+  tierPlatinumThreshold:  z.number().int().min(0).max(1_000_000),
+})
+
+export async function getLoyaltyConfigForEditor(): Promise<LoyaltyConfig> {
+  return getLoyaltyConfig()
+}
+
+export async function updateLoyaltyConfig(
+  input: unknown,
+): Promise<{ success: boolean; error?: string }> {
+  let caller
+  try {
+    caller = await requireDashboardSection('settings')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+  if (!ALLOWED_ROLES.includes(caller.role as StaffRole)) {
+    return { success: false, error: 'Forbidden: only owners or general managers can edit loyalty config' }
+  }
+
+  const parsed = inputSchema.safeParse(input)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { success: false, error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid input' }
+  }
+
+  // Tier thresholds must be strictly increasing for the UI tiering to make sense.
+  if (parsed.data.tierSilverThreshold >= parsed.data.tierGoldThreshold) {
+    return { success: false, error: 'حد الذهبي يجب أن يكون أكبر من الفضي' }
+  }
+  if (parsed.data.tierGoldThreshold >= parsed.data.tierPlatinumThreshold) {
+    return { success: false, error: 'حد البلاتيني يجب أن يكون أكبر من الذهبي' }
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return { success: false, error: 'Configuration error' }
+
+  const supabase = createSupabaseClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+
+  const row = {
+    points_per_bhd:          parsed.data.pointsPerBhd,
+    max_redemption_ratio:    parsed.data.maxRedemptionRatio,
+    min_redemption_points:   parsed.data.minRedemptionPoints,
+    point_value_bhd:         parsed.data.pointValueBhd,
+    points_expiry_months:    parsed.data.pointsExpiryMonths,
+    tier_silver_threshold:   parsed.data.tierSilverThreshold,
+    tier_gold_threshold:     parsed.data.tierGoldThreshold,
+    tier_platinum_threshold: parsed.data.tierPlatinumThreshold,
+    is_active:               true,
+    updated_at:              new Date().toISOString(),
+  }
+
+  // Upsert the global active config row (branch_id IS NULL).
+  const { data: existing } = await supabase
+    .from('loyalty_config')
+    .select('id')
+    .is('branch_id', null)
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle()
+
+  const existingId = (existing as { id?: string } | null)?.id
+  const result = existingId
+    ? await supabase.from('loyalty_config').update(row).eq('id', existingId)
+    : await supabase.from('loyalty_config').insert({ ...row, branch_id: null })
+
+  if (result.error) {
+    console.error('[loyalty/config] update failed:', result.error)
+    return { success: false, error: result.error.message }
+  }
+
+  // Invalidate the unstable_cache wrapping getLoyaltyConfig.
+  revalidateTag('loyalty-config')
+
+  return { success: true }
+}
+
+export { DEFAULT_LOYALTY_CONFIG }

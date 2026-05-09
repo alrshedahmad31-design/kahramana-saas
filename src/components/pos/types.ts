@@ -9,15 +9,44 @@ export interface POSVariant {
   priceBhd: number
 }
 
+export interface POSModifierOption {
+  id:             string
+  nameAr:         string
+  nameEn:         string
+  priceModifier:  number
+  isAvailable:    boolean
+}
+
+export interface POSModifierGroup {
+  id:           string
+  nameAr:       string
+  nameEn:       string
+  required:     boolean
+  multiSelect:  boolean
+  options:      POSModifierOption[]
+}
+
 export interface POSItem {
-  id:        string
-  nameAr:    string
-  nameEn:    string
-  image:     string
-  available: boolean
-  priceBhd:  number | null
-  sizes:     POSSize[]
-  variants:  POSVariant[]
+  id:              string
+  nameAr:          string
+  nameEn:          string
+  image:           string
+  available:       boolean
+  priceBhd:        number | null
+  sizes:           POSSize[]
+  variants:        POSVariant[]
+  modifierGroups:  POSModifierGroup[]
+}
+
+/** Snapshot of one selected option, persisted into order_items.modifiers JSONB. */
+export interface CartModifier {
+  group_id:        string
+  group_name_ar:   string
+  group_name_en:   string
+  option_id:       string
+  option_name_ar:  string
+  option_name_en:  string
+  price_modifier:  number
 }
 
 export interface POSCategory {
@@ -44,4 +73,5 @@ export interface CartLine {
   unitPriceBhd:  number
   quantity:      number
   itemNotes:     string
+  modifiers:     CartModifier[]
 }

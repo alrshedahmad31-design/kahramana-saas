@@ -4,7 +4,8 @@ import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { BRANCHES, type BranchId } from '@/constants/contact'
-import { MIN_REDEMPTION, MAX_REDEMPTION_RATIO, pointsToCredit } from '@/lib/loyalty/calculations'
+import { pointsToCredit } from '@/lib/loyalty/calculations'
+import { getLoyaltyConfig } from '@/lib/loyalty/config'
 import { calculateDiscount } from '@/lib/coupons/calculations'
 import { createOrderAccessToken } from '@/lib/auth/order-access'
 import type { CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
@@ -586,13 +587,14 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
     // ── Points: early balance + cap check (RPC performs the atomic final check) ─
     if (pointsToRedeem > 0) {
-      if (pointsToRedeem < MIN_REDEMPTION) {
-        return { orderId: '', finalTotal: 0, error: `Minimum redemption is ${MIN_REDEMPTION} points` }
+      const cfg = await getLoyaltyConfig()
+      if (pointsToRedeem < cfg.minRedemptionPoints) {
+        return { orderId: '', finalTotal: 0, error: `Minimum redemption is ${cfg.minRedemptionPoints} points` }
       }
 
-      // C-4: enforce 50% cap server-side before hitting the RPC
-      if (pointsDiscount > subtotal * MAX_REDEMPTION_RATIO) {
-        return { orderId: '', finalTotal: 0, error: 'Points discount cannot exceed 50% of order subtotal' }
+      // Enforce server-configured redemption cap before hitting the RPC
+      if (pointsDiscount > subtotal * cfg.maxRedemptionRatio) {
+        return { orderId: '', finalTotal: 0, error: `Points discount cannot exceed ${Math.round(cfg.maxRedemptionRatio * 100)}% of order subtotal` }
       }
 
       const customer = customerSession ?? await getCustomerSession()

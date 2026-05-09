@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { Pencil, Loader2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { updateMenuItem } from '@/app/[locale]/dashboard/menu/actions'
 import { toast } from '@/lib/toast'
+import MenuImageInput from '@/components/dashboard/menu/MenuImageInput'
+import ModifiersEditor from '@/components/dashboard/menu/ModifiersEditor'
 import {
   Dialog,
   DialogContent,
@@ -100,9 +101,6 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
       setLoading(false)
     }
   }
-
-  const previewSrc = form.image_url.trim()
-  const isExternalImage = previewSrc.startsWith('http')
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -290,31 +288,23 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
             </span>
           </div>
 
-          {/* Image URL + preview (full width) */}
-          <div className="space-y-2">
-            <Label htmlFor="image_url">{t('image_url')}</Label>
-            <div className="flex items-start gap-3">
-              <Input
-                id="image_url"
-                placeholder="/assets/gallery/image.webp"
-                maxLength={500}
-                value={form.image_url}
-                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              />
-              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-brand-gold/20 bg-brand-surface-2">
-                {previewSrc ? (
-                  <Image
-                    src={previewSrc}
-                    alt=""
-                    fill
-                    sizes="64px"
-                    className="object-cover"
-                    unoptimized={isExternalImage}
-                  />
-                ) : null}
-              </div>
+          {/* Image upload (full width) */}
+          <MenuImageInput
+            label={t('image_url')}
+            value={form.image_url}
+            onChange={(url) => setForm({ ...form, image_url: url })}
+            isAr={isAr}
+          />
+
+          {/* Modifiers / option groups */}
+          <details className="rounded-md border border-brand-border bg-brand-surface-2">
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium text-brand-text">
+              {isAr ? 'المعدّلات (الحجم، الإضافات…)' : 'Modifiers (size, add-ons…)'}
+            </summary>
+            <div className="border-t border-brand-border p-3">
+              <ModifiersEditor menuItemSlug={form.id} isAr={isAr} />
             </div>
-          </div>
+          </details>
 
           <DialogFooter className="gap-2 sm:gap-2 pt-2">
             <Button

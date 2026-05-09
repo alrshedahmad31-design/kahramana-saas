@@ -159,7 +159,8 @@
       "Bash(grep -oP \"\\(\\\\w+\\)$\")",
       "Bash(Get-ChildItem src/app/[locale]/dashboard/delivery/ -Recurse)",
       "Bash(git check-ignore *)",
-      "Bash(vercel env *)"
+      "Bash(vercel env *)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }

@@ -1,15 +1,26 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { CloudOff, Loader2 } from 'lucide-react'
 import { createManualOrder, type ManualOrderPayload } from '@/app/[locale]/dashboard/pos/actions'
-import type { CartLine, POSBranch, POSCategory, POSItem } from './types'
+import {
+  enqueuePosOrder,
+  getPendingPosOrders,
+  deletePendingPosOrder,
+  pendingPosOrderCount,
+} from '@/lib/utils/offline-db'
+import type { CartLine, CartModifier, POSBranch, POSCategory, POSItem } from './types'
 import MenuBrowser from './MenuBrowser'
 import OrderBuilder from './OrderBuilder'
 import styles from './POSClient.module.css'
 import VariantPicker from './VariantPicker'
+import ModifierPicker from './ModifierPicker'
+import PrintReceiptButton from './PrintReceiptButton'
+import type { ReceiptOrder } from '@/lib/hardware/receipt-printer'
+import { BRANCHES } from '@/constants/contact'
 
 // Leaflet requires browser DOM — SSR must be disabled
 const DeliveryMapPicker = dynamic(() => import('./DeliveryMapPicker'), { ssr: false })
@@ -54,17 +65,105 @@ export default function POSClient({
   const [showMapPicker, setShowMapPicker] = useState(false)
   const [cart, setCart] = useState<CartLine[]>([])
   const [pendingItem, setPendingItem] = useState<POSItem | null>(null)
+  const [pendingModifierItem, setPendingModifierItem] = useState<{
+    item: POSItem
+    size: string | null
+    variant: { ar: string; en: string } | null
+    unit: number
+  } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<{ orderId: string } | null>(null)
+  const [success, setSuccess] = useState<{
+    orderId: string
+    queued?: boolean
+    receipt?: ReceiptOrder
+  } | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // ── Online / offline state + queue ──────────────────────────────────────────
+  const [isOnline, setIsOnline] = useState<boolean>(true)
+  const [pendingCount, setPendingCount] = useState<number>(0)
+  const [isFlushing, setIsFlushing] = useState<boolean>(false)
+  const flushingRef = useRef(false)
+
+  const refreshPendingCount = useCallback(async () => {
+    try {
+      const n = await pendingPosOrderCount()
+      setPendingCount(n)
+    } catch {
+      // IndexedDB unavailable — treat as 0
+      setPendingCount(0)
+    }
+  }, [])
+
+  const flushQueue = useCallback(async () => {
+    if (flushingRef.current) return
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return
+    flushingRef.current = true
+    setIsFlushing(true)
+    try {
+      const queued = await getPendingPosOrders()
+      for (const entry of queued) {
+        const result = await createManualOrder(entry.payload as ManualOrderPayload)
+        // On success OR idempotent duplicate (server returns existing order_id), drop the entry.
+        // Network errors propagate as a thrown rejection from the fetch layer; we keep the entry.
+        if (result.orderId && entry.id != null) {
+          await deletePendingPosOrder(entry.id)
+        } else if (result.error) {
+          // Validation / auth errors are non-recoverable for this entry — drop it
+          // so the queue does not block flush of subsequent entries.
+          if (entry.id != null) await deletePendingPosOrder(entry.id)
+          console.warn('[POSClient] dropped queued order due to error:', result.error)
+        }
+      }
+    } catch (err) {
+      console.error('[POSClient] flushQueue failed:', err)
+    } finally {
+      flushingRef.current = false
+      setIsFlushing(false)
+      void refreshPendingCount()
+    }
+  }, [refreshPendingCount])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsOnline(navigator.onLine)
+    void refreshPendingCount()
+
+    const onOnline = () => {
+      setIsOnline(true)
+      void flushQueue()
+    }
+    const onOffline = () => setIsOnline(false)
+
+    window.addEventListener('online',  onOnline)
+    window.addEventListener('offline', onOffline)
+
+    // Best-effort flush on mount in case orders were queued in a previous session
+    if (navigator.onLine) void flushQueue()
+
+    return () => {
+      window.removeEventListener('online',  onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [flushQueue, refreshPendingCount])
 
   const subtotal = useMemo(
     () => Number(cart.reduce((s, l) => s + l.unitPriceBhd * l.quantity, 0).toFixed(3)),
     [cart],
   )
 
-  function addItem(item: POSItem, size: string | null, variant: { ar: string; en: string } | null, unit: number) {
-    const key = `${item.id}::${size ?? ''}::${variant?.en ?? ''}`
+  function addItem(
+    item: POSItem,
+    size: string | null,
+    variant: { ar: string; en: string } | null,
+    unit: number,
+    modifiers: CartModifier[] = [],
+  ) {
+    const modKey = modifiers
+      .map((m) => m.option_id)
+      .sort()
+      .join(',')
+    const key = `${item.id}::${size ?? ''}::${variant?.en ?? ''}::${modKey}`
     setCart((prev) => {
       const existing = prev.find((l) => l.key === key)
       if (existing) {
@@ -83,6 +182,7 @@ export default function POSClient({
         unitPriceBhd: unit,
         quantity:     1,
         itemNotes:    '',
+        modifiers,
       }
       return [...prev, line]
     })
@@ -96,10 +196,15 @@ export default function POSClient({
 
   function handleAddRequest(item: POSItem) {
     if (!item.available) return
-    const hasSizes = item.sizes.length > 0
-    const hasVariants = item.variants.length > 0
+    const hasSizes     = item.sizes.length > 0
+    const hasVariants  = item.variants.length > 0
+    const hasModifiers = item.modifierGroups.length > 0
     if (hasSizes || hasVariants) {
       setPendingItem(item)
+      return
+    }
+    if (hasModifiers && typeof item.priceBhd === 'number') {
+      setPendingModifierItem({ item, size: null, variant: null, unit: item.priceBhd })
       return
     }
     if (typeof item.priceBhd === 'number') {
@@ -158,6 +263,42 @@ export default function POSClient({
       return
     }
 
+    const idempotencyKey = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
+
+    // Snapshot for the receipt — captured before reset() wipes the cart.
+    const branchKey = (Object.keys(BRANCHES) as Array<keyof typeof BRANCHES>).find(
+      (k) => BRANCHES[k].id === branchId,
+    )
+    const branchInfo = branchKey ? BRANCHES[branchKey] : null
+    const buildReceipt = (orderId: string): ReceiptOrder => ({
+      restaurantNameAr: 'كهرمانة بغداد',
+      branchNameAr:     branchInfo?.nameAr ?? branches.find((b) => b.id === branchId)?.nameAr ?? '',
+      branchPhone:      branchInfo?.phone ?? '',
+      orderId,
+      customerName:     customerName.trim() || undefined,
+      customerPhone:    customerPhone.trim() || undefined,
+      items: cart.map((l) => ({
+        nameAr:       l.nameAr,
+        nameEn:       l.nameEn,
+        quantity:     l.quantity,
+        unitPriceBhd: l.unitPriceBhd,
+        size:         l.size,
+        variant:      isAr ? l.variantAr : l.variantEn,
+        modifiers:    l.modifiers.map((m) => ({
+          ar:    m.option_name_ar,
+          en:    m.option_name_en,
+          price: m.price_modifier,
+        })),
+        notes: l.itemNotes.trim() || null,
+      })),
+      subtotalBhd: subtotal,
+      totalBhd:    subtotal,
+      trackingUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}${prefix}/order/${orderId}`,
+      isAr,
+    })
+
     const payload: ManualOrderPayload = {
       branchId,
       orderType,
@@ -170,6 +311,7 @@ export default function POSClient({
         variantName:  l.variantEn ?? null,
         unitPriceBhd: l.unitPriceBhd,
         itemNotes:    l.itemNotes.trim() || null,
+        modifiers:    l.modifiers.length > 0 ? l.modifiers : undefined,
       })),
       notes: notes.trim() || null,
       paymentMethod,
@@ -185,56 +327,160 @@ export default function POSClient({
           : null,
       deliveryLat:  orderType === 'delivery' ? (deliveryLat ?? undefined) : undefined,
       deliveryLng:  orderType === 'delivery' ? (deliveryLng ?? undefined) : undefined,
+      idempotencyKey,
+    }
+
+    // Offline path — enqueue and clear cart so the cashier can keep ringing.
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine
+    if (offline) {
+      startTransition(async () => {
+        try {
+          await enqueuePosOrder({
+            idempotencyKey,
+            payload: payload as unknown as Record<string, unknown>,
+          })
+          await refreshPendingCount()
+          setSuccess({
+            orderId: idempotencyKey,
+            queued:  true,
+            receipt: buildReceipt(idempotencyKey),
+          })
+          reset()
+        } catch (err) {
+          console.error('[POSClient] enqueue failed:', err)
+          setError(t('errorGeneric'))
+        }
+      })
+      return
     }
 
     startTransition(async () => {
-      const result = await createManualOrder(payload)
-      if (result.error || !result.orderId) {
-        setError(result.error ?? t('errorGeneric'))
-        return
+      try {
+        const result = await createManualOrder(payload)
+        if (result.error || !result.orderId) {
+          setError(result.error ?? t('errorGeneric'))
+          return
+        }
+        setSuccess({
+          orderId: result.orderId,
+          receipt: buildReceipt(result.orderId),
+        })
+        reset()
+      } catch (err) {
+        console.warn('[POSClient] online submit failed, queuing locally:', err)
+        try {
+          await enqueuePosOrder({
+            idempotencyKey,
+            payload: payload as unknown as Record<string, unknown>,
+          })
+          await refreshPendingCount()
+          setSuccess({
+            orderId: idempotencyKey,
+            queued:  true,
+            receipt: buildReceipt(idempotencyKey),
+          })
+          reset()
+        } catch (queueErr) {
+          console.error('[POSClient] enqueue fallback failed:', queueErr)
+          setError(t('errorGeneric'))
+        }
       }
-      setSuccess({ orderId: result.orderId })
-      reset()
     })
   }
 
   if (success) {
     const shortId = success.orderId.slice(-8).toUpperCase()
+    const queued  = success.queued === true
     return (
       <div className="min-h-[60vh] flex items-center justify-center" dir={isAr ? 'rtl' : 'ltr'}>
         <div className="max-w-md w-full rounded-xl border border-brand-gold/40 bg-brand-surface p-8 text-center">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-brand-success/10 flex items-center justify-center">
-            <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="text-brand-success">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+          <div className={`mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center ${queued ? 'bg-brand-gold/10' : 'bg-brand-success/10'}`}>
+            {queued ? (
+              <CloudOff className="h-8 w-8 text-brand-gold" />
+            ) : (
+              <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="text-brand-success">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
           </div>
           <h2 className={`text-2xl font-black text-brand-gold mb-2 ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-            {t('orderCreated')}
+            {queued
+              ? (isAr ? 'تم حفظ الطلب محلياً' : 'Order queued offline')
+              : t('orderCreated')}
           </h2>
-          <p className="font-satoshi text-brand-muted mb-6 tabular-nums">#{shortId}</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
-              onClick={() => router.push(`${prefix}/dashboard/orders/${success.orderId}`)}
-              className="flex-1 min-h-[44px] rounded-lg bg-brand-gold text-brand-black font-satoshi font-bold hover:bg-brand-gold-light transition-colors"
-            >
-              {t('viewOrder')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSuccess(null)}
-              className="flex-1 min-h-[44px] rounded-lg border border-brand-border bg-brand-surface-2 text-brand-text font-satoshi font-medium hover:border-brand-gold/40 transition-colors"
-            >
-              {t('newOrder')}
-            </button>
+          <p className="font-satoshi text-brand-muted mb-2 tabular-nums">#{shortId}</p>
+          {queued && (
+            <p className="font-satoshi text-xs text-brand-muted mb-6">
+              {isAr
+                ? 'سيُرسل الطلب تلقائياً عند عودة الاتصال'
+                : 'Will sync automatically when the connection returns'}
+            </p>
+          )}
+          <div className="flex flex-col gap-3">
+            {success.receipt && (
+              <PrintReceiptButton order={success.receipt} isAr={isAr} />
+            )}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {!queued && (
+                <button
+                  type="button"
+                  onClick={() => router.push(`${prefix}/dashboard/orders/${success.orderId}`)}
+                  className="flex-1 min-h-[44px] rounded-lg bg-brand-gold text-brand-black font-satoshi font-bold hover:bg-brand-gold-light transition-colors"
+                >
+                  {t('viewOrder')}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setSuccess(null)}
+                className="flex-1 min-h-[44px] rounded-lg border border-brand-border bg-brand-surface-2 text-brand-text font-satoshi font-medium hover:border-brand-gold/40 transition-colors"
+              >
+                {t('newOrder')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     )
   }
 
+  const showOfflineBanner = !isOnline || pendingCount > 0
+
   return (
     <div className="-mx-4 sm:-mx-6 -my-6" dir={isAr ? 'rtl' : 'ltr'}>
+      {showOfflineBanner && (
+        <div
+          role="status"
+          className={`flex items-center justify-between gap-3 px-4 py-2 text-sm font-satoshi border-b ${
+            !isOnline
+              ? 'bg-brand-gold/10 text-brand-gold border-brand-gold/30'
+              : 'bg-brand-surface-2 text-brand-muted border-brand-border'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {isFlushing ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <CloudOff className="h-4 w-4" aria-hidden="true" />
+            )}
+            <span>
+              {!isOnline
+                ? (isAr
+                    ? 'وضع عدم الاتصال — الطلبات ستُرسل عند عودة الشبكة'
+                    : 'Offline mode — orders will sync when the connection returns')
+                : isFlushing
+                  ? (isAr ? 'جارٍ مزامنة الطلبات…' : 'Syncing queued orders…')
+                  : (isAr ? 'طلبات في انتظار المزامنة' : 'Orders awaiting sync')}
+            </span>
+          </div>
+          {pendingCount > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[1.5rem] rounded-full bg-brand-gold text-brand-black px-2 py-0.5 text-xs font-bold tabular-nums">
+              {pendingCount}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Mobile tab switcher */}
       <div className="lg:hidden sticky top-0 z-30 bg-brand-black border-b border-brand-border">
         <div className="flex">
@@ -338,8 +584,28 @@ export default function POSClient({
           isAr={isAr}
           onCancel={() => setPendingItem(null)}
           onConfirm={(size, variant, unit) => {
-            addItem(pendingItem, size, variant, unit)
+            const item = pendingItem
             setPendingItem(null)
+            if (item.modifierGroups.length > 0) {
+              setPendingModifierItem({ item, size, variant, unit })
+            } else {
+              addItem(item, size, variant, unit)
+            }
+          }}
+        />
+      )}
+
+      {/* Modifier picker modal */}
+      {pendingModifierItem && (
+        <ModifierPicker
+          item={pendingModifierItem.item}
+          isAr={isAr}
+          baseUnitPriceBhd={pendingModifierItem.unit}
+          onCancel={() => setPendingModifierItem(null)}
+          onConfirm={(modifiers, adjustedUnit) => {
+            const { item, size, variant } = pendingModifierItem
+            addItem(item, size, variant, adjustedUnit, modifiers)
+            setPendingModifierItem(null)
           }}
         />
       )}
