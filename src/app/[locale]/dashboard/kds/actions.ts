@@ -1,6 +1,6 @@
 'use server'
 
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { canAccessKDS, canUpdateOrderStatus } from '@/lib/auth/rbac'
 import type { OrderStatus, KDSStation, KDSItemStatus, KDSOrder } from '@/lib/supabase/custom-types'
@@ -91,11 +91,11 @@ export async function updateItemStatus(
     return { success: false, error: 'Unauthorized: KDS access restricted' }
   }
 
-  const supabase = await createServiceClient()
+  const service = await createServiceClient()
 
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   if (!isGlobal) {
-    const { data: order, error: fetchErr } = await supabase
+    const { data: order, error: fetchErr } = await service
       .from('orders')
       .select('branch_id')
       .eq('id', orderId)
@@ -106,7 +106,11 @@ export async function updateItemStatus(
     }
   }
 
-  const { error } = await supabase.rpc('update_order_item_station_status', {
+  // Use user-context client so the RPC's auth_user_role()/auth_user_branch_id()
+  // resolve from the cookie JWT. Service role has no auth.uid() and the RPC
+  // (added by migration 089) raises UNAUTHENTICATED.
+  const userClient = await createClient()
+  const { error } = await userClient.rpc('update_order_item_station_status', {
     p_order_id: orderId,
     p_item_id:  itemId,
     p_station:  station,
@@ -130,17 +134,20 @@ export async function bumpStationOrder(
 
   if (!canAccessKDS(caller)) return { success: false, error: 'Unauthorized' }
 
-  const supabase = await createServiceClient()
+  const service = await createServiceClient()
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   if (!isGlobal) {
-    const { data: order, error: fetchErr } = await supabase
+    const { data: order, error: fetchErr } = await service
       .from('orders').select('branch_id').eq('id', orderId).single()
     if (fetchErr || !order) return { success: false, error: 'Order not found' }
     if (order.branch_id !== caller.branch_id)
       return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
   }
 
-  const { error } = await supabase
+  // User-context client — the new branch-scoped RLS on order_item_station_status
+  // (migration 089) needs auth.uid() to resolve the caller's branch.
+  const userClient = await createClient()
+  const { error } = await userClient
     .from('order_item_station_status')
     .update({ status: 'completed', updated_at: new Date().toISOString() })
     .eq('order_id', orderId)
@@ -163,17 +170,19 @@ export async function recallStationOrder(
 
   if (!canAccessKDS(caller)) return { success: false, error: 'Unauthorized' }
 
-  const supabase = await createServiceClient()
+  const service = await createServiceClient()
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   if (!isGlobal) {
-    const { data: order, error: fetchErr } = await supabase
+    const { data: order, error: fetchErr } = await service
       .from('orders').select('branch_id').eq('id', orderId).single()
     if (fetchErr || !order) return { success: false, error: 'Order not found' }
     if (order.branch_id !== caller.branch_id)
       return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
   }
 
-  const { error } = await supabase
+  // User-context client — see bumpStationOrder for rationale.
+  const userClient = await createClient()
+  const { error } = await userClient
     .from('order_item_station_status')
     .update({ status: 'ready', updated_at: new Date().toISOString() })
     .eq('order_id', orderId)
