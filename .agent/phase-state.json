@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-09 (session 77 — Sprint: Waiter App PWA + QR Table Ordering + Promotion Engine. Migrations 085-087 applied to production. Build: 540 pages, 0 errors.)",
+    "last_updated":  "2026-05-09 (session 78 — Dashboard/Menu full self-management + DB-first architecture. 15 files fixed/rewritten, migration 088 created. TSC 0 errors. Migration 088 PENDING production apply.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",
@@ -14,7 +14,7 @@
                        "build_pages":  540,
                        "git_tag":  "v1.6-realtime-logistics",
                        "pending_db_migrations":  [
-
+                                                     "088_menu_db_first_fix.sql — fixes menu_option_groups FK from menu_items_sync(slug) to menu_items(id) ON DELETE CASCADE. MUST apply before testing dashboard modifier creation."
                                                  ],
                        "migration_status":  "087 APPLIED — Sprint: Waiter App + QR Ordering + Promotions. Migrations 085 (restaurant_tables + orders.table_number + orders.source CHECK + rpc_create_order p_table_number + waiter/qr auto-accept), 086 (promotions table + promotion_type ENUM + orders.promotion_id + orders.promotion_discount_bhd + rpc_create_order p_promotion_id/p_promotion_discount_bhd), and 087 (orders.order_type CHECK adds 'dine_in') applied via Supabase SQL Editor on 2026-05-09.",
                        "applied_db_migrations":  [

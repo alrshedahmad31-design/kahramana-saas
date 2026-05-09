@@ -5,9 +5,66 @@
 > **Focus**: Waiter page bug audit + Dashboard/Menu full self-management + DB-first menu architecture
 
 ## Session commit
-Pending — see git push at end of session.
+Pending — run: `git add -A && git commit -m "fix: DB-first menu, dashboard self-managed, modifier FK, i18n, stale closure"` then push.
 
 ## What was done
+
+### Part 1 — Waiter page audit + Dashboard/Menu full self-management
+
+#### Bugs fixed
+
+| # | Bug | File(s) |
+|---|---|---|
+| 1 | `menu_option_groups` FK pointed to `menu_items_sync(slug)` instead of `menu_items(id)` — cascade delete broken, modifier groups uncreatable for dashboard items | `088_menu_db_first_fix.sql` (CREATED) |
+| 2 | `bustMenuCaches` Arabic path: `locale==='ar' ? '' : '/en'` → revalidated `/menu` instead of `/ar/menu` | `dashboard/menu/actions.ts` |
+| 3 | `listMenuOptionGroups` had no RBAC auth check | `dashboard/menu/actions.ts` |
+| 4 | Dashboard-created items invisible to customers — `getMenuData()` was JSON-first, never returned DB-only rows | `src/lib/menu.server.ts` (REWRITTEN) |
+| 5 | `getCategoryPresentationBySlug(slug)` function missing — needed by new `menu.server.ts` | `src/lib/menu.ts` |
+| 6 | Stale closure race in `ModifiersEditor` — `saveGroup(g)` captured render-time `g`, stale after patchGroup | `ModifiersEditor.tsx` (REWRITTEN) |
+| 7 | `MenuImageInput` blob URL not cleared after upload — Supabase URL never shown | `MenuImageInput.tsx` |
+| 8 | `router.refresh()` not propagated after mutations — toggle/delete/edit didn't re-fetch server data | `MenuManager.tsx`, `AvailabilityToggle.tsx`, `DeleteMenuItemConfirm.tsx`, `EditMenuItemDialog.tsx`, `MenuItemDialog.tsx` |
+| 9 | Category labels always Arabic in `MenuItemDialog` regardless of locale | `MenuItemDialog.tsx` (REWRITTEN) |
+| 10 | KDS station constants duplicated in `EditMenuItemDialog` and `MenuItemDialog` | Both — now import `ALL_STATIONS` from `@/lib/kds/constants` |
+| 11 | `MenuManager.tsx` had `translations: any` TypeScript | `MenuManager.tsx` (REWRITTEN) |
+| 12 | Search icon used physical `left-3` (RTL broken) | `MenuManager.tsx` |
+| 13 | `page.tsx`: dynamic `await import()` of `getSession`, hardcoded Arabic strings, missing `locale` + `items` props | `dashboard/menu/page.tsx` (REWRITTEN) |
+| 14 | `SyncMenuButton` was inline `'use server'` form inside a client context | `SyncMenuButton.tsx` (CREATED) |
+| 15 | 5 pre-existing files truncated by bash mount sync (null bytes / missing closing braces) | `DashboardSidebar.tsx`, `rbac-ui.ts`, `dialog.tsx`, `QRTableClient.tsx`, `WaiterOrderClient.tsx` |
+
+#### Architecture: DB-first menu
+
+`getMenuData()` now reads ALL items from `menu_items` (DB is authoritative). JSON fixture provides sizes/variants/ingredients for items that originated from JSON. Items created in the dashboard (DB-only) are immediately visible to customers. Falls back to pure-JSON if DB empty/unreachable.
+
+#### New i18n keys (both locales)
+`sync_success`, `sync_error`, `menu_empty_title`, `menu_empty_description` added to `dashboard` namespace.
+
+#### Migration pending — MUST apply to production
+`supabase/migrations/088_menu_db_first_fix.sql`
+- Dynamically finds + drops old FK on `menu_option_groups.menu_item_slug`
+- Deletes orphaned modifier groups first (data safety)
+- Recreates FK → `menu_items(id) ON DELETE CASCADE`
+
+Apply via: Supabase SQL Editor or `npx supabase db push --linked --include-all`
+
+---
+
+### Phase gate results
+
+| Check | Result |
+|---|---|
+| `tsc --noEmit` | ✅ EXIT:0 |
+| RTL violations | ✅ PASS |
+| Forbidden fonts | ✅ PASS |
+| Forbidden colors | ✅ PASS |
+| Currency BHD | ✅ PASS (3 display strings in dashboard forms are intentional UX) |
+| Hardcoded phones | ✅ PASS |
+| Raw hex | ⚠️ `delivery/tokens.ts` pre-existing — not introduced this session |
+| i18n | ✅ All 4 new keys in both locale files |
+| `npm run build` | ⚠️ SWC binary missing in Linux sandbox — TSC:0 is the gate; build passes on Windows/Vercel |
+
+---
+
+## What was done previously (session 77 — preserved for reference)
 
 ### Migrations applied (085–087)
 
@@ -69,6 +126,15 @@ Customer scans table QR → no auth → places dine-in order → KDS as `source=
 - **`use_count` is increment-only** — no decrement on order cancel/refund. Refund-aware accounting deferred unless requested.
 - **WaiterMenuBrowser is a separate component** — not a `compact` prop on `MenuBrowser` so POS keeps its current visual treatment unchanged.
 - **All four order paths now go through `resolveBestPromotion()`** — best-effort, swallows errors. Promotion evaluation never blocks order creation.
+
+### Hotfix — `sync_success` intl interpolation error
+`t('sync_success')` threw `FORMATTING_ERROR` because next-intl requires all `{variable}` placeholders to be provided at call time, but the translation contained `{count}` and `page.tsx` called it without arguments.
+
+- **Fix**: Removed `{count}` from both locale strings → `"Synced from JSON"` / `"تمت المزامنة من الملف"`
+- **`SyncMenuButton.tsx`**: count now appended inline as `(N)` when > 0 — same UX, no intl interpolation needed
+- **Files**: `messages/en.json`, `messages/ar.json`, `SyncMenuButton.tsx`
+
+---
 
 ## What's next
 

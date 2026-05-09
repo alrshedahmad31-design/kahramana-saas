@@ -1442,7 +1442,7 @@
     "update_success": "Item updated successfully",
     "delete_success": "Item deleted successfully",
     "error": "An unexpected error occurred",
-    "sync_success": "Synced {count} items from JSON",
+    "sync_success": "Synced from JSON",
     "sync_error": "Sync failed. Please try again.",
     "menu_empty_title": "Menu is Empty",
     "menu_empty_description": "No items in the database yet. Sync from JSON or add items manually."

@@ -20,7 +20,8 @@ export default function SyncMenuButton({ syncLabel, successMsg, errorMsg }: Prop
     startTransition(async () => {
       const result = await syncMenuItemsWithDatabase()
       if (result.success) {
-        toast.success(successMsg.replace('{count}', String(result.count ?? 0)))
+        const count = result.count ?? 0
+        toast.success(count > 0 ? `${successMsg} (${count})` : successMsg)
         router.refresh()
       } else {
         toast.error(result.error ?? errorMsg)
