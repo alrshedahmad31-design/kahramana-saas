@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-08 (session 65 — Menu Management CRUD: implemented full CRUD, fixed RLS (075), added station mapping, ingredients, and data sync from JSON with fallback)",
+    "last_updated":  "2026-05-09 (session 76 — SaaS audit + 5 competitive-gap closures: image upload, offline POS queue, menu modifiers, ESC/POS receipt, configurable loyalty. Migrations 077-084 applied to production.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",
@@ -16,7 +16,7 @@
                        "pending_db_migrations":  [
 
                                                  ],
-                       "migration_status":  "064 APPLIED — Security hardening: column-level UPDATE restrictions, rpc_create_customer_profile, rpc_get_driver_location, rpc_create_order v2 with auth gate + price validation + phone override + 50% points cap.",
+                       "migration_status":  "084 APPLIED — Loyalty config table + 5-gap features (image bucket 081, menu modifiers 082, rpc_create_order modifiers patch 083, loyalty_config 084) + KDS trigger fixes 077-079 + menu sync seed 080 all pushed to production via supabase db push --include-all on 2026-05-09.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -37,7 +37,15 @@
                                                      "061_orders_loyalty_columns.sql — applied 2026-05-06 (loyalty_points_redeemed INTEGER, loyalty_discount_bhd NUMERIC(10,3) on orders)",
                                                      "067_fix_loyalty_trigger_for_delivery.sql — applied 2026-05-07",
                                                      "070_menu_items_availability.sql — applied 2026-05-07 (Availability Toggle)",
-                                                     "071_shift_closing.sql — applied 2026-05-07 (Cash Reconciliation)"
+                                                     "071_shift_closing.sql — applied 2026-05-07 (Cash Reconciliation)",
+                                                     "077_fix_kds_trigger_slug_column.sql — applied 2026-05-09",
+                                                     "078_fix_kds_station_mapping.sql — applied 2026-05-09",
+                                                     "079_fix_kds_trigger_inline_mapping.sql — applied 2026-05-09",
+                                                     "080_seed_menu_items_sync.sql — applied 2026-05-09 (179 menu items)",
+                                                     "081_menu_images_storage.sql — applied 2026-05-09 (Supabase Storage bucket: menu-images, 2 MB cap, public read)",
+                                                     "082_menu_modifiers.sql — applied 2026-05-09 (menu_option_groups + menu_options + order_items.modifiers JSONB)",
+                                                     "083_rpc_create_order_modifiers.sql — applied 2026-05-09 (rpc_create_order persists v_item->modifiers; PRICE_MISMATCH skipped when line has modifiers)",
+                                                     "084_loyalty_config.sql — applied 2026-05-09 (DB-driven loyalty rules; defaults seeded; partial unique index on global active row)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
