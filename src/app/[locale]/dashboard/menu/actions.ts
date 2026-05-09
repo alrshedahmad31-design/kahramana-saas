@@ -9,6 +9,7 @@ import {
 } from '@/lib/auth/dashboard-guards'
 import { slugify } from '@/lib/menu'
 import menuData from '@/data/menu.json'
+import { MENU_CATEGORY_IDS } from '@/constants/menu-categories'
 import type { StaffRole, KDSStation } from '@/lib/supabase/custom-types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -30,13 +31,17 @@ const STATIONS = ['main', 'grill', 'shawarma', 'bakery', 'appetizer_drinks'] as 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 const itemPayloadSchema = z.object({
-  id:             z.string().min(1).max(120).regex(SLUG_RE, 'invalid slug'),
+  // id is optional on create — server generates it from category + name_en when missing.
+  id:             z.string().min(1).max(120).regex(SLUG_RE, 'invalid slug').optional(),
   name_ar:        z.string().trim().min(1).max(120),
   name_en:        z.string().trim().min(1).max(120),
   description_ar: z.string().trim().max(2000).optional().default(''),
   description_en: z.string().trim().max(2000).optional().default(''),
   price_bhd:      z.number().min(0).max(10_000),
-  category:       z.string().trim().min(1).max(80),
+  category:       z.string().trim().min(1).max(80).refine(
+    (v) => MENU_CATEGORY_IDS.includes(v),
+    { message: 'category must be one of MENU_CATEGORIES' },
+  ),
   image_url:      z.string().trim().max(500).optional().default(''),
   station:        z.enum(STATIONS),
   is_available:   z.boolean().optional().default(true),
@@ -193,10 +198,35 @@ export async function createMenuItem(
   }
   const payload = parsed.data
 
+  // Generate slug server-side when client did not supply one.
+  const generatedSlug = payload.id?.trim()
+    ? payload.id.trim()
+    : `${payload.category}-${slugify(payload.name_en)}`
+
+  if (!SLUG_RE.test(generatedSlug)) {
+    return { success: false, error: 'id: invalid slug after auto-generation — check the English name' }
+  }
+
   const supabase = await createServiceClient()
+
+  // Uniqueness check against menu_items_sync (canonical slug registry).
+  const { data: existing, error: lookupError } = await supabase
+    .from('menu_items_sync')
+    .select('slug')
+    .eq('slug', generatedSlug)
+    .maybeSingle()
+
+  if (lookupError) {
+    console.error('[menu] createMenuItem uniqueness check failed:', lookupError)
+    return { success: false, error: lookupError.message }
+  }
+  if (existing) {
+    return { success: false, error: 'هذا المعرف مستخدم، عدّل الاسم الإنجليزي' }
+  }
 
   const { error } = await supabase.from('menu_items').insert({
     ...payload,
+    id:         generatedSlug,
     image_url:  payload.image_url || null,
     updated_at: new Date().toISOString(),
   })
@@ -210,12 +240,12 @@ export async function createMenuItem(
     table_name: 'menu_items',
     action:     'INSERT',
     user_id:    caller.id,
-    record_id:  payload.id,
+    record_id:  generatedSlug,
     actor_role: caller.role,
-    changes:    { action: 'menu_item_created', ...payload },
+    changes:    { action: 'menu_item_created', ...payload, id: generatedSlug },
   })
 
-  bustMenuCaches(payload.id)
+  bustMenuCaches(generatedSlug)
   return { success: true }
 }
 

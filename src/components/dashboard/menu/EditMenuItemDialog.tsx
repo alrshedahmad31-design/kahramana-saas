@@ -19,8 +19,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { STATION_CONFIG } from '@/constants/kds'
+import { MENU_CATEGORIES, type MenuCategoryId } from '@/constants/menu-categories'
 import type { KDSStation } from '@/lib/supabase/custom-types'
 
 const STATIONS: KDSStation[] = ['main', 'grill', 'shawarma', 'bakery', 'appetizer_drinks']
@@ -125,15 +125,43 @@ export default function EditMenuItemDialog({ item, locale }: Props) {
             <DialogDescription>{t('menu_item_form_description')}</DialogDescription>
           </DialogHeader>
 
-          {/* Slug + category badge */}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-brand-muted">
-            <span className="font-mono">{form.id}</span>
-            <Badge
-              variant="outline"
-              className="border-brand-gold/30 bg-brand-gold/10 text-brand-gold"
+          {/* Slug — read-only after creation. Changing it would break URLs. */}
+          <div className="space-y-1">
+            <Label htmlFor="slug-readonly" className="text-xs text-brand-muted">
+              {t('item_slug')} (ID)
+            </Label>
+            <Input
+              id="slug-readonly"
+              value={form.id}
+              disabled
+              readOnly
+              className="font-mono text-xs"
+            />
+            <p className="text-xs text-brand-muted">
+              {isAr
+                ? 'لا يمكن تغيير المعرف بعد الإنشاء'
+                : 'Slug cannot be changed after creation'}
+            </p>
+          </div>
+
+          {/* Category — editable Select */}
+          <div className="space-y-2">
+            <Label htmlFor="category">{t('category_id')}</Label>
+            <select
+              id="category"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value as MenuCategoryId })}
+              className="flex h-10 w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-sm text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
             >
-              {form.category}
-            </Badge>
+              {!MENU_CATEGORIES.some((c) => c.id === form.category) && (
+                <option value={form.category}>{form.category}</option>
+              )}
+              {MENU_CATEGORIES.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {isAr ? cat.ar : cat.en}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Locale switcher */}
