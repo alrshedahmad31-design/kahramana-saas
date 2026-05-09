@@ -274,21 +274,27 @@ export function getSortedRawCategories(): MenuCategory[] {
 }
 
 function getPriceValues(item: MenuItem): number[] {
-  if (typeof item.price_bhd === 'number') return [item.price_bhd]
+  const prices: number[] = []
+  
+  if (typeof item.price_bhd === 'number' && item.price_bhd > 0) {
+    prices.push(item.price_bhd)
+  }
 
   if (item.sizes) {
-    return Object.values(item.sizes).filter(
-      (price): price is number => typeof price === 'number',
+    const sizePrices = Object.values(item.sizes).filter(
+      (price): price is number => typeof price === 'number' && price > 0,
     )
+    prices.push(...sizePrices)
   }
 
   if (item.variants) {
-    return item.variants
-      .map((variant) => variant.price_bhd)
-      .filter((price): price is number => typeof price === 'number')
+    const variantPrices = item.variants
+      .map((v) => v.price_bhd)
+      .filter((p): p is number => typeof p === 'number' && p > 0)
+    prices.push(...variantPrices)
   }
 
-  return []
+  return prices
 }
 
 export function getItemImageOrFallback(item: Pick<MenuItem, 'image_url'>): string {
@@ -299,41 +305,56 @@ export function resolveMenuItemPrice(
   item: MenuItem,
   selection: MenuPriceSelection = {},
 ): number {
-  if (typeof item.price_bhd === 'number') return item.price_bhd
+  let total = 0
+  let hasSelection = false
 
   if (item.sizes) {
     const selectedSizePrice = selection.size
       ? (item.sizes as Record<string, number | undefined>)[selection.size]
       : undefined
 
-    if (typeof selectedSizePrice === 'number') return selectedSizePrice
-
-    const sizePrices = Object.values(item.sizes).filter(
-      (price): price is number => typeof price === 'number',
-    )
-    return sizePrices.length > 0 ? Math.min(...sizePrices) : 0
+    if (typeof selectedSizePrice === 'number') {
+      total += selectedSizePrice
+      hasSelection = true
+    } else {
+      const sizePrices = Object.values(item.sizes).filter(
+        (price): price is number => typeof price === 'number',
+      )
+      if (sizePrices.length > 0) {
+        total += Math.min(...sizePrices)
+        hasSelection = true
+      }
+    }
   }
 
   if (item.variants) {
-    const selectedVariant = selection.variant
+    const variant = selection.variant
       ? item.variants.find(
-          (variant) =>
-            variant.label.en === selection.variant ||
-            variant.label.ar === selection.variant,
+          (v) =>
+            v.label.en === selection.variant ||
+            v.label.ar === selection.variant,
         )
       : undefined
 
-    if (typeof selectedVariant?.price_bhd === 'number') {
-      return selectedVariant.price_bhd
+    if (typeof variant?.price_bhd === 'number') {
+      total += variant.price_bhd
+      hasSelection = true
+    } else {
+      const variantPrices = item.variants
+        .map((v) => v.price_bhd)
+        .filter((p): p is number => typeof p === 'number')
+      if (variantPrices.length > 0) {
+        total += Math.min(...variantPrices)
+        hasSelection = true
+      }
     }
-
-    const variantPrices = item.variants
-      .map((variant) => variant.price_bhd)
-      .filter((price): price is number => typeof price === 'number')
-    return variantPrices.length > 0 ? Math.min(...variantPrices) : 0
   }
 
-  return 0
+  if (!hasSelection && typeof item.price_bhd === 'number') {
+    return item.price_bhd
+  }
+
+  return total
 }
 
 export function resolveCheckoutMenuItemPrice(

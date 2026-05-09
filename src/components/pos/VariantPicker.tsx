@@ -34,12 +34,18 @@ export default function VariantPicker({ item, isAr, onCancel, onConfirm }: Props
   }, [onCancel])
 
   const unitPriceBhd = useMemo(() => {
-    if (hasVariants) return item.variants[variantIndex]?.priceBhd ?? 0
+    let total = 0
     if (hasSizes) {
       const s = item.sizes.find((x) => x.label === size)
-      return s?.priceBhd ?? 0
+      total += s?.priceBhd ?? 0
     }
-    return item.priceBhd ?? 0
+    if (hasVariants) {
+      total += item.variants[variantIndex]?.priceBhd ?? 0
+    }
+    if (!hasSizes && !hasVariants) {
+      total = item.priceBhd ?? 0
+    }
+    return total
   }, [hasSizes, hasVariants, item, size, variantIndex])
 
   function confirm() {
