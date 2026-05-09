@@ -24,6 +24,7 @@ const ROLE_BADGE: Record<StaffRole, { bg: string; text: string }> = {
   branch_manager:    { bg: 'bg-brand-success/20', text: 'text-brand-success' },
   cashier:           { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
   kitchen:           { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
+  waiter:            { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
   driver:            { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
   inventory:         { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },
   inventory_manager: { bg: 'bg-brand-surface-2',  text: 'text-brand-muted'   },

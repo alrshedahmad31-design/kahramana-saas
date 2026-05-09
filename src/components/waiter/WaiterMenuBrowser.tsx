@@ -1,10 +1,11 @@
 'use client'
 
 import Image from 'next/image'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Plus } from 'lucide-react'
 import type { POSCategory, POSItem } from '@/components/pos/types'
+import { resolveMenuItemPrice } from '@/components/pos/types'
 
 interface Props {
   categories: POSCategory[]
@@ -144,9 +145,8 @@ function ItemCard({
   item, isAr, onAdd,
 }: { item: POSItem; isAr: boolean; onAdd: () => void }) {
   const t = useTranslations('waiter')
-  // Server-precomputed (page.tsx maps from NormalizedMenuItem.fromPrice).
-  // Re-deriving on the client risked SSR/CSR drift on items where
-  // `priceBhd` came back from PostgREST as a string — see commit log.
+  const [price] = useState(() => resolveMenuItemPrice(item))
+
   const fromPrice = item.fromPriceBhd
 
   const disabled = !item.available
@@ -156,6 +156,9 @@ function ItemCard({
       type="button"
       disabled={disabled}
       onClick={onAdd}
+      aria-label={isAr
+        ? `إضافة ${item.nameAr} - ${price.toFixed(3)} د.ب`
+        : `Add ${item.nameEn} - ${price.toFixed(3)} BHD`}
       className={`group flex flex-col rounded-xl border bg-brand-surface text-start overflow-hidden transition-colors
         ${disabled
           ? 'border-brand-border opacity-50 cursor-not-allowed'
@@ -184,7 +187,7 @@ function ItemCard({
         </h4>
         <div className="mt-auto flex items-end justify-between gap-2 pt-2">
           <span className="font-satoshi font-black text-brand-gold tabular-nums text-sm">
-            {fromPrice.toFixed(3)}
+            {price.toFixed(3)}
           </span>
           <span className="shrink-0 w-6 h-6 rounded bg-brand-surface-2 text-brand-muted flex items-center justify-center group-hover:bg-brand-gold group-hover:text-brand-black transition-colors">
             <Plus size={14} strokeWidth={3} />

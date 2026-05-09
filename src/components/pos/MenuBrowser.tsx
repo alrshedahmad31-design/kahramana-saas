@@ -1,9 +1,10 @@
 'use client'
 
 import Image from 'next/image'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import type { POSCategory, POSItem } from './types'
+import { resolveMenuItemPrice } from './types'
 
 interface Props {
   categories: POSCategory[]
@@ -126,8 +127,8 @@ function ItemCard({
   item, isAr, onAdd,
 }: { item: POSItem; isAr: boolean; onAdd: () => void }) {
   const t = useTranslations('pos')
-  // Server-precomputed (page.tsx maps from NormalizedMenuItem.fromPrice) so
-  // SSR and client renders never disagree.
+  const [price] = useState(() => resolveMenuItemPrice(item))
+
   const fromPrice = item.fromPriceBhd
 
   const disabled = !item.available
@@ -137,6 +138,9 @@ function ItemCard({
       type="button"
       disabled={disabled}
       onClick={onAdd}
+      aria-label={isAr
+        ? `إضافة ${item.nameAr} - ${price.toFixed(3)} د.ب`
+        : `Add ${item.nameEn} - ${price.toFixed(3)} BHD`}
       className={`group flex flex-col rounded-xl border bg-brand-surface text-start overflow-hidden transition-colors
         ${disabled
           ? 'border-brand-border opacity-50 cursor-not-allowed'
@@ -163,7 +167,7 @@ function ItemCard({
         </span>
         <div className="mt-auto flex items-center justify-between gap-2">
           <span className="font-satoshi font-bold text-brand-gold text-sm tabular-nums">
-            {fromPrice.toFixed(3)}
+            {price.toFixed(3)}
           </span>
           {!disabled && (
             <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-brand-gold/10 text-brand-gold group-hover:bg-brand-gold group-hover:text-brand-black transition-colors">

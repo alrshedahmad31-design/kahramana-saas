@@ -10,7 +10,7 @@ export type { Database, Tables, TablesInsert, TablesUpdate, Enums, Json } from '
 // ── Postgres ENUM aliases ────────────────────────────────────────────────────
 
 export type OrderStatus    = Enums<'order_status'>;
-export type StaffRole      = Enums<'staff_role'>;
+export type StaffRole      = Enums<'staff_role'> | 'waiter';
 export type KDSStation     = 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'main' | 'fry' | 'salads' | 'desserts' | 'drinks' | 'packing';
 export type KDSItemStatus  = 'pending' | 'preparing' | 'ready' | 'completed';
 export type LoyaltyTier    = Enums<'loyalty_tier'>;

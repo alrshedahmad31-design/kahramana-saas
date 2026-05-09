@@ -11,6 +11,7 @@ const ROLE_LABEL: Record<StaffRole, string> = {
   branch_manager:    'Branch Manager',
   cashier:           'Cashier',
   kitchen:           'Kitchen',
+  waiter:            'Waiter',
   driver:            'Driver',
   inventory:         'Inventory',
   inventory_manager: 'Inventory Manager',
