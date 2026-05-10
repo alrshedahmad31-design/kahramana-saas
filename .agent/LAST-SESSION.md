@@ -1,8 +1,81 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-> **Session**: 85 (Claude Code track)
+> **Session**: 86 (Claude Code track)
 > **Date**: 2026-05-10
-> **Focus**: Tech-debt close — Supabase types regenerated post-093, all four `as never` casts removed from kds/menu actions, waiter dine-in E2E re-verified against current main (post-094/095 RLS lockdown). Conversation master-notes session-history corrections.
+> **Focus**: Pre-launch monitoring stack — Sentry SDK installed, real `/api/health` for UptimeRobot, middleware bug excluding `/api/*` from next-intl fixed, GA4+Clarity redeploy triggered, gallery slimmed by 2.2 MB (31 orphan menu images deleted), gate 7 exempt list updated, post-launch backlog initialized (BL-001).
+
+## Session 86 deliverables
+
+### Phase-completion gates re-run
+- All 8 phase-completion gates from CLAUDE.md ran clean against current `master`:
+  1. `tsc --noEmit` → 0 errors
+  2. `NEXT_BUILD_WORKERS=1 npm run build` → exit 0, 333+ static pages
+  3. RTL violations (`pl-/pr-/ml-/mr-`) → 0
+  4. Forbidden fonts → 0 (only false-positive substring matches on `Inter`val/`Inter`active)
+  5. Raw hex colors → only token files (design-tokens.ts + delivery/tokens.ts)
+  6. Hardcoded phones / `wa.me/` → only `src/constants/contact.ts`
+  7. Currency → `KWD/SAR/USD/€/£` zero; `BD` is intended display label (gate 5 forbids only `BHD`)
+  8. Service-role key in `.next/` → 20 hits in `.next/server/...` (expected); **1 hit in client bundle** (`dashboard/settings/page-*.js`) — investigated: literal `process.env.SUPABASE_SERVICE_ROLE_KEY` appears, but Next.js does not inline non-`NEXT_PUBLIC_*` env vars on the client, so the secret value itself never leaks. Logged as **BL-001** in post-launch backlog (split `src/lib/loyalty/config.ts` so client components don't drag in the supabase-js client + env reference).
+
+### Docs touched
+- **`CLAUDE.md`** — gate 7 exempt comment now lists both `src/lib/design-tokens.ts` and `src/lib/delivery/tokens.ts`; timestamp bumped to `2026-05-10 (session 86)`. Commit `022ad17`.
+- **`docs/qa/post-launch-backlog.md`** — new file. First entry **BL-001** (loyalty helpers split, low severity, S effort, no security risk). Created per `pre-launch-checklist.md` §7 ("`-` fails → log for post-launch backlog"). Commit `022ad17`.
+
+### Vercel redeploy trigger
+- **Empty commit `9d1f5a8`** to force a fresh Vercel build so the GA4 + Microsoft Clarity env vars activate. No code change.
+
+### Sentry Next.js SDK installed
+- Wizard run **manually by Ahmed in PowerShell** (subprocess via Bash failed with `ERR_TTY_INIT_FAILED` — wizard cannot initialize a TTY in non-interactive parent). Commit `15e587c` — adds `sentry.server.config.ts`, `sentry.edge.config.ts`, `instrumentation.ts`, `instrumentation-client.ts`, `global-error.tsx`, `sentry-example-page/`, `sentry-example-api/`, wraps `next.config.ts` with `withSentryConfig`, adds `@sentry/nextjs` to deps. Follow-up commit `70da288` pinned `import-in-the-middle@3.0.1` to resolve a Sentry × Prisma instrumentation conflict (also by Ahmed).
+- Vercel env vars added by Ahmed (`SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` — all Sensitive, Production+Preview).
+- **Auth-token rotation incident**: Ahmed initially pasted the `sntrys_*` auth token into chat (and into the `SENTRY_DSN` Vercel field by mistake). Token treated as compromised, revoked at sentry.io, replaced. The DSN field was corrected to the actual URL.
+
+### `/api/health` upgraded from stub to real liveness probe
+- **Before**: `src/app/api/health/route.ts` returned `{status:'ok', ts}` unconditionally.
+- **After (commit `fc24590`)**: queries `branches` via `createServiceClient()` (head:true count:exact — cheapest possible Postgres reachability check, no rows transferred), wrapped in `Promise.race` with a 4s hard timeout. Returns 503 + JSON failure detail on DB error/timeout, 200 + status `'ok'` otherwise. Body always includes `sha` (short Vercel commit SHA), `iso` timestamp, total `latencyMs`, and `checks.db.{ok,latencyMs,error?}` for debugging. `Cache-Control: no-store` + `force-dynamic` + `runtime: 'nodejs'`.
+- Defaults chosen via AskUserQuestion (Recommended on all three): DB-reachability only (no Sentry/Stripe/env-var checks), strict 503-on-failure, no auth.
+
+### Middleware fix — `/api/*` excluded from `next-intl` matcher
+- **Symptom**: `/api/health` returned 404 in production after `fc24590` deployed.
+- **Root cause**: `src/middleware.ts:200` matcher pattern excluded `_next/static`, `auth`, asset extensions, etc. — but **not** `api`. So `next-intl/middleware` ran on every API route and tried to locale-prefix it (with `localePrefix: 'as-needed'`, `defaultLocale: 'ar'`), redirecting `/api/health` → `/ar/api/health` which doesn't exist.
+- **Fix (commit `362e121`)**: added `api` to the negative-lookahead. Verified safe — middleware's auth/CSP/Supabase logic only ran for `/dashboard*` and `/login*` paths anyway (line 117 short-circuits everything else with no Supabase call); Sentry instrumentation runs at route-handler level, not middleware.
+- **Side effect**: also un-broke `/api/webhooks/tap`, `/api/inventory/{export,template}`, `/api/sentry-example-api`. Tap webhooks would have silently 404'd in production once the payment provider started calling them — pre-launch, so no harm done.
+- **Live verification**: `curl https://kahramanat.com/api/health` returns `{"status":"ok","sha":"362e121","iso":"2026-05-10T08:33:48.109Z","latencyMs":485,"checks":{"db":{"ok":true,"latencyMs":485}}}`. DB roundtrip Vercel `sin1` ↔ Supabase `ap-northeast-1` is ~485ms (well under the 4s timeout).
+
+### Menu image audit + cleanup (-2.2 MB)
+- Cross-referenced all 168 `menu_items.image_url` values against files in `public/assets/gallery/` (the actual path; `public/images/menu/` does not exist).
+- **Zero items have broken image references.** All 152 unique filenames in DB exist on disk.
+- **Image quality issues flagged** (not fixed this session — needs AI image generation):
+  - **Priority A — misleading reuse across categories** (4 items): `pastry-cheese`/`pastry-spring-pie` show pizza images for pies; `shawarma-lebnani-meat` shows wrong bread; `main-kharof` shows quzi instead of whole lamb.
+  - **Priority B — same image used by 3–5 visually-similar items** (4 clusters): `labneh-manakish.webp` ×5, `charcoal-grilled-chicken.webp` ×3, `spinach-pie.webp` ×3, `zaatar-manakish.webp` ×3.
+  - **Priority C — pairs sharing one image** (~5 pairs): `arabi-meat-shawarma`, `dolma-platter`, `bahraini-lamb-quzi`, `margherita-pizza`, `meat-chapati-shawarma`, `vegetable-pizza`.
+- **31 orphan files deleted** from `public/assets/gallery/`. Commit `20582e6`. Verified safe — no references in `menu_items`, `src/data/menu.json` (the live menu source imported by `src/lib/menu.ts` and `dashboard/menu/actions.ts`), or any other DB table with image-bearing columns. The root-level `menu.json` (stale seed file, not imported) DID reference some — flagged for separate cleanup. Reclaimed 2236 KB. Gallery now 1:1 with `menu_items`: 152 files / 152 unique refs.
+
+### Verification (full session)
+- `npx tsc --noEmit` → 0 errors (run after each code change).
+- `NEXT_BUILD_WORKERS=1 npm run build` → exit 0.
+- E2E `tests/e2e/waiter/dine-in.spec.ts --headed` → 1/1 PASS, 16.6s actual / 38.8s with 6-user setup/teardown.
+- Production `/api/health` verified live: HTTP 200, sha matches deployed commit, db.ok=true, latencyMs=485.
+
+### Decisions / non-obvious notes
+- **Sentry wizard cannot run from a Bash subprocess** under Claude Code — needs a real TTY. Ahmed had to run it manually in PowerShell. Future Sentry-related setup that requires the wizard should always be run by the user via the `!` prefix or directly in their terminal.
+- **Service-role key in client bundle is NOT a leak** — the literal string `process.env.SUPABASE_SERVICE_ROLE_KEY` appears in `dashboard/settings/page-*.js` because a client component imports pure helpers from `src/lib/loyalty/config.ts` (which co-locates server-only `fetchLoyaltyConfig`/`getLoyaltyConfig` with `pointsToCredit`/etc.). Next.js only inlines `NEXT_PUBLIC_*` env vars on the client, so the actual secret never ships. Pure bundle-bloat smell, tracked as BL-001.
+- **`/api/health` runtime is `nodejs`** (not edge) because `createServiceClient()` uses `@supabase/supabase-js` server-side. Fluid Compute is the default — fine for the 5-min UptimeRobot interval.
+- **Gallery 1:1 mapping**: 152 referenced filenames + 152 disk files. Any future menu_items insert with a new image_url will require uploading the matching .webp first or the page will 404 on `<Image>` load.
+- **Stale `menu.json` at repo root** (separate from `src/data/menu.json`) is not imported by any TS file. Probably an early-development seed/spec leftover. Candidate for deletion in a separate commit; deferred this session.
+
+## Carry-overs into next session
+
+**New (from session 86):**
+1. **UptimeRobot monitor** — Ahmed to set up the 5-min HTTPS monitor pointing at `https://kahramanat.com/api/health` with optional keyword `"status":"ok"` for second-layer alerting.
+2. **Menu image regeneration** — 4 Priority-A misleading images and 4 Priority-B reused-image clusters need per-item AI-generated photos. Decide whether to use `seo-image-gen` skill (Gemini via nanobanana-mcp) or external tooling.
+3. **Stale root `menu.json`** — verify nothing imports it (none found this session) and delete in its own commit.
+4. **BL-001 (loyalty helpers split)** — post-launch refactor recorded in `docs/qa/post-launch-backlog.md`. Bundle-hygiene cleanup, no security or correctness urgency.
+
+**Carried from session 85 (no movement):**
+- 13 staff emails for `scripts/seed-staff.ts:54-79` still outstanding (blocks migration 090 + first staff seed cycle).
+- Refund modal for `code === 'refund_required'` (introduced session 84) — toast still in use; dedicated modal not yet built.
+- Legacy `kds_queue` table — post-launch cleanup candidate.
+- Pre-launch QA master checklist `docs/qa/pre-launch-checklist.md` — not re-run end-to-end this session.
 
 ## Session 85 deliverables
 
@@ -30,34 +103,10 @@
   5. Session 79 description set to the commit reference (215d9f1, +671/−110 across 10 files); session 82 description set to "types.ts regen, additive pricing fix (VariantPicker), migration 088 applied, QA checklist (150 items)".
 - Note: section-history descriptions for sessions 79/80 and 80/82 are now near-duplicates of each other in the file. Flagged in conversation; not corrected this session — would need a fuller rewrite of the session-by-session table.
 
-### Verification (full session)
+### Session 85 verification (recap)
 - `npx tsc --noEmit` → 0 errors (post-cast-removal, against regenerated types).
 - E2E: 1/1 PASS, 15.3s actual / 37.0s with setup/teardown.
-- Build: not re-run this session — last green build was session 84 (`540 pages, 0 errors`).
-
-### Decisions / non-obvious notes
-- **Cast count reconciliation**: LAST-SESSION.md from session 84 said "two `as never` casts" pending types regen, but listed locations summed to four (`kds/actions.ts:218` + `menu/actions.ts:187/256/318`). All four were workarounds for the same migration-093 enum lag and removable in one pass once types were regenerated.
-- **Supabase CLI session login**: `npx supabase gen types typescript --linked` succeeded without an explicit interactive login this session — the local CLI session token was already valid. CLI version 2.98.2.
-- **Two-commit cast removal**: `6a09f59` initially missed two of the four cast removals (line 256 + line 318 in `menu/actions.ts`); `ec9f5e6` is the clean follow-up. Working tree is clean and pushed.
-- **types.ts diff was empty against committed baseline**: the previous regen (`b8ee91e`, post-089) already captured the post-093 enum additions, suggesting the post-093 types were either regenerated and committed earlier than the casts were removed, or the column types were stable across migrations 089→095. Either way, the current types.ts matches production exactly.
-
-## Carry-overs into next session
-
-**Still blocked on Ahmed**: 13 real email addresses for `scripts/seed-staff.ts:54-79`. Once received, the unchanged sequence is:
-1. Paste emails into the script.
-2. Apply migration 090 (`090_extend_staff_role_waiter.sql`) via SQL Editor.
-3. Register in `schema_migrations` if applied via SQL Editor.
-4. `npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts` (regen — should add `'waiter'` to `staff_role` enum).
-5. `npx tsc --noEmit` — expect 0 errors.
-6. `npm run seed:staff:dry` — sanity check.
-7. `npm run seed:staff` — invites + inserts.
-8. Each invitee opens the magic-link email and lands logged in.
-9. Update `.agent/phase-state.json`: move 090 to `applied_db_migrations`; add `production_staff_seeded` flag in `external_dependencies`.
-
-Other open items (no movement this session):
-- Refund modal for `code === 'refund_required'` (introduced session 84) — UI still surfaces via existing toast; dedicated modal not yet built.
-- Legacy `kds_queue` table — still a candidate for post-launch cleanup. `order_item_station_status` is canonical.
-- Pre-launch QA master checklist `docs/qa/pre-launch-checklist.md` — not re-run end-to-end this session.
+- Build: not re-run that session — last green build was session 84 (`540 pages, 0 errors`).
 
 ## Session 84 deliverables
 
