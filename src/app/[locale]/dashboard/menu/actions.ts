@@ -250,7 +250,7 @@ export async function createMenuItem(
     id:         generatedSlug,
     image_url:  payload.image_url || null,
     updated_at: new Date().toISOString(),
-  } as never)
+  })
 
   if (error) {
     console.error('[menu] createMenuItem failed:', error)
@@ -312,7 +312,7 @@ export async function updateMenuItem(
       ...editable,
       image_url:  editable.image_url || null,
       updated_at: new Date().toISOString(),
-    } as never)
+    })
     .eq('id', slug)
 
   if (error) {
