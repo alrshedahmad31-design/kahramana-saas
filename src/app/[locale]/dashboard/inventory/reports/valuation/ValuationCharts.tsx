@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { colors } from '@/lib/design-tokens'
 
-const PIE_COLORS = [colors.gold, '#ef4444', '#22c55e', colors.muted, colors.border, colors.surface2]
+const PIE_COLORS = [colors.gold, colors.error, colors.success, colors.muted, colors.border, colors.surface2]
 
 interface TooltipProps {
   active?: boolean

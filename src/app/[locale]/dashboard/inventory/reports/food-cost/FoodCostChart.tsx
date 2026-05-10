@@ -82,13 +82,13 @@ export default function FoodCostTrendChart({
             <Tooltip content={<CustomTooltip locale={locale} />} cursor={{ stroke: colors.surface2, strokeWidth: 1 }} />
             <ReferenceLine
               y={targetPct}
-              stroke="#22c55e"
+              stroke={colors.success}
               strokeDasharray="5 5"
               strokeWidth={1.5}
-              label={{ 
-                value: t('targetLabel', { pct: targetPct }), 
-                position: 'insideTopRight', 
-                fill: '#22c55e', 
+              label={{
+                value: t('targetLabel', { pct: targetPct }),
+                position: 'insideTopRight',
+                fill: colors.success,
                 fontSize: 10,
                 fontWeight: 900,
                 offset: 10

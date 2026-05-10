@@ -70,9 +70,9 @@ function COGSBarChart({ dishes, title, currency, locale }: { dishes: DishCogsRow
     }))
 
   const getColor = (margin: number) => {
-    if (margin >= 60) return '#22c55e'
+    if (margin >= 60) return colors.success
     if (margin >= 40) return colors.gold
-    return '#ef4444'
+    return colors.error
   }
 
   return (

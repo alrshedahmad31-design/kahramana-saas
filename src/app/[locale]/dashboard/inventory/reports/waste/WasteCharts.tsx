@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 import { colors } from '@/lib/design-tokens'
 
-const PIE_COLORS = [colors.gold, '#ef4444', '#22c55e', colors.muted, colors.border]
+const PIE_COLORS = [colors.gold, colors.error, colors.success, colors.muted, colors.border]
 
 interface TooltipProps {
   active?: boolean
