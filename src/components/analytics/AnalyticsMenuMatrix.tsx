@@ -15,7 +15,9 @@ interface Props {
 
 interface CustomTooltipProps {
   active?:  boolean
-  payload?: any[]
+  // Recharts threads each scatter point's row through `payload[i].payload`.
+  // We only read index 0, and the row shape is exactly AnalyticsMenuEngineeringRow.
+  payload?: Array<{ payload: AnalyticsMenuEngineeringRow }>
   locale:   string
 }
 
