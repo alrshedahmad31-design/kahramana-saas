@@ -1,7 +1,8 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import * as Sentry from '@sentry/nextjs'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 type AuthError = 'rate_limited' | 'invalid_credentials' | 'signup_error'
 type AuthResult = { success: true } | { success: false; error: AuthError }
@@ -62,14 +63,38 @@ export async function registerAction(
   const supabase = await createClient()
 
   const { data: authData, error: signUpErr } = await supabase.auth.signUp({ email, password })
-  if (signUpErr || !authData.user?.id) return { success: false, error: 'signup_error' }
+  if (signUpErr || !authData.user?.id) {
+    Sentry.captureException(signUpErr ?? new Error('signUp returned no user id'), {
+      tags: { stage: 'auth.signUp' },
+    })
+    return { success: false, error: 'signup_error' }
+  }
 
-  const { error: profileErr } = await supabase.rpc('rpc_create_customer_profile', {
-    p_phone: normalizedPhone,
-    p_name:  name.trim() || undefined,
-    p_email: email,
-  })
-  if (profileErr) return { success: false, error: 'signup_error' }
+  // Insert the customer profile via service-role.
+  //
+  // Why service-role and not the rpc_create_customer_profile RPC: the RPC
+  // requires auth.uid() to resolve, but Supabase's email-confirmation flow
+  // does NOT create a session on signUp — no session cookies are set, so
+  // auth.uid() returns NULL and the RPC raises AUTH_REQUIRED. Bypassing
+  // RLS with service-role and using the user.id from the signUp response
+  // works regardless of email-confirmation settings.
+  const admin = createServiceClient()
+  const { error: profileErr } = await admin
+    .from('customer_profiles')
+    .insert({
+      id:    authData.user.id,
+      phone: normalizedPhone,
+      name:  name.trim() || null,
+      email,
+    })
+
+  if (profileErr) {
+    Sentry.captureException(profileErr, {
+      tags: { stage: 'customer_profile.insert' },
+      extra: { userId: authData.user.id },
+    })
+    return { success: false, error: 'signup_error' }
+  }
 
   return { success: true }
 }
