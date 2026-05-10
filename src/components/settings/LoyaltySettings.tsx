@@ -7,7 +7,7 @@ import {
   getLoyaltyConfigForEditor,
   updateLoyaltyConfig,
 } from '@/app/[locale]/dashboard/settings/loyalty-actions'
-import { DEFAULT_LOYALTY_CONFIG, type LoyaltyConfig } from '@/lib/loyalty/config'
+import { DEFAULT_LOYALTY_CONFIG, type LoyaltyConfig } from '@/lib/loyalty/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
