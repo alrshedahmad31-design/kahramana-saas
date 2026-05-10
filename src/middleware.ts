@@ -13,6 +13,13 @@ const STAFF_ROUTE_PATTERN  = /^(\/(ar|en))?\/dashboard\/staff(\/.*)?$/
 
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
 
+const PUBLIC_NO_PREFIX = [
+  '/branches',
+  '/privacy-policy',
+  '/terms',
+  '/refund-policy',
+] as const
+
 // ── CSP builder (nonce injected per request) ──────────────────────────────────
 // Strategy:
 //   - Production: nonce-based + 'strict-dynamic'. Modern browsers ignore
@@ -103,6 +110,15 @@ function finalizeResponse(
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  const isPublicNoPrefix = PUBLIC_NO_PREFIX.some((path) =>
+    pathname === path || pathname.startsWith(`${path}/`),
+  )
+
+  if (isPublicNoPrefix) {
+    return NextResponse.next()
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
   const headersWithNonce = new Headers(request.headers)
   headersWithNonce.set('x-nonce', nonce)
