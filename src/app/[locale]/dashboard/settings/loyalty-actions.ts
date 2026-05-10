@@ -9,7 +9,6 @@ import {
 } from '@/lib/auth/dashboard-guards'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 import {
-  DEFAULT_LOYALTY_CONFIG,
   getLoyaltyConfig,
   type LoyaltyConfig,
 } from '@/lib/loyalty/config'
@@ -103,5 +102,3 @@ export async function updateLoyaltyConfig(
 
   return { success: true }
 }
-
-export { DEFAULT_LOYALTY_CONFIG }

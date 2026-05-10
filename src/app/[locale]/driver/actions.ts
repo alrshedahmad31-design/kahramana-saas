@@ -4,12 +4,23 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import type { DriverLocationInsert } from '@/lib/supabase/custom-types'
 
-// Roles that can perform driver actions (driver + supervising management)
-const DRIVER_ACTION_ROLES = new Set(['driver', 'branch_manager', 'general_manager', 'owner'])
-// Roles with cross-branch authority (not bound by branch_id guard)
-const CROSS_BRANCH_ROLES  = new Set(['general_manager', 'owner'])
+// Audit fix #1: driver mutations are driver-only. Managers monitor and
+// dispatch from the delivery dashboard; they do not bump/arrive/fail orders
+// directly. The previous broader DRIVER_ACTION_ROLES allowed branch_manager/
+// GM/owner to perform driver-side mutations, which leaked accountability.
+function isDriver(role: string | null | undefined): boolean {
+  return role === 'driver'
+}
 
 export type DriverActionResult = { success: true } | { success: false; error: string }
+
+// Audit fix #5: validate cash collection consistently — finite, non-negative,
+// rounded to 3 decimals. Returns NaN to signal invalid input.
+function normalizeCashAmount(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null
+  if (!Number.isFinite(value) || value < 0) return Number.NaN
+  return Math.round(value * 1000) / 1000
+}
 
 export async function driverBumpOrder(
   orderId:       string,
@@ -21,7 +32,8 @@ export async function driverBumpOrder(
   if (!user) {
     return { success: false, error: 'Login Required' }
   }
-  if (!user.role || !DRIVER_ACTION_ROLES.has(user.role)) {
+  // Audit fix #1: driver-only.
+  if (!isDriver(user.role)) {
     return { success: false, error: 'Unauthorized: Driver access only' }
   }
 
@@ -29,19 +41,24 @@ export async function driverBumpOrder(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, status, branch_id, assigned_driver_id, arrived_at')
+    .select('id, status, branch_id, order_type, assigned_driver_id, arrived_at')
     .eq('id', orderId)
     .single()
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
 
+  // Audit fix #3: drivers only act on delivery orders. Reject defensively
+  // even though the page query already filters by order_type='delivery'.
+  if (order.order_type !== 'delivery') {
+    return { success: false, error: 'Order is not a delivery order' }
+  }
+
   if (order.status !== currentStatus) {
     return { success: false, error: 'Unexpected order state' }
   }
 
-  // D-C3: Branch guard — owners/GMs can act across branches; branch-scoped roles must match.
-  const isCrossBranch = !!user.role && CROSS_BRANCH_ROLES.has(user.role)
-  if (!isCrossBranch && (!user.branch_id || order.branch_id !== user.branch_id)) {
+  // Branch guard — driver must serve this order's branch.
+  if (!user.branch_id || order.branch_id !== user.branch_id) {
     return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
 
@@ -70,14 +87,21 @@ export async function driverBumpOrder(
   }
   if (currentStatus === 'out_for_delivery') {
     orderUpdate.delivered_at = now
-    if (tipBhd && tipBhd > 0) {
-      if (tipBhd > 50) return { success: false, error: 'Tip exceeds maximum (50 BD)' }
+    if (tipBhd !== undefined && tipBhd !== null && tipBhd > 0) {
+      if (!Number.isFinite(tipBhd) || tipBhd > 50) {
+        return { success: false, error: 'Tip exceeds maximum (50 BD) or is invalid' }
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(orderUpdate as any).tip_bhd = Number(tipBhd.toFixed(3))
+      ;(orderUpdate as any).tip_bhd = Math.round(tipBhd * 1000) / 1000
     }
+    // Audit fix #5: validate actualCollected via shared helper.
     if (actualCollected !== undefined && actualCollected !== null) {
+      const normalized = normalizeCashAmount(actualCollected)
+      if (normalized === null || Number.isNaN(normalized)) {
+        return { success: false, error: 'Cash collected must be a non-negative finite number' }
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(orderUpdate as any).actual_collected = Number(actualCollected.toFixed(3))
+      ;(orderUpdate as any).actual_collected = normalized
     }
   }
 
@@ -107,19 +131,26 @@ export async function driverBumpOrder(
 
 export async function markDriverArrived(orderId: string): Promise<DriverActionResult> {
   const user = await getSession()
-  if (!user || !user.role || !DRIVER_ACTION_ROLES.has(user.role)) return { success: false, error: 'Unauthorized' }
+  // Audit fix #1: driver-only.
+  if (!user || !isDriver(user.role)) return { success: false, error: 'Unauthorized' }
 
   const service = createServiceClient()
   const { data: order, error: fetchError } = await service
     .from('orders')
-    .select('id, status, assigned_driver_id')
+    .select('id, status, branch_id, order_type, assigned_driver_id')
     .eq('id', orderId)
     .single()
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
+  // Audit fix #3: delivery only.
+  if (order.order_type !== 'delivery') return { success: false, error: 'Order is not a delivery order' }
   if (order.status !== 'out_for_delivery') return { success: false, error: 'Unexpected order state' }
-  // Allow the assigned driver OR a supervising manager to mark arrival
-  if ((!user.role || !CROSS_BRANCH_ROLES.has(user.role)) && order.assigned_driver_id !== user.id) {
+  // Branch guard.
+  if (!user.branch_id || order.branch_id !== user.branch_id) {
+    return { success: false, error: 'Unauthorized: Order belongs to another branch' }
+  }
+  // Only the assigned driver may mark arrival.
+  if (order.assigned_driver_id !== user.id) {
     return { success: false, error: 'Unauthorized' }
   }
 
@@ -151,7 +182,36 @@ export async function postDriverLocation(
     return { success: false, error: 'Unauthorized' }
   }
 
+  // Audit fix #2: verify the order this location belongs to is actually
+  // assigned to this driver, in 'out_for_delivery' state, and within the
+  // driver's branch. Without this, a malicious client could write spurious
+  // pings against any order_id and pollute the live driver-tracking map.
+  const orderId = (payload as { order_id?: string | null }).order_id
+  if (!orderId) {
+    return { success: false, error: 'Order id required' }
+  }
+
   const supabase = await createServiceClient()
+
+  const { data: order, error: orderErr } = await supabase
+    .from('orders')
+    .select('id, status, branch_id, order_type, assigned_driver_id')
+    .eq('id', orderId)
+    .single()
+
+  if (orderErr || !order) return { success: false, error: 'Order not found' }
+  if (order.order_type !== 'delivery') {
+    return { success: false, error: 'Order is not a delivery order' }
+  }
+  if (order.status !== 'out_for_delivery') {
+    return { success: false, error: 'Order is not in transit' }
+  }
+  if (order.assigned_driver_id !== user.id) {
+    return { success: false, error: 'Unauthorized: Order is not assigned to you' }
+  }
+  if (!user.branch_id || order.branch_id !== user.branch_id) {
+    return { success: false, error: 'Unauthorized: Order belongs to another branch' }
+  }
 
   const { error } = await supabase
     .from('driver_locations')
@@ -248,6 +308,12 @@ export async function submitCashHandover(
     return { success: false, error: 'Unauthorized' }
   }
 
+  // Audit fix #5: cash amount must be finite and non-negative.
+  const normalizedActual = normalizeCashAmount(actualAmount)
+  if (normalizedActual === null || Number.isNaN(normalizedActual)) {
+    return { success: false, error: 'Cash amount must be a non-negative finite number' }
+  }
+
   let totalExpected = 0
   let branchId: string | null = null
 
@@ -289,8 +355,8 @@ export async function submitCashHandover(
     .insert({
       driver_id:       user.id,
       branch_id:       branchId!,
-      expected_amount: Number(totalExpected.toFixed(3)),
-      actual_amount:   Number(actualAmount.toFixed(3)),
+      expected_amount: Math.round(totalExpected * 1000) / 1000,
+      actual_amount:   normalizedActual,
       order_ids:       orderIds,
       manager_confirmed: false
     })
@@ -325,8 +391,8 @@ export async function submitCashHandover(
     changes: {
       order_ids: orderIds,
       expected:  totalExpected,
-      actual:    actualAmount,
-      diff:      actualAmount - totalExpected
+      actual:    normalizedActual,
+      diff:      normalizedActual - totalExpected
     }
   })
 
@@ -389,7 +455,8 @@ export async function reportDeliveryFailure(
   notes?:  string,
 ): Promise<DriverActionResult> {
   const user = await getSession()
-  if (!user || !user.role || !DRIVER_ACTION_ROLES.has(user.role)) {
+  // Audit fix #1: driver-only.
+  if (!user || !isDriver(user.role)) {
     return { success: false, error: 'Unauthorized' }
   }
 
@@ -401,20 +468,27 @@ export async function reportDeliveryFailure(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, branch_id, assigned_driver_id, status, driver_notes')
+    .select('id, branch_id, order_type, assigned_driver_id, status, driver_notes')
     .eq('id', orderId)
     .single()
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
 
-  // D-C3: Branch guard
-  const isCrossBranchFailure = !!user.role && CROSS_BRANCH_ROLES.has(user.role)
-  if (!isCrossBranchFailure && (!user.branch_id || order.branch_id !== user.branch_id)) {
-    return { success: false, error: 'Unauthorized' }
+  // Audit fix #3: delivery only.
+  if (order.order_type !== 'delivery') {
+    return { success: false, error: 'Order is not a delivery order' }
   }
-
-  if (!isCrossBranchFailure && (order.assigned_driver_id !== user.id || order.status !== 'out_for_delivery')) {
-    return { success: false, error: 'Unauthorized' }
+  // Audit fix #5: status MUST be out_for_delivery for ALL callers.
+  if (order.status !== 'out_for_delivery') {
+    return { success: false, error: 'Order is not in transit — cannot mark as failed' }
+  }
+  // Branch guard.
+  if (!user.branch_id || order.branch_id !== user.branch_id) {
+    return { success: false, error: 'Unauthorized: Order belongs to another branch' }
+  }
+  // Only the assigned driver may report failure.
+  if (order.assigned_driver_id !== user.id) {
+    return { success: false, error: 'Unauthorized: Order is not assigned to you' }
   }
 
   const service = await createServiceClient()
@@ -424,7 +498,8 @@ export async function reportDeliveryFailure(
     ? `${order.driver_notes}\n${failureNote}`
     : failureNote
 
-  const { error: updateError } = await service
+  // Audit fix #5: pin to current status to detect concurrent change.
+  const { data: updatedRows, error: updateError } = await service
     .from('orders')
     .update({
       status:       'delivery_failed',
@@ -432,8 +507,13 @@ export async function reportDeliveryFailure(
       updated_at:   new Date().toISOString(),
     })
     .eq('id', orderId)
+    .eq('status', 'out_for_delivery')
+    .select('id')
 
   if (updateError) return { success: false, error: updateError.message }
+  if (!updatedRows || updatedRows.length === 0) {
+    return { success: false, error: 'Order status changed — refresh and retry' }
+  }
 
   await service
     .from('driver_order_issues')

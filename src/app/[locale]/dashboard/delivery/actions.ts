@@ -110,6 +110,9 @@ export async function assignDriverToOrder(
   return { success: true }
 }
 
+// Active delivery statuses where unassign / reassign make sense.
+const ACTIVE_DELIVERY_STATUSES = ['accepted', 'preparing', 'ready', 'out_for_delivery'] as const
+
 export async function unassignDriver(orderId: string): Promise<DispatchActionResult> {
   const caller = await getSession()
   if (!caller || !caller.role || !MANAGER_ROLES.has(caller.role)) {
@@ -117,14 +120,26 @@ export async function unassignDriver(orderId: string): Promise<DispatchActionRes
   }
 
   const supabase = await createServiceClient()
-  const { data: order } = await supabase.from('orders').select('branch_id').eq('id', orderId).single()
+  const { data: order } = await supabase
+    .from('orders')
+    .select('id, branch_id, status')
+    .eq('id', orderId)
+    .single()
   if (!order) return { success: false, error: 'Order not found' }
 
   if (!GLOBAL_ADMIN_ROLES.has(caller.role) && caller.branch_id !== order.branch_id) {
     return { success: false, error: 'Unauthorized' }
   }
 
-  const { error } = await supabase
+  // Audit fix #5: only unassign while the order is in an active delivery
+  // state. Cannot unassign a delivered/cancelled/failed order.
+  if (!(ACTIVE_DELIVERY_STATUSES as readonly string[]).includes(order.status)) {
+    return { success: false, error: 'Cannot unassign driver at this stage' }
+  }
+
+  // Pin to current status + verify row count so a concurrent transition
+  // can't be silently overwritten.
+  const { data: updatedRows, error } = await supabase
     .from('orders')
     .update({
       assigned_driver_id: null,
@@ -133,8 +148,13 @@ export async function unassignDriver(orderId: string): Promise<DispatchActionRes
       updated_at: new Date().toISOString()
     })
     .eq('id', orderId)
+    .eq('status', order.status)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updatedRows || updatedRows.length === 0) {
+    return { success: false, error: 'Order status changed — refresh and retry' }
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/delivery`)
@@ -160,13 +180,20 @@ export async function cancelDeliveryOrder(orderId: string): Promise<DispatchActi
     return { success: false, error: 'Order cannot be cancelled at this stage' }
   }
 
+  // Audit fix #5: pin to current status + verify row count so a concurrent
+  // delivery/cancel can't be silently overwritten.
   const now = new Date().toISOString()
-  const { error } = await supabase
+  const { data: updatedRows, error } = await supabase
     .from('orders')
     .update({ status: 'cancelled', updated_at: now })
     .eq('id', orderId)
+    .eq('status', order.status)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updatedRows || updatedRows.length === 0) {
+    return { success: false, error: 'Order status changed — refresh and retry' }
+  }
 
   await supabase.from('audit_logs').insert({
     table_name: 'orders',
@@ -258,15 +285,26 @@ export async function reassignDriver(orderId: string, driverId: string): Promise
     return { success: false, error: 'Driver does not serve this branch' }
   }
 
-  const { error } = await supabase
+  // Audit fix #5: only reassign while the order is still in an active
+  // delivery state. Pin to current status to detect concurrent transitions.
+  if (!(ACTIVE_DELIVERY_STATUSES as readonly string[]).includes(order.status)) {
+    return { success: false, error: 'Cannot reassign driver at this stage' }
+  }
+
+  const { data: updatedRows, error } = await supabase
     .from('orders')
     .update({
       assigned_driver_id: driverId,
       updated_at: new Date().toISOString()
     })
     .eq('id', orderId)
+    .eq('status', order.status)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updatedRows || updatedRows.length === 0) {
+    return { success: false, error: 'Order status changed — refresh and retry' }
+  }
 
   await supabase.from('audit_logs').insert({
     table_name: 'orders',

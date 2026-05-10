@@ -47,11 +47,14 @@ export default async function DriverPage({ params }: Props) {
   // "ready" orders are visible to all branch drivers (eligible for pickup).
   // "out_for_delivery" orders are scoped to this driver only — showing another
   // driver's in-transit order leaks assignment data and clutters the UI.
+  // Audit fix #3: filter by order_type='delivery' so dine-in/pickup orders
+  // never appear on the driver app.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let readyQ = (supabase as any)
     .from('orders')
     .select(ORDER_SELECT)
     .eq('status', 'ready')
+    .eq('order_type', 'delivery')
     .order('created_at', { ascending: true })
   if (user.branch_id) readyQ = readyQ.eq('branch_id', user.branch_id)
 
@@ -59,6 +62,7 @@ export default async function DriverPage({ params }: Props) {
     .from('orders')
     .select(ORDER_SELECT)
     .eq('status', 'out_for_delivery')
+    .eq('order_type', 'delivery')
     .eq('assigned_driver_id', user.id)
     .order('created_at', { ascending: true })
 

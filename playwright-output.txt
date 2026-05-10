@@ -1,0 +1,1357 @@
+Γùç injected env (5) from .env.test // tip: Γîÿ multiple files { path: ['.env.local', '.env'] }
+[E2E setup] Γ£ô e2e-owner@test.kahramana (owner)
+[E2E setup] Γ£ô e2e-manager@test.kahramana (general_manager)
+[E2E setup] Γ£ô e2e-branch-mgr@test.kahramana (branch_manager)
+[E2E setup] Γ£ô e2e-cashier-riffa@test.kahramana (cashier)
+[E2E setup] Γ£ô e2e-cashier-qallali@test.kahramana (cashier)
+[E2E setup] Γ£ô e2e-driver@test.kahramana (driver)
+[E2E setup] All test users ready.
+
+Running 203 tests using 2 workers
+
+Γùç injected env (0) from .env.test // tip: Γîÿ custom filepath { path: '/custom/path/.env' }
+Γùç injected env (0) from .env.test // tip: Γîÿ enable debugging { debug: true }
+  Γ£ô    1 tests\e2e\auth\login.spec.ts:22:7 ΓÇ║ Login flow ΓÇ║ valid credentials redirect to /dashboard (4.9s)
+  Γ£ô    3 tests\e2e\auth\login.spec.ts:28:7 ΓÇ║ Login flow ΓÇ║ Supabase auth cookies are set after successful login (4.8s)
+  Γ£ÿ    4 tests\e2e\auth\login.spec.ts:34:7 ΓÇ║ Login flow ΓÇ║ hard refresh on /dashboard does not end session (12.6s)
+Γùç injected env (0) from .env.test // tip: Γîü auth for agents [www.vestauth.com]
+  Γ£ÿ    2 tests\e2e\auth\invite.spec.ts:44:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link via admin API ΓåÆ auth/callback ΓåÆ lands on /dashboard (23.3s)
+Γùç injected env (0) from .env.test // tip: Γùê secrets for agents [www.dotenvx.com]
+  Γ£ÿ    5 tests\e2e\auth\login.spec.ts:34:7 ΓÇ║ Login flow ΓÇ║ hard refresh on /dashboard does not end session (retry #1) (12.5s)
+Γùç injected env (0) from .env.test // tip: Γîÿ custom filepath { path: '/custom/path/.env' }
+  Γ£ô    7 tests\e2e\auth\login.spec.ts:47:7 ΓÇ║ Login flow ΓÇ║ session is shared across same-origin tabs (7.4s)
+  Γ£ÿ    8 tests\e2e\auth\login.spec.ts:63:7 ΓÇ║ Login flow ΓÇ║ wrong password shows Arabic error message (3.1s)
+Γùç injected env (0) from .env.test // tip: Γîÿ suppress logs { quiet: true }
+  Γ£ÿ    6 tests\e2e\auth\invite.spec.ts:44:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link via admin API ΓåÆ auth/callback ΓåÆ lands on /dashboard (retry #1) (23.4s)
+Γùç injected env (0) from .env.test // tip: Γîü auth for agents [www.vestauth.com]
+  Γ£ÿ    9 tests\e2e\auth\login.spec.ts:63:7 ΓÇ║ Login flow ΓÇ║ wrong password shows Arabic error message (retry #1) (3.2s)
+Γùç injected env (0) from .env.test // tip: Γùê secrets for agents [www.dotenvx.com]
+  Γ£ÿ   11 tests\e2e\auth\login.spec.ts:79:7 ΓÇ║ Login flow ΓÇ║ non-existent email shows error message (3.4s)
+Γùç injected env (0) from .env.test // tip: Γîÿ suppress logs { quiet: true }
+  Γ£ÿ   12 tests\e2e\auth\login.spec.ts:79:7 ΓÇ║ Login flow ΓÇ║ non-existent email shows error message (retry #1) (3.3s)
+Γùç injected env (0) from .env.test // tip: Γîÿ suppress logs { quiet: true }
+  Γ£ô   13 tests\e2e\auth\login.spec.ts:92:7 ΓÇ║ Login flow ΓÇ║ empty form submit does not trigger API call (1.2s)
+  Γ£ÿ   10 tests\e2e\auth\invite.spec.ts:77:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link with no matching staff_basic ΓåÆ redirected to /login with error (23.4s)
+Γùç injected env (0) from .env.test // tip: Γîÿ suppress logs { quiet: true }
+  Γ£ÿ   14 tests\e2e\auth\login.spec.ts:102:7 ΓÇ║ Login flow ΓÇ║ visiting /login while already authenticated redirects to /dashboard (17.6s)
+Γùç injected env (0) from .env.test // tip: Γîÿ custom filepath { path: '/custom/path/.env' }
+  Γ£ô   16 tests\e2e\auth\login.spec.ts:102:7 ΓÇ║ Login flow ΓÇ║ visiting /login while already authenticated redirects to /dashboard (retry #1) (7.4s)
+  Γ£ô   17 tests\e2e\auth\logout.spec.ts:19:7 ΓÇ║ Logout flow ΓÇ║ clicking logout redirects to /login (6.0s)
+  Γ£ÿ   15 tests\e2e\auth\invite.spec.ts:77:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link with no matching staff_basic ΓåÆ redirected to /login with error (retry #1) (23.0s)
+Γùç injected env (0) from .env.test // tip: Γîÿ multiple files { path: ['.env.local', '.env'] }
+  -   19 tests\e2e\auth\invite.spec.ts:105:7 ΓÇ║ Staff invitation flow ΓÇ║ resend invitation: owner can trigger resend via server action
+  Γ£ô   20 tests\e2e\auth\middleware.spec.ts:19:7 ΓÇ║ Middleware ΓÇö unauthenticated redirects ΓÇ║ /dashboard without session ΓåÆ redirects to /login with ?redirect= param (1.2s)
+  Γ£ô   18 tests\e2e\auth\logout.spec.ts:30:7 ΓÇ║ Logout flow ΓÇ║ auth cookies are cleared after logout (7.7s)
+  Γ£ô   21 tests\e2e\auth\middleware.spec.ts:32:7 ΓÇ║ Middleware ΓÇö unauthenticated redirects ΓÇ║ /dashboard/orders without session ΓåÆ redirects to /login (1.2s)
+  Γ£ô   23 tests\e2e\auth\middleware.spec.ts:41:7 ΓÇ║ Middleware ΓÇö unauthenticated redirects ΓÇ║ /dashboard/staff without session ΓåÆ redirects to /login (1.4s)
+  Γ£ô   22 tests\e2e\auth\logout.spec.ts:39:7 ΓÇ║ Logout flow ΓÇ║ back button after logout does not restore dashboard ΓÇö redirects to /login (10.7s)
+  Γ£ô   25 tests\e2e\auth\logout.spec.ts:67:7 ΓÇ║ Logout flow ΓÇ║ after logout, direct navigation to /dashboard redirects to /login (8.0s)
+  Γ£ô   26 tests\e2e\auth\password-reset.spec.ts:31:7 ΓÇ║ /auth/callback error handling ΓÇ║ missing code ΓåÆ redirects to /login?error=missing_code (991ms)
+  Γ£ô   27 tests\e2e\auth\password-reset.spec.ts:40:7 ΓÇ║ /auth/callback error handling ΓÇ║ invalid/expired code ΓåÆ redirects to /login with error (924ms)
+  Γ£ÿ   24 tests\e2e\auth\middleware.spec.ts:52:7 ΓÇ║ Middleware ΓÇö authenticated redirects ΓÇ║ /login with valid session ΓåÆ redirects to /dashboard (18.7s)
+  Γ£ô   28 tests\e2e\auth\password-reset.spec.ts:49:7 ΓÇ║ /auth/callback error handling ΓÇ║ /auth/callback with Supabase error param ΓåÆ redirected to /login with error (920ms)
+Γùç injected env (0) from .env.test // tip: Γîÿ suppress logs { quiet: true }
+  Γ£ô   29 tests\e2e\auth\password-reset.spec.ts:77:7 ΓÇ║ Password update via admin API ΓÇ║ login with new password succeeds after admin password update (5.1s)
+  Γ£ÿ   31 tests\e2e\auth\password-reset.spec.ts:102:7 ΓÇ║ Password update via admin API ΓÇ║ login with old password fails after password change (3.0s)
+Γùç injected env (0) from .env.test // tip: Γîÿ override existing { override: true }
+  Γ£ÿ   30 tests\e2e\auth\middleware.spec.ts:52:7 ΓÇ║ Middleware ΓÇö authenticated redirects ΓÇ║ /login with valid session ΓåÆ redirects to /dashboard (retry #1) (17.6s)
+  Γ£ÿ   32 tests\e2e\auth\password-reset.spec.ts:102:7 ΓÇ║ Password update via admin API ΓÇ║ login with old password fails after password change (retry #1) (7.7s)
+Γùç injected env (0) from .env.test // tip: Γîÿ custom filepath { path: '/custom/path/.env' }
+Γùç injected env (0) from .env.test // tip: Γùê encrypted .env [www.dotenvx.com]
+  Γ£ÿ   34 tests\e2e\auth\password-reset.spec.ts:120:7 ΓÇ║ No /forgot-password page (documented gap) ΓÇ║ /forgot-password returns 404 or redirects (page not implemented) (1.1s)
+Γùç injected env (0) from .env.test // tip: Γîÿ override existing { override: true }
+  Γ£ÿ   35 tests\e2e\auth\password-reset.spec.ts:120:7 ΓÇ║ No /forgot-password page (documented gap) ΓÇ║ /forgot-password returns 404 or redirects (page not implemented) (retry #1) (780ms)
+Γùç injected env (0) from .env.test // tip: Γîÿ override existing { override: true }
+  Γ£ô   33 tests\e2e\auth\middleware.spec.ts:62:7 ΓÇ║ Middleware ΓÇö authenticated redirects ΓÇ║ /en/login with valid session ΓåÆ redirects to /en/dashboard (6.9s)
+  Γ£ô   36 tests\e2e\auth\rbac.spec.ts:22:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/staff ΓåÆ redirected to /dashboard (middleware) (7.6s)
+  Γ£ô   37 tests\e2e\auth\middleware.spec.ts:75:7 ΓÇ║ Middleware ΓÇö locale detection ΓÇ║ default locale AR: /dashboard has no /en/ prefix (5.2s)
+  Γ£ô   39 tests\e2e\auth\middleware.spec.ts:84:7 ΓÇ║ Middleware ΓÇö locale detection ΓÇ║ /en/login ΓåÆ after auth lands on /en/dashboard (5.7s)
+  Γ£ô   38 tests\e2e\auth\rbac.spec.ts:30:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/settings ΓåÆ redirected to /dashboard (page-level RBAC) (9.1s)
+  Γ£ô   40 tests\e2e\auth\middleware.spec.ts:104:7 ΓÇ║ Middleware ΓÇö RBAC (staff route) ΓÇ║ cashier visiting /dashboard/staff ΓåÆ redirected to /dashboard by middleware (8.5s)
+  Γ£ô   41 tests\e2e\auth\rbac.spec.ts:38:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/schedule ΓåÆ redirected to /dashboard (page-level RBAC) (9.6s)
+  Γ£ô   42 tests\e2e\auth\middleware.spec.ts:117:7 ΓÇ║ Middleware ΓÇö RBAC (staff route) ΓÇ║ branch_manager visiting /dashboard/staff ΓåÆ allowed through middleware (8.8s)
+  Γ£ô   43 tests\e2e\auth\rbac.spec.ts:46:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/orders ΓåÆ allowed (no RBAC restriction) (8.1s)
+  Γ£ô   44 tests\e2e\auth\middleware.spec.ts:128:7 ΓÇ║ Middleware ΓÇö RBAC (staff route) ΓÇ║ owner visiting /dashboard/staff ΓåÆ allowed through middleware (8.0s)
+  Γ£ô   46 tests\e2e\auth\middleware.spec.ts:142:7 ΓÇ║ Middleware ΓÇö ?redirect= preservation ΓÇ║ ?redirect= param is set when unauthenticated user hits /dashboard/orders (920ms)
+  Γ£ô   47 tests\e2e\realtime-rls.spec.ts:152:7 ΓÇ║ Pre-flight checks ΓÇ║ owner can authenticate and query orders (938ms)
+  Γ£ô   48 tests\e2e\realtime-rls.spec.ts:160:7 ΓÇ║ Pre-flight checks ΓÇ║ cashier can authenticate and query orders (branch-scoped) (1.1s)
+  Γ£ÿ   49 tests\e2e\realtime-rls.spec.ts:171:7 ΓÇ║ Pre-flight checks ΓÇ║ cashier realtime channel subscribes successfully (8.3s)
+Γùç injected env (0) from .env.test // tip: Γîÿ enable debugging { debug: true }
+  Γ£ÿ   45 tests\e2e\auth\rbac.spec.ts:53:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/kds ΓåÆ allowed (19.8s)
+Γùç injected env (0) from .env.test // tip: Γîÿ multiple files { path: ['.env.local', '.env'] }
+  Γ£ÿ   50 tests\e2e\realtime-rls.spec.ts:171:7 ΓÇ║ Pre-flight checks ΓÇ║ cashier realtime channel subscribes successfully (retry #1) (8.4s)
+Γùç injected env (0) from .env.test // tip: Γîÿ override existing { override: true }
+  Γ£ô   51 tests\e2e\auth\rbac.spec.ts:53:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/kds ΓåÆ allowed (retry #1) (8.0s)
+  Γ£ô   53 tests\e2e\auth\rbac.spec.ts:69:7 ΓÇ║ Branch manager access ΓÇ║ branch_manager /dashboard/staff ΓåÆ allowed (6.4s)
+  Γ£ô   54 tests\e2e\auth\rbac.spec.ts:76:7 ΓÇ║ Branch manager access ΓÇ║ branch_manager /dashboard/schedule ΓåÆ allowed (7.1s)
+  Γ£ô   55 tests\e2e\auth\rbac.spec.ts:83:7 ΓÇ║ Branch manager access ΓÇ║ branch_manager /dashboard/settings ΓåÆ redirected (owner/general_manager only) (8.3s)
+  Γ£ÿ   52 tests\e2e\realtime-rls.spec.ts:209:7 ΓÇ║ Scenario A ΓÇö Cashier receives events for own branch (riffa) ΓÇ║ receives INSERT event for own branch and fetchOrders would return the row (30.0s)
+Γùç injected env (0) from .env.test // tip: Γîÿ multiple files { path: ['.env.local', '.env'] }
+  Γ£ô   56 tests\e2e\auth\rbac.spec.ts:97:7 ΓÇ║ General manager access ΓÇ║ general_manager /dashboard/settings ΓåÆ allowed (7.3s)
+  Γ£ô   58 tests\e2e\auth\rbac.spec.ts:104:7 ΓÇ║ General manager access ΓÇ║ general_manager /dashboard/staff ΓåÆ allowed (6.9s)
+  Γ£ô   59 tests\e2e\auth\rbac.spec.ts:123:9 ΓÇ║ Owner full access ΓÇ║ owner /dashboard/orders ΓåÆ allowed (6.9s)
+  Γ£ÿ   60 tests\e2e\auth\rbac.spec.ts:123:9 ΓÇ║ Owner full access ΓÇ║ owner /dashboard/staff ΓåÆ allowed (12.0s)
+Γùç injected env (0) from .env.test // tip: Γùê encrypted .env [www.dotenvx.com]
+  Γ£ô   61 tests\e2e\auth\rbac.spec.ts:123:9 ΓÇ║ Owner full access ΓÇ║ owner /dashboard/staff ΓåÆ allowed (retry #1) (8.3s)
+  Γ£ô   62 tests\e2e\auth\rbac.spec.ts:123:9 ΓÇ║ Owner full access ΓÇ║ owner /dashboard/settings ΓåÆ allowed (6.4s)
+  Γ£ô   63 tests\e2e\auth\rbac.spec.ts:123:9 ΓÇ║ Owner full access ΓÇ║ owner /dashboard/schedule ΓåÆ allowed (6.6s)
+  Γ£ô   64 tests\e2e\auth\rbac.spec.ts:133:7 ΓÇ║ Owner full access ΓÇ║ owner /driver ΓåÆ allowed (dispatch visibility) (8.1s)
+  Γ£ÿ   57 tests\e2e\realtime-rls.spec.ts:209:7 ΓÇ║ Scenario A ΓÇö Cashier receives events for own branch (riffa) ΓÇ║ receives INSERT event for own branch and fetchOrders would return the row (retry #1) (30.0s)
+Γùç injected env (0) from .env.test // tip: Γùê secrets for agents [www.dotenvx.com]
+  Γ£ÿ   65 tests\e2e\auth\rbac.spec.ts:146:7 ΓÇ║ Driver access ΓÇ║ driver /driver ΓåÆ allowed (own page) (17.7s)
+Γùç injected env (0) from .env.test // tip: Γîü auth for agents [www.vestauth.com]
+  Γ£ÿ   66 tests\e2e\realtime-rls.spec.ts:254:7 ΓÇ║ Scenario B ΓÇö Cashier receives NO events for other branch (qallali) ΓÇ║ no event arrives within 3s after INSERT in other branch (30.0s)
+Γùç injected env (0) from .env.test // tip: Γîÿ enable debugging { debug: true }
+  Γ£ÿ   67 tests\e2e\auth\rbac.spec.ts:146:7 ΓÇ║ Driver access ΓÇ║ driver /driver ΓåÆ allowed (own page) (retry #1) (20.2s)
+Γùç injected env (0) from .env.test // tip: Γîÿ suppress logs { quiet: true }
+  Γ£ÿ   69 tests\e2e\auth\rbac.spec.ts:154:7 ΓÇ║ Driver access ΓÇ║ driver /dashboard ΓåÆ allowed at middleware (no driver-specific rule) (21.4s)
+Γùç injected env (0) from .env.test // tip: Γîÿ override existing { override: true }
+  Γ£ÿ   68 tests\e2e\realtime-rls.spec.ts:254:7 ΓÇ║ Scenario B ΓÇö Cashier receives NO events for other branch (qallali) ΓÇ║ no event arrives within 3s after INSERT in other branch (retry #1) (30.0s)
+Γùç injected env (0) from .env.test // tip: Γùê encrypted .env [www.dotenvx.com]
+  Γ£ÿ   70 tests\e2e\auth\rbac.spec.ts:154:7 ΓÇ║ Driver access ΓÇ║ driver /dashboard ΓåÆ allowed at middleware (no driver-specific rule) (retry #1) (18.0s)
+Γùç injected env (0) from .env.test // tip: Γîÿ enable debugging { debug: true }
+  Γ£ô   72 tests\e2e\auth\rbac.spec.ts:163:7 ΓÇ║ Driver access ΓÇ║ /driver without session ΓåÆ redirected to /login (1.4s)
+  Γ£ÿ   71 tests\e2e\realtime-rls.spec.ts:297:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ receives event for riffa order (0ms)
+  -   74 tests\e2e\realtime-rls.spec.ts:304:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ receives event for qallali order
+  -   75 tests\e2e\realtime-rls.spec.ts:311:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ can SELECT both orders (no RLS restriction)
+Γùç injected env (0) from .env.test // tip: Γîÿ override existing { override: true }
+  Γ£ÿ   73 tests\e2e\waiter\dine-in.spec.ts:31:7 ΓÇ║ Waiter dine-in @ Riffa Table 1 ΓÇ║ places size-variant order without PRICE_MISMATCH (20.2s)
+Γùç injected env (0) from .env.test // tip: Γîÿ multiple files { path: ['.env.local', '.env'] }
+POS    main: [33m1436[39m inner: [33m1436[39m card: [33m188[39m
+Waiter main: [33m1436[39m inner: [33m1436[39m card: [33m188[39m
+  Γ£ô   77 tests\e2e\waiter\layout-parity.spec.ts:14:7 ΓÇ║ Waiter Γåö POS layout parity ΓÇ║ main content + sidebar widths match POS (16.2s)
+  Γ£ô   78 tests\kahramana.spec.ts:41:7 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ EN: card titles in HTTP response (server-rendered) (2.7s)
+  Γ£ô   79 tests\kahramana.spec.ts:49:7 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ EN: 3 card h2s in DOM (924ms)
+  Γ£ô   80 tests\kahramana.spec.ts:56:7 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ AR: homepage loads and has h1 (1.2s)
+  Γ£ô   81 tests\kahramana.spec.ts:61:7 ΓÇ║ Fix 2 ΓÇö FeatureArtifacts SSR ΓÇ║ EN: feature cards visible (1.1s)
+  Γ£ô   82 tests\kahramana.spec.ts:73:7 ΓÇ║ Fix 3 ΓÇö Client message scoping ΓÇ║ EN: nav link "Menu" visible (client translations working) (1.3s)
+  Γ£ÿ   76 tests\e2e\realtime-rls.spec.ts:297:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ receives event for riffa order (retry #1) (0ms)
+  -   84 tests\e2e\realtime-rls.spec.ts:304:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ receives event for qallali order (retry #1)
+  -   85 tests\e2e\realtime-rls.spec.ts:311:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ can SELECT both orders (no RLS restriction) (retry #1)
+  Γ£ô   83 tests\kahramana.spec.ts:78:7 ΓÇ║ Fix 3 ΓÇö Client message scoping ΓÇ║ EN: home content renders (server getTranslations working) (1.9s)
+Γùç injected env (0) from .env.test // tip: Γùê secrets for agents [www.dotenvx.com]
+  Γ£ô   86 tests\kahramana.spec.ts:83:7 ΓÇ║ Fix 3 ΓÇö Client message scoping ΓÇ║ EN: no JS errors after message scoping (3.9s)
+  Γ£ô   87 tests\e2e\realtime-rls.spec.ts:328:7 ΓÇ║ Channel health checks ΓÇ║ no RLS policy violation on cashier channel subscribe (5.8s)
+  Γ£ô   88 tests\kahramana.spec.ts:89:7 ΓÇ║ Fix 3 ΓÇö Client message scoping ΓÇ║ AR: no JS errors (2.1s)
+  Γ£ô   90 tests\kahramana.spec.ts:101:7 ΓÇ║ Fix 4 ΓÇö EditorialNew-Bold font preload ΓÇ║ EN: woff2 preload link in <head> (991ms)
+  Γ£ô   91 tests\kahramana.spec.ts:110:7 ΓÇ║ Fix 4 ΓÇö EditorialNew-Bold font preload ΓÇ║ EN: font preload crossorigin attribute present (1.3s)
+  Γ£ô   92 tests\kahramana.spec.ts:127:9 ΓÇ║ Homepage ΓÇ║ AR: loads without JS errors (2.0s)
+  Γ£ô   93 tests\kahramana.spec.ts:133:9 ΓÇ║ Homepage ΓÇ║ AR: h1 contains restaurant name (1.2s)
+  Γ£ô   89 tests\e2e\realtime-rls.spec.ts:351:7 ΓÇ║ Channel health checks ΓÇ║ no RLS policy violation on owner channel subscribe (5.6s)
+  Γ£ô   94 tests\kahramana.spec.ts:141:9 ΓÇ║ Homepage ΓÇ║ AR: hero image has fetchpriority=high (1.1s)
+  Γ£ô   95 tests\kahramana.spec.ts:146:9 ΓÇ║ Homepage ΓÇ║ AR: hero image src is hero-poster.webp (1.1s)
+  Γ£ô   96 tests\kahramana.spec.ts:152:9 ΓÇ║ Homepage ΓÇ║ AR: link to /menu exists (1.1s)
+  Γ£ô   97 tests\kahramana.spec.ts:157:9 ΓÇ║ Homepage ΓÇ║ AR: page title set (1.1s)
+  Γ£ô   98 tests\kahramana.spec.ts:127:9 ΓÇ║ Homepage ΓÇ║ EN: loads without JS errors (1.8s)
+  Γ£ô   99 tests\kahramana.spec.ts:133:9 ΓÇ║ Homepage ΓÇ║ EN: h1 contains restaurant name (1.4s)
+  Γ£ô  100 tests\kahramana.spec.ts:141:9 ΓÇ║ Homepage ΓÇ║ EN: hero image has fetchpriority=high (1.1s)
+  Γ£ô  101 tests\kahramana.spec.ts:146:9 ΓÇ║ Homepage ΓÇ║ EN: hero image src is hero-poster.webp (1.2s)
+  Γ£ô  102 tests\kahramana.spec.ts:152:9 ΓÇ║ Homepage ΓÇ║ EN: link to /menu exists (991ms)
+  Γ£ô  103 tests\kahramana.spec.ts:157:9 ΓÇ║ Homepage ΓÇ║ EN: page title set (1.6s)
+  Γ£ô  104 tests\kahramana.spec.ts:170:7 ΓÇ║ SEO ΓÇ║ AR: lang="ar" on <html> (1.3s)
+  Γ£ô  105 tests\kahramana.spec.ts:177:7 ΓÇ║ SEO ΓÇ║ EN: lang="en" on <html> (1.1s)
+  Γ£ô  106 tests\kahramana.spec.ts:183:7 ΓÇ║ SEO ΓÇ║ AR: dir="rtl" on <html> (1.8s)
+  Γ£ô  107 tests\kahramana.spec.ts:190:7 ΓÇ║ SEO ΓÇ║ EN: dir="ltr" on <html> (1.2s)
+  Γ£ô  108 tests\kahramana.spec.ts:196:7 ΓÇ║ SEO ΓÇ║ og:image points to hero-poster.webp (1.4s)
+  Γ£ô  109 tests\kahramana.spec.ts:205:7 ΓÇ║ SEO ΓÇ║ canonical link present on homepage (1.1s)
+  Γ£ô  110 tests\kahramana.spec.ts:214:7 ΓÇ║ SEO ΓÇ║ hreflang ar-BH and en-BH present (1.1s)
+  Γ£ô  111 tests\kahramana.spec.ts:224:7 ΓÇ║ SEO ΓÇ║ Organization JSON-LD on homepage (1.3s)
+  Γ£ô  112 tests\kahramana.spec.ts:233:7 ΓÇ║ SEO ΓÇ║ FAQPage JSON-LD on homepage (1.1s)
+  Γ£ô  113 tests\kahramana.spec.ts:242:7 ΓÇ║ SEO ΓÇ║ sitemap.xml reachable (722ms)
+  Γ£ô  114 tests\kahramana.spec.ts:247:7 ΓÇ║ SEO ΓÇ║ robots.txt reachable (743ms)
+  Γ£ô  115 tests\kahramana.spec.ts:258:7 ΓÇ║ Header ΓÇ║ AR: header renders (1.3s)
+  Γ£ô  116 tests\kahramana.spec.ts:264:7 ΓÇ║ Header ΓÇ║ EN: nav "Menu" link in header (1.3s)
+  Γ£ô  117 tests\kahramana.spec.ts:269:7 ΓÇ║ Header ΓÇ║ EN: nav "Branches" link in header (1.2s)
+  Γ£ô  118 tests\kahramana.spec.ts:274:7 ΓÇ║ Header ΓÇ║ EN: locale switch button visible (1.1s)
+  Γ£ô  119 tests\kahramana.spec.ts:283:7 ΓÇ║ Locale switching ΓÇ║ EN ΓåÆ AR navigates away from /en (2.6s)
+  Γ£ô  120 tests\kahramana.spec.ts:301:7 ΓÇ║ Cart drawer ΓÇ║ EN: cart button in header (1.0s)
+  Γ£ô  121 tests\kahramana.spec.ts:310:7 ΓÇ║ Cart drawer ΓÇ║ EN: opening cart causes no JS errors (2.3s)
+  Γ£ô  122 tests\kahramana.spec.ts:330:9 ΓÇ║ Menu listing page ΓÇ║ AR: loads without errors (3.7s)
+  Γ£ô  123 tests\kahramana.spec.ts:336:9 ΓÇ║ Menu listing page ΓÇ║ AR: menu category links visible (3.7s)
+  Γ£ô  124 tests\kahramana.spec.ts:342:9 ΓÇ║ Menu listing page ΓÇ║ AR: has heading (3.1s)
+  Γ£ÿ  125 tests\kahramana.spec.ts:330:9 ΓÇ║ Menu listing page ΓÇ║ EN: loads without errors (2.3s)
+Γùç injected env (0) from .env.test // tip: Γîÿ custom filepath { path: '/custom/path/.env' }
+  Γ£ÿ  126 tests\kahramana.spec.ts:330:9 ΓÇ║ Menu listing page ΓÇ║ EN: loads without errors (retry #1) (3.4s)
+Γùç injected env (0) from .env.test // tip: Γîÿ multiple files { path: ['.env.local', '.env'] }
+  Γ£ô  127 tests\kahramana.spec.ts:336:9 ΓÇ║ Menu listing page ΓÇ║ EN: menu category links visible (2.9s)
+  Γ£ô  128 tests\kahramana.spec.ts:342:9 ΓÇ║ Menu listing page ΓÇ║ EN: has heading (2.0s)
+  Γ£ô  129 tests\kahramana.spec.ts:354:9 ΓÇ║ Menu category page ΓÇ║ AR: loads (1.0s)
+  Γ£ô  130 tests\kahramana.spec.ts:359:9 ΓÇ║ Menu category page ΓÇ║ AR: dish item links present (1.3s)
+  Γ£ô  131 tests\kahramana.spec.ts:354:9 ΓÇ║ Menu category page ΓÇ║ EN: loads (924ms)
+  Γ£ô  132 tests\kahramana.spec.ts:359:9 ΓÇ║ Menu category page ΓÇ║ EN: dish item links present (1.3s)
+  Γ£ô  133 tests\kahramana.spec.ts:372:9 ΓÇ║ Menu item page ΓÇ║ AR: loads (747ms)
+  Γ£ô  134 tests\kahramana.spec.ts:377:9 ΓÇ║ Menu item page ΓÇ║ AR: price in BHD visible (1.0s)
+  Γ£ô  135 tests\kahramana.spec.ts:383:9 ΓÇ║ Menu item page ΓÇ║ AR: Add to Cart button visible (first match) (817ms)
+  Γ£ô  136 tests\kahramana.spec.ts:390:9 ΓÇ║ Menu item page ΓÇ║ AR: MenuItem JSON-LD present (1.7s)
+  Γ£ô  137 tests\kahramana.spec.ts:399:9 ΓÇ║ Menu item page ΓÇ║ AR: canonical does not contain /ar/menu/item/ (1.1s)
+  Γ£ô  138 tests\kahramana.spec.ts:372:9 ΓÇ║ Menu item page ΓÇ║ EN: loads (1.4s)
+  Γ£ô  139 tests\kahramana.spec.ts:377:9 ΓÇ║ Menu item page ΓÇ║ EN: price in BHD visible (1.1s)
+  Γ£ô  140 tests\kahramana.spec.ts:383:9 ΓÇ║ Menu item page ΓÇ║ EN: Add to Cart button visible (first match) (1.2s)
+  Γ£ô  141 tests\kahramana.spec.ts:390:9 ΓÇ║ Menu item page ΓÇ║ EN: MenuItem JSON-LD present (1.3s)
+  Γ£ô  142 tests\kahramana.spec.ts:399:9 ΓÇ║ Menu item page ΓÇ║ EN: canonical does not contain /ar/menu/item/ (1.1s)
+  Γ£ô  143 tests\kahramana.spec.ts:418:9 ΓÇ║ Branches listing ΓÇ║ AR: loads without errors (1.5s)
+  Γ£ô  144 tests\kahramana.spec.ts:424:9 ΓÇ║ Branches listing ΓÇ║ AR: Riffa + Qallali visible (702ms)
+  Γ£ô  145 tests\kahramana.spec.ts:418:9 ΓÇ║ Branches listing ΓÇ║ EN: loads without errors (1.8s)
+  Γ£ô  146 tests\kahramana.spec.ts:424:9 ΓÇ║ Branches listing ΓÇ║ EN: Riffa + Qallali visible (846ms)
+  Γ£ô  147 tests\kahramana.spec.ts:438:11 ΓÇ║ Branch detail pages ΓÇ║ AR riffa: loads (667ms)
+  Γ£ô  148 tests\kahramana.spec.ts:443:11 ΓÇ║ Branch detail pages ΓÇ║ AR riffa: LocalBusiness JSON-LD (812ms)
+  Γ£ô  149 tests\kahramana.spec.ts:452:11 ΓÇ║ Branch detail pages ΓÇ║ AR riffa: phone number visible (1.8s)
+  Γ£ô  150 tests\kahramana.spec.ts:438:11 ΓÇ║ Branch detail pages ΓÇ║ EN riffa: loads (1.5s)
+  Γ£ô  151 tests\kahramana.spec.ts:443:11 ΓÇ║ Branch detail pages ΓÇ║ EN riffa: LocalBusiness JSON-LD (720ms)
+  Γ£ô  152 tests\kahramana.spec.ts:452:11 ΓÇ║ Branch detail pages ΓÇ║ EN riffa: phone number visible (760ms)
+  Γ£ô  153 tests\kahramana.spec.ts:438:11 ΓÇ║ Branch detail pages ΓÇ║ AR qallali: loads (784ms)
+  Γ£ô  154 tests\kahramana.spec.ts:443:11 ΓÇ║ Branch detail pages ΓÇ║ AR qallali: LocalBusiness JSON-LD (973ms)
+  Γ£ô  155 tests\kahramana.spec.ts:452:11 ΓÇ║ Branch detail pages ΓÇ║ AR qallali: phone number visible (1.2s)
+  Γ£ô  156 tests\kahramana.spec.ts:438:11 ΓÇ║ Branch detail pages ΓÇ║ EN qallali: loads (693ms)
+  Γ£ô  157 tests\kahramana.spec.ts:443:11 ΓÇ║ Branch detail pages ΓÇ║ EN qallali: LocalBusiness JSON-LD (1.5s)
+  Γ£ô  158 tests\kahramana.spec.ts:452:11 ΓÇ║ Branch detail pages ΓÇ║ EN qallali: phone number visible (1.9s)
+  Γ£ô  159 tests\kahramana.spec.ts:467:9 ΓÇ║ About page ΓÇ║ AR: loads without errors (1.6s)
+  Γ£ô  160 tests\kahramana.spec.ts:473:9 ΓÇ║ About page ΓÇ║ AR: has a visible heading (916ms)
+  Γ£ô  161 tests\kahramana.spec.ts:467:9 ΓÇ║ About page ΓÇ║ EN: loads without errors (2.0s)
+  Γ£ô  162 tests\kahramana.spec.ts:473:9 ΓÇ║ About page ΓÇ║ EN: has a visible heading (974ms)
+  Γ£ô  163 tests\kahramana.spec.ts:487:9 ΓÇ║ Catering page ΓÇ║ AR: loads with 200 (952ms)
+  Γ£ô  164 tests\kahramana.spec.ts:492:9 ΓÇ║ Catering page ΓÇ║ AR: no JS errors (2.0s)
+  Γ£ô  165 tests\kahramana.spec.ts:487:9 ΓÇ║ Catering page ΓÇ║ EN: loads with 200 (1.2s)
+  Γ£ÿ  166 tests\kahramana.spec.ts:492:9 ΓÇ║ Catering page ΓÇ║ EN: no JS errors (2.4s)
+Γùç injected env (0) from .env.test // tip: Γùê encrypted .env [www.dotenvx.com]
+  Γ£ô  167 tests\kahramana.spec.ts:492:9 ΓÇ║ Catering page ΓÇ║ EN: no JS errors (retry #1) (2.5s)
+  Γ£ô  168 tests\kahramana.spec.ts:509:9 ΓÇ║ Checkout page ΓÇ║ AR: loads (1.7s)
+  Γ£ô  169 tests\kahramana.spec.ts:514:9 ΓÇ║ Checkout page ΓÇ║ AR: has input fields or empty cart message (1.2s)
+  Γ£ô  170 tests\kahramana.spec.ts:509:9 ΓÇ║ Checkout page ΓÇ║ EN: loads (1.0s)
+  Γ£ô  171 tests\kahramana.spec.ts:514:9 ΓÇ║ Checkout page ΓÇ║ EN: has input fields or empty cart message (1.0s)
+  Γ£ô  172 tests\kahramana.spec.ts:531:9 ΓÇ║ Contact page ΓÇ║ AR: loads without errors (2.1s)
+  Γ£ô  173 tests\kahramana.spec.ts:537:9 ΓÇ║ Contact page ΓÇ║ AR: contact form present (739ms)
+  Γ£ô  174 tests\kahramana.spec.ts:543:9 ΓÇ║ Contact page ΓÇ║ AR: WhatsApp link present (839ms)
+  Γ£ô  175 tests\kahramana.spec.ts:531:9 ΓÇ║ Contact page ΓÇ║ EN: loads without errors (1.7s)
+  Γ£ô  176 tests\kahramana.spec.ts:537:9 ΓÇ║ Contact page ΓÇ║ EN: contact form present (803ms)
+  Γ£ô  177 tests\kahramana.spec.ts:543:9 ΓÇ║ Contact page ΓÇ║ EN: WhatsApp link present (805ms)
+  Γ£ô  178 tests\kahramana.spec.ts:563:9 ΓÇ║ Legal pages ΓÇ║ AR /privacy: loads with 200 (855ms)
+  Γ£ô  179 tests\kahramana.spec.ts:568:9 ΓÇ║ Legal pages ΓÇ║ EN /en/privacy: loads with 200 (1.0s)
+  Γ£ô  180 tests\kahramana.spec.ts:573:9 ΓÇ║ Legal pages ΓÇ║ AR /privacy: has visible heading (698ms)
+  Γ£ô  181 tests\kahramana.spec.ts:563:9 ΓÇ║ Legal pages ΓÇ║ AR /terms: loads with 200 (660ms)
+  Γ£ô  182 tests\kahramana.spec.ts:568:9 ΓÇ║ Legal pages ΓÇ║ EN /en/terms: loads with 200 (654ms)
+  Γ£ô  183 tests\kahramana.spec.ts:573:9 ΓÇ║ Legal pages ΓÇ║ AR /terms: has visible heading (699ms)
+  Γ£ô  184 tests\kahramana.spec.ts:563:9 ΓÇ║ Legal pages ΓÇ║ AR /refund-policy: loads with 200 (643ms)
+  Γ£ô  185 tests\kahramana.spec.ts:568:9 ΓÇ║ Legal pages ΓÇ║ EN /en/refund-policy: loads with 200 (693ms)
+  Γ£ô  186 tests\kahramana.spec.ts:573:9 ΓÇ║ Legal pages ΓÇ║ AR /refund-policy: has visible heading (700ms)
+  Γ£ô  187 tests\kahramana.spec.ts:587:9 ΓÇ║ Login page ΓÇ║ AR: renders login form (723ms)
+  Γ£ô  188 tests\kahramana.spec.ts:593:9 ΓÇ║ Login page ΓÇ║ AR: wrong credentials stay on login (3.9s)
+  Γ£ô  189 tests\kahramana.spec.ts:587:9 ΓÇ║ Login page ΓÇ║ EN: renders login form (1.5s)
+  Γ£ô  190 tests\kahramana.spec.ts:593:9 ΓÇ║ Login page ΓÇ║ EN: wrong credentials stay on login (3.8s)
+  Γ£ô  191 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard redirects to login (611ms)
+  Γ£ô  192 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/orders redirects to login (644ms)
+  Γ£ô  193 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/kds redirects to login (606ms)
+  Γ£ô  194 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/delivery redirects to login (615ms)
+  Γ£ô  195 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/inventory redirects to login (639ms)
+  Γ£ô  196 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/analytics redirects to login (666ms)
+  Γ£ô  197 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/reports redirects to login (641ms)
+  Γ£ô  198 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/staff redirects to login (608ms)
+  Γ£ô  199 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/coupons redirects to login (564ms)
+  Γ£ô  200 tests\kahramana.spec.ts:623:9 ΓÇ║ Dashboard auth guard ΓÇ║ unauthenticated: /dashboard/settings redirects to login (590ms)
+  -  201 tests\kahramana.spec.ts:655:9 ΓÇ║ Dashboard ΓÇö authenticated smoke ΓÇ║ /dashboard: loads and has content
+  -  202 tests\kahramana.spec.ts:655:9 ΓÇ║ Dashboard ΓÇö authenticated smoke ΓÇ║ /dashboard/orders: loads and has content
+  -  203 tests\kahramana.spec.ts:655:9 ΓÇ║ Dashboard ΓÇö authenticated smoke ΓÇ║ /dashboard/kds: loads and has content
+  -  204 tests\kahramana.spec.ts:655:9 ΓÇ║ Dashboard ΓÇö authenticated smoke ΓÇ║ /dashboard/analytics: loads and has content
+  -  205 tests\kahramana.spec.ts:655:9 ΓÇ║ Dashboard ΓÇö authenticated smoke ΓÇ║ /dashboard/coupons: loads and has content
+  -  206 tests\kahramana.spec.ts:655:9 ΓÇ║ Dashboard ΓÇö authenticated smoke ΓÇ║ /dashboard/settings: loads and has content
+  Γ£ô  207 tests\kahramana.spec.ts:669:7 ΓÇ║ API routes ΓÇ║ GET /api/health ΓÇö 200 or 404 (route may not exist) (338ms)
+  Γ£ô  208 tests\kahramana.spec.ts:675:7 ΓÇ║ API routes ΓÇ║ POST /api/webhooks/tap without signature returns 4xx (133ms)
+  Γ£ô  209 tests\kahramana.spec.ts:686:7 ΓÇ║ 404 handling ΓÇ║ unknown route returns 404 (329ms)
+  Γ£ô  210 tests\kahramana.spec.ts:691:7 ΓÇ║ 404 handling ΓÇ║ 404 page has link back to root (395ms)
+  Γ£ô  211 tests\kahramana.spec.ts:704:7 ΓÇ║ Accessibility ΓÇ║ homepage has <main> landmark (737ms)
+  Γ£ô  212 tests\kahramana.spec.ts:709:7 ΓÇ║ Accessibility ΓÇ║ homepage has <nav> landmark (706ms)
+  Γ£ô  213 tests\kahramana.spec.ts:714:7 ΓÇ║ Accessibility ΓÇ║ homepage has <footer> landmark (789ms)
+  Γ£ô  214 tests\kahramana.spec.ts:719:7 ΓÇ║ Accessibility ΓÇ║ all images have alt text (807ms)
+  Γ£ô  215 tests\kahramana.spec.ts:729:7 ΓÇ║ Accessibility ΓÇ║ logo link has aria-label or contains image with alt (970ms)
+  Γ£ô  216 tests\kahramana.spec.ts:745:7 ΓÇ║ Currency formatting ΓÇ║ menu item page shows 3 decimal price (850ms)
+  Γ£ô  217 tests\kahramana.spec.ts:751:7 ΓÇ║ Currency formatting ΓÇ║ EN menu item page shows BD label (819ms)
+  Γ£ô  218 tests\kahramana.spec.ts:765:7 ΓÇ║ Mobile viewport ΓÇ║ homepage body scrollWidth <= viewport + 50px tolerance (861ms)
+  Γ£ô  219 tests\kahramana.spec.ts:773:7 ΓÇ║ Mobile viewport ΓÇ║ hero image visible on mobile (941ms)
+  Γ£ô  220 tests\kahramana.spec.ts:778:7 ΓÇ║ Mobile viewport ΓÇ║ mobile nav accessible (hamburger or inline) (1.5s)
+  Γ£ô  221 tests\kahramana.spec.ts:803:7 ΓÇ║ Performance signals ΓÇ║ homepage: no external Google Fonts requests (862ms)
+  Γ£ô  222 tests\kahramana.spec.ts:811:7 ΓÇ║ Performance signals ΓÇ║ homepage: font preload link exists (901ms)
+  Γ£ô  223 tests\kahramana.spec.ts:820:7 ΓÇ║ Performance signals ΓÇ║ hero image: fetchpriority=high present (LCP signal) (943ms)
+  Γ£ô  224 tests\kahramana.spec.ts:826:7 ΓÇ║ Performance signals ΓÇ║ hero image: has explicit width attribute (901ms)
+
+
+  1) tests\e2e\auth\invite.spec.ts:44:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link via admin API ΓåÆ auth/callback ΓåÆ lands on /dashboard 
+
+    TimeoutError: page.waitForURL: Timeout 20000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      71 |
+      72 |     // 4. The auth/callback route exchanges the code ΓåÆ finds staff_basic ΓåÆ redirects /dashboard
+    > 73 |     await page.waitForURL(/\/dashboard/, { timeout: 20_000 })
+         |                ^
+      74 |     await expect(page).toHaveURL(/\/dashboard/)
+      75 |   })
+      76 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\invite.spec.ts:73:16
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard\error-context.md
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    TimeoutError: page.waitForURL: Timeout 20000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      71 |
+      72 |     // 4. The auth/callback route exchanges the code ΓåÆ finds staff_basic ΓåÆ redirects /dashboard
+    > 73 |     await page.waitForURL(/\/dashboard/, { timeout: 20_000 })
+         |                ^
+      74 |     await expect(page).toHaveURL(/\/dashboard/)
+      75 |   })
+      76 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\invite.spec.ts:73:16
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard-retry1\error-context.md
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard-retry1\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-invite-Staff-invi-981ac-llback-ΓåÆ-lands-on-dashboard-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  2) tests\e2e\auth\invite.spec.ts:77:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link with no matching staff_basic ΓåÆ redirected to /login with error 
+
+    TimeoutError: page.waitForURL: Timeout 20000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       95 |
+       96 |     // auth/callback.ts: staffRow is null ΓåÆ redirect('/login?error=no_staff_profile')
+    >  97 |     await page.waitForURL(/\/login/, { timeout: 20_000 })
+          |                ^
+       98 |     const url = new URL(page.url())
+       99 |     expect(url.searchParams.get('error')).toBe('no_staff_profile')
+      100 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\invite.spec.ts:97:16
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error\error-context.md
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    TimeoutError: page.waitForURL: Timeout 20000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       95 |
+       96 |     // auth/callback.ts: staffRow is null ΓåÆ redirect('/login?error=no_staff_profile')
+    >  97 |     await page.waitForURL(/\/login/, { timeout: 20_000 })
+          |                ^
+       98 |     const url = new URL(page.url())
+       99 |     expect(url.searchParams.get('error')).toBe('no_staff_profile')
+      100 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\invite.spec.ts:97:16
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error-retry1\error-context.md
+
+    Error Context: test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error-retry1\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-invite-Staff-invi-c7839-irected-to-login-with-error-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  3) tests\e2e\auth\login.spec.ts:34:7 ΓÇ║ Login flow ΓÇ║ hard refresh on /dashboard does not end session 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('h1').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('h1').first()[22m
+
+
+      42 |     await expect(page).toHaveURL(/\/dashboard/)
+      43 |     // Dashboard heading present
+    > 44 |     await expect(page.locator('h1').first()).toBeVisible()
+         |                                              ^
+      45 |   })
+      46 |
+      47 |   test('session is shared across same-origin tabs', async ({ page, context }) => {
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\login.spec.ts:44:46
+
+    Error Context: test-results\e2e-auth-login-Login-flow--e154d-hboard-does-not-end-session\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-login-Login-flow--e154d-hboard-does-not-end-session\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-login-Login-flow--e154d-hboard-does-not-end-session\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('h1').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('h1').first()[22m
+
+
+      42 |     await expect(page).toHaveURL(/\/dashboard/)
+      43 |     // Dashboard heading present
+    > 44 |     await expect(page.locator('h1').first()).toBeVisible()
+         |                                              ^
+      45 |   })
+      46 |
+      47 |   test('session is shared across same-origin tabs', async ({ page, context }) => {
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\login.spec.ts:44:46
+
+    Error Context: test-results\e2e-auth-login-Login-flow--e154d-hboard-does-not-end-session-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-login-Login-flow--e154d-hboard-does-not-end-session-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-login-Login-flow--e154d-hboard-does-not-end-session-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  4) tests\e2e\auth\login.spec.ts:63:7 ΓÇ║ Login flow ΓÇ║ wrong password shows Arabic error message ΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: [32m"╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐"[39m
+    Error: strict mode violation: locator('[role="alert"]') resolved to 2 elements:
+        1) <p role="alert" class="rounded-lg bg-brand-error/10 border border-brand-error/30Γå╡                     px-4 py-3 font-almarai text-sm text-brand-error">╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐</p> aka getByText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+        2) <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div> aka locator('[id="__next-route-announcer__"]')
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[role="alert"]')[22m
+    [2m    3 ├ù locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>[22m
+    [2m      - unexpected value ""[22m
+
+
+      71 |     const alert = page.locator('[role="alert"]')
+      72 |     await expect(alert).toBeVisible({ timeout: 8_000 })
+    > 73 |     await expect(alert).toContainText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+         |                         ^
+      74 |
+      75 |     // URL must NOT change ΓÇö stay on /login
+      76 |     await expect(page).toHaveURL(/\/login/)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\login.spec.ts:73:25
+
+    Error Context: test-results\e2e-auth-login-Login-flow--a7cfd--shows-Arabic-error-message\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-login-Login-flow--a7cfd--shows-Arabic-error-message\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-login-Login-flow--a7cfd--shows-Arabic-error-message\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: [32m"╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐"[39m
+    Error: strict mode violation: locator('[role="alert"]') resolved to 2 elements:
+        1) <p role="alert" class="rounded-lg bg-brand-error/10 border border-brand-error/30Γå╡                     px-4 py-3 font-almarai text-sm text-brand-error">╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐</p> aka getByText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+        2) <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div> aka locator('[id="__next-route-announcer__"]')
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[role="alert"]')[22m
+    [2m    3 ├ù locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>[22m
+    [2m      - unexpected value ""[22m
+
+
+      71 |     const alert = page.locator('[role="alert"]')
+      72 |     await expect(alert).toBeVisible({ timeout: 8_000 })
+    > 73 |     await expect(alert).toContainText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+         |                         ^
+      74 |
+      75 |     // URL must NOT change ΓÇö stay on /login
+      76 |     await expect(page).toHaveURL(/\/login/)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\login.spec.ts:73:25
+
+    Error Context: test-results\e2e-auth-login-Login-flow--a7cfd--shows-Arabic-error-message-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-login-Login-flow--a7cfd--shows-Arabic-error-message-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-login-Login-flow--a7cfd--shows-Arabic-error-message-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  5) tests\e2e\auth\login.spec.ts:79:7 ΓÇ║ Login flow ΓÇ║ non-existent email shows error message ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: [32m"╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐"[39m
+    Error: strict mode violation: locator('[role="alert"]') resolved to 2 elements:
+        1) <p role="alert" class="rounded-lg bg-brand-error/10 border border-brand-error/30Γå╡                     px-4 py-3 font-almarai text-sm text-brand-error">╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐</p> aka getByText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+        2) <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div> aka locator('[id="__next-route-announcer__"]')
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[role="alert"]')[22m
+    [2m    3 ├ù locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>[22m
+    [2m      - unexpected value ""[22m
+
+
+      86 |     const alert = page.locator('[role="alert"]')
+      87 |     await expect(alert).toBeVisible({ timeout: 8_000 })
+    > 88 |     await expect(alert).toContainText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+         |                         ^
+      89 |     await expect(page).toHaveURL(/\/login/)
+      90 |   })
+      91 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\login.spec.ts:88:25
+
+    Error Context: test-results\e2e-auth-login-Login-flow--96190-t-email-shows-error-message\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-login-Login-flow--96190-t-email-shows-error-message\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-login-Login-flow--96190-t-email-shows-error-message\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: [32m"╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐"[39m
+    Error: strict mode violation: locator('[role="alert"]') resolved to 2 elements:
+        1) <p role="alert" class="rounded-lg bg-brand-error/10 border border-brand-error/30Γå╡                     px-4 py-3 font-almarai text-sm text-brand-error">╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐</p> aka getByText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+        2) <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div> aka locator('[id="__next-route-announcer__"]')
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[role="alert"]')[22m
+    [2m    3 ├ù locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>[22m
+    [2m      - unexpected value ""[22m
+
+
+      86 |     const alert = page.locator('[role="alert"]')
+      87 |     await expect(alert).toBeVisible({ timeout: 8_000 })
+    > 88 |     await expect(alert).toContainText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+         |                         ^
+      89 |     await expect(page).toHaveURL(/\/login/)
+      90 |   })
+      91 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\login.spec.ts:88:25
+
+    Error Context: test-results\e2e-auth-login-Login-flow--96190-t-email-shows-error-message-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-login-Login-flow--96190-t-email-shows-error-message-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-login-Login-flow--96190-t-email-shows-error-message-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  6) tests\e2e\auth\middleware.spec.ts:52:7 ΓÇ║ Middleware ΓÇö authenticated redirects ΓÇ║ /login with valid session ΓåÆ redirects to /dashboard 
+
+    TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:3000/login?redirect=%2Fdashboard"
+      navigated to "http://localhost:3000/login?redirect=%2Fdashboard"
+    ============================================================
+
+       at fixtures\auth-helpers.ts:33
+
+      31 |
+      32 |   // Next.js router.push('/dashboard') + router.refresh() ΓÇö wait for URL change
+    > 33 |   await page.waitForURL(/\/dashboard/, { timeout: 15_000 })
+         |              ^
+      34 | }
+      35 |
+      36 | /**
+        at loginAs (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\fixtures\auth-helpers.ts:33:14)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\middleware.spec.ts:54:5
+
+    Error Context: test-results\e2e-auth-middleware-Middle-5033f-on-ΓåÆ-redirects-to-dashboard\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-middleware-Middle-5033f-on-ΓåÆ-redirects-to-dashboard\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-middleware-Middle-5033f-on-ΓåÆ-redirects-to-dashboard\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+       at fixtures\auth-helpers.ts:33
+
+      31 |
+      32 |   // Next.js router.push('/dashboard') + router.refresh() ΓÇö wait for URL change
+    > 33 |   await page.waitForURL(/\/dashboard/, { timeout: 15_000 })
+         |              ^
+      34 | }
+      35 |
+      36 | /**
+        at loginAs (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\fixtures\auth-helpers.ts:33:14)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\middleware.spec.ts:54:5
+
+    Error Context: test-results\e2e-auth-middleware-Middle-5033f-on-ΓåÆ-redirects-to-dashboard-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-middleware-Middle-5033f-on-ΓåÆ-redirects-to-dashboard-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-middleware-Middle-5033f-on-ΓåÆ-redirects-to-dashboard-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  7) tests\e2e\auth\password-reset.spec.ts:102:7 ΓÇ║ Password update via admin API ΓÇ║ login with old password fails after password change 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: [32m"╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐"[39m
+    Error: strict mode violation: locator('[role="alert"]') resolved to 2 elements:
+        1) <p role="alert" class="rounded-lg bg-brand-error/10 border border-brand-error/30Γå╡                     px-4 py-3 font-almarai text-sm text-brand-error">╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐</p> aka getByText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+        2) <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div> aka locator('[id="__next-route-announcer__"]')
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[role="alert"]')[22m
+    [2m    3 ├ù locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>[22m
+    [2m      - unexpected value ""[22m
+
+
+      109 |     const alert = page.locator('[role="alert"]')
+      110 |     await expect(alert).toBeVisible({ timeout: 8_000 })
+    > 111 |     await expect(alert).toContainText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+          |                         ^
+      112 |   })
+      113 |
+      114 |   // afterAll restores TEST_PASSWORD so subsequent suites still work
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\password-reset.spec.ts:111:25
+
+    Error Context: test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change\error-context.md
+
+    Error Context: test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('[role="alert"]')
+    Expected substring: [32m"╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐"[39m
+    Received string:    [31m"┘â┘ç╪▒┘à╪º┘å╪⌐ ╪¿╪║╪»╪º╪» | ╪ú┘ü╪╢┘ä ┘à╪╖╪╣┘à ╪╣╪▒╪º┘é┘è ┘ü┘è ╪º┘ä╪¿╪¡╪▒┘è┘å"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for locator('[role="alert"]')[22m
+    [2m    6 ├ù locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>[22m
+    [2m      - unexpected value ""[22m
+    [2m    3 ├ù locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__">┘â┘ç╪▒┘à╪º┘å╪⌐ ╪¿╪║╪»╪º╪» | ╪ú┘ü╪╢┘ä ┘à╪╖╪╣┘à ╪╣╪▒╪º┘é┘è ┘ü┘è ╪º┘ä╪¿╪¡╪▒┘è┘å</div>[22m
+    [2m      - unexpected value "┘â┘ç╪▒┘à╪º┘å╪⌐ ╪¿╪║╪»╪º╪» | ╪ú┘ü╪╢┘ä ┘à╪╖╪╣┘à ╪╣╪▒╪º┘é┘è ┘ü┘è ╪º┘ä╪¿╪¡╪▒┘è┘å"[22m
+
+
+      109 |     const alert = page.locator('[role="alert"]')
+      110 |     await expect(alert).toBeVisible({ timeout: 8_000 })
+    > 111 |     await expect(alert).toContainText('╪¿╪▒┘è╪» ╪Ñ┘ä┘â╪¬╪▒┘ê┘å┘è ╪ú┘ê ┘â┘ä┘à╪⌐ ┘à╪▒┘ê╪▒ ╪║┘è╪▒ ╪╡╪¡┘è╪¡╪⌐')
+          |                         ^
+      112 |   })
+      113 |
+      114 |   // afterAll restores TEST_PASSWORD so subsequent suites still work
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\password-reset.spec.ts:111:25
+
+    Error Context: test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change-retry1\error-context.md
+
+    Error Context: test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change-retry1\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-password-reset-Pa-1f706-fails-after-password-change-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  8) tests\e2e\auth\password-reset.spec.ts:120:7 ΓÇ║ No /forgot-password page (documented gap) ΓÇ║ /forgot-password returns 404 or redirects (page not implemented) 
+
+    Error: /forgot-password should 404 or redirect ΓÇö if this fails, the page was implemented and tests should be expanded
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      125 |     expect(status === 404 || isRedirect,
+      126 |       '/forgot-password should 404 or redirect ΓÇö if this fails, the page was implemented and tests should be expanded'
+    > 127 |     ).toBe(true)
+          |       ^
+      128 |   })
+      129 | })
+      130 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\password-reset.spec.ts:127:7
+
+    Error Context: test-results\e2e-auth-password-reset-No-8be50-rects-page-not-implemented-\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-password-reset-No-8be50-rects-page-not-implemented-\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-password-reset-No-8be50-rects-page-not-implemented-\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: /forgot-password should 404 or redirect ΓÇö if this fails, the page was implemented and tests should be expanded
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      125 |     expect(status === 404 || isRedirect,
+      126 |       '/forgot-password should 404 or redirect ΓÇö if this fails, the page was implemented and tests should be expanded'
+    > 127 |     ).toBe(true)
+          |       ^
+      128 |   })
+      129 | })
+      130 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\password-reset.spec.ts:127:7
+
+    Error Context: test-results\e2e-auth-password-reset-No-8be50-rects-page-not-implemented--retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-password-reset-No-8be50-rects-page-not-implemented--retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-password-reset-No-8be50-rects-page-not-implemented--retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  9) tests\e2e\auth\rbac.spec.ts:146:7 ΓÇ║ Driver access ΓÇ║ driver /driver ΓåÆ allowed (own page) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+    ============================================================
+
+       at fixtures\auth-helpers.ts:33
+
+      31 |
+      32 |   // Next.js router.push('/dashboard') + router.refresh() ΓÇö wait for URL change
+    > 33 |   await page.waitForURL(/\/dashboard/, { timeout: 15_000 })
+         |              ^
+      34 | }
+      35 |
+      36 | /**
+        at loginAs (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\fixtures\auth-helpers.ts:33:14)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\rbac.spec.ts:147:5
+
+    Error Context: test-results\e2e-auth-rbac-Driver-acces-13b44--driver-ΓåÆ-allowed-own-page-\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-rbac-Driver-acces-13b44--driver-ΓåÆ-allowed-own-page-\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-rbac-Driver-acces-13b44--driver-ΓåÆ-allowed-own-page-\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+    ============================================================
+
+       at fixtures\auth-helpers.ts:33
+
+      31 |
+      32 |   // Next.js router.push('/dashboard') + router.refresh() ΓÇö wait for URL change
+    > 33 |   await page.waitForURL(/\/dashboard/, { timeout: 15_000 })
+         |              ^
+      34 | }
+      35 |
+      36 | /**
+        at loginAs (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\fixtures\auth-helpers.ts:33:14)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\rbac.spec.ts:147:5
+
+    Error Context: test-results\e2e-auth-rbac-Driver-acces-13b44--driver-ΓåÆ-allowed-own-page--retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-rbac-Driver-acces-13b44--driver-ΓåÆ-allowed-own-page--retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-rbac-Driver-acces-13b44--driver-ΓåÆ-allowed-own-page--retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  10) tests\e2e\auth\rbac.spec.ts:154:7 ΓÇ║ Driver access ΓÇ║ driver /dashboard ΓåÆ allowed at middleware (no driver-specific rule) 
+
+    TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+    ============================================================
+
+       at fixtures\auth-helpers.ts:33
+
+      31 |
+      32 |   // Next.js router.push('/dashboard') + router.refresh() ΓÇö wait for URL change
+    > 33 |   await page.waitForURL(/\/dashboard/, { timeout: 15_000 })
+         |              ^
+      34 | }
+      35 |
+      36 | /**
+        at loginAs (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\fixtures\auth-helpers.ts:33:14)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\rbac.spec.ts:155:5
+
+    Error Context: test-results\e2e-auth-rbac-Driver-acces-3ac12-re-no-driver-specific-rule-\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-rbac-Driver-acces-3ac12-re-no-driver-specific-rule-\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-rbac-Driver-acces-3ac12-re-no-driver-specific-rule-\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+      navigated to "http://localhost:3000/driver"
+    ============================================================
+
+       at fixtures\auth-helpers.ts:33
+
+      31 |
+      32 |   // Next.js router.push('/dashboard') + router.refresh() ΓÇö wait for URL change
+    > 33 |   await page.waitForURL(/\/dashboard/, { timeout: 15_000 })
+         |              ^
+      34 | }
+      35 |
+      36 | /**
+        at loginAs (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\fixtures\auth-helpers.ts:33:14)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\rbac.spec.ts:155:5
+
+    Error Context: test-results\e2e-auth-rbac-Driver-acces-3ac12-re-no-driver-specific-rule--retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-rbac-Driver-acces-3ac12-re-no-driver-specific-rule--retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-rbac-Driver-acces-3ac12-re-no-driver-specific-rule--retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  11) tests\e2e\realtime-rls.spec.ts:171:7 ΓÇ║ Pre-flight checks ΓÇ║ cashier realtime channel subscribes successfully 
+
+    Error: subscribe timeout
+
+      174 |     const status   = await Promise.race([
+      175 |       watcher.subscribeStatus(),
+    > 176 |       new Promise<string>((_, reject) => setTimeout(() => reject(new Error('subscribe timeout')), 8_000)),
+          |                                                                  ^
+      177 |     ])
+      178 |
+      179 |     if (status.startsWith('ERROR') || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        at Timeout._onTimeout (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\realtime-rls.spec.ts:176:66)
+
+    Error Context: test-results\e2e-realtime-rls-Pre-fligh-feb39-nel-subscribes-successfully\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-realtime-rls-Pre-fligh-feb39-nel-subscribes-successfully\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-realtime-rls-Pre-fligh-feb39-nel-subscribes-successfully\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: subscribe timeout
+
+      174 |     const status   = await Promise.race([
+      175 |       watcher.subscribeStatus(),
+    > 176 |       new Promise<string>((_, reject) => setTimeout(() => reject(new Error('subscribe timeout')), 8_000)),
+          |                                                                  ^
+      177 |     ])
+      178 |
+      179 |     if (status.startsWith('ERROR') || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        at Timeout._onTimeout (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\realtime-rls.spec.ts:176:66)
+
+    Error Context: test-results\e2e-realtime-rls-Pre-fligh-feb39-nel-subscribes-successfully-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-realtime-rls-Pre-fligh-feb39-nel-subscribes-successfully-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-realtime-rls-Pre-fligh-feb39-nel-subscribes-successfully-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  12) tests\e2e\realtime-rls.spec.ts:209:7 ΓÇ║ Scenario A ΓÇö Cashier receives events for own branch (riffa) ΓÇ║ receives INSERT event for own branch and fetchOrders would return the row 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--532f5-Orders-would-return-the-row\error-context.md
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--532f5-Orders-would-return-the-row\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-realtime-rls-Scenario--532f5-Orders-would-return-the-row\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-realtime-rls-Scenario--532f5-Orders-would-return-the-row\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: ENOENT: no such file or directory, open 'C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\test-results\.playwright-artifacts-22\333631f61405cde4cccba10c2a7ce097.zip'
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--532f5-Orders-would-return-the-row-retry1\error-context.md
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--532f5-Orders-would-return-the-row-retry1\error-context.md
+
+  13) tests\e2e\realtime-rls.spec.ts:254:7 ΓÇ║ Scenario B ΓÇö Cashier receives NO events for other branch (qallali) ΓÇ║ no event arrives within 3s after INSERT in other branch 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch\error-context.md
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch-retry1\error-context.md
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch-retry1\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-realtime-rls-Scenario--c081d-fter-INSERT-in-other-branch-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  14) tests\e2e\realtime-rls.spec.ts:297:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ receives event for riffa order 
+
+    [31m"beforeAll" hook timeout of 30000ms exceeded.[39m
+
+      284 |   const insertedIds: string[] = []
+      285 |
+    > 286 |   test.beforeAll(async () => {
+          |        ^
+      287 |     ownerClient  = await signIn(TEST_USERS.owner.email, TEST_USERS.owner.password)
+      288 |     ownerWatcher = watchOrders(ownerClient, 'scenario-c')
+      289 |     await ownerWatcher.subscribeStatus()
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\realtime-rls.spec.ts:286:8
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order\error-context.md
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    [31m"beforeAll" hook timeout of 30000ms exceeded.[39m
+
+      284 |   const insertedIds: string[] = []
+      285 |
+    > 286 |   test.beforeAll(async () => {
+          |        ^
+      287 |     ownerClient  = await signIn(TEST_USERS.owner.email, TEST_USERS.owner.password)
+      288 |     ownerWatcher = watchOrders(ownerClient, 'scenario-c')
+      289 |     await ownerWatcher.subscribeStatus()
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\realtime-rls.spec.ts:286:8
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order-retry1\error-context.md
+
+    Error Context: test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order-retry1\error-context.md
+
+    attachment #3: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-realtime-rls-Scenario--8e250-eives-event-for-riffa-order-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  15) tests\e2e\waiter\dine-in.spec.ts:31:7 ΓÇ║ Waiter dine-in @ Riffa Table 1 ΓÇ║ places size-variant order without PRICE_MISMATCH 
+
+    Error: no waiter order created
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoHaveLength[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected length: [32m1[39m
+    Received length: [31m0[39m
+    Received array:  [31m[][39m
+
+      115 |
+      116 |     expect(ordersErr, 'orders query failed').toBeNull()
+    > 117 |     expect(orders, 'no waiter order created').toHaveLength(1)
+          |                                               ^
+      118 |     const order = orders![0]
+      119 |
+      120 |     // Step 6: order_type / source / table / total / auto-accept
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\waiter\dine-in.spec.ts:117:47
+
+    Error Context: test-results\e2e-waiter-dine-in-Waiter--572cd-rder-without-PRICE-MISMATCH\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-waiter-dine-in-Waiter--572cd-rder-without-PRICE-MISMATCH\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-waiter-dine-in-Waiter--572cd-rder-without-PRICE-MISMATCH\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  16) tests\kahramana.spec.ts:330:9 ΓÇ║ Menu listing page ΓÇ║ EN: loads without errors ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: Uncaught JS errors found
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoHaveLength[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected length: [32m0[39m
+    Received length: [31m1[39m
+    Received array:  [31m["Switched to client rendering because the server rendering errored:┬╖[39m
+    [31mFailed to call `useTranslations` because the context from `NextIntlClientProvider` was not found.┬╖[39m
+    [31mThis can happen because:[39m
+    [31m1) You intended to render this component as a Server Component, the render[39m
+    [31m   failed, and therefore React attempted to render the component on the client[39m
+    [31m   instead. If this is the case, check the console for server errors.[39m
+    [31m2) You intended to render this component on the client side, but no context was found.[39m
+    [31m   Learn more about this error here: https://next-intl.dev/docs/environments/server-client-components#missing-context"][39m
+
+      21 |   await page.waitForLoadState('domcontentloaded')
+      22 |   await page.waitForTimeout(800)
+    > 23 |   expect(errors, 'Uncaught JS errors found').toHaveLength(0)
+         |                                              ^
+      24 | }
+      25 |
+      26 | async function loginAsAdmin(context: BrowserContext): Promise<Page> {
+        at assertNoErrors (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\kahramana.spec.ts:23:46)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\kahramana.spec.ts:333:7
+
+    Error Context: test-results\kahramana-Menu-listing-page-EN-loads-without-errors\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\kahramana-Menu-listing-page-EN-loads-without-errors\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\kahramana-Menu-listing-page-EN-loads-without-errors\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Retry #1 ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: Uncaught JS errors found
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoHaveLength[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected length: [32m0[39m
+    Received length: [31m1[39m
+    Received array:  [31m["Switched to client rendering because the server rendering errored:┬╖[39m
+    [31mFailed to call `useTranslations` because the context from `NextIntlClientProvider` was not found.┬╖[39m
+    [31mThis can happen because:[39m
+    [31m1) You intended to render this component as a Server Component, the render[39m
+    [31m   failed, and therefore React attempted to render the component on the client[39m
+    [31m   instead. If this is the case, check the console for server errors.[39m
+    [31m2) You intended to render this component on the client side, but no context was found.[39m
+    [31m   Learn more about this error here: https://next-intl.dev/docs/environments/server-client-components#missing-context"][39m
+
+      21 |   await page.waitForLoadState('domcontentloaded')
+      22 |   await page.waitForTimeout(800)
+    > 23 |   expect(errors, 'Uncaught JS errors found').toHaveLength(0)
+         |                                              ^
+      24 | }
+      25 |
+      26 | async function loginAsAdmin(context: BrowserContext): Promise<Page> {
+        at assertNoErrors (C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\kahramana.spec.ts:23:46)
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\kahramana.spec.ts:333:7
+
+    Error Context: test-results\kahramana-Menu-listing-page-EN-loads-without-errors-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\kahramana-Menu-listing-page-EN-loads-without-errors-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\kahramana-Menu-listing-page-EN-loads-without-errors-retry1\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  17) tests\e2e\auth\login.spec.ts:102:7 ΓÇ║ Login flow ΓÇ║ visiting /login while already authenticated redirects to /dashboard 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:3000/login?redirect=%2Fdashboard"
+    ============================================================
+
+      108 |     // Navigate back to /login ΓÇö middleware should redirect to /dashboard
+      109 |     await page.goto(PATHS.login)
+    > 110 |     await page.waitForURL(/\/dashboard/, { timeout: 10_000 })
+          |                ^
+      111 |     await expect(page).toHaveURL(/\/dashboard/)
+      112 |   })
+      113 | })
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\login.spec.ts:110:16
+
+    Error Context: test-results\e2e-auth-login-Login-flow--10bc9-ated-redirects-to-dashboard\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-login-Login-flow--10bc9-ated-redirects-to-dashboard\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-login-Login-flow--10bc9-ated-redirects-to-dashboard\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  18) tests\e2e\auth\rbac.spec.ts:53:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/kds ΓåÆ allowed 
+
+    TimeoutError: page.waitForURL: Timeout 10000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      58 |     // Cashier rank=3, kitchen rank=3 ΓÇö cashier does NOT have canAccessKDS
+      59 |     // This will redirect to /dashboard
+    > 60 |     await page.waitForURL(/\/dashboard/, { timeout: 10_000 })
+         |                ^
+      61 |   })
+      62 | })
+      63 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\rbac.spec.ts:60:16
+
+    Error Context: test-results\e2e-auth-rbac-Cashier-acce-40686-ier-dashboard-kds-ΓåÆ-allowed\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-rbac-Cashier-acce-40686-ier-dashboard-kds-ΓåÆ-allowed\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-rbac-Cashier-acce-40686-ier-dashboard-kds-ΓåÆ-allowed\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  19) tests\e2e\auth\rbac.spec.ts:123:9 ΓÇ║ Owner full access ΓÇ║ owner /dashboard/staff ΓåÆ allowed ΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mpage[39m[2m).[22mtoHaveURL[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Expected pattern: [32m/\/dashboard\/staff/[39m
+    Received string:  [31m"http://localhost:3000/login"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toHaveURL" with timeout 5000ms[22m
+    [2m    9 ├ù unexpected value "http://localhost:3000/login"[22m
+
+
+      125 |       await page.goto(path)
+      126 |       await page.waitForLoadState('networkidle')
+    > 127 |       await expect(page).toHaveURL(new RegExp(`/dashboard/${name}`))
+          |                          ^
+      128 |     })
+      129 |   }
+      130 |
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\e2e\auth\rbac.spec.ts:127:26
+
+    Error Context: test-results\e2e-auth-rbac-Owner-full-a-5844c-r-dashboard-staff-ΓåÆ-allowed\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\e2e-auth-rbac-Owner-full-a-5844c-r-dashboard-staff-ΓåÆ-allowed\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\e2e-auth-rbac-Owner-full-a-5844c-r-dashboard-staff-ΓåÆ-allowed\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  20) tests\kahramana.spec.ts:492:9 ΓÇ║ Catering page ΓÇ║ EN: no JS errors ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoHaveLength[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected length: [32m0[39m
+    Received length: [31m1[39m
+    Received array:  [31m["Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:┬╖[39m
+    [31m- A server/client branch `if (typeof window !== 'undefined')`.[39m
+    [31m- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.[39m
+    [31m- Date formatting in a user's locale which doesn't match the server.[39m
+    [31m- External changing data without sending a snapshot of it along with the HTML.[39m
+    [31m- Invalid HTML tag nesting.┬╖[39m
+    [31mIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.┬╖[39m
+    [31mhttps://react.dev/link/hydration-mismatch┬╖[39m
+    [31m  ...[39m
+    [31m    <LoadingBoundary loading={null}>[39m
+    [31m      <HTTPAccessFallbackBoundary notFound={<SegmentViewNode>} forbidden={undefined} unauthorized={undefined}>[39m
+    [31m        <HTTPAccessFallbackErrorBoundary pathname=\"/en/catering\" notFound={<SegmentViewNode>} forbidden={undefined} ...>[39m
+    [31m          <RedirectBoundary>[39m
+    [31m            <RedirectErrorBoundary router={{...}}>[39m
+    [31m              <InnerLayoutRouter url=\"/en/catering\" tree={[...]} cacheNode={{lazyData:null, ...}} segmentPath={[...]}>[39m
+    [31m                <SegmentViewNode type=\"layout\" pagePath=\"[locale]/l...\">[39m
+    [31m                  <SegmentTrieNode>[39m
+    [31m                  <link>[39m
+    [31m                  <script>[39m
+    [31m                  <script>[39m
+    [31m                  <script>[39m
+    [31m                  <script>[39m
+    [31m                  <LocaleLayout>[39m
+    [31m                    <html lang=\"en\" dir=\"ltr\" className=\"cairo_8efd...\">[39m
+    [31m                      <head>[39m
+    [31m                      <body className=\"bg-brand-b...\" style={{margin:0, ...}}>[39m
+    [31m                        <i>[39m
+    [31m                          <r locale=\"en\" now={Date} timeZone=\"Asia/Bahrain\" messages={{common:{...}, ...}}>[39m
+    [31m                            <IntlProvider locale=\"en\" now={Date} timeZone=\"Asia/Bahrain\" messages={{common:{...}, ...}}>[39m
+    [31m                              <Header>[39m
+    [31m                              <main>[39m
+    [31m                              <ConditionalFooter>[39m
+    [31m                                <Footer>[39m
+    [31m+                                 <footer[39m
+    [31m+                                   className=\"relative bg-brand-black pt-20 overflow-hidden border-t border-brand-bor...\"[39m
+    [31m+                                 >[39m
+    [31m-                                 <div className=\"absolute inset-0 pointer-events-none overflow-hidden\">[39m
+    [31m                              ...[39m
+    [31m                        ...[39m
+    [31m              ...[39m
+    [31m"][39m
+
+      496 |       await page.waitForLoadState('domcontentloaded')
+      497 |       await page.waitForTimeout(1000)
+    > 498 |       expect(errors).toHaveLength(0)
+          |                      ^
+      499 |     })
+      500 |   }
+      501 | })
+        at C:\Users\Espresso\Desktop\kahramana-platform\kahramana-Saas\tests\kahramana.spec.ts:498:22
+
+    Error Context: test-results\kahramana-Catering-page-EN-no-JS-errors\error-context.md
+
+    attachment #2: trace (application/zip) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\kahramana-Catering-page-EN-no-JS-errors\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\kahramana-Catering-page-EN-no-JS-errors\trace.zip
+
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  16 failed
+    tests\e2e\auth\invite.spec.ts:44:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link via admin API ΓåÆ auth/callback ΓåÆ lands on /dashboard 
+    tests\e2e\auth\invite.spec.ts:77:7 ΓÇ║ Staff invitation flow ΓÇ║ invite link with no matching staff_basic ΓåÆ redirected to /login with error 
+    tests\e2e\auth\login.spec.ts:34:7 ΓÇ║ Login flow ΓÇ║ hard refresh on /dashboard does not end session 
+    tests\e2e\auth\login.spec.ts:63:7 ΓÇ║ Login flow ΓÇ║ wrong password shows Arabic error message ΓöÇΓöÇΓöÇΓöÇΓöÇ
+    tests\e2e\auth\login.spec.ts:79:7 ΓÇ║ Login flow ΓÇ║ non-existent email shows error message ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    tests\e2e\auth\middleware.spec.ts:52:7 ΓÇ║ Middleware ΓÇö authenticated redirects ΓÇ║ /login with valid session ΓåÆ redirects to /dashboard 
+    tests\e2e\auth\password-reset.spec.ts:102:7 ΓÇ║ Password update via admin API ΓÇ║ login with old password fails after password change 
+    tests\e2e\auth\password-reset.spec.ts:120:7 ΓÇ║ No /forgot-password page (documented gap) ΓÇ║ /forgot-password returns 404 or redirects (page not implemented) 
+    tests\e2e\auth\rbac.spec.ts:146:7 ΓÇ║ Driver access ΓÇ║ driver /driver ΓåÆ allowed (own page) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    tests\e2e\auth\rbac.spec.ts:154:7 ΓÇ║ Driver access ΓÇ║ driver /dashboard ΓåÆ allowed at middleware (no driver-specific rule) 
+    tests\e2e\realtime-rls.spec.ts:171:7 ΓÇ║ Pre-flight checks ΓÇ║ cashier realtime channel subscribes successfully 
+    tests\e2e\realtime-rls.spec.ts:209:7 ΓÇ║ Scenario A ΓÇö Cashier receives events for own branch (riffa) ΓÇ║ receives INSERT event for own branch and fetchOrders would return the row 
+    tests\e2e\realtime-rls.spec.ts:254:7 ΓÇ║ Scenario B ΓÇö Cashier receives NO events for other branch (qallali) ΓÇ║ no event arrives within 3s after INSERT in other branch 
+    tests\e2e\realtime-rls.spec.ts:297:7 ΓÇ║ Scenario C ΓÇö Owner receives events from all branches ΓÇ║ receives event for riffa order 
+    tests\e2e\waiter\dine-in.spec.ts:31:7 ΓÇ║ Waiter dine-in @ Riffa Table 1 ΓÇ║ places size-variant order without PRICE_MISMATCH 
+    tests\kahramana.spec.ts:330:9 ΓÇ║ Menu listing page ΓÇ║ EN: loads without errors ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  4 flaky
+    tests\e2e\auth\login.spec.ts:102:7 ΓÇ║ Login flow ΓÇ║ visiting /login while already authenticated redirects to /dashboard 
+    tests\e2e\auth\rbac.spec.ts:53:7 ΓÇ║ Cashier access restrictions ΓÇ║ cashier /dashboard/kds ΓåÆ allowed 
+    tests\e2e\auth\rbac.spec.ts:123:9 ΓÇ║ Owner full access ΓÇ║ owner /dashboard/staff ΓåÆ allowed ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    tests\kahramana.spec.ts:492:9 ΓÇ║ Catering page ΓÇ║ EN: no JS errors ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  7 skipped
+  2 did not run
+  174 passed (10.1m)

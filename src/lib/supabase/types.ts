@@ -4320,6 +4320,13 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["staff_role"]
       }
+      bump_station_order: {
+        Args: {
+          p_order_id: string
+          p_station: Database["public"]["Enums"]["kds_station"]
+        }
+        Returns: number
+      }
       calculate_loyalty_tier: {
         Args: { p_orders: number; p_spent: number }
         Returns: Database["public"]["Enums"]["loyalty_tier"]
@@ -4466,37 +4473,6 @@ export type Database = {
               p_order_type: string
               p_payment_method?: string
               p_points_to_redeem?: number
-              p_source?: string
-              p_status?: string
-              p_table_number?: number
-              p_total_bhd: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_branch_id: string
-              p_coupon_discount_bhd?: number
-              p_coupon_id?: string
-              p_customer_id?: string
-              p_customer_name: string
-              p_customer_notes?: string
-              p_customer_phone: string
-              p_delivery_address?: string
-              p_delivery_area?: string
-              p_delivery_building?: string
-              p_delivery_city?: string
-              p_delivery_lat?: number
-              p_delivery_lng?: number
-              p_delivery_street?: string
-              p_expires_at?: string
-              p_idempotency_key: string
-              p_items: Json
-              p_loyalty_discount_bhd?: number
-              p_notes?: string
-              p_order_type: string
-              p_payment_method?: string
-              p_points_to_redeem?: number
               p_promotion_discount_bhd?: number
               p_promotion_id?: string
               p_source?: string
@@ -4602,15 +4578,26 @@ export type Database = {
         Returns: undefined
       }
       rpc_update_abc_classification: { Args: never; Returns: undefined }
-      update_order_item_station_status: {
-        Args: {
-          p_item_id: string
-          p_order_id: string
-          p_station: Database["public"]["Enums"]["kds_station"]
-          p_status: Database["public"]["Enums"]["kds_item_status"]
-        }
-        Returns: undefined
-      }
+      update_order_item_station_status:
+        | {
+            Args: {
+              p_item_id: string
+              p_order_id: string
+              p_station: Database["public"]["Enums"]["kds_station"]
+              p_status: Database["public"]["Enums"]["kds_item_status"]
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_expected_status?: Database["public"]["Enums"]["kds_item_status"]
+              p_item_id: string
+              p_order_id: string
+              p_station: Database["public"]["Enums"]["kds_station"]
+              p_status: Database["public"]["Enums"]["kds_item_status"]
+            }
+            Returns: undefined
+          }
     }
     Enums: {
       abc_class: "A" | "B" | "C"
@@ -4642,6 +4629,9 @@ export type Database = {
         | "bakery"
         | "appetizer_drinks"
         | "main"
+        | "fryer"
+        | "cold"
+        | "unassigned"
       loyalty_tier: "bronze" | "silver" | "gold" | "platinum"
       order_status:
         | "new"
@@ -4842,6 +4832,9 @@ export const Constants = {
         "bakery",
         "appetizer_drinks",
         "main",
+        "fryer",
+        "cold",
+        "unassigned",
       ],
       loyalty_tier: ["bronze", "silver", "gold", "platinum"],
       order_status: [

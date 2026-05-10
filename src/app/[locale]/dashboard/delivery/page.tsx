@@ -42,7 +42,10 @@ export default async function DeliveryPage({ params }: Props) {
       order_items(id)
     `)
     .in('status', ['accepted', 'preparing', 'ready', 'out_for_delivery'])
-    .neq('order_type', 'pickup')
+    // Audit fix #3: positive filter (was .neq('order_type','pickup') — that
+    // also matched dine_in and any future order_type). Delivery dashboard
+    // shows delivery orders only.
+    .eq('order_type', 'delivery')
     .order('created_at', { ascending: true })
 
   if (branchScope) {

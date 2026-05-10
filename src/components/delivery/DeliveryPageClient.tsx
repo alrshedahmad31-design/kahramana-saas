@@ -103,6 +103,8 @@ export default function DeliveryPageClient({
         delivery_lat, delivery_lng, order_items(id)
       `)
       .in('status', ACTIVE_STATUSES as never[])
+      // Audit fix #3: delivery dashboard only watches delivery orders.
+      .eq('order_type', 'delivery')
       .order('created_at', { ascending: true })
 
     if (branchId) query = query.eq('branch_id', branchId)

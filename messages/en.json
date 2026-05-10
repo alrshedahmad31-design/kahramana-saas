@@ -1768,6 +1768,10 @@
         "dailyTrend": "Daily Waste Cost Trend"
       },
       "wasteEscalation": {
+        "title": "Waste Escalation",
+        "noPending": "No waste awaiting review",
+        "awaitingBm": "Awaiting Branch Manager",
+        "escalatedGm": "Escalated to General Manager",
         "escalatedOwner": "Escalated to Owner",
         "viewPending": "View pending waste"
       },

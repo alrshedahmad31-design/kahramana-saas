@@ -121,7 +121,9 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
     setUpdating(itemId)
 
     try {
-      const result = await updateItemStatus(order.id, itemId, station, next)
+      // Pass currentStatus as expectedStatus so the RPC can detect concurrent
+      // changes (CONFLICT) and the action can short-circuit illegal jumps.
+      const result = await updateItemStatus(order.id, itemId, station, next, currentStatus)
       if (!result.success) {
         setOptimistic(prev => { const { [itemId]: _, ...rest } = prev; return rest })
         console.error('[KDS] update failed:', result.error)

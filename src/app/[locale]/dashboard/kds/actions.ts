@@ -74,11 +74,24 @@ export async function advanceOrderStatus(
   return { success: true }
 }
 
+// Server-side transition validation — must match the RPC graph in
+// migration 094 (pending→preparing→ready→completed and completed→ready recall).
+const ITEM_STATUS_TRANSITIONS: Record<KDSItemStatus, readonly KDSItemStatus[]> = {
+  pending:   ['preparing'],
+  preparing: ['ready'],
+  ready:     ['completed'],
+  completed: ['ready'],
+}
+function isLegalItemTransition(from: KDSItemStatus, to: KDSItemStatus): boolean {
+  return ITEM_STATUS_TRANSITIONS[from]?.includes(to) ?? false
+}
+
 export async function updateItemStatus(
-  orderId: string,
-  itemId:  string,
-  station: KDSStation,
-  status:  KDSItemStatus,
+  orderId:        string,
+  itemId:         string,
+  station:        KDSStation,
+  status:         KDSItemStatus,
+  expectedStatus?: KDSItemStatus,
 ): Promise<AdvanceResult> {
   let caller
   try {
@@ -89,6 +102,13 @@ export async function updateItemStatus(
 
   if (!canAccessKDS(caller)) {
     return { success: false, error: 'Unauthorized: KDS access restricted' }
+  }
+
+  // Pre-flight transition validation: short-circuit obvious illegal jumps so
+  // the user gets a clear error instead of a generic RPC failure. The RPC
+  // re-validates against the actual stored status (defence in depth).
+  if (expectedStatus && !isLegalItemTransition(expectedStatus, status)) {
+    return { success: false, error: `Illegal transition: ${expectedStatus} → ${status}` }
   }
 
   const service = await createServiceClient()
@@ -106,15 +126,19 @@ export async function updateItemStatus(
     }
   }
 
-  // Use user-context client so the RPC's auth_user_role()/auth_user_branch_id()
-  // resolve from the cookie JWT. Service role has no auth.uid() and the RPC
-  // (added by migration 089) raises UNAUTHENTICATED.
+  // User-context client so the RPC's auth_user_role()/auth_user_branch_id()
+  // resolve from the cookie JWT. The RPC (migration 094) enforces:
+  //   - role whitelist (kitchen, branch_manager, general_manager, owner)
+  //   - server-side transition graph
+  //   - p_expected_status optimistic-concurrency check
   const userClient = await createClient()
-  const { error } = await userClient.rpc('update_order_item_station_status', {
-    p_order_id: orderId,
-    p_item_id:  itemId,
-    p_station:  station,
-    p_status:   status,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (userClient.rpc as any)('update_order_item_station_status', {
+    p_order_id:        orderId,
+    p_item_id:         itemId,
+    p_station:         station,
+    p_status:          status,
+    p_expected_status: expectedStatus ?? null,
   })
 
   if (error) return { success: false, error: error.message }
@@ -144,14 +168,17 @@ export async function bumpStationOrder(
       return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
   }
 
-  // User-context client — the new branch-scoped RLS on order_item_station_status
-  // (migration 089) needs auth.uid() to resolve the caller's branch.
+  // bump_station_order RPC (migration 094) is atomic and:
+  //   - verifies every station row is 'ready' before completing any
+  //   - returns the affected row count, raises NO_ROWS_AFFECTED on 0
+  //   - raises NOT_ALL_READY if any item is still pending/preparing
+  //   - re-checks role + branch scope server-side (defence in depth)
   const userClient = await createClient()
-  const { error } = await userClient
-    .from('order_item_station_status')
-    .update({ status: 'completed', updated_at: new Date().toISOString() })
-    .eq('order_id', orderId)
-    .eq('station', station)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (userClient.rpc as any)('bump_station_order', {
+    p_order_id: orderId,
+    p_station:  station,
+  })
 
   if (error) return { success: false, error: error.message }
   return { success: true }
@@ -181,12 +208,15 @@ export async function recallStationOrder(
   }
 
   // User-context client — see bumpStationOrder for rationale.
+  // Cast `station` because the auto-generated Database type for the
+  // `station` column lags the migration 093 enum additions (fryer/cold/
+  // unassigned). The KDSStation TS union is the source of truth at this layer.
   const userClient = await createClient()
   const { error } = await userClient
     .from('order_item_station_status')
     .update({ status: 'ready', updated_at: new Date().toISOString() })
     .eq('order_id', orderId)
-    .eq('station', station)
+    .eq('station', station as never)
     .eq('status', 'completed')
 
   if (error) return { success: false, error: error.message }

@@ -65,7 +65,13 @@ export default async function KDSPage({ params, searchParams }: Props) {
       countsQuery = countsQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
     }
 
-    const { data: countRows } = await countsQuery
+    const { data: countRows, error: countsError } = await countsQuery
+    if (countsError) {
+      // Log + render selector with empty counts so the operator can still
+      // navigate. Hiding the error would make a DB/RLS failure look like
+      // "no work to do".
+      console.error('[kds] station counts query failed:', countsError)
+    }
     const stationCounts: Partial<Record<KDSStation, number>> = {}
     for (const row of countRows ?? []) {
       const s = row.station as KDSStation

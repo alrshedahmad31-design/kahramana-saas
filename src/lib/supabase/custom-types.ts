@@ -11,7 +11,14 @@ export type { Database, Tables, TablesInsert, TablesUpdate, Enums, Json } from '
 
 export type OrderStatus    = Enums<'order_status'>;
 export type StaffRole      = Enums<'staff_role'> | 'waiter';
-export type KDSStation     = 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'main' | 'fry' | 'salads' | 'desserts' | 'drinks' | 'packing';
+// Canonical 5-station taxonomy (migration 093/094): grill, fryer, cold,
+// drinks, desserts, plus 'unassigned' as the explicit fail-closed queue.
+// Legacy values are retained so in-flight rows assigned by older triggers
+// (shawarma/bakery/appetizer_drinks/main/fry/salads/packing) still type-check
+// when read from the DB. New rows from trigger 094 only emit canonical values.
+export type KDSStation =
+  | 'grill' | 'fryer' | 'cold' | 'drinks' | 'desserts' | 'unassigned'
+  | 'shawarma' | 'bakery' | 'appetizer_drinks' | 'main' | 'fry' | 'salads' | 'packing';
 export type KDSItemStatus  = 'pending' | 'preparing' | 'ready' | 'completed';
 export type LoyaltyTier    = Enums<'loyalty_tier'>;
 export type CouponType     = Enums<'coupon_type'>;

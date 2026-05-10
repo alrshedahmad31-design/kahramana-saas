@@ -1768,6 +1768,10 @@
         "dailyTrend": "اتجاه تكلفة الهدر اليومي"
       },
       "wasteEscalation": {
+        "title": "تصعيد الهدر",
+        "noPending": "لا يوجد هدر بانتظار المراجعة",
+        "awaitingBm": "بانتظار مدير الفرع",
+        "escalatedGm": "مُصعَّد للمدير العام",
         "escalatedOwner": "مُصعَّد للمالك",
         "viewPending": "عرض الهدر المعلَّق"
       },
