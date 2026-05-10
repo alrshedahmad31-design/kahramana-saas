@@ -168,7 +168,12 @@
       "Bash(cmd /c \"netstat -ano\")",
       "PowerShell(Get-NetTCPConnection *)",
       "PowerShell(npx playwright test tests/e2e/waiter/dine-in.spec.ts --workers=1 --reporter=list 2>&1)",
-      "PowerShell(npm run *)"
+      "PowerShell(npm run *)",
+      "mcp__plugin_vercel_vercel__list_deployments",
+      "mcp__plugin_supabase_supabase__execute_sql",
+      "mcp__plugin_supabase_supabase__get_logs",
+      "mcp__plugin_supabase_supabase__get_advisors",
+      "mcp__plugin_vercel_vercel__get_deployment"
     ]
   }
 }

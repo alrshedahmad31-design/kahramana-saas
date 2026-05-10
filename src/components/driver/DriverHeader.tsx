@@ -26,7 +26,7 @@ export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="font-satoshi text-sm text-brand-muted tabular-nums hidden sm:block">{clock}</span>
+          <span suppressHydrationWarning className="font-satoshi text-sm text-brand-muted tabular-nums hidden sm:block">{clock}</span>
 
           {/* Mute toggle */}
           <button
