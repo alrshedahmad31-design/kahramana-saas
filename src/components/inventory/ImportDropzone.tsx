@@ -281,10 +281,10 @@ export default function ImportDropzone({ locale }: Props) {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {importSuccess.summary.ingredients > 0 && <StatBadge label={locale === 'ar' ? 'مكونات' : 'Ingredients'} count={importSuccess.summary.ingredients} />}
-            {importSuccess.summary.prepItems > 0 && <StatBadge label="Prep Items" count={importSuccess.summary.prepItems} />}
+            {importSuccess.summary.prepItems > 0 && <StatBadge label={locale === 'ar' ? 'الأصناف الجاهزة' : 'Prep Items'} count={importSuccess.summary.prepItems} />}
             {importSuccess.summary.recipes > 0 && <StatBadge label={locale === 'ar' ? 'وصفات' : 'Recipes'} count={importSuccess.summary.recipes} />}
             {importSuccess.summary.openingStock > 0 && <StatBadge label={locale === 'ar' ? 'أرصدة افتتاحية' : 'Opening stock'} count={importSuccess.summary.openingStock} />}
-            {importSuccess.summary.parLevels > 0 && <StatBadge label={locale === 'ar' ? 'مستويات Par' : 'Par levels'} count={importSuccess.summary.parLevels} />}
+            {importSuccess.summary.parLevels > 0 && <StatBadge label={locale === 'ar' ? 'مستويات المخزون' : 'Par levels'} count={importSuccess.summary.parLevels} />}
           </div>
           <div className="flex gap-3 flex-wrap">
             <a

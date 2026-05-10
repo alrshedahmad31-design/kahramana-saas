@@ -67,7 +67,7 @@ export default async function PrepItemDetailPage({ params }: PageProps) {
             href={`${prefix}/dashboard/inventory/prep-items`}
             className="font-satoshi text-sm text-brand-muted hover:text-brand-gold transition-colors"
           >
-            Prep Items
+            {isAr ? 'الأصناف الجاهزة' : 'Prep Items'}
           </Link>
           <span className="text-brand-muted">/</span>
           <span className="font-satoshi text-sm text-brand-text">{prepItem.name_ar}</span>
@@ -79,7 +79,7 @@ export default async function PrepItemDetailPage({ params }: PageProps) {
       {/* Edit Form */}
       <div className="bg-brand-surface border border-brand-border rounded-xl p-6">
         <h2 className="font-cairo text-lg font-black text-brand-text mb-4">
-          {isAr ? 'تعديل Prep Item' : 'Edit Prep Item'}
+          {isAr ? 'تعديل صنف جاهز' : 'Edit Prep Item'}
         </h2>
         <PrepItemForm
           prepItem={prepItem}

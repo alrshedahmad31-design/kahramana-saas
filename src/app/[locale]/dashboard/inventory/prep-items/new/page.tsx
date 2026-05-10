@@ -29,7 +29,7 @@ export default async function NewPrepItemPage({ params }: PageProps) {
             href={`${prefix}/dashboard/inventory/prep-items`}
             className="font-satoshi text-sm text-brand-muted hover:text-brand-gold transition-colors"
           >
-            Prep Items
+            {isAr ? 'الأصناف الجاهزة' : 'Prep Items'}
           </Link>
           <span className="text-brand-muted">/</span>
           <span className="font-satoshi text-sm text-brand-text">
@@ -37,7 +37,7 @@ export default async function NewPrepItemPage({ params }: PageProps) {
           </span>
         </div>
         <h1 className="font-cairo text-2xl font-black text-brand-text">
-          {isAr ? 'إضافة Prep Item جديد' : 'Add New Prep Item'}
+          {isAr ? 'إضافة صنف جاهز جديد' : 'Add New Prep Item'}
         </h1>
       </div>
 

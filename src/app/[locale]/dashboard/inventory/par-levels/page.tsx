@@ -38,7 +38,7 @@ export default async function ParLevelsPage({ params }: PageProps) {
     <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-6">
       <div>
         <h1 className="font-cairo text-2xl font-black text-brand-text">
-          {isAr ? 'مستويات Par' : 'Par Levels'}
+          {isAr ? 'مستويات المخزون' : 'Par Levels'}
         </h1>
         <p className="font-satoshi text-sm text-brand-muted mt-1">
           {isAr

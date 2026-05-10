@@ -211,7 +211,7 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { href: `${prefix}/dashboard/inventory/ingredients`, label: isAr ? 'المكونات' : 'Ingredients' },
-          { href: `${prefix}/dashboard/inventory/prep-items`, label: isAr ? 'Prep Items' : 'Prep Items' },
+          { href: `${prefix}/dashboard/inventory/prep-items`, label: isAr ? 'الأصناف الجاهزة' : 'Prep Items' },
           { href: `${prefix}/dashboard/inventory/recipes`, label: isAr ? 'الوصفات' : 'Recipes' },
           { href: `${prefix}/dashboard/inventory/stock`, label: isAr ? 'المخزون' : 'Stock Levels' },
           { href: `${prefix}/dashboard/inventory/catering`, label: isAr ? 'التقديم الخارجي' : 'Catering' },

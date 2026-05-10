@@ -1374,8 +1374,8 @@
       "yield": "الهدر",
       "optional": "اختياري",
       "cost": "التكلفة",
-      "prepItems": "Prep Items",
-      "addPrepItem": "إضافة Prep Item",
+      "prepItems": "الأصناف الجاهزة",
+      "addPrepItem": "إضافة صنف جاهز",
       "save": "حفظ الوصفة",
       "saving": "جاري الحفظ..."
     },

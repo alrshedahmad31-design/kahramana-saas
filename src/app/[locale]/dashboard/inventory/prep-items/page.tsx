@@ -63,7 +63,7 @@ export default async function PrepItemsPage({ params, searchParams }: PageProps)
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-cairo text-2xl font-black text-brand-text">
-            Prep Items
+            {isAr ? 'الأصناف الجاهزة' : 'Prep Items'}
           </h1>
           <p className="font-satoshi text-sm text-brand-muted mt-1">
             {count ?? 0} {isAr ? 'عنصر' : 'items'}
@@ -73,7 +73,7 @@ export default async function PrepItemsPage({ params, searchParams }: PageProps)
           href={`${prefix}/dashboard/inventory/prep-items/new`}
           className="inline-flex items-center gap-2 rounded-lg bg-brand-gold px-4 py-2.5 font-satoshi text-sm font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors"
         >
-          + {isAr ? 'إضافة Prep Item' : 'Add Prep Item'}
+          + {isAr ? 'إضافة صنف جاهز' : 'Add Prep Item'}
         </Link>
       </div>
 
@@ -98,7 +98,7 @@ export default async function PrepItemsPage({ params, searchParams }: PageProps)
       {rows.length === 0 ? (
         <div className="border border-brand-border rounded-xl p-12 text-center">
           <p className="font-satoshi text-brand-muted">
-            {isAr ? 'لا توجد Prep Items' : 'No prep items found'}
+            {isAr ? 'لا توجد أصناف جاهزة' : 'No prep items found'}
           </p>
         </div>
       ) : (

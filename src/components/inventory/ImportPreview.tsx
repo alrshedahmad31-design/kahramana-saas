@@ -43,12 +43,12 @@ export default function ImportPreview({ summary, errors, warnings, onConfirm, on
         {/* Summary counts */}
         <div className="rounded-lg bg-brand-surface-2 px-4 py-3 flex flex-col divide-y divide-brand-border">
           <SummaryRow label={ar ? 'مكونات جاهزة للاستيراد' : 'Ingredients ready'} count={summary.ingredients} />
-          <SummaryRow label={ar ? 'Prep Items' : 'Prep Items'} count={summary.prepItems} />
-          <SummaryRow label={ar ? 'مكونات Prep' : 'Prep ingredients'} count={summary.prepIngredients} />
+          <SummaryRow label={ar ? 'الأصناف الجاهزة' : 'Prep Items'} count={summary.prepItems} />
+          <SummaryRow label={ar ? 'مكونات الأصناف الجاهزة' : 'Prep ingredients'} count={summary.prepIngredients} />
           <SummaryRow label={ar ? 'وصفات' : 'Recipes'} count={summary.recipes} />
           <SummaryRow label={ar ? 'سجلات المخزون الافتتاحي' : 'Opening stock records'} count={summary.openingStock} />
           <SummaryRow label={ar ? 'دفعات (lots)' : 'Lots'} count={summary.lots} />
-          <SummaryRow label={ar ? 'مستويات Par' : 'Par levels'} count={summary.parLevels} />
+          <SummaryRow label={ar ? 'مستويات المخزون' : 'Par levels'} count={summary.parLevels} />
           <SummaryRow label={ar ? 'موردون' : 'Suppliers'} count={summary.suppliers} />
         </div>
 
