@@ -10,6 +10,7 @@ import {
   getMetrics, getDailySales, getTopItems,
   getHourlyDistribution, getBranchSummaries,
   getSecondaryMetrics,
+  getLaborCostMetrics, getMenuEngineeringMatrix,
 } from '@/lib/analytics/queries'
 import { getTranslations } from 'next-intl/server'
 import { generateInsights } from '@/lib/analytics/insights'
@@ -23,6 +24,8 @@ import BranchComparisonTable from '@/components/analytics/BranchComparisonTable'
 import AnalyticsRefresher    from '@/components/analytics/AnalyticsRefresher'
 import AnalyticsSubNav       from '@/components/analytics/AnalyticsSubNav'
 import AutomatedInsights     from '@/components/analytics/AutomatedInsights'
+import LaborCostWidget       from '@/components/analytics/LaborCostWidget'
+import AnalyticsMenuMatrix   from '@/components/analytics/AnalyticsMenuMatrix'
 
 interface SearchParams {
   range?:  string
@@ -54,13 +57,15 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   const branchId      = isGlobalAdmin && sp.branch ? sp.branch : (user.branch_id ?? undefined)
 
-  const [metrics, dailySales, topItems, hourly, branches, secondary] = await Promise.all([
+  const [metrics, dailySales, topItems, hourly, branches, secondary, labor, menuMatrix] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getDailySales(range.from, range.to, branchId),
     getTopItems(range.from, range.to, 10, branchId),
     getHourlyDistribution(range.from, range.to, branchId),
     getBranchSummaries(range.from, range.to),
     getSecondaryMetrics(range.from, range.to, branchId),
+    getLaborCostMetrics(range.from, range.to, branchId),
+    getMenuEngineeringMatrix(range.from, range.to, branchId),
   ])
 
   const filledSales = fillDailyGaps(dailySales, range.from, range.to, {
@@ -159,14 +164,18 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
         />
       </div>
 
-      {/* Revenue chart + Insights — 70/30 */}
-      <div className="grid grid-cols-1 xl:grid-cols-10 gap-6">
-        <div className="xl:col-span-7 bg-brand-surface border border-brand-border rounded-xl p-5">
+      {/* Revenue chart + Insights + Labor — 50/25/25 or similar */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="xl:col-span-6 bg-brand-surface border border-brand-border rounded-xl p-5">
           <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-5
             ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
             {isAr ? 'الإيرادات اليومية' : 'Daily Revenue'}
           </h2>
           <RevenueChart data={filledSales} currency={currency} />
+        </div>
+
+        <div className="xl:col-span-3">
+          <LaborCostWidget data={labor} />
         </div>
 
         <div className="xl:col-span-3 bg-brand-surface border border-brand-border rounded-xl p-5">
@@ -177,6 +186,9 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
           <AutomatedInsights insights={insights} isRTL={isAr} />
         </div>
       </div>
+
+      {/* Menu Engineering Matrix */}
+      <AnalyticsMenuMatrix data={menuMatrix} />
 
       {/* Top items + Branch comparison */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
