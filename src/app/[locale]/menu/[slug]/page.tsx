@@ -92,11 +92,12 @@ export default async function MenuCategoryPage({ params }: Props) {
   const isRTL = locale === 'ar'
   const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations({ locale, namespace: 'menu' })
+  const categoryName = isRTL ? category.name.ar : category.name.en
 
 
   const breadcrumb = buildCategoryBreadcrumb(
     locale,
-    isRTL ? category.name.ar : category.name.en,
+    categoryName,
     slug,
   )
 
@@ -109,13 +110,13 @@ export default async function MenuCategoryPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <MenuHero
-        titleOverride={isRTL ? category.name.ar : category.name.en}
+        titleOverride={categoryName}
         descriptionOverride={
           category.description
             ? isRTL
               ? category.description.ar
               : category.description.en
-            : t('categoryFallbackDescription')
+            : t('categoryFallbackDescription', { category: categoryName })
         }
       />
       <MenuExperience

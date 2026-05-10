@@ -70,7 +70,7 @@ export default function RefundPolicyPage() {
           <p>{t('process.content')}</p>
           <ul>
             {(t.raw('process.items') as string[]).map((item, i) => (
-              <li key={i}>{t.rich(item, { strong: (c) => <strong>{c}</strong> })}</li>
+              <li key={i}>{item}</li>
             ))}
           </ul>
           <p>{t.rich('process.timeline', { strong: (c) => <strong>{c}</strong> })}</p>
