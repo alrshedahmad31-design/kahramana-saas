@@ -1213,8 +1213,11 @@
     "title": "My Account",
     "login": "Sign In",
     "register": "Register",
+    "loginOrRegister": "Sign In / Register",
     "createAccountHint": "Create an account to earn loyalty points and track your order history.",
-    "pointsHistory": "Points History"
+    "pointsHistory": "Points History",
+    "signOut": "Sign Out",
+    "pointsShort": "pts"
   },
   "payment": {
     "title": "Complete Your Payment",

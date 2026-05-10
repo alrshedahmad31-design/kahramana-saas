@@ -1213,8 +1213,11 @@
     "title": "حسابي",
     "login": "تسجيل الدخول",
     "register": "إنشاء حساب",
+    "loginOrRegister": "تسجيل / دخول",
     "createAccountHint": "أنشئ حساباً لكسب نقاط الولاء وتتبع سجل طلباتك.",
-    "pointsHistory": "سجل النقاط"
+    "pointsHistory": "سجل النقاط",
+    "signOut": "تسجيل الخروج",
+    "pointsShort": "نقطة"
   },
   "payment": {
     "title": "أكمل الدفع",
