@@ -1,4 +1,5 @@
 import { redirect }          from 'next/navigation'
+import { getTranslations }    from 'next-intl/server'
 import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency } from '@/lib/analytics/calculations'
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default async function MarketingAnalyticsPage({ params, searchParams }: Props) {
+  const t          = await getTranslations('common')
   const { locale } = await params
   const sp         = await searchParams
   const isAr       = locale === 'ar'
@@ -36,7 +38,7 @@ export default async function MarketingAnalyticsPage({ params, searchParams }: P
     getOrderSourceBreakdown(),
   ])
 
-  const currency = isAr ? 'د.ب' : 'BD'
+  const currency = t('currency')
 
   const totalDiscount   = coupons.reduce((s, c) => s + c.total_discount_given,   0)
   const couponsRevenue  = coupons.reduce((s, c) => s + c.revenue_with_coupon,    0)

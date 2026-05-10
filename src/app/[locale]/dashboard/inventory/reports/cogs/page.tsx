@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
@@ -14,7 +15,7 @@ const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_
 
 export default async function COGSPage({ params }: PageProps) {
   const { locale } = await params
-  const isAr = locale !== 'en'
+  const t = await getTranslations({ locale, namespace: 'inventory.reports.cogs' })
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
@@ -33,18 +34,19 @@ export default async function COGSPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       <ReportHeader
-        title={isAr ? 'تكلفة الأصناف (COGS)' : 'Dish COGS Report'}
-        description={isAr ? 'هامش الربح والتكلفة لكل طبق في القائمة' : 'Profit margin and cost for every menu item'}
+        title={t('title')}
+        description={t('desc')}
         locale={locale}
       />
       {safeData.length === 0 ? (
         <EmptyReport
-          title={isAr ? 'لا توجد بيانات' : 'No data'}
-          description={isAr ? 'لم يتم العثور على وصفات مرتبطة بأسعار' : 'No recipes with pricing found'}
+          title={t('emptyTitle')}
+          description={t('emptyDesc')}
         />
       ) : (
-        <COGSClient dishes={safeData} isAr={isAr} />
+        <COGSClient dishes={safeData} locale={locale} />
       )}
     </div>
   )
 }
+

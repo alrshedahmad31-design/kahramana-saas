@@ -18,6 +18,8 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
   const [editing,    setEditing]    = useState(false)
   const [isPending,  startTransition] = useTransition()
   const t = useTranslations()
+  const tCommon = useTranslations('common')
+
   const [error,      setError]      = useState<string | null>(null)
   const [success,    setSuccess]    = useState(false)
 
@@ -131,7 +133,7 @@ export default function StaffOverview({ staff, canEdit, isRTL }: Props) {
           />
           <InfoCard
             label={t('staff.hourlyRate')}
-            value={staff.hourly_rate != null ? `${staff.hourly_rate} BD` : null}
+            value={staff.hourly_rate != null ? `${staff.hourly_rate} ${tCommon('currency')}` : null}
             isRTL={isRTL}
           />
           <InfoCard label={t('staff.emergencyContact')} value={staff.emergency_contact_name} isRTL={isRTL} />

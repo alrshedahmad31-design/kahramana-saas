@@ -101,27 +101,29 @@ export default async function middleware(request: NextRequest) {
   headersWithNonce.set('x-nonce', nonce)
   headersWithNonce.set('x-pathname', pathname)
 
+  // 1. Always run intl middleware first to handle redirects/cookies
+  const intlResponse = intlMiddleware(request)
+
+  // 2. If it's a redirect (e.g. locale change), return it immediately
+  if (intlResponse.status >= 300 && intlResponse.status < 400) {
+    intlResponse.headers.set('Content-Security-Policy', buildCsp(nonce))
+    return intlResponse
+  }
+
   const isDashboard = DASHBOARD_PATTERN.test(pathname)
   const isLogin     = LOGIN_PATTERN.test(pathname)
 
   // ── Public routes: skip Supabase entirely ─────────────────────────────────
   if (!isDashboard && !isLogin) {
-    const intlResponse = intlMiddleware(request)
-    return finalizeResponse(
-      headersWithNonce,
-      nonce,
-      NextResponse.next({ request: { headers: headersWithNonce } }),
-      intlResponse,
-    )
+    return finalizeResponse(headersWithNonce, nonce, NextResponse.next(), intlResponse)
   }
 
-  // ── Auth routes only ──────────────────────────────────────────────────────
+  // ── Auth routes: Supabase logic ──────────────────────────────────────────
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
   if (!supabaseUrl || !supabaseKey) {
-    const res = intlMiddleware(request)
-    res.headers.set('Content-Security-Policy', buildCsp(nonce))
-    return res
+    return finalizeResponse(headersWithNonce, nonce, NextResponse.next(), intlResponse)
   }
 
   let supabaseResponse = NextResponse.next({ request: { headers: headersWithNonce } })
@@ -189,7 +191,6 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  const intlResponse = intlMiddleware(request)
   return finalizeResponse(headersWithNonce, nonce, supabaseResponse, intlResponse)
 }
 

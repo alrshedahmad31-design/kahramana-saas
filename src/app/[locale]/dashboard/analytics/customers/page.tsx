@@ -1,4 +1,5 @@
 import { redirect }          from 'next/navigation'
+import { getTranslations }    from 'next-intl/server'
 import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency } from '@/lib/analytics/calculations'
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default async function CustomersAnalyticsPage({ params, searchParams }: Props) {
+  const t          = await getTranslations('common')
   const { locale } = await params
   const sp         = await searchParams
   const isAr       = locale === 'ar'
@@ -44,7 +46,7 @@ export default async function CustomersAnalyticsPage({ params, searchParams }: P
     getOrderSourceBreakdown(),
   ])
 
-  const currency  = isAr ? 'د.ب' : 'BD'
+  const currency  = t('currency')
   const totalCust = segments.reduce((s, r) => s + r.customer_count, 0)
 
   return (

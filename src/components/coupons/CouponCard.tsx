@@ -111,7 +111,10 @@ export default function CouponCard({ coupon, onEdit, onTogglePause, onCopy, onVi
               {isAr ? 'الحد الأدنى' : 'Min Order'}
             </span>
             <span className={`text-xs font-bold text-brand-text tabular-nums ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {Number(coupon.min_order_value_bhd || 0).toFixed(3)} {isAr ? 'د.ب' : 'BD'}
+              {Number(coupon.min_order_value_bhd || 0).toFixed(3)}{' '}
+              <span className={isAr ? 'font-almarai' : 'font-satoshi'}>
+                {t('common.currency')}
+              </span>
             </span>
           </div>
           <div className="flex flex-col gap-1 text-end">
@@ -163,7 +166,10 @@ export default function CouponCard({ coupon, onEdit, onTogglePause, onCopy, onVi
               {isAr ? 'تأثير الإيرادات' : 'Revenue Impact'}
             </span>
             <span className="text-xs font-black text-brand-gold tabular-nums">
-              +{Number(coupon.total_revenue_impact || 0).toFixed(3)} {isAr ? 'د.ب' : 'BD'}
+              +{Number(coupon.total_revenue_impact || 0).toFixed(3)}{' '}
+              <span className={isAr ? 'font-almarai' : 'font-satoshi'}>
+                {t('common.currency')}
+              </span>
             </span>
           </div>
           <div className="flex items-center gap-1.5">

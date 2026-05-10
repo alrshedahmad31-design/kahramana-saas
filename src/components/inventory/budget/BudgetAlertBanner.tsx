@@ -1,37 +1,45 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
+import { AlertTriangle } from 'lucide-react'
+
 interface Props {
   spendVariance: number
   wasteVariance: number
-  isAr?: boolean
+  locale: string
 }
 
-export default function BudgetAlertBanner({ spendVariance, wasteVariance, isAr = true }: Props) {
+export default function BudgetAlertBanner({ spendVariance, wasteVariance, locale }: Props) {
+  const t = useTranslations('inventory.reports.budget')
+  const tCommon = useTranslations('common')
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  
   const overSpend = spendVariance > 0
   const overWaste = wasteVariance > 0
 
   if (!overSpend && !overWaste) return null
 
   return (
-    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-        <p className="font-satoshi font-bold text-sm text-red-400">
-          {isAr ? 'تجاوز الميزانية' : 'Budget Exceeded'}
-        </p>
-      </div>
+    <div className="flex flex-col gap-2">
       {overSpend && (
-        <p className="font-satoshi text-xs text-red-400 ms-4">
-          {isAr
-            ? `تجاوز المشتريات: +${spendVariance.toFixed(3)} BD`
-            : `Overspend: +${spendVariance.toFixed(3)} BD`}
-        </p>
+        <div className="flex items-center gap-3 rounded-xl border border-brand-error/20 bg-brand-error/5 p-4 text-brand-error shadow-sm animate-in fade-in slide-in-from-top-2">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          <p className={`${font} text-sm font-medium`}>
+            {t('overPurchase', { val: `${Number(spendVariance).toFixed(3)} ${tCommon('currency')}` })}
+          </p>
+        </div>
       )}
       {overWaste && (
-        <p className="font-satoshi text-xs text-red-400 ms-4">
-          {isAr
-            ? `تجاوز ميزانية الهدر: +${wasteVariance.toFixed(3)} BD`
-            : `Over waste budget: +${wasteVariance.toFixed(3)} BD`}
-        </p>
+        <div className="flex items-center gap-3 rounded-xl border border-brand-error/20 bg-brand-error/5 p-4 text-brand-error shadow-sm animate-in fade-in slide-in-from-top-2">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          <p className={`${font} text-sm font-medium`}>
+            {t('overWaste', { val: `${Number(wasteVariance).toFixed(3)} ${tCommon('currency')}` })}
+          </p>
+        </div>
       )}
     </div>
   )
 }
+
+

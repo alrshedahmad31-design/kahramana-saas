@@ -142,7 +142,7 @@ export default function StaffCardGrid({
                       {member.name}
                     </div>
                     <span className={`inline-block mt-1 px-2 py-0.5 rounded-lg
-                      text-xs font-almarai font-bold ${badge.bg} ${badge.text}`}>
+                      text-xs font-bold ${isAr ? 'font-almarai' : 'font-satoshi'} ${badge.bg} ${badge.text}`}>
                       {tR(member.role)}
                     </span>
                   </div>
@@ -151,7 +151,7 @@ export default function StaffCardGrid({
                 <div className="flex items-center gap-1.5 shrink-0 mt-1">
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0
                     ${member.is_active ? 'bg-brand-success' : 'bg-brand-muted'}`} />
-                  <span className={`font-almarai text-xs
+                  <span className={`text-xs ${isAr ? 'font-almarai' : 'font-satoshi'}
                     ${member.is_active ? 'text-brand-success' : 'text-brand-muted'}`}>
                     {isAr
                       ? (member.is_active ? 'نشط' : 'معطّل')
@@ -162,20 +162,20 @@ export default function StaffCardGrid({
 
               {/* Info */}
               <div className="flex flex-col gap-1.5 text-sm">
-                <div className="flex items-center gap-2 text-brand-muted font-almarai">
+                <div className={`flex items-center gap-2 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
                   <BranchIcon />
                   <span className="truncate">{branchLabel(member.branch_id, isAr)}</span>
                 </div>
 
                 {member.phone && (
-                  <div className="flex items-center gap-2 text-brand-muted font-almarai">
+                  <div className={`flex items-center gap-2 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
                     <PhoneIcon />
                     <span dir="ltr" className="font-satoshi text-xs">{member.phone}</span>
                   </div>
                 )}
 
                 {empLabel && (
-                  <div className="flex items-center gap-2 text-brand-muted font-almarai">
+                  <div className={`flex items-center gap-2 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
                     <WorkIcon />
                     <span>{empLabel}</span>
                     {member.hire_date && (
@@ -195,9 +195,10 @@ export default function StaffCardGrid({
                 ${canManage ? 'grid-cols-3' : 'grid-cols-1'}`}>
                 <Link
                   href={`/${locale}/dashboard/staff/${member.id}`}
-                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl
-                             bg-brand-surface-2 text-brand-muted font-almarai text-xs font-bold
-                             hover:text-brand-text transition-colors"
+                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl
+                             bg-brand-surface-2 text-brand-muted text-xs font-bold
+                             ${isAr ? 'font-almarai' : 'font-satoshi'}
+                             hover:text-brand-text transition-colors`}
                 >
                   <EyeIcon />
                   {isAr ? 'الملف' : 'View'}
@@ -207,9 +208,10 @@ export default function StaffCardGrid({
                   <>
                     <Link
                       href={`/${locale}/dashboard/staff/${member.id}`}
-                      className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl
-                                 bg-brand-surface-2 text-brand-muted font-almarai text-xs font-bold
-                                 hover:text-brand-gold transition-colors"
+                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl
+                                 bg-brand-surface-2 text-brand-muted text-xs font-bold
+                                 ${isAr ? 'font-almarai' : 'font-satoshi'}
+                                 hover:text-brand-gold transition-colors`}
                     >
                       <EditIcon />
                       {isAr ? 'تعديل' : 'Edit'}
@@ -220,7 +222,8 @@ export default function StaffCardGrid({
                       disabled={pending === member.id}
                       onClick={() => handleToggle(member)}
                       className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl
-                        font-almarai text-xs font-bold transition-colors
+                        text-xs font-bold transition-colors
+                        ${isAr ? 'font-almarai' : 'font-satoshi'}
                         disabled:opacity-50 disabled:cursor-not-allowed
                         ${member.is_active
                           ? 'bg-brand-error/10 text-brand-error hover:bg-brand-error/20'

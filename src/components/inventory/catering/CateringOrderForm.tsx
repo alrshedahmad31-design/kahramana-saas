@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCateringOrder, updateCateringOrder } from '@/app/[locale]/dashboard/inventory/catering/actions'
 import type { CateringOrderRow, CateringPackageRow } from '@/lib/supabase/custom-types'
+import { useTranslations } from 'next-intl'
 
 interface Props {
   mode:      'create' | 'edit'
@@ -11,13 +12,18 @@ interface Props {
   branchId:  string
   packages:  Pick<CateringPackageRow, 'id' | 'name_ar' | 'name_en' | 'min_guests' | 'max_guests' | 'price_per_person_bhd'>[]
   prefix:    string
-  isAr?:     boolean
+  locale:    string
   onCancel?: () => void
 }
 
 type Step = 1 | 2 | 3
 
-export default function CateringOrderForm({ mode, order, branchId, packages, prefix, isAr = true, onCancel }: Props) {
+export default function CateringOrderForm({ mode, order, branchId, packages, prefix, locale, onCancel }: Props) {
+  const t = useTranslations('inventory.catering')
+  const tCommon = useTranslations('common')
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  
   const router = useRouter()
   const [step, setStep]         = useState<Step>(1)
   const [error, setError]       = useState<string | null>(null)
@@ -84,11 +90,11 @@ export default function CateringOrderForm({ mode, order, branchId, packages, pre
     })
   }
 
-  const inputClass = 'w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2.5 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none'
-  const labelClass = 'font-satoshi text-xs text-brand-muted uppercase tracking-wide'
+  const inputClass = `w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2.5 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors`
+  const labelClass = `${font} text-xs text-brand-muted uppercase tracking-wide`
 
   return (
-    <div className="bg-brand-surface border border-brand-border rounded-xl p-6 flex flex-col gap-5 max-w-lg w-full">
+    <div className="bg-brand-surface border border-brand-border rounded-xl p-6 flex flex-col gap-5 max-w-lg w-full shadow-sm">
       {/* Step indicator */}
       <div className="flex items-center gap-2">
         {([1, 2, 3] as Step[]).map((s) => (
@@ -100,10 +106,8 @@ export default function CateringOrderForm({ mode, order, branchId, packages, pre
             {s < 3 && <div className={`h-px w-8 ${step > s ? 'bg-brand-gold/40' : 'bg-brand-border'}`} />}
           </div>
         ))}
-        <span className="ms-2 font-satoshi text-sm text-brand-muted">
-          {step === 1 ? (isAr ? 'بيانات العميل' : 'Client Info')
-            : step === 2 ? (isAr ? 'تفاصيل الفعالية' : 'Event Details')
-            : (isAr ? 'الباقة والتسعير' : 'Package & Pricing')}
+        <span className={`ms-2 ${font} text-sm text-brand-muted`}>
+          {step === 1 ? t('clientInfo') : step === 2 ? t('eventDetails') : t('packagePricing')}
         </span>
       </div>
 
@@ -111,15 +115,15 @@ export default function CateringOrderForm({ mode, order, branchId, packages, pre
       {step === 1 && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'اسم العميل *' : 'Client Name *'}</label>
-            <input value={clientName} onChange={(e) => setClientName(e.target.value)} className={inputClass} placeholder={isAr ? 'أحمد محمد' : 'Ahmed Mohammed'} />
+            <label className={labelClass}>{t('clientName')} *</label>
+            <input value={clientName} onChange={(e) => setClientName(e.target.value)} className={inputClass} placeholder={t('placeholderName')} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'رقم الهاتف *' : 'Phone *'}</label>
+            <label className={labelClass}>{t('phone')} *</label>
             <input value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className={inputClass} placeholder="+9647XXXXXXXXX" dir="ltr" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'البريد الإلكتروني' : 'Email'}</label>
+            <label className={labelClass}>{t('email')}</label>
             <input value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} className={inputClass} type="email" dir="ltr" />
           </div>
         </div>
@@ -129,19 +133,19 @@ export default function CateringOrderForm({ mode, order, branchId, packages, pre
       {step === 2 && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'تاريخ الفعالية *' : 'Event Date *'}</label>
+            <label className={labelClass}>{t('eventDate')} *</label>
             <input value={eventDate} onChange={(e) => setEventDate(e.target.value)} className={inputClass} type="date" dir="ltr" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'الوقت' : 'Time'}</label>
+            <label className={labelClass}>{t('time')}</label>
             <input value={eventTime} onChange={(e) => setEventTime(e.target.value)} className={inputClass} type="time" dir="ltr" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'اسم المكان' : 'Venue Name'}</label>
+            <label className={labelClass}>{t('venueName')}</label>
             <input value={venueName} onChange={(e) => setVenueName(e.target.value)} className={inputClass} />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'عنوان المكان' : 'Venue Address'}</label>
+            <label className={labelClass}>{t('venueAddress')}</label>
             <input value={venueAddress} onChange={(e) => setVenueAddress(e.target.value)} className={inputClass} />
           </div>
         </div>
@@ -151,60 +155,60 @@ export default function CateringOrderForm({ mode, order, branchId, packages, pre
       {step === 3 && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'الباقة' : 'Package'}</label>
+            <label className={labelClass}>{t('package')}</label>
             <select value={packageId} onChange={(e) => handlePackageChange(e.target.value)} className={inputClass}>
-              <option value="">{isAr ? '— بدون باقة —' : '— No package —'}</option>
+              <option value="">{t('noPackage')}</option>
               {packages.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {isAr ? p.name_ar : p.name_en} — {Number(p.price_per_person_bhd).toFixed(3)} BD/شخص
+                  {isAr ? p.name_ar : p.name_en} — {Number(p.price_per_person_bhd).toFixed(3)} {tCommon('currency')}/{t('perPerson')}
                 </option>
               ))}
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'عدد الضيوف *' : 'Guest Count *'}</label>
+            <label className={labelClass}>{t('guestCount')} *</label>
             <input value={guestCount} onChange={(e) => setGuestCount(Number(e.target.value))} className={inputClass} type="number" min={1} dir="ltr" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'السعر للشخص (BD)' : 'Price/Person (BD)'}</label>
+            <label className={labelClass}>{t('pricePerPerson')} ({tCommon('currency')})</label>
             <input value={pricePerPerson} onChange={(e) => setPricePerPerson(Number(e.target.value))} className={inputClass} type="number" min={0} step={0.001} dir="ltr" />
           </div>
           <div className="bg-brand-surface-2 rounded-lg px-3 py-2 flex items-center justify-between">
-            <span className="font-satoshi text-sm text-brand-muted">{isAr ? 'الإجمالي' : 'Subtotal'}</span>
-            <span className="font-cairo font-black text-brand-gold">{subtotal.toFixed(3)} BD</span>
+            <span className={`${font} text-sm text-brand-muted`}>{t('subtotal')}</span>
+            <span className="font-cairo font-black text-brand-gold">{subtotal.toFixed(3)} {tCommon('currency')}</span>
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'العربون (BD)' : 'Deposit (BD)'}</label>
+            <label className={labelClass}>{t('deposit')} ({tCommon('currency')})</label>
             <input value={depositBhd} onChange={(e) => setDepositBhd(Number(e.target.value))} className={inputClass} type="number" min={0} step={0.001} dir="ltr" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className={labelClass}>{isAr ? 'ملاحظات' : 'Notes'}</label>
+            <label className={labelClass}>{t('notes')}</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} rows={3} />
           </div>
         </div>
       )}
 
       {error && (
-        <p className="font-satoshi text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{error}</p>
+        <p className={`${font} text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2`}>{error}</p>
       )}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between gap-3 pt-1">
+      <div className="flex items-center justify-between gap-3 pt-1 border-t border-brand-border mt-2">
         <button
           type="button"
           onClick={onCancel ?? (() => {})}
-          className="font-satoshi text-sm text-brand-muted hover:text-brand-text transition-colors"
+          className={`${font} text-sm text-brand-muted hover:text-brand-text transition-colors`}
         >
-          {isAr ? 'إلغاء' : 'Cancel'}
+          {t('cancel')}
         </button>
         <div className="flex gap-2">
           {step > 1 && (
             <button
               type="button"
               onClick={() => setStep((s) => (s - 1) as Step)}
-              className="rounded-lg border border-brand-border px-4 py-2 font-satoshi text-sm text-brand-muted hover:text-brand-text transition-colors"
+              className={`rounded-lg border border-brand-border px-4 py-2 ${font} text-sm text-brand-muted hover:text-brand-text transition-colors`}
             >
-              {isAr ? 'السابق' : 'Back'}
+              {t('back')}
             </button>
           )}
           {step < 3 ? (
@@ -215,22 +219,22 @@ export default function CateringOrderForm({ mode, order, branchId, packages, pre
                 (step === 1 && (!clientName || !clientPhone)) ||
                 (step === 2 && !eventDate)
               }
-              className="rounded-lg bg-brand-gold px-4 py-2 font-satoshi text-sm font-bold text-brand-black hover:bg-brand-goldLight disabled:opacity-50 transition-colors"
+              className={`rounded-lg bg-brand-gold px-4 py-2 ${font} text-sm font-bold text-brand-black hover:bg-brand-goldLight disabled:opacity-50 transition-colors`}
             >
-              {isAr ? 'التالي' : 'Next'}
+              {t('next')}
             </button>
           ) : (
             <button
               type="button"
               onClick={handleSubmit}
               disabled={isPending || guestCount < 1}
-              className="rounded-lg bg-brand-gold px-4 py-2 font-satoshi text-sm font-bold text-brand-black hover:bg-brand-goldLight disabled:opacity-50 transition-colors"
+              className={`rounded-lg bg-brand-gold px-4 py-2 ${font} text-sm font-bold text-brand-black hover:bg-brand-goldLight disabled:opacity-50 transition-colors`}
             >
               {isPending
-                ? (isAr ? 'جارٍ الحفظ...' : 'Saving...')
+                ? t('saving')
                 : mode === 'edit'
-                ? (isAr ? 'حفظ التغييرات' : 'Save Changes')
-                : (isAr ? 'حفظ الطلب' : 'Save Order')}
+                ? t('saveChanges')
+                : t('saveOrder')}
             </button>
           )}
         </div>
@@ -238,3 +242,4 @@ export default function CateringOrderForm({ mode, order, branchId, packages, pre
     </div>
   )
 }
+

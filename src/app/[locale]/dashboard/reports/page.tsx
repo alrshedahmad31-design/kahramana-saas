@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth/session'
 import { canAccessReports } from '@/lib/auth/rbac'
 import { createServiceClient } from '@/lib/supabase/server'
 import { HIDDEN_BRANCHES } from '@/constants/contact'
+import { getTranslations } from 'next-intl/server'
 import ReportsClient from './ReportsClient'
 import type { DishCogsRow } from '@/lib/supabase/custom-types'
 
@@ -100,9 +101,10 @@ function marginColor(pct: number | null) {
 export default async function ReportsPage({ params, searchParams }: Props) {
   const { locale } = await params
   const sp         = await searchParams
+  const t          = await getTranslations('common')
   const isAr       = locale === 'ar'
   const prefix     = locale === 'en' ? '/en' : ''
-  const currency   = isAr ? 'د.ب' : 'BD'
+  const currency   = t('currency')
 
   const user = await getSession()
   if (!user) redirect(`/${locale}/login`)

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations, useLocale } from 'next-intl'
 import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip,
   ReferenceLine, ResponsiveContainer,
@@ -32,19 +33,34 @@ type ScatterPoint = {
 interface TooltipProps {
   active?: boolean
   payload?: Array<{ payload: ScatterPoint }>
+  locale: string
 }
 
-function CustomTooltip({ active, payload }: TooltipProps) {
+function CustomTooltip({ active, payload, locale }: TooltipProps) {
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  
   return (
-    <div className="rounded-lg border px-3 py-2 shadow-lg" style={{ background: colors.surface, borderColor: colors.border }}>
-      <p className="font-satoshi text-sm font-semibold text-brand-text">{d?.name}</p>
-      <p className="font-satoshi text-xs text-brand-muted mt-1">مبيع: <span className="text-brand-gold tabular-nums">{d?.x}</span></p>
-      <p className="font-satoshi text-xs text-brand-muted">ربح: <span className="text-brand-gold tabular-nums">BD {d?.y?.toFixed(3)}</span></p>
-      {d?.margin !== null && (
-        <p className="font-satoshi text-xs text-brand-muted">هامش: <span className="text-brand-gold tabular-nums">{d?.margin?.toFixed(1)}%</span></p>
-      )}
+    <div className="rounded-xl border px-4 py-3 shadow-xl backdrop-blur-md bg-brand-surface/90" style={{ borderColor: colors.border }}>
+      <p className={`${font} text-sm font-black text-brand-text mb-2`}>{d?.name}</p>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-4">
+          <span className={`${font} text-[10px] font-bold text-brand-muted uppercase`}>{isAr ? 'المباع' : 'Sold'}</span>
+          <span className="font-satoshi text-xs font-black text-brand-gold tabular-nums">{d?.x}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <span className={`${font} text-[10px] font-bold text-brand-muted uppercase`}>{isAr ? 'الربح' : 'Profit'}</span>
+          <span className="font-satoshi text-xs font-black text-brand-gold tabular-nums">{d?.y?.toFixed(3)}</span>
+        </div>
+        {d?.margin !== null && (
+          <div className="flex items-center justify-between gap-4 pt-1 border-t border-brand-border/30">
+            <span className={`${font} text-[10px] font-bold text-brand-muted uppercase`}>{isAr ? 'الهامش' : 'Margin'}</span>
+            <span className="font-satoshi text-xs font-black text-brand-success tabular-nums">{d?.margin?.toFixed(1)}%</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -58,14 +74,13 @@ function getQuadrant(row: MenuEngineeringRow, avgSold: number, avgProfit: number
   return 'Dogs'
 }
 
-const QUADRANT_LABELS: Record<string, { ar: string; color: string }> = {
-  Stars:       { ar: 'النجوم',       color: colors.gold },
-  Puzzles:     { ar: 'الألغاز',      color: colors.success },
-  Plowhorses:  { ar: 'الخيول',       color: colors.muted },
-  Dogs:        { ar: 'الكلاب',       color: colors.error },
-}
-
 export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringRow[] }) {
+  const locale = useLocale()
+  const t = useTranslations('inventory.reports.menuEngineering')
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const currency = 'BHD'
+
   if (!rows.length) return null
 
   const avgSold = rows.reduce((s, r) => s + r.total_sold, 0) / rows.length
@@ -75,100 +90,143 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
     x: r.total_sold,
     y: r.profit_bhd,
     z: Math.max(r.revenue_bhd, 1),
-    name: r.name_ar,
+    name: isAr ? r.name_ar : (r.name_en ?? r.name_ar),
     margin: r.margin_pct,
     slug: r.menu_item_slug,
   }))
 
-  // Group by quadrant
   const quadrants = ['Stars', 'Puzzles', 'Plowhorses', 'Dogs']
   const grouped = Object.fromEntries(
     quadrants.map((q) => [q, rows.filter((r) => getQuadrant(r, avgSold, avgProfit) === q)]),
   )
 
-  const recommendations: Record<string, string> = {
-    Stars:      'حافظ على الجودة والتوفر — هذه هي القائمة الذهبية',
-    Puzzles:    'قلّل التكلفة أو أعد التسعير — الهامش عالٍ لكن الطلب منخفض',
-    Plowhorses: 'راجع تسعيرها لتحسين الهامش — مبيعاتها قوية',
-    Dogs:       'أزِل هذه الأصناف أو طوِّرها جذرياً',
+  const QUADRANT_CONFIG: Record<string, { label: string; desc: string; color: string }> = {
+    Stars:      { label: t('matrix.stars'),      desc: t('matrix.starsDesc'),      color: colors.brand.gold },
+    Puzzles:    { label: t('matrix.puzzles'),    desc: t('matrix.puzzlesDesc'),    color: colors.brand.success },
+    Plowhorses: { label: t('matrix.plowhorses'), desc: t('matrix.plowhorsesDesc'), color: colors.brand.muted },
+    Dogs:       { label: t('matrix.dogs'),       desc: t('matrix.dogsDesc'),       color: colors.brand.error },
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700">
       {/* Scatter chart */}
-      <div className="rounded-xl border border-brand-border bg-brand-surface p-4">
-        <p className="font-cairo text-sm font-black text-brand-text mb-1">مصفوفة هندسة القائمة</p>
-        <p className="font-satoshi text-xs text-brand-muted mb-4">X = الوحدات المباعة · Y = الربح BD · الحجم = الإيراد</p>
-        <ResponsiveContainer width="100%" height={380}>
-          <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-            <XAxis
-              type="number"
-              dataKey="x"
-              name="مباع"
-              tick={{ fill: colors.muted, fontSize: 11 }}
-              label={{ value: 'الوحدات المباعة', position: 'insideBottom', offset: -10, fill: colors.muted, fontSize: 11 }}
-            />
-            <YAxis
-              type="number"
-              dataKey="y"
-              name="ربح"
-              tick={{ fill: colors.muted, fontSize: 11 }}
-              label={{ value: 'الربح BD', angle: -90, position: 'insideLeft', fill: colors.muted, fontSize: 11 }}
-            />
-            <ZAxis type="number" dataKey="z" range={[40, 300]} />
-            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: colors.border }} />
-            <ReferenceLine x={avgSold} stroke={colors.muted} strokeDasharray="4 4" />
-            <ReferenceLine y={avgProfit} stroke={colors.muted} strokeDasharray="4 4" />
-            <Scatter data={scatterData} fill={colors.gold} fillOpacity={0.8} />
-          </ScatterChart>
-        </ResponsiveContainer>
+      <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm hover:shadow-md transition-all">
+        <div className="mb-6">
+          <h3 className={`${font} text-sm font-black text-brand-text uppercase tracking-wider`}>{t('matrixTitle')}</h3>
+          <p className={`${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest mt-1`}>
+            {isAr ? 'X = الوحدات المباعة · Y = الربح د.ب · الحجم = الإيراد' : 'X = Units Sold · Y = Profit BHD · Size = Revenue'}
+          </p>
+        </div>
+        
+        <div className="h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <XAxis
+                type="number"
+                dataKey="x"
+                tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }}
+                stroke={colors.border}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                type="number"
+                dataKey="y"
+                tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }}
+                stroke={colors.border}
+                axisLine={false}
+                tickLine={false}
+              />
+              <ZAxis type="number" dataKey="z" range={[50, 400]} />
+              <Tooltip content={<CustomTooltip locale={locale} />} cursor={{ strokeDasharray: '3 3', stroke: colors.border }} />
+              <ReferenceLine x={avgSold} stroke={colors.border} strokeDasharray="6 6" strokeWidth={2} />
+              <ReferenceLine y={avgProfit} stroke={colors.border} strokeDasharray="6 6" strokeWidth={2} />
+              <Scatter 
+                data={scatterData} 
+                fill={colors.brand.gold} 
+                fillOpacity={0.6} 
+                stroke={colors.brand.gold}
+                strokeWidth={2}
+              />
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+
         {/* Quadrant legend */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
           {quadrants.map((q) => (
-            <div key={q} className="flex items-center gap-2 rounded-lg border border-brand-border px-3 py-2">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: QUADRANT_LABELS[q].color }} />
-              <span className="font-satoshi text-xs text-brand-muted">{QUADRANT_LABELS[q].ar} <span className="text-brand-text font-semibold">({grouped[q]?.length ?? 0})</span></span>
+            <div key={q} className="flex flex-col gap-1 rounded-xl border border-brand-border bg-brand-surface-2 p-3 shadow-sm hover:shadow-md transition-all border-s-4" style={{ borderSColor: QUADRANT_CONFIG[q].color }}>
+              <span className={`${font} text-[10px] font-black text-brand-text uppercase tracking-widest`}>{QUADRANT_CONFIG[q].label}</span>
+              <span className="font-satoshi text-[14px] font-black text-brand-gold tabular-nums">
+                {grouped[q]?.length ?? 0} <span className="text-[10px] font-bold text-brand-muted uppercase">{t('items')}</span>
+              </span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Categorized tables */}
-      {quadrants.map((q) => {
-        const items = grouped[q] ?? []
-        if (!items.length) return null
-        return (
-          <div key={q} className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-brand-border" style={{ borderLeftColor: QUADRANT_LABELS[q].color }}>
-              <span className="w-2 h-2 rounded-full" style={{ background: QUADRANT_LABELS[q].color }} />
-              <h3 className="font-cairo text-sm font-black text-brand-text">{QUADRANT_LABELS[q].ar} — {q} ({items.length})</h3>
-              <p className="font-satoshi text-xs text-brand-muted ms-auto">{recommendations[q]}</p>
+      <div className="space-y-6">
+        {quadrants.map((q) => {
+          const items = grouped[q] ?? []
+          if (!items.length) return null
+          const config = QUADRANT_CONFIG[q]
+          
+          return (
+            <div key={q} className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden shadow-sm hover:shadow-md transition-all">
+              <div className="flex flex-wrap items-center gap-4 px-5 py-4 border-b border-brand-border bg-brand-surface-2/50">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full shadow-sm" style={{ background: config.color }} />
+                  <h3 className={`${font} text-sm font-black text-brand-text uppercase tracking-wider`}>
+                    {config.label} <span className="opacity-40 px-2">|</span> {items.length} {t('items')}
+                  </h3>
+                </div>
+                <p className={`${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest ms-auto opacity-80`}>
+                  {config.desc}
+                </p>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-start">
+                  <thead>
+                    <tr className="bg-brand-surface-2">
+                      <th className={`px-5 py-3 text-start ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('item')}</th>
+                      <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('sold')}</th>
+                      <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{isAr ? 'الإيراد' : 'Revenue'}</th>
+                      <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('profit')}</th>
+                      <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('margin')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brand-border/30">
+                    {items.map((r) => {
+                      const itemName = isAr ? r.name_ar : (r.name_en ?? r.name_ar)
+                      return (
+                        <tr key={r.menu_item_slug} className="hover:bg-brand-surface-2 transition-colors group">
+                          <td className={`px-5 py-3 ${font} text-sm font-bold text-brand-text group-hover:text-brand-gold transition-colors`}>
+                            {itemName}
+                          </td>
+                          <td className="px-5 py-3 text-end font-satoshi text-sm font-bold text-brand-muted tabular-nums">
+                            {r.total_sold}
+                          </td>
+                          <td className="px-5 py-3 text-end font-satoshi text-sm font-bold text-brand-muted tabular-nums">
+                            {r.revenue_bhd.toFixed(3)}
+                          </td>
+                          <td className="px-5 py-3 text-end font-satoshi text-sm font-black text-brand-gold tabular-nums">
+                            {r.profit_bhd.toFixed(3)}
+                          </td>
+                          <td className="px-5 py-3 text-end font-satoshi text-sm font-black text-brand-success tabular-nums">
+                            {r.margin_pct?.toFixed(1) ?? '—'}%
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-brand-border bg-brand-surface-2">
-                  <th className="px-4 py-2 text-start font-satoshi text-xs font-semibold text-brand-muted">الصنف</th>
-                  <th className="px-4 py-2 text-end font-satoshi text-xs font-semibold text-brand-muted">مباع</th>
-                  <th className="px-4 py-2 text-end font-satoshi text-xs font-semibold text-brand-muted">إيراد BD</th>
-                  <th className="px-4 py-2 text-end font-satoshi text-xs font-semibold text-brand-muted">ربح BD</th>
-                  <th className="px-4 py-2 text-end font-satoshi text-xs font-semibold text-brand-muted">هامش %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((r) => (
-                  <tr key={r.menu_item_slug} className="border-b border-brand-border/30 hover:bg-brand-surface-2 transition-colors">
-                    <td className="px-4 py-2 font-satoshi text-brand-text">{r.name_ar}</td>
-                    <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-muted">{r.total_sold}</td>
-                    <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-muted">{r.revenue_bhd.toFixed(3)}</td>
-                    <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-gold font-semibold">{r.profit_bhd.toFixed(3)}</td>
-                    <td className="px-4 py-2 text-end font-satoshi tabular-nums text-brand-muted">{r.margin_pct?.toFixed(1) ?? '—'}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }

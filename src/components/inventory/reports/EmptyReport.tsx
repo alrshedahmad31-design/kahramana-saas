@@ -1,3 +1,7 @@
+'use client'
+
+import { useLocale } from 'next-intl'
+
 interface Props {
   title: string
   description: string
@@ -5,19 +9,23 @@ interface Props {
 }
 
 export default function EmptyReport({ title, description, cta }: Props) {
+  const locale = useLocale()
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-brand-surface-2 flex items-center justify-center text-2xl">
+    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center bg-brand-surface/50 rounded-2xl border border-dashed border-brand-border/60">
+      <div className="w-20 h-20 rounded-full bg-brand-surface-2 flex items-center justify-center text-3xl shadow-inner">
         📊
       </div>
-      <div>
-        <p className="font-cairo text-lg font-black text-brand-text">{title}</p>
-        <p className="font-satoshi text-sm text-brand-muted mt-1 max-w-sm">{description}</p>
+      <div className="space-y-1">
+        <p className={`${isAr ? 'font-cairo' : 'font-satoshi'} text-lg font-black text-brand-text`}>{title}</p>
+        <p className={`${font} text-sm text-brand-muted mt-1 max-w-sm`}>{description}</p>
       </div>
       {cta && (
         <a
           href={cta.href}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-gold px-4 py-2 font-satoshi text-sm font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors"
+          className={`inline-flex items-center gap-2 rounded-lg bg-brand-gold px-4 py-2 ${font} text-sm font-semibold text-brand-black hover:bg-brand-gold/90 transition-all shadow-sm hover:shadow`}
         >
           {cta.label}
         </a>
@@ -25,3 +33,4 @@ export default function EmptyReport({ title, description, cta }: Props) {
     </div>
   )
 }
+

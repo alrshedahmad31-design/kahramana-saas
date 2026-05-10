@@ -1,9 +1,12 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveBranches } from '@/lib/branches/queries'
+import { translateUnit } from '@/lib/inventory/units'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
+import StatCard from '@/components/inventory/reports/StatCard'
+import EmptyReport from '@/components/inventory/reports/EmptyReport'
 
 interface DeadStockRow {
   ingredient_id: string
@@ -28,8 +31,12 @@ const DAYS_OPTIONS = [14, 30, 60, 90]
 
 export default async function DeadStockPage({ params, searchParams }: PageProps) {
   const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'inventory.reports.deadStock' })
+  const tCommon = await getTranslations({ locale, namespace: 'common' })
   const sp = await searchParams
-  const isAr = locale !== 'en'
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const currency = tCommon('currency')
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
@@ -68,90 +75,86 @@ export default async function DeadStockPage({ params, searchParams }: PageProps)
     .map((r) => ({ name: r.name_ar, value: Number(r.stock_value_bhd) }))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <ReportHeader
-        title={isAr ? 'المخزون الراكد' : 'Dead Stock Report'}
-        description={isAr ? `أصناف لم تتحرك خلال ${days} يوماً` : `Items with no movement in ${days} days`}
+        title={t('title')}
+        description={t('desc', { days })}
         locale={locale}
       />
 
       {/* Filters */}
-      <form method="GET" className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-border bg-brand-surface p-4">
+      <form method="GET" className="flex flex-wrap items-center gap-4 rounded-xl border border-brand-border bg-brand-surface p-4 shadow-sm hover:shadow-md transition-all">
         {isGlobal && (
           <select
             name="branch"
             defaultValue={branchId}
-            className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-1.5 font-satoshi text-xs text-brand-text focus:border-brand-gold focus:outline-none"
+            className={`rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-1.5 ${font} text-xs text-brand-text focus:border-brand-gold focus:outline-none min-w-[200px] transition-colors`}
           >
-            {(branches ?? []).map((b) => <option key={b.id} value={b.id}>{b.name_ar}</option>)}
+            {(branches ?? []).map((b) => <option key={b.id} value={b.id}>{isAr ? b.name_ar : b.name_en}</option>)}
           </select>
         )}
-        <div className="flex items-center gap-2">
-          <label className="font-satoshi text-xs text-brand-muted">{isAr ? 'عدم الحركة:' : 'No movement:'}</label>
-          {DAYS_OPTIONS.map((d) => (
-            <a
-              key={d}
-              href={`?days=${d}${branchId ? `&branch=${branchId}` : ''}`}
-              className={`rounded-lg px-3 py-1.5 font-satoshi text-xs font-medium transition-colors ${days === d ? 'bg-brand-gold text-brand-black' : 'border border-brand-border text-brand-muted hover:border-brand-gold hover:text-brand-gold'}`}
-            >
-              {d}d
-            </a>
-          ))}
+        <div className="flex items-center gap-3">
+          <label className={`${font} text-xs text-brand-muted font-bold uppercase tracking-wider`}>{t('noMovement')}</label>
+          <div className="flex gap-1">
+            {DAYS_OPTIONS.map((d) => (
+              <a
+                key={d}
+                href={`?days=${d}${isGlobal ? `&branch=${branchId}` : ''}`}
+                className={`rounded-lg px-3 py-1.5 font-satoshi text-xs font-black transition-all ${days === d ? 'bg-brand-gold text-brand-black shadow-md' : 'border border-brand-border text-brand-muted hover:border-brand-gold hover:text-brand-gold'}`}
+              >
+                {d}d
+              </a>
+            ))}
+          </div>
         </div>
-        {isGlobal && (
-          <button type="submit" className="rounded-lg bg-brand-gold px-4 py-1.5 font-satoshi text-xs font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors">
-            {isAr ? 'تطبيق' : 'Apply'}
-          </button>
-        )}
       </form>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard label={isAr ? 'قيمة المخزون الراكد' : 'Dead Stock Value'} value={`BD ${totalValue.toFixed(3)}`} highlight trend={totalValue > 0 ? 'down' : 'neutral'} />
-        <StatCard label={isAr ? 'عدد الأصناف' : 'Item Count'} value={safeRows.length} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <StatCard label={t('totalValue')} value={`${totalValue.toFixed(3)} ${currency}`} highlight />
+        <StatCard label={t('itemCount')} value={safeRows.length.toString()} />
       </div>
 
       {safeRows.length === 0 ? (
         <EmptyReport
-          title={isAr ? 'لا يوجد مخزون راكد' : 'No dead stock'}
-          description={isAr ? `لا توجد أصناف بدون حركة خلال ${days} يوماً` : `No items without movement in ${days} days`}
+          title={t('emptyTitle')}
+          description={t('emptyDesc', { days })}
         />
       ) : (
         <>
           {chartData.length > 0 && <DeadStockBarChart data={chartData} />}
 
-          <div className="overflow-x-auto rounded-xl border border-brand-border">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-brand-border bg-brand-surface shadow-sm hover:shadow-md transition-all">
+            <table className="w-full text-start">
               <thead>
-                <tr className="border-b border-brand-border bg-brand-surface-2">
-                  <th className="px-4 py-3 text-start font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'المكوّن' : 'Ingredient'}</th>
-                  <th className="px-4 py-3 text-end font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'الكمية' : 'On Hand'}</th>
-                  <th className="px-4 py-3 text-end font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'آخر حركة' : 'Last Move'}</th>
-                  <th className="px-4 py-3 text-end font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'أيام الركود' : 'Days Inactive'}</th>
-                  <th className="px-4 py-3 text-end font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'القيمة BD' : 'Value BD'}</th>
-                  <th className="px-4 py-3 text-center font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'إجراء' : 'Action'}</th>
+                <tr className="bg-brand-surface-2">
+                  <th className={`px-5 py-3 text-start ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('ingredient')}</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('onHand')}</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('lastMove')}</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('daysInactive')}</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('valueBd')} ({currency})</th>
+                  <th className={`px-5 py-3 text-center ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('action')}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-brand-border/30">
                 {safeRows.map((r) => (
-                  <tr key={r.ingredient_id} className="border-b border-brand-border/50 hover:bg-brand-surface-2 transition-colors">
-                    <td className="px-4 py-3 font-satoshi text-brand-text">{r.name_ar}</td>
-                    <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-muted">{Number(r.on_hand).toFixed(2)}</td>
-                    <td className="px-4 py-3 text-end font-satoshi text-xs text-brand-muted">
-                      {r.last_movement_at ? new Date(r.last_movement_at).toLocaleDateString('ar-IQ') : '—'}
+                  <tr key={r.ingredient_id} className="hover:bg-brand-surface-2 transition-colors group">
+                    <td className={`px-5 py-3 ${font} text-sm font-bold text-brand-text group-hover:text-brand-gold transition-colors`}>{isAr ? r.name_ar : r.name_en}</td>
+                    <td className="px-5 py-3 text-end font-satoshi text-sm font-bold text-brand-muted tabular-nums">
+                      {Number(r.on_hand).toFixed(2)} 
+                      <span className={`${font} text-[10px] ms-1 text-brand-muted/70 font-medium`}>{translateUnit(r.unit ?? '', isAr)}</span>
                     </td>
-                    <td className={`px-4 py-3 text-end font-satoshi tabular-nums font-semibold ${r.days_inactive > 60 ? 'text-brand-error' : 'text-brand-gold'}`}>
-                      {r.days_inactive}
+                    <td className={`px-5 py-3 text-end ${font} text-xs text-brand-muted`}>
+                      {r.last_movement_at ? new Date(r.last_movement_at).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB') : '—'}
                     </td>
-                    <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-error font-semibold">
-                      {Number(r.stock_value_bhd).toFixed(3)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-5 py-3 text-end font-satoshi text-sm font-black text-brand-error tabular-nums">{r.days_inactive}</td>
+                    <td className="px-5 py-3 text-end font-satoshi text-sm font-black text-brand-gold tabular-nums">{Number(r.stock_value_bhd).toFixed(3)}</td>
+                    <td className="px-5 py-3 text-center">
                       <Link
                         href={`${prefix}/dashboard/inventory/waste/new?ingredient_id=${r.ingredient_id}&quantity=${r.on_hand}`}
-                        className="inline-flex rounded-lg border border-brand-border px-2 py-1 font-satoshi text-xs text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors"
+                        className={`${font} text-[10px] font-black uppercase tracking-widest text-brand-gold hover:text-brand-gold/80 transition-colors bg-brand-surface border border-brand-border/50 px-3 py-1 rounded-md shadow-sm`}
                       >
-                        {isAr ? 'تسجيل هدر' : 'Log Waste'}
+                        {t('logWaste')}
                       </Link>
                     </td>
                   </tr>

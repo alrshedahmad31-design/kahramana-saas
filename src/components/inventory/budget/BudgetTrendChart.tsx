@@ -4,20 +4,22 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
+import { useTranslations } from 'next-intl'
 import { colors } from '@/lib/design-tokens'
 import type { BudgetVsActual } from '@/lib/supabase/custom-types'
 
-const MONTH_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-const MONTH_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
 interface Props {
   rows:  BudgetVsActual[]
-  isAr?: boolean
+  locale: string
 }
 
-export default function BudgetTrendChart({ rows, isAr = true }: Props) {
+export default function BudgetTrendChart({ rows, locale }: Props) {
+  const t = useTranslations('inventory.reports.budget')
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+
   const data = rows.map((r) => ({
-    month:      isAr ? MONTH_AR[r.month - 1] : MONTH_EN[r.month - 1],
+    month:      t(`months.${r.month}`).substring(0, 3),
     budget:     Number(r.purchase_budget_bhd),
     actual:     Number(r.actual_spend_bhd),
     waste:      Number(r.actual_waste_bhd),
@@ -38,33 +40,61 @@ export default function BudgetTrendChart({ rows, isAr = true }: Props) {
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={`${colors.border}33`} />
-        <XAxis dataKey="month" tick={{ fontFamily: 'Satoshi', fontSize: 11, fill: colors.muted }} />
-        <YAxis tick={{ fontFamily: 'Satoshi', fontSize: 11, fill: colors.muted }} width={52} />
+        <XAxis 
+          dataKey="month" 
+          tick={{ fontFamily: isAr ? 'Almarai' : 'Satoshi', fontSize: 10, fill: colors.muted }} 
+          axisLine={{ stroke: colors.border, strokeOpacity: 0.5 }}
+          tickLine={false}
+        />
+        <YAxis 
+          tick={{ fontFamily: 'Satoshi', fontSize: 10, fill: colors.muted }} 
+          width={40} 
+          axisLine={{ stroke: colors.border, strokeOpacity: 0.5 }}
+          tickLine={false}
+        />
         <Tooltip
           contentStyle={{
-            background: colors.surface2, border: `1px solid ${colors.border}`,
-            borderRadius: 8, fontFamily: 'Satoshi', fontSize: 12,
+            background: colors.surface2, 
+            border: `1px solid ${colors.border}`,
+            borderRadius: 12, 
+            fontFamily: isAr ? 'Almarai' : 'Satoshi', 
+            fontSize: 12,
+            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
           }}
-          labelStyle={{ color: colors.text }}
+          labelStyle={{ color: colors.text, fontWeight: 'bold', marginBottom: 4 }}
+          itemStyle={{ padding: '2px 0' }}
         />
-        <Legend wrapperStyle={{ fontFamily: 'Satoshi', fontSize: 12 }} />
+        <Legend 
+          verticalAlign="top" 
+          align="right"
+          iconType="circle"
+          wrapperStyle={{ 
+            fontFamily: isAr ? 'Almarai' : 'Satoshi', 
+            fontSize: 10, 
+            paddingBottom: 20,
+            opacity: 0.8
+          }} 
+        />
         <Area
           type="monotone"
           dataKey="budget"
-          name={isAr ? 'ميزانية المشتريات' : 'Purchase Budget'}
+          name={t('budget')}
           stroke={colors.gold}
-          strokeWidth={2}
+          strokeWidth={3}
           fill="url(#bgGrad)"
+          activeDot={{ r: 6, strokeWidth: 0 }}
         />
         <Area
           type="monotone"
           dataKey="actual"
-          name={isAr ? 'الإنفاق الفعلي' : 'Actual Spend'}
+          name={t('actual')}
           stroke={colors.error}
-          strokeWidth={2}
+          strokeWidth={3}
           fill="url(#actGrad)"
+          activeDot={{ r: 6, strokeWidth: 0 }}
         />
       </AreaChart>
     </ResponsiveContainer>
   )
 }
+

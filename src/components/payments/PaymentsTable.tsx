@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { PaymentMethod, PaymentStatus } from '@/lib/supabase/custom-types'
+import { useTranslations } from 'next-intl'
 
 export type PaymentRow = {
   id: string
@@ -70,7 +71,8 @@ function formatDate(iso: string, isAr: boolean): string {
 }
 
 export default function PaymentsTable({ payments, totalCount, page, pageSize, locale: _locale, isAr, prefix }: Props) {
-  const currency = isAr ? 'د.ب' : 'BD'
+  const t = useTranslations('common')
+  const currency = t('currency')
   const totalPages = Math.ceil(totalCount / pageSize)
   const orderPrefix = `${prefix}/dashboard/orders`
 

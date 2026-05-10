@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { callUpdateAbcClassification } from '../actions'
 
-export default function AbcUpdateButton({ isAr }: { isAr: boolean }) {
+export default function AbcUpdateButton({ locale }: { locale: string }) {
   const [isPending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
+  const t = useTranslations('inventory.reports.abcAnalysis')
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
 
   function handleClick() {
     startTransition(async () => {
@@ -13,7 +17,7 @@ export default function AbcUpdateButton({ isAr }: { isAr: boolean }) {
       if (result.error) {
         setMessage({ text: result.error, ok: false })
       } else {
-        setMessage({ text: isAr ? 'تم تحديث التصنيف بنجاح' : 'Classification updated successfully', ok: true })
+        setMessage({ text: t('updateSuccess'), ok: true })
       }
       setTimeout(() => setMessage(null), 4000)
     })
@@ -25,15 +29,17 @@ export default function AbcUpdateButton({ isAr }: { isAr: boolean }) {
         type="button"
         onClick={handleClick}
         disabled={isPending}
-        className="inline-flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 font-satoshi text-sm font-medium text-brand-muted hover:border-brand-gold hover:text-brand-gold disabled:opacity-40 transition-colors"
+        className={`inline-flex items-center gap-2 rounded-lg border border-brand-border bg-brand-surface px-4 py-2 ${font} text-[10px] font-black uppercase tracking-widest text-brand-muted hover:border-brand-gold hover:text-brand-gold disabled:opacity-40 transition-all shadow-sm active:scale-95`}
       >
-        {isPending ? '...' : (isAr ? 'تحديث التصنيف الآن' : 'Update ABC Classification')}
+        {isPending ? '...' : t('updateBtn')}
       </button>
       {message && (
-        <p className={`font-satoshi text-xs ${message.ok ? 'text-green-400' : 'text-brand-error'}`}>
+        <p className={`${font} text-[10px] font-black uppercase tracking-widest ${message.ok ? 'text-brand-success' : 'text-brand-error'} animate-in fade-in slide-in-from-top-1 shadow-sm px-2 py-1 bg-brand-surface border border-brand-border rounded-md`}>
           {message.text}
         </p>
       )}
     </div>
   )
 }
+
+

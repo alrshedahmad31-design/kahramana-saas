@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getActiveBranches } from '@/lib/branches/queries'
@@ -17,14 +18,14 @@ interface PageProps {
 
 export const dynamic = 'force-dynamic'
 
-
-const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
-
 export default async function BudgetPage({ params, searchParams }: PageProps) {
-  const { locale }                   = await params
+  const { locale } = await params
   const { branch, year: qYear, month: qMonth } = await searchParams
-  const isAr  = locale !== 'en'
+  const t = await getTranslations({ locale, namespace: 'inventory.reports.budget' })
+  const tCommon = await getTranslations({ locale, namespace: 'common' })
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const currency = tCommon('currency')
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
@@ -51,9 +52,9 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
 
   if (!activeBranchId) {
     return (
-      <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-6">
-        <p className="font-satoshi text-sm text-brand-muted">
-          {isAr ? 'لا يوجد فرع محدد' : 'No branch selected'}
+      <div className="flex flex-col gap-6">
+        <p className={`${font} text-sm text-brand-muted`}>
+          {t('noBranch')}
         </p>
       </div>
     )
@@ -75,18 +76,18 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
   const trend    = (trendRes.data ?? []) as BudgetVsActual[]
   const budgetRow = (budgetRowRes.data ?? null) as InventoryBudgetRow | null
 
-  const monthName = isAr ? MONTHS_AR[month - 1] : MONTHS_EN[month - 1]
+  const monthName = t(`months.${month}`)
 
   return (
-    <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-cairo text-2xl font-black text-brand-text">
-            {isAr ? 'ميزانية المخزون' : 'Inventory Budget'}
+          <h1 className={`${isAr ? 'font-cairo' : 'font-satoshi'} text-2xl font-black text-brand-text tracking-tight`}>
+            {t('title')}
           </h1>
-          <p className="font-satoshi text-sm text-brand-muted mt-1">
-            {isAr ? `${monthName} ${year}` : `${monthName} ${year}`}
+          <p className={`${font} text-sm text-brand-muted mt-1 font-medium`}>
+            {monthName} {year}
           </p>
         </div>
 
@@ -99,14 +100,14 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
               <select
                 name="branch"
                 defaultValue={activeBranchId}
-                className="rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none"
+                className={`rounded-lg border border-brand-border bg-brand-surface px-3 py-2 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none shadow-sm transition-colors`}
               >
                 {branches.map((b: { id: string; name_ar: string; name_en: string | null }) => (
                   <option key={b.id} value={b.id}>{isAr ? b.name_ar : (b.name_en ?? b.name_ar)}</option>
                 ))}
               </select>
-              <button type="submit" className="rounded-lg bg-brand-surface-2 px-3 py-2 font-satoshi text-sm text-brand-muted hover:text-brand-text transition-colors">
-                {isAr ? 'تطبيق' : 'Apply'}
+              <button type="submit" className={`rounded-lg bg-brand-surface-2 px-3 py-2 ${font} text-sm text-brand-muted hover:text-brand-text transition-colors shadow-sm`}>
+                {t('apply')}
               </button>
             </form>
           )}
@@ -117,21 +118,21 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
             <select
               name="month"
               defaultValue={month}
-              className="rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none"
+              className={`rounded-lg border border-brand-border bg-brand-surface px-3 py-2 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none shadow-sm transition-colors`}
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                <option key={m} value={m}>{isAr ? MONTHS_AR[m - 1] : MONTHS_EN[m - 1]}</option>
+                <option key={m} value={m}>{t(`months.${m}`)}</option>
               ))}
             </select>
             <input
               name="year"
               type="number"
               defaultValue={year}
-              className="w-20 rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none"
+              className={`w-20 rounded-lg border border-brand-border bg-brand-surface px-3 py-2 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none shadow-sm transition-colors`}
               dir="ltr"
             />
-            <button type="submit" className="rounded-lg bg-brand-surface-2 px-3 py-2 font-satoshi text-sm text-brand-muted hover:text-brand-text transition-colors">
-              {isAr ? 'عرض' : 'View'}
+            <button type="submit" className={`rounded-lg bg-brand-surface-2 px-3 py-2 ${font} text-sm text-brand-muted hover:text-brand-text transition-colors shadow-sm`}>
+              {t('view')}
             </button>
           </form>
         </div>
@@ -142,7 +143,7 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
         <BudgetAlertBanner
           spendVariance={Number(vsActual.spend_variance_bhd)}
           wasteVariance={Number(vsActual.waste_variance_bhd)}
-          isAr={isAr}
+          locale={locale}
         />
       )}
 
@@ -153,46 +154,46 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
           {vsActual && (
             <>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
-                  <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الإنفاق الفعلي' : 'Actual Spend'}</p>
-                  <p className="font-cairo text-xl font-black text-brand-gold mt-1">{Number(vsActual.actual_spend_bhd).toFixed(3)}</p>
-                  <p className="font-satoshi text-xs text-brand-muted">BD</p>
+                <div className="bg-brand-surface border border-brand-border rounded-xl p-4 shadow-sm transition-all hover:shadow-md">
+                  <p className={`${font} text-[10px] text-brand-muted uppercase tracking-wider font-semibold`}>{t('actualSpend')}</p>
+                  <p className="font-cairo text-xl font-black text-brand-gold mt-1 tabular-nums">{Number(vsActual.actual_spend_bhd).toFixed(3)}</p>
+                  <p className={`${font} text-xs text-brand-muted mt-0.5 font-medium`}>{currency}</p>
                 </div>
-                <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
-                  <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'تكلفة الطعام' : 'Food Cost %'}</p>
-                  <p className={`font-cairo text-xl font-black mt-1 ${Number(vsActual.actual_food_cost_pct) > Number(vsActual.food_cost_target_pct) ? 'text-red-400' : 'text-brand-gold'}`}>
+                <div className="bg-brand-surface border border-brand-border rounded-xl p-4 shadow-sm transition-all hover:shadow-md">
+                  <p className={`${font} text-[10px] text-brand-muted uppercase tracking-wider font-semibold`}>{t('foodCost')}</p>
+                  <p className={`font-cairo text-xl font-black mt-1 tabular-nums ${Number(vsActual.actual_food_cost_pct) > Number(vsActual.food_cost_target_pct) ? 'text-brand-error' : 'text-brand-gold'}`}>
                     {Number(vsActual.actual_food_cost_pct).toFixed(1)}%
                   </p>
-                  <p className="font-satoshi text-xs text-brand-muted">{isAr ? `الهدف: ${Number(vsActual.food_cost_target_pct).toFixed(1)}%` : `Target: ${Number(vsActual.food_cost_target_pct).toFixed(1)}%`}</p>
+                  <p className={`${font} text-xs text-brand-muted mt-0.5 font-medium`}>{t('target', { val: Number(vsActual.food_cost_target_pct).toFixed(1) })}</p>
                 </div>
-                <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
-                  <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الإيرادات' : 'Revenue'}</p>
-                  <p className="font-cairo text-xl font-black text-brand-gold mt-1">{Number(vsActual.actual_revenue_bhd).toFixed(3)}</p>
-                  <p className="font-satoshi text-xs text-brand-muted">BD</p>
+                <div className="bg-brand-surface border border-brand-border rounded-xl p-4 shadow-sm transition-all hover:shadow-md">
+                  <p className={`${font} text-[10px] text-brand-muted uppercase tracking-wider font-semibold`}>{t('revenue')}</p>
+                  <p className="font-cairo text-xl font-black text-brand-gold mt-1 tabular-nums">{Number(vsActual.actual_revenue_bhd).toFixed(3)}</p>
+                  <p className={`${font} text-xs text-brand-muted mt-0.5 font-medium`}>{currency}</p>
                 </div>
-                <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
-                  <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'تكلفة البضاعة' : 'COGS'}</p>
-                  <p className="font-cairo text-xl font-black text-brand-gold mt-1">{Number(vsActual.actual_cogs_bhd).toFixed(3)}</p>
-                  <p className="font-satoshi text-xs text-brand-muted">BD</p>
+                <div className="bg-brand-surface border border-brand-border rounded-xl p-4 shadow-sm transition-all hover:shadow-md">
+                  <p className={`${font} text-[10px] text-brand-muted uppercase tracking-wider font-semibold`}>{t('cogs')}</p>
+                  <p className="font-cairo text-xl font-black text-brand-gold mt-1 tabular-nums">{Number(vsActual.actual_cogs_bhd).toFixed(3)}</p>
+                  <p className={`${font} text-xs text-brand-muted mt-0.5 font-medium`}>{currency}</p>
                 </div>
               </div>
 
-              <div className="bg-brand-surface border border-brand-border rounded-xl p-5 flex flex-col gap-4">
-                <h3 className="font-satoshi font-bold text-sm text-brand-text">
-                  {isAr ? 'نسبة الاستخدام' : 'Budget Utilization'}
+              <div className="bg-brand-surface border border-brand-border rounded-xl p-5 flex flex-col gap-4 shadow-sm">
+                <h3 className={`${font} font-bold text-sm text-brand-text`}>
+                  {t('utilization')}
                 </h3>
                 <BudgetProgressBar
-                  label={isAr ? 'ميزانية المشتريات' : 'Purchase Budget'}
+                  label={t('purchaseBudget')}
                   used={Number(vsActual.actual_spend_bhd)}
                   budget={Number(vsActual.purchase_budget_bhd)}
-                  isAr={isAr}
+                  locale={locale}
                 />
                 <BudgetProgressBar
-                  label={isAr ? 'ميزانية الهدر' : 'Waste Budget'}
+                  label={t('wasteBudget')}
                   used={Number(vsActual.actual_waste_bhd)}
                   budget={Number(vsActual.waste_budget_bhd)}
-                  colorClass="bg-red-500/60"
-                  isAr={isAr}
+                  colorClass="bg-brand-error/60"
+                  locale={locale}
                 />
               </div>
             </>
@@ -200,11 +201,11 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
 
           {/* Trend chart */}
           {trend.length > 0 && (
-            <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
-              <h3 className="font-satoshi font-bold text-sm text-brand-text mb-4">
-                {isAr ? `مقارنة الميزانية بالفعلي — ${year}` : `Budget vs Actual — ${year}`}
+            <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
+              <h3 className={`${font} font-bold text-sm text-brand-text mb-4`}>
+                {t('trendTitle', { year })}
               </h3>
-              <BudgetTrendChart rows={trend} isAr={isAr} />
+              <BudgetTrendChart rows={trend} locale={locale} />
             </div>
           )}
         </div>
@@ -221,7 +222,7 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
                 food_cost_target_pct: Number(budgetRow.food_cost_target_pct),
                 waste_budget_bhd:     Number(budgetRow.waste_budget_bhd),
               } : undefined}
-              isAr={isAr}
+              locale={locale}
             />
           </div>
         )}
@@ -229,3 +230,4 @@ export default async function BudgetPage({ params, searchParams }: PageProps) {
     </div>
   )
 }
+

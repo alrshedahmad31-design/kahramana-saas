@@ -11,6 +11,7 @@ import {
   getHourlyDistribution, getBranchSummaries,
   getSecondaryMetrics,
 } from '@/lib/analytics/queries'
+import { getTranslations } from 'next-intl/server'
 import { generateInsights } from '@/lib/analytics/insights'
 
 import DateRangePicker       from '@/components/analytics/DateRangePicker'
@@ -40,6 +41,7 @@ export const dynamic = 'force-dynamic'
 export default async function AnalyticsPage({ params, searchParams }: Props) {
   const { locale } = await params
   const sp         = await searchParams
+  const t          = await getTranslations('common')
   const isAr       = locale === 'ar'
 
   const user = await getSession()
@@ -68,7 +70,7 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
     avg_order_value_bhd: 0,
   })
 
-  const currency = isAr ? 'د.ب' : 'BD'
+  const currency = t('currency')
 
   const revenueGrowth = calculateGrowth(metrics.totalRevenue,    metrics.prevTotalRevenue)
   const ordersGrowth  = calculateGrowth(metrics.orderCount,      metrics.prevOrderCount)

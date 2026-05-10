@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations, useLocale } from 'next-intl'
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   Tooltip, ResponsiveContainer, Legend,
@@ -20,66 +21,108 @@ interface VendorPerformanceRow {
 
 interface TooltipProps {
   active?: boolean
-  payload?: Array<{ value: number; name: string }>
+  payload?: Array<{ value: number; name: string; color: string; payload: any }>
   label?: string
+  locale: string
 }
 
-function CustomTooltip({ active, payload, label }: TooltipProps) {
+function CustomTooltip({ active, payload, label, locale }: TooltipProps) {
   if (!active || !payload?.length) return null
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  
   return (
-    <div className="rounded-lg border px-3 py-2 shadow-lg" style={{ background: colors.surface, borderColor: colors.border }}>
-      <p className="font-satoshi text-xs text-brand-muted mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} className="font-satoshi text-xs tabular-nums" style={{ color: colors.gold }}>{p.name}: {p.value.toFixed(0)}</p>
-      ))}
+    <div className="rounded-xl border px-4 py-3 shadow-xl backdrop-blur-md bg-brand-surface/90" style={{ borderColor: colors.border }}>
+      <p className={`${font} text-[10px] text-brand-muted mb-2 uppercase tracking-widest font-bold`}>{label}</p>
+      <div className="space-y-1.5">
+        {payload.map((p, i) => (
+          <div key={i} className="flex items-center justify-between gap-4">
+            <span className={`${font} text-xs font-bold text-brand-muted`}>{p.name}</span>
+            <span className="font-satoshi text-sm font-black tabular-nums" style={{ color: p.color }}>
+              {p.value.toFixed(0)}%
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-const RADAR_COLORS = [colors.gold, colors.success, colors.error, colors.muted, colors.border]
+const RADAR_COLORS = [colors.brand.gold, colors.brand.success, colors.brand.error, colors.brand.muted, colors.brand.border]
 
 export default function VendorRadarChart({ vendors }: { vendors: VendorPerformanceRow[] }) {
-  const top5 = vendors.slice(0, 5)
+  const locale = useLocale()
+  const t = useTranslations('inventory.reports.vendorPerformance')
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
 
-  const metrics = ['دقة التسليم', 'الجودة', 'التوقيت']
+  const top5 = vendors.slice(0, 5)
+  const metrics = [
+    { key: 'accuracy', label: t('accuracyLabel') },
+    { key: 'quality', label: t('qualityLabel') },
+    { key: 'timing', label: t('delayLabel') }
+  ]
 
   // Build data: each metric is a row, each vendor is a key
-  const data = metrics.map((metric) => {
-    const row: Record<string, number | string> = { metric }
+  const data = metrics.map((m) => {
+    const row: Record<string, number | string> = { metric: m.label }
     top5.forEach((v) => {
-      if (metric === 'دقة التسليم') {
-        row[v.name_ar] = v.delivery_accuracy_pct ?? 0
-      } else if (metric === 'الجودة') {
-        row[v.name_ar] = (v.avg_quality_rating ?? 0) * 20
+      const vendorName = isAr ? v.name_ar : (v.name_en ?? v.name_ar)
+      if (m.key === 'accuracy') {
+        row[vendorName] = v.delivery_accuracy_pct ?? 0
+      } else if (m.key === 'quality') {
+        row[vendorName] = (v.avg_quality_rating ?? 0) * 20
       } else {
-        row[v.name_ar] = Math.max(0, 100 - Math.min((v.avg_delay_days ?? 0) * 10, 100))
+        row[vendorName] = Math.max(0, 100 - Math.min((v.avg_delay_days ?? 0) * 10, 100))
       }
     })
     return row
   })
 
   return (
-    <div className="rounded-xl border border-brand-border bg-brand-surface p-4">
-      <p className="font-cairo text-sm font-black text-brand-text mb-4">مقارنة أفضل 5 موردين (0-100)</p>
-      <ResponsiveContainer width="100%" height={320}>
-        <RadarChart data={data}>
-          <PolarGrid stroke={colors.surface2} />
-          <PolarAngleAxis dataKey="metric" tick={{ fill: colors.muted, fontSize: 12 }} />
-          <PolarRadiusAxis domain={[0, 100]} tick={{ fill: colors.muted, fontSize: 10 }} />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend formatter={(value) => <span style={{ color: colors.muted, fontSize: 11 }}>{value}</span>} />
-          {top5.map((v, i) => (
-            <Radar
-              key={v.id}
-              name={v.name_ar}
-              dataKey={v.name_ar}
-              stroke={RADAR_COLORS[i % RADAR_COLORS.length]}
-              fill={RADAR_COLORS[i % RADAR_COLORS.length]}
-              fillOpacity={0.15}
+    <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm hover:shadow-md transition-all">
+      <h3 className={`${isAr ? 'font-cairo' : 'font-satoshi'} text-sm font-black text-brand-text mb-6 uppercase tracking-wider`}>
+        {isAr ? 'مقارنة أفضل 5 موردين (0-100)' : 'Top 5 Vendors Comparison (0-100)'}
+      </h3>
+      <div className="h-[320px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={data}>
+            <PolarGrid stroke={colors.border} opacity={0.3} />
+            <PolarAngleAxis 
+              dataKey="metric" 
+              tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }} 
             />
-          ))}
-        </RadarChart>
-      </ResponsiveContainer>
+            <PolarRadiusAxis 
+              domain={[0, 100]} 
+              tick={{ fill: colors.muted, fontSize: 8, fontWeight: 600 }} 
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<CustomTooltip locale={locale} />} />
+            <Legend 
+              verticalAlign="bottom"
+              align="center"
+              iconType="circle"
+              formatter={(value) => <span className={`${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{value}</span>} 
+            />
+            {top5.map((v, i) => {
+              const vendorName = isAr ? v.name_ar : (v.name_en ?? v.name_ar)
+              return (
+                <Radar
+                  key={v.id}
+                  name={vendorName}
+                  dataKey={vendorName}
+                  stroke={RADAR_COLORS[i % RADAR_COLORS.length]}
+                  fill={RADAR_COLORS[i % RADAR_COLORS.length]}
+                  fillOpacity={0.1}
+                  strokeWidth={2}
+                  animationDuration={1500}
+                />
+              )
+            })}
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }

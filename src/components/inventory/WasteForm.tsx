@@ -1,19 +1,7 @@
 'use client'
 import { useTransition, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-
-const WASTE_REASONS = [
-  { value: 'expired',         labelAr: 'منتهي الصلاحية',     labelEn: 'Expired' },
-  { value: 'damaged',         labelAr: 'تالف',               labelEn: 'Damaged' },
-  { value: 'spillage',        labelAr: 'انسكاب',             labelEn: 'Spillage' },
-  { value: 'overproduction',  labelAr: 'إنتاج زائد',         labelEn: 'Overproduction' },
-  { value: 'quality',         labelAr: 'جودة سيئة',          labelEn: 'Bad Quality' },
-  { value: 'returned',        labelAr: 'مُرجَّع',             labelEn: 'Returned' },
-  { value: 'theft_suspected', labelAr: 'شبهة سرقة',          labelEn: 'Theft Suspected' },
-  { value: 'prep_error',      labelAr: 'خطأ في التحضير',     labelEn: 'Prep Error' },
-  { value: 'over_portioning', labelAr: 'إفراط في التقديم',   labelEn: 'Over Portioning' },
-  { value: 'other',           labelAr: 'أخرى',               labelEn: 'Other' },
-] as const
+import { useTranslations } from 'next-intl'
 
 interface Ingredient {
   id: string
@@ -37,7 +25,11 @@ interface Props {
 }
 
 export default function WasteForm({ branches, ingredients, locale, action, defaultBranchId }: Props) {
-  const isAr = locale !== 'en'
+  const t = useTranslations('inventory.waste')
+  const tCommon = useTranslations('common')
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  
   const prefix = locale === 'en' ? '/en' : ''
   const router = useRouter()
 
@@ -78,26 +70,34 @@ export default function WasteForm({ branches, ingredients, locale, action, defau
     })
   }
 
+  const reasons = [
+    'expired', 'damaged', 'spillage', 'overproduction', 'quality',
+    'returned', 'theft_suspected', 'prep_error', 'over_portioning', 'other'
+  ]
+
+  const inputClass = `w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors`
+  const labelClass = `${font} text-sm font-medium text-brand-text`
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 max-w-xl">
       {error && (
         <div className="rounded-lg border border-brand-error/30 bg-brand-error/10 px-4 py-3">
-          <p className="font-satoshi text-sm text-brand-error">{error}</p>
+          <p className={`${font} text-sm text-brand-error`}>{error}</p>
         </div>
       )}
 
       {/* Branch */}
       <div className="flex flex-col gap-1.5">
-        <label className="font-satoshi text-sm font-medium text-brand-text">
-          {isAr ? 'الفرع' : 'Branch'} *
+        <label className={labelClass}>
+          {t('branch')} *
         </label>
         <select
           name="branch_id"
           defaultValue={defaultBranchId ?? ''}
           required
-          className="w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors"
+          className={inputClass}
         >
-          <option value="">{isAr ? 'اختر الفرع' : 'Select branch'}</option>
+          <option value="">{t('selectBranch')}</option>
           {branches.map((b) => (
             <option key={b.id} value={b.id}>{b.name_ar}</option>
           ))}
@@ -106,28 +106,28 @@ export default function WasteForm({ branches, ingredients, locale, action, defau
 
       {/* Ingredient search */}
       <div className="flex flex-col gap-1.5">
-        <label className="font-satoshi text-sm font-medium text-brand-text">
-          {isAr ? 'المكوّن' : 'Ingredient'} *
+        <label className={labelClass}>
+          {t('ingredient')} *
         </label>
         <input
           type="text"
-          placeholder={isAr ? 'ابحث عن مكوّن...' : 'Search ingredient...'}
+          placeholder={t('searchIngredient')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors"
+          className={inputClass}
         />
         <select
           name="ingredient_id"
           required
           value={selectedIngredientId}
           onChange={(e) => setSelectedIngredientId(e.target.value)}
-          className="w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors"
+          className={inputClass}
           size={Math.min(filteredIngredients.length + 1, 6)}
         >
-          <option value="">{isAr ? 'اختر المكوّن' : 'Select ingredient'}</option>
+          <option value="">{t('selectIngredient')}</option>
           {filteredIngredients.map((i) => (
             <option key={i.id} value={i.id}>
-              {i.name_ar} ({i.unit})
+              {isAr ? i.name_ar : i.name_en} ({i.unit})
             </option>
           ))}
         </select>
@@ -135,8 +135,8 @@ export default function WasteForm({ branches, ingredients, locale, action, defau
 
       {/* Quantity */}
       <div className="flex flex-col gap-1.5">
-        <label className="font-satoshi text-sm font-medium text-brand-text">
-          {isAr ? 'الكمية' : 'Quantity'} {selectedIngredient ? `(${selectedIngredient.unit})` : ''} *
+        <label className={labelClass}>
+          {t('quantity')} {selectedIngredient ? `(${selectedIngredient.unit})` : ''} *
         </label>
         <input
           name="quantity"
@@ -146,11 +146,11 @@ export default function WasteForm({ branches, ingredients, locale, action, defau
           required
           value={quantity || ''}
           onChange={(e) => setQuantity(Number(e.target.value))}
-          className="w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors"
+          className={inputClass}
         />
         {selectedIngredient && quantity > 0 && (
-          <p className="font-satoshi text-xs text-brand-gold">
-            {isAr ? 'الكلفة التقديرية:' : 'Estimated cost:'} {estimatedCost.toFixed(3)} BD
+          <p className={`${font} text-xs text-brand-gold`}>
+            {t('estimatedCost')} {estimatedCost.toFixed(3)} {tCommon('currency')}
           </p>
         )}
       </div>
@@ -160,19 +160,19 @@ export default function WasteForm({ branches, ingredients, locale, action, defau
 
       {/* Reason */}
       <div className="flex flex-col gap-1.5">
-        <label className="font-satoshi text-sm font-medium text-brand-text">
-          {isAr ? 'السبب' : 'Reason'} *
+        <label className={labelClass}>
+          {t('reason')} *
         </label>
         <select
           name="reason"
           required
           defaultValue=""
-          className="w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors"
+          className={inputClass}
         >
-          <option value="">{isAr ? 'اختر السبب' : 'Select reason'}</option>
-          {WASTE_REASONS.map((r) => (
-            <option key={r.value} value={r.value}>
-              {isAr ? r.labelAr : r.labelEn}
+          <option value="">{t('selectReason')}</option>
+          {reasons.map((r) => (
+            <option key={r} value={r}>
+              {t(`reasons.${r}`)}
             </option>
           ))}
         </select>
@@ -180,27 +180,27 @@ export default function WasteForm({ branches, ingredients, locale, action, defau
 
       {/* Notes */}
       <div className="flex flex-col gap-1.5">
-        <label className="font-satoshi text-sm font-medium text-brand-text">
-          {isAr ? 'ملاحظات' : 'Notes'}
+        <label className={labelClass}>
+          {t('notes')}
         </label>
         <textarea
           name="notes"
           rows={3}
-          placeholder={isAr ? 'تفاصيل إضافية...' : 'Additional details...'}
-          className="w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors"
+          placeholder={t('additionalDetails')}
+          className={inputClass}
         />
       </div>
 
       {/* Photo URL */}
       <div className="flex flex-col gap-1.5">
-        <label className="font-satoshi text-sm font-medium text-brand-text">
-          {isAr ? 'رابط الصورة (اختياري)' : 'Photo URL (optional)'}
+        <label className={labelClass}>
+          {t('photoUrl')}
         </label>
         <input
           name="photo_url"
           type="url"
           placeholder="https://..."
-          className="w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors"
+          className={inputClass}
         />
       </div>
 
@@ -209,17 +209,18 @@ export default function WasteForm({ branches, ingredients, locale, action, defau
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-gold px-4 py-2 font-satoshi text-sm font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors disabled:opacity-50"
+          className={`inline-flex items-center gap-2 rounded-lg bg-brand-gold px-4 py-2 ${font} text-sm font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors disabled:opacity-50`}
         >
-          {isPending ? (isAr ? 'جارٍ الحفظ...' : 'Saving...') : (isAr ? 'تسجيل الهدر' : 'Log Waste')}
+          {isPending ? t('saving') : t('logWaste')}
         </button>
         <a
           href={`${prefix}/dashboard/inventory/waste`}
-          className="inline-flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 font-satoshi text-sm font-medium text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors"
+          className={`inline-flex items-center gap-2 rounded-lg border border-brand-border px-4 py-2 ${font} text-sm font-medium text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors`}
         >
-          {isAr ? 'إلغاء' : 'Cancel'}
+          {t('cancel')}
         </a>
       </div>
     </form>
   )
 }
+

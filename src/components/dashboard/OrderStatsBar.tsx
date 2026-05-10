@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { HIDDEN_BRANCHES } from '@/constants/contact'
 
@@ -14,6 +14,7 @@ interface Stats {
 }
 
 export default function OrderStatsBar() {
+  const t        = useTranslations('common')
   const isAr     = useLocale() === 'ar'
   const supabase = useMemo(() => createClient(), [])
 
@@ -117,7 +118,7 @@ export default function OrderStatsBar() {
         <p className="font-satoshi font-black text-2xl text-brand-gold tabular-nums leading-none">
           {stats.revenueToday.toFixed(3)}
           <span className={`text-xs text-brand-muted font-normal ms-1 ${font}`}>
-            {isAr ? 'د.ب' : 'BD'}
+            {t('currency')}
           </span>
         </p>
       </div>

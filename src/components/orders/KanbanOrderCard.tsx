@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { formatDistanceToNow } from 'date-fns'
 import { ar as arLocale } from 'date-fns/locale'
 import { updateOrderStatus } from '@/app/[locale]/dashboard/orders/actions'
@@ -60,6 +60,7 @@ interface Props {
 }
 
 export default function KanbanOrderCard({ order, userRole: _userRole, onStatusChange, onViewDetails }: Props) {
+  const t        = useTranslations('common')
   const locale   = useLocale()
   const isAr     = locale === 'ar'
   const [pending, startTransition] = useTransition()
@@ -191,7 +192,7 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
         </span>
         <span className="font-satoshi font-black text-xl text-brand-gold tabular-nums">
           {Number(order.total_bhd).toFixed(3)}{' '}
-          <span className={`text-xs font-normal text-brand-muted ${font}`}>{isAr ? 'د.ب' : 'BD'}</span>
+          <span className={`text-xs font-normal text-brand-muted ${font}`}>{t('currency')}</span>
         </span>
       </div>
 

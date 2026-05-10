@@ -21,14 +21,17 @@ const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_
 export default async function ValuationPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   const sp = await searchParams
-  const isAr = locale !== 'en'
+  const t = await getTranslations({ locale, namespace: 'inventory.reports.valuation' })
+  const tCommon = await getTranslations({ locale, namespace: 'common' })
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const currency = tCommon('currency')
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
   if (!user) redirect(`${prefix}/login`)
   if (!ALLOWED_ROLES.includes(user.role ?? '')) redirect(`${prefix}/dashboard`)
 
-  const t = await getTranslations('inventory.valuation')
   const isGlobal = user.role === 'owner' || user.role === 'general_manager'
   const branchFilter = sp.branch ?? 'all'
 
@@ -38,9 +41,7 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
     getActiveBranches(),
   ])
 
-  // v_inventory_valuation is branch+category aggregated view
   const allData = (valuation ?? []) as unknown as InventoryValuationRow[]
-  // Filter out hidden branches from the view data
   const safeData = allData.filter((r) => !isHiddenBranch(r.branch_id))
 
   const filtered = isGlobal && branchFilter !== 'all'
@@ -60,7 +61,7 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
   // Per-category totals
   const categoryTotals = new Map<string, number>()
   for (const r of filtered) {
-    const cat = r.category ?? (isAr ? 'غير محدد' : 'Uncategorized')
+    const cat = r.category ?? t('uncategorized')
     categoryTotals.set(cat, (categoryTotals.get(cat) ?? 0) + Number(r.total_value_bhd ?? 0))
   }
 
@@ -69,55 +70,55 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
     .sort((a, b) => b.value - a.value)
 
   const exportRows = filtered.map((r) => ({
-    branch_id: r.branch_id ?? '',
     branch_name: isAr ? r.branch_name_ar : (r.branch_name_en || r.branch_name_ar),
-    category: r.category ?? '',
+    category: r.category ?? t('uncategorized'),
     ingredient_count: r.ingredient_count ?? 0,
     total_value_bhd: Number(r.total_value_bhd ?? 0).toFixed(3),
     reserved_value_bhd: Number(r.reserved_value_bhd ?? 0).toFixed(3),
   }))
   const exportColumns = [
-    { key: 'branch_name', header: isAr ? 'الفرع' : 'Branch' },
-    { key: 'category', header: isAr ? 'الفئة' : 'Category' },
-    { key: 'ingredient_count', header: isAr ? 'عدد الأصناف' : 'Items' },
-    { key: 'total_value_bhd', header: isAr ? 'القيمة الإجمالية BD' : 'Total Value BHD' },
-    { key: 'reserved_value_bhd', header: isAr ? 'المحجوز BD' : 'Reserved BHD' },
+    { key: 'branch_name', header: t('branch') },
+    { key: 'category', header: t('category') },
+    { key: 'ingredient_count', header: isAr ? 'الأصناف' : 'Items' },
+    { key: 'total_value_bhd', header: `${t('totalValue')} ${currency}` },
+    { key: 'reserved_value_bhd', header: `${t('reserved')} ${currency}` },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <ReportHeader
         title={t('title')}
-        description={isAr ? 'القيمة الإجمالية للمخزون مقسّمة حسب الفئة والفرع' : 'Total stock value by category and branch'}
-        locale={locale}
-        actions={<ExportButton rows={exportRows} columns={exportColumns} filename="inventory-valuation" exportAction={exportToExcel} />}
+        description={t('desc')}
+        actions={<ExportButton rows={exportRows} columns={exportColumns} filename="inventory-valuation" exportAction={exportToExcel} locale={locale} />}
       />
 
       {/* Branch filter */}
       {isGlobal && (
-        <form method="GET" className="flex items-center gap-3 rounded-xl border border-brand-border bg-brand-surface p-4">
-          <label className="font-cairo text-xs text-brand-muted">{isAr ? 'الفرع:' : 'Branch:'}</label>
-          <select
-            name="branch"
-            defaultValue={branchFilter}
-            className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-1.5 font-cairo text-xs text-brand-text focus:border-brand-gold focus:outline-none"
-          >
-            <option value="all">{isAr ? 'كل الفروع' : 'All branches'}</option>
-            {(branches ?? []).map((b) => (
-              <option key={b.id} value={b.id}>
-                {isAr ? b.name_ar : (b.name_en || b.name_ar)}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="rounded-lg bg-brand-gold px-4 py-1.5 font-cairo text-xs font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors">
-            {isAr ? 'تطبيق' : 'Apply'}
+        <form method="GET" className="flex flex-wrap items-center gap-4 rounded-xl border border-brand-border bg-brand-surface p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className={`${font} text-[10px] text-brand-muted uppercase tracking-widest font-bold`}>{t('branch')}</span>
+            <select
+              name="branch"
+              defaultValue={branchFilter}
+              className={`rounded-lg border border-brand-border bg-brand-surface-2 px-4 py-2 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none shadow-inner transition-all appearance-none cursor-pointer`}
+            >
+              <option value="all">{t('allBranches')}</option>
+              {(branches ?? []).map((b) => (
+                <option key={b.id} value={b.id}>
+                  {isAr ? b.name_ar : (b.name_en || b.name_ar)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" className={`rounded-lg bg-brand-gold px-6 py-2 ${isAr ? 'font-cairo' : 'font-satoshi'} text-sm font-black text-brand-black hover:bg-brand-goldLight transition-all shadow-md active:scale-95`}>
+            {t('apply')}
           </button>
         </form>
       )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label={t('totalValue')} value={`BHD ${totalValue.toFixed(3)}`} highlight />
+        <StatCard label={t('totalValue')} value={totalValue.toFixed(3)} sub={currency} highlight />
         <StatCard label={t('totalItems')} value={totalIngredients} />
         <StatCard label={t('category')} value={categoryTotals.size} />
         <StatCard label={t('branch')} value={branchTotals.size} />
@@ -129,11 +130,14 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
           {Array.from(branchTotals.entries()).map(([branchId, val]) => {
             const branch = (branches ?? []).find((b) => b.id === branchId)
             return (
-              <div key={branchId} className="rounded-xl border border-brand-border bg-brand-surface p-4">
-                <p className="font-cairo text-xs text-brand-muted uppercase tracking-wide">
+              <div key={branchId} className="rounded-xl border border-brand-border bg-brand-surface p-5 shadow-sm hover:shadow-md transition-all group">
+                <p className={`${font} text-[10px] text-brand-muted uppercase tracking-widest font-bold group-hover:text-brand-gold transition-colors`}>
                   {isAr ? branch?.name_ar : (branch?.name_en || branch?.name_ar)}
                 </p>
-                <p className="font-satoshi text-xl font-black text-brand-text mt-1 tabular-nums">BHD {val.toFixed(3)}</p>
+                <p className="font-satoshi text-2xl font-black text-brand-text mt-2 tabular-nums">
+                  {val.toFixed(3)}
+                  <span className={`${font} text-xs text-brand-muted font-medium ms-1`}>{currency}</span>
+                </p>
               </div>
             )
           })}
@@ -142,61 +146,69 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
 
       {/* Chart + category summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {pieData.length > 0 && <ValuationPieChart data={pieData} />}
-
-        <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
-          <div className="px-4 py-3 border-b border-brand-border">
-            <h3 className="font-cairo text-sm font-black text-brand-text">{isAr ? 'القيمة حسب الفئة' : 'Value by Category'}</h3>
+        {pieData.length > 0 && (
+          <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-sm">
+            <ValuationPieChart data={pieData} locale={locale} />
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-border bg-brand-surface-2">
-                <th className="px-4 py-3 text-start font-cairo text-xs font-semibold text-brand-muted">{isAr ? 'الفئة' : 'Category'}</th>
-                <th className="px-4 py-3 text-end font-cairo text-xs font-semibold text-brand-muted">{isAr ? 'القيمة BHD' : 'Value BHD'}</th>
-                <th className="px-4 py-3 text-end font-cairo text-xs font-semibold text-brand-muted">%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pieData.map((item) => (
-                <tr key={item.name} className="border-b border-brand-border/50 hover:bg-brand-surface-2 transition-colors">
-                  <td className="px-4 py-3 font-cairo text-brand-text">{item.name}</td>
-                  <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-gold font-semibold">{item.value.toFixed(3)}</td>
-                  <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-muted">
-                    {totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0'}%
-                  </td>
+        )}
+
+        <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-brand-border bg-brand-surface-2/50 backdrop-blur-sm">
+            <h3 className={`${isAr ? 'font-cairo' : 'font-satoshi'} font-black text-sm text-brand-text`}>{t('valueByCategory')}</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-start">
+              <thead className="bg-brand-surface-2 border-b border-brand-border">
+                <tr>
+                  <th className={`px-5 py-3 text-start ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('category')}</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('totalValue')}</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>%</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-brand-border/30">
+                {pieData.map((item) => (
+                  <tr key={item.name} className="hover:bg-brand-surface-2 transition-colors">
+                    <td className={`px-5 py-3 ${font} text-sm font-medium text-brand-text`}>{item.name}</td>
+                    <td className="px-5 py-3 text-end font-satoshi text-sm font-black text-brand-gold tabular-nums">{item.value.toFixed(3)}</td>
+                    <td className="px-5 py-3 text-end font-satoshi text-sm font-bold text-brand-muted tabular-nums">
+                      {totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0'}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* Detailed rows */}
-      <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
-        <div className="px-4 py-3 border-b border-brand-border">
-          <h3 className="font-cairo text-sm font-black text-brand-text">{isAr ? 'التفاصيل' : 'Details'}</h3>
+      <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden shadow-sm">
+        <div className="px-5 py-4 border-b border-brand-border bg-brand-surface-2/50 backdrop-blur-sm">
+          <h3 className={`${isAr ? 'font-cairo' : 'font-satoshi'} font-black text-sm text-brand-text`}>{t('details')}</h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-brand-border bg-brand-surface-2">
-                <th className="px-4 py-3 text-start font-cairo text-xs font-semibold text-brand-muted">{t('branch')}</th>
-                <th className="px-4 py-3 text-start font-cairo text-xs font-semibold text-brand-muted">{t('category')}</th>
-                <th className="px-4 py-3 text-end font-cairo text-xs font-semibold text-brand-muted">{isAr ? 'الأصناف' : 'Items'}</th>
-                <th className="px-4 py-3 text-end font-cairo text-xs font-semibold text-brand-muted">{t('totalValue')}</th>
-                <th className="px-4 py-3 text-end font-cairo text-xs font-semibold text-brand-muted">{t('reserved')}</th>
+          <table className="w-full text-start">
+            <thead className="bg-brand-surface-2 border-b border-brand-border">
+              <tr>
+                <th className={`px-5 py-3 text-start ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('branch')}</th>
+                <th className={`px-5 py-3 text-start ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('category')}</th>
+                <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{isAr ? 'الأصناف' : 'Items'}</th>
+                <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('totalValue')}</th>
+                <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('reserved')}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-brand-border/30">
               {filtered.map((r, i) => (
-                <tr key={i} className="border-b border-brand-border/30 hover:bg-brand-surface-2 transition-colors">
-                  <td className="px-4 py-3 font-cairo text-brand-muted text-xs">
+                <tr key={i} className="hover:bg-brand-surface-2 transition-colors group">
+                  <td className={`px-5 py-3 ${font} text-xs font-bold text-brand-muted uppercase tracking-wider group-hover:text-brand-gold transition-colors`}>
                     {isAr ? r.branch_name_ar : (r.branch_name_en || r.branch_name_ar)}
                   </td>
-                  <td className="px-4 py-3 font-cairo text-brand-text">{r.category ?? (isAr ? 'غير محدد' : 'Uncategorized')}</td>
-                  <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-muted">{r.ingredient_count}</td>
-                  <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-gold font-semibold">{Number(r.total_value_bhd ?? 0).toFixed(3)}</td>
-                  <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-muted">{Number(r.reserved_value_bhd ?? 0).toFixed(3)}</td>
+                  <td className={`px-5 py-3 ${font} text-sm font-medium text-brand-text`}>
+                    {r.category ?? t('uncategorized')}
+                  </td>
+                  <td className="px-5 py-3 text-end font-satoshi text-sm font-bold text-brand-muted tabular-nums">{r.ingredient_count}</td>
+                  <td className="px-5 py-3 text-end font-satoshi text-sm font-black text-brand-gold tabular-nums">{Number(r.total_value_bhd ?? 0).toFixed(3)}</td>
+                  <td className="px-5 py-3 text-end font-satoshi text-sm font-bold text-brand-muted tabular-nums">{Number(r.reserved_value_bhd ?? 0).toFixed(3)}</td>
                 </tr>
               ))}
             </tbody>
@@ -206,4 +218,5 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
     </div>
   )
 }
+
 

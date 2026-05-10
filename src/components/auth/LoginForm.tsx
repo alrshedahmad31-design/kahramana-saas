@@ -11,6 +11,7 @@ export default function LoginForm() {
   const locale = useLocale()
   const isAr   = locale === 'ar'
   const router = useRouter()
+  const font   = isAr ? 'font-almarai' : 'font-satoshi'
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -52,7 +53,7 @@ export default function LoginForm() {
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="email"
-          className="font-almarai text-sm font-medium text-brand-text"
+          className={`${font} text-sm font-medium text-brand-text`}
         >
           {t('email')}
         </label>
@@ -64,13 +65,13 @@ export default function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={t('emailPlaceholder')}
-          className="min-h-[48px] w-full rounded-lg border border-brand-border
+          className={`min-h-[48px] w-full rounded-lg border border-brand-border
                      bg-brand-surface px-4 py-3
-                     font-satoshi text-base text-brand-text
+                     ${font} text-base text-brand-text
                      placeholder:text-brand-muted/50
                      focus:outline-none focus:ring-2 focus:ring-brand-gold/50
                      focus:border-brand-gold transition-colors duration-150
-                     disabled:opacity-50"
+                     disabled:opacity-50`}
           disabled={loading}
         />
       </div>
@@ -79,7 +80,7 @@ export default function LoginForm() {
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="password"
-          className="font-almarai text-sm font-medium text-brand-text"
+          className={`${font} text-sm font-medium text-brand-text`}
         >
           {t('password')}
         </label>
@@ -91,13 +92,13 @@ export default function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={t('passwordPlaceholder')}
-          className="min-h-[48px] w-full rounded-lg border border-brand-border
+          className={`min-h-[48px] w-full rounded-lg border border-brand-border
                      bg-brand-surface px-4 py-3
-                     font-satoshi text-base text-brand-text
+                     ${font} text-base text-brand-text
                      placeholder:text-brand-muted/50
                      focus:outline-none focus:ring-2 focus:ring-brand-gold/50
                      focus:border-brand-gold transition-colors duration-150
-                     disabled:opacity-50"
+                     disabled:opacity-50`}
           disabled={loading}
         />
       </div>
@@ -106,8 +107,8 @@ export default function LoginForm() {
       {error && (
         <p
           role="alert"
-          className="rounded-lg bg-brand-error/10 border border-brand-error/30
-                     px-4 py-3 font-satoshi text-sm text-brand-error"
+          className={`rounded-lg bg-brand-error/10 border border-brand-error/30
+                     px-4 py-3 ${font} text-sm text-brand-error`}
         >
           {error}
         </p>

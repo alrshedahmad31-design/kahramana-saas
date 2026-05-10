@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { motion } from 'framer-motion'
 import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
@@ -18,7 +20,9 @@ export default function MenuItemCard({
   locale,
   index,
 }: MenuItemCardProps) {
+  const t = useTranslations('common')
   const isRTL = locale === 'ar'
+  const font = isRTL ? 'font-almarai' : 'font-satoshi'
   
   return (
     <motion.article
@@ -84,7 +88,7 @@ export default function MenuItemCard({
       <div className="p-3 sm:p-4 flex flex-col flex-1">
 
         {/* Category label */}
-        <p className="font-almarai text-brand-muted text-[10px] mb-1 line-clamp-1 uppercase tracking-wider">
+        <p className={`${font} text-brand-muted text-[10px] mb-1 line-clamp-1 uppercase tracking-wider`}>
           {isRTL ? item.categoryName.ar : item.categoryName.en}
         </p>
 
@@ -119,10 +123,10 @@ export default function MenuItemCard({
         )}
 
         {/* Description — 2 lines max */}
-        <p className="
+        <p className={`
           hidden sm:block
-          font-almarai text-brand-muted text-xs mt-1.5 line-clamp-2 flex-1
-        ">
+          ${font} text-brand-muted text-xs mt-1.5 line-clamp-2 flex-1
+        `}>
           {isRTL ? item.description?.ar : item.description?.en}
         </p>
 
@@ -140,7 +144,7 @@ export default function MenuItemCard({
               font-satoshi font-medium text-brand-gold tabular-nums
               text-sm sm:text-base
             ">
-              {item.fromPrice.toFixed(3)} <span className="text-[10px] font-bold opacity-80 uppercase">BD</span>
+              {item.fromPrice.toFixed(3)} <span className={`text-[10px] font-bold opacity-80 uppercase ${font}`}>{t('currency')}</span>
             </span>
           </div>
 

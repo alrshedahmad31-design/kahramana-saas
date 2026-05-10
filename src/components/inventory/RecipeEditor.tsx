@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import type { RecipeRow } from '@/lib/supabase/custom-types'
+import { useTranslations } from 'next-intl'
 
 export interface RecipeRowInput {
   ingredient_id?: string | null
@@ -54,16 +55,16 @@ interface PrepRow {
 let keyCounter = 0
 function nextKey() { return `k${++keyCounter}` }
 
-const inputSm = 'rounded-lg border border-brand-border bg-brand-surface px-2 py-1.5 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors w-full'
-const selectSm = 'rounded-lg border border-brand-border bg-brand-surface px-2 py-1.5 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors w-full'
-
 export default function RecipeEditor({
   slug, dishName, dishPrice,
   existingIngredients, existingPrepItems,
   allIngredients, allPrepItems,
   saveAction, locale
 }: Props) {
+  const t = useTranslations('inventory.recipes')
+  const tCommon = useTranslations('common')
   const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
 
   const [ingRows, setIngRows] = useState<IngRow[]>(() =>
     existingIngredients.map((r) => ({
@@ -164,6 +165,9 @@ export default function RecipeEditor({
     })
   }
 
+  const inputSm = `rounded-lg border border-brand-border bg-brand-surface px-2 py-1.5 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors w-full`
+  const selectSm = `rounded-lg border border-brand-border bg-brand-surface px-2 py-1.5 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors w-full`
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header + COGS */}
@@ -171,23 +175,22 @@ export default function RecipeEditor({
         <div>
           <h2 className="font-cairo text-xl font-black text-brand-text">{dishName}</h2>
           {dishPrice !== null && (
-            <p className="font-satoshi text-sm text-brand-muted mt-0.5">
-              {isAr ? 'السعر: ' : 'Price: '}
-              <span className="text-brand-text font-medium">{dishPrice.toFixed(3)} BD</span>
+            <p className={`${font} text-sm text-brand-muted mt-0.5`}>
+              {t('price')}: <span className="text-brand-text font-medium">{dishPrice.toFixed(3)} {tCommon('currency')}</span>
             </p>
           )}
         </div>
         <div className="flex items-center gap-4">
           <div className="text-end">
-            <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wide">
-              {isAr ? 'تكلفة الطبق' : 'Dish Cost'}
+            <p className={`${font} text-xs text-brand-muted uppercase tracking-wide`}>
+              {t('dishCost')}
             </p>
-            <p className="font-cairo text-lg font-black text-brand-gold">{cogs.toFixed(3)} BD</p>
+            <p className="font-cairo text-lg font-black text-brand-gold">{cogs.toFixed(3)} {tCommon('currency')}</p>
           </div>
           {margin !== null && (
             <div className="text-end">
-              <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wide">
-                {isAr ? 'هامش الربح' : 'Margin'}
+              <p className={`${font} text-xs text-brand-muted uppercase tracking-wide`}>
+                {t('margin')}
               </p>
               <p className={`font-cairo text-lg font-black ${marginColor(margin)}`}>
                 {margin.toFixed(1)}%
@@ -199,7 +202,7 @@ export default function RecipeEditor({
 
       {error && (
         <div className="rounded-lg border border-brand-error/30 bg-brand-error/10 px-4 py-3">
-          <p className="font-satoshi text-sm text-brand-error">{error}</p>
+          <p className={`${font} text-sm text-brand-error`}>{error}</p>
         </div>
       )}
 
@@ -207,32 +210,32 @@ export default function RecipeEditor({
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-cairo text-base font-bold text-brand-text">
-            {isAr ? 'مكونات مباشرة' : 'Direct Ingredients'}
+            {t('directIngredients')}
           </h3>
           <button
             type="button"
             onClick={addIngRow}
-            className="inline-flex items-center gap-2 rounded-lg border border-brand-border px-3 py-1.5 font-satoshi text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors"
+            className={`inline-flex items-center gap-2 rounded-lg border border-brand-border px-3 py-1.5 ${font} text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors`}
           >
             <span>+</span>
-            {isAr ? 'إضافة مكوّن' : 'Add Ingredient'}
+            {t('addIngredient')}
           </button>
         </div>
 
         {ingRows.length === 0 ? (
-          <p className="font-satoshi text-sm text-brand-muted italic">
-            {isAr ? 'لا مكونات مباشرة' : 'No direct ingredients'}
+          <p className={`${font} text-sm text-brand-muted italic`}>
+            {t('noDirectIngredients')}
           </p>
         ) : (
           <div className="border border-brand-border rounded-xl overflow-hidden">
             <table className="w-full">
               <thead className="bg-brand-surface-2">
                 <tr>
-                  <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'المكوّن' : 'Ingredient'}</th>
-                  <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الكمية' : 'Qty'}</th>
-                  <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الهدر' : 'Yield'}</th>
-                  <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'اختياري' : 'Optional'}</th>
-                  <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'التكلفة' : 'Cost'}</th>
+                  <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('ingredient')}</th>
+                  <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('qty')}</th>
+                  <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('yield')}</th>
+                  <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('optional')}</th>
+                  <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('cost')}</th>
                   <th className="px-3 py-2" />
                 </tr>
               </thead>
@@ -282,7 +285,7 @@ export default function RecipeEditor({
                         />
                       </td>
                       <td className="px-3 py-2 w-24">
-                        <span className="font-satoshi text-xs text-brand-muted">{rowCost.toFixed(3)}</span>
+                        <span className={`${font} text-xs text-brand-muted`}>{rowCost.toFixed(3)}</span>
                       </td>
                       <td className="px-3 py-2 w-10">
                         <button
@@ -307,15 +310,15 @@ export default function RecipeEditor({
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-cairo text-base font-bold text-brand-text">
-              {isAr ? 'Prep Items' : 'Prep Items'}
+              {t('prepItems')}
             </h3>
             <button
               type="button"
               onClick={addPrepRow}
-              className="inline-flex items-center gap-2 rounded-lg border border-brand-border px-3 py-1.5 font-satoshi text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors"
+              className={`inline-flex items-center gap-2 rounded-lg border border-brand-border px-3 py-1.5 ${font} text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors`}
             >
               <span>+</span>
-              {isAr ? 'إضافة Prep Item' : 'Add Prep Item'}
+              {t('addPrepItem')}
             </button>
           </div>
 
@@ -324,10 +327,10 @@ export default function RecipeEditor({
               <table className="w-full">
                 <thead className="bg-brand-surface-2">
                   <tr>
-                    <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">Prep Item</th>
-                    <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الكمية' : 'Qty'}</th>
-                    <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الهدر' : 'Yield'}</th>
-                    <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'اختياري' : 'Optional'}</th>
+                    <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('prepItems')}</th>
+                    <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('qty')}</th>
+                    <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('yield')}</th>
+                    <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('optional')}</th>
                     <th className="px-3 py-2" />
                   </tr>
                 </thead>
@@ -400,13 +403,12 @@ export default function RecipeEditor({
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-gold px-6 py-2.5 font-satoshi text-sm font-semibold text-brand-black hover:bg-brand-gold/90 disabled:opacity-50 transition-colors"
+          className={`inline-flex items-center gap-2 rounded-lg bg-brand-gold px-6 py-2.5 ${font} text-sm font-semibold text-brand-black hover:bg-brand-gold/90 disabled:opacity-50 transition-colors`}
         >
-          {isPending
-            ? (isAr ? 'جاري الحفظ...' : 'Saving...')
-            : (isAr ? 'حفظ الوصفة' : 'Save Recipe')}
+          {isPending ? t('saving') : t('save')}
         </button>
       </div>
     </div>
   )
 }
+

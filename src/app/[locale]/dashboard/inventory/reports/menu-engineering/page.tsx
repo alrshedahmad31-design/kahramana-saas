@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveBranches } from '@/lib/branches/queries'
@@ -30,8 +31,10 @@ const PERIOD_OPTIONS = [7, 14, 30, 60, 90]
 
 export default async function MenuEngineeringPage({ params, searchParams }: PageProps) {
   const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'inventory.reports.menuEngineering' })
   const sp = await searchParams
-  const isAr = locale !== 'en'
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
@@ -50,11 +53,11 @@ export default async function MenuEngineeringPage({ params, searchParams }: Page
 
   if (!branchId) {
     return (
-      <div className="space-y-6">
-        <ReportHeader title={isAr ? 'هندسة القائمة' : 'Menu Engineering'} locale={locale} />
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <ReportHeader title={t('title')} locale={locale} />
         <EmptyReport
-          title={isAr ? 'لا يوجد فرع محدد' : 'No branch selected'}
-          description={isAr ? 'الرجاء اختيار فرع لعرض هندسة القائمة' : 'Please select a branch to view menu engineering'}
+          title={t('noBranch')}
+          description={t('selectBranch')}
         />
       </div>
     )
@@ -68,53 +71,57 @@ export default async function MenuEngineeringPage({ params, searchParams }: Page
   const safeRows = (rows ?? []) as MenuEngineeringRow[]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <ReportHeader
-        title={isAr ? 'هندسة القائمة' : 'Menu Engineering'}
-        description={isAr ? 'مصفوفة Stars/Puzzles/Plowhorses/Dogs' : 'Stars / Puzzles / Plowhorses / Dogs matrix'}
+        title={t('title')}
+        description={t('desc')}
         locale={locale}
       />
 
       {/* Filters */}
-      <form method="GET" className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-border bg-brand-surface p-4">
+      <form method="GET" className="flex flex-wrap items-center gap-4 rounded-xl border border-brand-border bg-brand-surface p-4 shadow-sm hover:shadow-md transition-all">
         {isGlobal && (
           <select
             name="branch"
             defaultValue={branchId}
-            className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-1.5 font-satoshi text-xs text-brand-text focus:border-brand-gold focus:outline-none"
+            className={`rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-1.5 ${font} text-xs text-brand-text focus:border-brand-gold focus:outline-none min-w-[180px] transition-colors`}
           >
-            {(branches ?? []).map((b) => <option key={b.id} value={b.id}>{b.name_ar}</option>)}
+            {(branches ?? []).map((b) => <option key={b.id} value={b.id}>{isAr ? b.name_ar : b.name_en}</option>)}
           </select>
         )}
-        <div className="flex items-center gap-2">
-          <label className="font-satoshi text-xs text-brand-muted">{isAr ? 'الفترة:' : 'Period:'}</label>
-          {PERIOD_OPTIONS.map((p) => (
-            <a
-              key={p}
-              href={`?period=${p}${branchId ? `&branch=${branchId}` : ''}`}
-              className={`rounded-lg px-3 py-1.5 font-satoshi text-xs font-medium transition-colors ${period === p ? 'bg-brand-gold text-brand-black' : 'border border-brand-border text-brand-muted hover:border-brand-gold hover:text-brand-gold'}`}
-            >
-              {p}d
-            </a>
-          ))}
+        
+        <div className="flex flex-wrap items-center gap-2">
+          <label className={`${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('period')}</label>
+          <div className="flex bg-brand-surface-2 p-1 rounded-lg border border-brand-border gap-1">
+            {PERIOD_OPTIONS.map((p) => (
+              <a
+                key={p}
+                href={`?period=${p}${branchId ? `&branch=${branchId}` : ''}`}
+                className={`rounded-md px-3 py-1 font-satoshi text-[10px] font-black transition-all ${period === p ? 'bg-brand-gold text-brand-black shadow-sm' : 'text-brand-muted hover:text-brand-gold'}`}
+              >
+                {p}D
+              </a>
+            ))}
+          </div>
         </div>
+
         {isGlobal && (
-          <button type="submit" className="rounded-lg bg-brand-gold px-4 py-1.5 font-satoshi text-xs font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors">
-            {isAr ? 'تطبيق' : 'Apply'}
+          <button type="submit" className={`ms-auto rounded-lg bg-brand-gold px-4 py-1.5 ${font} text-xs font-black text-brand-black hover:bg-brand-gold/90 transition-all shadow-sm active:scale-95`}>
+            {isAr ? 'تحديث' : 'Update'}
           </button>
         )}
       </form>
 
       {error && (
-        <div className="rounded-xl border border-brand-error bg-brand-error/10 px-4 py-3">
-          <p className="font-satoshi text-sm text-brand-error">{error.message}</p>
+        <div className="rounded-xl border border-brand-error/20 bg-brand-error/5 p-4 animate-in slide-in-from-top-2">
+          <p className={`${font} text-xs font-bold text-brand-error`}>{error.message}</p>
         </div>
       )}
 
       {safeRows.length === 0 ? (
         <EmptyReport
-          title={isAr ? 'لا توجد بيانات' : 'No data'}
-          description={isAr ? 'لا توجد مبيعات مسجّلة في هذه الفترة' : 'No sales recorded for this period'}
+          title={t('noData')}
+          description={t('noSalesDesc')}
         />
       ) : (
         <MenuEngineeringMatrix rows={safeRows} />

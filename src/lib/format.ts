@@ -9,16 +9,19 @@ export function filsToBhd(amountFils: number): number {
 }
 
 export function formatPrice(amount: number, locale: string): string {
-  const normalizedLocale = locale === 'ar' ? 'ar-BH' : 'en-BH'
+  const isAr = locale === 'ar'
+  const normalizedLocale = isAr ? 'ar-BH' : 'en-BH'
+  const symbol = isAr ? 'د.ب' : 'BD'
 
-  return new Intl.NumberFormat(normalizedLocale, {
-    style: 'currency',
-    currency: 'BHD',
+  const formattedNumber = new Intl.NumberFormat(normalizedLocale, {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
   }).format(amount)
+
+  return isAr ? `${formattedNumber} ${symbol}` : `${formattedNumber} ${symbol}`
 }
 
 export function formatPriceFils(amountFils: number, locale: string): string {
   return formatPrice(filsToBhd(amountFils), locale)
 }
+

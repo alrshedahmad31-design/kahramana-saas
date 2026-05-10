@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
+import { translateUnit } from '@/lib/inventory/units'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
@@ -15,15 +18,19 @@ type HistoryRow = {
   id: string
   unit_cost: number
   effective_at: string
-  supplier: { name_ar: string } | null
+  supplier: { name_ar: string; name_en: string } | null
 }
 
 const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager']
 
 export default async function PriceHistoryPage({ params, searchParams }: PageProps) {
   const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'inventory.reports.priceHistory' })
+  const tCommon = await getTranslations({ locale, namespace: 'common' })
   const sp = await searchParams
-  const isAr = locale !== 'en'
+  const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const currency = tCommon('currency')
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
@@ -35,14 +42,14 @@ export default async function PriceHistoryPage({ params, searchParams }: PagePro
 
   const { data: ingredients } = await supabase
     .from('ingredients')
-    .select('id, name_ar, unit')
+    .select('id, name_ar, name_en, unit')
     .eq('is_active', true)
     .order('name_ar')
 
   const { data: rawHistory } = ingredientId
     ? await supabase
         .from('supplier_price_history')
-        .select('id, unit_cost, effective_at, supplier:suppliers(name_ar)')
+        .select('id, unit_cost, effective_at, supplier:suppliers(name_ar, name_en)')
         .eq('ingredient_id', ingredientId)
         .order('effective_at', { ascending: true })
     : { data: null }
@@ -55,6 +62,7 @@ export default async function PriceHistoryPage({ params, searchParams }: PagePro
   const avgPrice = prices.length > 0 ? prices.reduce((s, p) => s + p, 0) / prices.length : 0
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
+  const trend = prices.length > 1 ? (prices[prices.length - 1] > prices[prices.length - 2] ? 'down' : 'up') : 'neutral'
 
   const selectedIngredient = ingredientId
     ? (ingredients ?? []).find((i) => i.id === ingredientId)
@@ -71,77 +79,80 @@ export default async function PriceHistoryPage({ params, searchParams }: PagePro
   }))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <ReportHeader
-        title={isAr ? 'سجل الأسعار' : 'Price History'}
-        description={isAr ? 'تاريخ أسعار المشتريات من الموردين لكل مكوّن' : 'Purchase price history by supplier per ingredient'}
+        title={t('title')}
+        description={t('desc')}
         locale={locale}
       />
 
       {/* Ingredient selector */}
-      <form method="GET" className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-border bg-brand-surface p-4">
-        <label className="font-satoshi text-xs text-brand-muted">{isAr ? 'المكوّن:' : 'Ingredient:'}</label>
-        <select
-          name="ingredient"
-          defaultValue={ingredientId ?? ''}
-          className="rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-1.5 font-satoshi text-xs text-brand-text focus:border-brand-gold focus:outline-none min-w-48"
-        >
-          <option value="">{isAr ? '— اختر مكوّناً —' : '— Select ingredient —'}</option>
-          {(ingredients ?? []).map((ing) => (
-            <option key={ing.id} value={ing.id}>{ing.name_ar} ({ing.unit})</option>
-          ))}
-        </select>
-        <button type="submit" className="rounded-lg bg-brand-gold px-4 py-1.5 font-satoshi text-xs font-semibold text-brand-black hover:bg-brand-gold/90 transition-colors">
-          {isAr ? 'عرض' : 'View'}
+      <form method="GET" className="flex flex-wrap items-center gap-4 rounded-xl border border-brand-border bg-brand-surface p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="flex items-center gap-3">
+          <label className={`${font} text-xs text-brand-muted font-bold uppercase tracking-wider`}>{t('selectIngredient')}</label>
+          <select
+            name="ingredient"
+            defaultValue={ingredientId ?? ''}
+            className={`rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-1.5 ${font} text-xs text-brand-text focus:border-brand-gold focus:outline-none min-w-48 transition-colors`}
+          >
+            <option value="">{t('selectPlaceholder')}</option>
+            {(ingredients ?? []).map((ing) => (
+              <option key={ing.id} value={ing.id}>{isAr ? ing.name_ar : ing.name_en} ({translateUnit(ing.unit ?? '', isAr)})</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className={`rounded-lg bg-brand-gold px-6 py-1.5 ${font} text-xs font-black text-brand-black hover:bg-brand-gold/90 transition-all shadow-sm active:scale-95`}>
+          {t('view')}
         </button>
       </form>
 
       {!ingredientId ? (
         <EmptyReport
-          title={isAr ? 'اختر مكوّناً للبدء' : 'Select an ingredient to start'}
-          description={isAr ? 'اختر مكوّناً من القائمة أعلاه لعرض سجل الأسعار' : 'Choose an ingredient from the dropdown above to view price history'}
+          title={t('emptyTitle')}
+          description={t('emptyDesc')}
         />
       ) : history.length === 0 ? (
         <EmptyReport
-          title={isAr ? 'لا توجد بيانات أسعار' : 'No price history'}
-          description={isAr ? `لا يوجد سجل أسعار لـ "${selectedIngredient?.name_ar ?? '—'}"` : `No price history found for "${selectedIngredient?.name_ar ?? '—'}"`}
+          title={t('noDataTitle')}
+          description={t('noDataDesc', { name: isAr ? selectedIngredient?.name_ar : selectedIngredient?.name_en })}
         />
       ) : (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label={isAr ? 'السعر الحالي BD' : 'Current Price BD'} value={`${currentPrice.toFixed(3)}`} highlight />
-            <StatCard label={isAr ? 'متوسط السعر BD' : 'Avg Price BD'} value={`${avgPrice.toFixed(3)}`} />
-            <StatCard label={isAr ? 'أدنى سعر BD' : 'Min Price BD'} value={`${minPrice.toFixed(3)}`} trend="up" />
-            <StatCard label={isAr ? 'أعلى سعر BD' : 'Max Price BD'} value={`${maxPrice.toFixed(3)}`} trend="down" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <StatCard label={`${t('currentPrice')}`} value={`${currentPrice.toFixed(3)} ${currency}`} highlight trend={trend} />
+            <StatCard label={`${t('avgPrice')}`} value={`${avgPrice.toFixed(3)} ${currency}`} />
+            <StatCard label={`${t('minPrice')}`} value={`${minPrice.toFixed(3)} ${currency}`} />
+            <StatCard label={`${t('maxPrice')}`} value={`${maxPrice.toFixed(3)} ${currency}`} />
           </div>
 
           {/* Chart */}
           <PriceHistoryChart history={history} />
 
-          {/* Table */}
-          <div className="overflow-x-auto rounded-xl border border-brand-border">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-xl border border-brand-border bg-brand-surface shadow-sm hover:shadow-md transition-all">
+            <table className="w-full text-start">
               <thead>
-                <tr className="border-b border-brand-border bg-brand-surface-2">
-                  <th className="px-4 py-3 text-start font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'التاريخ' : 'Date'}</th>
-                  <th className="px-4 py-3 text-start font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'المورد' : 'Supplier'}</th>
-                  <th className="px-4 py-3 text-end font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'السعر BD' : 'Price BD'}</th>
-                  <th className="px-4 py-3 text-end font-satoshi text-xs font-semibold text-brand-muted uppercase tracking-wide">{isAr ? 'التغيير %' : 'Change %'}</th>
+                <tr className="bg-brand-surface-2/50">
+                  <th className={`px-5 py-3 text-start ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('date')}</th>
+                  <th className={`px-5 py-3 text-start ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('supplier')}</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{tCommon('price')} ({currency})</th>
+                  <th className={`px-5 py-3 text-end ${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest`}>{t('change')}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-brand-border/30">
                 {[...historyWithChange].reverse().map((row) => {
                   const isUp = (row.changePct ?? 0) > 0
                   const isDown = (row.changePct ?? 0) < 0
+                  const dateStr = new Date(row.effective_at).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB')
+                  const supplierName = (isAr ? row.supplier?.name_ar : row.supplier?.name_en) ?? '—'
                   return (
-                    <tr key={row.id} className="border-b border-brand-border/50 hover:bg-brand-surface-2 transition-colors">
-                      <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">
-                        {new Date(row.effective_at).toLocaleDateString('ar-IQ')}
+                    <tr key={row.id} className="hover:bg-brand-surface-2 transition-colors group">
+                      <td className={`px-5 py-4 ${font} text-xs text-brand-muted font-bold tabular-nums`}>
+                        {dateStr}
                       </td>
-                      <td className="px-4 py-3 font-satoshi text-brand-text">{row.supplier?.name_ar ?? '—'}</td>
-                      <td className="px-4 py-3 text-end font-satoshi tabular-nums text-brand-gold font-semibold">{row.unit_cost.toFixed(3)}</td>
-                      <td className={`px-4 py-3 text-end font-satoshi tabular-nums font-semibold ${isUp ? 'text-brand-error' : isDown ? 'text-green-400' : 'text-brand-muted'}`}>
+                      <td className={`px-5 py-4 ${font} text-sm font-bold text-brand-text group-hover:text-brand-gold transition-colors`}>{supplierName}</td>
+                      <td className={`px-5 py-4 text-end font-satoshi text-sm font-black tabular-nums text-brand-gold`}>{row.unit_cost.toFixed(3)}</td>
+                      <td className={`px-5 py-4 text-end font-satoshi text-sm font-black tabular-nums ${isUp ? 'text-brand-error' : isDown ? 'text-brand-success' : 'text-brand-muted'}`}>
                         {row.changePct === null
                           ? '—'
                           : `${isUp ? '+' : ''}${row.changePct.toFixed(1)}%`}

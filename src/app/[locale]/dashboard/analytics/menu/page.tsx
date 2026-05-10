@@ -1,4 +1,5 @@
 import { redirect }          from 'next/navigation'
+import { getTranslations }    from 'next-intl/server'
 import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency } from '@/lib/analytics/calculations'
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default async function MenuAnalyticsPage({ params, searchParams }: Props) {
+  const t          = await getTranslations('common')
   const { locale } = await params
   const sp         = await searchParams
   const isAr       = locale === 'ar'
@@ -37,7 +39,7 @@ export default async function MenuAnalyticsPage({ params, searchParams }: Props)
     getTopItems(range.from, range.to, 10, branchId),
   ])
 
-  const currency = isAr ? 'د.ب' : 'BD'
+  const currency = t('currency')
 
   const totalRevMenu  = menuItems.reduce((s, i) => s + i.total_revenue,    0)
   const totalProfit   = menuItems.reduce((s, i) => s + i.estimated_profit, 0)

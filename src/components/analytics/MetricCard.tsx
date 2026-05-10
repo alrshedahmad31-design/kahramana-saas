@@ -2,6 +2,7 @@
 
 import { formatPercentage } from '@/lib/analytics/calculations'
 import { colors } from '@/lib/design-tokens'
+import { useLocale, useTranslations } from 'next-intl'
 
 interface Props {
   title:      string
@@ -12,6 +13,11 @@ interface Props {
 }
 
 export default function MetricCard({ title, value, unit, change, isLoading }: Props) {
+  const locale = useLocale()
+  const t      = useTranslations('common')
+  const isAr   = locale === 'ar'
+  const font   = isAr ? 'font-almarai' : 'font-satoshi'
+
   if (isLoading) {
     return (
       <div className="bg-brand-surface border border-brand-border rounded-xl p-5 animate-pulse">
@@ -33,25 +39,25 @@ export default function MetricCard({ title, value, unit, change, isLoading }: Pr
 
   return (
     <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
-      <p className="font-satoshi text-xs text-brand-muted uppercase tracking-wide mb-2">
+      <p className={`${font} text-xs text-brand-muted uppercase tracking-wide mb-2`}>
         {title}
       </p>
 
       <p className="font-satoshi text-2xl font-bold text-brand-text tabular-nums">
         {value}
         {unit && (
-          <span className="text-sm font-normal text-brand-muted ms-1">{unit}</span>
+          <span className={`text-sm font-normal text-brand-muted ms-1 ${font}`}>{unit}</span>
         )}
       </p>
 
       {change !== undefined && (
         <p
-          className="font-satoshi text-xs mt-1.5 tabular-nums"
+          className={`${font} text-xs mt-1.5 tabular-nums`}
           style={{ color: trendColor }}
         >
           {trendArrow} {formatPercentage(change)}
           <span className="text-brand-muted ms-1 font-normal" style={{ color: colors.muted }}>
-            vs prev period
+            {t('vsPrevPeriod')}
           </span>
         </p>
       )}

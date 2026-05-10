@@ -3,47 +3,7 @@
 import { useState, useTransition } from 'react'
 import AllergenSelector from './AllergenSelector'
 import type { IngredientRow, IngredientUnit, IngredientCategory, StorageTemp } from '@/lib/supabase/custom-types'
-
-const UNIT_LABELS: { value: IngredientUnit; ar: string; en: string }[] = [
-  { value: 'g',       ar: 'غرام',          en: 'g' },
-  { value: 'kg',      ar: 'كغم',           en: 'kg' },
-  { value: 'ml',      ar: 'مل',            en: 'ml' },
-  { value: 'l',       ar: 'لتر',           en: 'L' },
-  { value: 'unit',    ar: 'وحدة',          en: 'unit' },
-  { value: 'tbsp',    ar: 'ملعقة كبيرة',  en: 'tbsp' },
-  { value: 'tsp',     ar: 'ملعقة صغيرة',  en: 'tsp' },
-  { value: 'oz',      ar: 'أوقية',         en: 'oz' },
-  { value: 'lb',      ar: 'رطل',           en: 'lb' },
-  { value: 'piece',   ar: 'قطعة',          en: 'piece' },
-  { value: 'portion', ar: 'حصة',           en: 'portion' },
-  { value: 'bottle',  ar: 'زجاجة',         en: 'bottle' },
-  { value: 'can',     ar: 'علبة',          en: 'can' },
-  { value: 'bag',     ar: 'كيس',           en: 'bag' },
-  { value: 'box',     ar: 'صندوق',         en: 'box' },
-]
-
-const CATEGORIES: { value: IngredientCategory; ar: string; en: string }[] = [
-  { value: 'protein',    ar: 'بروتين',      en: 'Protein' },
-  { value: 'grain',      ar: 'حبوب',        en: 'Grain' },
-  { value: 'vegetable',  ar: 'خضراوات',     en: 'Vegetable' },
-  { value: 'dairy',      ar: 'ألبان',       en: 'Dairy' },
-  { value: 'seafood',    ar: 'مأكولات بحرية', en: 'Seafood' },
-  { value: 'spice',      ar: 'بهارات',      en: 'Spice' },
-  { value: 'oil',        ar: 'زيوت',        en: 'Oil' },
-  { value: 'beverage',   ar: 'مشروبات',     en: 'Beverage' },
-  { value: 'sauce',      ar: 'صلصات',       en: 'Sauce' },
-  { value: 'packaging',  ar: 'تعبئة',       en: 'Packaging' },
-  { value: 'cleaning',   ar: 'تنظيف',       en: 'Cleaning' },
-  { value: 'disposable', ar: 'مستهلكات',    en: 'Disposable' },
-  { value: 'other',      ar: 'أخرى',        en: 'Other' },
-]
-
-const STORAGE_TEMPS: { value: StorageTemp; ar: string; en: string }[] = [
-  { value: 'frozen',   ar: 'مجمد',        en: 'Frozen' },
-  { value: 'chilled',  ar: 'مبرد',        en: 'Chilled' },
-  { value: 'ambient',  ar: 'درجة الغرفة', en: 'Ambient' },
-  { value: 'dry',      ar: 'جاف',         en: 'Dry' },
-]
+import { useTranslations } from 'next-intl'
 
 interface IngredientWithAllergens extends IngredientRow {
   allergens: string[]
@@ -56,12 +16,12 @@ interface Props {
   action: (formData: FormData) => Promise<{ error?: string }>
 }
 
-const inputClass = 'w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2.5 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-gold focus:outline-none transition-colors'
-const labelClass = 'block font-satoshi text-sm font-medium text-brand-text mb-1'
-const selectClass = 'w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2.5 font-satoshi text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors'
-
 export default function IngredientForm({ ingredient, suppliers, locale, action }: Props) {
+  const t = useTranslations('inventory.ingredients')
+  const tCommon = useTranslations('common')
   const isAr = locale === 'ar'
+  const font = isAr ? 'font-almarai' : 'font-satoshi'
+
   const [allergens, setAllergens] = useState<string[]>(ingredient?.allergens ?? [])
   const [isActive, setIsActive] = useState(ingredient?.is_active ?? true)
   const [error, setError] = useState<string | null>(null)
@@ -71,8 +31,7 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     fd.set('is_active', isActive ? 'true' : 'false')
-    // allergens already added as checkboxes via AllergenSelector
-    // but we manage them in state, so delete the ones from the form and add from state
+    
     const existingAllergens = fd.getAll('allergens')
     existingAllergens.forEach(() => fd.delete('allergens'))
     allergens.forEach((a) => fd.append('allergens', a))
@@ -87,38 +46,46 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
     })
   }
 
+  const inputClass = `w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2.5 ${font} text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-gold focus:outline-none transition-colors`
+  const labelClass = `block ${font} text-sm font-medium text-brand-text mb-1`
+  const selectClass = `w-full rounded-lg border border-brand-border bg-brand-surface px-3 py-2.5 ${font} text-sm text-brand-text focus:border-brand-gold focus:outline-none transition-colors`
+
+  const units: IngredientUnit[] = ['g', 'kg', 'ml', 'l', 'unit', 'tbsp', 'tsp', 'oz', 'lb', 'piece', 'portion', 'bottle', 'can', 'bag', 'box']
+  const categories: IngredientCategory[] = ['protein', 'grain', 'vegetable', 'dairy', 'seafood', 'spice', 'oil', 'beverage', 'sauce', 'packaging', 'cleaning', 'disposable', 'other']
+  const storageTemps: StorageTemp[] = ['frozen', 'chilled', 'ambient', 'dry']
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {ingredient?.id && <input type="hidden" name="id" value={ingredient.id} />}
 
       {error && (
         <div className="rounded-lg border border-brand-error/30 bg-brand-error/10 px-4 py-3">
-          <p className="font-satoshi text-sm text-brand-error">{error}</p>
+          <p className={`${font} text-sm text-brand-error`}>{error}</p>
         </div>
       )}
 
       {/* Names */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>{isAr ? 'الاسم بالعربية *' : 'Arabic Name *'}</label>
+          <label className={labelClass}>{t('arabicName')} *</label>
           <input
             type="text"
             name="name_ar"
             required
             defaultValue={ingredient?.name_ar}
-            placeholder="مثال: دجاج مشوي"
+            placeholder={t('placeholderAr')}
             className={inputClass}
             dir="rtl"
           />
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'الاسم بالإنجليزية *' : 'English Name *'}</label>
+          <label className={labelClass}>{t('englishName')} *</label>
           <input
             type="text"
             name="name_en"
             required
             defaultValue={ingredient?.name_en}
-            placeholder="e.g. Grilled Chicken"
+            placeholder={t('placeholderEn')}
             className={inputClass}
             dir="ltr"
           />
@@ -128,32 +95,32 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
       {/* Unit & Purchase Unit */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label className={labelClass}>{isAr ? 'وحدة القياس *' : 'Unit *'}</label>
+          <label className={labelClass}>{t('unit')} *</label>
           <select name="unit" required defaultValue={ingredient?.unit ?? 'g'} className={selectClass}>
-            {UNIT_LABELS.map((u) => (
-              <option key={u.value} value={u.value}>{isAr ? u.ar : u.en}</option>
+            {units.map((u) => (
+              <option key={u} value={u}>{t(`units.${u}`)}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'وحدة الشراء' : 'Purchase Unit'}</label>
+          <label className={labelClass}>{t('purchaseUnit')}</label>
           <input
             type="text"
             name="purchase_unit"
             defaultValue={ingredient?.purchase_unit ?? ''}
-            placeholder={isAr ? 'مثال: كرتون' : 'e.g. Carton'}
+            placeholder={t('placeholderCarton')}
             className={inputClass}
           />
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'معامل التحويل' : 'Purchase Factor'}</label>
+          <label className={labelClass}>{t('purchaseFactor')}</label>
           <input
             type="number"
             name="purchase_unit_factor"
             defaultValue={ingredient?.purchase_unit_factor ?? ''}
             step="0.001"
             min="0"
-            placeholder="e.g. 1000"
+            placeholder={t('placeholderFactor')}
             className={inputClass}
           />
         </div>
@@ -162,7 +129,7 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
       {/* Cost & Yield */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label className={labelClass}>{isAr ? 'التكلفة / وحدة (BD)' : 'Cost / Unit (BD)'}</label>
+          <label className={labelClass}>{t('costPerUnit')} ({tCommon('currency')})</label>
           <div className="relative">
             <input
               type="number"
@@ -174,11 +141,11 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
               placeholder="0.000"
               className={inputClass + ' pe-10'}
             />
-            <span className="absolute end-3 top-1/2 -translate-y-1/2 font-satoshi text-xs text-brand-muted">BD</span>
+            <span className={`absolute end-3 top-1/2 -translate-y-1/2 ${font} text-xs text-brand-muted`}>{tCommon('currency')}</span>
           </div>
         </div>
         <div>
-          <label className={labelClass}>{isAr ? '% التكلفة المثالية' : 'Ideal Cost %'}</label>
+          <label className={labelClass}>{t('idealCost')}</label>
           <input
             type="number"
             name="ideal_cost_pct"
@@ -191,7 +158,7 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
           />
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'معامل الهدر' : 'Yield Factor'}</label>
+          <label className={labelClass}>{t('yieldFactor')}</label>
           <input
             type="number"
             name="default_yield_factor"
@@ -207,20 +174,20 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
       {/* Category & ABC */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>{isAr ? 'الفئة' : 'Category'}</label>
+          <label className={labelClass}>{t('category')}</label>
           <select name="category" defaultValue={ingredient?.category ?? ''} className={selectClass}>
-            <option value="">{isAr ? '— اختر فئة —' : '— Select Category —'}</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>{isAr ? c.ar : c.en}</option>
+            <option value="">{t('selectCategory')}</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>{t(`categories.${c}`)}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'تصنيف ABC' : 'ABC Class'}</label>
+          <label className={labelClass}>{t('abcClass')}</label>
           <select name="abc_class" defaultValue={ingredient?.abc_class ?? 'C'} className={selectClass}>
-            <option value="A">A — {isAr ? 'حرج' : 'Critical'}</option>
-            <option value="B">B — {isAr ? 'متوسط' : 'Moderate'}</option>
-            <option value="C">C — {isAr ? 'منخفض' : 'Low'}</option>
+            <option value="A">A — {t('abcCritical')}</option>
+            <option value="B">B — {t('abcModerate')}</option>
+            <option value="C">C — {t('abcLow')}</option>
           </select>
         </div>
       </div>
@@ -228,7 +195,7 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
       {/* Stock Levels */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label className={labelClass}>{isAr ? 'نقطة إعادة الطلب' : 'Reorder Point'}</label>
+          <label className={labelClass}>{t('reorderPoint')}</label>
           <input
             type="number"
             name="reorder_point"
@@ -239,7 +206,7 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
           />
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'الحد الأقصى للمخزون' : 'Max Stock Level'}</label>
+          <label className={labelClass}>{t('maxStock')}</label>
           <input
             type="number"
             name="max_stock_level"
@@ -250,7 +217,7 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
           />
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'كمية إعادة الطلب' : 'Reorder Qty'}</label>
+          <label className={labelClass}>{t('reorderQty')}</label>
           <input
             type="number"
             name="reorder_qty"
@@ -265,7 +232,7 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
       {/* Storage */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label className={labelClass}>{isAr ? 'مدة الصلاحية (أيام)' : 'Shelf Life (days)'}</label>
+          <label className={labelClass}>{t('shelfLife')}</label>
           <input
             type="number"
             name="shelf_life_days"
@@ -276,16 +243,16 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
           />
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'درجة التخزين' : 'Storage Temp'}</label>
+          <label className={labelClass}>{t('storageTemp')}</label>
           <select name="storage_temp" defaultValue={ingredient?.storage_temp ?? ''} className={selectClass}>
-            <option value="">{isAr ? '— اختر —' : '— Select —'}</option>
-            {STORAGE_TEMPS.map((s) => (
-              <option key={s.value} value={s.value}>{isAr ? s.ar : s.en}</option>
+            <option value="">{t('select')}</option>
+            {storageTemps.map((s) => (
+              <option key={s} value={s}>{t(`storageTemps.${s}`)}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className={labelClass}>{isAr ? 'الباركود' : 'Barcode'}</label>
+          <label className={labelClass}>{t('barcode')}</label>
           <input
             type="text"
             name="barcode"
@@ -298,11 +265,11 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
 
       {/* Supplier */}
       <div>
-        <label className={labelClass}>{isAr ? 'المورد' : 'Supplier'}</label>
+        <label className={labelClass}>{t('supplier')}</label>
         <select name="supplier_id" defaultValue={ingredient?.supplier_id ?? ''} className={selectClass}>
-          <option value="">{isAr ? '— بدون مورد —' : '— No Supplier —'}</option>
+          <option value="">{t('noSupplier')}</option>
           {suppliers.map((s) => (
-            <option key={s.id} value={s.id}>{s.name_ar}{s.name_en ? ` / ${s.name_en}` : ''}</option>
+            <option key={s.id} value={s.id}>{isAr ? s.name_ar : (s.name_en || s.name_ar)}</option>
           ))}
         </select>
       </div>
@@ -329,14 +296,14 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
               ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
           />
         </button>
-        <span className="font-satoshi text-sm text-brand-text">
-          {isAr ? (isActive ? 'نشط' : 'غير نشط') : (isActive ? 'Active' : 'Inactive')}
+        <span className={`${font} text-sm text-brand-text`}>
+          {isActive ? t('active') : t('inactive')}
         </span>
       </div>
 
       {/* Notes */}
       <div>
-        <label className={labelClass}>{isAr ? 'ملاحظات' : 'Notes'}</label>
+        <label className={labelClass}>{t('notes')}</label>
         <textarea
           name="notes"
           defaultValue={ingredient?.notes ?? ''}
@@ -350,13 +317,12 @@ export default function IngredientForm({ ingredient, suppliers, locale, action }
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-gold px-6 py-2.5 font-satoshi text-sm font-semibold text-brand-black hover:bg-brand-gold/90 disabled:opacity-50 transition-colors"
+          className={`inline-flex items-center gap-2 rounded-lg bg-brand-gold px-6 py-2.5 ${font} text-sm font-semibold text-brand-black hover:bg-brand-gold/90 disabled:opacity-50 transition-colors`}
         >
-          {isPending
-            ? (isAr ? 'جاري الحفظ...' : 'Saving...')
-            : (isAr ? 'حفظ المكوّن' : 'Save Ingredient')}
+          {isPending ? t('saving') : t('save')}
         </button>
       </div>
     </form>
   )
 }
+

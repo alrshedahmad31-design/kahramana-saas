@@ -1,4 +1,5 @@
 import { redirect }          from 'next/navigation'
+import { getTranslations }    from 'next-intl/server'
 import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency, calculateGrowth } from '@/lib/analytics/calculations'
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default async function FinancialAnalyticsPage({ params, searchParams }: Props) {
+  const t          = await getTranslations('common')
   const { locale } = await params
   const sp         = await searchParams
   const isAr       = locale === 'ar'
@@ -69,7 +71,7 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
     }
   }
 
-  const currency = isAr ? 'د.ب' : 'BD'
+  const currency = t('currency')
   const rev      = metrics.totalRevenue
   const cogs     = rev * cogsPct
   const labor    = rev * laborPct

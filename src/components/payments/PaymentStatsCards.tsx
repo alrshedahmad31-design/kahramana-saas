@@ -1,3 +1,5 @@
+import { useTranslations } from 'next-intl'
+
 interface Props {
   total: number
   revenue: number
@@ -7,7 +9,8 @@ interface Props {
 }
 
 export default function PaymentStatsCards({ total, revenue, successRate, failedCount, isAr }: Props) {
-  const currency = isAr ? 'د.ب' : 'BD'
+  const t = useTranslations('common')
+  const currency = t('currency')
 
   const cards = [
     {

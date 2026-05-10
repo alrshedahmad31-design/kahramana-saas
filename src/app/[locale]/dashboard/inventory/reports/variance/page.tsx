@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveBranches } from '@/lib/branches/queries'
@@ -16,7 +17,7 @@ const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_
 
 export default async function VariancePage({ params }: PageProps) {
   const { locale } = await params
-  const isAr = locale !== 'en'
+  const t = await getTranslations({ locale, namespace: 'inventory.reports.variance' })
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
@@ -45,23 +46,24 @@ export default async function VariancePage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       <ReportHeader
-        title={isAr ? 'تقرير التباين' : 'Variance Report'}
-        description={isAr ? 'الفرق بين الاستهلاك الفعلي والنظري — التحديث التلقائي كل ساعة' : 'Actual vs theoretical usage — auto-refreshed hourly'}
+        title={t('title')}
+        description={t('desc')}
         locale={locale}
       />
       {!rows || rows.length === 0 ? (
         <EmptyReport
-          title={isAr ? 'لا توجد بيانات تباين' : 'No variance data'}
-          description={isAr ? 'لم يتم تسجيل أي استهلاك حتى الآن' : 'No consumption recorded yet'}
+          title={t('emptyTitle')}
+          description={t('emptyDesc')}
         />
       ) : (
         <VarianceClient
           rows={rows}
           branches={branches ?? []}
-          isAr={isAr}
+          locale={locale}
           isGlobal={isGlobal}
         />
       )}
     </div>
   )
 }
+
