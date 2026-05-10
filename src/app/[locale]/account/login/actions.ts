@@ -7,7 +7,15 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 type AuthError = 'rate_limited' | 'invalid_credentials' | 'signup_error'
 type AuthResult = { success: true } | { success: false; error: AuthError }
 
-async function checkRateLimit(key: string): Promise<boolean> {
+// Per-action limits: login is tighter (credential-stuffing surface);
+// register gets more headroom because real users may mistype phone/email
+// and a single mistake shouldn't cost 20% of their attempts.
+const RATE_LIMITS: Record<'login' | 'register', number> = {
+  login:    5,
+  register: 10,
+}
+
+async function checkRateLimit(key: 'login' | 'register'): Promise<boolean> {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     return true
   }
@@ -17,7 +25,7 @@ async function checkRateLimit(key: string): Promise<boolean> {
   ])
   const ratelimit = new Ratelimit({
     redis:   Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(5, '15 m'),
+    limiter: Ratelimit.slidingWindow(RATE_LIMITS[key], '15 m'),
   })
   const headersList = await headers()
   const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim()

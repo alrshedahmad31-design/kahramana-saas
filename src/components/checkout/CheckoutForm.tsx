@@ -578,6 +578,22 @@ export default function CheckoutForm({ customerProfile }: Props) {
         )}
       </SectionCard>
 
+      {/* Loyalty sign-in nudge — only when no customer profile is attached */}
+      {!customerProfile && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-brand-gold/30 bg-brand-gold/5 ps-4 pe-3 py-3">
+          <p className={`text-sm text-brand-text ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+            <span aria-hidden className="me-2">✦</span>
+            {t('loyalty.signinPrompt')}
+          </p>
+          <Link
+            href="/account"
+            className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold border border-brand-gold/60 text-brand-gold hover:bg-brand-gold/10 transition-all ${isAr ? 'font-cairo' : 'font-satoshi'}`}
+          >
+            {t('loyalty.signinCta')}
+          </Link>
+        </div>
+      )}
+
       {/* STEP 2: Customer Information */}
       <StepHeader
         number="2"

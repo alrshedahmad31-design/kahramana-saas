@@ -660,7 +660,9 @@
       "equivalent": "worth {amount}",
       "saving": "You save {amount} on this order",
       "toggle": "Toggle loyalty points",
-      "needMore": "You need {count} more points to redeem"
+      "needMore": "You need {count} more points to redeem",
+      "signinPrompt": "Sign in to earn loyalty points on every order",
+      "signinCta": "Sign In / Register"
     }
   },
   "order": {
@@ -2443,5 +2445,37 @@
     "downloadAll": "Download all",
     "empty": "No tables configured",
     "inactive": "Inactive"
+  },
+  "analytics": {
+    "labor": {
+      "title": "Labor Cost vs Revenue",
+      "noData": "No labor data for this period",
+      "statusGood": "Optimized",
+      "statusWarning": "Elevated",
+      "statusCritical": "Over-Budget",
+      "ofRevenue": "of Revenue",
+      "totalRevenue": "Total Revenue",
+      "laborCost": "Labor Cost",
+      "staffCount": "Staff Active",
+      "orders": "Orders",
+      "insightGood": "Labor costs are healthy (<20%). Operational efficiency is high.",
+      "insightWarning": "Labor costs are between 20-30%. Consider optimizing shift coverage.",
+      "insightCritical": "Labor cost is over 30%. Immediate review of staffing levels required."
+    },
+    "menuEngineering": {
+      "title": "Menu Engineering Matrix",
+      "subtitle": "Performance based on Popularity (Volume) and Profitability (Margin)",
+      "noData": "No menu performance data available",
+      "xAxis": "Popularity (Qty)",
+      "yAxis": "Profitability (Margin)",
+      "classStar": "Stars",
+      "classPlowhorse": "Plowhorses",
+      "classPuzzle": "Puzzles",
+      "classDog": "Dogs",
+      "descStar": "High Popularity & High Profit. Keep quality high and promote heavily.",
+      "descPlowhorse": "High Popularity but Low Profit. Consider small price increases or portion adjustments.",
+      "descPuzzle": "Low Popularity but High Profit. Promote these items more or rename them.",
+      "descDog": "Low Popularity & Low Profit. Consider removing from menu or reinventing."
+    }
   }
 }
