@@ -982,6 +982,18 @@
       "title": "Find Us",
       "desc": "Two branches in Bahrain, one authentic experience."
     },
+    "loyalty": {
+      "eyebrow": "Kahramana Club",
+      "title": "Earn Points With Every Order",
+      "subtitle": "A simple loyalty program — order, earn, redeem",
+      "step1Title": "Create Your Account",
+      "step1Desc": "Sign up free in a minute and start collecting points from your very first order.",
+      "step2Title": "Earn 10 Points per BD",
+      "step2Desc": "Every completed order adds to your balance automatically — no codes, no extra steps.",
+      "step3Title": "Redeem from 200 Points",
+      "step3Desc": "Discount on your next order — up to 50% of the order value. Every 200 points = 1 BD.",
+      "cta": "Join Now"
+    },
     "cta": {
       "title": "Ready to Experience Baghdad?",
       "desc": "Visit us at either of our branches or order online via WhatsApp.",

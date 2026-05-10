@@ -14,6 +14,7 @@ import {
 import FeatureArtifactsWrapper from '@/components/home/FeatureArtifactsWrapper'
 import PhilosophyManifesto from '@/components/home/PhilosophyManifesto'
 import ProtocolStack from '@/components/home/ProtocolStack'
+import LoyaltySection from '@/components/home/LoyaltySection'
 import HomeFAQ from '@/components/home/HomeFAQ'
 
 // ISR: revalidate daily. Removing headers() from this render tree allows Next.js
@@ -92,6 +93,7 @@ export default async function HomePage() {
         {/* C-F. Below-fold content stays server-rendered; animation JS removed from this path */}
         <PhilosophyManifesto />
         <ProtocolStack />
+        <LoyaltySection />
         <HomeFAQ />
 
         {/* F. Bottom CTA */}
