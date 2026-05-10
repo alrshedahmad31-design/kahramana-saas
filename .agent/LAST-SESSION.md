@@ -1,8 +1,104 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-> **Session**: 86 (Claude Code track)
+> **Session**: 87 (Claude Code track — long session, ran in parallel with Gemini for analytics work)
 > **Date**: 2026-05-10
-> **Focus**: Pre-launch monitoring stack — Sentry SDK installed, real `/api/health` for UptimeRobot, middleware bug excluding `/api/*` from next-intl fixed, GA4+Clarity redeploy triggered, gallery slimmed by 2.2 MB (31 orphan menu images deleted), gate 7 exempt list updated, post-launch backlog initialized (BL-001).
+> **Focus**: Loyalty discoverability end-to-end (Header button → home section → checkout nudge → SEO allow/sitemap), customer registration fix, migration 097 audit + repair of CLI sync drift, 5 security/privacy audit fixes (Sentry sampling + PII, CSP, cookie consent gating analytics, /privacy consolidation, Turnstile soft-launch), Sentry HTML meta-tag suppression, then 2 hours debugging why every deploy was failing — root cause was a single ESLint error from Gemini's analytics commit.
+
+## Session 87 deliverables
+
+### Loyalty system — discoverability completed end-to-end
+The loyalty backend was 100% functional but had **zero UI entry points** at session start (verified via code audit). Closed every gap:
+- **`feat(header) 115627c`** — customer account button. Signed-out: gold "Sign In / Register" pill (desktop) + icon (mobile) + nav-overlay link. Signed-in: pill with user icon + points + tier badge → dropdown (name, tier, balance, "My Account", "Sign Out"). Mobile top-strip is icon-only with mini tier badge corner. Reads `customer_profiles` via browser supabase client; refreshes via `onAuthStateChange`. RTL: logical properties only.
+- **`feat(home) a024286`** — Kahramana Club section between ProtocolStack and HomeFAQ. Server component, follows PhilosophyManifesto styling. Title + 3 numbered cards (sign up / earn 10 pts/BD / redeem from 200 pts) + gold CTA → `/account/register`. `home.loyalty.*` keys (server-only namespace per layout's SERVER_ONLY_NS strip).
+- **`feat(checkout) 6e78a76`** — gold-tinted "Sign in to earn points" card directly above Step 2 (Customer Information) when `customerProfile === null`. Same commit also bumped registration rate limit 5→10 / 15min (login stays 5; real users mistype phone/email). Operational cleanup: deleted 9 orphan `auth.users` rows (7 e2e fixtures + 2 half-registration leftovers).
+- **`seo(account) 8579d3c`** — removed 5 `/account*` Disallow rules from `robots.ts`. Added `/account` (priority 0.40) and `/account/register` (0.50) to `sitemap.ts` for both ar+en with hreflang alternates. `/account/login` intentionally excluded from sitemap (per-page noindex on `/account/register/page.tsx` is intentional and was left in place — discoverability without indexing the form itself).
+
+### Customer registration fix (`fix(auth) a0e60ac`)
+"An error occurred during registration" — diagnosed via postgres logs: multiple `ERROR: AUTH_REQUIRED` entries from `rpc_create_customer_profile` (line 44 of `064_rpc_security_hardening.sql`). Root cause: Supabase email-confirmation flow does NOT create a session on signUp → no cookies → `auth.uid()` returns NULL → RPC raises AUTH_REQUIRED → error swallowed as `signup_error`. Fix: after `signUp` succeeds, insert `customer_profiles` via `createServiceClient()` using `authData.user.id` directly. Bypasses the auth.uid() gate. Self-heals existing half-registered users on retry (signUp obfuscates "user exists" and returns the existing user.id, then service-role insert fills the missing profile). Added `Sentry.captureException` at both failure points so future regressions surface.
+
+### Migration 097 verification + repair sprint (Gemini's WIP audited and fixed)
+Gemini built Labor Cost Widget + Menu Engineering Matrix in parallel session, leaving migration 097 + components untracked. Verification found:
+- Migration 097 had **branch_id UUID** (project uses TEXT — silent comparison failure)
+- **Missing GRANT EXECUTE** to `authenticated` (would fail at first call)
+- Temp-table race condition (CREATE TEMP TABLE without ON COMMIT DROP)
+- LEFT JOIN + `WHERE t.total_qty > 0` (cancels outer semantics; intended INNER JOIN)
+- `total_hours` column assumed without fallback
+- 3 new `as any` casts in `queries.ts` (lines 696, 714, plus `payload?: any[]` in component)
+
+**`fix(migrations) 6f4857a`** rewrote migration 097 with all five SQL fixes + correct GRANT statements (with corrected parameter order — Gemini's spec had wrong order), applied via Supabase MCP (CLI's `db push` failed due to short-prefix vs timestamp registration mismatch — known project quirk). Dropped legacy UUID overloads via 098. Regenerated `types.ts` to include both new RPCs (150,913 chars), removed `as any` casts in queries.ts. Phase-state.json session label corrected 83 → 87.
+
+Also a **dedicated migration-history-repair sprint** the user approved separately:
+- Phase 1: `migration repair --status reverted` on 9 timestamp versions (`20260509000088`-`20260510111454`) + `--status applied` on short prefixes (088, 090, 091, 092, 093, 094, 095, 097, 098). One hiccup: `097b` rejected by CLI (non-digit suffix) — renamed file to `098_drop_legacy_uuid_overloads.sql` and re-registered.
+- Phase 2: verified live schema artifacts for 085/086/087/089 (4/4 pass: restaurant_tables exists, promotions table + enum, dine_in CHECK, oiss.branch_id+created_at) → registered as applied.
+- Phase 4: `migration list --linked` → all rows now show `Local | Remote` matched. `db push --linked` returns "Remote database is up to date." exit 0.
+
+### 5 security+privacy audit fixes (`security+privacy 8d46326`)
+1. **Sentry sample rates**: `tracesSampleRate 1 → 0.1` in both `sentry.server.config.ts` and `instrumentation-client.ts`. Server config: `sendDefaultPii true → false` (was auto-capturing client IPs/cookies on every event).
+2. **CSP additions in middleware**: `connect-src` + Sentry endpoints (fallback if `/monitoring` tunnel ever blocked). `script-src` + `frame-src` + `https://challenges.cloudflare.com` (Turnstile — added frame-src beyond user spec because the widget renders in an iframe).
+3. **Cookie consent now gates analytics** (this was the most impactful fix). New `src/components/layout/Analytics.tsx` client component reads `cookie-consent` from localStorage, listens for `cookie-consent-updated` event, only renders GA4+Clarity `<Script>` tags after accept. CookieBanner dispatches the event on accept. SSR-safe (`useState(false)` initial → server renders null). The previous behavior was that GA4+Clarity loaded on every page regardless of consent — banner was cosmetic.
+4. **`/privacy` consolidated into `/privacy-policy`**: deleted `src/app/[locale]/privacy/page.tsx` (257-line duplicate). Added 2 permanent 301 redirects in `next.config.ts`. CookieBanner href updated.
+5. **Cloudflare Turnstile on `/contact`**: installed `@marsidev/react-turnstile`, added widget to ContactForm, server-side `siteverify` in actions.ts. Soft-launch pattern: if `TURNSTILE_SECRET_KEY` is unset, falls back to honeypot-only — form keeps working, defense activates the moment env vars land. Ahmed has not yet provisioned the Cloudflare account or Vercel env vars (tracked as **BL-002** in `docs/qa/post-launch-backlog.md`).
+
+### Sentry HTML meta-tag suppression (`security 4b49ba1`)
+User reported `<meta name="baggage">` and `<meta name="sentry-trace">` in HTML responses exposing the git commit SHA (sentry-release) and route name on every page. Investigation confirmed `withSentryConfig` doesn't have a direct off-switch; the right knob is `autoInstrumentAppDirectory: false` (under `webpack` block), which stops App Router from creating server-side transactions → no meta tag injection. Also added `autoInstrumentServerFunctions: false` (per user spec) and `autoInstrumentMiddleware: false` (for completeness). User's spec also asked for `sentryOptionsToSend` and `hideSourceMaps` — both rejected because they're not real options in `@sentry/nextjs@10.52.0` types. Trade-off: automatic SSR/RSC performance traces are gone; error capture, manual `Sentry.startSpan()` calls, and client-side tracing continue to work.
+
+### Build was broken for ~2 hours — single ESLint error
+Email + Vercel MCP showed every commit since `30917244` (Gemini's analytics UI) failing. Local build reproduced with the exact error:
+
+```
+./src/components/analytics/AnalyticsMenuMatrix.tsx
+18:13  Error: Unexpected any. Specify a different type.
+@typescript-eslint/no-explicit-any
+```
+
+The project's `next build` fails on ESLint errors (warnings allowed). `tsc --noEmit` doesn't run ESLint, so `tsc clean` reports throughout the session were technically true but didn't catch this gate. **I'd flagged this exact `any[]` as "🟢 LOW priority" during the verification round** (commit message of fix calls this out for future-me). Fix `9d18db4` was a one-line replacement: `payload?: any[]` → `payload?: Array<{ payload: AnalyticsMenuEngineeringRow }>`. Vercel deploy succeeded immediately after; all 11 queued commits shipped to production in one build.
+
+### Supabase health snapshot (post-deploy)
+- Project status: ACTIVE_HEALTHY, Postgres 17.6, Tokyo region
+- DB size 18.6 MB, 2 active connections
+- `auth.users`: 4, `customer_profiles`: 1, active staff: 6, menu items: 168, branches: 4, restaurant_tables: 40
+- Orders: 66 total, 0 today, 12 in non-terminal status — all from Ahmed's Waiter app + POS testing on May 8-9, zero real customers stuck
+- Postgres logs: zero ERROR-level events in the last hour (registration AUTH_REQUIRED noise gone, fix holding)
+- **Security advisors flagged 4 ERROR + 76 WARN** entries — see "Carry-overs" below
+
+### Verification (full session)
+- `npx tsc --noEmit` → 0 errors (every commit before push)
+- `npm run build` → exit 0 after 9d18db4 (was failing for 2h before)
+- E2E: not re-run this session
+- Production `/api/health`: serving 200 with `db.ok: true`
+
+## Carry-overs into next session
+
+**New (from session 87) — security backlog candidates worth grading before launch:**
+1. **4 SECURITY DEFINER views** — real RLS-bypass risk. `public.order_source_summary`, `public.customer_segments_view`, `public.coupon_analytics_view`, `public.v_kds_station_items` all execute with creator privileges (`postgres`). Fix: `ALTER VIEW <name> SET (security_invoker = on);` per view + UI test under RLS. Could be **BL-003**.
+2. **8 `rls_policy_always_true` policies** — policies that say `USING (true)` are effectively no policy. Need enumeration + per-policy decision (intentional public-read vs missed scoping). Could be **BL-004**.
+3. **22 + 22 + 16 + 6 + 1 + 1 = 68 lower-priority WARN entries** in advisors (anon/auth SECURITY DEFINER fns, search_path mutable, matview-in-API, password-leak protection disabled, public bucket listing). Tidiness sweep, not launch-blocking.
+
+**New (from session 87) — operational items:**
+4. **Provision Turnstile env vars** in Cloudflare + Vercel (BL-002) — already documented; one Cloudflare site setup + 2 Vercel env vars (NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY). Until then, /contact runs honeypot-only.
+5. **12 stale test orders** in non-terminal status from May 8-9 — bulk-clean before launch (or leave for QA traceability).
+6. **GA4 / Clarity traffic will drop short-term** after the consent gate ships — users haven't re-consented yet. Expected, not a bug.
+
+**Carried from session 86 (no movement this session):**
+- 13 staff emails for `scripts/seed-staff.ts:54-79` (blocks migration 090 + first staff seed cycle).
+- Refund modal for `code === 'refund_required'` (toast still in use).
+- Legacy `kds_queue` table — post-launch cleanup candidate.
+- Pre-launch QA master checklist `docs/qa/pre-launch-checklist.md` — not re-run end-to-end this session.
+- **BL-001** (loyalty helpers split) — bundle-bloat smell, no security risk.
+
+## Decisions / non-obvious notes
+
+- **`tsc clean` ≠ build clean.** This project's `next build` runs ESLint with `no-explicit-any` configured as **error**. Running `tsc --noEmit` only does type-checking and never runs ESLint, so my "tsc clean" reports throughout the session were technically true but missed a build-blocking gate. Going forward: when reviewing code with `any` casts, treat them as build-blockers by default; downgrade to "low priority" only after confirming `.eslintrc` allows them. **A new memory has been saved capturing this.**
+- **Gemini's `payload?: any[]` was flagged "LOW" in verification** — same root cause as above. Should have been HIGH the moment I saw `no-explicit-any` would be enforced.
+- **Sentry's `withSentryConfig` does NOT have `sentryOptionsToSend` or `hideSourceMaps`** in v10.52.0 — both common knowledge from older docs. Always grep `node_modules/@sentry/nextjs/build/types/config/types.d.ts` before adding options.
+- **Email confirmation OFF + service-role insert** is now the registration architecture — works regardless of confirmation setting. The RPC `rpc_create_customer_profile` is now effectively unused for the primary signup path; kept for any future client-side direct call.
+- **Migration history repair was risky atomic-revert + apply.** One CLI parser surprise (`097b` rejected) created a window where 8 short-prefix versions were unregistered. Recovered immediately by re-running with valid IDs only. **Lesson:** when calling `migration repair` with multiple version IDs, validate each against the CLI's parser (digits only) before chaining the revert step.
+- **Long deploy outage (2h) had no production impact** because Vercel keeps serving the last successful deploy on ERROR. Customers continued to see `6e78a76` throughout. UptimeRobot didn't alert because `/api/health` kept passing.
+
+## Session 86 deliverables
+
+### Phase-completion gates re-run
+- All 8 phase-completion gates from CLAUDE.md ran clean against current `master`:
 
 ## Session 86 deliverables
 
