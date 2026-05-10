@@ -31,7 +31,7 @@ export default async function WaiterOrdersPage({ params, searchParams }: PagePro
   const supabase = await createServiceClient()
   const ACTIVE_STATUSES = ['new', 'accepted', 'preparing', 'ready'] as const
 
-  const { data } = await supabase
+  const { data, error: ordersError } = await supabase
     .from('orders')
     .select('id, table_number, status, total_bhd, created_at, notes')
     .eq('branch_id', branchId)
@@ -41,6 +41,10 @@ export default async function WaiterOrdersPage({ params, searchParams }: PagePro
     .order('created_at', { ascending: false })
     .limit(50)
     .returns<WaiterOrderRow[]>()
+
+  if (ordersError) {
+    console.error('[waiter/orders] active orders query failed:', ordersError)
+  }
 
   return (
     <WaiterOrdersClient

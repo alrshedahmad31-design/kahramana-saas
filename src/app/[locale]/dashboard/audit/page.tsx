@@ -1,5 +1,7 @@
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
+import { requireDashboardSection, isDashboardGuardError } from '@/lib/auth/dashboard-guards'
 import { Card, CardContent, CardHeader, CardTitle } from '@ui/card'
 import {
   Table,
@@ -24,11 +26,20 @@ interface AuditLogData {
 }
 
 export default async function AuditLogPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: _locale } = await params
+  const { locale } = await params
+  const prefix = locale === 'en' ? '/en' : ''
+
+  try {
+    await requireDashboardSection('audit')
+  } catch (e) {
+    if (isDashboardGuardError(e)) redirect(`${prefix}/dashboard`)
+    throw e
+  }
+
   const at = await getTranslations('dashboard.audit')
-  
+
   const supabase = await createClient()
-  
+
   const { data: logsData, error } = await supabase
     .from('audit_logs')
     .select('*')

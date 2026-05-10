@@ -15,6 +15,7 @@ const WAITER_ROLES: readonly StaffRole[] = [
   'general_manager',
   'branch_manager',
   'cashier',
+  'waiter',
 ] as const
 
 const modifierSchema = z.object({
@@ -52,6 +53,8 @@ export type WaiterOrderPayload = z.infer<typeof payloadSchema>
 export interface CreateWaiterOrderResult {
   orderId?: string
   error?:   string
+  /** Order committed but a non-blocking record (payment, audit) failed. */
+  warning?: string
 }
 
 export async function createWaiterOrder(
@@ -70,7 +73,7 @@ export async function createWaiterOrder(
   const data = parsed.data
 
   if (
-    (caller.role === 'branch_manager' || caller.role === 'cashier') &&
+    (caller.role === 'branch_manager' || caller.role === 'cashier' || caller.role === 'waiter') &&
     caller.branch_id && caller.branch_id !== data.branchId
   ) {
     return { error: 'Forbidden: branch scope violation' }
@@ -204,14 +207,22 @@ export async function createWaiterOrder(
     return { error: rpcError?.message ?? 'Order creation failed' }
   }
 
-  await supabase.from('payments').insert({
+  const { error: paymentError } = await supabase.from('payments').insert({
     order_id:   orderId as string,
     amount_bhd: subtotal,
     method:     'cash',
     status:     'pending_cod',
   })
 
-  await supabase.from('audit_logs').insert({
+  // Order is committed but payment row failed — surface as partial failure
+  // so the waiter/manager can resolve manually (reconciliation depends on payments).
+  let paymentWarning: string | undefined
+  if (paymentError) {
+    console.error('[waiter] payment insert failed for order', orderId, paymentError)
+    paymentWarning = `Order created but payment record failed: ${paymentError.message}. Manager resolution required.`
+  }
+
+  const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'orders',
     action:     'INSERT',
     user_id:    caller.id,
@@ -225,6 +236,9 @@ export async function createWaiterOrder(
       item_count:    pricedItems.length,
     },
   })
+  if (auditError) {
+    console.error('[waiter] audit_logs insert failed for order', orderId, auditError)
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/waiter`)
@@ -232,5 +246,5 @@ export async function createWaiterOrder(
   revalidatePath(`/${locale}/waiter/orders`)
   revalidatePath(`/${locale}/dashboard/kds`)
 
-  return { orderId: orderId as string }
+  return { orderId: orderId as string, warning: paymentWarning }
 }

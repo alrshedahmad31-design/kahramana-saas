@@ -62,7 +62,11 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
       const fetchSummary = async () => {
         try {
           const s = await getShiftSummary(branchId, new Date().toISOString().split('T')[0])
-          setSummary(s)
+          if ('error' in s && s.error) {
+            toast.error(t.fetch_summary_failed_toast)
+            return
+          }
+          setSummary({ expectedCash: s.expectedCash, orderCount: s.orderCount })
         } catch (_err) {
           toast.error(t.fetch_summary_failed_toast)
         }

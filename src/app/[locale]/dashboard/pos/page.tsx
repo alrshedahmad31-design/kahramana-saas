@@ -47,22 +47,34 @@ async function loadModifierGroupsBySlug(): Promise<Map<string, POSModifierGroup[
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const { data: groups } = await supabase
+  const { data: groups, error: groupsError } = await supabase
     .from('menu_option_groups')
     .select('*')
     .order('sort_order', { ascending: true })
 
+  // Fail closed: if the modifier groups query errors, return an empty map so
+  // the POS server action's modifier validation rejects any client-supplied
+  // modifier instead of silently accepting a "no modifiers" UI state.
+  if (groupsError) {
+    console.error('[pos] menu_option_groups query failed:', groupsError)
+    return map
+  }
   if (!groups || groups.length === 0) return map
 
   const groupRows = groups as RawGroup[]
   const groupIds  = groupRows.map((g) => g.id)
 
-  const { data: options } = await supabase
+  const { data: options, error: optionsError } = await supabase
     .from('menu_options')
     .select('*')
     .in('group_id', groupIds)
     .eq('is_available', true)
     .order('sort_order', { ascending: true })
+
+  if (optionsError) {
+    console.error('[pos] menu_options query failed:', optionsError)
+    return map
+  }
 
   const optionRows = (options ?? []) as RawOption[]
   const optionsByGroup = new Map<string, POSModifierOption[]>()

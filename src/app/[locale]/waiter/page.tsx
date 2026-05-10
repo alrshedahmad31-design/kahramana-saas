@@ -58,20 +58,23 @@ export default async function WaiterHomePage({ params, searchParams }: PageProps
     ? createSupabaseClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
     : null
 
-  const { data: rawTables } = untyped
+  const tablesResult = untyped
     ? await untyped
         .from('restaurant_tables')
         .select('id, branch_id, table_number, label_ar, label_en, capacity, is_active')
         .eq('branch_id', branchId)
         .eq('is_active', true)
         .order('table_number', { ascending: true })
-    : { data: [] as unknown[] }
+    : { data: [] as unknown[], error: null }
 
-  const tables = (rawTables ?? []) as TableRow[]
+  if ('error' in tablesResult && tablesResult.error) {
+    console.error('[waiter] restaurant_tables query failed:', tablesResult.error)
+  }
+  const tables = (tablesResult.data ?? []) as TableRow[]
 
   const supabase = await createServiceClient()
   const ACTIVE_STATUSES = ['new', 'accepted', 'preparing', 'ready'] as const
-  const { data: ordersData } = await supabase
+  const { data: ordersData, error: ordersError } = await supabase
     .from('orders')
     .select('id, table_number, status, created_at')
     .eq('branch_id', branchId)
@@ -80,6 +83,10 @@ export default async function WaiterHomePage({ params, searchParams }: PageProps
     .not('table_number', 'is', null)
     .order('created_at', { ascending: false })
     .returns<ActiveOrderRow[]>()
+
+  if (ordersError) {
+    console.error('[waiter] active orders query failed:', ordersError)
+  }
 
   const ordersByTable = new Map<number, ActiveOrderRow[]>()
   for (const o of ordersData ?? []) {

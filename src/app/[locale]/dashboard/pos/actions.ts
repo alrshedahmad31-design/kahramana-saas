@@ -82,6 +82,8 @@ export type ManualOrderPayload = z.infer<typeof payloadSchema>
 export interface CreateManualOrderResult {
   orderId?: string
   error?:   string
+  /** Order committed but a non-blocking record (payment, audit) failed. */
+  warning?: string
 }
 
 function isBranchId(value: string): value is BranchId {
@@ -320,15 +322,23 @@ export async function createManualOrder(
   // Map POS payment selection to schema-supported method codes.
   const paymentMethodForRecord: 'cash' | 'tap_card' =
     data.paymentMethod === 'cash' ? 'cash' : 'tap_card'
-  await supabase.from('payments').insert({
+  const { error: paymentError } = await supabase.from('payments').insert({
     order_id:   orderId,
     amount_bhd: subtotal,
     method:     paymentMethodForRecord,
     status:     data.paymentMethod === 'cash' ? 'pending_cod' : 'pending',
   })
 
-  // ── Audit log ─────────────────────────────────────────────────────────
-  await supabase.from('audit_logs').insert({
+  // Order is committed but payment row failed — surface as partial failure
+  // so the cashier can resolve manually (reconciliation depends on payments).
+  let paymentWarning: string | undefined
+  if (paymentError) {
+    console.error('[pos] payment insert failed for order', orderId, paymentError)
+    paymentWarning = `Order created but payment record failed: ${paymentError.message}. Manager resolution required.`
+  }
+
+  // ── Audit log (best-effort: log on failure, never blocks order) ────────
+  const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'orders',
     action:     'INSERT',
     user_id:    caller.id,
@@ -345,6 +355,9 @@ export async function createManualOrder(
       item_count:    pricedItems.length,
     },
   })
+  if (auditError) {
+    console.error('[pos] audit_logs insert failed for order', orderId, auditError)
+  }
 
   // ── Persist user-pinned coordinates OR fall back to Nominatim geocoding ──
   if (data.orderType === 'delivery') {
@@ -364,7 +377,7 @@ export async function createManualOrder(
   revalidatePath(`/${locale}/dashboard/orders`)
   revalidatePath(`/${locale}/dashboard/pos`)
 
-  return { orderId }
+  return { orderId, warning: paymentWarning }
 }
 
 // ── Nominatim geocoder for Bahrain numbered addresses ─────────────────────────

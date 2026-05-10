@@ -367,7 +367,19 @@ export default function POSClient({
         })
         reset()
       } catch (err) {
-        console.warn('[POSClient] online submit failed, queuing locally:', err)
+        // Only fall back to offline queue on genuine network failures
+        // (offline, fetch error). Auth/permission/validation/server bugs are
+        // surfaced as real errors so retrying them won't help and will pile
+        // up in the queue.
+        const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+        const networkLike = err instanceof TypeError
+          || (err instanceof Error && /network|fetch|failed to fetch|networkerror/i.test(err.message))
+        if (!offline && !networkLike) {
+          console.error('[POSClient] online submit failed (non-network):', err)
+          setError(err instanceof Error ? err.message : t('errorGeneric'))
+          return
+        }
+        console.warn('[POSClient] network failure — queuing locally:', err)
         try {
           await enqueuePosOrder({
             idempotencyKey,

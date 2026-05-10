@@ -122,7 +122,7 @@ export default async function WaiterTablePage({ params, searchParams }: PageProp
     auth: { persistSession: false, autoRefreshToken: false },
   })
   type TableMeta = { id: string; label_ar: string | null; label_en: string | null }
-  const { data: tableMetaRaw } = await untypedTables
+  const { data: tableMetaRaw, error: tableMetaError } = await untypedTables
     .from('restaurant_tables')
     .select('id, label_ar, label_en')
     .eq('branch_id', branchId)
@@ -130,6 +130,10 @@ export default async function WaiterTablePage({ params, searchParams }: PageProp
     .eq('is_active', true)
     .limit(1)
 
+  if (tableMetaError) {
+    console.error('[waiter/table] restaurant_tables query failed:', tableMetaError)
+    notFound()
+  }
   const tableMeta = (tableMetaRaw ?? []) as TableMeta[]
   if (tableMeta.length === 0) notFound()
 

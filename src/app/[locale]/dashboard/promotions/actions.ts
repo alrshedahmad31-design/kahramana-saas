@@ -4,7 +4,13 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { requireDashboardSection, assertBranchScope, isDashboardGuardError } from '@/lib/auth/dashboard-guards'
+import {
+  requireDashboardSection,
+  assertBranchScope,
+  isDashboardGuardError,
+  isGlobalDashboardAdmin,
+} from '@/lib/auth/dashboard-guards'
+import type { AuthUser } from '@/lib/auth/session'
 import type { PromotionType } from '@/lib/promotions/types'
 
 const PROMO_TYPES: readonly PromotionType[] = [
@@ -113,12 +119,43 @@ export async function upsertPromotion(input: PromotionInput): Promise<PromotionM
   return { ok: true, id: resultId }
 }
 
-export async function togglePromotion(id: string, isActive: boolean): Promise<PromotionMutationResult> {
+// Look up a promotion's branch_id and assert the caller is allowed to act on it.
+// Global admins may operate on any promotion; branch-scoped roles (branch_manager,
+// marketing) are limited to their own branch and cannot touch global promotions
+// (branch_id IS NULL).
+async function assertPromotionBranchScope(
+  user: AuthUser,
+  id: string,
+): Promise<PromotionMutationResult | null> {
+  if (isGlobalDashboardAdmin(user)) return null
+  const supabase = getServiceClient()
+  if (!supabase) return { error: 'Configuration error' }
+  const { data: row, error } = await supabase
+    .from('promotions')
+    .select('branch_id')
+    .eq('id', id)
+    .single()
+  if (error || !row) return { error: error?.message ?? 'Promotion not found' }
+  const branchId = (row as { branch_id: string | null }).branch_id
+  if (branchId == null) return { error: 'Forbidden: cannot modify global promotion' }
   try {
-    await requireDashboardSection('promotions')
+    assertBranchScope(user, branchId)
+  } catch {
+    return { error: 'Forbidden: branch scope violation' }
+  }
+  return null
+}
+
+export async function togglePromotion(id: string, isActive: boolean): Promise<PromotionMutationResult> {
+  let user
+  try {
+    user = await requireDashboardSection('promotions')
   } catch (e) {
     return { error: isDashboardGuardError(e) ? e.message : 'Forbidden' }
   }
+  const scopeError = await assertPromotionBranchScope(user, id)
+  if (scopeError) return scopeError
+
   const supabase = getServiceClient()
   if (!supabase) return { error: 'Configuration error' }
   const { error } = await supabase
@@ -132,11 +169,15 @@ export async function togglePromotion(id: string, isActive: boolean): Promise<Pr
 }
 
 export async function deletePromotion(id: string): Promise<PromotionMutationResult> {
+  let user
   try {
-    await requireDashboardSection('promotions')
+    user = await requireDashboardSection('promotions')
   } catch (e) {
     return { error: isDashboardGuardError(e) ? e.message : 'Forbidden' }
   }
+  const scopeError = await assertPromotionBranchScope(user, id)
+  if (scopeError) return scopeError
+
   const supabase = getServiceClient()
   if (!supabase) return { error: 'Configuration error' }
   const { error } = await supabase.from('promotions').delete().eq('id', id)
