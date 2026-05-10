@@ -1,6 +1,6 @@
 # CLAUDE.md — Kahramana Baghdad
 > Claude Code specific. Inherits from AGENTS.md. Read both files.
-> Last updated: 2026-04-27 (session 3 — Phase Completion now 9 checks; added phones, hex, build)
+> Last updated: 2026-05-10 (session 86 — gate 7 exempt list now includes src/lib/delivery/tokens.ts)
 
 ---
 
@@ -64,7 +64,10 @@ grep -rn 'BHD' app/ components/ --include="*.tsx"
 # src/lib/whatsapp.ts — WhatsApp utilities (buildCustomerContactLink uses dynamic phone from order data)
 grep -rn "97317\|wa\.me/" src/ app/ components/ --include="*.tsx" --include="*.ts" | grep -v "src/constants/contact.ts" | grep -v "src/lib/whatsapp.ts"
 
-# 7. Raw hex colors in components (must return nothing — only lib/design-tokens.ts is exempt)
+# 7. Raw hex colors in components (must return nothing)
+# Exempt token files (raw hex allowed):
+#   - src/lib/design-tokens.ts  — global brand tokens
+#   - src/lib/delivery/tokens.ts — delivery surface + Google Maps style tokens
 grep -rn "#[0-9a-fA-F]\{6\}" app/ components/ --include="*.tsx" --include="*.ts"
 
 # 8. i18n completeness — all keys must exist in both files
