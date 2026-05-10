@@ -47,6 +47,7 @@ export default function WaiterOrderClient({
   const [orderNotes, setOrderNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [isPending, startTransition] = useTransition()
 
@@ -140,6 +141,7 @@ export default function WaiterOrderClient({
   function submit() {
     setError(null)
     setSuccess(null)
+    setWarning(null)
     if (cart.length === 0) {
       setError(t('errorEmpty'))
       return
@@ -167,6 +169,7 @@ export default function WaiterOrderClient({
         setError(result.error)
         return
       }
+      if (result.warning) setWarning(result.warning)
       setSuccess(t('orderSent'))
       setCart([])
       setOrderNotes('')
@@ -359,6 +362,14 @@ export default function WaiterOrderClient({
               {success && (
                 <div className="rounded-lg border border-brand-success/40 bg-brand-success/10 px-3 py-2 text-sm text-brand-success">
                   {success}
+                </div>
+              )}
+              {warning && (
+                <div className="rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-3 py-2 text-sm text-brand-gold" role="alert">
+                  <p className="font-bold mb-0.5">
+                    {isAr ? '⚠ يلزم تدخّل المدير' : '⚠ Manager resolution required'}
+                  </p>
+                  <p className="text-xs text-brand-gold/90">{warning}</p>
                 </div>
               )}
 

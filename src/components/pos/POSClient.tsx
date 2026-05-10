@@ -75,6 +75,7 @@ export default function POSClient({
   const [success, setSuccess] = useState<{
     orderId: string
     queued?: boolean
+    warning?: string
     receipt?: ReceiptOrder
   } | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -363,6 +364,7 @@ export default function POSClient({
         }
         setSuccess({
           orderId: result.orderId,
+          warning: result.warning,
           receipt: buildReceipt(result.orderId),
         })
         reset()
@@ -427,6 +429,16 @@ export default function POSClient({
                 ? 'سيُرسل الطلب تلقائياً عند عودة الاتصال'
                 : 'Will sync automatically when the connection returns'}
             </p>
+          )}
+          {success.warning && (
+            <div className={`mb-6 rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-start ${isAr ? 'font-almarai' : 'font-satoshi'}`} role="alert">
+              <p className="text-sm font-bold text-brand-gold mb-1">
+                {isAr ? '⚠ يلزم تدخّل المدير' : '⚠ Manager resolution required'}
+              </p>
+              <p className="text-xs text-brand-gold/90">
+                {success.warning}
+              </p>
+            </div>
           )}
           <div className="flex flex-col gap-3">
             {success.receipt && (
