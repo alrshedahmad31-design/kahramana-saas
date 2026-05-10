@@ -184,10 +184,7 @@ export async function syncMenuItemsWithDatabase(): Promise<{
   if (allItems.length === 0) return { success: true, count: 0 }
 
   const supabase = await createServiceClient()
-  // Cast `allItems` because the auto-generated Database type for the
-  // menu_items.station column lags the migration 093 enum additions.
-  // KDSStation TS union is the source of truth at this layer.
-  const { error } = await supabase.from('menu_items').upsert(allItems as never, {
+  const { error } = await supabase.from('menu_items').upsert(allItems, {
     onConflict: 'id',
   })
 

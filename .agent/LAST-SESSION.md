@@ -1,8 +1,83 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-> **Session**: 83 (Claude Code track)
-> **Date**: 2026-05-09
-> **Focus**: Waiter dine-in QA retest (steps 6–8) codified as Playwright spec; verified migration 091 unblocked PRICE_MISMATCH end-to-end.
+> **Session**: 84 (Claude Code track)
+> **Date**: 2026-05-10
+> **Focus**: Multi-audit hardening — dashboard P0/P1/P2, orders security + concurrency + payment-aware cancels, KDS taxonomy + RLS/RPC lockdown, driver mutation scope + delivery filter parity. i18n cleanup (sidebar nav, prep items, par levels, waste-escalation keys, AR alert text). Build + TSC clean throughout.
+
+## Session 84 deliverables
+
+### Migrations (4 new, all applied to git)
+- **`092_shift_closing_rls_branch_scope.sql`** — `shift_closings` insert WITH CHECK now enforces `staff_basic.branch_id = shift_closings.branch_id` for branch_manager/cashier (owner/GM unrestricted).
+- **`093_kds_station_taxonomy_enum_values.sql`** — adds `'fryer'`, `'cold'`, `'unassigned'` to `kds_station` enum (separate file because PG can't use new enum values in same tx).
+- **`094_kds_hardening_and_taxonomy.sql`** — RLS+RPC role lockdown (kitchen/branch_manager/GM/owner only); trigger CASE re-mapped to canonical 5 stations + `ELSE 'unassigned'`; `update_order_item_station_status` gained `p_expected_status` (CONFLICT) + transition graph; new `bump_station_order(p_order_id, p_station)` RPC verifies all-ready before completing; menu_items_sync legacy stations backfilled.
+- **`095_orders_update_rls_tighten.sql`** — removed `cashier`/`kitchen` from `orders_update_non_driver_staff` USING+WITH CHECK; their mutations now go through KDS RPCs or service-role server actions only.
+
+### Server actions hardened
+- **`dashboard/audit/page.tsx`** — `requireDashboardSection('audit')` guard added (was leaking PII to any same-branch session).
+- **`dashboard/shifts/actions.ts`** — full rewrite: Zod schema, `round3()` cash normalization, branch-scope assertion, typed `ShiftActionResult` with discriminant `code` (`forbidden|invalid_input|branch_scope|db_error|conflict|unknown`), `getShiftSummary` returns `{error, expectedCash, orderCount}` shape; `CloseShiftDialog.tsx` updated to read the new error discriminant.
+- **`waiter/actions.ts`** — added `'waiter'` to `WAITER_ROLES`; payment + audit_logs inserts now check error and return `warning?: string` for partial-failure surface.
+- **`dashboard/pos/actions.ts`** — same payment/audit insert error handling + `warning?: string` field; modifier loader fails closed on query error.
+- **`dashboard/promotions/actions.ts`** — `togglePromotion` and `deletePromotion` now look up promotion's `branch_id` and assert non-global-admin caller owns it (also blocks edits to `branch_id IS NULL` global promotions for branch-scoped roles).
+- **`dashboard/orders/actions.ts`** — comprehensive rewrite: `requireDashboardSection('orders')` everywhere, UUID validation, explicit field list (no `select('*')`), branch-scope on `getOrderDetails`, `canUpdateOrderStatus(...)` reused inside `updateOrderWithReason` for transition validation, optimistic concurrency via `.eq('status', current)` + `.select('id')` row-count check on both status mutations, refund-aware: `hasCapturedPayment()` blocks `cancelled`/`returned` when `payments.status='completed'` (returns `code: 'refund_required'`); typed `OrderActionErrorCode` union; audit_logs insert error surfaced via `console.error`.
+- **`dashboard/orders/[id]/page.tsx`** — `requireDashboardSection('orders')` (was just `getSession + canViewOrder`), branch-scope assertion on fetched order, `notFound()` only on `PGRST116`, `throw` on any other DB error.
+- **`components/orders/OrdersClient.tsx`** — new `escapeSearch()` helper escapes ilike wildcards (`%`, `_`, `\`) and strips PostgREST structural chars (`,`, `(`, `)`, `:`, `"`) before interpolation into `.or()`.
+- **`driver/actions.ts`** — driver mutations now `role === 'driver'` only (was `driver|branch_manager|GM|owner`); `postDriverLocation` verifies order `assigned_driver_id`/`status='out_for_delivery'`/branch before upsert; `reportDeliveryFailure` requires `status='out_for_delivery'` for ALL callers + concurrency-pinned UPDATE; new `normalizeCashAmount()` helper validates `actualCollected` and `submitCashHandover.actualAmount`; `driverBumpOrder`/`markDriverArrived` now require `order_type='delivery'` defensively.
+- **`dashboard/delivery/actions.ts`** — `unassignDriver`, `cancelDeliveryOrder`, `reassignDriver` all gained `ACTIVE_DELIVERY_STATUSES` predicate + `.eq('status', order.status)` + `.select('id')` row-count guard.
+
+### Order_type filter parity (delivery dashboard + driver app)
+- **`driver/page.tsx`** — added `.eq('order_type','delivery')` to both `readyQ` and `transitQ` queries.
+- **`dashboard/delivery/page.tsx`** — replaced `.neq('order_type','pickup')` with positive `.eq('order_type','delivery')` filter.
+- **`components/delivery/DeliveryPageClient.tsx`** — added `.eq('order_type','delivery')` to the realtime refresh query.
+
+### KDS taxonomy alignment (TS layer)
+- **`lib/supabase/custom-types.ts:14`** — `KDSStation` union expanded with canonical 5 (`grill | fryer | cold | drinks | desserts | unassigned`); legacy values retained for in-flight rows.
+- **`constants/kds.ts`** — `STATION_CONFIG` rewritten with the canonical 5 + `unassigned`; `getStationConfig()` fallback changed from `'main'` to `'unassigned'`. Selector picks up new tiles automatically.
+- **`dashboard/kds/actions.ts`** — `updateItemStatus` gained `expectedStatus?: KDSItemStatus` + client-side `ITEM_STATUS_TRANSITIONS` graph for fast-fail; `bumpStationOrder` rewired to call new `bump_station_order` RPC; station-counts query error surfaced via `console.error`.
+- **`components/kds/KDSStationOrderCard.tsx:124`** — caller threads `currentStatus` as `expectedStatus`.
+- Two `as never` casts at the supabase `.eq()`/`.upsert()`/`.insert()`/`.update()` boundary (`kds/actions.ts:218`, `menu/actions.ts:187/256/318`) — required until generated `Database` types are regenerated against the new enum values.
+
+### UI: payment-warning surface
+- **`components/pos/POSClient.tsx`** — `success` state extended with `warning?: string`; new amber banner in success screen when `result.warning` set, bilingual heading "⚠ يلزم تدخّل المدير" / "⚠ Manager resolution required" + server-supplied body; offline-queue catch block now classifies error (only queues on `navigator.onLine === false` or TypeError/network-like errors; auth/perm/server bugs surface as real errors).
+- **`app/[locale]/waiter/table/[tableNumber]/WaiterOrderClient.tsx`** — separate `warning` state + amber banner under success.
+
+### i18n cleanup
+- Sidebar nav (`DashboardSidebar.tsx:267-285`) — wired `waiter`, `tables`, `promotions` (keys already existed in messages files).
+- Replaced raw English/mixed Prep Items + Par Levels labels across 7 files with `الأصناف الجاهزة` / `صنف جاهز` / `مستويات المخزون`.
+- Inventory-alerts visible AR text — added `inventory.alerts.{title, severity.*, type.*}` namespace to both messages files; `inventory/page.tsx` now uses `getTranslations` to render alert severity + type instead of raw DB strings.
+- `inventory.reports.wasteEscalation` namespace — added missing `title|noPending|awaitingBm|escalatedGm` keys.
+- `inventory.recipes.prepItems`/`addPrepItem` — replaced English literals in AR file.
+- Delivery dashboard components (`OrderListPanel`, `OrderDetailDrawer`, `DeliveryHeader`, `DriverFleetPanel`) migrated from hardcoded Arabic to `useTranslations('delivery')` with new `delivery` namespace (~70 keys) in both messages files.
+
+### Pre-existing TS error cleanup (Gemini parallel-edits)
+At one point Gemini's wide refactor left 56 TS errors. Fixed all in this session:
+- Bulk-removed `locale={...}` props passed to ReportHeader/ExportButton/AbcPieChart (those components now use `useLocale()` internally) — then added back where the receiving component still required `locale: string` (AbcUpdateButton, COGSClient, COGSBarChart, ValuationPieChart, VarianceClient, both CustomTooltip components).
+- Catering pages: changed `isAr={isAr}` → `locale={locale}` for CateringStatusStepper/CateringOrderForm/CateringIngredientsDrawer.
+- `colors.brand.X` → `colors.X` (the design-tokens object is flat) in MenuEngineeringMatrix/PriceHistoryChart/VendorRadarChart.
+- `borderSColor` typo → `borderColor`.
+- `dead-stock/page.tsx` — added missing `Link` import, removed duplicate `StatCard`/`EmptyReport` imports, added `unit?: string|null` to `DeadStockRow`.
+- `expiry/page.tsx` — added `Link` import, imported `ExpiryReportRow` type.
+- `valuation/ValuationCharts.tsx` + `waste/WasteCharts.tsx` — `(percent ?? 0) * 100`.
+- `WasteEscalationWidget` — removed `isAr` prop pass-through (component uses `useLocale`).
+- `SupplierRow` — added missing `address|lead_time_days|payment_terms|min_order_bhd|reliability_pct|notes` (notes optional in 3 places).
+- `TransferForm.Ingredient.name_en` → optional with `?.toLowerCase()` chain.
+- `ExpiryReportRow.unit?` added as optional.
+- ESLint `any` → typed in `expiry/page.tsx:128` and `vendor/VendorRadarChart.tsx:24`.
+- `loyalty-actions.ts` — removed `export { DEFAULT_LOYALTY_CONFIG }` (`'use server'` files can only export async functions).
+- POS server-component `<select>` — removed no-op `onChange={(_e) => {}}` (Next.js disallows event handlers on RSC native elements; this was the underlying cause of a hydration cascade).
+
+### Verification
+- `npx tsc --noEmit` → 0 errors after each P-level + each fix batch.
+- `npm run build` → PASS (full route table generated, no ESLint-blocking errors).
+
+### Decisions / non-obvious notes
+- **Dev-server stale cache**: when JSON message files are edited mid-session, Next/Turbopack hot-reloads the client bundle but server-side module cache may hold stale parsed JSON, causing transient hydration mismatches (specific symptom: server renders raw key, client renders translation). Restart `npm run dev` to clear. Don't add `setRequestLocale` in nested layouts as a "fix" — that's cargo-cult.
+- **Auto-generated `Database` types lag enum migrations**: until `npx supabase gen types typescript` is rerun after migration 093, the new `kds_station` values (fryer/cold/unassigned) require `as never` casts at supabase boundaries. Casts are documented in source.
+- **POS/waiter `result.warning`** is the new partial-failure shape: order committed successfully but a non-blocking record (payment row, audit log) failed. UI now shows it as an amber banner; downstream reconciliation should pick these up.
+- **Refund-required flow**: `updateOrderStatus`/`updateOrderWithReason` now return `code: 'refund_required'` if `payments.status='completed'`. UI doesn't yet branch on this — currently shown via the existing toast. Future task: open a dedicated refund modal when `code === 'refund_required'`.
+- **Migration 095 deployment caution**: any cashier/kitchen client doing direct `supabase.from('orders').update(...)` will start returning empty rowsets after deploy. Verified the KDS RPCs (094) cover the kitchen path and POS server actions cover the cashier path; no remaining direct-update sites in cashier/kitchen client code.
+- **Drivers will lose access to dine-in/pickup orders** after fix #3 deploys (positive `order_type='delivery'` filter replaces `.neq('order_type','pickup')`). Acceptable per audit; flag if any branch was relying on drivers seeing those.
+
+## Session 83 deliverables
 
 ## Session 83 deliverables
 

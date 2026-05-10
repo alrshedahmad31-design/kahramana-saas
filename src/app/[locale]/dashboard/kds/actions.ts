@@ -208,15 +208,12 @@ export async function recallStationOrder(
   }
 
   // User-context client — see bumpStationOrder for rationale.
-  // Cast `station` because the auto-generated Database type for the
-  // `station` column lags the migration 093 enum additions (fryer/cold/
-  // unassigned). The KDSStation TS union is the source of truth at this layer.
   const userClient = await createClient()
   const { error } = await userClient
     .from('order_item_station_status')
     .update({ status: 'ready', updated_at: new Date().toISOString() })
     .eq('order_id', orderId)
-    .eq('station', station as never)
+    .eq('station', station)
     .eq('status', 'completed')
 
   if (error) return { success: false, error: error.message }
