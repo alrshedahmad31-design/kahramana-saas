@@ -152,6 +152,19 @@ export default withSentryConfig(withNextIntl(nextConfig), {
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
 
+    // Disable Sentry's automatic instrumentation that creates a server-side
+    // transaction for every App Router page render. The transaction was the
+    // source of the <meta name="baggage"> and <meta name="sentry-trace">
+    // tags injected into HTML responses, which exposed the git commit SHA
+    // (sentry-release) and route name to every visitor.
+    //
+    // Trade-off: automatic SSR/RSC performance traces are lost. Error
+    // capture, manual Sentry.startSpan() calls, and client-side tracing
+    // continue to work normally.
+    autoInstrumentAppDirectory:   false,
+    autoInstrumentServerFunctions: false,
+    autoInstrumentMiddleware:     false,
+
     // Tree-shaking options for reducing bundle size
     treeshake: {
       // Automatically tree-shake Sentry logger statements to reduce bundle size
