@@ -21,7 +21,7 @@ interface VendorPerformanceRow {
 
 interface TooltipProps {
   active?: boolean
-  payload?: Array<{ value: number; name: string; color: string; payload: any }>
+  payload?: Array<{ value: number; name: string; color: string; payload: Record<string, unknown> }>
   label?: string
   locale: string
 }
@@ -48,7 +48,7 @@ function CustomTooltip({ active, payload, label, locale }: TooltipProps) {
   )
 }
 
-const RADAR_COLORS = [colors.brand.gold, colors.brand.success, colors.brand.error, colors.brand.muted, colors.brand.border]
+const RADAR_COLORS = [colors.gold, colors.success, colors.error, colors.muted, colors.border]
 
 export default function VendorRadarChart({ vendors }: { vendors: VendorPerformanceRow[] }) {
   const locale = useLocale()

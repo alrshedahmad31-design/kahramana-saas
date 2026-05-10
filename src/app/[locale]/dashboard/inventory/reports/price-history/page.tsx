@@ -83,7 +83,6 @@ export default async function PriceHistoryPage({ params, searchParams }: PagePro
       <ReportHeader
         title={t('title')}
         description={t('desc')}
-        locale={locale}
       />
 
       {/* Ingredient selector */}

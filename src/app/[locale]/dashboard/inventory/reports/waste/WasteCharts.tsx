@@ -73,7 +73,7 @@ export function WasteByReasonChart({ data, locale }: { data: { name: string; val
               outerRadius={90} 
               paddingAngle={5}
               stroke="none"
-              label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+              label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
               labelLine={false}
             >
               {data.map((_, index) => (

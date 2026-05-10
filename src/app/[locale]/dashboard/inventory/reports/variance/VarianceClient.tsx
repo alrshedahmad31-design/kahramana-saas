@@ -189,7 +189,7 @@ export default function VarianceClient({
           />
         </div>
         <div className="ms-auto">
-          <ExportButton rows={exportRows} columns={exportColumns} filename={t('reportName')} exportAction={exportToExcel} locale={locale} />
+          <ExportButton rows={exportRows} columns={exportColumns} filename={t('reportName')} exportAction={exportToExcel} />
         </div>
       </div>
 

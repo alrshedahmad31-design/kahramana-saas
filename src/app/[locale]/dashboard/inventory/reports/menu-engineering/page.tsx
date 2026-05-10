@@ -54,7 +54,7 @@ export default async function MenuEngineeringPage({ params, searchParams }: Page
   if (!branchId) {
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
-        <ReportHeader title={t('title')} locale={locale} />
+        <ReportHeader title={t('title')} />
         <EmptyReport
           title={t('noBranch')}
           description={t('selectBranch')}
@@ -75,7 +75,6 @@ export default async function MenuEngineeringPage({ params, searchParams }: Page
       <ReportHeader
         title={t('title')}
         description={t('desc')}
-        locale={locale}
       />
 
       {/* Filters */}

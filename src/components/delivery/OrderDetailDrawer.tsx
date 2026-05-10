@@ -2,11 +2,12 @@
 import { SIZE_LABELS } from '@/lib/cart'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslations }                from 'next-intl'
 import { motion, AnimatePresence }        from 'framer-motion'
 import { X, Phone, MapPin, Bike, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { createClient }                   from '@/lib/supabase/client'
 import { cancelDeliveryOrder, confirmDelivery } from '@/app/[locale]/dashboard/delivery/actions'
-import { DV, DV_STATUS, STATUS_BORDER, STATUS_LABEL } from '@/lib/delivery/tokens'
+import { DV, DV_STATUS, STATUS_BORDER } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver, OrderItem } from '@/lib/delivery/types'
 
 interface Props {
@@ -18,24 +19,31 @@ interface Props {
   isAr:       boolean
 }
 
-const TIMELINE_STEPS: { status: string; label: string; icon: React.ReactNode }[] = [
-  { status: 'accepted',         label: 'استلام الطلب',   icon: <CheckCircle size={14} /> },
-  { status: 'preparing',        label: 'قيد التحضير',    icon: <Clock size={14} />       },
-  { status: 'ready',            label: 'جاهز للاستلام', icon: <CheckCircle size={14} /> },
-  { status: 'out_for_delivery', label: 'خرج للتوصيل',    icon: <Bike size={14} />        },
-  { status: 'delivered',        label: 'تم التوصيل',     icon: <CheckCircle size={14} /> },
+const TIMELINE_STEPS: { status: 'accepted' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered'; icon: React.ReactNode }[] = [
+  { status: 'accepted',         icon: <CheckCircle size={14} /> },
+  { status: 'preparing',        icon: <Clock size={14} />       },
+  { status: 'ready',            icon: <CheckCircle size={14} /> },
+  { status: 'out_for_delivery', icon: <Bike size={14} />        },
+  { status: 'delivered',        icon: <CheckCircle size={14} /> },
 ]
 
 const STATUS_ORDER = ['accepted', 'preparing', 'ready', 'out_for_delivery', 'delivered']
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('ar-BH', { hour: '2-digit', minute: '2-digit' })
+const KNOWN_ORDER_STATUSES = ['accepted','new','preparing','ready','out_for_delivery','delivered','completed'] as const
+function isKnownOrderStatus(s: string): s is typeof KNOWN_ORDER_STATUSES[number] {
+  return (KNOWN_ORDER_STATUSES as readonly string[]).includes(s)
 }
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('ar-BH', { day: 'numeric', month: 'short' })
+
+function formatTime(iso: string, locale: string) {
+  return new Date(iso).toLocaleTimeString(locale === 'ar' ? 'ar-BH' : 'en-BH', { hour: '2-digit', minute: '2-digit' })
+}
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale === 'ar' ? 'ar-BH' : 'en-BH', { day: 'numeric', month: 'short' })
 }
 
 export default function OrderDetailDrawer({ order, drivers, open, onClose, onDispatch, isAr }: Props) {
+  const t          = useTranslations('delivery')
+  const locale     = isAr ? 'ar' : 'en'
   const supabase   = useMemo(() => createClient(), [])
   const driver     = order?.driver_id ? drivers.find(d => d.id === order.driver_id) : null
   const currentIdx = order ? STATUS_ORDER.indexOf(order.status) : -1
@@ -144,16 +152,16 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                     borderRadius: '5px',
                     border:       `1px solid ${STATUS_BORDER[order.status] ?? DV.amber}40`,
                   }}>
-                    {STATUS_LABEL[order.status] ?? order.status}
+                    {isKnownOrderStatus(order.status) ? t(`status.${order.status}`) : order.status}
                   </span>
                   {isLate && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: DV_STATUS.errorBg }}>
-                      <AlertCircle size={11} /> متأخر {elapsedMin} د
+                      <AlertCircle size={11} /> {t('late')} {elapsedMin} {t('minutesShort')}
                     </span>
                   )}
                 </div>
                 <div style={{ fontSize: '12px', color: DV.muted, marginTop: '2px' }}>
-                  {formatDate(order.created_at)} · {formatTime(order.created_at)}
+                  {formatDate(order.created_at, locale)} · {formatTime(order.created_at, locale)}
                 </div>
               </div>
               <button
@@ -174,7 +182,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
             <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
               {/* Customer */}
-              <Section title="بيانات العميل">
+              <Section title={t('drawer.customerSection')}>
                 <InfoRow icon={<span style={{ fontSize: '14px' }}>👤</span>} label={order.customer_name ?? '—'} />
                 {order.customer_phone && (
                   <InfoRow
@@ -231,17 +239,17 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                     fontSize:     '12px',
                     color:        DV.text,
                   }}>
-                    <span style={{ color: DV.amber, fontSize: '11px', fontWeight: 600 }}>ملاحظة: </span>
+                    <span style={{ color: DV.amber, fontSize: '11px', fontWeight: 600 }}>{t('drawer.noteLabel')} </span>
                     {order.notes}
                   </div>
                 )}
               </Section>
 
               {/* Order items */}
-              <Section title="الأصناف المطلوبة">
+              <Section title={t('drawer.itemsSection')}>
                 {items.length === 0 ? (
                   <div style={{ fontSize: '12px', color: DV.muted, fontStyle: 'italic' }}>
-                    {order.items_count} صنف — جاري التحميل…
+                    {t('itemsCount', { count: order.items_count })} — {t('drawer.loadingItems')}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -284,9 +292,9 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                       borderTop:      `1px solid ${DV.border}`,
                       marginTop:      '4px',
                     }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: DV.muted }}>المجموع</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: DV.muted }}>{t('drawer.total')}</span>
                       <span style={{ fontSize: '14px', fontWeight: 700, color: DV.amberLight }}>
-                        {Number(order.total_bhd).toFixed(3)} د.ب
+                        {Number(order.total_bhd).toFixed(3)} {t('drawer.currency')}
                       </span>
                     </div>
                   </div>
@@ -294,7 +302,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
               </Section>
 
               {/* Driver */}
-              <Section title="السائق المعيّن">
+              <Section title={t('drawer.driverSection')}>
                 {driver ? (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
@@ -333,7 +341,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                       }}
                     >
                       <RefreshCw size={11} />
-                      تغيير
+                      {t('drawer.change')}
                     </button>
                   </div>
                 ) : order.status === 'ready' ? (
@@ -345,10 +353,10 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                     textAlign: 'center'
                   }}>
                     <p style={{ fontSize: '13px', fontWeight: 700, color: DV_STATUS.successText, marginBottom: '4px' }}>
-                      {isAr ? 'الطلب متاح في قائمة الاستلام' : 'Order is in the pickup pool'}
+                      {t('drawer.inPickupPool')}
                     </p>
                     <p style={{ fontSize: '11px', color: DV.muted }}>
-                      {isAr ? 'سيقوم أحد السائقين باستلامه قريباً' : 'A driver will claim it soon'}
+                      {t('drawer.driverWillClaim')}
                     </p>
                     <button
                       type="button"
@@ -363,7 +371,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                         textDecoration: 'underline'
                       }}
                     >
-                      {isAr ? 'تعيين سائق يدوياً؟' : 'Assign manually?'}
+                      {t('drawer.assignManually')}
                     </button>
                   </div>
                 ) : (
@@ -383,13 +391,13 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                       fontFamily:   'IBM Plex Sans Arabic, sans-serif',
                     }}
                   >
-                    + تعيين سائق
+                    {t('drawer.assignDriverBtn')}
                   </button>
                 )}
               </Section>
 
               {/* Timeline */}
-              <Section title="مسار الحالات">
+              <Section title={t('drawer.timelineSection')}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
                   {TIMELINE_STEPS.map((step, i) => {
                     const done    = i <= currentIdx
@@ -426,11 +434,11 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                         </div>
                         <div style={{ paddingBottom: '16px' }}>
                           <div style={{ fontSize: '13px', fontWeight: current ? 600 : 400, color: done ? DV.text : DV.muted }}>
-                            {step.label}
+                            {t(`timeline.${step.status}`)}
                           </div>
                           {current && (
                             <div style={{ fontSize: '11px', color: DV.muted, marginTop: '1px' }}>
-                              {formatTime(order.updated_at)}
+                              {formatTime(order.updated_at, locale)}
                             </div>
                           )}
                         </div>
@@ -488,7 +496,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                   fontFamily:   'IBM Plex Sans Arabic, sans-serif',
                 }}
               >
-                تغيير السائق
+                {t('drawer.changeDriverBtn')}
               </button>
               <button
                 type="button"
@@ -508,7 +516,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                   transition:   'opacity 0.2s',
                 }}
               >
-                {ctaLoading === 'cancel' ? '…' : 'إلغاء التوصيل'}
+                {ctaLoading === 'cancel' ? '…' : t('drawer.cancelDelivery')}
               </button>
               <button
                 type="button"
@@ -528,7 +536,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
                   transition:   'all 0.2s',
                 }}
               >
-                {ctaLoading === 'confirm' ? '…' : 'تأكيد التسليم'}
+                {ctaLoading === 'confirm' ? '…' : t('drawer.confirmDelivery')}
               </button>
             </div>
           </motion.aside>

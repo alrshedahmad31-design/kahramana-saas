@@ -101,10 +101,10 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
   )
 
   const QUADRANT_CONFIG: Record<string, { label: string; desc: string; color: string }> = {
-    Stars:      { label: t('matrix.stars'),      desc: t('matrix.starsDesc'),      color: colors.brand.gold },
-    Puzzles:    { label: t('matrix.puzzles'),    desc: t('matrix.puzzlesDesc'),    color: colors.brand.success },
-    Plowhorses: { label: t('matrix.plowhorses'), desc: t('matrix.plowhorsesDesc'), color: colors.brand.muted },
-    Dogs:       { label: t('matrix.dogs'),       desc: t('matrix.dogsDesc'),       color: colors.brand.error },
+    Stars:      { label: t('matrix.stars'),      desc: t('matrix.starsDesc'),      color: colors.gold },
+    Puzzles:    { label: t('matrix.puzzles'),    desc: t('matrix.puzzlesDesc'),    color: colors.success },
+    Plowhorses: { label: t('matrix.plowhorses'), desc: t('matrix.plowhorsesDesc'), color: colors.muted },
+    Dogs:       { label: t('matrix.dogs'),       desc: t('matrix.dogsDesc'),       color: colors.error },
   }
 
   return (
@@ -143,9 +143,9 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
               <ReferenceLine y={avgProfit} stroke={colors.border} strokeDasharray="6 6" strokeWidth={2} />
               <Scatter 
                 data={scatterData} 
-                fill={colors.brand.gold} 
+                fill={colors.gold} 
                 fillOpacity={0.6} 
-                stroke={colors.brand.gold}
+                stroke={colors.gold}
                 strokeWidth={2}
               />
             </ScatterChart>
@@ -155,7 +155,7 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
         {/* Quadrant legend */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
           {quadrants.map((q) => (
-            <div key={q} className="flex flex-col gap-1 rounded-xl border border-brand-border bg-brand-surface-2 p-3 shadow-sm hover:shadow-md transition-all border-s-4" style={{ borderSColor: QUADRANT_CONFIG[q].color }}>
+            <div key={q} className="flex flex-col gap-1 rounded-xl border border-brand-border bg-brand-surface-2 p-3 shadow-sm hover:shadow-md transition-all border-s-4" style={{ borderColor: QUADRANT_CONFIG[q].color }}>
               <span className={`${font} text-[10px] font-black text-brand-text uppercase tracking-widest`}>{QUADRANT_CONFIG[q].label}</span>
               <span className="font-satoshi text-[14px] font-black text-brand-gold tabular-nums">
                 {grouped[q]?.length ?? 0} <span className="text-[10px] font-bold text-brand-muted uppercase">{t('items')}</span>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState }                       from 'react'
+import { useTranslations }                from 'next-intl'
 import { Map, List, LayoutGrid, UserPlus, ChevronDown } from 'lucide-react'
 import { DV }                             from '@/lib/delivery/tokens'
 import type { ViewMode }                  from '@/lib/delivery/types'
@@ -12,19 +13,6 @@ interface Props {
   isMuted:       boolean
   onToggleMute:  () => void
   isAr:          boolean
-}
-
-const VIEW_BTNS: { id: ViewMode; icon: React.ReactNode; labelAr: string; labelEn: string }[] = [
-  { id: 'kanban', icon: <LayoutGrid size={15} />, labelAr: 'كانبان', labelEn: 'Kanban' },
-  { id: 'map',    icon: <Map size={15} />,        labelAr: 'خريطة',  labelEn: 'Map'    },
-  { id: 'list',   icon: <List size={15} />,       labelAr: 'قائمة',  labelEn: 'List'   },
-]
-
-const FILTER_OPTIONS = {
-  period:  ['اليوم', 'الأمس', 'آخر ٧ أيام'],
-  branch:  ['كل الفروع', 'الرفاع', 'قلالي'],
-  driver:  ['كل السائقين'],
-  status:  ['كل الحالات', 'جديد', 'قيد التحضير', 'جاهز', 'يُوصَّل', 'مكتمل'],
 }
 
 function FilterDropdown({ label: _label, options }: { label: string; options: string[] }) {
@@ -97,7 +85,22 @@ function FilterDropdown({ label: _label, options }: { label: string; options: st
   )
 }
 
-export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, onToggleMute, isAr }: Props) {
+export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, onToggleMute, isAr: _isAr }: Props) {
+  const t = useTranslations('delivery')
+
+  const VIEW_BTNS: { id: ViewMode; icon: React.ReactNode; label: string }[] = [
+    { id: 'kanban', icon: <LayoutGrid size={15} />, label: t('header.viewKanban') },
+    { id: 'map',    icon: <Map size={15} />,        label: t('header.viewMap')    },
+    { id: 'list',   icon: <List size={15} />,       label: t('header.viewList')   },
+  ]
+
+  const FILTER_OPTIONS = {
+    period:  [t('header.filterPeriodToday'), t('header.filterPeriodYesterday'), t('header.filterPeriod7d')],
+    branch:  [t('header.filterAllBranches'), t('header.branchRiffa'), t('header.branchQallali')],
+    driver:  [t('header.filterAllDrivers')],
+    status:  [t('header.filterAllStatuses'), t('status.new'), t('status.preparing'), t('status.ready'), t('status.out_for_delivery'), t('status.completed')],
+  }
+
   return (
     <header style={{
       padding:        '12px 20px',
@@ -116,7 +119,7 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, 
         marginInlineEnd: 'auto',
         whiteSpace:      'nowrap',
       }}>
-        {isAr ? 'لوحة التوصيل' : 'Delivery Board'}
+        {t('boardTitle')}
       </h1>
 
       {/* View toggle */}
@@ -150,22 +153,22 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, 
             }}
           >
             {btn.icon}
-            {isAr ? btn.labelAr : btn.labelEn}
+            {btn.label}
           </button>
         ))}
       </div>
 
-      {/* Filters (period/branch stay Arabic — these are local context labels) */}
-      <FilterDropdown label="اليوم"       options={FILTER_OPTIONS.period} />
-      <FilterDropdown label="كل الفروع"   options={FILTER_OPTIONS.branch} />
-      <FilterDropdown label="كل السائقين" options={FILTER_OPTIONS.driver} />
-      <FilterDropdown label="كل الحالات"  options={FILTER_OPTIONS.status} />
+      {/* Filters */}
+      <FilterDropdown label={t('header.filterPeriodToday')} options={FILTER_OPTIONS.period} />
+      <FilterDropdown label={t('header.filterAllBranches')} options={FILTER_OPTIONS.branch} />
+      <FilterDropdown label={t('header.filterAllDrivers')}  options={FILTER_OPTIONS.driver} />
+      <FilterDropdown label={t('header.filterAllStatuses')} options={FILTER_OPTIONS.status} />
 
       {/* Dispatch button */}
       <button
         type="button"
         onClick={onAssign}
-        title={isAr ? 'تعيين سائق' : 'Assign Driver'}
+        title={t('header.assignDriver')}
         style={{
           height:       '34px',
           display:      'flex',
@@ -185,14 +188,14 @@ export default function DeliveryHeader({ view, onViewChange, onAssign, isMuted, 
         }}
       >
         <UserPlus size={16} />
-        {isAr ? 'تعيين' : 'Assign'}
+        {t('header.assign')}
       </button>
 
       {/* Mute toggle */}
       <button
         type="button"
         onClick={onToggleMute}
-        title={isMuted ? (isAr ? 'تشغيل الصوت' : 'Unmute') : (isAr ? 'كتم الصوت' : 'Mute')}
+        title={isMuted ? t('header.unmute') : t('header.mute')}
         style={{
           width:        '34px',
           height:       '34px',

@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations }     from 'next-intl'
 import { motion, AnimatePresence }     from 'framer-motion'
 import { Clock, Bike, AlertCircle }    from 'lucide-react'
-import { DV, DV_STATUS, STATUS_BORDER, STATUS_LABEL } from '@/lib/delivery/tokens'
+import { DV, DV_STATUS, STATUS_BORDER } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver }  from '@/lib/delivery/types'
 
 interface Props {
@@ -31,6 +32,7 @@ function useETACountdown(createdAt: string) {
 function OrderRow({ order, driver, onSelect, onHover, isAr }: {
   order: DeliveryOrder; driver: Driver | undefined; onSelect: () => void; onHover: (id: string | null) => void; isAr: boolean
 }) {
+  const t = useTranslations('delivery')
   const elapsedMin = useETACountdown(order.created_at)
   const isLate     = elapsedMin > 45
   const borderColor = STATUS_BORDER[order.status] ?? DV.amber
@@ -83,12 +85,12 @@ function OrderRow({ order, driver, onSelect, onHover, isAr }: {
             {isLate && (
               <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: DV_STATUS.errorBg }}>
                 <AlertCircle size={11} />
-                متأخر
+                {t('late')}
               </span>
             )}
           </div>
           <div style={{ fontSize: '13px', color: DV.text, fontWeight: 400, marginBottom: '2px' }}>
-            {order.customer_name ?? 'عميل'}
+            {order.customer_name ?? t('guest')}
           </div>
           {driver && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: DV.muted }}>
@@ -115,10 +117,10 @@ function OrderRow({ order, driver, onSelect, onHover, isAr }: {
             }}
           >
             <Clock size={12} />
-            {elapsedMin} د
+            {elapsedMin} {t('minutesShort')}
           </motion.div>
           <div style={{ fontSize: '12px', color: DV.muted, marginTop: '2px' }}>
-            {order.items_count} صنف
+            {t('itemsCount', { count: order.items_count })}
           </div>
           <div style={{ fontSize: '12px', color: DV.amberLight, fontWeight: 600, marginTop: '2px' }}>
             {Number(order.total_bhd).toFixed(3)}
@@ -130,8 +132,10 @@ function OrderRow({ order, driver, onSelect, onHover, isAr }: {
 }
 
 function StatusPill({ status }: { status: string }) {
+  const t = useTranslations('delivery.status')
   const color  = STATUS_BORDER[status] ?? DV.amber
-  const label  = STATUS_LABEL[status]  ?? status
+  const known  = ['accepted','new','preparing','ready','out_for_delivery','delivered','completed'].includes(status)
+  const label  = known ? t(status as 'accepted') : status
   return (
     <span style={{
       fontSize:     '10px',
@@ -149,6 +153,7 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export default function OrderListPanel({ orders, drivers, onSelect, onHover, isAr, fullWidth }: Props) {
+  const t           = useTranslations('delivery')
   const driverMap   = new Map(drivers.map(d => [d.id, d]))
   const nowMs       = Date.now()
   const lateOrders  = orders.filter(o => (nowMs - new Date(o.created_at).getTime()) / 60_000 > 45)
@@ -172,7 +177,7 @@ export default function OrderListPanel({ orders, drivers, onSelect, onHover, isA
         flexShrink:     0,
       }}>
         <span style={{ fontSize: '14px', fontWeight: 700, color: DV.text }}>
-          الطلبات النشطة
+          {t('activeOrders')}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {lateOrders.length > 0 && (
@@ -181,7 +186,7 @@ export default function OrderListPanel({ orders, drivers, onSelect, onHover, isA
               background: `${DV_STATUS.errorBg}18`, padding: '2px 8px', borderRadius: '6px',
               display: 'flex', alignItems: 'center', gap: '4px',
             }}>
-              <AlertCircle size={11} /> {lateOrders.length} متأخر
+              <AlertCircle size={11} /> {lateOrders.length} {t('late')}
             </span>
           )}
           <span style={{
@@ -228,7 +233,7 @@ export default function OrderListPanel({ orders, drivers, onSelect, onHover, isA
             gridColumn:     fullWidth ? '1 / -1' : undefined,
           }}>
             <span style={{ fontSize: '32px' }}>📦</span>
-            <span style={{ fontSize: '13px' }}>لا توجد طلبات نشطة</span>
+            <span style={{ fontSize: '13px' }}>{t('noActiveOrders')}</span>
           </div>
         )}
       </div>

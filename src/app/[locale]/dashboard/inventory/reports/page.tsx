@@ -38,7 +38,6 @@ export default async function ReportsHubPage({ params }: PageProps) {
       <ReportHeader
         title={isAr ? 'التقارير والذكاء' : 'Reports & Intelligence'}
         description={isAr ? 'تقارير شاملة لمساعدتك في اتخاذ القرارات الصحيحة' : 'Comprehensive reports to help you make informed decisions'}
-        locale={locale}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">

@@ -93,6 +93,15 @@ export default async function TransfersPage({ params, searchParams }: PageProps)
     cancelled:  'ملغي',
   }
 
+  const STATUS_LABEL_EN: Record<string, string> = {
+    pending:    'Pending',
+    in_transit: 'In transit',
+    received:   'Received',
+    cancelled:  'Cancelled',
+  }
+
+  const STATUS_LABEL = isAr ? STATUS_LABEL_AR : STATUS_LABEL_EN
+
   type TransferRow = {
     id: string
     quantity: number
@@ -125,7 +134,7 @@ export default async function TransfersPage({ params, searchParams }: PageProps)
       {/* Status tabs */}
       <div className="flex gap-2 flex-wrap">
         {(['all', 'pending', 'in_transit', 'received', 'cancelled'] as const).map((s) => {
-          const label = s === 'all' ? (isAr ? 'الكل' : 'All') : (isAr ? STATUS_LABEL_AR[s] : s)
+          const label = s === 'all' ? (isAr ? 'الكل' : 'All') : (STATUS_LABEL[s] ?? s)
           const isActive = (status ?? 'all') === s
           return (
             <Link

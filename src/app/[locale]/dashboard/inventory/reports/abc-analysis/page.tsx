@@ -43,7 +43,7 @@ export default async function AbcAnalysisPage({ params }: PageProps) {
   if (!ingredients || ingredients.length === 0) {
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
-        <ReportHeader title={t('title')} locale={locale} />
+        <ReportHeader title={t('title')} />
         <EmptyReport title={t('emptyTitle')} description={t('emptyDesc')} />
       </div>
     )
@@ -110,7 +110,6 @@ export default async function AbcAnalysisPage({ params }: PageProps) {
       <ReportHeader
         title={t('title')}
         description={t('desc')}
-        locale={locale}
         actions={isOwnerOrGM ? <AbcUpdateButton locale={locale} /> : undefined}
       />
 
@@ -129,7 +128,7 @@ export default async function AbcAnalysisPage({ params }: PageProps) {
 
       {/* Chart & Guide */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AbcPieChart data={pieData} locale={locale} />
+        <AbcPieChart data={pieData} />
 
         {/* Class explanation */}
         <div className="rounded-xl border border-brand-border bg-brand-surface p-6 space-y-5 shadow-sm hover:shadow-md transition-all">

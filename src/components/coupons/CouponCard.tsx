@@ -113,7 +113,7 @@ export default function CouponCard({ coupon, onEdit, onTogglePause, onCopy, onVi
             <span className={`text-xs font-bold text-brand-text tabular-nums ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
               {Number(coupon.min_order_value_bhd || 0).toFixed(3)}{' '}
               <span className={isAr ? 'font-almarai' : 'font-satoshi'}>
-                {t('common.currency')}
+                {tCommon('currency')}
               </span>
             </span>
           </div>
@@ -168,7 +168,7 @@ export default function CouponCard({ coupon, onEdit, onTogglePause, onCopy, onVi
             <span className="text-xs font-black text-brand-gold tabular-nums">
               +{Number(coupon.total_revenue_impact || 0).toFixed(3)}{' '}
               <span className={isAr ? 'font-almarai' : 'font-satoshi'}>
-                {t('common.currency')}
+                {tCommon('currency')}
               </span>
             </span>
           </div>

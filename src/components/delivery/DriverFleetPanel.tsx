@@ -1,10 +1,17 @@
 'use client'
 
 import { Phone, MapPin, PackageCheck } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { DV, DRIVER_STATUS } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
+
+const KNOWN_DRIVER_STATUSES = ['available','delivering','busy','returning','offline'] as const
+type KnownDriverStatus = typeof KNOWN_DRIVER_STATUSES[number]
+function isKnownDriverStatus(s: string): s is KnownDriverStatus {
+  return (KNOWN_DRIVER_STATUSES as readonly string[]).includes(s)
+}
 
 const STATUS_DOT_CLS: Record<string, string> = {
   available:  'bg-brand-success',
@@ -30,6 +37,7 @@ interface Props {
 }
 
 function DailyRating({ completed }: { completed: number }) {
+  const t = useTranslations('delivery.fleet')
   // 0–2 → 1★, 3–5 → 2★, 6–8 → 3★, 9–11 → 4★, 12+ → 5★ (0 = no orders yet)
   const stars = completed === 0 ? 0
     : completed <= 2  ? 1
@@ -48,7 +56,7 @@ function DailyRating({ completed }: { completed: number }) {
       borderRadius:   '6px',
       border:         `1px solid ${DV.border}`,
     }}>
-      <span style={{ fontSize: '10px', color: DV.muted }}>تقييم اليوم</span>
+      <span style={{ fontSize: '10px', color: DV.muted }}>{t('dailyRating')}</span>
       <span style={{ fontSize: '13px', letterSpacing: '1px', lineHeight: 1 }}>
         {Array.from({ length: 5 }, (_, i) => (
           <span key={i} style={{ color: i < stars ? DV.amber : `${DV.amber}30` }}>★</span>
@@ -61,7 +69,9 @@ function DailyRating({ completed }: { completed: number }) {
 function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
   driver: Driver; currentOrder: DeliveryOrder | undefined; onAssign: () => void; isAr: boolean; index: number
 }) {
+  const t          = useTranslations('delivery')
   const statusCfg  = DRIVER_STATUS[driver.status] ?? DRIVER_STATUS.offline
+  const statusLabel = isKnownDriverStatus(driver.status) ? t(`driverStatus.${driver.status}`) : statusCfg.label
   const initials   = driver.name.split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
 
   return (
@@ -119,7 +129,7 @@ function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
           <span
             className={`inline-block text-[11px] font-semibold px-[6px] py-[1px] rounded mt-[2px] ${STATUS_BADGE_CLS[driver.status] ?? 'bg-brand-surface-2 text-brand-muted'}`}
           >
-            {statusCfg.label}
+            {statusLabel}
           </span>
         </div>
       </div>
@@ -128,7 +138,7 @@ function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
         <div style={{ textAlign: 'center', flex: 1 }}>
           <div style={{ fontSize: '16px', fontWeight: 700, color: DV.text }}>{driver.completed_today}</div>
-          <div style={{ fontSize: '10px', color: DV.muted }}>مكتملة</div>
+          <div style={{ fontSize: '10px', color: DV.muted }}>{t('fleet.completedShort')}</div>
         </div>
         {driver.phone && (
           <a
@@ -196,13 +206,14 @@ function DriverCard({ driver, currentOrder, onAssign, isAr: _isAr, index }: {
           transition:   'all 0.15s',
         }}
       >
-        {driver.status === 'available' ? 'تعيين طلب' : 'عرض مسار'}
+        {driver.status === 'available' ? t('fleet.assignOrder') : t('fleet.viewRoute')}
       </button>
     </motion.div>
   )
 }
 
 export default function DriverFleetPanel({ drivers, orders, onAssign, isAr }: Props) {
+  const t        = useTranslations('delivery')
   const orderMap = new Map(orders.map(o => [o.id, o]))
 
   return (
@@ -217,15 +228,15 @@ export default function DriverFleetPanel({ drivers, orders, onAssign, isAr }: Pr
         justifyContent: 'space-between',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 700, color: DV.text }}>
-          أسطول السائقين
+          {t('fleet.title')}
         </span>
         <div style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
-          {['available', 'delivering', 'offline'].map(s => {
+          {(['available', 'delivering', 'offline'] as const).map(s => {
             const cfg   = DRIVER_STATUS[s]
             const count = drivers.filter(d => d.status === s).length
             return (
               <span key={s} style={{ color: cfg.text }}>
-                {count} {cfg.label}
+                {count} {t(`driverStatus.${s}`)}
               </span>
             )
           })}
@@ -252,7 +263,7 @@ export default function DriverFleetPanel({ drivers, orders, onAssign, isAr }: Pr
 
         {drivers.length === 0 && (
           <div style={{ padding: '24px 0', color: DV.muted, fontSize: '13px' }}>
-            لا يوجد سائقون متاحون
+            {t('fleet.noDrivers')}
           </div>
         )}
       </div>

@@ -51,7 +51,7 @@ export default function ValuationPieChart({ data, locale }: { data: { name: stri
               outerRadius={100}
               paddingAngle={5}
               stroke="none"
-              label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+              label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
               labelLine={false}
             >
               {data.map((_, index) => (

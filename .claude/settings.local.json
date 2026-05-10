@@ -167,7 +167,8 @@
       "Bash(cmd /c \"tasklist /FI \\\\\"PID eq 9784\\\\\"\")",
       "Bash(cmd /c \"netstat -ano\")",
       "PowerShell(Get-NetTCPConnection *)",
-      "PowerShell(npx playwright test tests/e2e/waiter/dine-in.spec.ts --workers=1 --reporter=list 2>&1)"
+      "PowerShell(npx playwright test tests/e2e/waiter/dine-in.spec.ts --workers=1 --reporter=list 2>&1)",
+      "PowerShell(npm run *)"
     ]
   }
 }

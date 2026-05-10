@@ -76,7 +76,7 @@ export default async function NewCateringOrderPage({ params }: PageProps) {
         branchId={branchId}
         packages={packages}
         prefix={prefix}
-        isAr={isAr}
+        locale={locale}
       />
     </div>
   )

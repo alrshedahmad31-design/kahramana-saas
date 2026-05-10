@@ -1123,6 +1123,81 @@
     "handedSuccessfully": "Cash handed successfully",
     "noCashOrders": "No cash orders today"
   },
+  "delivery": {
+    "boardTitle": "Delivery Board",
+    "activeOrders": "Active Orders",
+    "noActiveOrders": "No active orders",
+    "late": "Late",
+    "guest": "Guest",
+    "itemsCount": "{count} items",
+    "minutesShort": "min",
+    "fleet": {
+      "title": "Driver Fleet",
+      "noDrivers": "No drivers available",
+      "completedShort": "completed",
+      "dailyRating": "Today's Rating",
+      "assignOrder": "Assign Order",
+      "viewRoute": "View Route"
+    },
+    "header": {
+      "viewKanban": "Kanban",
+      "viewMap": "Map",
+      "viewList": "List",
+      "filterPeriodToday": "Today",
+      "filterPeriodYesterday": "Yesterday",
+      "filterPeriod7d": "Last 7 days",
+      "filterAllBranches": "All branches",
+      "filterAllDrivers": "All drivers",
+      "filterAllStatuses": "All statuses",
+      "branchRiffa": "Riffa",
+      "branchQallali": "Qallali",
+      "assign": "Assign",
+      "assignDriver": "Assign Driver",
+      "mute": "Mute",
+      "unmute": "Unmute"
+    },
+    "drawer": {
+      "customerSection": "Customer",
+      "itemsSection": "Items",
+      "driverSection": "Assigned Driver",
+      "timelineSection": "Status Timeline",
+      "noteLabel": "Note:",
+      "loadingItems": "Loading…",
+      "total": "Total",
+      "currency": "BD",
+      "change": "Change",
+      "assignDriverBtn": "+ Assign Driver",
+      "inPickupPool": "Order is in the pickup pool",
+      "driverWillClaim": "A driver will claim it soon",
+      "assignManually": "Assign manually?",
+      "changeDriverBtn": "Change Driver",
+      "cancelDelivery": "Cancel Delivery",
+      "confirmDelivery": "Confirm Delivery"
+    },
+    "timeline": {
+      "accepted": "Order accepted",
+      "preparing": "Preparing",
+      "ready": "Ready for pickup",
+      "out_for_delivery": "Out for delivery",
+      "delivered": "Delivered"
+    },
+    "status": {
+      "accepted": "New",
+      "new": "New",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "out_for_delivery": "Delivering",
+      "delivered": "Completed",
+      "completed": "Completed"
+    },
+    "driverStatus": {
+      "available": "Available",
+      "delivering": "Delivering",
+      "busy": "Busy",
+      "returning": "Returning",
+      "offline": "Offline"
+    }
+  },
   "loyalty": {
     "totalOrders": "Total Orders",
     "totalSpent": "Total Spent",
@@ -1192,6 +1267,35 @@
       "bag": "bag",
       "box": "box",
       "batch": "batch"
+    },
+    "alerts": {
+      "title": "Inventory Alerts",
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning",
+        "info": "Info"
+      },
+      "type": {
+        "low_stock": "Low stock for {name}",
+        "out_of_stock": "Out of stock: {name}",
+        "high_waste": "High waste: {name}",
+        "variance_warning": "Count variance: {name}",
+        "variance_critical": "Critical count variance: {name}",
+        "unmapped_item": "No recipe mapped for: {slug}",
+        "expiring_soon": "Expiring soon: {name}",
+        "expired": "Expired: {name}",
+        "theft_suspected": "Possible theft: {name}",
+        "po_overdue": "Purchase order overdue",
+        "cost_spike": "Cost spike: {name}",
+        "overstock": "Overstock: {name}",
+        "dead_stock": "Dead stock: {name}",
+        "auto_po_generated": "Auto purchase order generated",
+        "waste_escalated": "Waste escalated for review",
+        "count_variance_high": "High count variance detected",
+        "prep_low_stock": "Low stock on prep item: {name}",
+        "catering_stock_insufficient": "Insufficient stock for catering"
+      },
+      "type_fallback": "{type}"
     },
     "valuation": {
       "title": "Inventory Valuation",

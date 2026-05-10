@@ -174,7 +174,7 @@ export default async function InventoryWidgetsSection({ branchId, prefix, isAr, 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <LowStockWidget      items={lowStockItems}  prefix={prefix} locale={isAr ? 'ar' : 'en'} />
         <ExpiryCalendarWidget rows={expiryItems}    prefix={prefix} isAr={isAr} />
-        <WasteEscalationWidget counts={wasteCounts}  prefix={prefix} isAr={isAr} />
+        <WasteEscalationWidget counts={wasteCounts}  prefix={prefix} />
         <StockValueWidget    valuations={valuations} trendPoints={trendPoints} currency={currency} locale={isAr ? 'ar' : 'en'} />
       </div>
     </div>

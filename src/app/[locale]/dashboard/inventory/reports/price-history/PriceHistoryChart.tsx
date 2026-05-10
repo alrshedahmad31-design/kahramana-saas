@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import { colors } from '@/lib/design-tokens'
 
-const LINE_COLORS = [colors.brand.gold, colors.brand.success, colors.brand.error, colors.brand.muted, colors.brand.border]
+const LINE_COLORS = [colors.gold, colors.success, colors.error, colors.muted, colors.border]
 
 interface HistoryRow {
   id: string

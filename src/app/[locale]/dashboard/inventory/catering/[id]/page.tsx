@@ -86,7 +86,7 @@ export default async function CateringOrderDetailPage({ params }: PageProps) {
       {/* Status stepper */}
       <CateringStatusStepper
         currentStatus={order.status as CateringOrderStatus}
-        isAr={isAr}
+        locale={locale}
       />
 
       {/* Edit form */}
@@ -96,7 +96,7 @@ export default async function CateringOrderDetailPage({ params }: PageProps) {
         branchId={order.branch_id}
         packages={packages}
         prefix={prefix}
-        isAr={isAr}
+        locale={locale}
       />
 
       {/* Ingredients drawer — only for confirmed / in-progress orders */}
@@ -104,7 +104,7 @@ export default async function CateringOrderDetailPage({ params }: PageProps) {
         <CateringIngredientsDrawer
           orderId={order.id}
           snapshot={order.ingredients_snapshot ?? null}
-          isAr={isAr}
+          locale={locale}
         />
       )}
     </div>

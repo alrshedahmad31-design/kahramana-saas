@@ -91,6 +91,15 @@ export default async function PODetailPage({ params }: PageProps) {
     cancelled: 'ملغي',
   }
 
+  const STATUS_LABEL_EN: Record<string, string> = {
+    draft:     'Draft',
+    sent:      'Sent',
+    confirmed: 'Confirmed',
+    partial:   'Partially received',
+    received:  'Received',
+    cancelled: 'Cancelled',
+  }
+
   const STATUS_BADGE: Record<string, string> = {
     draft:     'bg-brand-surface-2 text-brand-muted',
     sent:      'bg-blue-500/10 text-blue-400',
@@ -117,7 +126,7 @@ export default async function PODetailPage({ params }: PageProps) {
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium ${STATUS_BADGE[typedPO.status] ?? 'bg-brand-surface-2 text-brand-muted'}`}
             >
-              {isAr ? STATUS_LABEL_AR[typedPO.status] ?? typedPO.status : typedPO.status}
+              {(isAr ? STATUS_LABEL_AR : STATUS_LABEL_EN)[typedPO.status] ?? typedPO.status}
             </span>
           </div>
           <div className="flex flex-wrap gap-4 mt-1">

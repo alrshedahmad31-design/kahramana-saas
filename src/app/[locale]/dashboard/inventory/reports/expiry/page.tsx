@@ -1,9 +1,11 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveBranches } from '@/lib/branches/queries'
 import { translateUnit } from '@/lib/inventory/units'
+import type { ExpiryReportRow } from '@/lib/supabase/custom-types'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
@@ -59,7 +61,7 @@ export default async function ExpiryReportPage({ params, searchParams }: PagePro
   if (!branchId) {
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
-        <ReportHeader title={t('title')} locale={locale} />
+        <ReportHeader title={t('title')} />
         <EmptyReport title={t('noBranch')} description={t('selectBranch')} />
       </div>
     )
@@ -81,7 +83,6 @@ export default async function ExpiryReportPage({ params, searchParams }: PagePro
       <ReportHeader
         title={t('title')}
         description={t('desc', { days })}
-        locale={locale}
       />
 
       {/* Filters */}
@@ -124,7 +125,7 @@ export default async function ExpiryReportPage({ params, searchParams }: PagePro
         />
       ) : (
         <div className="space-y-8">
-          {(Object.entries(grouped) as [string, any[]][]).map(([group, items]) => {
+          {(Object.entries(grouped) as [string, ExpiryReportRow[]][]).map(([group, items]) => {
             if (items.length === 0) return null
             
             return (

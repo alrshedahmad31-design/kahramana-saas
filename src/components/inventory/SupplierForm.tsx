@@ -13,6 +13,7 @@ interface SupplierRow {
   reliability_pct: number | null
   payment_terms: string | null
   is_active: boolean
+  notes?: string | null
   created_at: string
 }
 

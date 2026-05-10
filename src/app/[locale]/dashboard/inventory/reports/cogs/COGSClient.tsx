@@ -203,7 +203,7 @@ export default function COGSClient({ dishes, locale }: { dishes: DishCogsRow[]; 
           </div>
         </div>
         <div className="ms-auto">
-          <ExportButton rows={exportRows} columns={exportColumns} filename={t('exportFilename')} exportAction={exportToExcel} locale={locale} />
+          <ExportButton rows={exportRows} columns={exportColumns} filename={t('exportFilename')} exportAction={exportToExcel} />
         </div>
       </div>
 

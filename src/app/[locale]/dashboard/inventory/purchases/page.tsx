@@ -26,6 +26,15 @@ const STATUS_LABEL_AR: Record<string, string> = {
   cancelled: 'ملغي',
 }
 
+const STATUS_LABEL_EN: Record<string, string> = {
+  draft:     'Draft',
+  sent:      'Sent',
+  confirmed: 'Confirmed',
+  partial:   'Partially received',
+  received:  'Received',
+  cancelled: 'Cancelled',
+}
+
 export default async function PurchasesPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   const { status, branch, page } = await searchParams
@@ -144,7 +153,9 @@ export default async function PurchasesPage({ params, searchParams }: PageProps)
       <div className="flex gap-2 flex-wrap">
         {(['all', 'draft', 'sent', 'confirmed', 'partial', 'received', 'cancelled'] as const).map(
           (s) => {
-            const label = s === 'all' ? (isAr ? 'الكل' : 'All') : (isAr ? STATUS_LABEL_AR[s] : s)
+            const label = s === 'all'
+              ? (isAr ? 'الكل' : 'All')
+              : ((isAr ? STATUS_LABEL_AR : STATUS_LABEL_EN)[s] ?? s)
             const isActive = (status ?? 'all') === s
             return (
               <Link

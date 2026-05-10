@@ -36,7 +36,6 @@ export default async function COGSPage({ params }: PageProps) {
       <ReportHeader
         title={t('title')}
         description={t('desc')}
-        locale={locale}
       />
       {safeData.length === 0 ? (
         <EmptyReport

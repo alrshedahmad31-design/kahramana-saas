@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import type {
@@ -27,11 +28,30 @@ function severityBadge(severity: string) {
   return 'bg-brand-gold/10 text-brand-gold'
 }
 
+const KNOWN_ALERT_TYPES = new Set([
+  'low_stock', 'out_of_stock', 'high_waste', 'variance_warning', 'variance_critical',
+  'unmapped_item', 'expiring_soon', 'expired', 'theft_suspected', 'po_overdue',
+  'cost_spike', 'overstock', 'dead_stock', 'auto_po_generated', 'waste_escalated',
+  'count_variance_high', 'prep_low_stock', 'catering_stock_insufficient',
+])
+
+function alertParams(alert: InventoryAlertRow): Record<string, string> {
+  const md = alert.metadata ?? {}
+  const slug = (md as { menu_item_slug?: unknown }).menu_item_slug
+  const name = (md as { ingredient_name?: unknown; name?: unknown }).ingredient_name ?? (md as { name?: unknown }).name
+  return {
+    slug: typeof slug === 'string' ? slug : '',
+    name: typeof name === 'string' ? name : '',
+    type: alert.alert_type,
+  }
+}
+
 export default async function InventoryOverviewPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   const { branch } = await searchParams
   const isAr = locale !== 'en'
   const prefix = locale === 'en' ? '/en' : ''
+  const t = await getTranslations({ locale, namespace: 'inventory.alerts' })
 
   const user = await getSession()
   if (!user) redirect(`${prefix}/login`)
@@ -271,23 +291,28 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
       {alerts.length > 0 && (
         <div>
           <h2 className="font-cairo text-lg font-black text-brand-text mb-3">
-            {isAr ? 'تنبيهات المخزون' : 'Inventory Alerts'}
+            {t('title')}
           </h2>
           <div className="flex flex-col gap-2">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="flex items-start gap-3 rounded-xl border border-brand-border bg-brand-surface p-4"
-              >
-                <span className={`mt-0.5 inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium ${severityBadge(alert.severity)}`}>
-                  {alert.severity}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-satoshi text-sm text-brand-text">{alert.message}</p>
-                  <p className="font-satoshi text-xs text-brand-muted mt-0.5">{formatDate(alert.created_at)}</p>
+            {alerts.map((alert) => {
+              const messageText = KNOWN_ALERT_TYPES.has(alert.alert_type)
+                ? t(`type.${alert.alert_type}` as 'type.unmapped_item', alertParams(alert))
+                : t('type_fallback', { type: alert.alert_type })
+              return (
+                <div
+                  key={alert.id}
+                  className="flex items-start gap-3 rounded-xl border border-brand-border bg-brand-surface p-4"
+                >
+                  <span className={`mt-0.5 inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium ${severityBadge(alert.severity)}`}>
+                    {t(`severity.${alert.severity}` as 'severity.critical')}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-satoshi text-sm text-brand-text">{messageText}</p>
+                    <p className="font-satoshi text-xs text-brand-muted mt-0.5">{formatDate(alert.created_at)}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

@@ -1123,6 +1123,81 @@
     "handedSuccessfully": "تم تسليم النقد بنجاح",
     "noCashOrders": "لا توجد طلبات نقدية اليوم"
   },
+  "delivery": {
+    "boardTitle": "لوحة التوصيل",
+    "activeOrders": "الطلبات النشطة",
+    "noActiveOrders": "لا توجد طلبات نشطة",
+    "late": "متأخر",
+    "guest": "عميل",
+    "itemsCount": "{count} صنف",
+    "minutesShort": "د",
+    "fleet": {
+      "title": "أسطول السائقين",
+      "noDrivers": "لا يوجد سائقون متاحون",
+      "completedShort": "مكتملة",
+      "dailyRating": "تقييم اليوم",
+      "assignOrder": "تعيين طلب",
+      "viewRoute": "عرض مسار"
+    },
+    "header": {
+      "viewKanban": "كانبان",
+      "viewMap": "خريطة",
+      "viewList": "قائمة",
+      "filterPeriodToday": "اليوم",
+      "filterPeriodYesterday": "الأمس",
+      "filterPeriod7d": "آخر ٧ أيام",
+      "filterAllBranches": "كل الفروع",
+      "filterAllDrivers": "كل السائقين",
+      "filterAllStatuses": "كل الحالات",
+      "branchRiffa": "الرفاع",
+      "branchQallali": "قلالي",
+      "assign": "تعيين",
+      "assignDriver": "تعيين سائق",
+      "mute": "كتم الصوت",
+      "unmute": "تشغيل الصوت"
+    },
+    "drawer": {
+      "customerSection": "بيانات العميل",
+      "itemsSection": "الأصناف المطلوبة",
+      "driverSection": "السائق المعيّن",
+      "timelineSection": "مسار الحالات",
+      "noteLabel": "ملاحظة:",
+      "loadingItems": "جاري التحميل…",
+      "total": "المجموع",
+      "currency": "د.ب",
+      "change": "تغيير",
+      "assignDriverBtn": "+ تعيين سائق",
+      "inPickupPool": "الطلب متاح في قائمة الاستلام",
+      "driverWillClaim": "سيقوم أحد السائقين باستلامه قريباً",
+      "assignManually": "تعيين سائق يدوياً؟",
+      "changeDriverBtn": "تغيير السائق",
+      "cancelDelivery": "إلغاء التوصيل",
+      "confirmDelivery": "تأكيد التسليم"
+    },
+    "timeline": {
+      "accepted": "استلام الطلب",
+      "preparing": "قيد التحضير",
+      "ready": "جاهز للاستلام",
+      "out_for_delivery": "خرج للتوصيل",
+      "delivered": "تم التوصيل"
+    },
+    "status": {
+      "accepted": "جديد",
+      "new": "جديد",
+      "preparing": "قيد التحضير",
+      "ready": "جاهز",
+      "out_for_delivery": "يُوصَّل",
+      "delivered": "مكتمل",
+      "completed": "مكتمل"
+    },
+    "driverStatus": {
+      "available": "متاح",
+      "delivering": "يُوصِّل",
+      "busy": "مشغول",
+      "returning": "عائد",
+      "offline": "غير متصل"
+    }
+  },
   "loyalty": {
     "totalOrders": "إجمالي الطلبات",
     "totalSpent": "إجمالي الإنفاق",
@@ -1192,6 +1267,35 @@
       "bag": "كيس",
       "box": "صندوق",
       "batch": "دفعة"
+    },
+    "alerts": {
+      "title": "تنبيهات المخزون",
+      "severity": {
+        "critical": "حرج",
+        "warning": "تحذير",
+        "info": "معلومة"
+      },
+      "type": {
+        "low_stock": "مخزون منخفض: {name}",
+        "out_of_stock": "نفاد المخزون: {name}",
+        "high_waste": "هدر مرتفع: {name}",
+        "variance_warning": "فرق في الجرد: {name}",
+        "variance_critical": "فرق جرد حرج: {name}",
+        "unmapped_item": "لا توجد وصفة مرتبطة بـ: {slug}",
+        "expiring_soon": "قارب على الانتهاء: {name}",
+        "expired": "منتهي الصلاحية: {name}",
+        "theft_suspected": "اشتباه في سرقة: {name}",
+        "po_overdue": "طلب شراء متأخر",
+        "cost_spike": "ارتفاع مفاجئ في التكلفة: {name}",
+        "overstock": "فائض في المخزون: {name}",
+        "dead_stock": "مخزون راكد: {name}",
+        "auto_po_generated": "تم إنشاء طلب شراء تلقائياً",
+        "waste_escalated": "تم تصعيد هدر للمراجعة",
+        "count_variance_high": "فرق كبير في الجرد",
+        "prep_low_stock": "مخزون منخفض لصنف تحضير: {name}",
+        "catering_stock_insufficient": "مخزون غير كافٍ للتموين"
+      },
+      "type_fallback": "{type}"
     },
     "valuation": {
       "title": "تقييم المخزون",

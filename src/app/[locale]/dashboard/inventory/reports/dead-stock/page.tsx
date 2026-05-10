@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
@@ -7,19 +8,18 @@ import { translateUnit } from '@/lib/inventory/units'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
+import DeadStockBarChart from './DeadStockChart'
 
 interface DeadStockRow {
   ingredient_id: string
   name_ar: string
   name_en: string
+  unit: string | null
   on_hand: number
   last_movement_at: string | null
   days_inactive: number
   stock_value_bhd: number
 }
-import StatCard from '@/components/inventory/reports/StatCard'
-import EmptyReport from '@/components/inventory/reports/EmptyReport'
-import DeadStockBarChart from './DeadStockChart'
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -55,7 +55,7 @@ export default async function DeadStockPage({ params, searchParams }: PageProps)
   if (!branchId) {
     return (
       <div className="space-y-6">
-        <ReportHeader title={isAr ? 'المخزون الراكد' : 'Dead Stock'} locale={locale} />
+        <ReportHeader title={isAr ? 'المخزون الراكد' : 'Dead Stock'} />
         <EmptyReport title={isAr ? 'لا يوجد فرع' : 'No branch'} description={isAr ? 'الرجاء اختيار فرع' : 'Please select a branch'} />
       </div>
     )
@@ -79,7 +79,6 @@ export default async function DeadStockPage({ params, searchParams }: PageProps)
       <ReportHeader
         title={t('title')}
         description={t('desc', { days })}
-        locale={locale}
       />
 
       {/* Filters */}

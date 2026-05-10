@@ -12,7 +12,7 @@ interface Branch {
 interface Ingredient {
   id: string
   name_ar: string
-  name_en: string
+  name_en?: string
   unit: string
 }
 
@@ -51,8 +51,8 @@ export default function TransferForm({
   const filteredIngredients = useMemo(() => {
     if (!ingredientSearch.trim()) return ingredients
     const q = ingredientSearch.toLowerCase()
-    return ingredients.filter((i) => 
-      i.name_ar.includes(q) || i.name_en.toLowerCase().includes(q)
+    return ingredients.filter((i) =>
+      i.name_ar.includes(q) || (i.name_en?.toLowerCase().includes(q) ?? false)
     )
   }, [ingredients, ingredientSearch])
 

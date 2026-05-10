@@ -182,7 +182,10 @@ export interface IngredientRow {
 
 export interface SupplierRow {
   id: string; name_ar: string; name_en: string|null; phone: string|null
-  email: string|null; is_active: boolean; created_at: string
+  email: string|null; address: string|null; lead_time_days: number|null
+  payment_terms: 'cash'|'net7'|'net14'|'net30'|'net60'|null
+  min_order_bhd: number|null; reliability_pct: number|null
+  is_active: boolean; notes: string|null; created_at: string
 }
 
 export interface PrepItemRow {
@@ -239,7 +242,7 @@ export interface LowStockAlert {
 export interface ExpiryReportRow {
   ingredient_id: string; name_ar: string; name_en: string; lot_id: string
   lot_number: string|null; quantity_remaining: number; expires_at: string
-  days_remaining: number; stock_value_bhd: number
+  days_remaining: number; stock_value_bhd: number; unit?: string|null
 }
 
 export interface DishCogsRow {

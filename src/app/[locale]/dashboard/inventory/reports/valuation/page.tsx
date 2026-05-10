@@ -89,7 +89,7 @@ export default async function ValuationPage({ params, searchParams }: PageProps)
       <ReportHeader
         title={t('title')}
         description={t('desc')}
-        actions={<ExportButton rows={exportRows} columns={exportColumns} filename="inventory-valuation" exportAction={exportToExcel} locale={locale} />}
+        actions={<ExportButton rows={exportRows} columns={exportColumns} filename="inventory-valuation" exportAction={exportToExcel} />}
       />
 
       {/* Branch filter */}

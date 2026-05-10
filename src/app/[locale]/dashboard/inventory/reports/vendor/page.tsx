@@ -52,8 +52,7 @@ export default async function VendorPerformancePage({ params }: PageProps) {
       <div className="space-y-6 animate-in fade-in duration-500">
         <ReportHeader 
           title={t('title')} 
-          description={t('desc')}
-          locale={locale} 
+          description={t('desc')} 
         />
         <EmptyReport
           title={t('emptyTitle')}
@@ -77,7 +76,6 @@ export default async function VendorPerformancePage({ params }: PageProps) {
       <ReportHeader
         title={t('title')}
         description={t('desc')}
-        locale={locale}
       />
 
       {/* Stats */}

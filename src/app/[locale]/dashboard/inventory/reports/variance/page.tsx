@@ -48,7 +48,6 @@ export default async function VariancePage({ params }: PageProps) {
       <ReportHeader
         title={t('title')}
         description={t('desc')}
-        locale={locale}
       />
       {!rows || rows.length === 0 ? (
         <EmptyReport
