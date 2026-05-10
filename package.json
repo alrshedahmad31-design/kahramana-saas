@@ -23,6 +23,7 @@
     "seed:staff:dry": "npx tsx scripts/seed-staff.ts --dry"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.5.2",
     "@react-google-maps/api": "^2.20.8",
     "@sentry/nextjs": "^10.52.0",
     "@supabase/ssr": "^0.10.2",

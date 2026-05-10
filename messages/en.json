@@ -872,6 +872,7 @@
     "success": "Your message has been sent successfully! We'll get back to you soon.",
     "error": "An error occurred while sending. Please try again.",
     "rateLimit": "Too many messages — please wait an hour before trying again.",
+    "captchaError": "Please complete the human verification before submitting.",
     "contactInfo": "Contact Information",
     "followUs": "Follow Us",
     "generalEnquiries": "General Enquiries",

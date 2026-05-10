@@ -1,13 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { z } from 'zod'
 import { BRANCH_LIST } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import LuxuryIcon from '@/components/icons/LuxuryIcon'
 import { submitContactMessage } from '@/app/[locale]/contact/actions'
 import { gtag } from '@/lib/gtag'
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 const schema = z.object({
   name:      z.string().min(2).max(100),
@@ -30,8 +33,10 @@ export default function ContactForm() {
     name: '', email: '', phone: '', branch_id: '', message: '',
   })
   const [honeypot, setHoneypot] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileInstance | null>(null)
   const [errors,   setErrors]   = useState<FieldErrors>({})
-  const [status,   setStatus]   = useState<'idle' | 'sending' | 'success' | 'error' | 'rate_limit'>('idle')
+  const [status,   setStatus]   = useState<'idle' | 'sending' | 'success' | 'error' | 'rate_limit' | 'captcha'>('idle')
 
   function update(field: keyof FormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -53,19 +58,31 @@ export default function ContactForm() {
       return
     }
 
+    // Block submit if Turnstile is configured but no token yet.
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setStatus('captcha')
+      return
+    }
+
     setStatus('sending')
 
     const response = await submitContactMessage({
-      name:      result.data.name,
-      email:     result.data.email,
-      phone:     result.data.phone ?? '',
-      branch_id: result.data.branch_id ?? '',
-      message:   result.data.message,
-      website:   honeypot,
+      name:           result.data.name,
+      email:          result.data.email,
+      phone:          result.data.phone ?? '',
+      branch_id:      result.data.branch_id ?? '',
+      message:        result.data.message,
+      website:        honeypot,
+      turnstileToken,
     })
 
     if (!response.success) {
-      setStatus(response.error === 'rate_limit' ? 'rate_limit' : 'error')
+      // Reset Turnstile on any failure — token is single-use.
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
+      if (response.error === 'rate_limit')   setStatus('rate_limit')
+      else if (response.error === 'captcha') setStatus('captcha')
+      else                                    setStatus('error')
       return
     }
 
@@ -188,8 +205,29 @@ export default function ContactForm() {
         />
       </Field>
 
+      {/* Cloudflare Turnstile — only renders if site key is configured.
+          Honeypot remains in place above as a complementary defence. */}
+      {TURNSTILE_SITE_KEY && (
+        <div className="flex justify-center">
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={TURNSTILE_SITE_KEY}
+            onSuccess={(token) => {
+              setTurnstileToken(token)
+              if (status === 'captcha') setStatus('idle')
+            }}
+            onError={() => setTurnstileToken('')}
+            onExpire={() => setTurnstileToken('')}
+            options={{
+              theme:    'dark',
+              language: isAr ? 'ar' : 'en',
+            }}
+          />
+        </div>
+      )}
+
       {/* Server errors */}
-      {(status === 'error' || status === 'rate_limit') && (
+      {(status === 'error' || status === 'rate_limit' || status === 'captcha') && (
         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
           <p
             role="alert"
@@ -197,7 +235,9 @@ export default function ContactForm() {
                        px-6 py-4 font-almarai text-sm text-brand-error flex items-center gap-3"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-brand-error animate-pulse" />
-            {status === 'rate_limit' ? t('rateLimit') : t('error')}
+            {status === 'rate_limit' ? t('rateLimit')
+              : status === 'captcha' ? t('captchaError')
+              : t('error')}
           </p>
         </div>
       )}

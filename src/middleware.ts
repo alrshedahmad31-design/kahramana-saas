@@ -28,7 +28,9 @@ function buildCsp(nonce: string): string {
   const isDev = process.env.NODE_ENV !== 'production'
   const SCRIPT_HOSTS =
     'https://www.googletagmanager.com https://www.google-analytics.com ' +
-    'https://www.clarity.ms https://cdn.sanity.io https://va.vercel-scripts.com'
+    'https://www.clarity.ms https://cdn.sanity.io https://va.vercel-scripts.com ' +
+    // Cloudflare Turnstile (CAPTCHA) — script + iframe (frame-src below).
+    'https://challenges.cloudflare.com'
 
   const scriptSrc = isDev
     // Dev: permissive for HMR + inline framework scripts
@@ -43,13 +45,18 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://cdn.sanity.io https://images.unsplash.com https://*.google.com https://*.tile.openstreetmap.org https://*.openstreetmap.org",
     "font-src 'self'",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+    // Sentry endpoints added so client SDK can fall back to direct ingest if
+    // the /monitoring tunnel route is ever blocked. Wildcards cover both the
+    // generic ingest hosts and the US region (current DSN).
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://sentry.io",
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "frame-src 'self' https://www.google.com",
+    // Turnstile renders its challenge UI inside an iframe; without this entry
+    // the CAPTCHA widget would render blank in production.
+    "frame-src 'self' https://www.google.com https://challenges.cloudflare.com",
     "upgrade-insecure-requests",
   ].join('; ')
 }

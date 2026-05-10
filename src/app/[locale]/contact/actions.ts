@@ -12,15 +12,52 @@ const schema = z.object({
   message:   z.string().min(10).max(2000),
 })
 
-type Result = { success: true } | { success: false; error: 'rate_limit' | 'server_error' }
+type Result = { success: true } | { success: false; error: 'rate_limit' | 'server_error' | 'captcha' }
+
+const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v1/siteverify'
+
+async function verifyTurnstile(token: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY
+  // Soft-launch: if the secret isn't configured, fall back to honeypot only.
+  // This prevents the form from being permanently broken until env vars are
+  // set in Vercel. Turnstile becomes mandatory the moment the secret lands.
+  if (!secret) return true
+  if (!token) return false
+
+  try {
+    const headersList = await headers()
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim()
+            ?? headersList.get('x-real-ip')
+            ?? undefined
+
+    const body = new URLSearchParams({ secret, response: token })
+    if (ip) body.set('remoteip', ip)
+
+    const res = await fetch(TURNSTILE_VERIFY_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    })
+    if (!res.ok) return false
+    const data = (await res.json()) as { success?: boolean }
+    return data.success === true
+  } catch {
+    return false
+  }
+}
 
 export async function submitContactMessage(payload: {
   name: string; email: string; phone: string
   branch_id: string; message: string; website: string
+  turnstileToken?: string
 }): Promise<Result> {
 
   // Honeypot — bots fill this; real users leave it empty
   if (payload.website) return { success: true }
+
+  // Cloudflare Turnstile — verifies a real human if configured.
+  const captchaOk = await verifyTurnstile(payload.turnstileToken ?? '')
+  if (!captchaOk) return { success: false, error: 'captcha' }
 
   const result = schema.safeParse(payload)
   if (!result.success) return { success: false, error: 'server_error' }

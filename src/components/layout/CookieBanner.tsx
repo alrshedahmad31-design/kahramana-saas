@@ -15,12 +15,14 @@ export function CookieBanner() {
 
   const accept = () => {
     localStorage.setItem('cookie-consent', 'accepted')
+    // Notify <Analytics> (in layout) so GA4 + Clarity inject without a reload.
+    window.dispatchEvent(new Event('cookie-consent-updated'))
     setVisible(false)
   }
 
   if (!visible) return null
 
-  const privacyHref = isAr ? '/privacy' : '/en/privacy'
+  const privacyHref = isAr ? '/privacy-policy' : '/en/privacy-policy'
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-50 p-4 bg-brand-surface border-t border-brand-border shadow-2xl">

@@ -67,6 +67,18 @@ const nextConfig: NextConfig = {
         destination: 'https://kahramanat.com/:path*',
         permanent: true,
       },
+      // /privacy consolidated into /privacy-policy (page.tsx removed).
+      // CookieBanner used to point at /privacy; both legacy paths resolve here.
+      {
+        source: '/privacy',
+        destination: '/privacy-policy',
+        permanent: true,
+      },
+      {
+        source: '/:locale(ar|en)/privacy',
+        destination: '/:locale/privacy-policy',
+        permanent: true,
+      },
       // NOTE: kahramana.vercel.app → kahramanat.com redirect intentionally omitted.
       // Add it back at production launch by setting NEXT_PUBLIC_SITE_URL=https://kahramanat.com
       // in Vercel production env vars and re-enabling this redirect.
