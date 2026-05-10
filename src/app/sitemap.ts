@@ -32,6 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           ar: `${BASE_URL}${path}`,
           en: `${BASE_URL}/en${path}`,
+          'x-default': `${BASE_URL}${path}`,
         },
       },
     }))
@@ -49,6 +50,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
           languages: {
             ar: `${BASE_URL}/branches/${branch.id}`,
             en: `${BASE_URL}/en/branches/${branch.id}`,
+            'x-default': `${BASE_URL}/branches/${branch.id}`,
           },
         },
       }))
@@ -65,6 +67,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           ar: `${BASE_URL}/menu/${cat.slug}`,
           en: `${BASE_URL}/en/menu/${cat.slug}`,
+          'x-default': `${BASE_URL}/menu/${cat.slug}`,
         },
       },
     }))
@@ -81,6 +84,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           ar: `${BASE_URL}/menu/item/${item.slug}`,
           en: `${BASE_URL}/en/menu/item/${item.slug}`,
+          'x-default': `${BASE_URL}/menu/item/${item.slug}`,
         },
       },
     }))
