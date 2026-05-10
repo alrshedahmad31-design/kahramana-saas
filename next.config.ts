@@ -72,7 +72,7 @@ const nextConfig: NextConfig = {
       {
         source: '/privacy',
         destination: '/privacy-policy',
-        permanent: true,
+        statusCode: 301,
       },
       {
         source: '/:locale(ar|en)/privacy',
@@ -83,6 +83,33 @@ const nextConfig: NextConfig = {
       // Add it back at production launch by setting NEXT_PUBLIC_SITE_URL=https://kahramanat.com
       // in Vercel production env vars and re-enabling this redirect.
     ]
+  },
+
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/branches',
+          destination: '/ar/branches',
+        },
+        {
+          source: '/branches/:path*',
+          destination: '/ar/branches/:path*',
+        },
+        {
+          source: '/privacy-policy',
+          destination: '/ar/privacy-policy',
+        },
+        {
+          source: '/terms',
+          destination: '/ar/terms',
+        },
+        {
+          source: '/refund-policy',
+          destination: '/ar/refund-policy',
+        },
+      ],
+    }
   },
 
   images: {
