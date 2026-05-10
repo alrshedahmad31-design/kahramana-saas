@@ -3957,6 +3957,60 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_entries: {
+        Row: {
+          branch_id: string
+          created_at: string
+          guest_name: string
+          id: string
+          notes: string | null
+          notified_at: string | null
+          party_size: number
+          phone: string
+          seated_at: string | null
+          status: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          guest_name: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          party_size: number
+          phone: string
+          seated_at?: string | null
+          status?: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          guest_name?: string
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          party_size?: number
+          phone?: string
+          seated_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_entries_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_entries_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
+      }
       waste_log: {
         Row: {
           approved_at: string | null

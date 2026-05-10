@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-10 (session 87 — Analytics Enhancement (Gemini): Labor Cost vs Revenue gauge + Menu Engineering Matrix. Verification + fixes (Claude): migration 097 reworked — UUID→TEXT branch_id (matches project convention), GRANT EXECUTE to authenticated, total_hours fallback via clock_out-clock_in, TEMP TABLE→CTE refactor, LEFT→INNER JOIN. Legacy UUID overloads dropped. Types regenerated. queries.ts as-any casts removed. tsc pass.)",
+    "last_updated":  "2026-05-11 (session 88 — Waitlist Management shipped: migration 099 waitlist_entries applied to linked Supabase, types regenerated, /dashboard/waitlist live UI + modal + realtime channel + WhatsApp notify flow added, dashboard nav/RBAC/i18n updated, tsc/type-check pass.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",
@@ -16,7 +16,7 @@
                        "pending_db_migrations":  [
                                                      "090_extend_staff_role_waiter.sql — adds 'waiter' to staff_role ENUM. On disk; apply immediately before running scripts/seed-staff.ts so the waiter accounts in STAFF_ROSTER can be inserted into staff_basic. Safe no-op until any staff row uses role='waiter'."
                                                  ],
-                       "migration_status":  "091 APPLIED 2026-05-09 — rpc_create_order PRICE_MISMATCH guard now bypasses lines with selected_size or selected_variant (in addition to existing bypasses for modifiers + price_bhd IS NULL). Unblocks every flow that uses VariantPicker: customer checkout, POS, QR table, waiter. Server actions (resolveCheckoutMenuItemPrice in src/lib/menu.ts) remain the canonical price validators for size/variant lines.",
+                       "migration_status":  "099 APPLIED 2026-05-11 — waitlist_entries table added with branch-scoped RLS, status lifecycle, Bahrain phone check, performance index, realtime publication, and authenticated grants. /dashboard/waitlist uses server actions plus supabase.channel() live refresh.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -51,7 +51,8 @@
                                                      "087_dine_in_order_type.sql — applied 2026-05-09 (orders.order_type CHECK now allows 'dine_in' alongside 'delivery'/'pickup' — required by waiter + QR flows)",
                                                      "088_menu_db_first_fix.sql — applied 2026-05-09 (menu_option_groups FK from menu_items_sync(slug) to menu_items(id) ON DELETE CASCADE; registered in schema_migrations)",
                                                      "089_kds_rls_hardening.sql — applied 2026-05-09 (branch-scoped RLS on order_item_station_status, UNIQUE(item_id), denormalised branch_id for realtime, created_at for SLA timer baseline, BRANCH_MISMATCH defence-in-depth in update_order_item_station_status RPC)",
-                                                     "091_rpc_price_check_size_variant_aware.sql — applied 2026-05-09 (rpc_create_order PRICE_MISMATCH bypass extended: skip strict equality when line has selected_size or selected_variant; trust resolveCheckoutMenuItemPrice for additive size/variant pricing shipped in commit b65fe6c)"
+                                                     "091_rpc_price_check_size_variant_aware.sql — applied 2026-05-09 (rpc_create_order PRICE_MISMATCH bypass extended: skip strict equality when line has selected_size or selected_variant; trust resolveCheckoutMenuItemPrice for additive size/variant pricing shipped in commit b65fe6c)",
+                                                     "099_waitlist_entries.sql — applied 2026-05-11 (waitlist_entries table with branch-scoped RLS, status lifecycle waiting/notified/seated/cancelled, Bahrain phone validation, realtime publication, authenticated grants)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
