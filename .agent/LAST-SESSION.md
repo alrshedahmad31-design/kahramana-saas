@@ -1,8 +1,63 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-> **Session**: 84 (Claude Code track)
+> **Session**: 85 (Claude Code track)
 > **Date**: 2026-05-10
-> **Focus**: Multi-audit hardening — dashboard P0/P1/P2, orders security + concurrency + payment-aware cancels, KDS taxonomy + RLS/RPC lockdown, driver mutation scope + delivery filter parity. i18n cleanup (sidebar nav, prep items, par levels, waste-escalation keys, AR alert text). Build + TSC clean throughout.
+> **Focus**: Tech-debt close — Supabase types regenerated post-093, all four `as never` casts removed from kds/menu actions, waiter dine-in E2E re-verified against current main (post-094/095 RLS lockdown). Conversation master-notes session-history corrections.
+
+## Session 85 deliverables
+
+### Types regen + cast removal
+- **`src/lib/supabase/types.ts`** — regenerated via `npx supabase gen types typescript --linked --schema public`. The `Database["public"]["Enums"]["kds_station"]` union now includes the migration-093 additions (`fryer`, `cold`, `unassigned`) alongside legacy values (`grill | fry | salads | desserts | drinks | packing | shawarma | bakery | appetizer_drinks | main`). Working-tree diff vs the post-089 baseline was minimal because the canonical TS `KDSStation` union in `lib/supabase/custom-types.ts:19` already enumerated the same set.
+- **`dashboard/kds/actions.ts:219`** — removed `station as never` cast on `.eq('station', station)` (was the only cast in this file; LAST-SESSION.md from session 84 said "two" but only one was on disk). Removed the 5-line comment block explaining the workaround.
+- **`dashboard/menu/actions.ts`** — removed all three casts:
+  - line 190 `upsert(allItems as never, …)` → `upsert(allItems, …)` + 3-line comment block
+  - line 256 `insert({…} as never)` → `insert({…})` (createMenuItem)
+  - line 318 `update({…} as never)` → `update({…})` (updateMenuItem)
+- **Verification**: `npx tsc --noEmit` → 0 errors.
+- Commits: `6a09f59` (kds + menu upsert + types regen) and `ec9f5e6` (remaining 2 menu casts — committed by Ahmed and pushed).
+
+### E2E re-verification post-094/095
+- Ran `npx playwright test tests/e2e/waiter/dine-in.spec.ts --headed` against `http://localhost:3000` on current `master` (post-migration-095 + RLS tighten).
+- Result: `1 passed (37.0s)` — actual test 15.3s, plus globalSetup/globalTeardown for 6 e2e users.
+- Confirms migrations 094 (KDS RLS role lockdown + canonical-5 trigger CASE + bump_station_order RPC) and 095 (cashier/kitchen removed from orders UPDATE RLS) did not regress the waiter dine-in flow with size+variant pricing (the original PRICE_MISMATCH-bypass scenario from migration 091).
+
+### Conversation notes maintenance
+- **`kahramana-conversation-master-notes.md`** — five small corrections committed in `6a09f59`:
+  1. Header session label: 82 → 84.
+  2. Migration 090 row in the migrations table: ✅ → ⏳ on disk (correctly reflects `phase-state.json:17`, which still lists 090 as pending until the seeder runs).
+  3. Session-history table: added rows for sessions 83 and 84.
+  4. Session 80 row description corrected to KDS hardening sprint (commit 215d9f1).
+  5. Session 79 description set to the commit reference (215d9f1, +671/−110 across 10 files); session 82 description set to "types.ts regen, additive pricing fix (VariantPicker), migration 088 applied, QA checklist (150 items)".
+- Note: section-history descriptions for sessions 79/80 and 80/82 are now near-duplicates of each other in the file. Flagged in conversation; not corrected this session — would need a fuller rewrite of the session-by-session table.
+
+### Verification (full session)
+- `npx tsc --noEmit` → 0 errors (post-cast-removal, against regenerated types).
+- E2E: 1/1 PASS, 15.3s actual / 37.0s with setup/teardown.
+- Build: not re-run this session — last green build was session 84 (`540 pages, 0 errors`).
+
+### Decisions / non-obvious notes
+- **Cast count reconciliation**: LAST-SESSION.md from session 84 said "two `as never` casts" pending types regen, but listed locations summed to four (`kds/actions.ts:218` + `menu/actions.ts:187/256/318`). All four were workarounds for the same migration-093 enum lag and removable in one pass once types were regenerated.
+- **Supabase CLI session login**: `npx supabase gen types typescript --linked` succeeded without an explicit interactive login this session — the local CLI session token was already valid. CLI version 2.98.2.
+- **Two-commit cast removal**: `6a09f59` initially missed two of the four cast removals (line 256 + line 318 in `menu/actions.ts`); `ec9f5e6` is the clean follow-up. Working tree is clean and pushed.
+- **types.ts diff was empty against committed baseline**: the previous regen (`b8ee91e`, post-089) already captured the post-093 enum additions, suggesting the post-093 types were either regenerated and committed earlier than the casts were removed, or the column types were stable across migrations 089→095. Either way, the current types.ts matches production exactly.
+
+## Carry-overs into next session
+
+**Still blocked on Ahmed**: 13 real email addresses for `scripts/seed-staff.ts:54-79`. Once received, the unchanged sequence is:
+1. Paste emails into the script.
+2. Apply migration 090 (`090_extend_staff_role_waiter.sql`) via SQL Editor.
+3. Register in `schema_migrations` if applied via SQL Editor.
+4. `npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts` (regen — should add `'waiter'` to `staff_role` enum).
+5. `npx tsc --noEmit` — expect 0 errors.
+6. `npm run seed:staff:dry` — sanity check.
+7. `npm run seed:staff` — invites + inserts.
+8. Each invitee opens the magic-link email and lands logged in.
+9. Update `.agent/phase-state.json`: move 090 to `applied_db_migrations`; add `production_staff_seeded` flag in `external_dependencies`.
+
+Other open items (no movement this session):
+- Refund modal for `code === 'refund_required'` (introduced session 84) — UI still surfaces via existing toast; dedicated modal not yet built.
+- Legacy `kds_queue` table — still a candidate for post-launch cleanup. `order_item_station_status` is canonical.
+- Pre-launch QA master checklist `docs/qa/pre-launch-checklist.md` — not re-run end-to-end this session.
 
 ## Session 84 deliverables
 
