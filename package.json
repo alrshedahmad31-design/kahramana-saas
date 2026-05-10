@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
+    "@sentry/nextjs": "^10.52.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "@types/leaflet": "^1.9.21",
