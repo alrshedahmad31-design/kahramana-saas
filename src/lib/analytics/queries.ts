@@ -137,6 +137,27 @@ export interface MenuReportRow {
   order_count:       number
 }
 
+export interface LaborCostMetrics {
+  total_revenue:         number
+  total_labor_cost:      number
+  labor_cost_percentage: number
+  order_count:           number
+  staff_count:           number
+}
+
+export interface AnalyticsMenuEngineeringRow {
+  slug:                string
+  name_ar:             string
+  name_en:             string
+  total_quantity:      number
+  total_revenue:       number
+  profit_per_item:     number
+  total_profit:        number
+  popularity_score:    number
+  profitability_score: number
+  classification:      'Star' | 'Plowhorse' | 'Puzzle' | 'Dog'
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function toISO(d: Date) {
@@ -662,4 +683,40 @@ export async function refreshAnalyticsViews(): Promise<{ error: string | null }>
   const sb = createServiceClient()
   const { error } = await sb.rpc('refresh_analytics_views' as never)
   return { error: error?.message ?? null }
+}
+
+// ── Labor Cost vs Revenue ────────────────────────────────────────────────────
+
+export async function getLaborCostMetrics(
+  from:      Date,
+  to:        Date,
+  branchId?: string,
+): Promise<LaborCostMetrics | null> {
+  const sb = createServiceClient()
+  const { data, error } = await sb.rpc('get_labor_cost_metrics', {
+    p_from_date: toISO(from),
+    p_to_date:   toISO(to),
+    p_branch_id: branchId ?? undefined,
+  })
+
+  if (error || !data || data.length === 0) return null
+  return data[0] as LaborCostMetrics
+}
+
+// ── Menu Engineering Matrix ───────────────────────────────────────────────────
+
+export async function getMenuEngineeringMatrix(
+  from:      Date,
+  to:        Date,
+  branchId?: string,
+): Promise<AnalyticsMenuEngineeringRow[]> {
+  const sb = createServiceClient()
+  const { data, error } = await sb.rpc('get_menu_engineering_matrix', {
+    p_from_date: toISO(from),
+    p_to_date:   toISO(to),
+    p_branch_id: branchId ?? undefined,
+  })
+
+  if (error || !data) return []
+  return data as AnalyticsMenuEngineeringRow[]
 }

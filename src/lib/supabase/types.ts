@@ -4341,6 +4341,31 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_labor_cost_metrics: {
+        Args: { p_branch_id?: string; p_from_date: string; p_to_date: string }
+        Returns: {
+          labor_cost_percentage: number
+          order_count: number
+          staff_count: number
+          total_labor_cost: number
+          total_revenue: number
+        }[]
+      }
+      get_menu_engineering_matrix: {
+        Args: { p_branch_id?: string; p_from_date: string; p_to_date: string }
+        Returns: {
+          classification: string
+          name_ar: string
+          name_en: string
+          popularity_score: number
+          profit_per_item: number
+          profitability_score: number
+          slug: string
+          total_profit: number
+          total_quantity: number
+          total_revenue: number
+        }[]
+      }
       increment_coupon_usage: {
         Args: { p_coupon_id: string }
         Returns: undefined

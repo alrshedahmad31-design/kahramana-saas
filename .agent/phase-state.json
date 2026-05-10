@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-09 (session 82 — Migration 091 applied (rpc_create_order PRICE_MISMATCH bypass for size/variant lines, unblocks waiter/POS/QR/customer with VariantPicker). Staff-seeding scaffolding staged: migration 090 (waiter staff_role) on disk pending apply, rbac.ts/rbac-ui.ts updated, scripts/seed-staff.ts + npm run seed:staff[:dry] ready, awaiting 13 real emails before seed runs. Pre-launch QA checklist (docs/qa/pre-launch-checklist.md) shipped session 80; waiter dine-in QA report at docs/qa/waiter-table-qa.md found PRICE_MISMATCH at step 6 — re-test pending after 091.)",
+    "last_updated":  "2026-05-10 (session 87 — Analytics Enhancement (Gemini): Labor Cost vs Revenue gauge + Menu Engineering Matrix. Verification + fixes (Claude): migration 097 reworked — UUID→TEXT branch_id (matches project convention), GRANT EXECUTE to authenticated, total_hours fallback via clock_out-clock_in, TEMP TABLE→CTE refactor, LEFT→INNER JOIN. Legacy UUID overloads dropped. Types regenerated. queries.ts as-any casts removed. tsc pass.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",
