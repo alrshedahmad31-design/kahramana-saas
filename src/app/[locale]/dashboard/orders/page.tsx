@@ -57,6 +57,11 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
 
   const [ordersResult, totalsResult] = await Promise.all([ordersQuery, totalsQuery])
 
+  // Surface real query failures to the error boundary instead of rendering an
+  // empty list + 0.000 total (which is indistinguishable from "no orders today").
+  if (ordersResult.error) throw ordersResult.error
+  if (totalsResult.error) throw totalsResult.error
+
   const initialOrders: OrderCardData[] =
     (ordersResult.data ?? []) as OrderCardData[]
 

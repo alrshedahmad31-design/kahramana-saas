@@ -1,9 +1,11 @@
 import { getTranslations } from 'next-intl/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getSession } from '@/lib/auth/session'
-import { canViewOrder } from '@/lib/auth/rbac'
-import { redirect } from 'next/navigation'
+import {
+  requireDashboardSection,
+  isDashboardGuardError,
+  isGlobalDashboardAdmin,
+} from '@/lib/auth/dashboard-guards'
 import StatusBadge from '@/components/dashboard/StatusBadge'
 import OrderStatusSelect from '@/components/dashboard/OrderStatusSelect'
 import OrderActions from '@/components/dashboard/OrderActions'
@@ -18,49 +20,55 @@ interface Props {
 
 export default async function OrderDetailPage({ params }: Props) {
   const { locale, id } = await params
+  const prefix = locale === 'en' ? '/en' : ''
 
   if (!UUID_RE.test(id)) notFound()
 
-  const user = await getSession()
-  if (!user) redirect(`/${locale}/login`)
+  // Section guard: only roles in `orders` SECTION_ROLES can hit /dashboard/orders/*
+  // (replaces the previous getSession + canViewOrder branch-only gate).
+  let user
+  try {
+    user = await requireDashboardSection('orders')
+  } catch (e) {
+    if (isDashboardGuardError(e)) redirect(`${prefix}/dashboard`)
+    throw e
+  }
 
   const t  = await getTranslations('dashboard')
   const tS = await getTranslations('order.status')
   const tC = await getTranslations('common')
 
-  let order: OrderRow | null = null
+  const supabase = await createServiceClient()
 
-  let items: Pick<OrderItemRow, 'id' | 'name_ar' | 'name_en' | 'selected_size' | 'selected_variant' | 'quantity' | 'unit_price_bhd' | 'item_total_bhd' | 'notes'>[] = []
+  // Order fetch — failures are real errors, missing rows are 404.
+  const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', id)
+    .single()
 
-  try {
-    const supabase = await createServiceClient()
+  if (orderError) {
+    // PGRST116 = "row not found". Treat as 404; everything else is a real failure.
+    if (orderError.code === 'PGRST116') notFound()
+    throw orderError
+  }
+  if (!orderData) notFound()
+  const order = orderData as unknown as OrderRow
 
-    const { data: orderData, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error || !orderData) notFound()
-    order = orderData as unknown as OrderRow
-
-    // RBAC: branch-bound staff may only view orders within their branch
-    if (!canViewOrder(user, { branch_id: order.branch_id })) {
-      redirect(locale === 'en' ? '/en/dashboard/orders' : '/dashboard/orders')
-    }
-
-    const { data: itemsData } = await supabase
-      .from('order_items')
-      .select('id, name_ar, name_en, selected_size, selected_variant, quantity, unit_price_bhd, item_total_bhd, notes')
-      .eq('order_id', id)
-      .order('created_at', { ascending: true })
-
-    items = (itemsData ?? []) as unknown as typeof items
-  } catch {
-    notFound()
+  // Branch scope: branch-bound staff may only view orders within their branch.
+  if (!isGlobalDashboardAdmin(user) && user.branch_id && user.branch_id !== order.branch_id) {
+    redirect(`${prefix}/dashboard/orders`)
   }
 
-  if (!order) notFound()
+  // Items fetch — separate error handling so a query failure doesn't 404 the whole page.
+  const { data: itemsData, error: itemsError } = await supabase
+    .from('order_items')
+    .select('id, name_ar, name_en, selected_size, selected_variant, quantity, unit_price_bhd, item_total_bhd, notes')
+    .eq('order_id', id)
+    .order('created_at', { ascending: true })
+
+  if (itemsError) throw itemsError
+  const items = (itemsData ?? []) as Pick<OrderItemRow, 'id' | 'name_ar' | 'name_en' | 'selected_size' | 'selected_variant' | 'quantity' | 'unit_price_bhd' | 'item_total_bhd' | 'notes'>[]
 
   const isAr = locale === 'ar'
 

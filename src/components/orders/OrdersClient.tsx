@@ -18,6 +18,16 @@ import { BRANCHES, HIDDEN_BRANCHES } from '@/constants/contact'
 
 const PAGE_SIZE = 20
 
+// Sanitize search input for PostgREST .or() with ilike. Three concerns:
+//  1. `,` `(` `)` `:` are .or()-syntax delimiters → strip
+//  2. `%` `_` `\` are ilike wildcards → escape with backslash so the match is literal
+//  3. `"` would unbalance a quoted value → strip
+function escapeSearch(input: string): string {
+  return input
+    .replace(/[\\%_]/g, '\\$&')
+    .replace(/[,()":]/g, '')
+}
+
 const STATUS_MAP: Record<StatusFilter, OrderStatus[] | null> = {
   all:              null,
   new:              ['new', 'under_review', 'pending_payment', 'confirmed'],
@@ -157,7 +167,8 @@ export default function OrdersClient({
     } else if (HIDDEN_BRANCHES.length > 0) {
       q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
     }
-    if (search.trim()) q = q.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%,id.ilike.%${search.trim()}%`)
+    const safeSearch = escapeSearch(search.trim())
+    if (safeSearch) q = q.or(`customer_name.ilike.%${safeSearch}%,customer_phone.ilike.%${safeSearch}%,id.ilike.%${safeSearch}%`)
     if (range?.from)   q = q.gte('created_at', range.from)
     if (range?.to)     q = q.lt('created_at', range.to)
 
@@ -168,7 +179,7 @@ export default function OrdersClient({
     } else if (HIDDEN_BRANCHES.length > 0) {
       tq = tq.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
     }
-    if (search.trim()) tq = tq.or(`customer_name.ilike.%${search.trim()}%,customer_phone.ilike.%${search.trim()}%`)
+    if (safeSearch) tq = tq.or(`customer_name.ilike.%${safeSearch}%,customer_phone.ilike.%${safeSearch}%`)
     if (range?.from)   tq = tq.gte('created_at', range.from)
     if (range?.to)     tq = tq.lt('created_at', range.to)
 
