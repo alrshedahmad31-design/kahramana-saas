@@ -196,9 +196,10 @@ export default async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all paths except: API routes, _next internals, public assets,
-    // SEO files, and auth callbacks. /api/* must be excluded so next-intl
-    // doesn't try to locale-prefix JSON endpoints (causes 404).
-    '/((?!api|_next/static|_next/image|favicon|public|assets|fonts|icons|images|auth|robots\\.txt|sitemap.*\\.xml|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|css|js|woff|woff2|ttf|otf)).*)',
+    // Match all paths except: API routes, Sentry tunnel, _next internals,
+    // public assets, SEO files, and auth callbacks. /api/* and /monitoring
+    // must be excluded so next-intl doesn't locale-prefix them (causes 404).
+    // /monitoring is the Sentry tunnelRoute set in next.config.ts.
+    '/((?!api|monitoring|_next/static|_next/image|favicon|public|assets|fonts|icons|images|auth|robots\\.txt|sitemap.*\\.xml|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|css|js|woff|woff2|ttf|otf)).*)',
   ],
 }
