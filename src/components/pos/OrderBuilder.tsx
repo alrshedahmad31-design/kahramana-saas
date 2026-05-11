@@ -86,7 +86,7 @@ export default function OrderBuilder(props: Props) {
                 key={type}
                 type="button"
                 onClick={() => props.onOrderTypeChange(type)}
-                className={`min-h-[40px] rounded-lg font-satoshi text-xs font-medium transition-colors border
+                className={`min-h-[44px] rounded-lg font-satoshi text-xs font-medium transition-colors border
                   ${orderType === type
                     ? 'bg-brand-gold/10 text-brand-gold border-brand-gold/40'
                     : 'bg-brand-surface-2 text-brand-muted border-brand-border hover:text-brand-text'
@@ -174,9 +174,9 @@ export default function OrderBuilder(props: Props) {
                         type="button"
                         onClick={() => props.onRemove(line.key)}
                         aria-label={t('remove')}
-                        className="ms-1 inline-flex items-center justify-center w-7 h-7 rounded-lg text-brand-muted hover:text-brand-error hover:bg-brand-error/10 transition-colors"
+                        className="ms-1 inline-flex items-center justify-center w-11 h-11 rounded-lg text-brand-muted hover:text-brand-error hover:bg-brand-error/10 transition-colors"
                       >
-                        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
@@ -429,7 +429,7 @@ function QtyButton({ onClick, ariaLabel, children }: { onClick: () => void; aria
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="w-7 h-7 rounded-md border border-brand-border bg-brand-surface flex items-center justify-center text-sm font-bold text-brand-text hover:border-brand-gold/40 transition-colors"
+      className="w-11 h-11 rounded-md border border-brand-border bg-brand-surface flex items-center justify-center text-base font-bold text-brand-text hover:border-brand-gold/40 transition-colors"
     >
       {children}
     </button>

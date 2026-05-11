@@ -252,37 +252,63 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
             {isAr ? 'تنبيهات انتهاء الصلاحية' : 'Expiry Alerts'}
           </h2>
           <div className="border border-brand-border rounded-xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-brand-surface-2">
-                <tr>
-                  <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'المكوّن' : 'Ingredient'}</th>
-                  <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الكمية' : 'Qty'}</th>
-                  <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'تاريخ الانتهاء' : 'Expires'}</th>
-                  <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الأيام المتبقية' : 'Days Left'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {expiryItems.map((item) => (
-                  <tr
-                    key={item.lot_id}
-                    className={`border-t border-brand-border hover:bg-brand-surface-2 transition-colors
-                      ${item.days_remaining <= 1 ? 'bg-red-500/5' : item.days_remaining <= 3 ? 'bg-brand-gold/5' : ''}`}
-                  >
-                    <td className="px-4 py-3 font-satoshi text-sm text-brand-text">{isAr ? item.name_ar : item.name_en}</td>
-                    <td className="px-4 py-3 font-satoshi text-sm text-brand-text">{item.quantity_remaining}</td>
-                    <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">
-                      {new Date(item.expires_at).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB')}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium
-                        ${item.days_remaining <= 1 ? 'bg-red-500/10 text-red-400' : item.days_remaining <= 3 ? 'bg-brand-gold/10 text-brand-gold' : 'bg-brand-gold/10 text-brand-gold'}`}>
-                        {item.days_remaining} {isAr ? 'يوم' : 'days'}
-                      </span>
-                    </td>
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-brand-surface-2">
+                  <tr>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'المكوّن' : 'Ingredient'}</th>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الكمية' : 'Qty'}</th>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'تاريخ الانتهاء' : 'Expires'}</th>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الأيام المتبقية' : 'Days Left'}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {expiryItems.map((item) => (
+                    <tr
+                      key={item.lot_id}
+                      className={`border-t border-brand-border hover:bg-brand-surface-2 transition-colors
+                        ${item.days_remaining <= 1 ? 'bg-red-500/5' : item.days_remaining <= 3 ? 'bg-brand-gold/5' : ''}`}
+                    >
+                      <td className="px-4 py-3 font-satoshi text-sm text-brand-text">{isAr ? item.name_ar : item.name_en}</td>
+                      <td className="px-4 py-3 font-satoshi text-sm text-brand-text">{item.quantity_remaining}</td>
+                      <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">
+                        {new Date(item.expires_at).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB')}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium
+                          ${item.days_remaining <= 1 ? 'bg-red-500/10 text-red-400' : item.days_remaining <= 3 ? 'bg-brand-gold/10 text-brand-gold' : 'bg-brand-gold/10 text-brand-gold'}`}>
+                          {item.days_remaining} {isAr ? 'يوم' : 'days'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List */}
+            <div className="lg:hidden flex flex-col divide-y divide-brand-border">
+              {expiryItems.map((item) => (
+                <div
+                  key={item.lot_id}
+                  className={`p-4 flex flex-col gap-2 transition-colors
+                    ${item.days_remaining <= 1 ? 'bg-red-500/5' : item.days_remaining <= 3 ? 'bg-brand-gold/5' : ''}`}
+                >
+                  <div className="flex justify-between items-start">
+                    <span className="font-black text-brand-text">{isAr ? item.name_ar : item.name_en}</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                      ${item.days_remaining <= 1 ? 'bg-red-500/15 text-red-400' : 'bg-brand-gold/15 text-brand-gold'}`}>
+                      {item.days_remaining} {isAr ? 'يوم متبقي' : 'days left'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-brand-muted">
+                    <span>{isAr ? 'الكمية:' : 'Qty:'} <span className="text-brand-text font-bold">{item.quantity_remaining}</span></span>
+                    <span>{isAr ? 'ينتهي:' : 'Expires:'} <span className="text-brand-text font-bold">{new Date(item.expires_at).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB')}</span></span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

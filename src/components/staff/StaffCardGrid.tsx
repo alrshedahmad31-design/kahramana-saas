@@ -195,7 +195,7 @@ export default function StaffCardGrid({
                 ${canManage ? 'grid-cols-3' : 'grid-cols-1'}`}>
                 <Link
                   href={`/${locale}/dashboard/staff/${member.id}`}
-                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl
+                  className={`flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl
                              bg-brand-surface-2 text-brand-muted text-xs font-bold
                              ${isAr ? 'font-almarai' : 'font-satoshi'}
                              hover:text-brand-text transition-colors`}
@@ -208,7 +208,7 @@ export default function StaffCardGrid({
                   <>
                     <Link
                       href={`/${locale}/dashboard/staff/${member.id}`}
-                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl
+                      className={`flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl
                                  bg-brand-surface-2 text-brand-muted text-xs font-bold
                                  ${isAr ? 'font-almarai' : 'font-satoshi'}
                                  hover:text-brand-gold transition-colors`}
@@ -221,7 +221,7 @@ export default function StaffCardGrid({
                       type="button"
                       disabled={pending === member.id}
                       onClick={() => handleToggle(member)}
-                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl
+                      className={`flex items-center justify-center gap-1.5 min-h-[44px] rounded-xl
                         text-xs font-bold transition-colors
                         ${isAr ? 'font-almarai' : 'font-satoshi'}
                         disabled:opacity-50 disabled:cursor-not-allowed
@@ -245,7 +245,7 @@ export default function StaffCardGrid({
                   type="button"
                   disabled={resendPending === member.id}
                   onClick={() => handleResend(member.id, member.name)}
-                  className="w-full flex items-center justify-center gap-1.5 py-2
+                  className="w-full flex items-center justify-center gap-1.5 min-h-[44px]
                              rounded-xl border border-brand-border text-brand-muted
                              font-almarai text-xs hover:text-brand-gold hover:border-brand-gold/40
                              transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

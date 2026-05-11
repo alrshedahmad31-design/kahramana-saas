@@ -112,7 +112,7 @@ function CatButton({
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 min-h-[36px] px-3 rounded-lg font-satoshi text-xs font-medium whitespace-nowrap transition-colors
+      className={`shrink-0 min-h-[44px] px-3 rounded-lg font-satoshi text-xs font-medium whitespace-nowrap transition-colors
         ${active
           ? 'bg-brand-gold/10 text-brand-gold border border-brand-gold/40'
           : 'bg-brand-surface border border-brand-border text-brand-muted hover:text-brand-text hover:border-brand-gold/30'

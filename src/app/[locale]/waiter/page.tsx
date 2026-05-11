@@ -112,11 +112,11 @@ export default async function WaiterHomePage({ params, searchParams }: PageProps
           </p>
         </div>
         {isGlobalAdmin && (
-          <form className="shrink-0" action="" method="get">
+          <form className="shrink-0 flex items-center gap-2" action="" method="get">
             <select
               name="branch"
               defaultValue={branchId}
-              className="bg-brand-surface border border-brand-border rounded-lg px-3 py-2 text-sm text-brand-text font-satoshi focus:outline-none focus:border-brand-gold/40"
+              className="bg-brand-surface border border-brand-border rounded-lg px-3 min-h-[44px] text-sm text-brand-text font-satoshi focus:outline-none focus:border-brand-gold/40"
             >
               {branchOptions.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -124,7 +124,7 @@ export default async function WaiterHomePage({ params, searchParams }: PageProps
                 </option>
               ))}
             </select>
-            <button type="submit" className="ms-2 text-xs text-brand-gold underline">
+            <button type="submit" className="min-h-[44px] px-3 text-xs font-bold text-brand-gold bg-brand-gold/5 rounded-lg border border-brand-gold/20 hover:bg-brand-gold/10 transition-colors">
               {isAr ? 'تطبيق' : 'Apply'}
             </button>
           </form>

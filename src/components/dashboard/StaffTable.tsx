@@ -88,7 +88,8 @@ export default function StaffTable({
         </div>
       ) : (
         <div className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-brand-border">
@@ -150,16 +151,16 @@ export default function StaffTable({
                     </td>
 
                     {/* Actions */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-end">
                       {manageable.has(member.id) && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => setEditTarget(member)}
                             aria-label={`${t('edit')} ${member.name}`}
                             className="font-satoshi text-xs text-brand-muted
                                        hover:text-brand-gold transition-colors duration-150
-                                       min-h-[32px] px-2"
+                                       min-h-[44px] px-3 border border-brand-border rounded-lg"
                           >
                             {t('edit')}
                           </button>
@@ -169,10 +170,10 @@ export default function StaffTable({
                             onClick={() => handleToggle(member)}
                             aria-label={`${member.is_active ? t('deactivate') : t('activate')} ${member.name}`}
                             className={`font-satoshi text-xs transition-colors duration-150
-                                        min-h-[32px] px-2
+                                        min-h-[44px] px-3 border border-brand-border rounded-lg
                                         ${member.is_active
-                                          ? 'text-brand-error hover:text-brand-error/70'
-                                          : 'text-brand-success hover:text-brand-success/70'
+                                          ? 'text-brand-error hover:text-brand-error/10 border-brand-error/20'
+                                          : 'text-brand-success hover:text-brand-success/10 border-brand-success/20'
                                         }
                                         disabled:opacity-40 disabled:cursor-not-allowed`}
                           >
@@ -188,6 +189,71 @@ export default function StaffTable({
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden flex flex-col divide-y divide-brand-border">
+            {rows.map((member) => (
+              <div key={member.id} className="p-4 flex flex-col gap-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <Link
+                      href={`${locale === 'en' ? '/en' : ''}/dashboard/staff/${member.id}`}
+                      className="font-black text-brand-text hover:text-brand-gold transition-colors"
+                    >
+                      {member.name}
+                    </Link>
+                    <p className="text-xs text-brand-muted mt-0.5 tabular-nums uppercase">
+                      #{member.id.slice(0, 8)} · {tR(member.role as Parameters<typeof tR>[0])}
+                    </p>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                                ${member.is_active
+                                  ? 'bg-brand-success/15 text-brand-success'
+                                  : 'bg-brand-error/15 text-brand-error'
+                                }`}
+                  >
+                    {member.is_active ? t('active') : t('inactive')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-brand-muted">
+                  <span>
+                    {member.branch_id
+                      ? (BRANCHES[member.branch_id as keyof typeof BRANCHES]?.[isAr ? 'nameAr' : 'nameEn'] ?? member.branch_id)
+                      : '—'}
+                  </span>
+                </div>
+
+                {manageable.has(member.id) && (
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditTarget(member)}
+                      className="flex-1 min-h-[44px] bg-brand-surface-2 border border-brand-border rounded-xl text-xs font-bold text-brand-text"
+                    >
+                      {t('edit')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pending === member.id}
+                      onClick={() => handleToggle(member)}
+                      className={`flex-1 min-h-[44px] border rounded-xl text-xs font-bold
+                                  ${member.is_active
+                                    ? 'bg-brand-error/5 border-brand-error/20 text-brand-error'
+                                    : 'bg-brand-success/5 border-brand-success/20 text-brand-success'
+                                  } disabled:opacity-40`}
+                    >
+                      {pending === member.id
+                        ? '...'
+                        : member.is_active ? t('deactivate') : t('activate')
+                      }
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

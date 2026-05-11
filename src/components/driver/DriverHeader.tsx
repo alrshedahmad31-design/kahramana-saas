@@ -33,7 +33,7 @@ export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute
             type="button"
             onClick={onToggleMute}
             title={isMuted ? (isRTL ? 'تشغيل الصوت' : 'Unmute') : (isRTL ? 'كتم الصوت' : 'Mute')}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors duration-150 ${
+            className={`w-11 h-11 flex items-center justify-center rounded-lg border transition-colors duration-150 ${
               isMuted
                 ? 'bg-brand-surface-2 text-brand-muted border-brand-border'
                 : 'bg-brand-surface-2 text-brand-gold border-brand-gold/40 hover:border-brand-gold'
@@ -45,7 +45,7 @@ export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute
           <button
             type="button"
             onClick={onToggle}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 min-h-[40px] font-satoshi font-bold text-sm transition-colors duration-150 ${
+            className={`flex items-center gap-2 rounded-lg px-4 min-h-[44px] font-satoshi font-bold text-sm transition-colors duration-150 ${
               isOnline
                 ? 'bg-brand-success/20 text-brand-success border border-brand-success/40'
                 : 'bg-brand-surface-2 text-brand-muted border border-brand-border'
