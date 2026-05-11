@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { KDSOrder, KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
 import { getStationConfig } from '@/constants/kds'
 import KDSStationOrderCard from './KDSStationOrderCard'
+import KDSDialog from './KDSDialog'
 import {
   fetchStationOrders,
   updateItemStatus,
@@ -80,6 +81,10 @@ export default function KDSStationBoard({
   const [now, setNow]                   = useState(initialNow)
   const [isSyncing, setIsSyncing]       = useState(false)
   const [isConnected, setIsConnected]   = useState(true)
+  const [dialogConfig, setDialogConfig] = useState<{
+    title: string;
+    message: string;
+  } | null>(null)
 
   const t             = useTranslations('kds')
   const router        = useRouter()
@@ -115,7 +120,10 @@ export default function KDSStationBoard({
     const result = await updateItemStatus(orderId, itemId, station, status, expected)
     if (!result.success) {
       console.error('[KDS] Status update failed:', result.error);
-      alert(`خطأ في تحديث الحالة: ${result.error}`);
+      setDialogConfig({
+        title: 'تعذّر تحديث الحالة',
+        message: result.error || 'حدث خطأ غير متوقع أثناء تحديث حالة الصنف.'
+      });
     }
   }, [station])
 
@@ -131,7 +139,10 @@ export default function KDSStationBoard({
       if (soundRef.current) playBumpTone()
     } else {
       console.error('[KDS] Bump failed:', result.error);
-      alert(`خطأ في إنهاء الطلب: ${result.error}`);
+      setDialogConfig({
+        title: 'تعذّر إنهاء الطلب',
+        message: result.error || 'حدث خطأ أثناء محاولة إنهاء الطلب.'
+      });
     }
   }, [station])
 
@@ -478,6 +489,14 @@ export default function KDSStationBoard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Branded Dialogs */}
+      <KDSDialog
+        isOpen={!!dialogConfig}
+        title={dialogConfig?.title || ''}
+        message={dialogConfig?.message || ''}
+        onConfirm={() => setDialogConfig(null)}
+      />
     </div>
   )
 }

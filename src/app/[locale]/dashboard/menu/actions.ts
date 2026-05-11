@@ -184,7 +184,9 @@ export async function syncMenuItemsWithDatabase(): Promise<{
   if (allItems.length === 0) return { success: true, count: 0 }
 
   const supabase = await createServiceClient()
-  const { error } = await supabase.from('menu_items').upsert(allItems, {
+  // Cast to any to bypass temporary schema mismatch in generated types.ts
+  // while we transition from 'main' to 'mains' station enum.
+  const { error } = await supabase.from('menu_items').upsert(allItems as any, {
     onConflict: 'id',
   })
 
@@ -250,7 +252,7 @@ export async function createMenuItem(
     id:         generatedSlug,
     image_url:  payload.image_url || null,
     updated_at: new Date().toISOString(),
-  })
+  } as any)
 
   if (error) {
     console.error('[menu] createMenuItem failed:', error)
@@ -312,7 +314,7 @@ export async function updateMenuItem(
       ...editable,
       image_url:  editable.image_url || null,
       updated_at: new Date().toISOString(),
-    })
+    } as any)
     .eq('id', slug)
 
   if (error) {
