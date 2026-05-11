@@ -12,7 +12,12 @@ import { HIDDEN_BRANCHES } from '@/constants/contact'
 // PostgREST detects as a 1:1 relationship and returns as a single object
 // instead of an array. Older deployments may still return an array. This
 // helper normalises both shapes and returns the row matching the station.
-type StationStatusRow = { status: KDSItemStatus | null; station: KDSStation; created_at: string | null }
+type StationStatusRow = { 
+  status: KDSItemStatus | null; 
+  station: KDSStation; 
+  created_at: string | null;
+  bumped_at?: string | null;
+}
 function pickStationRow(
   raw: StationStatusRow | StationStatusRow[] | null | undefined,
   station: KDSStation,
@@ -91,7 +96,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
       id, branch_id, status, order_type, source, table_number, created_at, updated_at, notes, customer_name,
       order_items(
         id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes, modifiers,
-        order_item_station_status(status, station, created_at)
+        order_item_station_status(status, station, created_at, bumped_at)
       )
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
@@ -113,7 +118,8 @@ export default async function KDSPage({ params, searchParams }: Props) {
     return (
       <div className="h-screen overflow-hidden bg-brand-black">
         <KDSStationBoard
-          initialOrders={[]}
+          initialActive={[]}
+        initialStalled={[]}
           station={activeStation}
           branchId={branchId}
           locale={locale}
@@ -140,14 +146,20 @@ export default async function KDSPage({ params, searchParams }: Props) {
         ...item,
         station_status:       statusRow?.status ?? undefined,
         station_assigned_at:  statusRow?.created_at ?? null,
+        bumped_at:            statusRow?.bumped_at ?? null,
       }))
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
+  // Split into active and stalled (older than 3 hours)
+  const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000)
+  const initialActive  = normalizedOrders.filter(o => new Date(o.created_at) >= threeHoursAgo)
+  const initialStalled = normalizedOrders.filter(o => new Date(o.created_at) < threeHoursAgo)
 
   return (
     <div className="h-screen overflow-hidden bg-brand-black">
       <KDSStationBoard
-        initialOrders={normalizedOrders}
+        initialActive={initialActive}
+        initialStalled={initialStalled}
         station={activeStation}
         branchId={branchId}
         locale={locale}

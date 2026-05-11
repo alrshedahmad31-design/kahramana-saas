@@ -16,11 +16,12 @@ import {
 } from '@/app/[locale]/dashboard/kds/actions'
 
 interface Props {
-  initialOrders: KDSOrder[]
-  station:       KDSStation
-  branchId:      string | null
-  locale:        string
-  loadError?:    string
+  initialActive: KDSOrder[]
+  initialStalled: KDSOrder[]
+  station:        KDSStation
+  branchId:       string | null
+  locale:         string
+  loadError?:     string
 }
 
 function playTripleBeep() {
@@ -59,13 +60,15 @@ function playBumpTone() {
 }
 
 export default function KDSStationBoard({
-  initialOrders,
+  initialActive,
+  initialStalled,
   station,
   branchId,
   locale,
   loadError,
 }: Props) {
-  const [orders, setOrders]             = useState<KDSOrder[]>(initialOrders)
+  const [activeOrders, setActiveOrders]   = useState<KDSOrder[]>(initialActive)
+  const [stalledOrders, setStalledOrders] = useState<KDSOrder[]>(initialStalled)
   const [refreshError, setRefreshError] = useState<string | null>(loadError ?? null)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [dailyCount, setDailyCount]     = useState(0)
@@ -87,8 +90,9 @@ export default function KDSStationBoard({
     setIsSyncing(true)
     try {
       const result = await fetchStationOrders(station)
-      if ('orders' in result) {
-        setOrders(result.orders)
+      if ('active' in result) {
+        setActiveOrders(result.active)
+        setStalledOrders(result.stalled)
         setRefreshError(null)
       } else {
         setRefreshError(result.error)
@@ -104,7 +108,8 @@ export default function KDSStationBoard({
   const handleBump = useCallback(async (orderId: string) => {
     const result = await bumpStationOrder(orderId, station)
     if (result.success) {
-      setOrders(prev => prev.filter(o => o.id !== orderId))
+      setActiveOrders(prev => prev.filter(o => o.id !== orderId))
+      setStalledOrders(prev => prev.filter(o => o.id !== orderId))
       setRecentBump({ id: orderId, timestamp: Date.now() })
       setDailyCount(prev => prev + 1)
       if (soundRef.current) playBumpTone()
@@ -165,20 +170,24 @@ export default function KDSStationBoard({
         const row = payload.new as { item_id: string; status: KDSItemStatus } | null
         if (!row?.item_id) return
         if (row.status === 'completed') {
-          setOrders(prev => prev
+          const remover = (prev: KDSOrder[]) => prev
             .map(order => ({
               ...order,
               order_items: order.order_items.filter(item => item.id !== row.item_id),
             }))
             .filter(order => order.order_items.length > 0)
-          )
+          
+          setActiveOrders(remover)
+          setStalledOrders(remover)
         } else {
-          setOrders(prev => prev.map(order => ({
+          const updater = (prev: KDSOrder[]) => prev.map(order => ({
             ...order,
             order_items: order.order_items.map(item =>
               item.id === row.item_id ? { ...item, station_status: row.status } : item
             ),
-          })))
+          }))
+          setActiveOrders(updater)
+          setStalledOrders(updater)
         }
       }
     )
@@ -199,13 +208,15 @@ export default function KDSStationBoard({
         const old = payload.old as { item_id?: string } | null
         if (!old?.item_id) { refresh(); return }
         const itemId = old.item_id
-        setOrders(prev => prev
+        const remover = (prev: KDSOrder[]) => prev
           .map(order => ({
             ...order,
             order_items: order.order_items.filter(item => item.id !== itemId),
           }))
           .filter(order => order.order_items.length > 0)
-        )
+        
+        setActiveOrders(remover)
+        setStalledOrders(remover)
       }
     )
 
@@ -231,11 +242,17 @@ export default function KDSStationBoard({
     return () => clearInterval(interval)
   }, [isConnected, refresh])
 
-  const sortedOrders = useMemo(() => {
-    return [...orders].sort(
+  const sortedActive = useMemo(() => {
+    return [...activeOrders].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     )
-  }, [orders])
+  }, [activeOrders])
+
+  const sortedStalled = useMemo(() => {
+    return [...stalledOrders].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )
+  }, [stalledOrders])
 
   return (
     <div className="flex flex-col h-screen bg-brand-black overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
@@ -301,7 +318,7 @@ export default function KDSStationBoard({
               {t('activeOrders')}
             </div>
             <div className="text-2xl font-black tabular-nums" style={{ color: stationConfig.color }}>
-              {orders.length}
+              {activeOrders.length}
             </div>
           </div>
 
@@ -335,7 +352,7 @@ export default function KDSStationBoard({
       <main className="flex-1 overflow-x-auto overflow-y-hidden p-6">
         <div className="flex h-full gap-4 items-start">
           <AnimatePresence mode="popLayout">
-            {sortedOrders.map((order) => (
+            {sortedActive.map((order) => (
               <motion.div
                 key={order.id}
                 layout
@@ -357,7 +374,32 @@ export default function KDSStationBoard({
             ))}
           </AnimatePresence>
 
-          {orders.length === 0 && !refreshError && (
+          {sortedStalled.length > 0 && (
+            <div className="flex gap-4 items-start">
+              <div className="w-px self-stretch bg-border mx-2" />
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2 px-3 py-1 bg-surface2 rounded text-xs font-bold text-muted uppercase tracking-widest">
+                  <WarningIcon className="w-3 h-3" />
+                  {isAr ? 'طلبات متوقفة (>3 ساعات)' : 'Stalled Orders (>3h)'}
+                </div>
+                <div className="flex gap-4">
+                  {sortedStalled.map((order) => (
+                    <div key={order.id} className="w-72 shrink-0 max-h-full overflow-y-auto opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all">
+                      <KDSStationOrderCard
+                        order={order}
+                        station={station}
+                        locale={locale}
+                        onBump={handleBump}
+                        now={now}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeOrders.length === 0 && stalledOrders.length === 0 && !refreshError && (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 opacity-20 select-none">
               <span className="text-8xl leading-none">{stationConfig.icon}</span>
               <p className="text-2xl font-bold">{t('noOrders')}</p>

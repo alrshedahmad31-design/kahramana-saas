@@ -251,7 +251,7 @@ export async function getStationDailyCount(
 
 export async function fetchStationOrders(
   station: KDSStation,
-): Promise<{ orders: KDSOrder[] } | { error: string }> {
+): Promise<{ active: KDSOrder[]; stalled: KDSOrder[] } | { error: string }> {
   let caller
   try {
     caller = await requireDashboardSession()
@@ -303,5 +303,10 @@ export async function fetchStationOrders(
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
 
-  return { orders }
+  // Split into active and stalled (older than 3 hours)
+  const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000)
+  const active  = orders.filter(o => new Date(o.created_at) >= threeHoursAgo)
+  const stalled = orders.filter(o => new Date(o.created_at) < threeHoursAgo)
+
+  return { active, stalled }
 }

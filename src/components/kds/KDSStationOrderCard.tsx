@@ -268,8 +268,9 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                   {(item.selected_size || item.selected_variant) && (
                     <div className="text-xs text-brand-muted mt-0.5">
                       {item.selected_size && (SIZE_LABELS[item.selected_size]?.[isRTL ? 'ar' : 'en'] ?? item.selected_size)}
-                      {item.selected_size && item.selected_variant && ' · '}
-                      {item.selected_variant}
+                      {item.selected_variant !== item.name_ar && 
+                       item.selected_variant !== item.name_en && 
+                       item.selected_variant}
                     </div>
                   )}
 
