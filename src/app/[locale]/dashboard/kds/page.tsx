@@ -96,7 +96,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
       id, branch_id, status, order_type, source, table_number, created_at, updated_at, notes, customer_name,
       order_items(
         id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes, modifiers,
-        order_item_station_status(status, station, created_at, bumped_at)
+        order_item_station_status(status, station, created_at)
       )
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
@@ -146,7 +146,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
         ...item,
         station_status:       statusRow?.status ?? undefined,
         station_assigned_at:  statusRow?.created_at ?? null,
-        bumped_at:            statusRow?.bumped_at ?? null,
+        bumped_at:            null,
       }))
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
