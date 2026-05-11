@@ -56,12 +56,12 @@ export default async function MenuDashboardPage({
     <div className="space-y-6 p-6">
       {/* Analytics alert — owners / GMs only */}
       {!hasAnalytics && isPrivileged && (
-        <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 flex items-center gap-3">
-          <div className="rounded-full bg-amber-500/20 p-2 text-amber-500">
+        <div className="rounded-xl border border-brand-gold/50 bg-brand-gold/10 p-4 flex items-center gap-3">
+          <div className="rounded-full bg-brand-gold/20 p-2 text-brand-gold">
             <AlertCircle className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <h4 className="text-sm font-bold text-amber-500">
+            <h4 className="text-sm font-bold text-brand-gold">
               {locale === 'ar'
                 ? 'تنبيه: إعدادات التحليلات مفقودة'
                 : 'Notice: Analytics Config Missing'}
