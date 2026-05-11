@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-11 (session 88 — Waitlist Management shipped: migration 099 waitlist_entries applied to linked Supabase, types regenerated, /dashboard/waitlist live UI + modal + realtime channel + WhatsApp notify flow added, dashboard nav/RBAC/i18n updated, tsc/type-check pass.)",
+    "last_updated":  "2026-05-11 (session 88 — Waitlist Management shipped (Gemini track): migration 099 waitlist_entries applied to linked Supabase, types regenerated, /dashboard/waitlist live UI + modal + realtime channel + WhatsApp notify flow added, dashboard nav/RBAC/i18n updated, tsc/type-check pass. Pre-launch QA cleanup (Claude track): DriverHeader hydration suppress, sentry-example deletion (Roboto violation gone), 5 raw-hex chart colors → design-tokens (gate 7 clean), sitemap /terms added, middleware PUBLIC_NO_PREFIX rollback restoring intl rewrite. Local verification: /api/health + all 4 unprefixed public routes + /en variants return 200. CRITICAL DISCOVERY: production hostname kahramanat.com is currently serving the OLD STATIC HTML SITE — no x-vercel-* headers, loads /css/shared.min.css and reads kahramana_lang localStorage. DNS routes to Cloudflare anycast, NOT cname.vercel-dns.com. Middleware fix (aafda83) is correct but inert until hostname routing is restored to Vercel. Cloudflare cache purge is NOT the issue — every response is cf-cache-status: DYNAMIC. See LAST-SESSION.md carry-over #1.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",

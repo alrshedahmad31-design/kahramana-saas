@@ -1,8 +1,99 @@
 # LAST-SESSION.md — Kahramana Baghdad
 
-> **Session**: 87 (Claude Code track — long session, ran in parallel with Gemini for analytics work)
-> **Date**: 2026-05-10
-> **Focus**: Loyalty discoverability end-to-end (Header button → home section → checkout nudge → SEO allow/sitemap), customer registration fix, migration 097 audit + repair of CLI sync drift, 5 security/privacy audit fixes (Sentry sampling + PII, CSP, cookie consent gating analytics, /privacy consolidation, Turnstile soft-launch), Sentry HTML meta-tag suppression, then 2 hours debugging why every deploy was failing — root cause was a single ESLint error from Gemini's analytics commit.
+> **Session**: 88 (Claude Code track)
+> **Date**: 2026-05-11
+> **Focus**: Pre-launch QA cleanup — DriverHeader hydration fix, sentry-example deletion, raw-hex → design-tokens, sitemap /terms, middleware PUBLIC_NO_PREFIX rollback. Diagnostic discovery: production hostname kahramanat.com is currently serving the OLD STATIC HTML SITE, not the Next.js Vercel deployment.
+
+## Session 88 deliverables
+
+### Code fixes (4 commits, all pushed to master)
+
+**`83ced0a chore: remove sentry-example pages`** — deleted `src/app/sentry-example-page/` and `src/app/api/sentry-example-api/` (Sentry wizard scaffolding, only remaining source of the Roboto font violation). The commit also bundled the earlier `DriverHeader` hydration fix (`git add -A` grabbed it). The hydration fix added `suppressHydrationWarning` to the clock `<span>` in `DriverHeader.tsx:29` — root cause was `useState(formatClock)` running once during SSR and once during client hydration, ~1s apart, producing the `01:36:43 AM` vs `01:36:42 AM` Sentry diff. Verified via Sentry email + grep.
+
+**`f127116 style(reports): replace raw hex chart colors with design tokens`** — 5 raw-hex literals (`#22c55e` × 3, `#ef4444` × 2) across 4 recharts configurations replaced with `colors.success` / `colors.error` from `src/lib/design-tokens.ts`. Files: `COGSClient.tsx:73,75`, `FoodCostChart.tsx:85,91`, `ValuationCharts.tsx:7`, `WasteCharts.tsx:10`. Slight hue shift toward brand palette (brand `#27AE60` vs vivid `#22c55e`) was deliberate. Gate 7 of CLAUDE.md (no raw hex outside `design-tokens.ts` / `delivery/tokens.ts`) now passes across all of `src/`.
+
+**`c7645f5 seo(sitemap): add /terms to public legal pages`** — single `staticRoutes` entry added for `/terms`. Confirmed via path-listing that `/terms` was the only genuinely public route missing from the sitemap (current sitemap already generates ~416 URLs: 10 static × 2 + 3 branches × 2 + 16 categories × 2 + 179 items × 2). The handoff context's "Sitemap: 10 URLs only" claim was stale.
+
+**`aafda83 fix(middleware): remove PUBLIC_NO_PREFIX shortcut, restore intl rewrite`** — removed the `PUBLIC_NO_PREFIX` block (lines 16-21, 114-120) introduced in session 88's commit `17c0379`. Root cause analysis: with `routing.ts: localePrefix: 'as-needed'` and route files at `src/app/[locale]/*`, next-intl middleware MUST internally rewrite `/branches` → `/ar/branches` so the file-system route matches. The PUBLIC_NO_PREFIX shortcut returned `NextResponse.next()` *before* intl middleware could run — so the rewrite never happened, and Next.js looked for `src/app/branches/page.tsx` (does not exist) and served 404. Local verification after fix: `/api/health`, `/branches`, `/privacy-policy`, `/terms`, `/refund-policy` all return 200 (with and without `/en` prefix).
+
+### Stale handoff claims that turned out to be no-ops
+The session 88 handoff context ("CONTEXT SYNC — Session 88 Handoff" message) listed three i18n runtime errors as immediate fixes. All three were stale:
+
+1. **`MISSING_MESSAGE: home.loyalty (en)`** — `messages/en.json` already had `home.loyalty` with full 10-key parity vs AR (eyebrow/title/subtitle/step1-3 Title+Desc/cta). No `story.loyalty` namespace exists anywhere.
+2. **`MISSING_MESSAGE: refund.* (en)`** — `refund` namespace exists in EN with 9 keys, full parity with AR.
+3. **`FORMATTING_ERROR: categoryFallbackDescription`** — all 3 call sites in `menu/[slug]/page.tsx` (lines 42, 47, 119) already pass `{ category: ... }` interpolation.
+
+These were almost certainly fixed by `a024286 feat(home): add Kahramana Club loyalty section` and/or `8d46326 security+privacy: 5 audit fixes` from session 87, before the handoff was written. **Lesson:** verify handoff claims against current `master` with grep/probe before editing.
+
+### CRITICAL: production hostname is not pointing at Vercel
+
+Mid-session diagnostic for "Cloudflare Cache Purge مطلوب؟" surfaced a much larger issue. The `aafda83` middleware fix is correct (verified 200 on every route locally), but production `https://kahramanat.com` is currently serving the **OLD STATIC HTML SITE**, not the Next.js Vercel deployment. Strong evidence:
+
+- Homepage HTML loads `/css/shared.min.css?v=2.2.0`, `/js/schema.min.js?v=2.1.0`, `/js/shared.min.js?v=2.1.0` — old static-site bundles, not `_next/static/...` chunks.
+- 404 page is `pages/404.css?v=2.0.0` and references `index.html`, `menu.html`.
+- Anti-FOUC inline script reads `localStorage.getItem('kahramana_lang')` — old static-site i18n convention.
+- `/en/branches` 301-redirects to `/?cb=...` (Page Rule / static-site redirect), NOT to `/branches` via next-intl.
+- Response headers: `Server: cloudflare`, `cf-cache-status: DYNAMIC`. **No `x-vercel-*` headers anywhere.**
+- DNS: kahramanat.com resolves to `104.21.88.191` / `172.67.152.48` (Cloudflare anycast). Should be `cname.vercel-dns.com` if pointing at Vercel.
+
+This contradicts session 86's verified `/api/health` 200 with `db.ok=true` against the same hostname. So between session 86 and now, one of:
+1. DNS was repointed away from Vercel toward Cloudflare Pages (or another origin).
+2. A Cloudflare Worker / Page Rule was added that intercepts all requests to the apex domain.
+3. The Vercel domain `kahramanat.com` was unassigned from the Next.js project.
+
+Cloudflare cache purge would NOT fix this — every response is `cf-cache-status: DYNAMIC` (proxied live, not cached). The 404s are origin-served by whatever backend Cloudflare is currently routing to.
+
+### Verification (full session)
+- `npx tsc --noEmit` → 0 errors after each edit.
+- `npm run build` → not re-run this session (last green build was session 87 commit `9d18db4`).
+- E2E → not re-run.
+- Local dev server → all 9 target routes (4 unprefixed + 4 /en-prefixed + /api/health) return 200 after middleware fix.
+- Production → 4 unprefixed routes still 404, /en-prefixed routes 301 → / (because production isn't running the Next.js app).
+
+## Carry-overs into next session
+
+**🔴 BLOCKING (must resolve before any further deploy work):**
+1. **kahramanat.com hostname routing** — diagnose why DNS/Cloudflare is serving the old static site instead of Vercel. Check in this order:
+   - Vercel dashboard → Project Settings → Domains. Is `kahramanat.com` still listed against the Next.js project?
+   - Cloudflare dashboard → DNS records. Apex `A`/`AAAA`/`CNAME` should target `cname.vercel-dns.com` (not Cloudflare Pages, not legacy origin).
+   - Cloudflare → Rules → Page Rules / Workers / Redirect Rules. Anything intercepting `*kahramanat.com/*`?
+   - Get the actual Vercel production URL (looks like `kahramana-alrshedahmad31-designs-projects.vercel.app` based on preview hostname pattern). Curl it directly — should serve the Next.js app and confirm the deploy itself is healthy.
+   - Once routing is fixed, the 4 commits from this session (especially `aafda83`) take effect and all 9 routes flip to 200.
+
+**🟡 New (from session 88) — operational:**
+2. Vercel preview URL has Deployment Protection enabled (401 on every path tested). If that wasn't deliberate, disabling it for `master` branch only would let smoke-tests run against preview without auth.
+
+**Carried from session 87 — still open:**
+3. **4 SECURITY DEFINER views** (BL-003 candidate) — `public.order_source_summary`, `public.customer_segments_view`, `public.coupon_analytics_view`, `public.v_kds_station_items`. Fix: `ALTER VIEW <name> SET (security_invoker = on);` per view + UI smoke-test under RLS.
+4. **8 `rls_policy_always_true` policies** (BL-004 candidate) — enumerate, decide intentional public-read vs missed scoping per policy.
+5. **68 lower-priority advisor WARN entries** — tidiness sweep, not launch-blocking.
+6. **Provision Turnstile env vars** in Cloudflare + Vercel (BL-002) — `/contact` runs honeypot-only until then.
+7. **12 stale test orders** in non-terminal status from May 8-9 — bulk-clean before launch.
+8. **GA4 / Clarity short-term traffic dip** from new consent gate — monitor, not a bug.
+
+**Carried from session 86 — still open:**
+9. UptimeRobot 5-min monitor on `/api/health` (will only work once kahramanat.com routes back to Vercel — see #1).
+10. Menu image regeneration: 4 Priority-A misleading + 4 Priority-B reused-image clusters.
+11. Delete stale root `menu.json` (verified no imports last session).
+12. **BL-001** (loyalty helpers split) — bundle hygiene.
+
+**Carried from session 85 / earlier:**
+13. 13 staff emails for `scripts/seed-staff.ts:54-79` (blocks migration 090 + first staff seed).
+14. Refund modal for `code === 'refund_required'` (toast still in use).
+15. Legacy `kds_queue` table — post-launch cleanup candidate.
+16. Pre-launch QA master checklist `docs/qa/pre-launch-checklist.md` — full re-run.
+
+## Decisions / non-obvious notes
+
+- **Cloudflare cache purge is NOT a routing fix.** When a response shows `cf-cache-status: DYNAMIC`, Cloudflare is proxying live and not caching. Purging won't change anything. Reach for cache purge only when `cf-cache-status: HIT` and the cached body is wrong.
+- **`PUBLIC_NO_PREFIX` shortcut was a misunderstanding** of how next-intl `localePrefix: 'as-needed'` works. The middleware MUST run intl middleware on unprefixed paths so the internal rewrite to the default locale segment can happen. Skipping it makes the file-system route invisible.
+- **`git add -A` will bundle stale uncommitted work.** The DriverHeader hydration fix from earlier in the session got bundled into the sentry-example deletion commit because I ran `git add -A` instead of explicit paths. Future sessions that need separate commits per task should always use explicit paths in `git add`.
+- **Session 86's `/api/health` 200 verification was true at the time but no longer reflects reality.** Production verifications can decay between sessions if hostname routing changes outside the codebase. Re-verify production state at session start, not just trust prior session reports.
+- **Vercel preview URLs are gated by Deployment Protection** (401 on all paths). Direct preview-URL probes need either disabling protection for master, an OIDC bypass token, or going through `gh` / Vercel CLI with auth.
+
+---
+
+
 
 ## Session 87 deliverables
 
