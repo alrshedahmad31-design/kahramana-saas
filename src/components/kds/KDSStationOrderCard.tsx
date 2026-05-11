@@ -312,16 +312,20 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                   </div>
                 </div>
 
-                {/* Status icon */}
-                <div className="shrink-0 w-6 h-6 self-start mt-1 flex items-center justify-center">
+                {/* Status icon / Checkmark */}
+                <div className="shrink-0 w-10 h-10 self-center flex items-center justify-center">
                   {isUpdating ? (
-                    <SpinnerIcon className="w-5 h-5 text-brand-gold animate-spin" />
+                    <SpinnerIcon className="w-6 h-6 text-brand-gold animate-spin" />
                   ) : isReady ? (
-                    <CheckIcon className="w-5 h-5 text-brand-success" />
+                    <div className="w-8 h-8 rounded-full bg-brand-success flex items-center justify-center shadow-lg shadow-brand-success/20">
+                      <CheckIcon className="w-5 h-5 text-brand-black" />
+                    </div>
                   ) : isPreparing ? (
-                    <SpinnerIcon className="w-5 h-5 text-brand-gold" />
+                    <div className="w-8 h-8 rounded-full bg-brand-gold/20 flex items-center justify-center border border-brand-gold animate-pulse">
+                      <SpinnerIcon className="w-5 h-5 text-brand-gold" />
+                    </div>
                   ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-brand-border" />
+                    <div className="w-8 h-8 rounded-full border-2 border-brand-border hover:border-brand-gold transition-colors" />
                   )}
                 </div>
 
@@ -354,28 +358,27 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
           </div>
         )}
 
-        {/* Bump button */}
-        <AnimatePresence>
-          {allReady && (
-            <motion.button
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              onClick={handleBump}
-              disabled={bumping}
-              className={[
-                'mt-4 w-full py-3 rounded-xl font-black text-base',
-                'flex items-center justify-center gap-2 transition-all active:scale-[0.97]',
-                bumping
-                  ? 'bg-brand-success/40 text-brand-black/40 cursor-not-allowed'
-                  : 'bg-brand-success text-brand-black hover:bg-brand-success/90 shadow-lg shadow-brand-success/20',
-              ].join(' ')}
-            >
-              {bumping ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : <CheckAllIcon className="w-5 h-5" />}
+        {/* Bump button — always visible but disabled if not all items are ready */}
+        <button
+          onClick={handleBump}
+          disabled={!allReady || bumping}
+          className={[
+            'mt-4 w-full py-4 rounded-xl font-black text-lg uppercase tracking-tight',
+            'flex items-center justify-center gap-2 transition-all active:scale-[0.97]',
+            !allReady || bumping
+              ? 'bg-surface2 text-muted opacity-50 cursor-not-allowed'
+              : 'bg-brand-success text-brand-black hover:bg-brand-success/90 shadow-lg shadow-brand-success/20',
+          ].join(' ')}
+        >
+          {bumping ? (
+            <SpinnerIcon className="w-6 h-6 animate-spin" />
+          ) : (
+            <>
+              <CheckAllIcon className="w-6 h-6" />
               {t('bumpOrder')}
-            </motion.button>
+            </>
           )}
-        </AnimatePresence>
+        </button>
       </div>
     </article>
   )

@@ -146,6 +146,7 @@ export type KDSOrder = Pick<
     station?: KDSStation;
     station_status?: KDSItemStatus;
     station_assigned_at?: string | null;
+    bumped_at?: string | null;
   }>;
 };
 

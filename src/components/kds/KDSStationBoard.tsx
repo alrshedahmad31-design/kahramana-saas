@@ -12,6 +12,7 @@ import {
   fetchStationOrders,
   bumpStationOrder,
   recallStationOrder,
+  getStationDailyCount,
 } from '@/app/[locale]/dashboard/kds/actions'
 
 interface Props {
@@ -67,8 +68,8 @@ export default function KDSStationBoard({
   const [orders, setOrders]             = useState<KDSOrder[]>(initialOrders)
   const [refreshError, setRefreshError] = useState<string | null>(loadError ?? null)
   const [soundEnabled, setSoundEnabled] = useState(true)
-  const [bumpedToday, setBumpedToday]   = useState(0)
-  const [bumpedStack, setBumpedStack]   = useState<string[]>([])
+  const [dailyCount, setDailyCount]     = useState(0)
+  const [recentBump, setRecentBump]     = useState<{ id: string; timestamp: number } | null>(null)
   const [isRecalling, setIsRecalling]   = useState(false)
   const [now, setNow]                   = useState(Date.now())
   const [isSyncing, setIsSyncing]       = useState(false)
@@ -104,27 +105,41 @@ export default function KDSStationBoard({
     const result = await bumpStationOrder(orderId, station)
     if (result.success) {
       setOrders(prev => prev.filter(o => o.id !== orderId))
-      setBumpedStack(prev => [orderId, ...prev].slice(0, 20))
-      setBumpedToday(prev => prev + 1)
+      setRecentBump({ id: orderId, timestamp: Date.now() })
+      setDailyCount(prev => prev + 1)
       if (soundRef.current) playBumpTone()
     }
   }, [station])
 
   const handleRecall = useCallback(async () => {
-    if (bumpedStack.length === 0 || isRecalling) return
-    const orderId = bumpedStack[0]
+    if (!recentBump || isRecalling) return
     setIsRecalling(true)
     try {
-      const result = await recallStationOrder(orderId, station)
+      const result = await recallStationOrder(recentBump.id, station)
       if (result.success) {
-        setBumpedStack(prev => prev.slice(1))
-        setBumpedToday(prev => Math.max(0, prev - 1))
+        setRecentBump(null)
+        setDailyCount(prev => Math.max(0, prev - 1))
         await refresh()
       }
     } finally {
       setIsRecalling(false)
     }
-  }, [bumpedStack, station, refresh, isRecalling])
+  }, [recentBump, station, refresh, isRecalling])
+
+  // Initial fetch for daily count
+  useEffect(() => {
+    if (!branchId) return
+    getStationDailyCount(station, branchId).then(res => {
+      if ('count' in res) setDailyCount(res.count)
+    })
+  }, [station, branchId])
+
+  // Clear recall toast after 60s
+  useEffect(() => {
+    if (!recentBump) return
+    const id = setTimeout(() => setRecentBump(null), 60000)
+    return () => clearTimeout(id)
+  }, [recentBump])
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -260,31 +275,14 @@ export default function KDSStationBoard({
           >
             <RefreshIcon className="w-5 h-5" />
           </button>
-          {bumpedToday > 0 && (
+          {dailyCount > 0 && (
             <div className="flex flex-col items-center min-w-[48px]">
               <div className="text-[10px] text-muted uppercase tracking-widest leading-none mb-1">
                 {t('allDayLabel')}
               </div>
-              <div className="text-xl font-black tabular-nums text-success">{bumpedToday}</div>
+              <div className="text-xl font-black tabular-nums text-success">{dailyCount}</div>
             </div>
           )}
-
-          <AnimatePresence>
-            {bumpedStack.length > 0 && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={handleRecall}
-                disabled={isRecalling}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gold/40 text-gold text-sm font-bold hover:bg-gold/10 active:scale-95 transition-all disabled:opacity-40"
-              >
-                <RecallIcon className="w-4 h-4" />
-                {t('recallOrder')}
-                <span className="text-xs bg-gold/20 rounded px-1">{bumpedStack.length}</span>
-              </motion.button>
-            )}
-          </AnimatePresence>
 
           <button
             onClick={() => setSoundEnabled(v => !v)}
@@ -375,12 +373,50 @@ export default function KDSStationBoard({
             ? (isAr ? 'غير متصل' : 'Disconnected')
             : (isAr ? 'متصل — يتحدث تلقائياً' : 'Live — auto-updating')}
         </span>
-        {bumpedToday > 0 && (
+        {dailyCount > 0 && (
           <span className="ms-auto">
-            {isAr ? `أُنجز اليوم: ${bumpedToday}` : `Bumped today: ${bumpedToday}`}
+            {isAr ? `أُنجز اليوم: ${dailyCount}` : `Bumped today: ${dailyCount}`}
           </span>
         )}
       </footer>
+
+      {/* Feature 1: Recall Toast */}
+      <AnimatePresence>
+        {recentBump && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-brand-gold text-brand-black px-6 py-4 rounded-2xl shadow-2xl"
+          >
+            <div className="flex flex-col">
+              <span className="font-black text-sm uppercase tracking-tight">
+                {isAr ? 'تم إنهاء الطلب' : 'Order Bumped'}
+              </span>
+              <span className="text-xs opacity-80 font-bold">#{recentBump.id.slice(-4).toUpperCase()}</span>
+            </div>
+            
+            <button
+              onClick={handleRecall}
+              disabled={isRecalling}
+              className="flex items-center gap-2 bg-brand-black/10 hover:bg-brand-black/20 px-4 py-2 rounded-xl border border-brand-black/20 font-black transition-all active:scale-95 disabled:opacity-50"
+            >
+              <RecallIcon className="w-5 h-5" />
+              {isAr ? 'استعادة' : 'RECALL'}
+            </button>
+
+            {/* Countdown progress ring/bar would go here, using a simpler timed line for now */}
+            <div className="absolute bottom-0 left-0 h-1 bg-brand-black/30 rounded-full overflow-hidden" style={{ width: '100%' }}>
+               <motion.div 
+                 initial={{ width: '100%' }}
+                 animate={{ width: '0%' }}
+                 transition={{ duration: 60, ease: 'linear' }}
+                 className="h-full bg-brand-black"
+               />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

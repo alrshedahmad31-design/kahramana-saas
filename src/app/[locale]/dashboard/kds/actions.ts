@@ -7,7 +7,13 @@ import type { OrderStatus, KDSStation, KDSItemStatus, KDSOrder } from '@/lib/sup
 
 // Migration 089's UNIQUE(item_id) made order_items → order_item_station_status
 // a 1:1 relation; PostgREST returns it as an object, not an array.
-type StationStatusRow = { status: KDSItemStatus | null; station: KDSStation; created_at: string | null }
+type StationStatusRow = { 
+  status: KDSItemStatus | null; 
+  station: KDSStation; 
+  created_at: string | null;
+  station_assigned_at?: string | null;
+  bumped_at?: string | null;
+};
 function pickStationRow(
   raw: StationStatusRow | StationStatusRow[] | null | undefined,
   station: KDSStation,
@@ -209,15 +215,38 @@ export async function recallStationOrder(
 
   // User-context client — see bumpStationOrder for rationale.
   const userClient = await createClient()
-  const { error } = await userClient
-    .from('order_item_station_status')
-    .update({ status: 'ready', updated_at: new Date().toISOString() })
-    .eq('order_id', orderId)
-    .eq('station', station)
-    .eq('status', 'completed')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (userClient.rpc as any)('recall_station_order', {
+    p_order_id: orderId,
+    p_station:  station,
+  })
 
   if (error) return { success: false, error: error.message }
   return { success: true }
+}
+
+export async function getStationDailyCount(
+  station: KDSStation,
+  branchId: string,
+): Promise<{ count: number } | { error: string }> {
+  let caller
+  try {
+    caller = await requireDashboardSession()
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  if (!canAccessKDS(caller)) return { error: 'Unauthorized' }
+
+  const userClient = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (userClient.rpc as any)('get_station_daily_count', {
+    p_station:   station,
+    p_branch_id: branchId,
+  })
+
+  if (error) return { error: error.message }
+  return { count: data ?? 0 }
 }
 
 export async function fetchStationOrders(
@@ -243,7 +272,7 @@ export async function fetchStationOrders(
       id, branch_id, status, order_type, source, table_number, created_at, updated_at, notes, customer_name,
       order_items(
         id, name_ar, name_en, quantity, selected_size, selected_variant, menu_item_slug, notes, modifiers,
-        order_item_station_status(status, station, created_at)
+        order_item_station_status(status, station, created_at, bumped_at)
       )
     `)
     .in('status', ['accepted', 'preparing', 'ready'])
@@ -269,6 +298,7 @@ export async function fetchStationOrders(
         ...item,
         station_status:      (statusRow?.status ?? undefined) as KDSItemStatus | undefined,
         station_assigned_at: statusRow?.created_at ?? null,
+        bumped_at:           statusRow?.bumped_at ?? null,
       }))
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
