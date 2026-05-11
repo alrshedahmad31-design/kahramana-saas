@@ -10,7 +10,7 @@ import Image from 'next/image'
 import AvailabilityToggle from './AvailabilityToggle'
 import EditMenuItemDialog from './EditMenuItemDialog'
 import DeleteMenuItemConfirm from './DeleteMenuItemConfirm'
-import { STATION_CONFIG } from '@/constants/kds'
+import { getStationConfig } from '@/constants/kds'
 import type { KDSStation } from '@/lib/supabase/custom-types'
 
 interface MenuItem {
@@ -163,8 +163,8 @@ export default function MenuManager({ initialCategories, locale, translations: t
               <CardContent className="p-0">
                 <div className="divide-y divide-brand-gold/10">
                   {category.items.map((item) => {
-                    const stationKey    = (item.station ?? 'main') as KDSStation
-                    const stationCfg    = STATION_CONFIG[stationKey] ?? STATION_CONFIG['main']!
+                    const stationKey    = (item.station ?? 'unassigned') as KDSStation
+                    const stationCfg    = getStationConfig(stationKey)
                     const description   = isAr ? item.description?.ar ?? '' : item.description?.en ?? ''
                     const descPreview   = description.length > 50 ? `${description.slice(0, 50).trim()}…` : description
 

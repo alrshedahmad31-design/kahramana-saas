@@ -176,7 +176,7 @@ export async function syncMenuItemsWithDatabase(): Promise<{
       price_bhd:      item.price_bhd ?? 0,
       category:       slugify(cat.category.en),
       image_url:      item.image_url || null,
-      station:        ((item.station || 'main') as KDSStation),
+      station:        ((item.station || 'unassigned') as KDSStation),
       updated_at:     new Date().toISOString(),
     })),
   )

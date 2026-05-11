@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { STATION_CONFIG } from '@/constants/kds'
+import { getStationConfig } from '@/constants/kds'
 import { ALL_STATIONS } from '@/lib/kds/constants'
 import { MENU_CATEGORIES, type MenuCategoryId } from '@/constants/menu-categories'
 import type { KDSStation } from '@/lib/supabase/custom-types'
@@ -62,8 +62,8 @@ export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
 
   const stationKey = (ALL_STATIONS.includes(form.station as KDSStation)
     ? form.station
-    : 'main') as KDSStation
-  const stationCfg = STATION_CONFIG[stationKey] ?? STATION_CONFIG['main']!
+    : 'unassigned') as KDSStation
+  const stationCfg = getStationConfig(stationKey)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -269,7 +269,7 @@ export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
               className="flex h-10 w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-sm text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
             >
               {ALL_STATIONS.map((s) => {
-                const cfg = STATION_CONFIG[s] ?? STATION_CONFIG['main']!
+                const cfg = getStationConfig(s)
                 return (
                   <option key={s} value={s}>
                     {`${cfg.icon}  ${isAr ? cfg.label.ar : cfg.label.en}`}

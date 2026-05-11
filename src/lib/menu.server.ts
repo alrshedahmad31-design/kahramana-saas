@@ -85,7 +85,7 @@ function dbRowToNormalized(
     price_bhd:   safePrice,
     image_url:   row.image_url ?? undefined,
     available:   row.is_available,
-    station:     (row.station ?? 'main') as MenuItem['station'],
+    station:     (row.station ?? 'unassigned') as MenuItem['station'],
     // JSON-only fields preserved as-is
     sizes:       jsonEntry?.item.sizes,
     variants:    jsonEntry?.item.variants,

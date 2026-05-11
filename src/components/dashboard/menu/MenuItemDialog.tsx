@@ -7,7 +7,7 @@ import { toast } from '@/lib/toast'
 import { slugify } from '@/lib/menu'
 import { MENU_CATEGORIES, getSlugPrefix, type MenuCategoryId } from '@/constants/menu-categories'
 import { ALL_STATIONS } from '@/lib/kds/constants'
-import { STATION_CONFIG } from '@/constants/kds'
+import { getStationConfig } from '@/constants/kds'
 import {
   Dialog,
   DialogContent,
@@ -58,7 +58,7 @@ const EMPTY_FORM = {
   price_bhd:      0,
   category:       '' as MenuCategoryId | '',
   image_url:      '',
-  station:        'main' as KDSStation,
+  station:        'mains' as KDSStation,
   is_available:   true,
 }
 
@@ -255,7 +255,7 @@ export default function MenuItemDialog({ translations: t, locale }: Props) {
                 </SelectTrigger>
                 <SelectContent>
                   {ALL_STATIONS.map((s) => {
-                    const cfg = STATION_CONFIG[s] ?? STATION_CONFIG['main']!
+                    const cfg = getStationConfig(s)
                     return (
                       <SelectItem key={s} value={s}>
                         {`${cfg.icon}  ${isAr ? cfg.label.ar : cfg.label.en}`}
