@@ -5,6 +5,7 @@ import { AlertCircle, ShoppingBag } from 'lucide-react'
 import MenuItemDialog from '@/components/dashboard/menu/MenuItemDialog'
 import MenuManager from '@/components/dashboard/menu/MenuManager'
 import SyncMenuButton from '@/components/dashboard/menu/SyncMenuButton'
+import ExportMenuButton from '@/components/dashboard/menu/ExportMenuButton'
 
 export default async function MenuDashboardPage({
   params,
@@ -95,6 +96,13 @@ export default async function MenuDashboardPage({
               syncLabel={t('sync_data')}
               successMsg={t('sync_success')}
               errorMsg={t('sync_error')}
+            />
+          )}
+          {isPrivileged && (
+            <ExportMenuButton
+              label={locale === 'ar' ? 'تصدير JSON' : 'Export JSON'}
+              successMsg={locale === 'ar' ? 'تم تصدير القائمة' : 'Menu exported'}
+              errorMsg={locale === 'ar' ? 'فشل التصدير' : 'Export failed'}
             />
           )}
           <MenuItemDialog mode="add" translations={clientT} locale={locale} />

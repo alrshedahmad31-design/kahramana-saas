@@ -199,6 +199,45 @@ export async function syncMenuItemsWithDatabase(): Promise<{
   return { success: true, count: allItems.length }
 }
 
+// ── Export to JSON ────────────────────────────────────────────────────────────
+
+export async function exportMenuItems(): Promise<{
+  success: boolean
+  error?: string
+  data?: { exported_at: string; count: number; items: unknown[] }
+}> {
+  let caller
+  try {
+    caller = await requireDashboardSection('menu')
+  } catch (err) {
+    return { success: false, error: getDashboardGuardErrorMessage(err) }
+  }
+  if (!DESTRUCTIVE_ROLES.includes(caller.role as StaffRole)) {
+    return { success: false, error: 'Forbidden: only owners or general managers can export menu' }
+  }
+
+  const supabase = await createServiceClient()
+  const { data, error } = await supabase
+    .from('menu_items')
+    .select('*')
+    .order('category', { ascending: true })
+    .order('id',       { ascending: true })
+
+  if (error) {
+    console.error('[menu] exportMenuItems failed:', error)
+    return { success: false, error: error.message }
+  }
+
+  return {
+    success: true,
+    data: {
+      exported_at: new Date().toISOString(),
+      count:       data?.length ?? 0,
+      items:       data ?? [],
+    },
+  }
+}
+
 // ── Create ────────────────────────────────────────────────────────────────────
 
 export async function createMenuItem(
