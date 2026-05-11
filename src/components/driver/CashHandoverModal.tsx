@@ -48,7 +48,7 @@ export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClos
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-brand-border">
-          <h2 className={`font-black text-base text-brand-text ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+          <h2 className="font-cairo font-black text-base text-brand-text">
             {isRTL
               ? (isPartial ? 'تسليم نقد جزئي' : 'تسليم النقد')
               : (isPartial ? 'Partial Cash Handover' : 'Cash Handover')
@@ -86,7 +86,7 @@ export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClos
                   type="number"
                   step="0.100"
                   min="0"
-                  value={actualAmount || ''}
+                  value={actualAmount === 0 ? '' : actualAmount}
                   onChange={e => setActualAmount(Math.max(0, Number(e.target.value) || 0))}
                   placeholder="0.000"
                   className="w-full h-14 rounded-xl bg-brand-surface border border-brand-border text-center font-satoshi font-black text-2xl text-red-300 tabular-nums focus:outline-none focus:border-red-500/50"
@@ -142,7 +142,7 @@ export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClos
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={loading || done || cashOrders.length === 0}
+            disabled={loading || done || cashOrders.length === 0 || actualAmount <= 0}
             className={`
               w-full min-h-[56px] rounded-2xl font-satoshi font-black text-base
               transition-all duration-150 active:scale-[0.98]

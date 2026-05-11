@@ -24,7 +24,9 @@ export default function DriverPWAShell({ locale, children }: Props) {
   // Register service worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {/* silent */})
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('[driver-pwa] service worker registration failed:', err)
+      })
     }
   }, [])
 
@@ -85,10 +87,10 @@ export default function DriverPWAShell({ locale, children }: Props) {
                         flex items-center justify-between gap-3">
           <div>
             <p className={`font-bold text-sm text-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? '🔔 فعّل الإشعارات' : '🔔 Enable Notifications'}
+              {t('pushPromptTitle')}
             </p>
             <p className={`text-xs text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr ? 'لتصلك التنبيهات فور وصول طلب جديد' : 'Get alerts the moment a new order arrives'}
+              {t('pushPromptHint')}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -96,7 +98,7 @@ export default function DriverPWAShell({ locale, children }: Props) {
               type="button"
               onClick={() => setPushDismissed(true)}
               className="text-brand-muted hover:text-brand-text transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
-              aria-label={isAr ? 'تجاهل' : 'Dismiss'}
+              aria-label={t('pushPromptDismiss')}
             >
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -107,7 +109,7 @@ export default function DriverPWAShell({ locale, children }: Props) {
               onClick={requestPermission}
               className={`bg-brand-gold text-brand-black font-black text-sm px-4 py-2 rounded-lg min-h-[44px] ${isAr ? 'font-cairo' : 'font-satoshi'}`}
             >
-              {isAr ? 'تفعيل' : 'Enable'}
+              {t('pushPromptEnable')}
             </button>
           </div>
         </div>

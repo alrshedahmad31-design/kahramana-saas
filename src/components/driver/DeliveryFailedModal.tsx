@@ -4,12 +4,12 @@ import { useState } from 'react'
 import { reportDeliveryFailure } from '@/app/[locale]/driver/actions'
 
 const FAILURE_REASONS = [
-  'العميل لا يرد',
-  'العنوان غير صحيح',
-  'العميل رفض الاستلام',
-  'العميل ألغى الطلب',
-  'حادث/مشكلة بالسيارة',
-  'أخرى',
+  { key: 'customer_unreachable', ar: 'العميل لا يرد',          en: 'Customer unreachable' },
+  { key: 'wrong_address',       ar: 'العنوان غير صحيح',       en: 'Wrong address' },
+  { key: 'customer_refused',    ar: 'العميل رفض الاستلام',    en: 'Customer refused' },
+  { key: 'customer_cancelled',  ar: 'العميل ألغى الطلب',      en: 'Customer cancelled' },
+  { key: 'vehicle_issue',       ar: 'حادث/مشكلة بالسيارة',   en: 'Vehicle issue' },
+  { key: 'other',               ar: 'أخرى',                   en: 'Other' },
 ] as const
 
 interface Props {
@@ -67,7 +67,7 @@ export default function DeliveryFailedModal({ orderId, orderRef, isRTL, onClose 
         <div className="flex items-center justify-between px-5 py-3 border-b border-brand-border">
           <div className="flex items-center gap-2">
             <WarningCircleIcon />
-            <h2 className={`font-black text-base text-brand-error ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+            <h2 className="font-cairo font-black text-base text-brand-error">
               {isRTL ? `فشل توصيل الطلب #${orderRef}` : `Delivery Failed — Order #${orderRef}`}
             </h2>
           </div>
@@ -88,7 +88,7 @@ export default function DeliveryFailedModal({ orderId, orderRef, isRTL, onClose 
               <div className="w-14 h-14 rounded-full bg-brand-error/20 border border-brand-error/30 flex items-center justify-center">
                 <CheckBigIcon />
               </div>
-              <p className={`font-black text-lg text-brand-error ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+              <p className="font-cairo font-black text-lg text-brand-error">
                 {isRTL ? 'تم تسجيل الفشل' : 'Failure Recorded'}
               </p>
               <p className={`text-sm text-brand-muted text-center ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
@@ -105,20 +105,20 @@ export default function DeliveryFailedModal({ orderId, orderRef, isRTL, onClose 
                 <div className="grid grid-cols-2 gap-2">
                   {FAILURE_REASONS.map((reason) => (
                     <button
-                      key={reason}
+                      key={reason.key}
                       type="button"
-                      onClick={() => setSelected(reason)}
+                      onClick={() => setSelected(reason.key)}
                       className={`
                         rounded-xl px-3 py-3 min-h-[52px] text-start transition-all duration-150
                         font-bold text-sm leading-snug
                         ${isRTL ? 'font-almarai' : 'font-satoshi'}
-                        ${selected === reason
+                        ${selected === reason.key
                           ? 'bg-brand-error/15 border-2 border-brand-error text-brand-error'
                           : 'bg-brand-surface-2 border border-brand-border text-brand-muted hover:border-brand-error/40 hover:text-brand-text'
                         }
                       `}
                     >
-                      {reason}
+                      {isRTL ? reason.ar : reason.en}
                     </button>
                   ))}
                 </div>

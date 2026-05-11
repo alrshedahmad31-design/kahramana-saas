@@ -73,7 +73,7 @@ export default function DriverDashboard({
         expected_delivery_time, customer_notes, driver_notes,
         picked_up_at, arrived_at, delivered_at,
         total_bhd, assigned_driver_id, created_at, updated_at,
-        source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
+        source, whatsapp_sent_at,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant, notes),
         payments(method)
       `)
@@ -113,7 +113,7 @@ export default function DriverDashboard({
         expected_delivery_time, customer_notes, driver_notes,
         picked_up_at, arrived_at, delivered_at,
         total_bhd, assigned_driver_id, created_at, updated_at,
-        source, whatsapp_sent_at, coupon_id, coupon_discount_bhd,
+        source, whatsapp_sent_at,
         cash_settled_at, cash_settlement_id, tip_bhd,
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
         payments(method)
