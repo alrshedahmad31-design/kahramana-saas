@@ -174,6 +174,7 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
           <div>
             <div
               className="text-4xl font-black tabular-nums leading-none"
+              suppressHydrationWarning
               style={{
                 color:
                   ageStatus === 'overdue' ? tokens.color.error :

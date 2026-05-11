@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-11 (session 89 — KDS VISIBILITY RESTORED: Identified missing 'bumped_at' column causing 500/42703 errors. Applied code-level fallback to restore display immediately. Created migration 102 to add column, relax restrictive 'orders' RLS for staff roles, and fix bump RPC. KDS variant display polished to avoid duplication and add separators. verified via diagnostic script.)",
+    "last_updated":  "2026-05-11 (session 89 — KDS VISIBILITY RESTORED: Identified missing 'bumped_at' column causing 42703 errors. Applied code-level fallback. Fixed KDS hydration mismatch by synchronizing 'now' state between server and client via props and applying suppressHydrationWarning to time displays. verified via tsc.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",

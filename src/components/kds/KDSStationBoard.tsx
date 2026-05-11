@@ -22,6 +22,7 @@ interface Props {
   branchId:       string | null
   locale:         string
   loadError?:     string
+  initialNow:     number
 }
 
 function playTripleBeep() {
@@ -66,6 +67,7 @@ export default function KDSStationBoard({
   branchId,
   locale,
   loadError,
+  initialNow,
 }: Props) {
   const [activeOrders, setActiveOrders]   = useState<KDSOrder[]>(initialActive)
   const [stalledOrders, setStalledOrders] = useState<KDSOrder[]>(initialStalled)
@@ -74,7 +76,7 @@ export default function KDSStationBoard({
   const [dailyCount, setDailyCount]     = useState(0)
   const [recentBump, setRecentBump]     = useState<{ id: string; timestamp: number } | null>(null)
   const [isRecalling, setIsRecalling]   = useState(false)
-  const [now, setNow]                   = useState(Date.now())
+  const [now, setNow]                   = useState(initialNow)
   const [isSyncing, setIsSyncing]       = useState(false)
   const [isConnected, setIsConnected]   = useState(true)
 
@@ -466,7 +468,10 @@ export default function KDSStationBoard({
 function Clock({ locale, now }: { locale: string; now: number }) {
   const time = new Date(now)
   return (
-    <div className="font-black text-2xl tabular-nums text-white min-w-[90px] text-center">
+    <div 
+      className="font-black text-2xl tabular-nums text-white min-w-[90px] text-center"
+      suppressHydrationWarning
+    >
       {time.toLocaleTimeString(locale === 'ar' ? 'ar-BH' : 'en-US', {
         hour12: true,
         hour: '2-digit',

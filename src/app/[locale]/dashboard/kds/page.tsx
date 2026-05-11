@@ -112,6 +112,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
 
   const { data, error } = await query
   const branchId = isGlobalKitchenViewer ? null : (user.branch_id ?? null)
+  const initialNow = Date.now()
 
   // B1: Surface DB errors to the board instead of silently showing empty state
   if (error) {
@@ -124,6 +125,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
           branchId={branchId}
           locale={locale}
           loadError={error.message}
+          initialNow={initialNow}
         />
       </div>
     )
@@ -151,7 +153,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
     return { ...order, order_items: stationItems } as unknown as KDSOrder
   }).filter(order => order.order_items.length > 0)
   // Split into active and stalled (older than 3 hours)
-  const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000)
+  const threeHoursAgo = new Date(initialNow - 3 * 60 * 60 * 1000)
   const initialActive  = normalizedOrders.filter(o => new Date(o.created_at) >= threeHoursAgo)
   const initialStalled = normalizedOrders.filter(o => new Date(o.created_at) < threeHoursAgo)
 
@@ -163,6 +165,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
         station={activeStation}
         branchId={branchId}
         locale={locale}
+        initialNow={initialNow}
       />
     </div>
   )
