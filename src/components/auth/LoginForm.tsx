@@ -1,17 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import CinematicButton from '@/components/ui/CinematicButton'
 
+// Open-redirect guard: only honor ?redirect=... when it's a same-origin
+// relative path. Reject protocol-relative ("//evil.com"), absolute URLs, and
+// anything that doesn't start with a single "/".
+function sanitizeRedirect(raw: string | null): string | null {
+  if (!raw) return null
+  if (!raw.startsWith('/') || raw.startsWith('//')) return null
+  return raw
+}
+
 export default function LoginForm() {
-  const t      = useTranslations('auth')
-  const locale = useLocale()
-  const isAr   = locale === 'ar'
-  const router = useRouter()
-  const font   = isAr ? 'font-almarai' : 'font-satoshi'
+  const t            = useTranslations('auth')
+  const locale       = useLocale()
+  const isAr         = locale === 'ar'
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const font         = isAr ? 'font-almarai' : 'font-satoshi'
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -37,8 +47,13 @@ export default function LoginForm() {
       return
     }
 
+    // Honor ?redirect=... when it's a safe same-origin path (set by
+    // middleware when bouncing unauthenticated requests off a gated route,
+    // e.g. /login?redirect=/driver). Otherwise default to /dashboard — the
+    // middleware will then forward drivers to /driver on its own.
+    const safeRedirect = sanitizeRedirect(searchParams.get('redirect'))
     const dashboardPath = locale === 'en' ? '/en/dashboard' : '/dashboard'
-    router.push(dashboardPath)
+    router.push(safeRedirect ?? dashboardPath)
     router.refresh()
   }
 
