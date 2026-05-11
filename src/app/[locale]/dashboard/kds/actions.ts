@@ -147,7 +147,10 @@ export async function updateItemStatus(
     p_expected_status: expectedStatus ?? null,
   })
 
-  if (error) return { success: false, error: error.message }
+  if (error) {
+    console.error('[KDS Action] update_order_item_station_status error:', error);
+    return { success: false, error: error.message };
+  }
   return { success: true }
 }
 
@@ -164,21 +167,23 @@ export async function bumpStationOrder(
 
   if (!canAccessKDS(caller)) return { success: false, error: 'Unauthorized' }
 
+  console.log(`[KDS Action] bumpStationOrder: fetching order branch_id for validation...`);
   const service = await createServiceClient()
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   if (!isGlobal) {
     const { data: order, error: fetchErr } = await service
       .from('orders').select('branch_id').eq('id', orderId).single()
-    if (fetchErr || !order) return { success: false, error: 'Order not found' }
-    if (order.branch_id !== caller.branch_id)
+    if (fetchErr || !order) {
+      console.error('[KDS Action] Order not found for validation:', fetchErr);
+      return { success: false, error: 'Order not found' }
+    }
+    if (order.branch_id !== caller.branch_id) {
+      console.warn('[KDS Action] Branch mismatch:', { order: order.branch_id, caller: caller.branch_id });
       return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
+    }
   }
 
-  // bump_station_order RPC (migration 094) is atomic and:
-  //   - verifies every station row is 'ready' before completing any
-  //   - returns the affected row count, raises NO_ROWS_AFFECTED on 0
-  //   - raises NOT_ALL_READY if any item is still pending/preparing
-  //   - re-checks role + branch scope server-side (defence in depth)
+  console.log(`[KDS Action] Executing bump_station_order RPC for ${orderId} / ${station}...`);
   const userClient = await createClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (userClient.rpc as any)('bump_station_order', {
@@ -186,7 +191,10 @@ export async function bumpStationOrder(
     p_station:  station,
   })
 
-  if (error) return { success: false, error: error.message }
+  if (error) {
+    console.error('[KDS Action] bump_station_order error:', error);
+    return { success: false, error: error.message };
+  }
   return { success: true }
 }
 

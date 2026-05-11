@@ -10,6 +10,7 @@ import { getStationConfig } from '@/constants/kds'
 import KDSStationOrderCard from './KDSStationOrderCard'
 import {
   fetchStationOrders,
+  updateItemStatus,
   bumpStationOrder,
   recallStationOrder,
   getStationDailyCount,
@@ -107,14 +108,30 @@ export default function KDSStationBoard({
     }
   }, [station])
 
+  const handleStatusChange = useCallback(async (
+    orderId: string, itemId: string, station: KDSStation, status: KDSItemStatus, expected?: KDSItemStatus
+  ) => {
+    console.log(`[KDS] Changing status: order=${orderId} item=${itemId} to ${status}`);
+    const result = await updateItemStatus(orderId, itemId, station, status, expected)
+    if (!result.success) {
+      console.error('[KDS] Status update failed:', result.error);
+      alert(`خطأ في تحديث الحالة: ${result.error}`);
+    }
+  }, [station])
+
   const handleBump = useCallback(async (orderId: string) => {
+    console.log(`[KDS] Bumping order: ${orderId} at station: ${station}`);
     const result = await bumpStationOrder(orderId, station)
     if (result.success) {
+      console.log(`[KDS] Bump successful for order: ${orderId}`);
       setActiveOrders(prev => prev.filter(o => o.id !== orderId))
       setStalledOrders(prev => prev.filter(o => o.id !== orderId))
       setRecentBump({ id: orderId, timestamp: Date.now() })
       setDailyCount(prev => prev + 1)
       if (soundRef.current) playBumpTone()
+    } else {
+      console.error('[KDS] Bump failed:', result.error);
+      alert(`خطأ في إنهاء الطلب: ${result.error}`);
     }
   }, [station])
 

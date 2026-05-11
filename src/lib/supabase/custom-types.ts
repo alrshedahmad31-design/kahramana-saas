@@ -17,8 +17,8 @@ export type StaffRole      = Enums<'staff_role'> | 'waiter';
 // (shawarma/bakery/appetizer_drinks/main/fry/salads/packing) still type-check
 // when read from the DB. New rows from trigger 094 only emit canonical values.
 export type KDSStation =
-  | 'grill' | 'fryer' | 'cold' | 'drinks' | 'desserts' | 'unassigned'
-  | 'shawarma' | 'bakery' | 'appetizer_drinks' | 'main' | 'fry' | 'salads' | 'packing';
+  | 'mains' | 'grill' | 'shawarma' | 'pizza' | 'cold' | 'drinks' | 'desserts' | 'unassigned'
+  | 'fryer' | 'bakery' | 'appetizer_drinks' | 'main' | 'fry' | 'salads' | 'packing';
 export type KDSItemStatus  = 'pending' | 'preparing' | 'ready' | 'completed';
 export type LoyaltyTier    = Enums<'loyalty_tier'>;
 export type CouponType     = Enums<'coupon_type'>;

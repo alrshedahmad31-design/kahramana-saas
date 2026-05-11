@@ -98,7 +98,10 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
         return sum
       }, 0) / items.length
     : 0
-  const allReady = progress === 100 && items.length > 0
+  const allReady = items.length > 0 && items.every(item => {
+    const st = effectiveStatus(item)
+    return st === 'ready' || st === 'completed'
+  })
 
   async function handleItemToggle(itemId: string, currentStatus?: KDSItemStatus) {
     if (updating) return
@@ -137,6 +140,7 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
   }
 
   async function handleBump() {
+    console.log(`[KDS Card] handleBump clicked for order: ${order.id}, bumping=${bumping}`);
     if (bumping) return
     setBumping(true)
     try { await onBump(order.id) }

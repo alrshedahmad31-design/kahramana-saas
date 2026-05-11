@@ -10,30 +10,30 @@ export const STATION_CONFIG: Partial<Record<KDSStation, {
   color: string
   label: { ar: string; en: string }
 }>> = {
+  mains: {
+    icon: '🥘',
+    color: tokens.color.kdsAmber,
+    label: { ar: 'الأطباق الرئيسية', en: 'Mains' },
+  },
   grill: {
     icon: '🔥',
-    color: tokens.color.kdsAmber,
+    color: tokens.color.kdsOrange,
     label: { ar: 'المشاوي', en: 'Grill' },
   },
-  fryer: {
-    icon: '🍳',
-    color: tokens.color.kdsOrange,
-    label: { ar: 'القلي والخبيز', en: 'Fryer' },
+  shawarma: {
+    icon: '🌯',
+    color: tokens.color.kdsBlue,
+    label: { ar: 'الشاورما والسندويشات', en: 'Shawarma' },
+  },
+  pizza: {
+    icon: '🍕',
+    color: tokens.color.gold,
+    label: { ar: 'البيتزا والفطائر', en: 'Pizza' },
   },
   cold: {
     icon: '🥗',
     color: tokens.color.success,
-    label: { ar: 'الباردة', en: 'Cold' },
-  },
-  drinks: {
-    icon: '🥤',
-    color: tokens.color.kdsBlue,
-    label: { ar: 'المشروبات', en: 'Drinks' },
-  },
-  desserts: {
-    icon: '🍰',
-    color: tokens.color.gold,
-    label: { ar: 'الحلويات', en: 'Desserts' },
+    label: { ar: 'المقبلات والحلويات', en: 'Cold' },
   },
   unassigned: {
     icon: '❓',
