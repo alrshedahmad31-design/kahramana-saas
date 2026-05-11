@@ -19,6 +19,11 @@ export default async function MenuDashboardPage({
   ])
 
   const isPrivileged = user?.role === 'owner' || user?.role === 'general_manager'
+  // Sync-from-JSON is a developer escape hatch — it overwrites owner edits
+  // with the static fixture. Gated behind an explicit env flag so the owner
+  // never sees the button in production. Set NEXT_PUBLIC_ENABLE_MENU_SYNC=true
+  // in your local .env to use it.
+  const showSyncButton = isPrivileged && process.env.NEXT_PUBLIC_ENABLE_MENU_SYNC === 'true'
 
   const clientT = {
     add_item:                   t('add_item'),
@@ -85,7 +90,7 @@ export default async function MenuDashboardPage({
         </div>
 
         <div className="flex items-center gap-3">
-          {isPrivileged && (
+          {showSyncButton && (
             <SyncMenuButton
               syncLabel={t('sync_data')}
               successMsg={t('sync_success')}
