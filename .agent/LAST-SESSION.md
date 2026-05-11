@@ -2,11 +2,11 @@
 
 > **Session**: 88 (Claude Code track)
 > **Date**: 2026-05-11
-> **Focus**: Pre-launch QA cleanup — DriverHeader hydration fix, sentry-example deletion, raw-hex → design-tokens, sitemap /terms, middleware PUBLIC_NO_PREFIX rollback. Diagnostic discovery: production hostname kahramanat.com is currently serving the OLD STATIC HTML SITE, not the Next.js Vercel deployment.
+> **Focus**: Pre-launch QA cleanup — DriverHeader hydration fix, sentry-example deletion, raw-hex → design-tokens, sitemap /terms, middleware PUBLIC_NO_PREFIX rollback, amber/yellow → brand-gold. Diagnostic discovery: production hostname kahramanat.com is currently serving the OLD STATIC HTML SITE, not the Next.js Vercel deployment — interim production URL is `https://kahramana.vercel.app`. Pre-launch QA pass run against the Vercel URL: 7 of 8 CLAUDE.md gates clean, all marketing/menu/SEO/i18n probes green.
 
 ## Session 88 deliverables
 
-### Code fixes (4 commits, all pushed to master)
+### Code fixes (5 commits, all pushed to master)
 
 **`83ced0a chore: remove sentry-example pages`** — deleted `src/app/sentry-example-page/` and `src/app/api/sentry-example-api/` (Sentry wizard scaffolding, only remaining source of the Roboto font violation). The commit also bundled the earlier `DriverHeader` hydration fix (`git add -A` grabbed it). The hydration fix added `suppressHydrationWarning` to the clock `<span>` in `DriverHeader.tsx:29` — root cause was `useState(formatClock)` running once during SSR and once during client hydration, ~1s apart, producing the `01:36:43 AM` vs `01:36:42 AM` Sentry diff. Verified via Sentry email + grep.
 
@@ -14,7 +14,9 @@
 
 **`c7645f5 seo(sitemap): add /terms to public legal pages`** — single `staticRoutes` entry added for `/terms`. Confirmed via path-listing that `/terms` was the only genuinely public route missing from the sitemap (current sitemap already generates ~416 URLs: 10 static × 2 + 3 branches × 2 + 16 categories × 2 + 179 items × 2). The handoff context's "Sitemap: 10 URLs only" claim was stale.
 
-**`aafda83 fix(middleware): remove PUBLIC_NO_PREFIX shortcut, restore intl rewrite`** — removed the `PUBLIC_NO_PREFIX` block (lines 16-21, 114-120) introduced in session 88's commit `17c0379`. Root cause analysis: with `routing.ts: localePrefix: 'as-needed'` and route files at `src/app/[locale]/*`, next-intl middleware MUST internally rewrite `/branches` → `/ar/branches` so the file-system route matches. The PUBLIC_NO_PREFIX shortcut returned `NextResponse.next()` *before* intl middleware could run — so the rewrite never happened, and Next.js looked for `src/app/branches/page.tsx` (does not exist) and served 404. Local verification after fix: `/api/health`, `/branches`, `/privacy-policy`, `/terms`, `/refund-policy` all return 200 (with and without `/en` prefix).
+**`aafda83 fix(middleware): remove PUBLIC_NO_PREFIX shortcut, restore intl rewrite`** — removed the `PUBLIC_NO_PREFIX` block (lines 16-21, 114-120) introduced in session 88's commit `17c0379`. Root cause analysis: with `routing.ts: localePrefix: 'as-needed'` and route files at `src/app/[locale]/*`, next-intl middleware MUST internally rewrite `/branches` → `/ar/branches` so the file-system route matches. The PUBLIC_NO_PREFIX shortcut returned `NextResponse.next()` *before* intl middleware could run — so the rewrite never happened, and Next.js looked for `src/app/branches/page.tsx` (does not exist) and served 404. Local verification after fix: `/api/health`, `/branches`, `/privacy-policy`, `/terms`, `/refund-policy` all return 200 (with and without `/en` prefix). **Production verification (post-deploy on `kahramana.vercel.app`):** `/api/health` returns 200 + `db.ok=true`, latency 133 ms, sha=`aafda83`. All 11 sampled routes return 200. `X-Matched-Path: /[locale]/branches` confirms intl rewrite is working.
+
+**`3ec0982 fix(tokens): replace amber/yellow tailwind classes with brand design tokens`** — `dashboard/menu/page.tsx:59-64` analytics-missing warning banner: 4 × `amber-500/*` classes (border, bg, icon container, text) → `brand-gold/*`. `ui/badge.tsx:15` warning variant: `bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80` → `bg-brand-gold/15 text-brand-gold hover:bg-brand-gold/25`. Brand-gold (#C8922A) is the project's warm-attention token; closer to the design system than vivid Tailwind amber/yellow. Gate 4 of CLAUDE.md (no purple/violet/indigo/yellow-N/amber-N) now passes across `src/`.
 
 ### Stale handoff claims that turned out to be no-ops
 The session 88 handoff context ("CONTEXT SYNC — Session 88 Handoff" message) listed three i18n runtime errors as immediate fixes. All three were stale:
@@ -48,7 +50,29 @@ Cloudflare cache purge would NOT fix this — every response is `cf-cache-status
 - `npm run build` → not re-run this session (last green build was session 87 commit `9d18db4`).
 - E2E → not re-run.
 - Local dev server → all 9 target routes (4 unprefixed + 4 /en-prefixed + /api/health) return 200 after middleware fix.
-- Production → 4 unprefixed routes still 404, /en-prefixed routes 301 → / (because production isn't running the Next.js app).
+- **Vercel production (`kahramana.vercel.app`)** — sha `aafda83` healthy, all 11 probed routes (`/`, `/about`, `/branches`, `/branches/{riffa,qallali}`, `/contact`, `/privacy-policy`, `/terms`, `/refund-policy`, `/menu`, `/menu/kahramana-signature-selection`) return 200 in both ar and en. `/api/health` returns 200 with `db.ok=true`, db latency 133 ms.
+- **Production via `kahramanat.com`** — still serving the old static HTML site (DNS issue tracked as carry-over #1). Middleware fix is live on Vercel but inert at the public hostname.
+
+### Pre-launch QA pass (machine-verifiable subset against Vercel URL)
+| Item | Result |
+|---|---|
+| Gate 1 `tsc --noEmit` | PASS — 0 errors |
+| Gate 2 RTL violations | PASS — 0 |
+| Gate 3 forbidden fonts | PASS — 0 (only `Interactive`/`Intersecting` substring noise) |
+| Gate 4 forbidden colors | **PASS post-fix** (was FAIL: `amber-500` × 3 in `dashboard/menu/page.tsx`, `yellow-100/yellow-800` in `ui/badge.tsx`; fixed in `3ec0982`) |
+| Gate 5 `BHD` literal | SOFT — 6 hits, all false positives or correct: 2 × Schema.org `priceCurrency` (must stay), 3 × bilingual ternary `{isAr ? 'د.ب' : 'BHD'}` (correct UX), 1 × `MenuEngineeringMatrix.tsx:82 const currency = 'BHD'` (likely Schema). Gate script is over-broad. |
+| Gate 6 hardcoded phones / `wa.me/` | PASS — 0 |
+| Gate 7 raw hex outside token files | PASS — 0 |
+| § 2.1 marketing pages (9 routes × ar/en) | 200/200 across the board; garbage URL → 404 ✓ |
+| § 2.2 menu pages | 200/200 (root menu + 2 category pages sampled) |
+| SEO-01 `/robots.txt` | comprehensive — blocks dashboards/auth/transactional, explicitly allows AI crawlers (GPTBot, ClaudeBot, OAI-SearchBot, PerplexityBot, Google-Extended, Applebot-Extended) |
+| SEO-02 `/sitemap.xml` | 394 `<loc>` entries with full hreflang ar/en/x-default per URL |
+| SEO-05 Bing verification meta | present (`msvalidate.01`) |
+| SEO-08 hreflang | extensive AR variants on home (ar-BH, ar-IQ, ar-SA, ar-AE, ar-KW) |
+| I18N-01 key parity ar.json ↔ en.json | PASS — 1944 keys both files, 0 diffs |
+| SEC-08 service-role key in client bundle | False-positive hit in `node_modules_@supabase_auth-js_dist_module_*.js` (string literal in supabase-js own source). Real concern (loyalty config split) was fixed by session 88's `280e8c1`. |
+
+**~150 checklist items still need human / device / accounts:** all cart/checkout/payment flows, all dashboard role tests, KDS realtime, Driver PWA on real Android, Waiter app, Inventory CRUD, mobile/RTL visual rendering, RLS spot-checks (need 13 real staff accounts — same blocker as session 85), Lighthouse on real network, email delivery, Tap merchant approval, WhatsApp API verification.
 
 ## Carry-overs into next session
 
