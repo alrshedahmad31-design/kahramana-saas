@@ -212,7 +212,7 @@ export default function DriverOrderCard({
     if (order.delivery_street)   parts.push(`Road ${order.delivery_street}`)
     if (order.delivery_building) parts.push(`Building ${order.delivery_building}`)
     // Include city if stored (delivery_city added in migration 076)
-    const city = (order as Record<string, unknown>).delivery_city as string | null | undefined
+    const city = order.delivery_city
     if (city)                    parts.push(city)
     if (parts.length === 0) return deliveryAddrText || ''
     return parts.join(', ')
@@ -511,6 +511,8 @@ export default function DriverOrderCard({
                         <div className="flex items-center gap-2 mb-3">
                           <input
                             type="number"
+                            inputMode="decimal"
+                            lang="en"
                             step="0.100"
                             min="0"
                             value={actualCollected ?? ''}
@@ -528,6 +530,8 @@ export default function DriverOrderCard({
                         <div className="flex items-center gap-2">
                           <input
                             type="number"
+                            inputMode="decimal"
+                            lang="en"
                             step="0.100"
                             min="0"
                             max="50"

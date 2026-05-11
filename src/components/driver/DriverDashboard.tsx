@@ -13,6 +13,7 @@ import DriverCashSummary from './DriverCashSummary'
 import CashHandoverModal from './CashHandoverModal'
 import CashHandoverReminderBanner from './CashHandoverReminderBanner'
 import { resolveExpectedAt, getUrgencyLevel } from '@/lib/utils/delivery'
+import { toast } from '@/lib/toast'
 import type { DriverOrder } from '@/lib/supabase/custom-types'
 
 interface Props {
@@ -60,6 +61,7 @@ export default function DriverDashboard({
   const [gpsError,        setGpsError]        = useState<string | null>(null)
   const [pendingSync,     setPendingSync]     = useState<number>(0)
   const lastGpsUpdateRef = useRef<number>(0)
+  const lastStateUpdateRef = useRef<number>(0)
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -67,7 +69,7 @@ export default function DriverDashboard({
     let q = supabase
       .from('orders')
       .select(`
-        id, customer_name, customer_phone, branch_id, status,
+        id, customer_name, customer_phone, branch_id, status, order_type,
         notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
         delivery_building, delivery_street, delivery_area,
         expected_delivery_time, customer_notes, driver_notes,
@@ -77,6 +79,7 @@ export default function DriverDashboard({
         order_items(name_ar, name_en, quantity, selected_size, selected_variant, notes),
         payments(method)
       `)
+      .eq('order_type', 'delivery')
       .in('status', ['ready', 'out_for_delivery'])
       .order('created_at', { ascending: true })
 
@@ -107,7 +110,7 @@ export default function DriverDashboard({
     const { data } = await supabase
       .from('orders')
       .select(`
-        id, customer_name, customer_phone, branch_id, status,
+        id, customer_name, customer_phone, branch_id, status, order_type,
         notes, delivery_address, delivery_lat, delivery_lng, delivery_instructions,
         delivery_building, delivery_street, delivery_area,
         expected_delivery_time, customer_notes, driver_notes,
@@ -118,6 +121,7 @@ export default function DriverDashboard({
         order_items(name_ar, name_en, quantity, selected_size, selected_variant),
         payments(method)
       `)
+      .eq('order_type', 'delivery')
       .eq('status', 'delivered')
       .eq('assigned_driver_id', driverId)
       .gte('updated_at', todayStart.toISOString())
@@ -144,7 +148,13 @@ export default function DriverDashboard({
         schema: 'public',
         table: 'orders',
         filter: branchId ? `branch_id=eq.${branchId}` : undefined
-      }, () => {
+      }, (payload: any) => {
+        // Audit fix: Ignore realtime events for non-delivery orders (dine-in, pickup)
+        // For DELETE events, payload.new may be empty and payload.old may lack order_type
+        // depending on Replica Identity settings — only skip if we positively know it's NOT delivery.
+        const record = payload.new && Object.keys(payload.new).length > 0 ? payload.new : payload.old
+        if (record?.order_type && record.order_type !== 'delivery') return
+        
         fetchOrders()
         fetchCompleted()
       })
@@ -168,11 +178,16 @@ export default function DriverDashboard({
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords
-        setUserLocation({ lat: latitude, lng: longitude })
-        setGpsStatus('tracking')
-        setGpsError(null)
-
         const now = Date.now()
+
+        // Audit fix: Throttle state updates (re-renders) to every 5 seconds
+        if (now - lastStateUpdateRef.current >= 5_000) {
+          lastStateUpdateRef.current = now
+          setUserLocation({ lat: latitude, lng: longitude })
+          setGpsStatus('tracking')
+          setGpsError(null)
+        }
+
         if (now - lastGpsUpdateRef.current >= 15_000) {
           lastGpsUpdateRef.current = now
           postDriverLocation({
@@ -261,32 +276,15 @@ export default function DriverDashboard({
     const nextStatus = currentStatus === 'ready' ? 'out_for_delivery' : 'delivered'
     const now = new Date().toISOString()
 
-    // Optimistic update
-    setOrders((prev) => {
-      if (nextStatus === 'delivered') return prev.filter((o) => o.id !== orderId)
-      return prev.map((o) =>
-        o.id === orderId
-          ? { ...o, status: nextStatus, assigned_driver_id: driverId, picked_up_at: now, updated_at: now }
-          : o
-      )
-    })
-
-    if (nextStatus === 'delivered') {
-      const order = orders.find(o => o.id === orderId)
-      if (order) {
-        setCompletedOrders(prev => [{ ...order, status: 'delivered', delivered_at: now, updated_at: now }, ...prev])
-      }
-    }
-
+    // Server-first: call before any local state mutation so failures stay
+    // visible. Optimistic delete used to unmount the DriverOrderCard before
+    // setActionError fired, swallowing the server's reason silently.
+    let result
     try {
-      const result = await driverBumpOrder(orderId, currentStatus, metadata?.tipBhd, metadata?.actualCollected)
-      if (!result.success) {
-        fetchOrders()
-        fetchCompleted()
-        return result.error
-      }
+      result = await driverBumpOrder(orderId, currentStatus, metadata?.tipBhd, metadata?.actualCollected)
     } catch (_err) {
-      // Offline or Network Error -> Save for sync
+      // Network failure → queue for offline sync. UI stays unchanged so the
+      // order is still visible and the driver can retry once online.
       try {
         await savePendingAction({ orderId, currentStatus, metadata: metadata as Record<string, unknown> | null })
         const remaining = await getPendingActions()
@@ -294,11 +292,45 @@ export default function DriverDashboard({
       } catch (dbErr) {
         console.error('Failed to save to IndexedDB:', dbErr)
       }
-      
-      return isAr 
-        ? 'أنت غير متصل بالإنترنت. سيتم مزامنة العملية تلقائياً عند عودة الاتصال.' 
+      const offlineMsg = isAr
+        ? 'أنت غير متصل بالإنترنت. سيتم مزامنة العملية تلقائياً عند عودة الاتصال.'
         : 'You are offline. Action will sync automatically when connection returns.'
+      toast.error(offlineMsg)
+      return offlineMsg
     }
+
+    if (!result.success) {
+      // Server rejected the transition (status race, missing arrival, branch
+      // mismatch, etc.). Show a toast since the calling card may unmount on
+      // refetch and would otherwise drop setActionError silently.
+      const errMsg = result.error ?? (isAr ? 'تعذّر تنفيذ العملية' : 'Action failed')
+      toast.error(errMsg)
+      fetchOrders()
+      fetchCompleted()
+      return errMsg
+    }
+
+    // Only after the server confirms — move the order out of the active list
+    // and into completed. Picked-up transitions just flip the status in place.
+    if (nextStatus === 'delivered') {
+      const movedOrder = orders.find((o) => o.id === orderId)
+      setOrders((prev) => prev.filter((o) => o.id !== orderId))
+      if (movedOrder) {
+        setCompletedOrders((prev) => [
+          { ...movedOrder, status: 'delivered', delivered_at: now, updated_at: now },
+          ...prev,
+        ])
+      }
+    } else {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? { ...o, status: nextStatus, assigned_driver_id: driverId, picked_up_at: now, updated_at: now }
+            : o,
+        ),
+      )
+    }
+
     return null
   }
 
@@ -568,7 +600,7 @@ export default function DriverDashboard({
           isPartial={hasSettledCash}
           isRTL={isAr}
           onClose={() => setShowHandover(false)}
-          onConfirmed={() => setShowHandover(false)}
+          onConfirmed={() => { setShowHandover(false); fetchCompleted() }}
         />
       )}
     </div>

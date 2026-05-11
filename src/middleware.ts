@@ -10,6 +10,11 @@ const intlMiddleware = createMiddleware(routing)
 const DASHBOARD_PATTERN   = /^(\/(ar|en))?\/dashboard(\/.*)?$/
 const LOGIN_PATTERN        = /^(\/(ar|en))?\/login$/
 const STAFF_ROUTE_PATTERN  = /^(\/(ar|en))?\/dashboard\/staff(\/.*)?$/
+const DRIVER_PATTERN       = /^(\/(ar|en))?\/driver(\/.*)?$/
+// Drivers are mono-locale (Arabic only). This pattern matches the canonical
+// unprefixed path so we know when NOT to redirect (avoids an infinite loop
+// when forcing /en/driver → /driver).
+const ARABIC_DRIVER_PATTERN = /^\/driver($|\/)/
 
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
 
@@ -118,11 +123,14 @@ export default async function middleware(request: NextRequest) {
     return intlResponse
   }
 
-  const isDashboard = DASHBOARD_PATTERN.test(pathname)
-  const isLogin     = LOGIN_PATTERN.test(pathname)
+  const isDashboard   = DASHBOARD_PATTERN.test(pathname)
+  const isLogin       = LOGIN_PATTERN.test(pathname)
+  const isDriverRoute = DRIVER_PATTERN.test(pathname)
 
   // ── Public routes: skip Supabase entirely ─────────────────────────────────
-  if (!isDashboard && !isLogin) {
+  // /driver is included because drivers must be forced into Arabic and
+  // bounced off /en/driver — that check needs the user's role.
+  if (!isDashboard && !isLogin && !isDriverRoute) {
     return finalizeResponse(headersWithNonce, nonce, NextResponse.next(), intlResponse)
   }
 
@@ -160,7 +168,7 @@ export default async function middleware(request: NextRequest) {
     new URL(locale === 'en' ? '/en/dashboard' : '/dashboard', request.url)
 
   if (!user) {
-    if (isDashboard) {
+    if (isDashboard || isDriverRoute) {
       const response = NextResponse.redirect(loginUrl(pathname))
       supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
       return response
@@ -174,7 +182,7 @@ export default async function middleware(request: NextRequest) {
       .single()
 
     if (!staffRow) {
-      if (isDashboard) {
+      if (isDashboard || isDriverRoute) {
         const response = NextResponse.redirect(loginUrl())
         supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
         return response
@@ -182,19 +190,32 @@ export default async function middleware(request: NextRequest) {
     } else {
       const role = staffRow.role as StaffRole
       if (role === 'driver') {
-        const driverUrl = new URL(locale === 'en' ? '/en/driver' : '/driver', request.url)
-        const response = NextResponse.redirect(driverUrl)
-        supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
-        return response
-      } else if (isLogin) {
-        const response = NextResponse.redirect(dashboardUrl())
-        supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
-        return response
-      }
-      if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
-        const response = NextResponse.redirect(dashboardUrl())
-        supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
-        return response
+        // Drivers always work in Arabic. Force /driver regardless of how
+        // they arrived (/en/driver, /dashboard, /en/dashboard, /login,
+        // /en/login). Skip the redirect when already on /driver to avoid a
+        // loop.
+        if (!ARABIC_DRIVER_PATTERN.test(pathname)) {
+          const response = NextResponse.redirect(new URL('/driver', request.url))
+          supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          return response
+        }
+      } else {
+        // Non-drivers don't belong on /driver — push to their dashboard.
+        if (isDriverRoute) {
+          const response = NextResponse.redirect(dashboardUrl())
+          supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          return response
+        }
+        if (isLogin) {
+          const response = NextResponse.redirect(dashboardUrl())
+          supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          return response
+        }
+        if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
+          const response = NextResponse.redirect(dashboardUrl())
+          supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          return response
+        }
       }
     }
   }

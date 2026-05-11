@@ -84,6 +84,8 @@ export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClos
               <div className="flex items-center gap-2">
                 <input
                   type="number"
+                  inputMode="decimal"
+                  lang="en"
                   step="0.100"
                   min="0"
                   value={actualAmount === 0 ? '' : actualAmount}
