@@ -425,7 +425,7 @@ function ActionButton({
       type="button"
       onClick={onClick}
       disabled={busy}
-      className={`inline-flex min-h-[40px] items-center gap-2 rounded-lg border px-3 text-sm font-bold transition-colors disabled:opacity-60 ${
+      className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg border px-3 text-sm font-bold transition-colors disabled:opacity-60 ${
         variant === 'muted'
           ? 'border-brand-border text-brand-muted hover:border-brand-error/40 hover:text-brand-error'
           : 'border-brand-gold/40 text-brand-gold hover:bg-brand-gold hover:text-brand-black'

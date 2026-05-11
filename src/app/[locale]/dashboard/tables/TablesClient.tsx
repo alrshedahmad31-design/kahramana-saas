@@ -129,7 +129,7 @@ export default function TablesClient({
             type="button"
             onClick={downloadAll}
             disabled={bulkLoading || tables.length === 0}
-            className={`inline-flex items-center gap-2 min-h-[40px] px-4 rounded-lg text-sm font-bold transition-colors ${
+            className={`inline-flex items-center gap-2 min-h-[44px] px-4 rounded-lg text-sm font-bold transition-colors ${
               bulkLoading || tables.length === 0
                 ? 'bg-brand-surface text-brand-muted cursor-not-allowed'
                 : 'bg-brand-gold text-brand-black hover:bg-brand-gold/90'
@@ -179,7 +179,7 @@ export default function TablesClient({
                     type="button"
                     onClick={() => downloadOne(table)}
                     disabled={downloading === table.id || !table.is_active}
-                    className={`shrink-0 inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-md text-xs font-bold transition-colors ${
+                    className={`shrink-0 inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-md text-xs font-bold transition-colors ${
                       downloading === table.id || !table.is_active
                         ? 'bg-brand-surface border border-brand-border text-brand-muted cursor-not-allowed'
                         : 'bg-brand-gold/10 border border-brand-gold/40 text-brand-gold hover:bg-brand-gold hover:text-brand-black'
