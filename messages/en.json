@@ -2301,7 +2301,16 @@
     "errorPhoneRequired": "Phone number is required",
     "errorNameRequired": "Customer name is required",
     "errorCartEmpty": "Add at least one item before creating an order",
-    "errorAddressRequired": "Delivery address fields are required"
+    "errorAddressRequired": "Delivery address fields are required",
+    "service": {
+      "title": "Service Mode",
+      "exitServiceMode": "Exit Service Mode",
+      "selectTable": "Select Table",
+      "tableNumber": "Table Number",
+      "sendToKitchen": "Send to Kitchen",
+      "noTableSelected": "Please select a table number",
+      "openServiceMode": "Service Mode"
+    }
   },
   "waiter": {
     "title": "Waiter",

@@ -1,11 +1,9 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { getMenuData } from '@/lib/menu.server'
 import { BRANCH_LIST } from '@/constants/contact'
-import POSClient from '@/components/pos/POSClient'
+import ServiceModeClient from '@/components/pos/ServiceModeClient'
 import type {
   POSCategory,
   POSModifierGroup,
@@ -44,7 +42,6 @@ async function loadModifierGroupsBySlug(): Promise<Map<string, POSModifierGroup[
   const map = new Map<string, POSModifierGroup[]>()
   if (!url || !key) return map
 
-  // Untyped client until `Database` types are regenerated for 082.
   const supabase = createSupabaseClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
@@ -54,11 +51,8 @@ async function loadModifierGroupsBySlug(): Promise<Map<string, POSModifierGroup[
     .select('*')
     .order('sort_order', { ascending: true })
 
-  // Fail closed: if the modifier groups query errors, return an empty map so
-  // the POS server action's modifier validation rejects any client-supplied
-  // modifier instead of silently accepting a "no modifiers" UI state.
   if (groupsError) {
-    console.error('[pos] menu_option_groups query failed:', groupsError)
+    console.error('[pos:service] menu_option_groups query failed:', groupsError)
     return map
   }
   if (!groups || groups.length === 0) return map
@@ -74,7 +68,7 @@ async function loadModifierGroupsBySlug(): Promise<Map<string, POSModifierGroup[
     .order('sort_order', { ascending: true })
 
   if (optionsError) {
-    console.error('[pos] menu_options query failed:', optionsError)
+    console.error('[pos:service] menu_options query failed:', optionsError)
     return map
   }
 
@@ -110,7 +104,7 @@ async function loadModifierGroupsBySlug(): Promise<Map<string, POSModifierGroup[
   return map
 }
 
-export default async function POSPage({ params }: PageProps) {
+export default async function ServiceModePage({ params }: PageProps) {
   const { locale } = await params
   const prefix = locale === 'en' ? '/en' : ''
   let user
@@ -140,8 +134,6 @@ export default async function POSPage({ params }: PageProps) {
         image:        item.image,
         available:    item.available,
         priceBhd:     (typeof item.price_bhd === 'number' && item.price_bhd > 0) ? item.price_bhd : null,
-        // Server-precomputed display price (NormalizedMenuItem.fromPrice)
-        // so SSR and client renders never disagree.
         fromPriceBhd: item.fromPrice,
         sizes:        item.sizes
           ? Object.entries(item.sizes)
@@ -163,24 +155,12 @@ export default async function POSPage({ params }: PageProps) {
     .filter((b) => b.status === 'active')
     .map((b) => ({ id: b.id, nameAr: b.nameAr, nameEn: b.nameEn }))
 
-  const t = await getTranslations('pos')
-
   return (
-    <>
-      <div className="mb-3 flex justify-end">
-        <Link
-          href={`${prefix}/dashboard/pos/service`}
-          className="inline-flex items-center gap-2 min-h-[44px] rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-4 text-sm font-satoshi font-bold text-brand-gold hover:bg-brand-gold/20 transition-colors"
-        >
-          {t('service.openServiceMode')}
-        </Link>
-      </div>
-      <POSClient
-        categories={categories}
-        branches={branches}
-        lockedBranchId={lockedBranchId}
-        locale={locale === 'en' ? 'en' : 'ar'}
-      />
-    </>
+    <ServiceModeClient
+      categories={categories}
+      branches={branches}
+      lockedBranchId={lockedBranchId}
+      locale={locale === 'en' ? 'en' : 'ar'}
+    />
   )
 }

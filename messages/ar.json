@@ -2301,7 +2301,16 @@
     "errorPhoneRequired": "رقم الهاتف مطلوب",
     "errorNameRequired": "اسم العميل مطلوب",
     "errorCartEmpty": "أضف صنفاً واحداً على الأقل قبل إنشاء الطلب",
-    "errorAddressRequired": "حقول عنوان التوصيل مطلوبة"
+    "errorAddressRequired": "حقول عنوان التوصيل مطلوبة",
+    "service": {
+      "title": "وضع الخدمة",
+      "exitServiceMode": "خروج من وضع الخدمة",
+      "selectTable": "اختر الطاولة",
+      "tableNumber": "رقم الطاولة",
+      "sendToKitchen": "أرسل للمطبخ",
+      "noTableSelected": "يرجى اختيار رقم الطاولة",
+      "openServiceMode": "وضع الخدمة"
+    }
   },
   "waiter": {
     "title": "تطبيق النادل",
