@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-11 (session 89 — KDS VISIBILITY RESTORED: Identified missing 'bumped_at' column causing 42703 errors. Applied code-level fallback. Fixed KDS hydration mismatch by synchronizing 'now' state between server and client via props and applying suppressHydrationWarning to time displays. verified via tsc.)",
+    "last_updated":  "2026-05-12 (session 90 — phase-state migration registry synced: 090-113 reconciled against supabase migration list --linked. Duplicate 102_kds_shawarma_routing.sql (Local-only, no Remote) removed from disk. Carry-over: 106-113 are applied on remote but untracked in git — verify by adding to repo in a follow-up commit.)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",
@@ -14,9 +14,9 @@
                        "build_pages":  540,
                        "git_tag":  "v1.6-realtime-logistics",
                        "pending_db_migrations":  [
-                                                     "090_extend_staff_role_waiter.sql — adds 'waiter' to staff_role ENUM. On disk; apply immediately before running scripts/seed-staff.ts so the waiter accounts in STAFF_ROSTER can be inserted into staff_basic. Safe no-op until any staff row uses role='waiter'."
+
                                                  ],
-                       "migration_status":  "099 APPLIED 2026-05-11 — waitlist_entries table added with branch-scoped RLS, status lifecycle, Bahrain phone check, performance index, realtime publication, and authenticated grants. /dashboard/waitlist uses server actions plus supabase.channel() live refresh.",
+                       "migration_status":  "090-113 ALL APPLIED — verified 2026-05-12 via supabase migration list --linked. Latest: 113_kds_strict_shawarma.sql. Note: 106-113 are applied on remote but currently untracked in git (need git add in a follow-up commit). Duplicate 102_kds_shawarma_routing.sql removed from disk this session.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -52,7 +52,28 @@
                                                      "088_menu_db_first_fix.sql — applied 2026-05-09 (menu_option_groups FK from menu_items_sync(slug) to menu_items(id) ON DELETE CASCADE; registered in schema_migrations)",
                                                      "089_kds_rls_hardening.sql — applied 2026-05-09 (branch-scoped RLS on order_item_station_status, UNIQUE(item_id), denormalised branch_id for realtime, created_at for SLA timer baseline, BRANCH_MISMATCH defence-in-depth in update_order_item_station_status RPC)",
                                                      "091_rpc_price_check_size_variant_aware.sql — applied 2026-05-09 (rpc_create_order PRICE_MISMATCH bypass extended: skip strict equality when line has selected_size or selected_variant; trust resolveCheckoutMenuItemPrice for additive size/variant pricing shipped in commit b65fe6c)",
-                                                     "099_waitlist_entries.sql — applied 2026-05-11 (waitlist_entries table with branch-scoped RLS, status lifecycle waiting/notified/seated/cancelled, Bahrain phone validation, realtime publication, authenticated grants)"
+                                                     "099_waitlist_entries.sql — applied 2026-05-11 (waitlist_entries table with branch-scoped RLS, status lifecycle waiting/notified/seated/cancelled, Bahrain phone validation, realtime publication, authenticated grants)",
+                                                     "090_extend_staff_role_waiter.sql — applied 2026-05-09 (adds 'waiter' enum value to staff_role; prerequisite for STAFF_ROSTER waiter seeding)",
+                                                     "092_shift_closing_rls_branch_scope.sql — applied 2026-05-10 (branch-scoped RLS on shift_closing)",
+                                                     "093_kds_station_taxonomy_enum_values.sql — applied 2026-05-10 (KDS station enum taxonomy values)",
+                                                     "094_kds_hardening_and_taxonomy.sql — applied 2026-05-10 (KDS hardening + taxonomy trigger rewrite)",
+                                                     "095_orders_update_rls_tighten.sql — applied 2026-05-10 (orders UPDATE RLS — blocks direct PostgREST mutation for cashier/kitchen, forces RPC path)",
+                                                     "097_labor_and_menu_engineering.sql — applied 2026-05-10 (get_labor_cost_metrics + get_menu_engineering_matrix RPCs powering Labor Cost Widget + 4-quadrant Menu Engineering Matrix)",
+                                                     "098_drop_legacy_uuid_overloads.sql — applied 2026-05-10 (drop legacy UUID overloads of RPCs)",
+                                                     "100_kds_enhanced_ops.sql — applied 2026-05-11 (bumped_at column, recall_station_order, get_station_daily_count — persistent daily counter + 60s recall toast + item checkmarks)",
+                                                     "101_kds_routing_fix.sql — applied 2026-05-11 (KDS station routing fix + legacy station backfill)",
+                                                     "102_kds_schema_access_fix.sql — applied 2026-05-11 (restore bumped_at + fix RLS + duplicate-subtitle cleanup + bump_station_order update; replaces removed 102_kds_shawarma_routing.sql duplicate)",
+                                                     "103_kds_routing_overhaul.sql — applied 2026-05-11 (KDS station routing v2 — canonical 5 stations: mains/grill/shawarma/pizza/cold + slug-pattern backfill)",
+                                                     "104_kds_routing_refinement.sql — applied 2026-05-11 (KDS routing refinement on top of v2)",
+                                                     "105_kds_rpc_cleanup.sql — applied 2026-05-11 (aggressive RPC cleanup to resolve bump_station_order TEXT vs kds_station overload conflict)",
+                                                     "106_kds_backfill.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
+                                                     "107_kds_rpc_table_fix.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
+                                                     "108_kds_rpc_final_fix.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
+                                                     "109_kds_final_backfill.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
+                                                     "110_kds_routing_precision.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
+                                                     "111_kds_breakfast_routing.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
+                                                     "112_kds_backfill_breakfast.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
+                                                     "113_kds_strict_shawarma.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
