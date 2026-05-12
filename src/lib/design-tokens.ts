@@ -12,7 +12,7 @@ export const tokens = {
     goldLight:  '#E8B86D',
     goldDark:   '#A67C00',
     text:       '#F5F5F5',
-    muted:      '#6B6560',
+    muted:      '#9A938C',
     border:     '#2A2A2A',
     error:      '#C0392B',
     success:    '#27AE60',

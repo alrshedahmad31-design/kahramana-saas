@@ -142,14 +142,18 @@ export default function ProtocolStackClient({ steps, isRTL, label }: Props) {
     const ctx = gsap.context(() => {
       const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[]
 
-      // Pin each card — pinSpacing:false lets them stack without adding extra page height
+      // Pin each card. Cards 1..n-1 use pinSpacing:false so they stack without
+      // adding extra page height. The LAST card uses pinSpacing:true so the page
+      // reserves one viewport-height past it before the next section enters;
+      // without that, the following section scrolls under the still-pinned card.
       cards.forEach((card, i) => {
+        const isLast = i === cards.length - 1
         gsap.set(card, { zIndex: i + 1 })
         ScrollTrigger.create({
           trigger:     card,
           start:       'top top',
           pin:         true,
-          pinSpacing:  false,
+          pinSpacing:  isLast,
         })
       })
 

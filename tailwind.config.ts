@@ -17,7 +17,7 @@ const config: Config = {
         'brand-gold-light': '#E8B86D',
         'brand-gold-dark': '#A67C00',
         'brand-text': '#F5F5F5',
-        'brand-muted': '#6B6560',
+        'brand-muted': '#9A938C',
         'brand-error': '#C0392B',
         'brand-success': '#27AE60',
       },

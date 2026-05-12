@@ -19,12 +19,6 @@ export default async function LoyaltySection() {
 
   return (
     <section className="py-32 px-6 sm:px-16 bg-brand-black relative overflow-hidden">
-      {/* Background texture — matches PhilosophyManifesto pattern */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-brand-gold/20 via-transparent to-brand-gold/10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-black via-transparent to-brand-black" />
-      </div>
-
       <div className="relative z-10 max-w-6xl mx-auto">
         <SectionHeader title={t('title')} subtitle={t('eyebrow')} isRTL={isRTL} />
 
@@ -65,7 +59,6 @@ export default async function LoyaltySection() {
             href="/account/register"
             className={`inline-flex items-center gap-2 px-8 sm:px-10 py-4 rounded-full
                         bg-brand-gold text-brand-black text-base sm:text-lg font-bold
-                        shadow-[0_0_30px_-8px_rgba(200,146,42,0.5)]
                         hover:bg-brand-gold-light transition-colors duration-300
                         ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
           >
