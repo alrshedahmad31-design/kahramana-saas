@@ -28,6 +28,11 @@ interface Props {
   initialHoursToday:      number
 }
 
+type DriverRealtimePayload = {
+  new: Partial<Pick<DriverOrder, 'order_type'>>
+  old: Partial<Pick<DriverOrder, 'order_type'>>
+}
+
 function formatClock(): string {
   const d    = new Date()
   const h    = String(d.getHours() % 12 || 12).padStart(2, '0')
@@ -148,7 +153,7 @@ export default function DriverDashboard({
         schema: 'public',
         table: 'orders',
         filter: branchId ? `branch_id=eq.${branchId}` : undefined
-      }, (payload: any) => {
+      }, (payload: DriverRealtimePayload) => {
         // Audit fix: Ignore realtime events for non-delivery orders (dine-in, pickup)
         // For DELETE events, payload.new may be empty and payload.old may lack order_type
         // depending on Replica Identity settings — only skip if we positively know it's NOT delivery.
