@@ -6,6 +6,7 @@ import type { StaffRole } from '@/lib/supabase/custom-types'
 
 export type DashboardSection =
   | 'home'
+  | 'owner'
   | 'orders'
   | 'driver'
   | 'kds'
@@ -40,6 +41,7 @@ export type DashboardSection =
 
 const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   home:             null,  // unrestricted — dashboard overview for all staff
+  owner:            ['owner', 'general_manager'],
   orders:           ['owner', 'general_manager', 'branch_manager', 'cashier'],
   driver:           ['owner', 'general_manager', 'branch_manager', 'driver'],
   kds:              ['owner', 'general_manager', 'branch_manager', 'kitchen'],

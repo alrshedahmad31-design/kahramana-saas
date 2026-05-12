@@ -34,6 +34,15 @@ function HomeIcon() {
   )
 }
 
+function OwnerIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7l4 4 5-7 5 7 4-4-2 13H5L3 7z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 20h10" />
+    </svg>
+  )
+}
+
 function StaffIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -224,6 +233,7 @@ interface SidebarProps {
 
 const getNavItems = (prefix: string): NavItem[] => [
   { key: 'home',      href: `${prefix}/dashboard`,            icon: <HomeIcon />,      section: 'home' },
+  { key: 'owner',     href: `${prefix}/dashboard/owner`,      icon: <OwnerIcon />,     section: 'owner' },
   { key: 'orders',    href: `${prefix}/dashboard/orders`,     icon: <OrdersIcon />,    section: 'orders' },
   { key: 'pos',       href: `${prefix}/dashboard/pos`,        icon: <POSIcon />,       section: 'pos' },
   { key: 'waiter',    href: `${prefix}/waiter`,               icon: <POSIcon />,       section: 'waiter' },
@@ -278,6 +288,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
 
   const navLabels: Record<string, string> = {
     home:            t('home'),
+    owner:           t('owner'),
     orders:          t('orders'),
     pos:             t('pos'),
     waiter:          t('waiter'),

@@ -2060,6 +2060,7 @@
     "couponDiscount": "Coupon Discount",
     "nav": {
       "home": "Home",
+      "owner": "Owner View",
       "orders": "Orders",
       "inventory": "Inventory",
       "staff": "Staff Management",
@@ -2083,6 +2084,82 @@
       "reservations": "Reservations",
       "promotions": "Promotions",
       "tables": "Tables & QR"
+    },
+    "owner": {
+      "eyebrow": "Owner View",
+      "title": "Owner Dashboard",
+      "subtitle": "Operations, money, and quality in one place.",
+      "todayLabel": "Today",
+      "vsYesterday": "vs yesterday",
+      "blocks": {
+        "operations": "Operations Snapshot",
+        "financial":  "Financial Snapshot",
+        "service":    "Service Quality",
+        "branches":   "Branch Comparison"
+      },
+      "ops": {
+        "ordersToday":     "Total Orders Today",
+        "revenueToday":    "Revenue Today",
+        "aov":             "Avg Order Value",
+        "aovHint":         "Today",
+        "lateOrders":      "Late Orders",
+        "longestWait":     "Longest wait {mins} min",
+        "noLate":          "No delays",
+        "statusBreakdown": "Order Status",
+        "delayed":         "Delayed",
+        "sources":         "Order Source",
+        "topItems":        "Top 3 Items Today",
+        "bottomItems":     "Slowest Sellers (today)",
+        "bottomHint":      "From today's tracked items only"
+      },
+      "sources": {
+        "whatsapp":     "WhatsApp",
+        "web":          "Web",
+        "pos":          "POS / Walk-in",
+        "qr":           "QR / Table",
+        "dine_in":      "Dine-in",
+        "walk_in":      "Walk-in",
+        "delivery_app": "Delivery Apps",
+        "delivery":     "Delivery",
+        "phone":        "Phone"
+      },
+      "fin": {
+        "period":           "Period",
+        "revenue":          "Revenue",
+        "orders":           "Orders",
+        "aov":              "AOV",
+        "growth":           "Growth",
+        "today":            "Today",
+        "week":             "Last 7 Days",
+        "month":            "This Month",
+        "foodCostPct":      "Food Cost %",
+        "laborCostPct":     "Labor Cost %",
+        "estNetProfit":     "Est. Net Profit",
+        "noFoodCostData":   "No food cost data yet",
+        "noLaborData":      "No labor data yet",
+        "foodCostThresholds": "Target under 28%",
+        "laborCostThresholds": "Target under 25%",
+        "netProfitHint":    "Revenue minus food, labor, 15% overhead",
+        "netMargin":        "Net margin {pct}%"
+      },
+      "service": {
+        "acceptanceTime":     "Avg Acceptance",
+        "acceptanceTimeHint": "Tracking not yet wired",
+        "prepTime":           "Avg Prep Time",
+        "mins":               "min",
+        "basedOn":            "Based on {count} orders",
+        "cancelledToday":     "Cancelled Today",
+        "cancelRate":         "rate",
+        "repeatRate":         "Repeat Customer Rate",
+        "repeatHint":         "{repeat} of {total} customers this month"
+      },
+      "branch": {
+        "label":         "Branch",
+        "todayRevenue":  "Today",
+        "monthRevenue":  "This Month",
+        "orders":        "orders",
+        "aov":           "AOV"
+      }
     },
     "stats": {
       "todayOrders": "Today's Orders",

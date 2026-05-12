@@ -2060,6 +2060,7 @@
     "couponDiscount": "خصم الكوبون",
     "nav": {
       "home": "الرئيسية",
+      "owner": "لوحة المالك",
       "orders": "الطلبات",
       "inventory": "المخزون",
       "staff": "إدارة الموظفين",
@@ -2083,6 +2084,82 @@
       "reservations": "الحجوزات",
       "promotions": "العروض",
       "tables": "الطاولات و QR"
+    },
+    "owner": {
+      "eyebrow": "لوحة المالك",
+      "title": "لوحة المالك",
+      "subtitle": "العمليات، المالية، والجودة في مكان واحد.",
+      "todayLabel": "اليوم",
+      "vsYesterday": "مقارنة بالأمس",
+      "blocks": {
+        "operations": "ملخص العمليات",
+        "financial":  "الملخص المالي",
+        "service":    "جودة الخدمة",
+        "branches":   "مقارنة الفروع"
+      },
+      "ops": {
+        "ordersToday":     "إجمالي طلبات اليوم",
+        "revenueToday":    "إيرادات اليوم",
+        "aov":             "متوسط قيمة الطلب",
+        "aovHint":         "اليوم",
+        "lateOrders":      "طلبات متأخرة",
+        "longestWait":     "أطول انتظار {mins} دقيقة",
+        "noLate":          "لا توجد تأخيرات",
+        "statusBreakdown": "حالة الطلبات",
+        "delayed":         "متأخر",
+        "sources":         "مصدر الطلب",
+        "topItems":        "أعلى ٣ أصناف اليوم",
+        "bottomItems":     "الأقل مبيعاً اليوم",
+        "bottomHint":      "من ضمن الأصناف المسجلة اليوم فقط"
+      },
+      "sources": {
+        "whatsapp":     "واتساب",
+        "web":          "الموقع",
+        "pos":          "نقطة البيع",
+        "qr":           "QR / الطاولة",
+        "dine_in":      "داخل المطعم",
+        "walk_in":      "حضوري",
+        "delivery_app": "تطبيقات التوصيل",
+        "delivery":     "توصيل",
+        "phone":        "هاتف"
+      },
+      "fin": {
+        "period":           "الفترة",
+        "revenue":          "الإيرادات",
+        "orders":           "الطلبات",
+        "aov":              "متوسط الطلب",
+        "growth":           "النمو",
+        "today":            "اليوم",
+        "week":             "آخر ٧ أيام",
+        "month":            "هذا الشهر",
+        "foodCostPct":      "نسبة تكلفة الطعام",
+        "laborCostPct":     "نسبة تكلفة العمالة",
+        "estNetProfit":     "صافي الربح التقديري",
+        "noFoodCostData":   "لا توجد بيانات تكلفة بعد",
+        "noLaborData":      "لا توجد بيانات عمالة بعد",
+        "foodCostThresholds": "الهدف أقل من ٢٨٪",
+        "laborCostThresholds": "الهدف أقل من ٢٥٪",
+        "netProfitHint":    "الإيرادات ناقص الطعام والعمالة و١٥٪ مصاريف ثابتة",
+        "netMargin":        "هامش الربح {pct}٪"
+      },
+      "service": {
+        "acceptanceTime":     "متوسط القبول",
+        "acceptanceTimeHint": "غير متوفر حالياً",
+        "prepTime":           "متوسط التحضير",
+        "mins":               "دقيقة",
+        "basedOn":            "بناءً على {count} طلب",
+        "cancelledToday":     "ملغاة اليوم",
+        "cancelRate":         "نسبة",
+        "repeatRate":         "نسبة العملاء المتكررين",
+        "repeatHint":         "{repeat} من {total} عميل هذا الشهر"
+      },
+      "branch": {
+        "label":         "فرع",
+        "todayRevenue":  "اليوم",
+        "monthRevenue":  "هذا الشهر",
+        "orders":        "طلب",
+        "aov":           "متوسط الطلب"
+      }
     },
     "stats": {
       "todayOrders": "طلبات اليوم",
