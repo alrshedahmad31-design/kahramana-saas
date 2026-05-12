@@ -61,7 +61,12 @@ BEGIN
   IF p_guest_name IS NULL OR char_length(btrim(p_guest_name)) = 0 THEN
     RAISE EXCEPTION 'INVALID_GUEST_NAME';
   END IF;
-  IF p_phone IS NULL OR p_phone !~ '^\+973[0-9]{8}$' THEN
+  -- Migration 116 relaxed phone validation from a strict Bahrain regex
+  -- (`^\+973[0-9]{8}$`) to a 7-30 char length range so international
+  -- guests can book. Preserve that here when re-emitting the RPC.
+  IF p_phone IS NULL
+     OR char_length(btrim(p_phone)) < 7
+     OR char_length(btrim(p_phone)) > 30 THEN
     RAISE EXCEPTION 'INVALID_PHONE';
   END IF;
   IF p_party_size IS NULL OR p_party_size < 1 OR p_party_size > 50 THEN
@@ -117,7 +122,7 @@ BEGIN
     reserved_for, duration_minutes, status, source,
     special_requests, created_by, seating_type
   ) VALUES (
-    p_branch_id, p_table_id, btrim(p_guest_name), p_phone, p_party_size,
+    p_branch_id, p_table_id, btrim(p_guest_name), btrim(p_phone), p_party_size,
     p_reserved_for, p_duration_minutes, 'pending', p_source,
     NULLIF(btrim(COALESCE(p_special_requests, '')), ''), v_caller_uid, p_seating_type
   )
