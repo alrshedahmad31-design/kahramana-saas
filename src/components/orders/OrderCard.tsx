@@ -29,6 +29,10 @@ export interface OrderCardData {
   delivery_building?: string | null
   delivery_street?:   string | null
   source?:         string | null
+  /** Server-computed: picked_up_at > 45 min ago AND no delivered_at AND
+      status === 'out_for_delivery'. Computed in orders/page.tsx so SSR
+      and CSR agree (no Date.now() hydration drift). */
+  is_late?:        boolean
   order_items:     OrderCardItem[]
 }
 
@@ -70,7 +74,17 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
             </span>
           )}
         </div>
-        <StatusBadge status={order.status} label={tS(order.status)} />
+        <div className="flex items-center gap-2">
+          {order.is_late && (
+            <span
+              className="inline-flex items-center rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400"
+              title={isRTL ? 'تأخر التوصيل أكثر من 45 دقيقة' : 'Delivery overdue: more than 45 minutes since pickup'}
+            >
+              {isRTL ? 'متأخر' : 'Late'}
+            </span>
+          )}
+          <StatusBadge status={order.status} label={tS(order.status)} />
+        </div>
       </div>
 
       <div className="h-px bg-brand-border" />

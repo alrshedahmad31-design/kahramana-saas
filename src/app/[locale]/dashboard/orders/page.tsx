@@ -35,7 +35,7 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
   let ordersQuery = supabase
     .from('orders')
     .select(
-      'id, customer_name, customer_phone, branch_id, status, order_type, total_bhd, created_at, updated_at, notes, customer_notes, delivery_address, delivery_building, delivery_street, source, order_items(name_ar, name_en, quantity, selected_size, selected_variant, notes)',
+      'id, customer_name, customer_phone, branch_id, status, order_type, total_bhd, created_at, updated_at, notes, customer_notes, delivery_address, delivery_building, delivery_street, source, picked_up_at, delivered_at, order_items(name_ar, name_en, quantity, selected_size, selected_variant, notes)',
       { count: 'exact' },
     )
     .gte('created_at', todayIso)
@@ -62,8 +62,25 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
   if (ordersResult.error) throw ordersResult.error
   if (totalsResult.error) throw totalsResult.error
 
-  const initialOrders: OrderCardData[] =
-    (ordersResult.data ?? []) as OrderCardData[]
+  // Compute "late" server-side to avoid client/SSR clock drift, then mark
+  // any out-for-delivery order whose pickup happened more than 45 minutes
+  // ago and has no delivered_at yet.
+  const nowMs = Date.now()
+  const LATE_THRESHOLD_MS = 45 * 60_000
+  const initialOrders: OrderCardData[] = (
+    (ordersResult.data ?? []) as Array<OrderCardData & {
+      picked_up_at?: string | null
+      delivered_at?: string | null
+    }>
+  ).map((o) => {
+    const pickedUpMs = o.picked_up_at ? new Date(o.picked_up_at).getTime() : null
+    const isLate =
+      o.status === 'out_for_delivery'
+      && pickedUpMs !== null
+      && !o.delivered_at
+      && (nowMs - pickedUpMs) > LATE_THRESHOLD_MS
+    return { ...o, is_late: isLate }
+  })
 
   const initialTotalCount = ordersResult.count ?? 0
 

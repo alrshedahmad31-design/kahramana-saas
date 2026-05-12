@@ -8,6 +8,7 @@ import StaffOverview              from '@/components/staff/StaffOverview'
 import StaffScheduleTab           from '@/components/staff/StaffScheduleTab'
 import StaffTimesheetTab          from '@/components/staff/StaffTimesheetTab'
 import StaffLeaveTab              from '@/components/staff/StaffLeaveTab'
+import DriverPerformanceCard, { type DriverPerformanceStats } from '@/components/staff/DriverPerformanceCard'
 import type { StaffExtendedRow } from '@/lib/supabase/custom-types'
 
 export const dynamic = 'force-dynamic'
@@ -47,6 +48,48 @@ export default async function StaffProfilePage({ params }: Props) {
   const entries = entriesRes.data ?? []
   const leaves  = leavesRes.data  ?? []
 
+  // ── Driver performance (last 30 days) — only for staff with role='driver'.
+  // We measure pickup → delivered duration; rows missing either timestamp
+  // count toward `untimedCount` and are excluded from the averages.
+  let driverStats: DriverPerformanceStats | null = null
+  if (staff.role === 'driver') {
+    const since = new Date()
+    since.setDate(since.getDate() - 30)
+    const { data: driverOrders } = await supabase
+      .from('orders')
+      .select('id, picked_up_at, delivered_at')
+      .eq('assigned_driver_id', id)
+      .in('status', ['delivered', 'completed'])
+      .gte('created_at', since.toISOString())
+
+    const rows = (driverOrders ?? []) as Array<{
+      picked_up_at: string | null
+      delivered_at: string | null
+    }>
+
+    const deliveredCount = rows.length
+    const durations: number[] = []
+    let untimedCount = 0
+    for (const r of rows) {
+      if (!r.picked_up_at || !r.delivered_at) {
+        untimedCount += 1
+        continue
+      }
+      const mins = (new Date(r.delivered_at).getTime() - new Date(r.picked_up_at).getTime()) / 60_000
+      if (Number.isFinite(mins) && mins >= 0) durations.push(mins)
+    }
+
+    const avgDurationMin = durations.length > 0
+      ? Math.round(durations.reduce((s, n) => s + n, 0) / durations.length)
+      : null
+
+    const onTimePercent = durations.length > 0
+      ? Math.round((durations.filter((m) => m <= 45).length / durations.length) * 100)
+      : null
+
+    driverStats = { deliveredCount, avgDurationMin, onTimePercent, untimedCount }
+  }
+
   return (
     <div className="flex flex-col gap-5" dir={isAr ? 'rtl' : 'ltr'}>
       {/* Breadcrumb */}
@@ -57,6 +100,11 @@ export default async function StaffProfilePage({ params }: Props) {
         <span>/</span>
         <span className="text-brand-text font-medium">{staff.name}</span>
       </nav>
+
+      {/* Driver performance — only rendered when the staff member is a driver */}
+      {driverStats && (
+        <DriverPerformanceCard stats={driverStats} isRTL={isAr} />
+      )}
 
       {/* Profile tabs */}
       <div className="bg-brand-surface border border-brand-border rounded-xl p-5">

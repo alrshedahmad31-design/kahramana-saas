@@ -3,6 +3,7 @@ import { getSession }           from '@/lib/auth/session'
 import { createClient }         from '@/lib/supabase/server'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 import DeliveryPageClient       from '@/components/delivery/DeliveryPageClient'
+import DeliveryTimesTable, { type DeliveryTimeRow } from '@/components/delivery/DeliveryTimesTable'
 import { HIDDEN_BRANCHES }    from '@/constants/contact'
 
 interface Props {
@@ -55,13 +56,15 @@ export default async function DeliveryPage({ params }: Props) {
   }
   const { data: ordersRaw } = await activeOrdersQuery
 
-  // Completed today (for metrics + per-driver count + on-time rate)
+  // Completed today (for metrics + per-driver count + on-time rate +
+  // the DeliveryTimesTable below the dispatch board)
   let completedQuery = supabase
     .from('orders')
-    .select('id, total_bhd, created_at, updated_at, assigned_driver_id, expected_delivery_time')
+    .select('id, customer_name, status, total_bhd, created_at, updated_at, assigned_driver_id, expected_delivery_time, picked_up_at, delivered_at')
     .in('status', ['delivered', 'completed'])
     .gte('created_at', todayStart)
     .lte('created_at', todayEnd)
+    .order('delivered_at', { ascending: false, nullsFirst: false })
 
   if (branchScope) {
     completedQuery = completedQuery.eq('branch_id', branchScope)
@@ -183,6 +186,16 @@ export default async function DeliveryPage({ params }: Props) {
     ? Math.round(onTimeCount / completed.length * 100)
     : 0
 
+  const timesRows: DeliveryTimeRow[] = (completedRaw ?? [])
+    .map((o) => ({
+      id:            o.id as string,
+      customer_name: (o as { customer_name?: string | null }).customer_name ?? null,
+      created_at:    o.created_at as string,
+      picked_up_at:  (o as { picked_up_at?: string | null }).picked_up_at ?? null,
+      delivered_at:  (o as { delivered_at?: string | null }).delivered_at ?? null,
+      status:        (o as { status?: string }).status ?? 'delivered',
+    }))
+
   return (
     <div>
       <DeliveryPageClient
@@ -203,6 +216,7 @@ export default async function DeliveryPage({ params }: Props) {
         locale={locale}
         branchId={branchScope}
       />
+      <DeliveryTimesTable rows={timesRows} locale={locale} />
     </div>
   )
 }
