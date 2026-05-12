@@ -9,6 +9,8 @@ const intlMiddleware = createMiddleware(routing)
 
 const DASHBOARD_PATTERN   = /^(\/(ar|en))?\/dashboard(\/.*)?$/
 const LOGIN_PATTERN        = /^(\/(ar|en))?\/login$/
+const FORGOT_PASSWORD_PATTERN = /^(\/(ar|en))?\/forgot-password$/
+const SET_PASSWORD_PATTERN    = /^(\/(ar|en))?\/set-password$/
 const STAFF_ROUTE_PATTERN  = /^(\/(ar|en))?\/dashboard\/staff(\/.*)?$/
 const DRIVER_PATTERN       = /^(\/(ar|en))?\/driver(\/.*)?$/
 // Drivers are mono-locale (Arabic only). This pattern matches the canonical
@@ -128,13 +130,15 @@ export default async function middleware(request: NextRequest) {
   }
 
   const isDashboard   = DASHBOARD_PATTERN.test(pathname)
-  const isLogin       = LOGIN_PATTERN.test(pathname)
-  const isDriverRoute = DRIVER_PATTERN.test(pathname)
+  const isLogin          = LOGIN_PATTERN.test(pathname)
+  const isForgotPassword = FORGOT_PASSWORD_PATTERN.test(pathname)
+  const isSetPassword    = SET_PASSWORD_PATTERN.test(pathname)
+  const isDriverRoute    = DRIVER_PATTERN.test(pathname)
 
   // ── Public routes: skip Supabase entirely ─────────────────────────────────
   // /driver is included because drivers must be forced into Arabic and
   // bounced off /en/driver — that check needs the user's role.
-  if (!isDashboard && !isLogin && !isDriverRoute) {
+  if (!isDashboard && !isLogin && !isForgotPassword && !isSetPassword && !isDriverRoute) {
     return finalizeResponse(headersWithNonce, nonce, NextResponse.next(), intlResponse)
   }
 
@@ -211,7 +215,7 @@ export default async function middleware(request: NextRequest) {
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
         }
-        if (isLogin) {
+        if (isLogin || isForgotPassword) {
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response

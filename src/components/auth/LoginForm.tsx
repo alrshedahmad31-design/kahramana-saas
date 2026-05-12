@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import CinematicButton from '@/components/ui/CinematicButton'
+import Link from 'next/link'
 
 // Open-redirect guard: only honor ?redirect=... when it's a same-origin
 // relative path. Reject protocol-relative ("//evil.com"), absolute URLs, and
@@ -93,12 +94,20 @@ export default function LoginForm() {
 
       {/* Password */}
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="password"
-          className={`${font} text-sm font-medium text-brand-text`}
-        >
-          {t('password')}
-        </label>
+        <div className="flex justify-between items-center">
+          <label
+            htmlFor="password"
+            className={`${font} text-sm font-medium text-brand-text`}
+          >
+            {t('password')}
+          </label>
+          <Link
+            href={`/${locale}/forgot-password`}
+            className={`${font} text-xs text-brand-gold hover:text-brand-gold/80 transition-colors`}
+          >
+            {t('forgotPassword.title')}
+          </Link>
+        </div>
         <input
           id="password"
           type="password"

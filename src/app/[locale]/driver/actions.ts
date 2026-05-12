@@ -12,6 +12,10 @@ function isDriver(role: string | null | undefined): boolean {
   return role === 'driver'
 }
 
+function isManagerPlus(role: string | null | undefined): boolean {
+  return role === 'owner' || role === 'general_manager' || role === 'branch_manager'
+}
+
 export type DriverActionResult = { success: true } | { success: false; error: string }
 
 // Audit fix #5: validate cash collection consistently — finite, non-negative,
@@ -32,8 +36,8 @@ export async function driverBumpOrder(
   if (!user) {
     return { success: false, error: 'Login Required' }
   }
-  // Audit fix #1: driver-only.
-  if (!isDriver(user.role)) {
+  // Audit fix #1: driver-only (expanded to Manager+ for supervision).
+  if (!isDriver(user.role) && !isManagerPlus(user.role)) {
     return { success: false, error: 'Unauthorized: Driver access only' }
   }
 
@@ -57,12 +61,13 @@ export async function driverBumpOrder(
     return { success: false, error: 'Unexpected order state' }
   }
 
-  // Branch guard — driver must serve this order's branch.
-  if (!user.branch_id || order.branch_id !== user.branch_id) {
+  // Branch guard — driver must serve this order's branch (Owner/GM bypass).
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  if (!isGlobalAdmin && (!user.branch_id || order.branch_id !== user.branch_id)) {
     return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
 
-  if (currentStatus === 'out_for_delivery' && order.assigned_driver_id !== user.id) {
+  if (currentStatus === 'out_for_delivery' && order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
     return { success: false, error: 'Unauthorized: This order is assigned to another driver' }
   }
 
@@ -131,8 +136,8 @@ export async function driverBumpOrder(
 
 export async function markDriverArrived(orderId: string): Promise<DriverActionResult> {
   const user = await getSession()
-  // Audit fix #1: driver-only.
-  if (!user || !isDriver(user.role)) return { success: false, error: 'Unauthorized' }
+  // Audit fix #1: driver-only (expanded to Manager+ for supervision).
+  if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) return { success: false, error: 'Unauthorized' }
 
   const service = createServiceClient()
   const { data: order, error: fetchError } = await service
@@ -145,12 +150,13 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
   // Audit fix #3: delivery only.
   if (order.order_type !== 'delivery') return { success: false, error: 'Order is not a delivery order' }
   if (order.status !== 'out_for_delivery') return { success: false, error: 'Unexpected order state' }
-  // Branch guard.
-  if (!user.branch_id || order.branch_id !== user.branch_id) {
+  // Branch guard (Owner/GM bypass).
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  if (!isGlobalAdmin && (!user.branch_id || order.branch_id !== user.branch_id)) {
     return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
-  // Only the assigned driver may mark arrival.
-  if (order.assigned_driver_id !== user.id) {
+  // Only the assigned driver may mark arrival (Managers bypass).
+  if (order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
     return { success: false, error: 'Unauthorized' }
   }
 
@@ -405,7 +411,7 @@ export async function submitDriverIssue(
   notes?:  string,
 ): Promise<DriverActionResult> {
   const user = await getSession()
-  if (!user || user.role !== 'driver') {
+  if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
     return { success: false, error: 'Unauthorized' }
   }
 
@@ -423,14 +429,15 @@ export async function submitDriverIssue(
 
   if (fetchError || !order) return { success: false, error: 'Order not found' }
 
-  // D-C3: Branch guard — drivers without a branch cannot act on any order.
-  if (!user.branch_id || order.branch_id !== user.branch_id) {
+  // D-C3: Branch guard (Owner/GM bypass).
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  if (!isGlobalAdmin && (!user.branch_id || order.branch_id !== user.branch_id)) {
     return { success: false, error: 'Unauthorized' }
   }
 
   const isOwnedByDriver = order.assigned_driver_id === user.id
   const isClaimable     = order.status === 'ready'
-  if (!isOwnedByDriver && !isClaimable) {
+  if (!isOwnedByDriver && !isClaimable && !isManagerPlus(user.role)) {
     return { success: false, error: 'Unauthorized' }
   }
 
@@ -455,8 +462,8 @@ export async function reportDeliveryFailure(
   notes?:  string,
 ): Promise<DriverActionResult> {
   const user = await getSession()
-  // Audit fix #1: driver-only.
-  if (!user || !isDriver(user.role)) {
+  // Audit fix #1: driver-only (expanded to Manager+ for supervision).
+  if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
     return { success: false, error: 'Unauthorized' }
   }
 
@@ -482,12 +489,13 @@ export async function reportDeliveryFailure(
   if (order.status !== 'out_for_delivery') {
     return { success: false, error: 'Order is not in transit — cannot mark as failed' }
   }
-  // Branch guard.
-  if (!user.branch_id || order.branch_id !== user.branch_id) {
+  // Branch guard (Owner/GM bypass).
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  if (!isGlobalAdmin && (!user.branch_id || order.branch_id !== user.branch_id)) {
     return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
-  // Only the assigned driver may report failure.
-  if (order.assigned_driver_id !== user.id) {
+  // Only the assigned driver may report failure (Managers bypass).
+  if (order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
     return { success: false, error: 'Unauthorized: Order is not assigned to you' }
   }
 
