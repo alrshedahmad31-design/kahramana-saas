@@ -32,10 +32,13 @@ const localized = <T,>(locale: Locale, ar: T, en: T): T =>
 const activeBranches = BRANCH_LIST.filter((b) => b.status === 'active')
 const plannedBranches = BRANCH_LIST.filter((b) => b.status === 'planned')
 
-// Only include ratings confirmed via GBP dashboard. Qallali review count unconfirmed — omitted.
+// Ratings confirmed via GBP dashboard. Per-branch values + brand-level aggregate.
 const BRANCH_RATINGS: Partial<Record<string, { ratingValue: string; reviewCount: string; bestRating: string; worstRating: string }>> = {
-  riffa: { ratingValue: '4.6', reviewCount: '1685', bestRating: '5', worstRating: '1' },
+  riffa:   { ratingValue: '4.5', reviewCount: '1600', bestRating: '5', worstRating: '1' },
+  qallali: { ratingValue: '4.4', reviewCount: '121',  bestRating: '5', worstRating: '1' },
 }
+
+const BRAND_RATING = { ratingValue: '4.5', reviewCount: '1650', bestRating: '5', worstRating: '1' }
 
 // Schema.org requires "25:00" format when closing time crosses midnight.
 function schemaClosesTime(time: string): string {
@@ -261,6 +264,10 @@ export function buildOrganizationSchema(locale: Locale) {
     location: activeBranches.map((b) => ({
       '@id': `${SITE}/#branch-${b.id}`,
     })),
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ...BRAND_RATING,
+    },
     founder: buildFounderSchema(),
   }
 }
