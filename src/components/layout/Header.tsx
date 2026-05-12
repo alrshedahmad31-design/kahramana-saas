@@ -167,7 +167,6 @@ export default function Header() {
               height={766}
               priority
               className={`transition-all duration-500 ${isScrolled ? 'h-7 w-auto' : 'h-9 w-auto'}`}
-              style={{ height: 'auto' }}
             />
           </Link>
 
