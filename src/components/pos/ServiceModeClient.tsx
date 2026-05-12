@@ -348,8 +348,11 @@ export default function ServiceModeClient({
           </div>
         </section>
 
-        {/* RIGHT — table selector + cart + submit */}
-        <aside className={`shrink-0 w-full lg:w-[20rem] xl:w-[22rem] border-t lg:border-t-0 lg:border-s border-brand-border bg-brand-surface flex-col ${activeTab === 'order' ? 'flex' : 'hidden lg:flex'}`}>
+        {/* RIGHT — table selector + cart + submit
+            Mobile: flex-1 + min-h-0 so the inner cart can scroll and the
+            sticky bottom bar (totals + Send) stays in view.
+            lg+: fixed-width sidebar (lg:flex-none + lg:w-[20rem]). */}
+        <aside className={`w-full flex-1 min-h-0 lg:flex-none lg:shrink-0 lg:w-[20rem] xl:w-[22rem] border-t lg:border-t-0 lg:border-s border-brand-border bg-brand-surface flex-col ${activeTab === 'order' ? 'flex' : 'hidden lg:flex'}`}>
           {/* Table picker */}
           <div className="shrink-0 px-4 py-3 border-b border-brand-border">
             <p className="text-[11px] uppercase tracking-wider text-brand-muted font-satoshi font-bold mb-2">
