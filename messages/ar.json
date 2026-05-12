@@ -2307,6 +2307,7 @@
       "exitServiceMode": "خروج من وضع الخدمة",
       "selectTable": "اختر الطاولة",
       "tableNumber": "رقم الطاولة",
+      "carNumber": "رقم السيارة",
       "sendToKitchen": "أرسل للمطبخ",
       "noTableSelected": "يرجى اختيار رقم الطاولة",
       "openServiceMode": "وضع الخدمة"

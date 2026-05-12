@@ -41,6 +41,7 @@ export default function ServiceModeClient({
   const [activeCat, setActiveCat] = useState<string>(categories[0]?.id ?? '')
   const [activeTab, setActiveTab] = useState<'menu' | 'order'>('menu')
   const [tableNumber, setTableNumber] = useState<number | null>(null)
+  const [carNumber, setCarNumber] = useState<string>('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [pendingItem, setPendingItem] = useState<POSItem | null>(null)
   const [pendingModifierItem, setPendingModifierItem] = useState<{
@@ -138,6 +139,7 @@ export default function ServiceModeClient({
   function reset() {
     setCart([])
     setTableNumber(null)
+    setCarNumber('')
     setError(null)
   }
 
@@ -156,9 +158,11 @@ export default function ServiceModeClient({
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
 
+    const carNote = carNumber.trim()
     const payload: ServiceOrderPayload = {
       branchId,
       tableNumber,
+      notes: carNote ? `سيارة: ${carNote}` : undefined,
       items: cart.map((l) => ({
         menuItemId:   l.itemId,
         quantity:     l.quantity,
@@ -353,6 +357,25 @@ export default function ServiceModeClient({
             sticky bottom bar (totals + Send) stays in view.
             lg+: fixed-width sidebar (lg:flex-none + lg:w-[20rem]). */}
         <aside className={`w-full flex-1 min-h-0 lg:flex-none lg:shrink-0 lg:w-[20rem] xl:w-[22rem] border-t lg:border-t-0 lg:border-s border-brand-border bg-brand-surface flex-col ${activeTab === 'order' ? 'flex' : 'hidden lg:flex'}`}>
+          {/* Car number (optional) — appended to order notes as "سيارة: <value>" */}
+          <div className="shrink-0 px-4 py-3 border-b border-brand-border">
+            <label
+              htmlFor="service-car-number"
+              className="text-[11px] uppercase tracking-wider text-brand-muted font-satoshi font-bold block mb-2"
+            >
+              {t('service.carNumber')}
+            </label>
+            <input
+              id="service-car-number"
+              type="text"
+              value={carNumber}
+              onChange={(e) => setCarNumber(e.target.value)}
+              maxLength={20}
+              dir="ltr"
+              className="w-full min-h-[44px] rounded-md bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted tabular-nums focus:outline-none focus:border-brand-gold/40"
+            />
+          </div>
+
           {/* Table picker */}
           <div className="shrink-0 px-4 py-3 border-b border-brand-border">
             <p className="text-[11px] uppercase tracking-wider text-brand-muted font-satoshi font-bold mb-2">

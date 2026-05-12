@@ -2307,6 +2307,7 @@
       "exitServiceMode": "Exit Service Mode",
       "selectTable": "Select Table",
       "tableNumber": "Table Number",
+      "carNumber": "Car Number",
       "sendToKitchen": "Send to Kitchen",
       "noTableSelected": "Please select a table number",
       "openServiceMode": "Service Mode"
