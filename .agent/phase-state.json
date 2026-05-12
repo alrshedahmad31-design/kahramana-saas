@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-12 (session 90 — phase-state migration registry synced: 090-113 reconciled against supabase migration list --linked. Duplicate 102_kds_shawarma_routing.sql (Local-only, no Remote) removed from disk. Carry-over: 106-113 are applied on remote but untracked in git — verify by adding to repo in a follow-up commit.)",
+    "last_updated":  "2026-05-12 (session 90 — phase-state migration registry fully synced: 090-113 reconciled against supabase migration list --linked. Duplicate 102_kds_shawarma_routing.sql (Local-only, no Remote) removed from disk. Migrations 106-113 now also tracked in git (commit 4433d21).)",
     "current_phase":  4,
     "next_phase":  8,
     "overall_status":  "pre_launch_operational",
@@ -16,7 +16,7 @@
                        "pending_db_migrations":  [
 
                                                  ],
-                       "migration_status":  "090-113 ALL APPLIED — verified 2026-05-12 via supabase migration list --linked. Latest: 113_kds_strict_shawarma.sql. Note: 106-113 are applied on remote but currently untracked in git (need git add in a follow-up commit). Duplicate 102_kds_shawarma_routing.sql removed from disk this session.",
+                       "migration_status":  "090-113 ALL APPLIED AND TRACKED — verified 2026-05-12 via supabase migration list --linked. Latest: 113_kds_strict_shawarma.sql. Duplicate 102_kds_shawarma_routing.sql removed from disk. Repo state matches Supabase remote.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -66,14 +66,14 @@
                                                      "103_kds_routing_overhaul.sql — applied 2026-05-11 (KDS station routing v2 — canonical 5 stations: mains/grill/shawarma/pizza/cold + slug-pattern backfill)",
                                                      "104_kds_routing_refinement.sql — applied 2026-05-11 (KDS routing refinement on top of v2)",
                                                      "105_kds_rpc_cleanup.sql — applied 2026-05-11 (aggressive RPC cleanup to resolve bump_station_order TEXT vs kds_station overload conflict)",
-                                                     "106_kds_backfill.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
-                                                     "107_kds_rpc_table_fix.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
-                                                     "108_kds_rpc_final_fix.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
-                                                     "109_kds_final_backfill.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
-                                                     "110_kds_routing_precision.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
-                                                     "111_kds_breakfast_routing.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
-                                                     "112_kds_backfill_breakfast.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)",
-                                                     "113_kds_strict_shawarma.sql — applied 2026-05-11 — verified via supabase migration list (file UNTRACKED in git as of 2026-05-12)"
+                                                     "106_kds_backfill.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "107_kds_rpc_table_fix.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "108_kds_rpc_final_fix.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "109_kds_final_backfill.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "110_kds_routing_precision.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "111_kds_breakfast_routing.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "112_kds_backfill_breakfast.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "113_kds_strict_shawarma.sql — applied 2026-05-11 (tracked in git 2026-05-12)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
