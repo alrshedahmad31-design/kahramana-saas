@@ -37,9 +37,12 @@ function buildCsp(nonce: string): string {
     // Cloudflare Turnstile (CAPTCHA) — script + iframe (frame-src below).
     'https://challenges.cloudflare.com'
 
+  // Dev-only allowance so impeccable live mode (localhost:8400 helper) can load.
+  const __impeccableLiveDev = isDev ? ' http://localhost:8400' : ''
+
   const scriptSrc = isDev
     // Dev: permissive for HMR + inline framework scripts
-    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${SCRIPT_HOSTS}`
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${SCRIPT_HOSTS}${__impeccableLiveDev}`
     // Prod: nonce-strict; 'unsafe-inline' is a legacy-browser fallback that
     // modern browsers ignore once a nonce is present.
     : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' ${SCRIPT_HOSTS}`
@@ -53,7 +56,7 @@ function buildCsp(nonce: string): string {
     // Sentry endpoints added so client SDK can fall back to direct ingest if
     // the /monitoring tunnel route is ever blocked. Wildcards cover both the
     // generic ingest hosts and the US region (current DSN).
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://sentry.io",
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://sentry.io${__impeccableLiveDev}`,
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
