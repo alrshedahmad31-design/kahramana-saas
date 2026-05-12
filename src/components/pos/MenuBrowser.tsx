@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import type { POSCategory, POSItem } from './types'
 import { resolveMenuItemPrice } from './types'
@@ -128,8 +128,6 @@ function ItemCard({
 }: { item: POSItem; isAr: boolean; onAdd: () => void }) {
   const t = useTranslations('pos')
   const [price] = useState(() => resolveMenuItemPrice(item))
-
-  const fromPrice = item.fromPriceBhd
 
   const disabled = !item.available
 

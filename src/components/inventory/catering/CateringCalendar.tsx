@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { colors } from '@/lib/design-tokens'
-import type { CateringOrderRow, CateringOrderStatus } from '@/lib/supabase/custom-types'
+import type { CateringOrderRow } from '@/lib/supabase/custom-types'
 
 interface Props {
   orders:  CateringOrderRow[]

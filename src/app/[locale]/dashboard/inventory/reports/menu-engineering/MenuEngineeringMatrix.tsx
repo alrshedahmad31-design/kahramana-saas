@@ -1,10 +1,7 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import {
-  ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip,
-  ReferenceLine, ResponsiveContainer,
-} from 'recharts'
 import { colors } from '@/lib/design-tokens'
 
 interface MenuEngineeringRow {
@@ -30,34 +27,26 @@ type ScatterPoint = {
   slug: string
 }
 
-interface TooltipProps {
-  active?: boolean
-  payload?: Array<{ payload: ScatterPoint }>
-  locale: string
-}
-
-function CustomTooltip({ active, payload, locale }: TooltipProps) {
-  if (!active || !payload?.length) return null
-  const d = payload[0]?.payload
+function MatrixTooltip({ point, locale }: { point: ScatterPoint; locale: string }) {
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
   
   return (
     <div className="rounded-xl border px-4 py-3 shadow-xl backdrop-blur-md bg-brand-surface/90" style={{ borderColor: colors.border }}>
-      <p className={`${font} text-sm font-black text-brand-text mb-2`}>{d?.name}</p>
+      <p className={`${font} text-sm font-black text-brand-text mb-2`}>{point.name}</p>
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-4">
           <span className={`${font} text-[10px] font-bold text-brand-muted uppercase`}>{isAr ? 'المباع' : 'Sold'}</span>
-          <span className="font-satoshi text-xs font-black text-brand-gold tabular-nums">{d?.x}</span>
+          <span className="font-satoshi text-xs font-black text-brand-gold tabular-nums">{point.x}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
           <span className={`${font} text-[10px] font-bold text-brand-muted uppercase`}>{isAr ? 'الربح' : 'Profit'}</span>
-          <span className="font-satoshi text-xs font-black text-brand-gold tabular-nums">{d?.y?.toFixed(3)}</span>
+          <span className="font-satoshi text-xs font-black text-brand-gold tabular-nums">{point.y.toFixed(3)}</span>
         </div>
-        {d?.margin !== null && (
+        {point.margin !== null && (
           <div className="flex items-center justify-between gap-4 pt-1 border-t border-brand-border/30">
             <span className={`${font} text-[10px] font-bold text-brand-muted uppercase`}>{isAr ? 'الهامش' : 'Margin'}</span>
-            <span className="font-satoshi text-xs font-black text-brand-success tabular-nums">{d?.margin?.toFixed(1)}%</span>
+            <span className="font-satoshi text-xs font-black text-brand-success tabular-nums">{point.margin.toFixed(1)}%</span>
           </div>
         )}
       </div>
@@ -75,16 +64,16 @@ function getQuadrant(row: MenuEngineeringRow, avgSold: number, avgProfit: number
 }
 
 export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringRow[] }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const locale = useLocale()
   const t = useTranslations('inventory.reports.menuEngineering')
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
-  const currency = 'BHD'
-
-  if (!rows.length) return null
-
-  const avgSold = rows.reduce((s, r) => s + r.total_sold, 0) / rows.length
-  const avgProfit = rows.reduce((s, r) => s + r.profit_bhd, 0) / rows.length
+  const avgSold = rows.length ? rows.reduce((s, r) => s + r.total_sold, 0) / rows.length : 0
+  const avgProfit = rows.length ? rows.reduce((s, r) => s + r.profit_bhd, 0) / rows.length : 0
+  const maxSold = Math.max(...rows.map((row) => row.total_sold), avgSold, 1)
+  const maxProfit = Math.max(...rows.map((row) => row.profit_bhd), avgProfit, 1)
+  const maxRevenue = Math.max(...rows.map((row) => row.revenue_bhd), 1)
 
   const scatterData: ScatterPoint[] = rows.map((r) => ({
     x: r.total_sold,
@@ -99,6 +88,22 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
   const grouped = Object.fromEntries(
     quadrants.map((q) => [q, rows.filter((r) => getQuadrant(r, avgSold, avgProfit) === q)]),
   )
+  const scaledPoints = useMemo(() => {
+    const margin = { top: 20, right: 20, bottom: 34, left: 42 }
+    const width = 400
+    const height = 400
+    const innerWidth = width - margin.left - margin.right
+    const innerHeight = height - margin.top - margin.bottom
+    return scatterData.map((point) => ({
+      point,
+      x: margin.left + (point.x / maxSold) * innerWidth,
+      y: margin.top + innerHeight - (point.y / maxProfit) * innerHeight,
+      r: 5 + (point.z / maxRevenue) * 12,
+    }))
+  }, [maxProfit, maxRevenue, maxSold, scatterData])
+  const activePoint = activeIndex === null ? null : scaledPoints[activeIndex] ?? null
+
+  if (!rows.length) return null
 
   const QUADRANT_CONFIG: Record<string, { label: string; desc: string; color: string }> = {
     Stars:      { label: t('matrix.stars'),      desc: t('matrix.starsDesc'),      color: colors.gold },
@@ -119,37 +124,57 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
         </div>
         
         <div className="h-[400px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-              <XAxis
-                type="number"
-                dataKey="x"
-                tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }}
-                stroke={colors.border}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                type="number"
-                dataKey="y"
-                tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }}
-                stroke={colors.border}
-                axisLine={false}
-                tickLine={false}
-              />
-              <ZAxis type="number" dataKey="z" range={[50, 400]} />
-              <Tooltip content={<CustomTooltip locale={locale} />} cursor={{ strokeDasharray: '3 3', stroke: colors.border }} />
-              <ReferenceLine x={avgSold} stroke={colors.border} strokeDasharray="6 6" strokeWidth={2} />
-              <ReferenceLine y={avgProfit} stroke={colors.border} strokeDasharray="6 6" strokeWidth={2} />
-              <Scatter 
-                data={scatterData} 
-                fill={colors.gold} 
-                fillOpacity={0.6} 
-                stroke={colors.gold}
-                strokeWidth={2}
-              />
-            </ScatterChart>
-          </ResponsiveContainer>
+          <div className="relative h-full w-full" onMouseLeave={() => setActiveIndex(null)}>
+            <svg width="100%" height="100%" viewBox="0 0 400 400" role="img" aria-hidden="true">
+              {[0.25, 0.5, 0.75].map((ratio) => (
+                <g key={ratio}>
+                  <line x1="42" x2="380" y1={20 + 346 * ratio} y2={20 + 346 * ratio} stroke={colors.border} strokeDasharray="3 3" opacity="0.35" />
+                  <line x1={42 + 338 * ratio} x2={42 + 338 * ratio} y1="20" y2="366" stroke={colors.border} strokeDasharray="3 3" opacity="0.35" />
+                </g>
+              ))}
+              <line x1="42" x2="380" y1="366" y2="366" stroke={colors.border} opacity="0.6" />
+              <line x1="42" x2="42" y1="20" y2="366" stroke={colors.border} opacity="0.6" />
+              <line x1={42 + (avgSold / maxSold) * 338} x2={42 + (avgSold / maxSold) * 338} y1="20" y2="366" stroke={colors.border} strokeDasharray="6 6" strokeWidth="2" />
+              <line x1="42" x2="380" y1={20 + 346 - (avgProfit / maxProfit) * 346} y2={20 + 346 - (avgProfit / maxProfit) * 346} stroke={colors.border} strokeDasharray="6 6" strokeWidth="2" />
+              {[0, 0.5, 1].map((ratio) => (
+                <g key={ratio}>
+                  <text x="34" y={366 - ratio * 346 + 4} textAnchor="end" fill={colors.muted} fontSize="10" fontWeight="700">
+                    {(maxProfit * ratio).toFixed(0)}
+                  </text>
+                  <text x={42 + ratio * 338} y="386" textAnchor="middle" fill={colors.muted} fontSize="10" fontWeight="700">
+                    {(maxSold * ratio).toFixed(0)}
+                  </text>
+                </g>
+              ))}
+              {scaledPoints.map((item, index) => (
+                <circle
+                  key={item.point.slug}
+                  cx={item.x}
+                  cy={item.y}
+                  r={item.r}
+                  fill={colors.gold}
+                  fillOpacity={activeIndex === index ? 0.9 : 0.6}
+                  stroke={colors.gold}
+                  strokeWidth="2"
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onFocus={() => setActiveIndex(index)}
+                  tabIndex={-1}
+                />
+              ))}
+            </svg>
+            {activePoint && (
+              <div
+                className="pointer-events-none absolute"
+                style={{
+                  left: `${(activePoint.x / 400) * 100}%`,
+                  top: `${(activePoint.y / 400) * 100}%`,
+                  transform: 'translate(-50%, -100%)',
+                }}
+              >
+                <MatrixTooltip point={activePoint.point} locale={locale} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Quadrant legend */}

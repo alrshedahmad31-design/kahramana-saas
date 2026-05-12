@@ -29,13 +29,6 @@ function groupRows(rows: ExpiryReportRow[]): Record<ExpiryGroup, ExpiryReportRow
   }
 }
 
-const GROUP_LABELS: Record<ExpiryGroup, { ar: string; en: string; rowClass: string; headerClass: string }> = {
-  expired: { ar: 'منتهي الصلاحية',  en: 'Expired',    rowClass: 'bg-brand-error/5', headerClass: 'text-brand-error border-brand-error/30' },
-  today:   { ar: 'ينتهي اليوم',     en: 'Expiring Today', rowClass: 'bg-brand-gold/5', headerClass: 'text-brand-gold border-brand-gold/30' },
-  week:    { ar: 'خلال أسبوع',      en: 'This Week',  rowClass: '', headerClass: 'text-brand-text border-brand-border' },
-  later:   { ar: 'لاحقاً',          en: 'Later',      rowClass: '', headerClass: 'text-brand-muted border-brand-border' },
-}
-
 export default async function ExpiryReportPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'inventory.reports.expiry' })

@@ -2,42 +2,12 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
-} from 'recharts'
+import LightweightBarChart from '@/components/charts/LightweightBarChart'
 import { colors } from '@/lib/design-tokens'
 import type { DishCogsRow } from '@/lib/supabase/custom-types'
 import StatCard from '@/components/inventory/reports/StatCard'
 import ExportButton from '@/components/inventory/reports/ExportButton'
 import { exportToExcel } from '../actions'
-
-// ─── Tooltip ──────────────────────────────────────────────────────────────────
-interface TooltipProps {
-  active?: boolean
-  payload?: Array<{ value: number; name: string }>
-  label?: string
-  currency: string
-  locale: string
-}
-
-function CustomTooltip({ active, payload, label, currency, locale }: TooltipProps) {
-  if (!active || !payload?.length) return null
-  const isAr = locale === 'ar'
-  const font = isAr ? 'font-almarai' : 'font-satoshi'
-  
-  return (
-    <div className="rounded-xl border px-4 py-3 shadow-xl backdrop-blur-md bg-brand-surface/90" style={{ borderColor: colors.border }}>
-      <p className={`${font} text-[10px] text-brand-muted mb-1.5 uppercase tracking-widest font-bold max-w-[180px] truncate`}>
-        {label}
-      </p>
-      <p className="font-satoshi text-lg font-black text-brand-gold tabular-nums">
-        {payload[0]?.value?.toFixed(3)}
-        <span className={`${font} text-[10px] text-brand-muted font-medium ms-1`}>{currency}</span>
-      </p>
-    </div>
-  )
-}
 
 // ─── Margin badge ─────────────────────────────────────────────────────────────
 function MarginBadge({ pct, font }: { pct: number | null; font: string }) {
@@ -58,8 +28,7 @@ function MarginBadge({ pct, font }: { pct: number | null; font: string }) {
 // ─── Bar Chart ────────────────────────────────────────────────────────────────
 function COGSBarChart({ dishes, title, currency, locale }: { dishes: DishCogsRow[]; title: string; currency: string; locale: string }) {
   const isAr = locale === 'ar'
-  const font = isAr ? 'font-almarai' : 'font-satoshi'
-  
+
   const top20 = [...dishes]
     .sort((a, b) => Number(b.cost_bhd) - Number(a.cost_bhd))
     .slice(0, 20)
@@ -79,34 +48,12 @@ function COGSBarChart({ dishes, title, currency, locale }: { dishes: DishCogsRow
     <div className="rounded-xl border border-brand-border bg-brand-surface p-5 shadow-sm space-y-6">
       <h3 className={`${isAr ? 'font-cairo' : 'font-satoshi'} text-sm font-black text-brand-text`}>{title}</h3>
       <div className="h-[420px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={top20} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={colors.surface2} horizontal={false} />
-            <XAxis 
-              type="number" 
-              tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }} 
-              tickFormatter={(v: number) => `${v.toFixed(3)}`}
-              axisLine={false}
-              tickLine={false}
-              dy={10}
-            />
-            <YAxis 
-              type="category" 
-              dataKey="name" 
-              tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }} 
-              width={140}
-              axisLine={false}
-              tickLine={false}
-              dx={isAr ? 10 : -10}
-            />
-            <Tooltip content={<CustomTooltip currency={currency} locale={locale} />} cursor={{ fill: colors.surface2, opacity: 0.4 }} />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
-              {top20.map((entry, index) => (
-                <Cell key={index} fill={getColor(entry.margin)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <LightweightBarChart
+          data={top20.map((entry) => ({ name: entry.name, value: entry.value, color: getColor(entry.margin) }))}
+          locale={locale}
+          currency={currency}
+          height={420}
+        />
       </div>
     </div>
   )
@@ -247,5 +194,4 @@ export default function COGSClient({ dishes, locale }: { dishes: DishCogsRow[]; 
     </div>
   )
 }
-
 

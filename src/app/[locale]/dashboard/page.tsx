@@ -14,7 +14,7 @@ import AnalyticsRefresher     from '@/components/analytics/AnalyticsRefresher'
 import InventoryWidgetsSection from '@/components/inventory/InventoryWidgetsSection'
 import InventoryWidgetsSkeleton from '@/components/inventory/InventoryWidgetsSkeleton'
 import OnboardingAlerts        from '@/components/dashboard/OnboardingAlerts'
-import { getTranslations, getLocale } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { createClient }        from '@/lib/supabase/server'
 import { isHiddenBranch }    from '@/constants/contact'
 

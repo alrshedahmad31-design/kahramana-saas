@@ -1,7 +1,6 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { tokens } from '@/lib/design-tokens'
 
 interface KDSDialogProps {
   isOpen: boolean
@@ -11,7 +10,6 @@ interface KDSDialogProps {
   cancelLabel?: string
   onConfirm: () => void
   onCancel?: () => void
-  type?: 'error' | 'info' | 'warning'
 }
 
 export default function KDSDialog({
@@ -22,7 +20,6 @@ export default function KDSDialog({
   cancelLabel,
   onConfirm,
   onCancel,
-  type = 'info'
 }: KDSDialogProps) {
   return (
     <AnimatePresence>

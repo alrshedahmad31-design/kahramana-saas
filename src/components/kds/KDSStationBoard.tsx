@@ -11,7 +11,6 @@ import KDSStationOrderCard from './KDSStationOrderCard'
 import KDSDialog from './KDSDialog'
 import {
   fetchStationOrders,
-  updateItemStatus,
   bumpStationOrder,
   recallStationOrder,
   getStationDailyCount,
@@ -110,20 +109,6 @@ export default function KDSStationBoard({
     } finally {
       setIsSyncing(false)
       isFetching.current = false
-    }
-  }, [station])
-
-  const handleStatusChange = useCallback(async (
-    orderId: string, itemId: string, station: KDSStation, status: KDSItemStatus, expected?: KDSItemStatus
-  ) => {
-    console.log(`[KDS] Changing status: order=${orderId} item=${itemId} to ${status}`);
-    const result = await updateItemStatus(orderId, itemId, station, status, expected)
-    if (!result.success) {
-      console.error('[KDS] Status update failed:', result.error);
-      setDialogConfig({
-        title: 'تعذّر تحديث الحالة',
-        message: result.error || 'حدث خطأ غير متوقع أثناء تحديث حالة الصنف.'
-      });
     }
   }, [station])
 

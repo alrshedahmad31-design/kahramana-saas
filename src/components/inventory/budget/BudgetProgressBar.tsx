@@ -14,7 +14,6 @@ interface Props {
 export default function BudgetProgressBar({
   label, used, budget, unit, colorClass = 'bg-brand-gold', locale,
 }: Props) {
-  const t = useTranslations('inventory.reports.budget')
   const tCommon = useTranslations('common')
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
