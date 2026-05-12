@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-12T00:00:00.000Z",
+  "title": "Design System: Kahramana Baghdad",
+  "extensions": {
+    "colorMeta": {
+      "brand-black": {
+        "role": "neutral",
+        "displayName": "Charcoal Black",
+        "canonical": "oklch(11% 0.003 70)",
+        "tonalRamp": [
+          "oklch(8% 0.003 70)",
+          "oklch(11% 0.003 70)",
+          "oklch(15% 0.004 70)",
+          "oklch(22% 0.005 70)",
+          "oklch(35% 0.006 70)",
+          "oklch(50% 0.006 70)",
+          "oklch(70% 0.005 70)",
+          "oklch(96% 0.003 70)"
+        ]
+      },
+      "brand-surface": {
+        "role": "neutral",
+        "displayName": "Surface One",
+        "canonical": "oklch(14% 0.005 70)",
+        "tonalRamp": [
+          "oklch(8% 0.005 70)",
+          "oklch(11% 0.005 70)",
+          "oklch(14% 0.005 70)",
+          "oklch(18% 0.006 70)",
+          "oklch(30% 0.007 70)",
+          "oklch(50% 0.007 70)",
+          "oklch(72% 0.005 70)",
+          "oklch(95% 0.004 70)"
+        ]
+      },
+      "brand-surface-2": {
+        "role": "neutral",
+        "displayName": "Surface Two",
+        "canonical": "oklch(17% 0.007 70)",
+        "tonalRamp": [
+          "oklch(9% 0.005 70)",
+          "oklch(13% 0.006 70)",
+          "oklch(17% 0.007 70)",
+          "oklch(22% 0.008 70)",
+          "oklch(34% 0.009 70)",
+          "oklch(52% 0.008 70)",
+          "oklch(74% 0.006 70)",
+          "oklch(96% 0.004 70)"
+        ]
+      },
+      "brand-border": {
+        "role": "neutral",
+        "displayName": "Hairline Border",
+        "canonical": "oklch(20% 0.004 70)",
+        "tonalRamp": []
+      },
+      "brand-text": {
+        "role": "neutral",
+        "displayName": "Linen Text",
+        "canonical": "oklch(96% 0.003 70)",
+        "tonalRamp": []
+      },
+      "brand-muted": {
+        "role": "neutral",
+        "displayName": "Muted Stone",
+        "canonical": "oklch(48% 0.007 70)",
+        "tonalRamp": []
+      },
+      "brand-gold": {
+        "role": "primary",
+        "displayName": "Bronze Gold",
+        "canonical": "oklch(66% 0.115 74)",
+        "tonalRamp": [
+          "oklch(20% 0.05 74)",
+          "oklch(32% 0.08 74)",
+          "oklch(44% 0.10 74)",
+          "oklch(55% 0.115 74)",
+          "oklch(66% 0.115 74)",
+          "oklch(76% 0.10 74)",
+          "oklch(86% 0.07 74)",
+          "oklch(96% 0.03 74)"
+        ]
+      },
+      "brand-gold-light": {
+        "role": "primary",
+        "displayName": "Bronze Light",
+        "canonical": "oklch(78% 0.10 74)",
+        "tonalRamp": []
+      },
+      "brand-gold-dark": {
+        "role": "primary",
+        "displayName": "Bronze Deep",
+        "canonical": "oklch(55% 0.105 74)",
+        "tonalRamp": []
+      },
+      "brand-error": {
+        "role": "semantic",
+        "displayName": "Pomegranate Error",
+        "canonical": "oklch(54% 0.18 27)",
+        "tonalRamp": []
+      },
+      "brand-success": {
+        "role": "semantic",
+        "displayName": "Olive Success",
+        "canonical": "oklch(60% 0.14 145)",
+        "tonalRamp": []
+      },
+      "delivery-bg": {
+        "role": "neutral",
+        "displayName": "Delivery Night",
+        "canonical": "oklch(8% 0.015 55)",
+        "tonalRamp": []
+      },
+      "delivery-surface": {
+        "role": "neutral",
+        "displayName": "Delivery Surface",
+        "canonical": "oklch(12% 0.025 55)",
+        "tonalRamp": []
+      },
+      "delivery-amber": {
+        "role": "primary",
+        "displayName": "Delivery Amber",
+        "canonical": "oklch(66% 0.13 70)",
+        "tonalRamp": []
+      }
+    },
+    "typographyMeta": {
+      "display-ar": { "displayName": "Display (Arabic)", "purpose": "Hero titles, Arabic. Cairo, weight 700, fluid 2.25rem to 4rem." },
+      "display-en": { "displayName": "Display (English)", "purpose": "Hero titles, English. Editorial New, weight 400 (often italic), fluid 2.25rem to 4rem." },
+      "headline":   { "displayName": "Headline",          "purpose": "Card cluster and sub-section titles." },
+      "title":      { "displayName": "Title",             "purpose": "Individual card titles, row leads." },
+      "body-ar":    { "displayName": "Body (Arabic)",     "purpose": "Paragraph copy in Arabic. Almarai, weight 400, 1.6 line height." },
+      "body-en":    { "displayName": "Body (English)",    "purpose": "Paragraph copy in English. Satoshi, weight 400, 1.6 line height." },
+      "label":      { "displayName": "Label / Eyebrow",   "purpose": "Gold uppercase eyebrow above titles, tracked 0.3em." }
+    },
+    "shadows": [
+      { "name": "focus-ring", "value": "0 0 0 2px #0A0A0A, 0 0 0 4px #C8922A", "purpose": "Keyboard focus on every interactive element. The double-ring (inner ground colour, outer gold) keeps the ring legible on any background." },
+      { "name": "dialog-backdrop", "value": "background: rgba(10, 10, 10, 0.80)", "purpose": "Backdrop behind any dialog. Never blurred." }
+    ],
+    "motion": [
+      { "name": "ease-out-fast",   "value": "150ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Button press feedback, chip selection, small state transitions." },
+      { "name": "ease-out-normal", "value": "250ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Card hover, input focus, dropdown open." },
+      { "name": "ease-out-slow",   "value": "400ms cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Section reveal on scroll, dialog enter." },
+      { "name": "ease-out-quint",  "value": "cubic-bezier(0.22, 1, 0.36, 1)",        "purpose": "Default easing curve across the system. Never bounce, never elastic." }
+    ],
+    "breakpoints": [
+      { "name": "sm",  "value": "640px" },
+      { "name": "md",  "value": "768px" },
+      { "name": "lg",  "value": "1024px" },
+      { "name": "xl",  "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button (Cinematic)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The dominant CTA across customer surfaces. Pill shape, gold ground, black text, oversized. At most one per visible viewport.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Order Now</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #C8922A; color: #0A0A0A; padding: 16px 32px; font-family: 'Satoshi', system-ui, sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.01em; border: none; border-radius: 9999px; cursor: pointer; transition: background 250ms cubic-bezier(0.22, 1, 0.36, 1), transform 150ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-primary:hover { background: #E8B86D; } .ds-btn-primary:active { background: #A67C00; transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid #C8922A; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The second CTA in a pair (paired with the primary). Surface-on-black with a gold text shift on hover.",
+      "html": "<button class=\"ds-btn-secondary\" type=\"button\">View Branches</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #141210; color: #F5F5F5; padding: 16px 32px; font-family: 'Satoshi', system-ui, sans-serif; font-size: 1rem; font-weight: 700; border: 1px solid #2A2A2A; border-radius: 9999px; cursor: pointer; transition: background 250ms cubic-bezier(0.22, 1, 0.36, 1), color 250ms cubic-bezier(0.22, 1, 0.36, 1), border-color 250ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-btn-secondary:hover { background: #1C1A16; color: #C8922A; border-color: rgba(200, 146, 42, 0.6); } .ds-btn-secondary:focus-visible { outline: 2px solid #C8922A; outline-offset: 2px; }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "The default card on customer surfaces. Tonal layering provides depth (no shadow at rest).",
+      "html": "<article class=\"ds-card\"><p class=\"ds-card-eyebrow\">Heritage</p><h3 class=\"ds-card-title\">Charcoal Masgouf</h3><p class=\"ds-card-body\">Tigris-style masgouf, butterflied and slow-grilled over orange-wood charcoal until the skin crisps and the flesh stays bronze-soft.</p></article>",
+      "css": ".ds-card { background: #141210; color: #F5F5F5; border: 1px solid #2A2A2A; border-radius: 16px; padding: 24px; transition: border-color 250ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-card:hover { border-color: rgba(200, 146, 42, 0.6); } .ds-card-eyebrow { font-family: 'Satoshi', system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: #C8922A; margin-bottom: 12px; } .ds-card-title { font-family: 'Editorial New', Georgia, serif; font-size: 1.5rem; font-weight: 400; line-height: 1.25; margin-bottom: 8px; } .ds-card-body { font-family: 'Satoshi', system-ui, sans-serif; font-size: 1rem; line-height: 1.6; color: rgba(245, 245, 245, 0.8); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Customer-surface text field. 16px font size (mandatory to suppress iOS Safari auto-zoom on focus), 48px minimum height.",
+      "html": "<label class=\"ds-input-wrap\"><span class=\"ds-input-label\">Phone</span><input class=\"ds-input\" type=\"tel\" placeholder=\"+973 1234 5678\" /></label>",
+      "css": ".ds-input-wrap { display: block; } .ds-input-label { display: block; font-family: 'Satoshi', system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #6B6560; margin-bottom: 8px; } .ds-input { display: block; width: 100%; background: #141210; color: #F5F5F5; font-family: 'Satoshi', system-ui, sans-serif; font-size: 1rem; padding: 12px 16px; min-height: 48px; border: 1px solid #2A2A2A; border-radius: 8px; transition: border-color 250ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input::placeholder { color: #6B6560; } .ds-input:hover { border-color: #3A3A3A; } .ds-input:focus { outline: none; border-color: #C8922A; } .ds-input:focus-visible { outline: 2px solid #C8922A; outline-offset: 2px; }"
+    },
+    {
+      "name": "Gold Chip",
+      "kind": "chip",
+      "refersTo": "chip-gold",
+      "description": "The signature chip variant. Used for the `new` tag on menu items and the gold eyebrow accent in lists. Always single-meaning.",
+      "html": "<span class=\"ds-chip-gold\">NEW</span>",
+      "css": ".ds-chip-gold { display: inline-flex; align-items: center; gap: 4px; background: #C8922A; color: #0A0A0A; font-family: 'Satoshi', system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px; }"
+    },
+    {
+      "name": "Section Eyebrow + Title (English)",
+      "kind": "custom",
+      "refersTo": "headline",
+      "description": "The signature typographic block that opens every marketing section. Gold uppercase eyebrow above an editorial serif title, often with an italic second line.",
+      "html": "<header class=\"ds-section-head\"><p class=\"ds-section-eyebrow\">Loyalty</p><h2 class=\"ds-section-title\">A table of <em>regulars</em></h2></header>",
+      "css": ".ds-section-head { max-width: 720px; } .ds-section-eyebrow { font-family: 'Satoshi', system-ui, sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: #C8922A; margin-bottom: 16px; opacity: 0.85; } .ds-section-title { font-family: 'Editorial New', Georgia, serif; font-size: clamp(2.25rem, 6vw, 3.5rem); font-weight: 400; line-height: 1.05; color: #F5F5F5; } .ds-section-title em { font-style: italic; color: #C8922A; }"
+    },
+    {
+      "name": "Operations Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The Bump / Confirm action on operations surfaces (KDS, driver, waiter). Same primary token as the marketing button, retuned for one-handed pressing at the line: larger touch target, smaller radius, glanceable label.",
+      "html": "<button class=\"ds-op-action\" type=\"button\">BUMP</button>",
+      "css": ".ds-op-action { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 64px; background: #C8922A; color: #0A0A0A; font-family: 'Satoshi', system-ui, sans-serif; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 12px; cursor: pointer; transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-op-action:hover { background: #E8B86D; } .ds-op-action:active { background: #A67C00; } .ds-op-action:focus-visible { outline: 2px solid #F5F5F5; outline-offset: 2px; }"
+    },
+    {
+      "name": "KDS Order Card (operations register)",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Signature operations component. Elapsed timer is the dominant glyph; order number is demoted; item names are body-weight. No shadow; tonal depth only.",
+      "html": "<article class=\"ds-kds-card\"><header class=\"ds-kds-head\"><span class=\"ds-kds-order\">#1428</span><time class=\"ds-kds-time\">04:21</time></header><ul class=\"ds-kds-items\"><li>2× Masgouf</li><li>1× Quzi (no rice)</li><li>1× Iraqi tea</li></ul></article>",
+      "css": ".ds-kds-card { background: #141210; color: #F5F5F5; border: 1px solid #2A2A2A; border-radius: 12px; padding: 16px; display: grid; grid-template-rows: auto 1fr; gap: 12px; } .ds-kds-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; } .ds-kds-order { font-family: 'Satoshi', system-ui, sans-serif; font-size: 0.875rem; font-weight: 700; color: #6B6560; } .ds-kds-time { font-family: 'Satoshi', system-ui, sans-serif; font-size: 4.5rem; font-weight: 800; line-height: 1; color: #C8922A; font-variant-numeric: tabular-nums; } .ds-kds-items { list-style: none; margin: 0; padding: 0; font-family: 'Satoshi', system-ui, sans-serif; font-size: 1rem; font-weight: 600; line-height: 1.5; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Bronze Kitchen at Night",
+    "overview": "The platform is the visual scene of an Iraqi grill house at dusk, photographed and translated into screens. Charcoal black is the room, bronze gold is the lamp over the table and the colour of food coming off the fire, and the white text on dark surfaces is the linen napkin underneath. The system commits to dark by default because the food deserves it: masgouf, quzi, kabab, and tepsi all photograph as bronze and copper, and they only carry that weight against a near-black background.\n\nThe personality the system supports is Heritage. Earned. Generous. Generosity shows up as comfortable spacing and food at full bleed; earned-ness shows up as restraint with ornament and a refusal to perform newness; heritage shows up in the typography and the bilingual fluency rather than in decorative motifs. The system explicitly rejects the four anti-references named in PRODUCT.md: SaaS startup gradients, Western fast-casual cream-and-red palettes, tourist Middle-Eastern arabesques, and the bright-orange generic delivery app.",
+    "keyCharacteristics": [
+      "Dark-first surface (#0A0A0A), warm-tinted, with a fixed SVG fractal-noise grain over the page that gives every screen a faint film texture.",
+      "Bronze gold (#C8922A) used like jewelry; small surface area, never as a gradient or full bleed.",
+      "Bilingual at origin: Arabic-primary RTL is first-class, English is the secondary cut with its own type pairing.",
+      "Flat by default; depth is tonal layering of three near-black surfaces, not drop shadows.",
+      "Generous-and-tactile components: comfortable padding, pill or large-radius corners on customer surfaces, no decorative motion.",
+      "Operations surfaces (KDS, driver, waiter) inherit the same tokens but turn the volume down: density up, ornament off, copy named in one word."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "There is one chromatic voice on the system, and it is bronze gold. No second accent colour is admitted to the palette. If a screen needs to distinguish more than two states, the answer is type weight, ornament, or layout, not a new hue.", "section": "colors" },
+      { "name": "The Jewelry Rule", "body": "Gold is used like jewelry, not paint. On any customer-facing screen, gold-coloured surface area must stay at or below roughly 10% of the visible viewport. Gold is the eyebrow, the CTA, the focus ring, the divider. It is never the page background, never a full-bleed gradient, never a hero wash.", "section": "colors" },
+      { "name": "The Tinted-Neutral Rule", "body": "Every neutral on the system is tinted warm. #000 and #fff are prohibited everywhere. The chosen black is #0A0A0A; the chosen white is #F5F5F5.", "section": "colors" },
+      { "name": "The Bilingual-At-Origin Rule", "body": "No design is finished until both languages render correctly. RTL is not an afterthought layout; it is the primary layout, and English is the variant. Pages that look perfect in English and broken in Arabic ship as broken.", "section": "typography" },
+      { "name": "The No-Em-Dash Rule", "body": "Em dashes are forbidden in body copy and headlines. Use commas, colons, semicolons, periods, or parentheses.", "section": "typography" },
+      { "name": "The Eyebrow Rule", "body": "The gold-coloured uppercase label sits above the section title, never below it, never beside it, and never inside the title. It is the cue that says 'we are about to begin a thought.'", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. The first reach for depth is a tonal step (move to the next surface tone), not a shadow. Shadows are reserved for state response, not for ambient ornament.", "section": "elevation" },
+      { "name": "The No-Glow Rule", "body": "Gold glows, cinematic shadows, and ambient halos around buttons or cards are forbidden. The brand is restrained heritage, not movie poster.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use the design tokens from src/lib/design-tokens.ts as the single source of truth for raw hex; everywhere else, reach for bg-brand-* Tailwind classes.",
+      "Do use logical properties (ps, pe, ms, me, border-s, border-e, rounded-s, rounded-e) for every spatial property. RTL is primary.",
+      "Do pair every section with its locale-appropriate font stack: Cairo + Almarai for AR, Editorial New + Satoshi for EN.",
+      "Do keep the gold-coloured surface area at or below 10% of any visible viewport on customer surfaces (The Jewelry Rule).",
+      "Do convey depth by stacking the three charcoal tones (brand-black -> brand-surface -> brand-surface-2), not with shadows.",
+      "Do show the gold focus ring on every interactive element.",
+      "Do size body text at 16px minimum and tap targets at 44x44 minimum on customer surfaces, 56x56 on operations surfaces.",
+      "Do honor prefers-reduced-motion on every animated surface."
+    ],
+    "donts": [
+      "Don't use the generic SaaS startup gradient (purple/violet, hero-metric template, identical card grids, glassmorphism).",
+      "Don't dress the brand as a Western fast-casual chain (red-and-cream palette, oversized circular logos, friendly-rounded sans-serifs).",
+      "Don't import tourist Middle-Eastern clichés (arabesque borders, faux-papyrus textures, camel/lamp/genie iconography).",
+      "Don't use generic delivery-app patterns (bright orange/red, scooter icons, urgency timers, gamified loyalty badges).",
+      "Don't use #000 or #fff anywhere.",
+      "Don't use a gradient on text (background-clip: text).",
+      "Don't use a coloured left-stripe or right-stripe border greater than 1px on cards, callouts, or alerts.",
+      "Don't add a second chromatic accent. There is one accent, and it is bronze gold.",
+      "Don't nest a card inside a card.",
+      "Don't add a drop shadow at rest on any surface.",
+      "Don't use Inter, Poppins, Nunito, Montserrat, Raleway, or Roboto anywhere.",
+      "Don't use em dashes in body or headline copy.",
+      "Don't hardcode raw hex values outside src/lib/design-tokens.ts and the two exempt files listed in CLAUDE.md."
+    ]
+  }
+}
