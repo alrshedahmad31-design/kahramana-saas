@@ -176,7 +176,8 @@
       "mcp__plugin_vercel_vercel__get_deployment",
       "Bash(awk NR>=2259 && NR<=2360 *)",
       "mcp__plugin_supabase_supabase__list_migrations",
-      "mcp__plugin_supabase_supabase__apply_migration"
+      "mcp__plugin_supabase_supabase__apply_migration",
+      "mcp__plugin_supabase_supabase__generate_typescript_types"
     ]
   }
 }

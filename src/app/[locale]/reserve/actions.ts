@@ -22,6 +22,7 @@ const createPublicSchema = z.object({
   special_requests: z.string().trim().max(500).optional(),
   website:          z.string().optional(),   // honeypot
   turnstileToken:   z.string().optional(),
+  seating_type:     z.enum(['family_section', 'arabic_seating', 'outdoor', 'indoor']).nullable().optional(),
 })
 
 const findAvailableSchema = z.object({
@@ -157,6 +158,7 @@ export async function createPublicReservation(
     p_duration_minutes: data.duration_minutes,
     p_special_requests: data.special_requests?.length ? data.special_requests : undefined,
     p_source:           'website',
+    p_seating_type:     data.seating_type ?? undefined,
   })
 
   if (error) {

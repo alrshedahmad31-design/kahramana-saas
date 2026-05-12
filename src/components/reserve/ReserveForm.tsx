@@ -29,6 +29,7 @@ type FormState = {
   guest_name:       string
   phone:            string                  // includes +973 prefix
   special_requests: string
+  seating_type:     'family_section' | 'arabic_seating' | 'outdoor' | 'indoor' | null
 }
 
 type FieldError = 'branch' | 'date' | 'time' | 'partySize' | 'name' | 'phone'
@@ -77,6 +78,7 @@ const initialForm: FormState = {
   guest_name:       '',
   phone:            '',
   special_requests: '',
+  seating_type:     null,
 }
 
 export default function ReserveForm({ locale, branches }: Props) {
@@ -97,6 +99,11 @@ export default function ReserveForm({ locale, branches }: Props) {
 
   const minDate = useMemo(() => todayISODate(), [])
   const maxDate = useMemo(() => maxISODate(), [])
+
+  const seatingOptions: ('family_section' | 'arabic_seating' | 'outdoor' | 'indoor')[] = useMemo(() => {
+    if (form.branch_id === 'qallali') return ['outdoor', 'indoor']
+    return ['family_section', 'arabic_seating', 'outdoor', 'indoor']
+  }, [form.branch_id])
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -143,6 +150,7 @@ export default function ReserveForm({ locale, branches }: Props) {
       special_requests: form.special_requests.trim() || undefined,
       website:          honeypot,
       turnstileToken,
+      seating_type:     form.seating_type,
     }
 
     setSubmit({ kind: 'submitting' })
@@ -329,6 +337,42 @@ export default function ReserveForm({ locale, branches }: Props) {
                 }`}
               >
                 {n === 10 ? `${n}+` : n}
+              </button>
+            )
+          })}
+        </div>
+      </Section>
+
+      {/* D2. Seating Type */}
+      <Section label={t('seatingType.label')} isAr={isAr}>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => update('seating_type', null)}
+            aria-pressed={form.seating_type === null}
+            className={`min-h-[48px] rounded-lg border px-3 text-sm font-bold transition-colors ${
+              form.seating_type === null
+                ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                : 'border-brand-border bg-brand-black/40 text-brand-text hover:border-brand-gold/40'
+            }`}
+          >
+            {t('seatingType.any')}
+          </button>
+          {seatingOptions.map((opt) => {
+            const selected = opt === form.seating_type
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => update('seating_type', opt)}
+                aria-pressed={selected}
+                className={`min-h-[48px] rounded-lg border px-3 text-sm font-bold transition-colors ${
+                  selected
+                    ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                    : 'border-brand-border bg-brand-black/40 text-brand-text hover:border-brand-gold/40'
+                }`}
+              >
+                {t(`seatingType.${opt}`)}
               </button>
             )
           })}

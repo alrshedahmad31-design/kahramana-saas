@@ -14,6 +14,7 @@ import type {
   ReservationRow,
   ReservationSource,
   ReservationStatus,
+  SeatingType,
 } from '@/lib/supabase/custom-types'
 
 const RESERVATION_STATUSES: readonly ReservationStatus[] = [
@@ -33,6 +34,7 @@ const createReservationSchema = z.object({
   table_id:         z.string().uuid().nullable().optional(),
   special_requests: z.string().trim().max(500).optional(),
   source:           z.enum(['website', 'phone', 'walk_in', 'staff']).default('staff'),
+  seating_type:     z.enum(['family_section', 'arabic_seating', 'outdoor', 'indoor']).nullable().optional(),
 })
 
 const findAvailableSchema = z.object({
@@ -44,9 +46,10 @@ const findAvailableSchema = z.object({
 
 const statusSchema = z.enum(['pending', 'confirmed', 'seated', 'no_show', 'cancelled', 'completed'])
 
-export type Reservation = Omit<ReservationRow, 'status' | 'source'> & {
+export type Reservation = Omit<ReservationRow, 'status' | 'source' | 'seating_type'> & {
   status: ReservationStatus
   source: ReservationSource
+  seating_type?: SeatingType | null
 }
 
 export type CreateReservationInput = z.infer<typeof createReservationSchema>
@@ -160,6 +163,7 @@ export async function createReservation(input: CreateReservationInput): Promise<
     p_table_id:         d.table_id ?? undefined,
     p_special_requests: d.special_requests?.length ? d.special_requests : undefined,
     p_source:           d.source,
+    p_seating_type:     d.seating_type ?? undefined,
   })
 
   if (error) throw new Error(error.message)

@@ -1,83 +1,98 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import {
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Loader2,
+  Search,
   Plus,
-  RefreshCw,
-  UserX,
-  X,
+  Calendar,
+  Users,
+  Clock,
+  Phone,
+  MessageSquare,
+  MoreVertical,
+  CheckCircle2,
   XCircle,
+  UserCheck,
+  Timer,
+  AlertCircle,
+  Table as TableIcon,
+  ChevronRight,
+  ChevronLeft,
+  Filter,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import type { ReservationSource, ReservationStatus } from '@/lib/supabase/custom-types'
+import { format, isToday, parseISO, addMinutes, isAfter, isBefore } from 'date-fns'
+import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from '@/lib/toast'
 import {
-  createReservation,
-  findAvailableTables,
-  getReservations,
-  updateReservationStatus,
-  type AvailableTable,
-  type CreateReservationInput,
   type Reservation,
+  createReservation,
+  updateReservationStatus,
+  findAvailableTables,
 } from '@/app/[locale]/dashboard/reservations/actions'
 
-interface BranchOption {
-  id:     string
-  nameAr: string
-  nameEn: string
-}
+const cn = (...classes: (string | undefined | boolean)[]) =>
+  classes.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()
 
-interface Props {
+interface ReservationsClientProps {
   initialReservations: Reservation[]
-  branchId:            string
-  branches:            BranchOption[]
-  isGlobalAdmin:       boolean
-  locale:              'ar' | 'en'
+  branchId: string
+  branches: Array<{ id: string; nameAr: string; nameEn: string }>
+  isGlobalAdmin: boolean
+  locale: 'ar' | 'en'
 }
 
-type FormState = {
-  guest_name:       string
-  phone:            string
-  party_size:       number
-  reserved_date:    string
-  reserved_time:    string
-  duration_minutes: number
-  special_requests: string
-  source:           ReservationSource
-  table_id:         string | null
+function StatusPill({ status, locale }: { status: Reservation['status']; locale: 'ar' | 'en' }) {
+  const t = useTranslations('dashboard.reservations.statuses')
+  const styles = {
+    pending:   'bg-brand-gold/10 text-brand-gold border-brand-gold/20',
+    confirmed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    seated:    'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    completed: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    no_show:   'bg-brand-muted/10 text-brand-muted border-brand-border',
+    cancelled: 'bg-brand-error/10 text-brand-error border-brand-error/20',
+  }
+
+  return (
+    <span className={cn(
+      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border transition-colors',
+      styles[status] || styles.pending
+    )}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+      {t(status)}
+    </span>
+  )
 }
 
-const initialForm: FormState = {
-  guest_name:       '',
-  phone:            '+973',
-  party_size:       2,
-  reserved_date:    '',
-  reserved_time:    '',
-  duration_minutes: 90,
-  special_requests: '',
-  source:           'staff',
-  table_id:         null,
-}
-
-const SOURCES: ReservationSource[]    = ['website', 'phone', 'walk_in', 'staff']
-
-function todayISODate(): string {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm   = String(d.getMonth() + 1).padStart(2, '0')
-  const dd   = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function combineDateTimeToISO(date: string, time: string): string | null {
-  if (!date || !time) return null
-  const parsed = new Date(`${date}T${time}:00`)
-  if (Number.isNaN(parsed.getTime())) return null
-  return parsed.toISOString()
+function StatCard({ label, value, icon: Icon, trend, locale }: { 
+  label: string; 
+  value: string | number; 
+  icon: any; 
+  trend?: string;
+  locale: 'ar' | 'en' 
+}) {
+  return (
+    <div className="bg-brand-surface border border-brand-border p-4 rounded-xl flex flex-col gap-1 transition-all hover:border-brand-gold/30 group">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-muted group-hover:text-brand-gold transition-colors">
+          {label}
+        </span>
+        <Icon size={14} className="text-brand-muted group-hover:text-brand-gold transition-colors" />
+      </div>
+      <div className="flex items-baseline gap-2">
+        <span className="font-cairo text-2xl font-black text-brand-text leading-none">
+          {value}
+        </span>
+        {trend && (
+          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
+            {trend}
+          </span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function ReservationsClient({
@@ -86,587 +101,354 @@ export default function ReservationsClient({
   branches,
   isGlobalAdmin,
   locale,
-}: Props) {
-  const t  = useTranslations('reservations')
+}: ReservationsClientProps) {
+  const t = useTranslations('dashboard.reservations')
   const isAr = locale === 'ar'
 
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations)
-  const [modalOpen,    setModalOpen]    = useState(false)
-  const [form,         setForm]         = useState<FormState>(() => ({
-    ...initialForm,
-    reserved_date: todayISODate(),
-  }))
-  const [availableTables, setAvailableTables] = useState<AvailableTable[]>([])
-  const [availabilityLoading, setAvailabilityLoading] = useState(false)
-  const [availabilityError, setAvailabilityError] = useState<string | null>(null)
-  const [error,        setError]        = useState<string | null>(null)
-  const [connected,    setConnected]    = useState(false)
-  const [pendingId,    setPendingId]    = useState<string | null>(null)
-  const [isPending,    startTransition] = useTransition()
+  const [search, setSearch] = useState('')
+  const [filterStatus, setFilterStatus] = useState<Reservation['status'] | 'all'>('all')
+  const [isAdding, setIsAdding] = useState(false)
+  const [selectedRes, setSelectedRes] = useState<Reservation | null>(null)
+  const [loading, setLoading] = useState<string | null>(null)
 
-  const selectedBranch = branches.find((b) => b.id === branchId)
-  const branchName = selectedBranch ? (isAr ? selectedBranch.nameAr : selectedBranch.nameEn) : branchId
+  const stats = useMemo(() => {
+    const today = reservations.filter(r => isToday(parseISO(r.reserved_for)) && r.status !== 'cancelled')
+    const totalCoversToday = today.reduce((sum, r) => sum + (r.party_size || 0), 0)
+    const now = new Date()
+    const oneHourFromNow = addMinutes(now, 60)
+    const upcoming = today.filter(r => {
+      const date = parseISO(r.reserved_for)
+      return isAfter(date, now) && isBefore(date, oneHourFromNow) && (r.status === 'pending' || r.status === 'confirmed')
+    })
 
-  const pendingCount   = reservations.filter((r) => r.status === 'pending').length
-  const confirmedCount = reservations.filter((r) => r.status === 'confirmed').length
+    return {
+      totalCoversToday,
+      upcomingCount: upcoming.length,
+      activeTables: today.filter(r => r.status === 'seated').length,
+      pendingCount: today.filter(r => r.status === 'pending').length,
+    }
+  }, [reservations])
 
-  const refresh = useCallback(async () => {
+  const filtered = useMemo(() => {
+    return reservations.filter((r) => {
+      const matchSearch = 
+        r.guest_name.toLowerCase().includes(search.toLowerCase()) ||
+        r.phone.includes(search)
+      const matchStatus = filterStatus === 'all' || r.status === filterStatus
+      return matchSearch && matchStatus
+    })
+  }, [reservations, search, filterStatus])
+
+  async function handleStatusUpdate(id: string, newStatus: Reservation['status']) {
+    setLoading(id)
     try {
-      const next = await getReservations(branchId)
-      setReservations(next)
-      setError(null)
-    } catch {
-      setError(t('refreshError'))
-    }
-  }, [branchId, t])
-
-  useEffect(() => {
-    setReservations(initialReservations)
-  }, [initialReservations])
-
-  useEffect(() => {
-    const supabase = createClient()
-    const channel = supabase.channel(`reservations-${branchId}`)
-
-    channel.on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'reservations', filter: `branch_id=eq.${branchId}` },
-      () => { refresh() },
-    )
-
-    channel.subscribe((status) => {
-      setConnected(status === 'SUBSCRIBED')
-    })
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [branchId, refresh])
-
-  // Look up available tables when the modal has enough info.
-  useEffect(() => {
-    if (!modalOpen) return
-    const iso = combineDateTimeToISO(form.reserved_date, form.reserved_time)
-    if (!iso || form.party_size < 1) {
-      setAvailableTables([])
-      setAvailabilityError(null)
-      return
-    }
-
-    let cancelled = false
-    setAvailabilityLoading(true)
-    setAvailabilityError(null)
-    findAvailableTables({
-      branch_id:        branchId,
-      party_size:       form.party_size,
-      reserved_for:     iso,
-      duration_minutes: form.duration_minutes,
-    })
-      .then((rows) => {
-        if (cancelled) return
-        setAvailableTables(rows)
-        // Drop the selected table if it's no longer available
-        if (form.table_id && !rows.some((row) => row.table_id === form.table_id)) {
-          setForm((current) => ({ ...current, table_id: null }))
-        }
-      })
-      .catch(() => {
-        if (cancelled) return
-        setAvailableTables([])
-        setAvailabilityError(t('errorGeneric'))
-      })
-      .finally(() => {
-        if (cancelled) return
-        setAvailabilityLoading(false)
-      })
-
-    return () => { cancelled = true }
-  }, [
-    modalOpen,
-    branchId,
-    form.reserved_date,
-    form.reserved_time,
-    form.party_size,
-    form.duration_minutes,
-    form.table_id,
-    t,
-  ])
-
-  async function handleAdd() {
-    setError(null)
-    const iso = combineDateTimeToISO(form.reserved_date, form.reserved_time)
-    if (!form.guest_name.trim() || !iso) {
-      setError(t('errorMissingFields'))
-      return
-    }
-    if (!/^\+973\d{8}$/.test(form.phone)) {
-      setError(t('errorInvalidPhone'))
-      return
-    }
-    if (form.party_size < 1 || form.party_size > 50) {
-      setError(t('errorInvalidPartySize'))
-      return
-    }
-
-    const payload: CreateReservationInput = {
-      branch_id:        branchId,
-      guest_name:       form.guest_name,
-      phone:            form.phone,
-      party_size:       form.party_size,
-      reserved_for:     iso,
-      duration_minutes: form.duration_minutes,
-      table_id:         form.table_id,
-      special_requests: form.special_requests.trim() || undefined,
-      source:           form.source,
-    }
-
-    startTransition(async () => {
-      try {
-        await createReservation(payload)
-        await refresh()
-        setForm({ ...initialForm, reserved_date: todayISODate() })
-        setAvailableTables([])
-        setModalOpen(false)
-      } catch (err) {
-        const message = err instanceof Error ? err.message : ''
-        if (message.includes('RESERVATION_CONFLICT')) {
-          setError(t('errorConflict'))
-        } else if (message.includes('INVALID_PHONE')) {
-          setError(t('errorInvalidPhone'))
-        } else if (message.includes('INVALID_PARTY_SIZE')) {
-          setError(t('errorInvalidPartySize'))
-        } else {
-          setError(t('errorGeneric'))
-        }
-      }
-    })
-  }
-
-  async function setStatus(row: Reservation, status: ReservationStatus) {
-    setPendingId(`${row.id}:${status}`)
-    try {
-      await updateReservationStatus(row.id, status)
-      await refresh()
-      setError(null)
-    } catch {
-      setError(t('actionError'))
+      await updateReservationStatus(id, newStatus)
+      setReservations(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r))
+      toast.success(t('notifications.statusUpdated'))
+    } catch (err: any) {
+      toast.error(err.message)
     } finally {
-      setPendingId(null)
+      setLoading(null)
     }
   }
-
-  const sortedReservations = useMemo(
-    () => [...reservations].sort(
-      (a, b) => new Date(a.reserved_for).getTime() - new Date(b.reserved_for).getTime(),
-    ),
-    [reservations],
-  )
 
   return (
-    <div className="min-h-screen bg-brand-black px-4 py-6 text-brand-text sm:px-6" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <header className="flex flex-col gap-4 border-b border-brand-border pb-5 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-brand-muted">
-              <span className={`h-2 w-2 rounded-full ${connected ? 'bg-success' : 'bg-brand-error'}`} />
-              <span>{connected ? t('live') : t('offline')}</span>
-            </div>
-            <h1 className={`text-3xl font-black text-brand-gold ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-              {t('title')}
-            </h1>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-brand-muted">
-              <span>{branchName}</span>
-              <span>{t('pendingCount', { count: pendingCount })}</span>
-              <span>{t('confirmedCount', { count: confirmedCount })}</span>
-            </div>
-          </div>
+    <div className="flex flex-col gap-6" dir={isAr ? 'rtl' : 'ltr'}>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 px-1">
+        <div>
+          <h1 className="font-cairo text-3xl font-black text-brand-text mb-1">
+            {t('title')}
+          </h1>
+          <p className="text-brand-muted text-sm font-medium">
+            {t('subtitle')}
+          </p>
+        </div>
+        <button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center justify-center gap-2 bg-brand-gold hover:bg-brand-gold/90 text-brand-black px-6 py-2.5 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(200,146,42,0.2)] hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Plus size={18} />
+          <span>{t('addNew')}</span>
+        </button>
+      </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {isGlobalAdmin && (
-              <form action="" method="get" className="flex min-h-[44px] items-center gap-2">
-                <select
-                  name="branch"
-                  defaultValue={branchId}
-                  aria-label={t('branch')}
-                  className="min-h-[44px] rounded-lg border border-brand-border bg-brand-surface px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                >
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {isAr ? branch.nameAr : branch.nameEn}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  className="min-h-[44px] rounded-lg border border-brand-border px-4 text-sm font-bold text-brand-gold"
-                >
-                  {t('apply')}
-                </button>
-              </form>
-            )}
-            <button
-              type="button"
-              onClick={() => refresh()}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-brand-border px-4 text-sm font-bold text-brand-muted transition-colors hover:border-brand-gold/40 hover:text-brand-gold"
-              aria-label={t('refresh')}
-            >
-              <RefreshCw size={16} />
-              {t('refresh')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-brand-gold px-4 text-sm font-black text-brand-black transition-colors hover:bg-brand-gold/90"
-              aria-label={t('addReservation')}
-            >
-              <Plus size={18} />
-              {t('addReservation')}
-            </button>
-          </div>
-        </header>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-1">
+        <StatCard label={t('stats.covers')} value={stats.totalCoversToday} icon={Users} locale={locale} />
+        <StatCard label={t('stats.upcoming')} value={stats.upcomingCount} icon={Timer} locale={locale} trend={stats.upcomingCount > 0 ? t('stats.active') : undefined} />
+        <StatCard label={t('stats.occupied')} value={stats.activeTables} icon={TableIcon} locale={locale} />
+        <StatCard label={t('stats.pending')} value={stats.pendingCount} icon={AlertCircle} locale={locale} />
+      </div>
 
-        {error && (
-          <div className="rounded-lg border border-brand-error/40 bg-brand-error/10 px-4 py-3 text-sm font-bold text-brand-error">
-            {error}
-          </div>
-        )}
-
-        {sortedReservations.length === 0 ? (
-          <section className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-2xl border border-brand-border bg-brand-surface px-4 py-10 text-center">
-            <Calendar size={36} className="text-brand-gold" aria-hidden="true" />
-            <p className={`text-base font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-              {t('empty')}
-            </p>
-          </section>
-        ) : (
-          <section className="space-y-3">
-            {sortedReservations.map((row) => (
-              <article
-                key={row.id}
-                className="rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5 transition-colors hover:border-brand-gold/30"
+      <div className="flex flex-col lg:flex-row gap-4 items-center bg-brand-surface border border-brand-border p-3 rounded-xl mx-1">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-muted" size={18} />
+          <input
+            type="text"
+            placeholder={t('searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-brand-black border border-brand-border rounded-lg ps-10 pe-4 py-2 text-sm text-brand-text focus:border-brand-gold outline-none transition-colors"
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full lg:w-auto">
+          <Filter size={16} className="text-brand-muted hidden lg:block" />
+          <div className="flex gap-1 overflow-x-auto pb-1 lg:pb-0 scrollbar-hide">
+            {(['all', 'pending', 'confirmed', 'seated', 'completed'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(s)}
+                className={cn(
+                  'whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border',
+                  filterStatus === s ? 'bg-brand-gold text-brand-black border-brand-gold' : 'bg-brand-black text-brand-muted border-brand-border hover:border-brand-gold/50'
+                )}
               >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  {/* LEFT — guest info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className={`truncate text-base font-semibold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-                        {row.guest_name}
-                      </p>
-                      <span className="shrink-0 rounded-full border border-brand-border px-2 py-0.5 text-xs text-brand-muted tabular-nums">
-                        {t('peopleCount', { count: row.party_size })}
-                      </span>
-                    </div>
-
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-brand-muted">
-                      <span className="inline-flex items-center gap-1.5 tabular-nums">
-                        <Calendar size={13} aria-hidden="true" />
-                        {formatDate(row.reserved_for, isAr)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 tabular-nums">
-                        <Clock size={13} aria-hidden="true" />
-                        {formatTime(row.reserved_for, isAr)}
-                      </span>
-                      <span className="tabular-nums" dir="ltr">{row.phone}</span>
-                      {row.table_id && (
-                        <span className="text-brand-gold">{t('tableLabel')}</span>
-                      )}
-                    </div>
-
-                    {row.special_requests && (
-                      <p className="mt-2 truncate text-xs text-brand-muted/70">
-                        {row.special_requests}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* RIGHT — status + actions */}
-                  <div className="flex flex-col items-start gap-3 sm:items-end">
-                    <StatusPill status={row.status} label={t(`status.${row.status}`)} />
-                    {(row.status === 'pending' || row.status === 'confirmed') && (
-                      <div className="flex flex-wrap gap-2 sm:justify-end">
-                        {row.status === 'pending' && (
-                          <>
-                            <ActionButton
-                              label={t('actions.confirm')}
-                              icon={<CheckCircle2 size={14} />}
-                              busy={pendingId === `${row.id}:confirmed`}
-                              onClick={() => setStatus(row, 'confirmed')}
-                            />
-                            <ActionButton
-                              label={t('actions.cancel')}
-                              icon={<XCircle size={14} />}
-                              busy={pendingId === `${row.id}:cancelled`}
-                              variant="muted"
-                              onClick={() => setStatus(row, 'cancelled')}
-                            />
-                          </>
-                        )}
-                        {row.status === 'confirmed' && (
-                          <>
-                            <ActionButton
-                              label={t('actions.seat')}
-                              icon={<CheckCircle2 size={14} />}
-                              busy={pendingId === `${row.id}:seated`}
-                              onClick={() => setStatus(row, 'seated')}
-                            />
-                            <ActionButton
-                              label={t('actions.noShow')}
-                              icon={<UserX size={14} />}
-                              busy={pendingId === `${row.id}:no_show`}
-                              variant="muted"
-                              onClick={() => setStatus(row, 'no_show')}
-                            />
-                            <ActionButton
-                              label={t('actions.cancel')}
-                              icon={<XCircle size={14} />}
-                              busy={pendingId === `${row.id}:cancelled`}
-                              variant="muted"
-                              onClick={() => setStatus(row, 'cancelled')}
-                            />
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </article>
+                {s === 'all' ? t('filterAll') : t(`statuses.${s}`)}
+              </button>
             ))}
-          </section>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden mx-1">
+        <div className="overflow-x-auto">
+          <table className="w-full text-start border-collapse">
+            <thead>
+              <tr className="bg-brand-surface-2 border-b border-brand-border">
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-muted text-start">{t('table.time')}</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-muted text-start">{t('table.guest')}</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-muted text-center">{t('table.size')}</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-muted text-center">{t('table.table')}</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-muted text-center">{t('table.status')}</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-muted text-end">{t('table.actions')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-brand-border/50">
+              <AnimatePresence mode="popLayout">
+                {filtered.map((res) => (
+                  <motion.tr
+                    layout
+                    key={res.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="group hover:bg-brand-surface-2/50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedRes(res)}
+                  >
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col">
+                        <span className="font-satoshi text-sm font-bold text-brand-text">{format(parseISO(res.reserved_for), 'HH:mm')}</span>
+                        <span className="text-[10px] text-brand-muted uppercase font-bold tracking-tight">{format(parseISO(res.reserved_for), 'MMM dd')}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-cairo text-sm font-bold text-brand-text">{res.guest_name}</span>
+                          {res.source === 'website' && <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded font-bold uppercase border border-blue-500/20">Web</span>}
+                          {res.party_size >= 6 && <span className="text-[9px] bg-brand-gold/10 text-brand-gold px-1.5 py-0.5 rounded font-bold uppercase border border-brand-gold/20">Group</span>}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-brand-muted">
+                          <Phone size={10} />
+                          <span className="font-satoshi">{res.phone}</span>
+                          {res.seating_type && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-brand-border" />
+                              <span className="text-brand-gold/80">{t(`seatingType.${res.seating_type}`)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-center">
+                      <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-brand-black border border-brand-border font-satoshi text-sm font-black text-brand-text">{res.party_size}</div>
+                    </td>
+                    <td className="px-6 py-5 text-center">
+                      <span className="text-xs font-bold text-brand-muted group-hover:text-brand-gold transition-colors">{res.table_id ? `#${res.table_id.slice(0, 4)}` : t('table.unassigned')}</span>
+                    </td>
+                    <td className="px-6 py-5 text-center"><StatusPill status={res.status} locale={locale} /></td>
+                    <td className="px-6 py-5 text-end" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        {res.status === 'pending' && <button onClick={() => handleStatusUpdate(res.id, 'confirmed')} disabled={loading === res.id} className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-brand-black transition-all border border-emerald-500/20"><CheckCircle2 size={16} /></button>}
+                        {res.status === 'confirmed' && <button onClick={() => handleStatusUpdate(res.id, 'seated')} disabled={loading === res.id} className="p-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-brand-black transition-all border border-amber-500/20"><UserCheck size={16} /></button>}
+                        {res.status !== 'cancelled' && res.status !== 'completed' && <button onClick={() => handleStatusUpdate(res.id, 'cancelled')} disabled={loading === res.id} className="p-2 rounded-lg bg-brand-error/10 text-brand-error hover:bg-brand-error hover:text-brand-black transition-all border border-brand-error/20"><XCircle size={16} /></button>}
+                        <button onClick={() => setSelectedRes(res)} className="p-2 rounded-lg bg-brand-surface-2 text-brand-muted hover:text-brand-gold transition-all border border-brand-border"><MoreVertical size={16} /></button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </div>
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-brand-surface-2 flex items-center justify-center mb-4 border border-brand-border"><Calendar size={32} className="text-brand-muted" /></div>
+            <h3 className="font-cairo text-lg font-bold text-brand-text mb-1">{t('table.noResults')}</h3>
+            <p className="text-brand-muted text-sm max-w-xs">{t('table.noResultsDesc')}</p>
+          </div>
         )}
       </div>
 
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end bg-brand-black/70 p-0 sm:items-center sm:justify-center sm:p-6">
-          <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-xl border border-brand-border bg-brand-surface p-5 shadow-2xl sm:max-w-lg sm:rounded-xl">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="text-xl font-black text-brand-gold">{t('addReservation')}</h2>
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text"
-                aria-label={t('close')}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="grid gap-4">
-              <label className="grid gap-2 text-sm font-bold text-brand-muted">
-                {t('guestName')}
-                <input
-                  value={form.guest_name}
-                  onChange={(e) => setForm((c) => ({ ...c, guest_name: e.target.value }))}
-                  className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                />
-              </label>
-
-              <label className="grid gap-2 text-sm font-bold text-brand-muted">
-                {t('phone')}
-                <input
-                  dir="ltr"
-                  inputMode="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))}
-                  className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                />
-              </label>
-
-              <div className="grid grid-cols-2 gap-3">
-                <label className="grid gap-2 text-sm font-bold text-brand-muted">
-                  {t('date')}
-                  <input
-                    type="date"
-                    value={form.reserved_date}
-                    onChange={(e) => setForm((c) => ({ ...c, reserved_date: e.target.value }))}
-                    className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-bold text-brand-muted">
-                  {t('time')}
-                  <input
-                    type="time"
-                    value={form.reserved_time}
-                    onChange={(e) => setForm((c) => ({ ...c, reserved_time: e.target.value }))}
-                    className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                  />
-                </label>
-              </div>
-
-              <div className="grid gap-2">
-                <span className="text-sm font-bold text-brand-muted">{t('partySize')}</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={50}
-                  value={form.party_size}
-                  onChange={(e) => setForm((c) => ({ ...c, party_size: Number(e.target.value) || 1 }))}
-                  className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                />
-              </div>
-
-              <label className="grid gap-2 text-sm font-bold text-brand-muted">
-                {t('duration')}
-                <select
-                  value={form.duration_minutes}
-                  onChange={(e) => setForm((c) => ({ ...c, duration_minutes: Number(e.target.value) }))}
-                  className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                >
-                  {[60, 90, 120, 150, 180].map((mins) => (
-                    <option key={mins} value={mins}>{mins}</option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="grid gap-2">
-                <span className="text-sm font-bold text-brand-muted">{t('availableTables')}</span>
-                {availabilityLoading ? (
-                  <div className="flex min-h-[48px] items-center gap-2 rounded-lg border border-brand-border bg-brand-black px-3 text-sm text-brand-muted">
-                    <Loader2 size={16} className="animate-spin" />
-                    {t('checkingAvailability')}
-                  </div>
-                ) : availabilityError ? (
-                  <p className="text-sm text-brand-error">{availabilityError}</p>
-                ) : availableTables.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-brand-border bg-brand-black px-3 py-3 text-sm text-brand-muted">
-                    {t('noTablesAvailable')}
-                  </p>
-                ) : (
-                  <select
-                    value={form.table_id ?? ''}
-                    onChange={(e) => setForm((c) => ({ ...c, table_id: e.target.value || null }))}
-                    className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                  >
-                    <option value="">{t('anyTable')}</option>
-                    {availableTables.map((row) => {
-                      const label = isAr ? row.label_ar : row.label_en
-                      const display = label ?? `${t('tableLabel')} ${row.table_number}`
-                      return (
-                        <option key={row.table_id} value={row.table_id}>
-                          {display} · {t('seatCount', { count: row.capacity })}
-                        </option>
-                      )
-                    })}
-                  </select>
-                )}
-              </div>
-
-              <label className="grid gap-2 text-sm font-bold text-brand-muted">
-                {t('source')}
-                <select
-                  value={form.source}
-                  onChange={(e) => setForm((c) => ({ ...c, source: e.target.value as ReservationSource }))}
-                  className="min-h-[48px] rounded-lg border border-brand-border bg-brand-black px-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                >
-                  {SOURCES.map((s) => (
-                    <option key={s} value={s}>{t(`sources.${s}`)}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="grid gap-2 text-sm font-bold text-brand-muted">
-                {t('specialRequests')}
-                <textarea
-                  value={form.special_requests}
-                  onChange={(e) => setForm((c) => ({ ...c, special_requests: e.target.value }))}
-                  rows={3}
-                  className="min-h-[96px] rounded-lg border border-brand-border bg-brand-black px-3 py-3 text-base text-brand-text focus:border-brand-gold/60 focus:outline-none"
-                />
-              </label>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="min-h-[44px] rounded-lg border border-brand-border px-4 text-sm font-bold text-brand-muted hover:text-brand-text"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={handleAdd}
-                disabled={isPending}
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-brand-gold px-5 text-sm font-black text-brand-black disabled:opacity-60"
-              >
-                {isPending && <Loader2 size={16} className="animate-spin" />}
-                {t('add')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {selectedRes && (
+          <DetailDrawer res={selectedRes} onClose={() => setSelectedRes(null)} locale={locale} onStatusChange={handleStatusUpdate} loading={loading === selectedRes?.id} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {isAdding && (
+          <AddReservationDrawer isOpen={isAdding} onClose={() => setIsAdding(false)} branchId={branchId} locale={locale} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
-function formatTime(iso: string, isAr: boolean): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleTimeString(isAr ? 'ar-BH' : 'en-GB', {
-      hour:   '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    })
-  } catch {
-    return iso.slice(11, 16)
-  }
-}
-
-function formatDate(iso: string, isAr: boolean): string {
-  try {
-    const d = new Date(iso)
-    return d.toLocaleDateString(isAr ? 'ar-BH' : 'en-GB', {
-      day:   '2-digit',
-      month: '2-digit',
-      year:  'numeric',
-    })
-  } catch {
-    return iso.slice(0, 10)
-  }
-}
-
-function StatusPill({ status, label }: { status: ReservationStatus; label: string }) {
-  const tone =
-    status === 'pending'
-      ? 'border-brand-gold/40 text-brand-gold bg-brand-gold/10'
-      : status === 'confirmed'
-        ? 'border-green-500/40 text-green-400 bg-green-500/10'
-        : status === 'seated'
-          ? 'border-transparent bg-brand-gold text-brand-black'
-          : status === 'no_show'
-            ? 'border-red-500/40 text-red-400 bg-red-500/10'
-            : 'border-brand-border text-brand-muted bg-transparent'
-
+function DetailDrawer({ res, onClose, locale, onStatusChange, loading }: { res: Reservation | null; onClose: () => void; locale: 'ar' | 'en'; onStatusChange: (id: string, s: Reservation['status']) => void; loading: boolean; }) {
+  const t = useTranslations('dashboard.reservations')
+  if (!res) return null
+  const isAr = locale === 'ar'
   return (
-    <span className={`inline-flex min-h-[28px] w-fit items-center rounded-full border px-3 text-xs font-bold uppercase tracking-wide ${tone}`}>
-      {label}
-    </span>
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-brand-black/60 backdrop-blur-sm" />
+      <motion.div initial={{ x: isAr ? '-100%' : '100%' }} animate={{ x: 0 }} exit={{ x: isAr ? '-100%' : '100%' }} className="relative w-full max-w-md h-full bg-brand-surface border-s border-brand-border shadow-2xl flex flex-col">
+        <div className="p-6 border-b border-brand-border flex items-center justify-between">
+          <div className="flex flex-col"><span className="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-1">{t('drawer.details')}</span><h2 className="font-cairo text-xl font-black text-brand-text">{res.guest_name}</h2></div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-brand-surface-2 transition-colors">{isAr ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-brand-black border border-brand-border p-4 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 text-brand-muted"><Clock size={14} /><span className="text-[10px] font-bold uppercase">{t('drawer.time')}</span></div>
+              <p className="font-satoshi font-bold text-brand-text">{format(parseISO(res.reserved_for), 'HH:mm')}</p>
+            </div>
+            <div className="bg-brand-black border border-brand-border p-4 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 text-brand-muted"><Users size={14} /><span className="text-[10px] font-bold uppercase">{t('drawer.size')}</span></div>
+              <p className="font-satoshi font-bold text-brand-text">{t('drawer.guestsCount', { count: res.party_size })}</p>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <InfoRow icon={Phone} label={t('drawer.phone')} value={res.phone} />
+            <InfoRow icon={Calendar} label={t('drawer.date')} value={format(parseISO(res.reserved_for), 'PPP')} />
+            <InfoRow icon={TableIcon} label={t('drawer.table')} value={res.table_id ? `#${res.table_id.slice(0, 8)}` : t('drawer.unassigned')} />
+            {res.seating_type && (
+              <InfoRow icon={TableIcon} label={t('seatingType.label')} value={t(`seatingType.${res.seating_type}`)} />
+            )}
+            <InfoRow icon={ExternalLink} label={t('drawer.source')} value={res.source} isCapitalized />
+          </div>
+          {res.special_requests && (
+            <div className="bg-brand-gold/5 border border-brand-gold/20 p-4 rounded-xl space-y-2"><div className="flex items-center gap-2 text-brand-gold"><MessageSquare size={16} /><span className="text-xs font-bold uppercase">{t('drawer.specialRequests')}</span></div><p className="text-sm text-brand-text leading-relaxed">{res.special_requests}</p></div>
+          )}
+        </div>
+        <div className="p-6 bg-brand-surface-2 border-t border-brand-border grid grid-cols-2 gap-3">
+          {res.status === 'pending' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'confirmed')} className="col-span-2 bg-brand-gold text-brand-black font-bold py-3 rounded-xl flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={18} />}{t('drawer.confirm')}</button>}
+          {res.status === 'confirmed' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'seated')} className="col-span-2 bg-amber-500 text-brand-black font-bold py-3 rounded-xl flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin" /> : <UserCheck size={18} />}{t('drawer.seat')}</button>}
+          {res.status !== 'cancelled' && res.status !== 'completed' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'no_show')} className="bg-brand-black text-brand-muted border border-brand-border font-bold py-3 rounded-xl">{t('drawer.noShow')}</button>}
+          {res.status !== 'cancelled' && res.status !== 'completed' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'cancelled')} className="bg-brand-black text-brand-muted border border-brand-border font-bold py-3 rounded-xl">{t('drawer.cancel')}</button>}
+        </div>
+      </motion.div>
+    </div>
   )
 }
 
-function ActionButton({
-  label, icon, busy, variant, onClick,
-}: {
-  label:    string
-  icon:     React.ReactNode
-  busy:     boolean
-  variant?: 'muted'
-  onClick:  () => void
-}) {
+function InfoRow({ icon: Icon, label, value, isCapitalized }: { icon: any; label: string; value: string; isCapitalized?: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={busy}
-      className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border px-3 text-xs font-bold transition-colors disabled:opacity-60 ${
-        variant === 'muted'
-          ? 'border-transparent text-brand-muted hover:border-brand-error/40 hover:text-brand-error'
-          : 'border-brand-gold/40 text-brand-gold hover:bg-brand-gold hover:text-brand-black'
-      }`}
-    >
-      {busy ? <Loader2 size={14} className="animate-spin" /> : icon}
-      {label}
-    </button>
+    <div className="flex items-center gap-4 group">
+      <div className="w-10 h-10 rounded-lg bg-brand-black border border-brand-border flex items-center justify-center text-brand-muted"><Icon size={18} /></div>
+      <div className="flex flex-col"><span className="text-[10px] font-bold text-brand-muted uppercase tracking-wider">{label}</span><span className={cn("text-sm font-medium text-brand-text", isCapitalized && 'capitalize')}>{value}</span></div>
+    </div>
+  )
+}
+
+function AddReservationDrawer({ isOpen, onClose, branchId, locale }: { isOpen: boolean; onClose: () => void; branchId: string; locale: 'ar' | 'en'; }) {
+  const t = useTranslations('dashboard.reservations')
+  const isAr = locale === 'ar'
+  const [formData, setFormData] = useState<{
+    guest_name: string;
+    phone: string;
+    party_size: number;
+    reserved_for: string;
+    special_requests: string;
+    seating_type: string | null;
+  }>({ 
+    guest_name: '', 
+    phone: '+973', 
+    party_size: 2, 
+    reserved_for: format(new Date(), "yyyy-MM-dd'T'HH:mm"), 
+    special_requests: '',
+    seating_type: null,
+  })
+
+  const seatingOptions = useMemo(() => {
+    if (branchId === 'qallali') return ['outdoor', 'indoor']
+    return ['family_section', 'arabic_seating', 'outdoor', 'indoor']
+  }, [branchId])
+
+  const [loading, setLoading] = useState(false)
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault(); setLoading(true)
+    try {
+      const tables = await findAvailableTables({ branch_id: branchId, party_size: formData.party_size, reserved_for: new Date(formData.reserved_for).toISOString(), duration_minutes: 90 })
+      await createReservation({ 
+        ...formData, 
+        branch_id: branchId, 
+        reserved_for: new Date(formData.reserved_for).toISOString(), 
+        table_id: tables[0]?.table_id || null, 
+        source: 'staff',
+        duration_minutes: 90,
+        seating_type: formData.seating_type as any
+      })
+      toast.success(t('notifications.addSuccess')); 
+      window.location.reload()
+    } catch (err: any) { 
+      toast.error(err.message) 
+    } finally { 
+      setLoading(false) 
+    }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-brand-black/60 backdrop-blur-sm" />
+      <motion.div initial={{ x: isAr ? '-100%' : '100%' }} animate={{ x: 0 }} exit={{ x: isAr ? '-100%' : '100%' }} className="relative w-full max-w-md h-full bg-brand-surface border-s border-brand-border flex flex-col p-8">
+        <div className="flex items-center justify-between mb-8"><h2 className="font-cairo text-2xl font-black text-brand-text">{t('add.title')}</h2><button onClick={onClose} className="p-2 rounded-lg hover:bg-brand-surface-2 transition-colors"><XCircle size={24} className="text-brand-muted" /></button></div>
+        <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
+          <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">{t('add.guestName')}</label><input required className="w-full bg-brand-black border border-brand-border rounded-xl px-4 py-3 text-brand-text" value={formData.guest_name} onChange={e => setFormData({...formData, guest_name: e.target.value})} /></div>
+          <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">{t('add.phone')}</label><input required className="w-full bg-brand-black border border-brand-border rounded-xl px-4 py-3 text-brand-text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">{t('add.partySize')}</label><input type="number" required className="w-full bg-brand-black border border-brand-border rounded-xl px-4 py-3 text-brand-text" value={formData.party_size} onChange={e => setFormData({...formData, party_size: parseInt(e.target.value)})} /></div>
+            <div className="space-y-2"><label className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">{t('add.dateTime')}</label><input type="datetime-local" required className="w-full bg-brand-black border border-brand-border rounded-xl px-4 py-3 text-brand-text font-satoshi" value={formData.reserved_for} onChange={e => setFormData({...formData, reserved_for: e.target.value})} /></div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">
+              {t('add.seatingType')}
+            </label>
+            <select
+              className="w-full bg-brand-black border border-brand-border rounded-xl px-4 py-3 text-brand-text appearance-none"
+              value={formData.seating_type || ''}
+              onChange={e => setFormData({ ...formData, seating_type: e.target.value || null })}
+            >
+              <option value="">{t('seatingType.any')}</option>
+              {seatingOptions.map(opt => (
+                <option key={opt} value={opt}>
+                  {t(`seatingType.${opt}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-brand-muted">
+              {t('add.specialRequests')}
+            </label>
+            <textarea 
+              className="w-full bg-brand-black border border-brand-border rounded-xl px-4 py-3 text-brand-text h-32 resize-none" 
+              value={formData.special_requests} 
+              onChange={e => setFormData({...formData, special_requests: e.target.value})} 
+            />
+          </div>
+          <div className="mt-auto pt-6 border-t border-brand-border"><button type="submit" disabled={loading} className="w-full bg-brand-gold text-brand-black font-black py-4 rounded-xl flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={20} />}{t('add.submit')}</button></div>
+        </form>
+      </motion.div>
+    </div>
   )
 }
