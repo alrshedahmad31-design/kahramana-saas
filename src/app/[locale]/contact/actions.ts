@@ -62,8 +62,16 @@ export async function submitContactMessage(payload: {
   const result = schema.safeParse(payload)
   if (!result.success) return { success: false, error: 'server_error' }
 
-  // Sliding-window rate limit: 5 submits / IP / hour
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  // Sliding-window rate limit: 5 submits / IP / hour. Production-only —
+  // in dev every request shares 127.0.0.1 (no x-forwarded-for) and the
+  // Upstash counter persists across restarts, so a normal testing
+  // session burns the budget and the next "first" submit returns
+  // rate_limit. Same gate as reserve/actions.ts.
+  if (
+    process.env.NODE_ENV === 'production'
+    && process.env.UPSTASH_REDIS_REST_URL
+    && process.env.UPSTASH_REDIS_REST_TOKEN
+  ) {
     const [{ Ratelimit }, { Redis }] = await Promise.all([
       import('@upstash/ratelimit'),
       import('@upstash/redis'),
