@@ -200,7 +200,9 @@ interface LayoutProps {
 
 export default async function LocaleLayout({ children, params }: LayoutProps) {
   const { locale } = await params
-  const nonce = (await headers()).get('x-nonce') ?? undefined
+  const requestHeaders = await headers()
+  const nonce = requestHeaders.get('x-nonce') ?? undefined
+  const pathname = requestHeaders.get('x-pathname') ?? ''
 
   if (!routing.locales.includes(locale as 'ar' | 'en')) {
     notFound()
@@ -209,17 +211,41 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
   setRequestLocale(locale)
 
   const allMessages = await getMessages()
+  const normalizedPathname = pathname.replace(/^\/(ar|en)(?=\/|$)/, '') || '/'
+  const isOperationalRoute = /^\/(dashboard|driver|waiter|table|pos)(?=\/|$)/.test(normalizedPathname)
 
-  // Strip server-only namespaces before serialising into the client bundle.
-  // 'home'     → fully SSR'd after FeatureArtifacts split; no 'use client' component reads it.
-  // 'seo'      → used only in generateMetadata() — never reaches the client.
-  // 'tracking' → server-only order tracking utilities.
-  // All other namespaces remain because real client components use them
-  // (Header→nav, CartDrawer→cart/common, menus, dashboard, driver, etc.).
+  // Keep server-only/copy-heavy storefront namespaces out of operational pages.
+  // Dashboard shells still retain nav/common/auth/cart keys used by shared client chrome.
   const SERVER_ONLY_NS = new Set(['home', 'seo', 'tracking'])
+  const OPERATIONAL_CLIENT_NS = new Set([
+    'account',
+    'analytics',
+    'auth',
+    'branches',
+    'cart',
+    'common',
+    'dashboard',
+    'delivery',
+    'driver',
+    'errors',
+    'inventory',
+    'kds',
+    'menu',
+    'nav',
+    'order',
+    'payment',
+    'pos',
+    'promotions',
+    'qrOrder',
+    'reports',
+    'staff',
+    'tablesAdmin',
+    'waiter',
+    'waitlist',
+  ])
   const clientMessages = Object.fromEntries(
     (Object.entries(allMessages) as [string, unknown][]).filter(
-      ([k]) => !SERVER_ONLY_NS.has(k),
+      ([k]) => !SERVER_ONLY_NS.has(k) && (!isOperationalRoute || OPERATIONAL_CLIENT_NS.has(k)),
     ),
   ) as typeof allMessages
 
