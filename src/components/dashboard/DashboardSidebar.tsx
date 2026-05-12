@@ -231,6 +231,17 @@ interface SidebarProps {
   userRole: StaffRole | null
 }
 
+type NavGroup = 'operations' | 'customers' | 'finance' | 'admin'
+
+const GROUP_OF: Record<string, NavGroup> = {
+  home: 'operations', owner: 'operations', orders: 'operations', pos: 'operations',
+  kds: 'operations', tables: 'operations', waiter: 'operations', driver: 'operations',
+  delivery: 'operations',
+  waitlist: 'customers', reservations: 'customers', coupons: 'customers', promotions: 'customers',
+  payments: 'finance', shifts: 'finance', analytics: 'finance', reports: 'finance', audit: 'finance',
+  staff: 'admin', menu: 'admin', schedule: 'admin', inventory: 'admin', settings: 'admin',
+}
+
 const getNavItems = (prefix: string): NavItem[] => [
   // GROUP 1 — Daily Operations
   { key: 'home',      href: `${prefix}/dashboard`,            icon: <HomeIcon />,      section: 'home' },
@@ -291,6 +302,13 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     await supabase.auth.signOut()
     router.push(locale === 'en' ? '/en/login' : '/login')
     router.refresh()
+  }
+
+  const groupLabels: Record<NavGroup, string> = {
+    operations: t('groups.operations'),
+    customers:  t('groups.customers'),
+    finance:    t('groups.finance'),
+    admin:      t('groups.admin'),
   }
 
   const navLabels: Record<string, string> = {
@@ -406,69 +424,92 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
         {/* Nav */}
         <div className={cn('flex-1 overflow-y-auto px-3 py-4')}>
           <nav className={cn('flex flex-col gap-1')}>
-            {visible.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-              const isInventory = item.key === 'inventory'
-              const showDivider = ['delivery', 'promotions', 'audit'].includes(item.key)
+            {(() => {
+              const nodes: React.ReactNode[] = []
+              let prevGroup: NavGroup | null = null
 
-              return (
-                <div key={item.key} className="flex flex-col gap-1">
-                  {isInventory ? (
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setInventoryOpen((v) => !v)}
+              visible.forEach((item) => {
+                const group = GROUP_OF[item.key] ?? null
+                if (group && group !== prevGroup) {
+                  if (prevGroup !== null) {
+                    nodes.push(
+                      <div
+                        key={`div-${group}`}
+                        className="my-3 border-t border-brand-border/50"
+                      />,
+                    )
+                  }
+                  nodes.push(
+                    <p
+                      key={`grp-${group}`}
+                      className="px-3 mt-4 mb-1 font-satoshi text-[10px] uppercase tracking-widest text-brand-muted/50"
+                    >
+                      {groupLabels[group]}
+                    </p>,
+                  )
+                  prevGroup = group
+                }
+
+                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                const isInventory = item.key === 'inventory'
+
+                nodes.push(
+                  <div key={item.key} className="flex flex-col gap-1">
+                    {isInventory ? (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setInventoryOpen((v) => !v)}
+                          className={cn(
+                            'flex items-center gap-3 rounded-lg px-3 py-2.5 w-full font-satoshi text-sm font-medium transition-colors duration-150 min-h-[44px]',
+                            isInInventory ? 'bg-brand-gold/10 text-brand-gold' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+                          )}
+                        >
+                          <InventoryIcon />
+                          <span className="flex-1 text-start">{isAr ? 'المخزون' : 'Inventory'}</span>
+                          <ChevronDownIcon open={inventoryOpen || isInInventory} />
+                        </button>
+
+                        {(inventoryOpen || isInInventory) && (
+                          <div className={cn('ms-6 mt-0.5 flex flex-col gap-0.5 border-s border-brand-border ps-3')}>
+                            {INVENTORY_SUB_ITEMS.map((sub) => {
+                              const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/')
+                              return (
+                                <a
+                                  key={sub.key}
+                                  href={sub.href}
+                                  onClick={() => setOpen(false)}
+                                  className={cn(
+                                    'flex items-center rounded-lg px-3 py-2 font-satoshi text-sm font-medium transition-colors duration-150 min-h-[40px]',
+                                    isSubActive ? 'text-brand-gold bg-brand-gold/10' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+                                  )}
+                                >
+                                  {sub.label}
+                                </a>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <a
+                        href={item.href}
+                        onClick={() => setOpen(false)}
                         className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2.5 w-full font-satoshi text-sm font-medium transition-colors duration-150 min-h-[44px]',
-                          isInInventory ? 'bg-brand-gold/10 text-brand-gold' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
+                          'flex items-center gap-3 rounded-lg px-3 py-2.5 font-satoshi text-sm font-medium transition-colors duration-150 min-h-[44px]',
+                          isActive ? 'bg-brand-gold/10 text-brand-gold' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
                         )}
                       >
-                        <InventoryIcon />
-                        <span className="flex-1 text-start">{isAr ? 'المخزون' : 'Inventory'}</span>
-                        <ChevronDownIcon open={inventoryOpen || isInInventory} />
-                      </button>
+                        {item.icon}
+                        {navLabels[item.key] ?? item.key}
+                      </a>
+                    )}
+                  </div>,
+                )
+              })
 
-                      {(inventoryOpen || isInInventory) && (
-                        <div className={cn('ms-6 mt-0.5 flex flex-col gap-0.5 border-s border-brand-border ps-3')}>
-                          {INVENTORY_SUB_ITEMS.map((sub) => {
-                            const isSubActive = pathname === sub.href || pathname.startsWith(sub.href + '/')
-                            return (
-                              <a
-                                key={sub.key}
-                                href={sub.href}
-                                onClick={() => setOpen(false)}
-                                className={cn(
-                                  'flex items-center rounded-lg px-3 py-2 font-satoshi text-sm font-medium transition-colors duration-150 min-h-[40px]',
-                                  isSubActive ? 'text-brand-gold bg-brand-gold/10' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
-                                )}
-                              >
-                                {sub.label}
-                              </a>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <a
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2.5 font-satoshi text-sm font-medium transition-colors duration-150 min-h-[44px]',
-                        isActive ? 'bg-brand-gold/10 text-brand-gold' : 'text-brand-muted hover:bg-brand-surface-2 hover:text-brand-text'
-                      )}
-                    >
-                      {item.icon}
-                      {navLabels[item.key] ?? item.key}
-                    </a>
-                  )}
-
-                  {showDivider && (
-                    <div className="border-t border-brand-border/30 my-2" />
-                  )}
-                </div>
-              )
-            })}
+              return nodes
+            })()}
           </nav>
         </div>
 

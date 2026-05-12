@@ -2059,6 +2059,12 @@
     "itemsSubtotal": "إجمالي الأصناف",
     "couponDiscount": "خصم الكوبون",
     "nav": {
+      "groups": {
+        "operations": "التشغيل",
+        "customers":  "العملاء",
+        "finance":    "المالية",
+        "admin":      "الإدارة"
+      },
       "home": "الرئيسية",
       "owner": "لوحة المالك",
       "orders": "الطلبات",

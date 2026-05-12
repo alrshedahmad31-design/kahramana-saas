@@ -2059,6 +2059,12 @@
     "itemsSubtotal": "Items Subtotal",
     "couponDiscount": "Coupon Discount",
     "nav": {
+      "groups": {
+        "operations": "Operations",
+        "customers":  "Customers",
+        "finance":    "Finance",
+        "admin":      "Admin"
+      },
       "home": "Home",
       "owner": "Owner View",
       "orders": "Orders",
