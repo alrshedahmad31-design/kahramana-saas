@@ -49,9 +49,9 @@
         "image_url": "/assets/gallery/grilled-lamb-ribs.webp",
         "available": true,
         "sizes": {
-          "S": 2.6,
-          "M": 5,
-          "L": 7.5
+          "S": 2.8,
+          "M": 5.5,
+          "L": 8
         },
         "ingredients": []
       },
@@ -90,7 +90,7 @@
           "ar": "قطع لحم غنم متبلة بعناية ومشوية ببطء على الفحم لتذوب في الفم.",
           "en": "Tender chunks of marinated lamb, slow-grilled over charcoal to succulent perfection."
         },
-        "price_bhd": 3.2,
+        "price_bhd": 3.5,
         "image_url": "/assets/gallery/lamb-tikka-skewers.webp",
         "available": true,
         "ingredients": []
@@ -124,8 +124,8 @@
         "image_url": "/assets/gallery/charcoal-chicken-kebab.webp",
         "available": true,
         "sizes": {
-          "S": 1.2,
-          "M": 2.2,
+          "S": 1.5,
+          "M": 2.5,
           "L": 4.4,
           "XL": 7.9
         },
@@ -261,7 +261,7 @@
           "en": "Succulent chicken marinated in premium Iraqi spices and yogurt, charcoal-grilled to achieve a crispy exterior and a tender, aromatically rich heart."
         },
         "sizes": {
-          "S": 2.1,
+          "S": 2.5,
           "M": 4.2,
           "L": 8.4
         },
@@ -1066,8 +1066,8 @@
           "en": "Crispy Cheese Burek"
         },
         "description": {
-          "ar": "رقائق عجين رقيقة وهشة، تُحشى بمزيج كريمي من الأجبان البيضاء والأعشاب، وتُخبز حتى تكتسب قرمشة ذهبية لا تُقاوم.",
-          "en": "Crispy, golden, and flaky pastry rolls encasing a beautifully melted, creamy blend of white cheeses and herbs."
+          "ar": "طبقات من العجين الرقيق والمقرمش، تحتضن حشوة شهية من اللحم المفروم الطازج والأجبان البيضاء الكريمية المعطرة بالأعشاب، تُخبز حتى تتألق بلون ذهبي وقرمشة تأسر الحواس",
+          "en": "Layers of thin, crispy dough enveloping a delicious filling of fresh minced meat and creamy white cheeses infused with aromatic herbs, baked to golden perfection with a captivating crunch."
         },
         "price_bhd": 1.7,
         "image_url": "/assets/gallery/cheese-borek.webp",
