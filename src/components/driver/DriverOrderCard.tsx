@@ -11,6 +11,7 @@ import { mapsDirectionsUrl }                                  from '@/lib/utils/
 import { buildCustomerContactLink }                           from '@/lib/whatsapp'
 import IssueReportModal                                       from '@/components/driver/IssueReportModal'
 import DeliveryFailedModal                                    from '@/components/driver/DeliveryFailedModal'
+import DeliveryProofCapture                                   from '@/components/driver/DeliveryProofCapture'
 import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
 import type { BranchId }                                      from '@/constants/contact'
 
@@ -133,6 +134,7 @@ export default function DriverOrderCard({
   const [tipBhd,         setTipBhd]        = useState(0)
   const [actualCollected, setActualCollected] = useState<number | null>(null)
   const [confirmDeliver,  setConfirmDeliver]  = useState(false)
+  const [showProofModal, setShowProofModal] = useState(false)
 
   useEffect(() => {
     if (confirmDeliver) {
@@ -313,11 +315,18 @@ export default function DriverOrderCard({
       setConfirmDeliver(true)
       return
     }
+    // For delivery completion, we show the proof modal first.
+    // If the driver captures or skips, it then triggers the final onAction.
+    setShowProofModal(true)
+  }
+
+  async function finishDelivery(proofUrl?: string) {
+    setShowProofModal(false)
     setBusy(true)
     setConfirmDeliver(false)
     setActionError(null)
     try {
-      const error = await onAction(order.id, 'out_for_delivery', {
+      const error = await onAction!(order.id, 'out_for_delivery', {
         tipBhd: isCash && tipBhd > 0 ? tipBhd : undefined,
         actualCollected: isCash && actualCollected !== null ? actualCollected : undefined,
       })
@@ -964,6 +973,12 @@ export default function DriverOrderCard({
           onClose={() => setShowFailed(false)}
         />
       )}
+      <DeliveryProofCapture
+        isOpen={showProofModal}
+        orderId={order.id}
+        onComplete={finishDelivery}
+        onSkip={() => finishDelivery()}
+      />
     </>
   )
 }

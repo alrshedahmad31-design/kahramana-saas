@@ -156,6 +156,28 @@ export default async function OrderDetailPage({ params }: Props) {
         </dl>
       </section>
 
+      {/* Delivery Proof */}
+      {order.delivery_proof_url && (
+        <section className="bg-brand-surface border border-brand-border rounded-xl p-5">
+          <h2 className="font-satoshi font-semibold text-brand-text mb-4">{t('deliveryProof')}</h2>
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-brand-border bg-black/20">
+            <img 
+              src={order.delivery_proof_url} 
+              alt="Delivery Proof" 
+              className="h-full w-full object-contain"
+            />
+            <a 
+              href={order.delivery_proof_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-brand-gold hover:text-black transition-all"
+            >
+              {t('openInNewTab')}
+            </a>
+          </div>
+        </section>
+      )}
+
       {/* Order items */}
       <section className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-brand-border">

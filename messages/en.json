@@ -1162,7 +1162,17 @@
     "totalCashCollected": "Total Cash Collected",
     "confirmHandover": "Confirm Handed to Restaurant",
     "handedSuccessfully": "Cash handed successfully",
-    "noCashOrders": "No cash orders today"
+    "noCashOrders": "No cash orders today",
+    "deliveryProof": {
+      "title": "Proof of Delivery",
+      "instruction": "Take a photo of the order at the customer's door",
+      "capture": "Capture Photo",
+      "retake": "Retake",
+      "confirm": "Confirm Delivery",
+      "skip": "Skip",
+      "uploading": "Uploading...",
+      "success": "Delivery proof saved"
+    }
   },
   "delivery": {
     "boardTitle": "Delivery Board",
@@ -2016,6 +2026,8 @@
     "total": "Total",
     "notes": "Additional Notes",
     "deliveryAddress": "Delivery Address",
+    "deliveryProof": "Delivery Proof",
+    "openInNewTab": "Open in new tab",
     "createdAt": "Ordered At",
     "status": "Status",
     "menu_management": "Menu Management",

@@ -3,6 +3,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import type { DriverLocationInsert } from '@/lib/supabase/custom-types'
+import { revalidatePath } from 'next/cache'
 
 // Audit fix #1: driver mutations are driver-only. Managers monitor and
 // dispatch from the delivery dashboard; they do not bump/arrive/fail orders
@@ -533,4 +534,65 @@ export async function reportDeliveryFailure(
     })
 
   return { success: true }
+}
+
+export async function uploadDeliveryProof(
+  orderId: string,
+  imageFile: File
+): Promise<DriverActionResult & { url?: string }> {
+  const user = await getSession()
+  if (!user || user.role !== 'driver') {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  const supabase = await createClient()
+
+  // 1. Verify driver is assigned
+  const { data: order, error: fetchErr } = await supabase
+    .from('orders')
+    .select('id, assigned_driver_id')
+    .eq('id', orderId)
+    .single()
+
+  if (fetchErr || !order) return { success: false, error: 'Order not found' }
+  if (order.assigned_driver_id !== user.id) {
+    return { success: false, error: 'Unauthorized: Order not assigned to you' }
+  }
+
+  // 2. Upload image
+  const timestamp = Date.now()
+  const fileName  = `${orderId}/${timestamp}.jpg`
+  const { error: uploadErr } = await supabase.storage
+    .from('delivery-proofs')
+    .upload(fileName, imageFile, {
+      contentType: 'image/jpeg',
+      upsert:      true,
+    })
+
+  if (uploadErr) return { success: false, error: `Upload failed: ${uploadErr.message}` }
+
+  // 3. Get public URL (or signed URL if private)
+  // Since the bucket is private (public: false in migration), we generate a signed URL.
+  // We'll give it a long expiry (e.g. 10 years) for archival purposes,
+  // or just store the path and let the UI handle signed URLs.
+  // The user prompt said: "3. احصل على signed URL أو public URL"
+  // For simplicity and to match "delivery_proof_url TEXT", we'll get a long-lived signed URL.
+  const { data: signed } = await supabase.storage
+    .from('delivery-proofs')
+    .createSignedUrl(fileName, 315360000) // 10 years
+
+  if (!signed?.signedUrl) return { success: false, error: 'Failed to generate access URL' }
+
+  // 4. Update order
+  const { error: updateErr } = await supabase
+    .from('orders')
+    .update({ delivery_proof_url: signed.signedUrl })
+    .eq('id', orderId)
+
+  if (updateErr) return { success: false, error: `Database update failed: ${updateErr.message}` }
+
+  revalidatePath(`/[locale]/driver`, 'page')
+  revalidatePath(`/[locale]/dashboard/orders/${orderId}`, 'page')
+
+  return { success: true, url: signed.signedUrl }
 }

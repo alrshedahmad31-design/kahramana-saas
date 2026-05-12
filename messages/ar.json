@@ -1162,7 +1162,17 @@
     "totalCashCollected": "إجمالي النقد المحصّل",
     "confirmHandover": "تأكيد التسليم للمطعم",
     "handedSuccessfully": "تم تسليم النقد بنجاح",
-    "noCashOrders": "لا توجد طلبات نقدية اليوم"
+    "noCashOrders": "لا توجد طلبات نقدية اليوم",
+    "deliveryProof": {
+      "title": "إثبات التوصيل",
+      "instruction": "التقط صورة للطلب عند باب الزبون",
+      "capture": "التقاط صورة",
+      "retake": "إعادة التقاط",
+      "confirm": "تأكيد التوصيل",
+      "skip": "تخطي",
+      "uploading": "جارٍ الرفع...",
+      "success": "تم حفظ إثبات التوصيل"
+    }
   },
   "delivery": {
     "boardTitle": "لوحة التوصيل",
@@ -2016,6 +2026,8 @@
     "total": "الإجمالي",
     "notes": "ملاحظات إضافية",
     "deliveryAddress": "عنوان التوصيل",
+    "deliveryProof": "إثبات التوصيل",
+    "openInNewTab": "فتح في نافذة جديدة",
     "createdAt": "وقت الطلب",
     "status": "الحالة",
     "menu_management": "إدارة المنيو",
