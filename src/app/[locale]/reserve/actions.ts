@@ -133,7 +133,15 @@ export async function createPublicReservation(
 
   // 3. Rate limit: 3 submissions / IP / hour (stricter than contact's 5/h
   //    because reservation writes hit the DB and produce SLA on staff side).
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  //    Production-only — in dev every request comes from 127.0.0.1 (no
+  //    x-forwarded-for) so the 3/h budget stacks across all local testers
+  //    and gets exhausted within minutes of churn. Upstash is a shared
+  //    remote Redis, so the counter persists across server restarts too.
+  if (
+    process.env.NODE_ENV === 'production'
+    && process.env.UPSTASH_REDIS_REST_URL
+    && process.env.UPSTASH_REDIS_REST_TOKEN
+  ) {
     const [{ Ratelimit }, { Redis }] = await Promise.all([
       import('@upstash/ratelimit'),
       import('@upstash/redis'),
