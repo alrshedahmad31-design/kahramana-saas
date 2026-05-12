@@ -75,7 +75,7 @@ const initialForm: FormState = {
   reserved_time:    '',
   party_size:       2,
   guest_name:       '',
-  phone:            '+973',
+  phone:            '',
   special_requests: '',
 }
 
@@ -103,14 +103,6 @@ export default function ReserveForm({ locale, branches }: Props) {
     setSubmit({ kind: 'idle' })
   }
 
-  function handlePhoneChange(raw: string) {
-    // Keep the +973 prefix locked; only accept up to 8 trailing digits.
-    let digits = raw.replace(/[^\d]/g, '')
-    if (digits.startsWith('973')) digits = digits.slice(3)
-    digits = digits.slice(0, 8)
-    update('phone', `+973${digits}`)
-  }
-
   function validate(): boolean {
     const errs: Partial<Record<FieldError, string>> = {}
     if (!form.branch_id) errs.branch = t('selectBranch')
@@ -118,7 +110,10 @@ export default function ReserveForm({ locale, branches }: Props) {
     if (!form.reserved_time) errs.time = t('selectTime')
     if (form.party_size < 1 || form.party_size > 20) errs.partySize = t('selectPartySize')
     if (!form.guest_name.trim()) errs.name = t('errorGeneric')
-    if (!/^\+973\d{8}$/.test(form.phone)) errs.phone = t('errorInvalidPhone')
+    const phoneTrimmed = form.phone.trim()
+    if (phoneTrimmed.length < 7 || phoneTrimmed.length > 30) {
+      errs.phone = t('errorInvalidPhone')
+    }
     setFieldErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -357,12 +352,14 @@ export default function ReserveForm({ locale, branches }: Props) {
         <input
           type="tel"
           required
-          inputMode="numeric"
+          inputMode="tel"
           dir="ltr"
+          autoComplete="tel"
+          maxLength={30}
           value={form.phone}
-          onChange={(e) => handlePhoneChange(e.target.value)}
+          onChange={(e) => update('phone', e.target.value)}
           className={`${inputClass(isAr)} tabular-nums`}
-          placeholder="+97333000000"
+          placeholder="+973 3300 0000"
         />
       </Section>
 

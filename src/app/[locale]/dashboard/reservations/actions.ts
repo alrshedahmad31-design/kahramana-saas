@@ -26,7 +26,7 @@ const RESERVATION_SOURCES: readonly ReservationSource[] = [
 const createReservationSchema = z.object({
   branch_id:        z.string().min(1).max(50),
   guest_name:       z.string().trim().min(1).max(120),
-  phone:            z.string().regex(/^\+973\d{8}$/),
+  phone:            z.string().trim().min(7).max(30),
   party_size:       z.number().int().min(1).max(50),
   reserved_for:     z.string().datetime(),
   duration_minutes: z.number().int().min(30).max(300).default(90),
