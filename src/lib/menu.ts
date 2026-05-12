@@ -43,7 +43,7 @@ export interface MenuItem {
   sizes?: MenuSizeMap
   variants?: MenuVariantOption[]
   tags?: string[]
-  station?: 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'main'
+  station?: 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'unassigned'
   ingredients?: string[]
 }
 
@@ -83,7 +83,7 @@ export interface NormalizedMenuItem extends MenuItem {
   hasMultiplePrices: boolean
   pricingKind: 'single' | 'sizes' | 'variants' | 'sizes_variants' | 'unpriced'
   image: string
-  station?: 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'main'
+  station?: 'shawarma' | 'bakery' | 'appetizer_drinks' | 'grill' | 'unassigned'
   ingredients: string[]
 }
 
