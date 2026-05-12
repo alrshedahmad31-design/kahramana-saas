@@ -141,12 +141,12 @@ export default function Header() {
 
   return (
     <div data-public-header className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none pt-4 sm:pt-6">
-      <header 
+      <header
         className={`
           relative flex items-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
           pointer-events-auto
-          ${isScrolled 
-            ? 'w-[92%] max-w-5xl rounded-full glass-surface h-14 px-2' 
+          ${isScrolled
+            ? 'w-[92%] max-w-5xl rounded-full glass-surface h-14 px-2'
             : 'w-full max-w-7xl h-16 px-4 sm:px-6'
           }
         `}
@@ -154,11 +154,11 @@ export default function Header() {
         <div className="flex items-center justify-between w-full gap-4">
           
           {/* Logo */}
-          <Link 
-            href="/" 
-            onClick={closeMenu} 
+          <Link
+            href="/"
+            onClick={closeMenu}
             aria-label={isRTL ? 'الرئيسية' : 'Home'}
-            className="shrink-0 flex items-center transition-transform hover:scale-105 active:scale-95"
+            className={`shrink-0 ${isScrolled ? 'h-14' : 'h-16'} flex items-center overflow-hidden transition-all duration-500 hover:scale-105 active:scale-95`}
           >
             <Image
               src="/assets/logo.svg"
@@ -166,7 +166,7 @@ export default function Header() {
               width={326}
               height={766}
               priority
-              className={`transition-all duration-500 ${isScrolled ? 'w-10 h-auto' : 'w-14 h-auto'}`}
+              className={`transition-all duration-500 ${isScrolled ? 'w-7 h-auto' : 'w-9 h-auto'}`}
             />
           </Link>
 

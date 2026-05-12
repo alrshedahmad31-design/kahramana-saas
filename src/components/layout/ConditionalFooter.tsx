@@ -10,6 +10,9 @@ export default function ConditionalFooter({ children }: { children: ReactNode })
     pathname.includes('/driver') ||
     pathname.includes('/waiter') ||
     pathname.includes('/table/')
-  if (hide) return null
-  return <>{children}</>
+  // Keep DOM shape identical between SSR and client to avoid a hydration
+  // mismatch: usePathname() from next-intl can resolve differently during the
+  // SSR → first-render window, which made the null-vs-children branch bubble
+  // CartDrawer up into the Footer slot. Toggle visibility via CSS instead.
+  return <div style={{ display: hide ? 'none' : 'contents' }}>{children}</div>
 }
