@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import { tokens } from '@/lib/design-tokens'
@@ -77,11 +77,25 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
 
   const [optimistic, setOptimistic] = useState<Record<string, KDSItemStatus>>({})
   const [updating,   setUpdating]   = useState<string | null>(null)
-  const [pendingUndo, setPendingUndo] = useState<string | null>(null)
   const [bumping,    setBumping]    = useState(false)
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => () => { if (undoTimerRef.current) clearTimeout(undoTimerRef.current) }, [])
+  // Inline undo: when the operator advances an item, surface an explicit
+  // UNDO control with a 5-second visible countdown. Replaces the previous
+  // "tap-row-again-within-2s" pattern, which was invisible and inconsistent
+  // with the bump-toast pattern elsewhere on the screen.
+  const UNDO_WINDOW_MS = 5_000
+  const [undoEntry, setUndoEntry] = useState<{
+    itemId:    string
+    label:     string
+    prevStatus: KDSItemStatus | undefined
+    expiresAt: number
+  } | null>(null)
+
+  useEffect(() => {
+    if (!undoEntry) return
+    if (undoEntry.expiresAt > now) return
+    setUndoEntry(null)
+  }, [now, undoEntry])
 
   const effectiveStatus = useCallback(
     (item: KDSOrder['order_items'][0]): KDSItemStatus | undefined =>
@@ -103,37 +117,51 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
     return st === 'ready' || st === 'completed'
   })
 
-  async function handleItemToggle(itemId: string, currentStatus?: KDSItemStatus) {
+  async function advanceItem(
+    itemId:        string,
+    label:         string,
+    currentStatus: KDSItemStatus | undefined,
+  ) {
     if (updating) return
-
-    if (currentStatus === 'ready' || currentStatus === 'completed') {
-      if (pendingUndo === itemId) {
-        clearTimeout(undoTimerRef.current!)
-        undoTimerRef.current = null
-        setPendingUndo(null)
-      } else {
-        if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
-        setPendingUndo(itemId)
-        undoTimerRef.current = setTimeout(() => setPendingUndo(null), 2000)
-        return
-      }
-    }
-
     const next = nextStatusFor(currentStatus)
     setOptimistic(prev => ({ ...prev, [itemId]: next }))
     setUpdating(itemId)
-
     try {
       // Pass currentStatus as expectedStatus so the RPC can detect concurrent
       // changes (CONFLICT) and the action can short-circuit illegal jumps.
       const result = await updateItemStatus(order.id, itemId, station, next, currentStatus)
       if (!result.success) {
         setOptimistic(prev => { const { [itemId]: _, ...rest } = prev; return rest })
-        console.error('[KDS] update failed:', result.error)
+      } else {
+        setUndoEntry({
+          itemId,
+          label,
+          prevStatus: currentStatus,
+          expiresAt:  Date.now() + UNDO_WINDOW_MS,
+        })
       }
-    } catch (err) {
+    } catch {
       setOptimistic(prev => { const { [itemId]: _, ...rest } = prev; return rest })
-      console.error('[KDS] update error:', err)
+    } finally {
+      setUpdating(null)
+    }
+  }
+
+  async function handleUndo() {
+    if (!undoEntry || updating) return
+    const { itemId, prevStatus } = undoEntry
+    if (!prevStatus) { setUndoEntry(null); return }
+    const currentOptimistic = optimistic[itemId]
+    setOptimistic(prev => ({ ...prev, [itemId]: prevStatus }))
+    setUpdating(itemId)
+    try {
+      const result = await updateItemStatus(order.id, itemId, station, prevStatus, currentOptimistic)
+      if (!result.success) {
+        // Rollback the rollback if server refuses.
+        setOptimistic(prev => ({ ...prev, [itemId]: currentOptimistic ?? prevStatus }))
+      } else {
+        setUndoEntry(null)
+      }
     } finally {
       setUpdating(null)
     }
@@ -157,7 +185,7 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
     <article
       className={[
         'flex flex-col rounded-2xl border-2 bg-brand-surface overflow-hidden',
-        'transition-colors duration-300 shadow-xl',
+        'transition-colors duration-300',
         ageBorderClass(ageStatus),
       ].join(' ')}
     >
@@ -173,11 +201,12 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
       </div>
 
       <div className="p-4">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
+        {/* Header — the elapsed timer is the single dominant glyph.
+            Order # and customer name demote to small/muted in the top-end. */}
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="min-w-0">
             <div
-              className="text-4xl font-black tabular-nums leading-none"
+              className="text-7xl font-black tabular-nums leading-none tracking-tight"
               suppressHydrationWarning
               style={{
                 color:
@@ -188,15 +217,13 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
             >
               {elapsed}
             </div>
-            <div className={`flex flex-wrap items-center gap-1.5 mt-1 ${font}`}>
-              {/* dine-in / delivery label */}
+            <div className={`flex flex-wrap items-center gap-1.5 mt-2 ${font}`}>
               <span className="text-xs text-brand-muted">
                 {isDineIn
                   ? (tableLabel ?? t('dineIn'))
                   : (order.order_type === 'delivery' ? t('delivery') : t('dineIn'))}
               </span>
 
-              {/* FIX 3: source badge */}
               {sourceCfg && (
                 <span
                   className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
@@ -211,11 +238,14 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
               )}
             </div>
           </div>
-          <div className="text-end">
-            <div className="text-3xl font-black tabular-nums" style={{ color: stationConfig.color }}>
+          <div className="text-end shrink-0">
+            <div
+              className="text-sm font-bold tabular-nums text-brand-muted"
+              style={{ color: `${stationConfig.color}cc` }}
+            >
               #{shortId}
             </div>
-            <div className={`text-xs text-brand-muted truncate max-w-[110px] mt-0.5 ${font}`}>
+            <div className={`text-[11px] text-brand-muted truncate max-w-[120px] mt-0.5 ${font}`}>
               {order.customer_name || t('guest')}
             </div>
           </div>
@@ -228,24 +258,22 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
             const isPreparing = st === 'preparing'
             const isReady     = st === 'ready' || st === 'completed'
             const isUpdating  = updating === item.id
-            const awaitUndo   = pendingUndo === item.id
             const btn         = statusButtonStyle(st)
-            const buttonLabel =
+            const itemLabel   = isRTL ? item.name_ar : item.name_en
+            const nextLabel   =
               isReady     ? t('btnDelivered')      :
               isPreparing ? t('btnReadyToServe')   :
                             t('btnStartPrep')
 
             return (
-              <button
+              <div
                 key={item.id}
-                onClick={() => handleItemToggle(item.id, st)}
-                disabled={!!updating && !isUpdating}
                 className={[
                   'relative flex items-stretch gap-3 p-3 rounded-xl border',
-                  'transition-all duration-200 text-start w-full active:scale-[0.98]',
+                  'transition-colors duration-200',
                   isReady     ? 'bg-brand-success/10 border-brand-success/30' :
                   isPreparing ? 'bg-brand-gold/10 border-brand-gold/40' :
-                                'bg-brand-surface-2 border-brand-border hover:border-brand-gold/40',
+                                'bg-brand-surface-2 border-brand-border',
                   isUpdating ? 'opacity-60' : '',
                 ].join(' ')}
               >
@@ -264,11 +292,11 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                 <div className="flex-1 min-w-0">
                   <div
                     className={[
-                      'text-lg font-black leading-tight tracking-tight',
+                      'text-base font-bold leading-snug tracking-tight',
                       isReady ? 'line-through text-brand-muted' : 'text-brand-text',
                     ].join(' ')}
                   >
-                    {isRTL ? item.name_ar : item.name_en}
+                    {itemLabel}
                   </div>
                   {(item.selected_size || item.selected_variant) && (
                     <div className="text-xs text-brand-muted mt-0.5">
@@ -290,7 +318,7 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                         return (
                           <span
                             key={`${item.id}-mod-${idx}`}
-                            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-brand-surface text-brand-muted border border-brand-border"
+                            className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-brand-gold/15 text-brand-gold border border-brand-gold/40"
                           >
                             {label}
                           </span>
@@ -305,53 +333,51 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
                     </div>
                   )}
 
-                  {/* FIX 5: Arabic status button label inline (badge under content) */}
-                  <div className="mt-2">
-                    <span
-                      className={[
-                        'inline-flex items-center text-[11px] font-bold uppercase tracking-wider',
-                        'px-2 py-0.5 rounded border',
-                        btn.bg, btn.text, btn.border,
-                      ].join(' ')}
-                    >
-                      {buttonLabel}
-                    </span>
-                  </div>
+                  {/* Next-action hint: labels the button to the right, not the current status. */}
+                  {!isReady && (
+                    <div className="mt-2">
+                      <span
+                        className={[
+                          'inline-flex items-center text-[11px] font-bold uppercase tracking-wider',
+                          'px-2 py-0.5 rounded border',
+                          btn.bg, btn.text, btn.border,
+                        ].join(' ')}
+                      >
+                        {nextLabel}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Status icon / Checkmark */}
-                <div className="shrink-0 w-10 h-10 self-center flex items-center justify-center">
+                {/* The status circle is the click target. Whole-row taps no
+                    longer advance — operators with greasy fingers can read
+                    a row without accidentally committing it. */}
+                <button
+                  type="button"
+                  onClick={() => advanceItem(item.id, itemLabel, st)}
+                  disabled={!!updating && !isUpdating}
+                  aria-label={nextLabel}
+                  className={[
+                    'shrink-0 w-12 h-12 self-center flex items-center justify-center rounded-full',
+                    'transition-transform active:scale-90',
+                    !!updating && !isUpdating ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+                  ].join(' ')}
+                >
                   {isUpdating ? (
-                    <SpinnerIcon className="w-6 h-6 text-brand-gold animate-spin" />
+                    <SpinnerIcon className="w-7 h-7 text-brand-gold animate-spin" />
                   ) : isReady ? (
-                    <div className="w-8 h-8 rounded-full bg-brand-success flex items-center justify-center shadow-lg shadow-brand-success/20">
-                      <CheckIcon className="w-5 h-5 text-brand-black" />
+                    <div className="w-10 h-10 rounded-full bg-brand-success flex items-center justify-center">
+                      <CheckIcon className="w-6 h-6 text-brand-black" />
                     </div>
                   ) : isPreparing ? (
-                    <div className="w-8 h-8 rounded-full bg-brand-gold/20 flex items-center justify-center border border-brand-gold animate-pulse">
-                      <SpinnerIcon className="w-5 h-5 text-brand-gold" />
+                    <div className="w-10 h-10 rounded-full bg-brand-gold/20 flex items-center justify-center border-2 border-brand-gold">
+                      <SpinnerIcon className="w-6 h-6 text-brand-gold" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-brand-border hover:border-brand-gold transition-colors" />
+                    <div className="w-10 h-10 rounded-full border-2 border-brand-border hover:border-brand-gold transition-colors" />
                   )}
-                </div>
-
-                {/* Undo confirmation overlay */}
-                <AnimatePresence>
-                  {awaitUndo && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 rounded-xl bg-brand-surface/85 flex items-center justify-center"
-                    >
-                      <span className={`text-xs font-bold text-brand-gold ${font}`}>
-                        {t('tapAgainToUndo')}
-                      </span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
+                </button>
+              </div>
             )
           })}
         </div>
@@ -365,27 +391,68 @@ export default function KDSStationOrderCard({ order, station, locale, onBump, no
           </div>
         )}
 
-        {/* Bump button — always visible but disabled if not all items are ready */}
-        <button
-          onClick={handleBump}
-          disabled={!allReady || bumping}
-          className={[
-            'mt-4 w-full py-4 rounded-xl font-black text-lg uppercase tracking-tight',
-            'flex items-center justify-center gap-2 transition-all active:scale-[0.97]',
-            !allReady || bumping
-              ? 'bg-surface2 text-muted opacity-50 cursor-not-allowed'
-              : 'bg-brand-success text-brand-black hover:bg-brand-success/90 shadow-lg shadow-brand-success/20',
-          ].join(' ')}
-        >
-          {bumping ? (
-            <SpinnerIcon className="w-6 h-6 animate-spin" />
-          ) : (
-            <>
-              <CheckAllIcon className="w-6 h-6" />
-              {t('bumpOrder')}
-            </>
-          )}
-        </button>
+        {/* Bump button is rendered only when the card is armed.
+            Across a 30-card board, 30 dim CTAs add noise; conditional
+            render keeps the "fire" moment clean. */}
+        {allReady && (
+          <button
+            onClick={handleBump}
+            disabled={bumping}
+            className={[
+              'mt-4 w-full py-4 rounded-xl font-black text-lg uppercase tracking-tight',
+              'flex items-center justify-center gap-2 transition-transform active:scale-[0.97]',
+              'bg-brand-success text-brand-black hover:bg-brand-success/90',
+            ].join(' ')}
+          >
+            {bumping ? (
+              <SpinnerIcon className="w-6 h-6 animate-spin" />
+            ) : (
+              <>
+                <CheckAllIcon className="w-6 h-6" />
+                {t('bumpOrder')}
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Inline undo for the last item advance. Explicit button + visible
+            countdown — same idiom as the recall toast on the Board. */}
+        <AnimatePresence>
+          {undoEntry && (() => {
+            const remainingMs = Math.max(0, undoEntry.expiresAt - now)
+            const seconds     = Math.ceil(remainingMs / 1000)
+            const progress    = Math.min(1, remainingMs / UNDO_WINDOW_MS)
+            return (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-3 overflow-hidden"
+              >
+                <div className="relative flex items-center gap-3 ps-3 pe-2 py-2 rounded-xl bg-brand-gold/15 border border-brand-gold/40">
+                  <span className={`flex-1 min-w-0 truncate text-xs font-bold text-brand-text ${font}`}>
+                    {t('itemAdvanced', { name: undoEntry.label })}
+                  </span>
+                  <span className="text-[11px] font-black tabular-nums text-brand-gold min-w-[2ch] text-center">
+                    {seconds}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleUndo}
+                    disabled={!!updating}
+                    className="px-3 py-1.5 rounded-lg bg-brand-gold text-brand-black text-xs font-black uppercase tracking-wider transition-transform active:scale-95 disabled:opacity-50"
+                  >
+                    {t('undo')}
+                  </button>
+                  <div
+                    className="absolute bottom-0 inset-x-0 h-0.5 bg-brand-gold"
+                    style={{ width: `${progress * 100}%`, transition: 'width 1s linear' }}
+                  />
+                </div>
+              </motion.div>
+            )
+          })()}
+        </AnimatePresence>
       </div>
     </article>
   )

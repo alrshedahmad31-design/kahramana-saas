@@ -5,16 +5,21 @@ import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { tokens } from '@/lib/design-tokens'
 import type { KDSOrder, KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
 import { getStationConfig } from '@/constants/kds'
 import KDSStationOrderCard from './KDSStationOrderCard'
 import KDSDialog from './KDSDialog'
+import { playBumpTone, playTripleBeep } from '@/lib/kds/audio'
 import {
   fetchStationOrders,
   bumpStationOrder,
   recallStationOrder,
   getStationDailyCount,
 } from '@/app/[locale]/dashboard/kds/actions'
+
+const RECALL_WINDOW_MS = 60_000
+const MAX_RECALLABLE   = 5
 
 interface Props {
   initialActive: KDSOrder[]
@@ -26,40 +31,7 @@ interface Props {
   initialNow:     number
 }
 
-function playTripleBeep() {
-  try {
-    const ctx = new AudioContext()
-    ;[0, 0.18, 0.36].forEach((delay) => {
-      const osc  = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.frequency.value = 880
-      osc.type = 'sine'
-      gain.gain.setValueAtTime(0, ctx.currentTime + delay)
-      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + delay + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.28)
-      osc.start(ctx.currentTime + delay)
-      osc.stop(ctx.currentTime + delay + 0.3)
-    })
-  } catch { /* AudioContext blocked — silent fail */ }
-}
-
-function playBumpTone() {
-  try {
-    const ctx  = new AudioContext()
-    const osc  = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.frequency.value = 523
-    osc.type = 'sine'
-    gain.gain.setValueAtTime(0.4, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5)
-    osc.start()
-    osc.stop(ctx.currentTime + 0.5)
-  } catch {}
-}
+type RecallEntry = { id: string; expiresAt: number }
 
 export default function KDSStationBoard({
   initialActive,
@@ -75,8 +47,8 @@ export default function KDSStationBoard({
   const [refreshError, setRefreshError] = useState<string | null>(loadError ?? null)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [dailyCount, setDailyCount]     = useState(0)
-  const [recentBump, setRecentBump]     = useState<{ id: string; timestamp: number } | null>(null)
-  const [isRecalling, setIsRecalling]   = useState(false)
+  const [recallStack, setRecallStack]   = useState<RecallEntry[]>([])
+  const [isRecalling, setIsRecalling]   = useState<string | null>(null)
   const [now, setNow]                   = useState(initialNow)
   const [isSyncing, setIsSyncing]       = useState(false)
   const [isConnected, setIsConnected]   = useState(true)
@@ -113,38 +85,45 @@ export default function KDSStationBoard({
   }, [station])
 
   const handleBump = useCallback(async (orderId: string) => {
-    console.log(`[KDS] Bumping order: ${orderId} at station: ${station}`);
     const result = await bumpStationOrder(orderId, station)
     if (result.success) {
-      console.log(`[KDS] Bump successful for order: ${orderId}`);
       setActiveOrders(prev => prev.filter(o => o.id !== orderId))
       setStalledOrders(prev => prev.filter(o => o.id !== orderId))
-      setRecentBump({ id: orderId, timestamp: Date.now() })
+      setRecallStack(prev => {
+        const next: RecallEntry = { id: orderId, expiresAt: Date.now() + RECALL_WINDOW_MS }
+        // FIFO eviction: keep at most MAX_RECALLABLE entries
+        const filtered = prev.filter(e => e.id !== orderId)
+        return [...filtered, next].slice(-MAX_RECALLABLE)
+      })
       setDailyCount(prev => prev + 1)
       if (soundRef.current) playBumpTone()
     } else {
-      console.error('[KDS] Bump failed:', result.error);
       setDialogConfig({
-        title: 'تعذّر إنهاء الطلب',
-        message: result.error || 'حدث خطأ أثناء محاولة إنهاء الطلب.'
-      });
+        title:   t('dialog.bumpFailedTitle'),
+        message: result.error || t('dialog.bumpFailedMessage'),
+      })
     }
-  }, [station])
+  }, [station, t])
 
-  const handleRecall = useCallback(async () => {
-    if (!recentBump || isRecalling) return
-    setIsRecalling(true)
+  const handleRecall = useCallback(async (entryId: string) => {
+    if (isRecalling) return
+    setIsRecalling(entryId)
     try {
-      const result = await recallStationOrder(recentBump.id, station)
+      const result = await recallStationOrder(entryId, station)
       if (result.success) {
-        setRecentBump(null)
+        setRecallStack(prev => prev.filter(e => e.id !== entryId))
         setDailyCount(prev => Math.max(0, prev - 1))
         await refresh()
+      } else {
+        setDialogConfig({
+          title:   t('dialog.bumpFailedTitle'),
+          message: result.error || t('dialog.bumpFailedMessage'),
+        })
       }
     } finally {
-      setIsRecalling(false)
+      setIsRecalling(null)
     }
-  }, [recentBump, station, refresh, isRecalling])
+  }, [station, refresh, isRecalling, t])
 
   // Initial fetch for daily count
   useEffect(() => {
@@ -154,12 +133,14 @@ export default function KDSStationBoard({
     })
   }, [station, branchId])
 
-  // Clear recall toast after 60s
+  // Drop recall entries whose 60s window has elapsed. Driven by `now`
+  // (which ticks every second) so the toast and the underlying state share
+  // a single clock and can't desync under tab-throttling.
   useEffect(() => {
-    if (!recentBump) return
-    const id = setTimeout(() => setRecentBump(null), 60000)
-    return () => clearTimeout(id)
-  }, [recentBump])
+    if (recallStack.length === 0) return
+    if (recallStack.every(e => e.expiresAt > now)) return
+    setRecallStack(prev => prev.filter(e => e.expiresAt > now))
+  }, [now, recallStack])
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -257,6 +238,27 @@ export default function KDSStationBoard({
     return () => clearInterval(interval)
   }, [isConnected, refresh])
 
+  // Keyboard shortcuts for power users on a wall-mounted touchscreen with
+  // an optional keyboard. Ignore when the focus is on an editable surface,
+  // even though the KDS has none today, so future input fields don't break.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
+      if (e.key === 'Escape') {
+        router.push(`/${locale}/dashboard/kds`)
+      } else if (e.key === 'r' || e.key === 'R') {
+        refresh()
+      } else if (e.key === 'm' || e.key === 'M') {
+        setSoundEnabled(v => !v)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [router, locale, refresh])
+
   const sortedActive = useMemo(() => {
     return [...activeOrders].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -272,64 +274,57 @@ export default function KDSStationBoard({
   return (
     <div className="flex flex-col h-screen bg-brand-black overflow-hidden" dir={isAr ? 'rtl' : 'ltr'}>
       <header
-        className="shrink-0 h-20 flex items-center justify-between px-6 border-b border-border"
+        className="shrink-0 h-20 flex items-center justify-between ps-4 pe-6 border-b border-brand-border"
         style={{ borderBottomColor: `${stationConfig.color}50` }}
       >
-        <div className="flex items-center gap-4">
+        {/* Cluster 1: station identity */}
+        <div className="flex items-center gap-3">
           <button
             onClick={() => router.push(`/${locale}/dashboard/kds`)}
-            className="p-2 hover:bg-surface2 rounded-lg transition-colors"
-            aria-label={isAr ? 'رجوع' : 'Back'}
+            className="p-2 hover:bg-brand-surface-2 rounded-lg transition-colors"
+            aria-label={t('backLabel')}
           >
-            <BackIcon className={`w-6 h-6 text-muted ${isAr ? 'rotate-180' : ''}`} />
+            <BackIcon className={`w-6 h-6 text-brand-muted ${isAr ? 'rotate-180' : ''}`} />
           </button>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl leading-none">{stationConfig.icon}</span>
-            <h1 className="text-2xl font-black font-ar-heading tracking-tight">
-              {isAr ? stationConfig.label.ar : stationConfig.label.en}
-            </h1>
-          </div>
+          <span className="text-3xl leading-none">{stationConfig.icon}</span>
+          <h1 className="text-2xl font-black font-cairo tracking-tight">
+            {isAr ? stationConfig.label.ar : stationConfig.label.en}
+          </h1>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface2 border border-border">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-success' : 'bg-error animate-pulse'}`} />
-            <span className="text-[10px] font-bold text-muted uppercase tracking-wider">
-              {isConnected ? (isAr ? 'متصل' : 'LIVE') : (isAr ? 'منقطع' : 'OFFLINE')}
+        {/* Cluster 2: connection + sync + sound. Visually grouped. */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-brand-success' : 'bg-brand-error animate-pulse'}`} />
+            <span className="text-[10px] font-bold text-brand-muted uppercase tracking-wider">
+              {isConnected ? t('liveLabel') : t('offlineLabel')}
             </span>
           </div>
 
           <button
             onClick={() => refresh()}
             disabled={isSyncing}
-            className={`p-2 hover:bg-surface2 rounded-lg transition-all ${isSyncing ? 'animate-spin text-gold' : 'text-muted hover:text-gold'}`}
-            title={isAr ? 'تحديث' : 'Sync'}
+            aria-label={t('refreshLabel')}
+            className={`p-2 hover:bg-brand-surface-2 rounded-lg transition-colors ${isSyncing ? 'animate-spin text-brand-gold' : 'text-brand-muted hover:text-brand-gold'}`}
           >
             <RefreshIcon className="w-5 h-5" />
           </button>
-          {dailyCount > 0 && (
-            <div className="flex flex-col items-center min-w-[48px]">
-              <div className="text-[10px] text-muted uppercase tracking-widest leading-none mb-1">
-                {t('allDayLabel')}
-              </div>
-              <div className="text-xl font-black tabular-nums text-success">{dailyCount}</div>
-            </div>
-          )}
 
           <button
             onClick={() => setSoundEnabled(v => !v)}
-            className="p-2 hover:bg-surface2 rounded-lg transition-colors"
+            className="p-2 hover:bg-brand-surface-2 rounded-lg transition-colors"
             aria-label={soundEnabled ? t('soundOn') : t('soundOff')}
           >
             {soundEnabled
-              ? <SoundOnIcon className="w-5 h-5 text-muted" />
-              : <SoundOffIcon className="w-5 h-5 text-error" />}
+              ? <SoundOnIcon className="w-5 h-5 text-brand-muted" />
+              : <SoundOffIcon className="w-5 h-5 text-brand-error" />}
           </button>
+        </div>
 
-          <div className="w-px h-10 bg-border" />
-
+        {/* Cluster 3: counts + clock */}
+        <div className="flex items-center gap-5">
           <div className="flex flex-col items-center min-w-[48px]">
-            <div className="text-[10px] text-muted uppercase tracking-widest leading-none mb-1">
+            <div className="text-[10px] text-brand-muted uppercase tracking-widest leading-none mb-1">
               {t('activeOrders')}
             </div>
             <div className="text-2xl font-black tabular-nums" style={{ color: stationConfig.color }}>
@@ -337,7 +332,7 @@ export default function KDSStationBoard({
             </div>
           </div>
 
-          <div className="w-px h-10 bg-border" />
+          <div className="w-px h-10 bg-brand-border" />
           <Clock locale={locale} now={now} />
         </div>
       </header>
@@ -350,7 +345,7 @@ export default function KDSStationBoard({
             exit={{ height: 0, opacity: 0 }}
             className="shrink-0 overflow-hidden"
           >
-            <div className="bg-error/10 border-b border-error/30 px-6 py-2 flex items-center gap-3 text-error text-sm">
+            <div className="bg-brand-error/10 border-b border-brand-error/30 ps-6 pe-6 py-2 flex items-center gap-3 text-brand-error text-sm">
               <WarningIcon className="w-4 h-4 shrink-0" />
               <span>{t('refreshError')}</span>
               <button
@@ -366,6 +361,50 @@ export default function KDSStationBoard({
 
       <main className="flex-1 overflow-x-auto overflow-y-hidden p-6">
         <div className="flex h-full gap-4 items-start">
+          {sortedStalled.length > 0 && (
+            <div className="flex gap-4 items-start">
+              {sortedStalled.map((order) => {
+                const hours = Math.max(3, Math.floor((now - new Date(order.created_at).getTime()) / 3_600_000))
+                return (
+                  <motion.div
+                    key={order.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      boxShadow: [
+                        `0 0 0 2px ${tokens.color.error}`,
+                        `0 0 0 6px ${tokens.color.error}40`,
+                        `0 0 0 2px ${tokens.color.error}`,
+                      ],
+                    }}
+                    transition={{
+                      boxShadow: { duration: 1.6, repeat: Infinity, ease: 'easeInOut' },
+                      layout:    { type: 'spring', damping: 25, stiffness: 300 },
+                    }}
+                    className="relative w-80 shrink-0 max-h-full overflow-y-auto rounded-2xl"
+                    style={{ scrollbarWidth: 'thin' } as React.CSSProperties}
+                  >
+                    <span
+                      className="absolute -top-2 start-3 z-10 px-2.5 py-1 rounded-md bg-brand-error text-brand-text text-[10px] font-black uppercase tracking-widest"
+                    >
+                      {t('stalledBadge', { hours })}
+                    </span>
+                    <KDSStationOrderCard
+                      order={order}
+                      station={station}
+                      locale={locale}
+                      onBump={handleBump}
+                      now={now}
+                    />
+                  </motion.div>
+                )
+              })}
+              <div className="w-px self-stretch bg-brand-border mx-2" />
+            </div>
+          )}
+
           <AnimatePresence mode="popLayout">
             {sortedActive.map((order) => (
               <motion.div
@@ -375,7 +414,7 @@ export default function KDSStationBoard({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="w-72 shrink-0 max-h-full overflow-y-auto"
+                className="w-80 shrink-0 max-h-full overflow-y-auto"
                 style={{ scrollbarWidth: 'thin' } as React.CSSProperties}
               >
                 <KDSStationOrderCard
@@ -389,31 +428,6 @@ export default function KDSStationBoard({
             ))}
           </AnimatePresence>
 
-          {sortedStalled.length > 0 && (
-            <div className="flex gap-4 items-start">
-              <div className="w-px self-stretch bg-border mx-2" />
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 px-3 py-1 bg-surface2 rounded text-xs font-bold text-muted uppercase tracking-widest">
-                  <WarningIcon className="w-3 h-3" />
-                  {isAr ? 'طلبات متوقفة (>3 ساعات)' : 'Stalled Orders (>3h)'}
-                </div>
-                <div className="flex gap-4">
-                  {sortedStalled.map((order) => (
-                    <div key={order.id} className="w-72 shrink-0 max-h-full overflow-y-auto opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all">
-                      <KDSStationOrderCard
-                        order={order}
-                        station={station}
-                        locale={locale}
-                        onBump={handleBump}
-                        now={now}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
           {activeOrders.length === 0 && stalledOrders.length === 0 && !refreshError && (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 opacity-20 select-none">
               <span className="text-8xl leading-none">{stationConfig.icon}</span>
@@ -423,56 +437,67 @@ export default function KDSStationBoard({
         </div>
       </main>
 
-      <footer className="shrink-0 h-10 bg-surface2 border-t border-border flex items-center px-6 gap-2 text-xs text-muted font-medium">
-        <span className={`w-2 h-2 rounded-full shrink-0 ${refreshError ? 'bg-error' : 'bg-success animate-pulse'}`} />
-        <span>
-          {refreshError
-            ? (isAr ? 'غير متصل' : 'Disconnected')
-            : (isAr ? 'متصل — يتحدث تلقائياً' : 'Live — auto-updating')}
-        </span>
+      {/* Footer carries the daily count (removed from header to reduce
+          number-density up top). Connection state stays in the header's
+          LIVE pill, so the footer doesn't repeat it. */}
+      <footer className="shrink-0 h-10 bg-brand-surface-2 border-t border-brand-border flex items-center ps-6 pe-6 gap-2 text-xs text-brand-muted font-medium">
         {dailyCount > 0 && (
-          <span className="ms-auto">
-            {isAr ? `أُنجز اليوم: ${dailyCount}` : `Bumped today: ${dailyCount}`}
+          <span className="tabular-nums">
+            {t('allDayLabel')}: <span className="font-black text-brand-success">{dailyCount}</span>
           </span>
         )}
       </footer>
 
-      {/* Feature 1: Recall Toast */}
+      {/* Recall toast: shows the most-recent bump on top, with a count of older
+          recallable bumps so the operator knows the stack depth.
+          Countdown and underlying expiry are driven from the same `now` clock. */}
       <AnimatePresence>
-        {recentBump && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-brand-gold text-brand-black px-6 py-4 rounded-2xl shadow-2xl"
-          >
-            <div className="flex flex-col">
-              <span className="font-black text-sm uppercase tracking-tight">
-                {isAr ? 'تم إنهاء الطلب' : 'Order Bumped'}
-              </span>
-              <span className="text-xs opacity-80 font-bold">#{recentBump.id.slice(-4).toUpperCase()}</span>
-            </div>
-            
-            <button
-              onClick={handleRecall}
-              disabled={isRecalling}
-              className="flex items-center gap-2 bg-brand-black/10 hover:bg-brand-black/20 px-4 py-2 rounded-xl border border-brand-black/20 font-black transition-all active:scale-95 disabled:opacity-50"
+        {recallStack.length > 0 && (() => {
+          const latest      = recallStack[recallStack.length - 1]
+          const remainingMs = Math.max(0, latest.expiresAt - now)
+          const progress    = Math.min(1, remainingMs / RECALL_WINDOW_MS)
+          const olderCount  = recallStack.length - 1
+          return (
+            <motion.div
+              key={latest.id}
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="fixed bottom-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-brand-gold text-brand-black ps-6 pe-4 py-4 rounded-2xl shadow-lg overflow-hidden"
             >
-              <RecallIcon className="w-5 h-5" />
-              {isAr ? 'استعادة' : 'RECALL'}
-            </button>
+              <div className="flex flex-col">
+                <span className="font-black text-sm uppercase tracking-tight">
+                  {t('bumpOrder')}
+                </span>
+                <span className="text-xs opacity-80 font-bold tabular-nums">
+                  #{latest.id.slice(-4).toUpperCase()}
+                  {olderCount > 0 && ` +${olderCount}`}
+                </span>
+              </div>
 
-            {/* Countdown progress ring/bar would go here, using a simpler timed line for now */}
-            <div className="absolute bottom-0 left-0 h-1 bg-brand-black/30 rounded-full overflow-hidden" style={{ width: '100%' }}>
-               <motion.div 
-                 initial={{ width: '100%' }}
-                 animate={{ width: '0%' }}
-                 transition={{ duration: 60, ease: 'linear' }}
-                 className="h-full bg-brand-black"
-               />
-            </div>
-          </motion.div>
-        )}
+              <button
+                onClick={() => handleRecall(latest.id)}
+                disabled={isRecalling === latest.id}
+                aria-label={t('undo')}
+                className="flex items-center gap-2 bg-brand-black/10 hover:bg-brand-black/20 px-4 py-2 rounded-xl border border-brand-black/20 font-black transition-all active:scale-95 disabled:opacity-50"
+              >
+                <RecallIcon className="w-5 h-5" />
+                {t('recallOrder')}
+              </button>
+
+              <span className="text-xs font-black tabular-nums min-w-[2ch] text-center opacity-80">
+                {Math.ceil(remainingMs / 1000)}
+              </span>
+
+              <div className="absolute bottom-0 inset-x-0 h-1 bg-brand-black/20">
+                <div
+                  className="h-full bg-brand-black"
+                  style={{ width: `${progress * 100}%`, transition: 'width 1s linear' }}
+                />
+              </div>
+            </motion.div>
+          )
+        })()}
       </AnimatePresence>
 
       {/* Branded Dialogs */}

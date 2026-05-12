@@ -1,17 +1,18 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import type { KDSStation } from '@/lib/supabase/custom-types'
 import { STATION_CONFIG } from '@/constants/kds'
-import { tokens } from '@/lib/design-tokens'
 import { useRouter, usePathname } from 'next/navigation'
 
 interface Props {
-  // FIX 9: pending+preparing item counts per station (server-fetched).
+  // pending+preparing item counts per station (server-fetched).
   stationCounts?: Partial<Record<KDSStation, number>>
 }
+
+type StationEntry = [KDSStation, NonNullable<(typeof STATION_CONFIG)[KDSStation]>]
 
 export function KDSStationSelector({ stationCounts = {} }: Props) {
   const t        = useTranslations('kds')
@@ -20,80 +21,74 @@ export function KDSStationSelector({ stationCounts = {} }: Props) {
   const pathname = usePathname()
   const isAr     = locale === 'ar'
 
-  const stations = (
-    Object.entries(STATION_CONFIG) as [KDSStation, NonNullable<(typeof STATION_CONFIG)[KDSStation]>][]
-  ).filter((entry): entry is [KDSStation, NonNullable<(typeof STATION_CONFIG)[KDSStation]>] => !!entry[1])
+  // Sort by current load descending so the busiest station is at the top
+  // of the operator's eye line. Stations with zero work fall to the bottom.
+  const stations = useMemo<StationEntry[]>(() => {
+    const all = (Object.entries(STATION_CONFIG) as StationEntry[])
+      .filter((entry): entry is StationEntry => !!entry[1])
+    return all.sort((a, b) => (stationCounts[b[0]] ?? 0) - (stationCounts[a[0]] ?? 0))
+  }, [stationCounts])
+
+  const maxCount = Math.max(1, ...Object.values(stationCounts).map(n => n ?? 0))
 
   const handleSelect = (station: KDSStation) => {
     router.push(`${pathname}?station=${station}`)
   }
 
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 bg-brand-black text-brand-text">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 font-ar-heading">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center ps-6 pe-6 py-12 bg-brand-black text-brand-text">
+      <div className="text-center mb-10 max-w-xl">
+        <h1 className={`text-4xl md:text-5xl font-bold mb-3 ${isAr ? 'font-cairo' : 'font-editorial'}`}>
           {t('selectStation')}
         </h1>
-        <p className="text-brand-muted text-lg">
+        <p className={`text-brand-muted text-base ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
           {t('selectStationDescription')}
         </p>
-      </motion.div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl w-full">
+      <div className="w-full max-w-2xl flex flex-col gap-2">
         {stations.map(([key, config], index) => {
           const count = stationCounts[key] ?? 0
+          const load  = count / maxCount
           return (
             <motion.button
               key={key}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.02, backgroundColor: tokens.color.surface2 }}
-              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.04, duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => handleSelect(key)}
-              className="group relative flex flex-col items-center justify-center p-8 rounded-xl border border-brand-border bg-brand-surface transition-all overflow-hidden"
+              className="group relative flex items-center gap-5 ps-5 pe-5 py-4 rounded-xl border border-brand-border bg-brand-surface hover:border-brand-gold/60 transition-colors text-start"
             >
-              {/* Station colour bar */}
-              <div
-                className="absolute top-0 inset-x-0 h-1.5 transition-all group-hover:h-3"
-                style={{ backgroundColor: config.color }}
-              />
+              <span className="text-4xl leading-none shrink-0">{config.icon}</span>
 
-              {/* FIX 9: per-station active count */}
-              {count > 0 && (
+              <div className="flex-1 min-w-0">
+                <div className={`text-xl font-black tracking-tight ${isAr ? 'font-cairo' : 'font-editorial'}`}>
+                  {isAr ? config.label.ar : config.label.en}
+                </div>
+                {/* Load bar — width is share of the busiest station */}
+                <div className="mt-2 h-1.5 w-full rounded-full bg-brand-surface-2 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-500 ease-out"
+                    style={{
+                      width:           `${Math.max(2, load * 100)}%`,
+                      backgroundColor: count === 0 ? 'transparent' : config.color,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="shrink-0 flex flex-col items-center min-w-[3rem]">
                 <span
-                  className="absolute top-3 end-3 min-w-[2rem] h-8 px-2 inline-flex items-center justify-center rounded-full text-sm font-black tabular-nums"
-                  style={{
-                    backgroundColor: config.color,
-                    color:           tokens.color.black,
-                  }}
+                  className="text-3xl font-black tabular-nums leading-none"
+                  style={{ color: count > 0 ? config.color : 'inherit', opacity: count > 0 ? 1 : 0.3 }}
                 >
                   {count}
                 </span>
-              )}
-
-              <span className="text-6xl mb-4 group-hover:scale-110 transition-transform">
-                {config.icon}
-              </span>
-
-              <h2 className="text-2xl font-bold mb-1">
-                {isAr ? config.label.ar : config.label.en}
-              </h2>
-
-              <div className="flex items-center gap-2 mt-4 text-sm font-medium uppercase tracking-wider opacity-60 group-hover:opacity-100 transition-opacity">
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: config.color }} />
-                {t('viewBoard')}
+                <span className="text-[10px] uppercase tracking-widest text-brand-muted mt-1">
+                  {t('activeOrders')}
+                </span>
               </div>
-
-              {/* Hover gradient */}
-              <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none"
-                style={{ background: `radial-gradient(circle at center, ${config.color} 0%, transparent 70%)` }}
-              />
             </motion.button>
           )
         })}
