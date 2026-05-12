@@ -158,7 +158,7 @@ export default function Header() {
             href="/"
             onClick={closeMenu}
             aria-label={isRTL ? 'الرئيسية' : 'Home'}
-            className={`shrink-0 ${isScrolled ? 'h-14' : 'h-16'} flex items-center overflow-hidden transition-all duration-500 hover:scale-105 active:scale-95`}
+            className="shrink-0 h-full flex items-center overflow-hidden transition-transform hover:scale-105 active:scale-95"
           >
             <Image
               src="/assets/logo.svg"
@@ -166,7 +166,7 @@ export default function Header() {
               width={326}
               height={766}
               priority
-              className={`transition-all duration-500 ${isScrolled ? 'w-7 h-auto' : 'w-9 h-auto'}`}
+              className={`transition-all duration-500 ${isScrolled ? 'w-5 h-auto' : 'w-7 h-auto'}`}
             />
           </Link>
 
