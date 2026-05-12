@@ -119,7 +119,7 @@ export default function StaffTable({
                       >
                         <p className="font-satoshi font-medium text-brand-text">{member.name}</p>
                         <p className="font-satoshi text-xs text-brand-muted">
-                          {member.email}
+                          {member.phone ?? '—'}
                         </p>
                       </Link>
                     </td>
@@ -204,7 +204,7 @@ export default function StaffTable({
                       {member.name}
                     </Link>
                     <p className="text-xs text-brand-muted mt-0.5 truncate">
-                      {member.email} · {tR(member.role as Parameters<typeof tR>[0])}
+                      {(member.phone ?? '—')} · {tR(member.role as Parameters<typeof tR>[0])}
                     </p>
                   </div>
                   <span

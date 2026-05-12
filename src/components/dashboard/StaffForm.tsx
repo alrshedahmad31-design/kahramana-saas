@@ -171,17 +171,19 @@ export default function StaffForm({
               />
             </Field>
 
-            {/* Email — editable on create, read-only on edit */}
-            <Field label={t('email')} error={errors.email}>
-              <input
-                type="email"
-                value={mode === 'create' ? email : (target?.email ?? '')}
-                onChange={(e) => setEmail(e.target.value)}
-                readOnly={mode === 'edit'}
-                className={`${inputClass(!!errors.email)} ${mode === 'edit' ? 'opacity-60 cursor-default' : ''}`}
-                autoComplete="email"
-              />
-            </Field>
+            {/* Email — create only. Edit mode hides the field because the
+                staff_basic view no longer exposes email (lives in auth.users). */}
+            {mode === 'create' && (
+              <Field label={t('email')} error={errors.email}>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClass(!!errors.email)}
+                  autoComplete="email"
+                />
+              </Field>
+            )}
 
             {/* Password — create only */}
             {mode === 'create' && (
