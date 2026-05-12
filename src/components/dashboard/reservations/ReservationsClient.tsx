@@ -331,96 +331,108 @@ export default function ReservationsClient({
           </div>
         )}
 
-        <section className="overflow-hidden rounded-lg border border-brand-border bg-brand-surface">
-          <div className="grid grid-cols-[90px_minmax(140px,1fr)_72px_96px_140px_minmax(220px,auto)] gap-3 border-b border-brand-border px-4 py-3 text-xs font-bold uppercase tracking-wide text-brand-muted max-lg:hidden">
-            <span>{t('columns.time')}</span>
-            <span>{t('columns.guest')}</span>
-            <span>{t('columns.party')}</span>
-            <span>{t('columns.table')}</span>
-            <span>{t('columns.status')}</span>
-            <span>{t('columns.actions')}</span>
-          </div>
+        {sortedReservations.length === 0 ? (
+          <section className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-2xl border border-brand-border bg-brand-surface px-4 py-10 text-center">
+            <Calendar size={36} className="text-brand-gold" aria-hidden="true" />
+            <p className={`text-base font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+              {t('empty')}
+            </p>
+          </section>
+        ) : (
+          <section className="space-y-3">
+            {sortedReservations.map((row) => (
+              <article
+                key={row.id}
+                className="rounded-2xl border border-brand-border bg-brand-surface p-4 sm:p-5 transition-colors hover:border-brand-gold/30"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  {/* LEFT — guest info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className={`truncate text-base font-semibold text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
+                        {row.guest_name}
+                      </p>
+                      <span className="shrink-0 rounded-full border border-brand-border px-2 py-0.5 text-xs text-brand-muted tabular-nums">
+                        {t('peopleCount', { count: row.party_size })}
+                      </span>
+                    </div>
 
-          {sortedReservations.length === 0 ? (
-            <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 px-4 py-10 text-center text-brand-muted">
-              <Calendar size={34} />
-              <p className="text-base font-bold">{t('empty')}</p>
-            </div>
-          ) : (
-            <ol className="divide-y divide-brand-border">
-              {sortedReservations.map((row) => (
-                <li
-                  key={row.id}
-                  className="grid gap-3 px-4 py-4 lg:grid-cols-[90px_minmax(140px,1fr)_72px_96px_140px_minmax(220px,auto)] lg:items-center"
-                >
-                  <div className="flex items-center gap-2 text-sm text-brand-text">
-                    <Clock size={14} className="text-brand-muted lg:hidden" aria-hidden="true" />
-                    <span className="font-black tabular-nums">{formatTime(row.reserved_for, isAr)}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-black text-brand-text">{row.guest_name}</p>
-                    <p className="mt-0.5 text-xs text-brand-muted tabular-nums" dir="ltr">{row.phone}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-brand-muted">
+                      <span className="inline-flex items-center gap-1.5 tabular-nums">
+                        <Calendar size={13} aria-hidden="true" />
+                        {formatDate(row.reserved_for, isAr)}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 tabular-nums">
+                        <Clock size={13} aria-hidden="true" />
+                        {formatTime(row.reserved_for, isAr)}
+                      </span>
+                      <span className="tabular-nums" dir="ltr">{row.phone}</span>
+                      {row.table_id && (
+                        <span className="text-brand-gold">{t('tableLabel')}</span>
+                      )}
+                    </div>
+
                     {row.special_requests && (
-                      <p className="mt-1 text-sm text-brand-muted">{row.special_requests}</p>
+                      <p className="mt-2 truncate text-xs text-brand-muted/70">
+                        {row.special_requests}
+                      </p>
                     )}
                   </div>
-                  <div className="text-sm font-bold text-brand-text">
-                    {t('peopleCount', { count: row.party_size })}
-                  </div>
-                  <div className="text-sm text-brand-muted">
-                    {row.table_id
-                      ? t('tableLabel')
-                      : <span className="text-brand-muted/70">—</span>}
-                  </div>
-                  <StatusPill status={row.status} label={t(`status.${row.status}`)} />
-                  <div className="flex flex-wrap gap-2">
-                    {row.status === 'pending' && (
-                      <>
-                        <ActionButton
-                          label={t('actions.confirm')}
-                          icon={<CheckCircle2 size={15} />}
-                          busy={pendingId === `${row.id}:confirmed`}
-                          onClick={() => setStatus(row, 'confirmed')}
-                        />
-                        <ActionButton
-                          label={t('actions.cancel')}
-                          icon={<XCircle size={15} />}
-                          busy={pendingId === `${row.id}:cancelled`}
-                          variant="muted"
-                          onClick={() => setStatus(row, 'cancelled')}
-                        />
-                      </>
-                    )}
-                    {row.status === 'confirmed' && (
-                      <>
-                        <ActionButton
-                          label={t('actions.seat')}
-                          icon={<CheckCircle2 size={15} />}
-                          busy={pendingId === `${row.id}:seated`}
-                          onClick={() => setStatus(row, 'seated')}
-                        />
-                        <ActionButton
-                          label={t('actions.noShow')}
-                          icon={<UserX size={15} />}
-                          busy={pendingId === `${row.id}:no_show`}
-                          variant="muted"
-                          onClick={() => setStatus(row, 'no_show')}
-                        />
-                        <ActionButton
-                          label={t('actions.cancel')}
-                          icon={<XCircle size={15} />}
-                          busy={pendingId === `${row.id}:cancelled`}
-                          variant="muted"
-                          onClick={() => setStatus(row, 'cancelled')}
-                        />
-                      </>
+
+                  {/* RIGHT — status + actions */}
+                  <div className="flex flex-col items-start gap-3 sm:items-end">
+                    <StatusPill status={row.status} label={t(`status.${row.status}`)} />
+                    {(row.status === 'pending' || row.status === 'confirmed') && (
+                      <div className="flex flex-wrap gap-2 sm:justify-end">
+                        {row.status === 'pending' && (
+                          <>
+                            <ActionButton
+                              label={t('actions.confirm')}
+                              icon={<CheckCircle2 size={14} />}
+                              busy={pendingId === `${row.id}:confirmed`}
+                              onClick={() => setStatus(row, 'confirmed')}
+                            />
+                            <ActionButton
+                              label={t('actions.cancel')}
+                              icon={<XCircle size={14} />}
+                              busy={pendingId === `${row.id}:cancelled`}
+                              variant="muted"
+                              onClick={() => setStatus(row, 'cancelled')}
+                            />
+                          </>
+                        )}
+                        {row.status === 'confirmed' && (
+                          <>
+                            <ActionButton
+                              label={t('actions.seat')}
+                              icon={<CheckCircle2 size={14} />}
+                              busy={pendingId === `${row.id}:seated`}
+                              onClick={() => setStatus(row, 'seated')}
+                            />
+                            <ActionButton
+                              label={t('actions.noShow')}
+                              icon={<UserX size={14} />}
+                              busy={pendingId === `${row.id}:no_show`}
+                              variant="muted"
+                              onClick={() => setStatus(row, 'no_show')}
+                            />
+                            <ActionButton
+                              label={t('actions.cancel')}
+                              icon={<XCircle size={14} />}
+                              busy={pendingId === `${row.id}:cancelled`}
+                              variant="muted"
+                              onClick={() => setStatus(row, 'cancelled')}
+                            />
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
       </div>
 
       {modalOpen && (
@@ -601,20 +613,33 @@ function formatTime(iso: string, isAr: boolean): string {
   }
 }
 
+function formatDate(iso: string, isAr: boolean): string {
+  try {
+    const d = new Date(iso)
+    return d.toLocaleDateString(isAr ? 'ar-BH' : 'en-GB', {
+      day:   '2-digit',
+      month: '2-digit',
+      year:  'numeric',
+    })
+  } catch {
+    return iso.slice(0, 10)
+  }
+}
+
 function StatusPill({ status, label }: { status: ReservationStatus; label: string }) {
   const tone =
-    status === 'confirmed'
-      ? 'border-brand-success/40 bg-brand-success/10 text-brand-success'
-      : status === 'seated'
-        ? 'border-brand-gold/40 bg-brand-gold/10 text-brand-gold'
-        : status === 'pending'
-          ? 'border-brand-gold/30 bg-brand-gold/5 text-brand-gold/90'
-          : status === 'no_show' || status === 'cancelled'
-            ? 'border-brand-error/40 bg-brand-error/10 text-brand-error'
-            : 'border-brand-border bg-brand-black text-brand-muted'
+    status === 'pending'
+      ? 'border-brand-gold/40 text-brand-gold bg-brand-gold/10'
+      : status === 'confirmed'
+        ? 'border-green-500/40 text-green-400 bg-green-500/10'
+        : status === 'seated'
+          ? 'border-transparent bg-brand-gold text-brand-black'
+          : status === 'no_show'
+            ? 'border-red-500/40 text-red-400 bg-red-500/10'
+            : 'border-brand-border text-brand-muted bg-transparent'
 
   return (
-    <span className={`inline-flex min-h-[32px] w-fit items-center rounded-full border px-3 text-sm font-bold ${tone}`}>
+    <span className={`inline-flex min-h-[28px] w-fit items-center rounded-full border px-3 text-xs font-bold uppercase tracking-wide ${tone}`}>
       {label}
     </span>
   )
@@ -634,13 +659,13 @@ function ActionButton({
       type="button"
       onClick={onClick}
       disabled={busy}
-      className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg border px-3 text-sm font-bold transition-colors disabled:opacity-60 ${
+      className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border px-3 text-xs font-bold transition-colors disabled:opacity-60 ${
         variant === 'muted'
-          ? 'border-brand-border text-brand-muted hover:border-brand-error/40 hover:text-brand-error'
+          ? 'border-transparent text-brand-muted hover:border-brand-error/40 hover:text-brand-error'
           : 'border-brand-gold/40 text-brand-gold hover:bg-brand-gold hover:text-brand-black'
       }`}
     >
-      {busy ? <Loader2 size={15} className="animate-spin" /> : icon}
+      {busy ? <Loader2 size={14} className="animate-spin" /> : icon}
       {label}
     </button>
   )
