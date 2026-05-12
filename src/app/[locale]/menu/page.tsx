@@ -5,11 +5,9 @@ import MenuPageClient from '@/components/menu/MenuPageClient'
 
 import { SITE_URL } from '@/constants/contact'
 import {
-  buildFAQSchema,
   buildFullMenuSchema,
   buildMenuWebPageSchema,
   buildMenuBreadcrumb,
-  buildHomepageFAQ,
 } from '@/lib/seo/schemas'
 
 type Props = {
@@ -63,18 +61,12 @@ export default async function MenuPage({ params, searchParams }: Props) {
   ])
 
   // SEO Schemas
-  const faqSchema     = buildFAQSchema(buildHomepageFAQ(localeKey))
   const menuSchema    = buildFullMenuSchema(categories, localeKey)
   const webPageSchema = buildMenuWebPageSchema(localeKey)
   const breadcrumb    = buildMenuBreadcrumb(localeKey)
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
       <script
         type="application/ld+json"
         suppressHydrationWarning

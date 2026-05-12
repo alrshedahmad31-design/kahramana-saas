@@ -53,13 +53,13 @@ export default async function CateringPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'Service',
     serviceType: isAr ? 'تموين الفعاليات والمناسبات' : 'Event & Wedding Catering',
-    provider: { '@id': 'https://kahramanat.com/#organization' },
+    provider: { '@id': `${SITE_URL}/#organization` },
     areaServed: { '@type': 'Country', name: 'Bahrain' },
     name: isAr ? 'خدمة تموين كهرمانة بغداد' : 'Kahramana Baghdad Catering',
     description: isAr
       ? 'خدمة تموين كاملة للأعراس والمناسبات في البحرين بمذاق المطبخ العراقي الأصيل من كهرمانة بغداد.'
       : 'Full event and wedding catering service in Bahrain delivering authentic Iraqi cuisine from Kahramana Baghdad.',
-    url: `https://kahramanat.com/${localeKey === 'en' ? 'en/' : ''}catering`,
+    url: `${SITE_URL}/${localeKey === 'en' ? 'en/' : ''}catering`,
     inLanguage: localeKey === 'ar' ? 'ar-BH' : 'en-BH',
   }
 

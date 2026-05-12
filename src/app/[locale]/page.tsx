@@ -4,7 +4,6 @@ import HeroWrapper from '@/components/home/HeroWrapper'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { SITE_URL } from '@/constants/contact'
 import {
-  buildOrganizationSchema,
   buildFAQSchema,
   buildHomepageFAQ,
   buildWebSiteSchema,
@@ -57,16 +56,10 @@ export default async function HomePage() {
   const t      = await getTranslations()
   const isRTL  = locale === 'ar'
 
-  const organizationSchema = buildOrganizationSchema(locale)
   const faqSchema          = buildFAQSchema(buildHomepageFAQ(locale))
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-      />
       <script
         type="application/ld+json"
         suppressHydrationWarning

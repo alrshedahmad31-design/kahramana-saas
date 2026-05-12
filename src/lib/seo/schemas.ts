@@ -261,10 +261,6 @@ export function buildOrganizationSchema(locale: Locale) {
     location: activeBranches.map((b) => ({
       '@id': `${SITE}/#branch-${b.id}`,
     })),
-    aggregateRating: BRANCH_RATINGS.riffa ? {
-      '@type': 'AggregateRating',
-      ...BRANCH_RATINGS.riffa,
-    } : undefined,
     founder: buildFounderSchema(),
   }
 }
@@ -306,7 +302,7 @@ export function buildContactPageSchema(locale: Locale) {
       ...activeBranches.map((b) => ({
         '@type': 'ContactPoint',
         telephone: b.phone,
-        contactType: 'reservations',
+        contactType: 'customer service',
         areaServed: localized(locale, b.cityAr, b.cityEn),
         availableLanguage: ['Arabic', 'English'],
       })),
@@ -531,7 +527,7 @@ export function buildFullMenuSchema(categories: CategoryWithItems[], locale: Loc
     hasMenuSection: categories.map((cat) => ({
       '@type': 'MenuSection',
       name: localized(locale, cat.nameAR, cat.nameEN ?? cat.nameAR),
-      hasMenuItem: cat.items.slice(0, 8).map((item) => {
+      hasMenuItem: cat.items.map((item) => {
         const imageUrl = item.image?.startsWith('http')
           ? item.image
           : `${process.env.NEXT_PUBLIC_SITE_URL}${item.image}`

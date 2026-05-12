@@ -90,7 +90,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
         orderNumber: shortId,
         orderStatus: 'https://schema.org/OrderProcessing',
         merchant: { '@type': 'Restaurant', name: 'كهرمانة بغداد' },
-        priceCurrency: 'IQD',
+        priceCurrency: 'BHD',
         price: order.total_bhd.toFixed(3),
       }
     : null
