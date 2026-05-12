@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { UserPlus, ExternalLink, Clock, Truck } from 'lucide-react'
 import { DV, DV_STATUS, DRIVER_STATUS }         from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver }           from '@/lib/delivery/types'
+import PromptDialog from '@/components/ui/PromptDialog'
 
 // ── Column config ─────────────────────────────────────────────────────────────
 
@@ -100,6 +102,9 @@ function KanbanCard({
   onCancel:   (reason: string) => void
 }) {
   const elapsed  = useElapsed(order.created_at)
+  const tOrder   = useTranslations('order')
+  const [cancelOpen, setCancelOpen] = useState(false)
+
   const urgency: Urgency = order.status === 'delivered' || order.status === 'completed'
     ? 'normal'
     : getUrgency(order.created_at, order.expected_delivery_time)
@@ -375,10 +380,9 @@ function KanbanCard({
               <button
                 type="button"
                 title={isAr ? 'إلغاء الطلب' : 'Cancel Order'}
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  const reason = prompt(isAr ? 'سبب الإلغاء:' : 'Cancellation reason:');
-                  if (reason) onCancel(reason); // Pass reason if needed, but the current UI only triggers onCancel
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setCancelOpen(true)
                 }}
                 style={{
                   padding:      '6px',
@@ -426,6 +430,16 @@ function KanbanCard({
         )}
 
       </div>
+
+      <PromptDialog
+        isOpen={cancelOpen}
+        title={tOrder('cancelReasonTitle')}
+        onConfirm={(reason) => {
+          setCancelOpen(false)
+          onCancel(reason)
+        }}
+        onCancel={() => setCancelOpen(false)}
+      />
     </div>
   )
 }

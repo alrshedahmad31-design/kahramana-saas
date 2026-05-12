@@ -17,6 +17,7 @@
     "exportFailed": "فشل التصدير",
     "required": "هذا الحقل مطلوب",
     "optional": "اختياري",
+    "reasonPlaceholder": "أدخل السبب…",
     "systemOperational": "النظام نشط"
   },
   "terms": {
@@ -691,6 +692,8 @@
     "totalLabel": "الإجمالي",
     "notesLabel": "ملاحظات",
     "contactBranchWhatsapp": "تواصل مع الفرع عبر واتساب",
+    "cancelReasonTitle": "سبب الإلغاء",
+    "returnReasonTitle": "سبب الإرجاع",
     "status": {
       "pending_payment": "بانتظار الدفع",
       "confirmed": "مؤكد",

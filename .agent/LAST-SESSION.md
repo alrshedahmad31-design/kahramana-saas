@@ -508,3 +508,7 @@ Migration 090 still on disk only; types regen + TSC clean still depend on its ap
 
 - **Waiter QA retest** (steps 6–8 of `docs/qa/waiter-table-qa.md`) — should be re-run by the Playwright agent now that 091 is live, before staff seeding consumes more session time.
 - Legacy `kds_queue` table — still a candidate for deletion post-launch. `order_item_station_status` is canonical.
+
+## Operational notes (2026-05-12)
+
+- **orders table: 68 rows, 44 pre-launch test/real orders — retained intentionally.** Oldest order timestamp is 2026-04-28, newest 2026-05-11. Reviewed during this session; no prune. These form the real history of the soft-launch window.

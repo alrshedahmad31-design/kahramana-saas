@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { updateOrderStatus, updateOrderWithReason } from '@/app/[locale]/dashboard/orders/actions'
 import { ALLOWED_TRANSITIONS, CAN_CANCEL } from '@/lib/auth/permissions'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
+import PromptDialog from '@/components/ui/PromptDialog'
 
 interface Props {
   orderId:       string
@@ -19,11 +20,13 @@ export default function OrderStatusSelect({
   userRole,
   onStatusChange,
 }: Props) {
-  const tS = useTranslations('order.status')
+  const tS     = useTranslations('order.status')
+  const tOrder = useTranslations('order')
 
   const [status,  setStatus]  = useState<OrderStatus>(currentStatus)
   const [error,   setError]   = useState<string | null>(null)
   const [pending, startTrans] = useTransition()
+  const [reasonFor, setReasonFor] = useState<'cancelled' | 'returned' | null>(null)
 
   const allowed = (ALLOWED_TRANSITIONS[status] ?? []) as OrderStatus[]
   // Filter out 'cancelled' for roles that can't cancel
@@ -34,27 +37,11 @@ export default function OrderStatusSelect({
 
   if (options.length === 0) return null
 
-  async function handleChange(next: OrderStatus) {
+  function handleChange(next: OrderStatus) {
     setError(null)
 
-    // Handle statuses that require a reason
     if (next === 'cancelled' || next === 'returned') {
-      const promptTitle = next === 'cancelled' 
-        ? (document.documentElement.dir === 'rtl' ? 'سبب الإلغاء:' : 'Cancellation reason:')
-        : (document.documentElement.dir === 'rtl' ? 'سبب الإرجاع:' : 'Return reason:')
-      
-      const reason = prompt(promptTitle)
-      if (!reason) return // User cancelled the prompt
-
-      startTrans(async () => {
-        const result = await updateOrderWithReason(orderId, reason, next)
-        if (!result.success) {
-          setError(result.error)
-          return
-        }
-        setStatus(next)
-        onStatusChange?.(next)
-      })
+      setReasonFor(next)
       return
     }
 
@@ -66,6 +53,21 @@ export default function OrderStatusSelect({
         return
       }
 
+      setStatus(next)
+      onStatusChange?.(next)
+    })
+  }
+
+  function commitWithReason(reason: string) {
+    const next = reasonFor
+    setReasonFor(null)
+    if (!next) return
+    startTrans(async () => {
+      const result = await updateOrderWithReason(orderId, reason, next)
+      if (!result.success) {
+        setError(result.error)
+        return
+      }
       setStatus(next)
       onStatusChange?.(next)
     })
@@ -99,6 +101,13 @@ export default function OrderStatusSelect({
       {error && (
         <p className="font-satoshi text-xs text-brand-error">{error}</p>
       )}
+
+      <PromptDialog
+        isOpen={reasonFor !== null}
+        title={reasonFor === 'returned' ? tOrder('returnReasonTitle') : tOrder('cancelReasonTitle')}
+        onConfirm={commitWithReason}
+        onCancel={() => setReasonFor(null)}
+      />
     </div>
   )
 }

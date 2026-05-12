@@ -17,6 +17,7 @@
     "exportFailed": "Export failed",
     "required": "This field is required",
     "optional": "Optional",
+    "reasonPlaceholder": "Enter reason…",
     "systemOperational": "System Operational"
   },
   "terms": {
@@ -691,6 +692,8 @@
     "totalLabel": "Total",
     "notesLabel": "Notes",
     "contactBranchWhatsapp": "Contact Branch via WhatsApp",
+    "cancelReasonTitle": "Cancellation reason",
+    "returnReasonTitle": "Return reason",
     "status": {
       "pending_payment": "Pending Payment",
       "confirmed": "Confirmed",
