@@ -1,8 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { colors } from '@/lib/design-tokens'
+import LightweightAreaChart from '@/components/charts/LightweightAreaChart'
 import type { InventoryValuationRow } from '@/lib/supabase/custom-types'
 
 interface DailyPoint {
@@ -17,24 +16,11 @@ interface Props {
   locale:      string
 }
 
-interface TooltipProps { active?: boolean; payload?: Array<{ value: number }>; label?: string; currency: string }
-
-function CustomTooltip({ active, payload, label, currency }: TooltipProps) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-lg border px-3 py-2 shadow-lg" style={{ background: colors.surface, borderColor: colors.goldDark }}>
-      <p className="font-satoshi text-xs text-brand-muted mb-1">{label}</p>
-      <p className="font-satoshi text-sm font-bold text-brand-gold tabular-nums">
-        {(payload[0]?.value ?? 0).toFixed(3)} {currency}
-      </p>
-    </div>
-  )
-}
-
 export default function StockValueWidget({ valuations, trendPoints, currency, locale }: Props) {
   const t = useTranslations('inventory.valuation')
   const totalValue = valuations.reduce((s, r) => s + r.total_value_bhd, 0)
   const isAr = locale === 'ar'
+  const chartPoints = trendPoints.map((point) => ({ label: point.date, value: point.value }))
 
   return (
     <div className="bg-brand-surface border border-brand-border rounded-xl p-5 flex flex-col gap-4 h-full">
@@ -81,28 +67,12 @@ export default function StockValueWidget({ valuations, trendPoints, currency, lo
           <p className="font-cairo text-xs text-brand-muted mb-2">
             {isAr ? 'آخر 14 يوم' : 'Last 14 days'}
           </p>
-          <ResponsiveContainer width="100%" height={80}>
-            <AreaChart data={trendPoints} margin={{ top: 2, right: 2, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="stockValGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={colors.gold} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={colors.gold} stopOpacity={0}   />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="date" hide />
-              <YAxis hide />
-              <Tooltip content={<CustomTooltip currency={currency} />} />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke={colors.gold}
-                strokeWidth={2}
-                fill="url(#stockValGrad)"
-                dot={false}
-                activeDot={{ r: 3, fill: colors.gold, strokeWidth: 0 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <LightweightAreaChart
+            points={chartPoints}
+            currency={currency}
+            height={80}
+            gradientId="stockValGrad"
+          />
         </div>
       )}
     </div>

@@ -183,10 +183,9 @@ export async function syncMenuItemsWithDatabase(): Promise<{
 
   if (allItems.length === 0) return { success: true, count: 0 }
 
-  const supabase = await createServiceClient()
-  // Cast to any to bypass temporary schema mismatch in generated types.ts
-  // while we transition from 'main' to 'mains' station enum.
-  const { error } = await supabase.from('menu_items').upsert(allItems as any, {
+  const supabase = untypedServiceClient()
+  // Use the untyped client until generated types include the full station taxonomy.
+  const { error } = await supabase.from('menu_items').upsert(allItems, {
     onConflict: 'id',
   })
 
@@ -286,12 +285,13 @@ export async function createMenuItem(
     return { success: false, error: 'هذا المعرف مستخدم، عدّل الاسم الإنجليزي' }
   }
 
-  const { error } = await supabase.from('menu_items').insert({
+  const menuSupabase = untypedServiceClient()
+  const { error } = await menuSupabase.from('menu_items').insert({
     ...payload,
     id:         generatedSlug,
     image_url:  payload.image_url || null,
     updated_at: new Date().toISOString(),
-  } as any)
+  })
 
   if (error) {
     console.error('[menu] createMenuItem failed:', error)
@@ -347,13 +347,14 @@ export async function updateMenuItem(
 
   const supabase = await createServiceClient()
 
-  const { error } = await supabase
+  const menuSupabase = untypedServiceClient()
+  const { error } = await menuSupabase
     .from('menu_items')
     .update({
       ...editable,
       image_url:  editable.image_url || null,
       updated_at: new Date().toISOString(),
-    } as any)
+    })
     .eq('id', slug)
 
   if (error) {

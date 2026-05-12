@@ -1,9 +1,6 @@
 'use client'
 
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell,
-} from 'recharts'
+import { useState } from 'react'
 import { colors } from '@/lib/design-tokens'
 import type { TopItemRow } from '@/lib/analytics/queries'
 
@@ -12,36 +9,9 @@ interface Props {
   locale: string
 }
 
-interface CustomTooltipProps {
-  active?:  boolean
-  payload?: Array<{ value: number; payload: { nameAr: string; nameEn: string; revenue: number } }>
-  locale:   string
-}
-
-function CustomTooltip({ active, payload, locale }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null
-  const item = payload[0]?.payload
-  if (!item) return null
-
-  return (
-    <div
-      className="rounded-lg border px-3 py-2 shadow-lg max-w-[180px]"
-      style={{ background: colors.surface, borderColor: colors.goldDark }}
-    >
-      <p className="font-satoshi text-xs text-brand-text font-medium mb-1 truncate">
-        {locale === 'ar' ? item.nameAr : item.nameEn}
-      </p>
-      <p className="font-satoshi text-xs text-brand-gold tabular-nums">
-        {payload[0]?.value ?? 0} orders
-      </p>
-      <p className="font-satoshi text-xs text-brand-muted tabular-nums">
-        {item.revenue.toFixed(3)} BD
-      </p>
-    </div>
-  )
-}
-
 export default function TopItemsChart({ data, locale }: Props) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+
   if (!data.length) {
     return (
       <div className="h-48 flex items-center justify-center">
@@ -51,6 +21,8 @@ export default function TopItemsChart({ data, locale }: Props) {
   }
 
   const top10 = data.slice(0, 10)
+  const maxOrders = Math.max(...top10.map((item) => item.total_quantity), 1)
+  const height = Math.max(220, top10.length * 36)
   const chartData = top10.map((r) => ({
     name:    locale === 'ar'
       ? (r.name_ar.length > 18 ? r.name_ar.slice(0, 18) + '…' : r.name_ar)
@@ -60,39 +32,61 @@ export default function TopItemsChart({ data, locale }: Props) {
     orders:  r.total_quantity,
     revenue: r.total_revenue_bhd,
   }))
+  const activeItem = activeIndex === null ? null : chartData[activeIndex] ?? null
 
   return (
-    <ResponsiveContainer width="100%" height={Math.max(220, top10.length * 36)}>
-      <BarChart
-        data={chartData}
-        layout="vertical"
-        margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
-      >
-        <CartesianGrid stroke={colors.surface2} strokeDasharray="3 3" horizontal={false} />
-        <XAxis
-          type="number"
-          tick={{ fill: colors.muted, fontSize: 11, fontFamily: 'Satoshi' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          width={130}
-          tick={{ fill: colors.text, fontSize: 11, fontFamily: 'Satoshi' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <Tooltip content={<CustomTooltip locale={locale} />} />
-        <Bar dataKey="orders" radius={[0, 4, 4, 0]}>
-          {chartData.map((_, i) => (
-            <Cell
-              key={i}
-              fill={i === 0 ? colors.gold : i === 1 ? colors.goldDark : colors.surface2}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div
+      className="relative w-full"
+      style={{ height }}
+      onMouseLeave={() => setActiveIndex(null)}
+    >
+      <svg width="100%" height={height} viewBox={`0 0 400 ${height}`} role="img" aria-hidden="true">
+        {chartData.map((item, index) => {
+          const y = 10 + index * 36
+          const width = (item.orders / maxOrders) * 230
+          const fill = index === 0 ? colors.gold : index === 1 ? colors.goldDark : colors.surface2
+          return (
+            <g
+              key={item.name}
+              onMouseEnter={() => setActiveIndex(index)}
+              onFocus={() => setActiveIndex(index)}
+              tabIndex={-1}
+            >
+              <text x="0" y={y + 17} fill={colors.text} fontFamily="Satoshi" fontSize="11">
+                {item.name}
+              </text>
+              <rect x="138" y={y + 4} width="240" height="20" rx="4" fill={colors.surface2} opacity="0.35" />
+              <rect x="138" y={y + 4} width={width} height="20" rx="4" fill={fill} />
+              <text x="386" y={y + 18} fill={colors.muted} fontFamily="Satoshi" fontSize="11" textAnchor="end">
+                {item.orders}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+
+      {activeItem && (
+        <div
+          className="pointer-events-none absolute rounded-lg border px-3 py-2 shadow-lg max-w-[180px]"
+          style={{
+            background: colors.surface,
+            borderColor: colors.goldDark,
+            left: 170,
+            top: 10 + (activeIndex ?? 0) * 36,
+            transform: 'translateY(-85%)',
+          }}
+        >
+          <p className="font-satoshi text-xs text-brand-text font-medium mb-1 truncate">
+            {locale === 'ar' ? activeItem.nameAr : activeItem.nameEn}
+          </p>
+          <p className="font-satoshi text-xs text-brand-gold tabular-nums">
+            {activeItem.orders} orders
+          </p>
+          <p className="font-satoshi text-xs text-brand-muted tabular-nums">
+            {activeItem.revenue.toFixed(3)} BD
+          </p>
+        </div>
+      )}
+    </div>
   )
 }

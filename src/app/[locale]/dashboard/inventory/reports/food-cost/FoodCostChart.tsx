@@ -1,35 +1,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine,
-} from 'recharts'
+import LightweightLineChart from '@/components/charts/LightweightLineChart'
 import { colors } from '@/lib/design-tokens'
-
-interface TooltipProps {
-  active?: boolean
-  payload?: Array<{ value: number; name: string }>
-  label?: string
-  locale: string
-}
-
-function CustomTooltip({ active, payload, label, locale }: TooltipProps) {
-  if (!active || !payload?.length) return null
-  const isAr = locale === 'ar'
-  const font = isAr ? 'font-almarai' : 'font-satoshi'
-  
-  return (
-    <div className="rounded-xl border px-4 py-3 shadow-xl backdrop-blur-md bg-brand-surface/90" style={{ borderColor: colors.border }}>
-      <p className={`${font} text-[10px] text-brand-muted mb-1.5 uppercase tracking-widest font-bold`}>
-        {new Date(label || '').toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB', { day: 'numeric', month: 'short' })}
-      </p>
-      <p className="font-satoshi text-lg font-black text-brand-gold tabular-nums">
-        {payload[0]?.value?.toFixed(1)}%
-      </p>
-    </div>
-  )
-}
 
 export default function FoodCostTrendChart({
   data,
@@ -61,53 +34,20 @@ export default function FoodCostTrendChart({
       </div>
 
       <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={colors.surface2} vertical={false} />
-            <XAxis 
-              dataKey="date" 
-              tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }}
-              tickFormatter={(v) => new Date(v).toLocaleDateString(isAr ? 'ar-IQ' : 'en-GB', { day: 'numeric', month: 'short' })}
-              axisLine={false}
-              tickLine={false}
-              dy={10}
-            />
-            <YAxis
-              tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }}
-              tickFormatter={(v: number) => `${v.toFixed(0)}%`}
-              axisLine={false}
-              tickLine={false}
-              dx={-10}
-            />
-            <Tooltip content={<CustomTooltip locale={locale} />} cursor={{ stroke: colors.surface2, strokeWidth: 1 }} />
-            <ReferenceLine
-              y={targetPct}
-              stroke={colors.success}
-              strokeDasharray="5 5"
-              strokeWidth={1.5}
-              label={{
-                value: t('targetLabel', { pct: targetPct }),
-                position: 'insideTopRight',
-                fill: colors.success,
-                fontSize: 10,
-                fontWeight: 900,
-                offset: 10
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="pct"
-              stroke={colors.gold}
-              strokeWidth={3}
-              dot={{ fill: colors.gold, r: 0, strokeWidth: 2 }}
-              activeDot={{ r: 5, fill: colors.gold, stroke: colors.surface, strokeWidth: 2 }}
-              name={t('foodCostPct')}
-              animationDuration={1500}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <LightweightLineChart
+          series={[{
+            key: 'pct',
+            label: t('foodCostPct'),
+            color: colors.gold,
+            values: data.map((point) => ({ label: point.date, value: point.pct })),
+          }]}
+          locale={locale}
+          height={300}
+          valueSuffix="%"
+          dateLabels
+          target={{ value: targetPct, label: t('targetLabel', { pct: targetPct }), color: colors.success }}
+        />
       </div>
     </div>
   )
 }
-

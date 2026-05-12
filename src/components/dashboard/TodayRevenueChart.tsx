@@ -1,11 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import {
-  AreaChart, Area, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts'
-import { colors } from '@/lib/design-tokens'
+import LightweightAreaChart from '@/components/charts/LightweightAreaChart'
 import type { HourlyPoint } from '@/lib/dashboard/stats'
 
 interface Props {
@@ -16,24 +12,6 @@ interface Props {
 
 // Only label every 4 hours
 const LABELED_HOURS = new Set([0, 4, 8, 12, 16, 20])
-
-interface TooltipPayload { value: number }
-interface TooltipProps { active?: boolean; payload?: TooltipPayload[]; label?: string; currency: string }
-
-function CustomTooltip({ active, payload, label, currency }: TooltipProps) {
-  if (!active || !payload?.length) return null
-  return (
-    <div
-      className="rounded-lg border px-3 py-2 shadow-lg text-start"
-      style={{ background: colors.surface, borderColor: colors.goldDark }}
-    >
-      <p className="font-satoshi text-xs text-brand-muted mb-1">{label}</p>
-      <p className="font-satoshi text-sm font-bold text-brand-gold tabular-nums">
-        {(payload[0]?.value ?? 0).toFixed(3)} {currency}
-      </p>
-    </div>
-  )
-}
 
 export default function TodayRevenueChart({ hourlyPoints, currency }: Props) {
   const t = useTranslations('inventory.analytics')
@@ -51,6 +29,7 @@ export default function TodayRevenueChart({ hourlyPoints, currency }: Props) {
   }).format(new Date())
   const currentH = parseInt(currentHourBH, 10) % 24
   const chartData = hourlyPoints.slice(0, currentH + 2)  // show up to 1 hour ahead
+  const chartPoints = chartData.map((point) => ({ label: point.label, value: point.revenue }))
 
   return (
     <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
@@ -90,46 +69,14 @@ export default function TodayRevenueChart({ hourlyPoints, currency }: Props) {
           </p>
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="dashRevGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor={colors.gold} stopOpacity={0.35} />
-                <stop offset="100%" stopColor={colors.gold} stopOpacity={0}    />
-              </linearGradient>
-            </defs>
-            <CartesianGrid
-              stroke={colors.surface2}
-              strokeDasharray="3 3"
-              vertical={false}
-            />
-            <XAxis
-              dataKey="label"
-              tick={{ fill: colors.muted, fontSize: 11, fontFamily: 'Satoshi' }}
-              axisLine={false}
-              tickLine={false}
-              interval={0}
-              tickFormatter={(v: string, i: number) => LABELED_HOURS.has(i) ? v : ''}
-            />
-            <YAxis
-              tick={{ fill: colors.muted, fontSize: 11, fontFamily: 'Satoshi' }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v: number) => v > 0 ? v.toFixed(0) : ''}
-              width={36}
-            />
-            <Tooltip content={<CustomTooltip currency={currency} />} />
-            <Area
-              type="monotone"
-              dataKey="revenue"
-              stroke={colors.gold}
-              strokeWidth={2.5}
-              fill="url(#dashRevGrad)"
-              dot={false}
-              activeDot={{ r: 4, fill: colors.gold, strokeWidth: 0 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <LightweightAreaChart
+          points={chartPoints}
+          currency={currency}
+          height={200}
+          gradientId="dashRevGrad"
+          showAxes
+          xTickFormatter={(label, index) => LABELED_HOURS.has(index) ? label : ''}
+        />
       )}
     </div>
   )

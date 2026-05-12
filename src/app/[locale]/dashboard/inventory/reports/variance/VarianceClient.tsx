@@ -2,9 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-} from 'recharts'
+import LightweightBarChart from '@/components/charts/LightweightBarChart'
 import { colors } from '@/lib/design-tokens'
 import ExportButton from '@/components/inventory/reports/ExportButton'
 import { exportToExcel } from '../actions'
@@ -20,32 +18,6 @@ interface VarianceRow {
   variance: number
   variance_pct: number | null
   variance_cost_bhd: number
-}
-
-interface TooltipProps {
-  active?: boolean
-  payload?: Array<{ value: number; name: string }>
-  label?: string
-  currency: string
-  locale: string
-}
-
-function CustomTooltip({ active, payload, label, currency, locale }: TooltipProps) {
-  if (!active || !payload?.length) return null
-  const isAr = locale === 'ar'
-  const font = isAr ? 'font-almarai' : 'font-satoshi'
-
-  return (
-    <div className="rounded-xl border px-4 py-3 shadow-xl backdrop-blur-md bg-brand-surface/90" style={{ borderColor: colors.border }}>
-      <p className={`${font} text-[10px] text-brand-muted mb-1.5 uppercase tracking-widest font-bold max-w-[200px] truncate`}>
-        {label}
-      </p>
-      <p className="font-satoshi text-lg font-black text-brand-gold tabular-nums">
-        {Number(payload[0]?.value).toFixed(3)}
-        <span className={`${font} text-[10px] text-brand-muted font-medium ms-1`}>{currency}</span>
-      </p>
-    </div>
-  )
 }
 
 function AbcBadge({ cls, font }: { cls: string; font: string }) {
@@ -97,7 +69,11 @@ export default function VarianceClient({
     .sort((a, b) => Math.abs(b.variance_cost_bhd) - Math.abs(a.variance_cost_bhd))
     .slice(0, 10)
 
-  const chartData = top10.map((r) => ({ name: isAr ? r.name_ar : (r.name_en || r.name_ar), value: r.variance_cost_bhd }))
+  const chartData = top10.map((r) => ({
+    name: isAr ? r.name_ar : (r.name_en || r.name_ar),
+    value: r.variance_cost_bhd,
+    color: r.variance_cost_bhd > 0 ? colors.error : colors.success,
+  }))
 
   const exportRows = filtered.map((r) => ({
     name: isAr ? r.name_ar : (r.name_en || r.name_ar),
@@ -197,19 +173,13 @@ export default function VarianceClient({
       <div className="rounded-xl border border-brand-border bg-brand-surface p-6 shadow-sm hover:shadow-md transition-all">
         <h3 className={`${isAr ? 'font-cairo' : 'font-satoshi'} text-sm font-black text-brand-text mb-6 uppercase tracking-wider`}>{t('topVarianceChart')}</h3>
         <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={colors.border} vertical={false} opacity={0.3} />
-              <XAxis dataKey="name" tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: colors.muted, fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: colors.surface2, opacity: 0.4 }} content={<CustomTooltip currency={currency} locale={locale} />} />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={40}>
-                {chartData.map((entry, index) => (
-                  <Cell key={index} fill={entry.value > 0 ? colors.error : colors.success} opacity={0.8} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <LightweightBarChart
+            data={chartData}
+            locale={locale}
+            currency={currency}
+            height={300}
+            layout="vertical"
+          />
         </div>
       </div>
 
@@ -254,5 +224,4 @@ export default function VarianceClient({
     </div>
   )
 }
-
 
