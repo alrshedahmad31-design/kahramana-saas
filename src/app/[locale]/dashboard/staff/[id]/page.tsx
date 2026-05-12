@@ -103,7 +103,7 @@ export default async function StaffProfilePage({ params }: Props) {
 
       {/* Driver performance — only rendered when the staff member is a driver */}
       {driverStats && (
-        <DriverPerformanceCard stats={driverStats} isRTL={isAr} />
+        <DriverPerformanceCard stats={driverStats} isRTL={isAr} locale={locale} />
       )}
 
       {/* Profile tabs */}

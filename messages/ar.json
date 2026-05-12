@@ -2270,7 +2270,79 @@
     "sync_success": "تمت المزامنة من الملف",
     "sync_error": "فشلت المزامنة. حاول مجدداً.",
     "menu_empty_title": "قائمة الطعام فارغة",
-    "menu_empty_description": "لا توجد أصناف في قاعدة البيانات بعد. يمكنك المزامنة من الملف أو إضافة أصناف يدوياً."
+    "menu_empty_description": "لا توجد أصناف في قاعدة البيانات بعد. يمكنك المزامنة من الملف أو إضافة أصناف يدوياً.",
+    "reservations": {
+      "title": "إدارة الحجوزات",
+      "subtitle": "إدارة حجوزات المطعم الذكية واللحظية",
+      "addNew": "إضافة حجز جديد",
+      "searchPlaceholder": "ابحث باسم الضيف أو رقم الهاتف...",
+      "filterAll": "الكل",
+      "stats": {
+        "covers": "إجمالي الأفراد",
+        "upcoming": "قادمون قريباً",
+        "occupied": "طاولات مشغولة",
+        "pending": "بانتظار التأكيد",
+        "active": "نشط"
+      },
+      "table": {
+        "time": "الوقت",
+        "guest": "الضيف",
+        "size": "الأفراد",
+        "table": "الطاولة",
+        "status": "الحالة",
+        "actions": "الإجراءات",
+        "unassigned": "غير محدد",
+        "noResults": "لا توجد حجوزات",
+        "noResultsDesc": "لم يتم العثور على أي حجوزات تطابق بحثك أو في هذا القسم."
+      },
+      "statuses": {
+        "pending": "قيد الانتظار",
+        "confirmed": "مؤكد",
+        "seated": "تم الإجلاس",
+        "completed": "مكتمل",
+        "no_show": "عدم حضور",
+        "cancelled": "ملغي"
+      },
+      "drawer": {
+        "details": "تفاصيل الحجز",
+        "time": "الوقت",
+        "size": "الأفراد",
+        "phone": "رقم الهاتف",
+        "date": "التاريخ",
+        "table": "الطاولة",
+        "source": "المصدر",
+        "specialRequests": "طلبات خاصة",
+        "confirm": "تأكيد الحجز",
+        "seat": "إجلاس الضيوف",
+        "noShow": "عدم حضور",
+        "cancel": "إلغاء",
+        "guestsCount": "{count} أشخاص",
+        "unassigned": "لم يتم التحديد"
+      },
+      "add": {
+        "title": "إضافة حجز جديد",
+        "guestName": "اسم الضيف",
+        "phone": "رقم الهاتف",
+        "partySize": "الأفراد",
+        "dateTime": "التوقيت",
+        "specialRequests": "طلبات خاصة",
+        "submit": "إنشاء الحجز الآن",
+        "seatingType": "نوع الجلسة"
+      },
+      "seatingType": {
+        "label": "نوع الجلسة",
+        "family_section": "مكان مخصص للعائلات",
+        "arabic_seating": "جلسة عربية",
+        "outdoor": "جلسة خارجية",
+        "indoor": "جلسة داخلية",
+        "any": "أي جلسة"
+      },
+      "notifications": {
+        "statusUpdated": "تم تحديث الحالة",
+        "addSuccess": "تم إضافة الحجز بنجاح"
+      }
+    }
+
   },
   "pos": {
     "title": "نقطة البيع",
@@ -2546,6 +2618,31 @@
     "refreshError": "تعذّر تحديث قائمة الحجوزات.",
     "actionError": "تعذّر تحديث الحالة. أعد المحاولة."
   },
+  "deliveryTimes": {
+    "title": "أوقات التوصيل اليوم",
+    "legendUnder30": "أقل من 30",
+    "legendOver45": "أكثر من 45",
+    "empty": "لا توجد توصيلات مكتملة اليوم",
+    "minutesShort": "دقيقة",
+    "col": {
+      "order": "الطلب",
+      "customer": "العميل",
+      "readyForPickup": "جاهز للاستلام",
+      "pickedUp": "استُلم",
+      "delivered": "وُصِّل",
+      "duration": "مدة التوصيل",
+      "status": "الحالة"
+    }
+  },
+  "driverPerformance": {
+    "title": "أداء السائق · آخر 30 يوم",
+    "deliveredOrders": "طلبات مُوصَّلة",
+    "avgDeliveryTime": "متوسط مدة التوصيل",
+    "onTimePercent": "في الوقت (أقل من 45)",
+    "minutesShort": "دقيقة",
+    "emptyLast30Days": "لا توجد طلبات مُوصَّلة في آخر 30 يومًا.",
+    "untimedHint": "{count} طلب بدون توقيت كامل (لم يُسجَّل وقت الاستلام)."
+  },
   "reserve": {
     "title": "احجز طاولة",
     "eyebrow": "كهرمانة بغداد",
@@ -2571,7 +2668,15 @@
     "errorConflict": "هذا الوقت محجوز، يرجى اختيار وقت آخر.",
     "errorRateLimit": "لقد تجاوزت الحد المسموح، حاول لاحقاً.",
     "errorInvalidPhone": "رقم الهاتف يجب أن يبدأ بـ +973 ويتبعه ثمانية أرقام.",
-    "errorGeneric": "حدث خطأ، يرجى المحاولة مرة أخرى."
+    "errorGeneric": "حدث خطأ، يرجى المحاولة مرة أخرى.",
+    "seatingType": {
+      "label": "نوع الجلسة",
+      "family_section": "مكان مخصص للعائلات",
+      "arabic_seating": "جلسة عربية",
+      "outdoor": "جلسة خارجية",
+      "indoor": "جلسة داخلية",
+      "any": "أي جلسة"
+    }
   },
   "analytics": {
     "labor": {

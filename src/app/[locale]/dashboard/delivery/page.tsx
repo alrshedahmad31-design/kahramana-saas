@@ -42,7 +42,7 @@ export default async function DeliveryPage({ params }: Props) {
       delivery_lat, delivery_lng,
       order_items(id)
     `)
-    .in('status', ['accepted', 'preparing', 'ready', 'out_for_delivery'])
+    .in('status', ['accepted', 'preparing', 'ready', 'out_for_delivery', 'arrived'])
     // Audit fix #3: positive filter (was .neq('order_type','pickup') — that
     // also matched dine_in and any future order_type). Delivery dashboard
     // shows delivery orders only.
@@ -60,7 +60,7 @@ export default async function DeliveryPage({ params }: Props) {
   // the DeliveryTimesTable below the dispatch board)
   let completedQuery = supabase
     .from('orders')
-    .select('id, customer_name, status, total_bhd, created_at, updated_at, assigned_driver_id, expected_delivery_time, picked_up_at, delivered_at')
+    .select('id, customer_name, status, total_bhd, created_at, updated_at, assigned_driver_id, expected_delivery_time, ready_at, picked_up_at, delivered_at')
     .in('status', ['delivered', 'completed'])
     .gte('created_at', todayStart)
     .lte('created_at', todayEnd)
@@ -102,7 +102,7 @@ export default async function DeliveryPage({ params }: Props) {
   // Build driver → current order map
   const driverOrderMap = new Map<string, string>()
   for (const o of ordersRaw ?? []) {
-    if (o.assigned_driver_id && o.status === 'out_for_delivery') {
+    if (o.assigned_driver_id && (o.status === 'out_for_delivery' || o.status === 'arrived')) {
       driverOrderMap.set(o.assigned_driver_id, o.id)
     }
   }
@@ -166,7 +166,7 @@ export default async function DeliveryPage({ params }: Props) {
 
   const completed       = completedRaw ?? []
   const revenueToday    = completed.reduce((s, o) => s + (Number(o.total_bhd) || 0), 0)
-  const inTransit       = orders.filter(o => o.status === 'out_for_delivery').length
+  const inTransit       = orders.filter(o => o.status === 'out_for_delivery' || o.status === 'arrived').length
   const nowMs           = Date.now()
   const lateCount       = orders.filter(o => {
     const ageMin = (nowMs - new Date(o.created_at).getTime()) / 60_000
@@ -190,7 +190,7 @@ export default async function DeliveryPage({ params }: Props) {
     .map((o) => ({
       id:            o.id as string,
       customer_name: (o as { customer_name?: string | null }).customer_name ?? null,
-      created_at:    o.created_at as string,
+      ready_at:      (o as { ready_at?: string | null }).ready_at ?? null,
       picked_up_at:  (o as { picked_up_at?: string | null }).picked_up_at ?? null,
       delivered_at:  (o as { delivered_at?: string | null }).delivered_at ?? null,
       status:        (o as { status?: string }).status ?? 'delivered',

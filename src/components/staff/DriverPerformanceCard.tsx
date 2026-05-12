@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import { Award, Clock, Package, Timer } from 'lucide-react'
 
 export interface DriverPerformanceStats {
@@ -17,32 +18,35 @@ export interface DriverPerformanceStats {
 interface Props {
   stats:  DriverPerformanceStats
   isRTL:  boolean
+  locale: string
 }
 
-export default function DriverPerformanceCard({ stats, isRTL }: Props) {
+export default async function DriverPerformanceCard({ stats, isRTL, locale }: Props) {
+  const t = await getTranslations({ locale, namespace: 'driverPerformance' })
+
   return (
     <section className="rounded-xl border border-brand-border bg-brand-surface p-5">
       <header className="flex items-center gap-2 border-b border-brand-border/60 pb-3">
         <Award size={16} className="text-brand-gold" aria-hidden="true" />
         <h2 className={`text-sm font-bold uppercase tracking-wider text-brand-text ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
-          {isRTL ? 'أداء السائق · آخر 30 يوم' : 'Driver Performance · Last 30 days'}
+          {t('title')}
         </h2>
       </header>
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat
           icon={<Package size={14} aria-hidden="true" />}
-          label={isRTL ? 'طلبات مُوصَّلة' : 'Delivered orders'}
+          label={t('deliveredOrders')}
           value={String(stats.deliveredCount)}
           isRTL={isRTL}
         />
         <Stat
           icon={<Timer size={14} aria-hidden="true" />}
-          label={isRTL ? 'متوسط مدة التوصيل' : 'Avg delivery time'}
+          label={t('avgDeliveryTime')}
           value={
             stats.avgDurationMin === null
               ? '—'
-              : `${stats.avgDurationMin} ${isRTL ? 'دقيقة' : 'min'}`
+              : `${stats.avgDurationMin} ${t('minutesShort')}`
           }
           isRTL={isRTL}
           tone={
@@ -54,7 +58,7 @@ export default function DriverPerformanceCard({ stats, isRTL }: Props) {
         />
         <Stat
           icon={<Clock size={14} aria-hidden="true" />}
-          label={isRTL ? 'في الوقت (أقل من 45)' : 'On-time (< 45 min)'}
+          label={t('onTimePercent')}
           value={
             stats.onTimePercent === null ? '—' : `${stats.onTimePercent}%`
           }
@@ -70,16 +74,12 @@ export default function DriverPerformanceCard({ stats, isRTL }: Props) {
 
       {stats.deliveredCount === 0 && (
         <p className={`mt-4 text-xs text-brand-muted ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-          {isRTL
-            ? 'لا توجد طلبات مُوصَّلة في آخر 30 يومًا.'
-            : 'No deliveries recorded in the last 30 days.'}
+          {t('emptyLast30Days')}
         </p>
       )}
       {stats.deliveredCount > 0 && stats.untimedCount > 0 && (
         <p className={`mt-4 text-xs text-brand-muted ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-          {isRTL
-            ? `${stats.untimedCount} طلب بدون توقيت كامل (لم يُسجَّل وقت الاستلام).`
-            : `${stats.untimedCount} delivery without full timing data (pickup time missing).`}
+          {t('untimedHint', { count: stats.untimedCount })}
         </p>
       )}
     </section>

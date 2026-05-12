@@ -14,6 +14,7 @@ export type DeliveryStatus =
   | 'preparing'
   | 'ready'
   | 'out_for_delivery'
+  | 'arrived'
   | 'delivered'
   | 'completed'
 

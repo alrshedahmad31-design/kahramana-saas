@@ -1,9 +1,13 @@
+import { getTranslations } from 'next-intl/server'
 import { Clock } from 'lucide-react'
 
 export interface DeliveryTimeRow {
   id:             string
   customer_name:  string | null
-  created_at:     string
+  /** Kitchen-set ready timestamp (migration 117). Replaces the prior
+   *  created_at column — created_at was just "order received", not
+   *  "ready for the driver to pick up". */
+  ready_at:       string | null
   picked_up_at:   string | null
   delivered_at:   string | null
   status:         string
@@ -44,8 +48,9 @@ function formatTime(iso: string | null, isAr: boolean): string {
   }
 }
 
-export default function DeliveryTimesTable({ rows, locale }: Props) {
+export default async function DeliveryTimesTable({ rows, locale }: Props) {
   const isAr = locale === 'ar'
+  const t = await getTranslations({ locale, namespace: 'deliveryTimes' })
 
   return (
     <section className="mt-6 rounded-2xl border border-brand-border bg-brand-surface overflow-hidden">
@@ -53,32 +58,32 @@ export default function DeliveryTimesTable({ rows, locale }: Props) {
         <div className="flex items-center gap-2">
           <Clock size={16} className="text-brand-gold" aria-hidden="true" />
           <h2 className={`text-sm font-bold uppercase tracking-wider text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-            {isAr ? 'أوقات التوصيل اليوم' : 'Today’s Delivery Times'}
+            {t('title')}
           </h2>
         </div>
         <div className={`flex items-center gap-3 text-[11px] text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" />{isAr ? 'أقل من 30' : '< 30'}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" />{t('legendUnder30')}</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-orange-400" />30 – 45</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-400" />{isAr ? 'أكثر من 45' : '> 45'}</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-400" />{t('legendOver45')}</span>
         </div>
       </header>
 
       {rows.length === 0 ? (
         <div className="px-4 py-10 text-center text-sm text-brand-muted">
-          {isAr ? 'لا توجد توصيلات مكتملة اليوم' : 'No completed deliveries today'}
+          {t('empty')}
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-brand-border bg-brand-surface">
-                <Th isAr={isAr}>{isAr ? 'الطلب' : 'Order'}</Th>
-                <Th isAr={isAr}>{isAr ? 'العميل' : 'Customer'}</Th>
-                <Th isAr={isAr}>{isAr ? 'تم القبول' : 'Accepted'}</Th>
-                <Th isAr={isAr}>{isAr ? 'استُلم' : 'Picked up'}</Th>
-                <Th isAr={isAr}>{isAr ? 'وُصِّل' : 'Delivered'}</Th>
-                <Th isAr={isAr}>{isAr ? 'مدة التوصيل' : 'Duration'}</Th>
-                <Th isAr={isAr}>{isAr ? 'الحالة' : 'Status'}</Th>
+                <Th isAr={isAr}>{t('col.order')}</Th>
+                <Th isAr={isAr}>{t('col.customer')}</Th>
+                <Th isAr={isAr}>{t('col.readyForPickup')}</Th>
+                <Th isAr={isAr}>{t('col.pickedUp')}</Th>
+                <Th isAr={isAr}>{t('col.delivered')}</Th>
+                <Th isAr={isAr}>{t('col.duration')}</Th>
+                <Th isAr={isAr}>{t('col.status')}</Th>
               </tr>
             </thead>
             <tbody>
@@ -97,12 +102,12 @@ export default function DeliveryTimesTable({ rows, locale }: Props) {
                         {row.customer_name ?? '—'}
                       </span>
                     </Td>
-                    <Td><span className="text-brand-muted tabular-nums">{formatTime(row.created_at, isAr)}</span></Td>
+                    <Td><span className="text-brand-muted tabular-nums">{formatTime(row.ready_at, isAr)}</span></Td>
                     <Td><span className="text-brand-muted tabular-nums">{formatTime(row.picked_up_at, isAr)}</span></Td>
                     <Td><span className="text-brand-muted tabular-nums">{formatTime(row.delivered_at, isAr)}</span></Td>
                     <Td>
                       <span className={`font-satoshi font-bold tabular-nums ${tone}`}>
-                        {mins === null ? '—' : `${mins} ${isAr ? 'دقيقة' : 'min'}`}
+                        {mins === null ? '—' : `${mins} ${t('minutesShort')}`}
                       </span>
                     </Td>
                     <Td>

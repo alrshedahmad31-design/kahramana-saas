@@ -111,7 +111,7 @@ export async function assignDriverToOrder(
 }
 
 // Active delivery statuses where unassign / reassign make sense.
-const ACTIVE_DELIVERY_STATUSES = ['accepted', 'preparing', 'ready', 'out_for_delivery'] as const
+const ACTIVE_DELIVERY_STATUSES = ['accepted', 'preparing', 'ready', 'out_for_delivery', 'arrived'] as const
 
 export async function unassignDriver(orderId: string): Promise<DispatchActionResult> {
   const caller = await getSession()
@@ -175,7 +175,7 @@ export async function cancelDeliveryOrder(orderId: string): Promise<DispatchActi
     return { success: false, error: 'Unauthorized' }
   }
 
-  const CANCELLABLE = new Set(['accepted', 'preparing', 'ready', 'out_for_delivery'])
+  const CANCELLABLE = new Set(['accepted', 'preparing', 'ready', 'out_for_delivery', 'arrived'])
   if (!CANCELLABLE.has(order.status)) {
     return { success: false, error: 'Order cannot be cancelled at this stage' }
   }
@@ -225,7 +225,7 @@ export async function confirmDelivery(orderId: string): Promise<DispatchActionRe
     return { success: false, error: 'Unauthorized' }
   }
 
-  if (order.status !== 'out_for_delivery') {
+  if (order.status !== 'out_for_delivery' && order.status !== 'arrived') {
     return { success: false, error: 'Order is not out for delivery' }
   }
 

@@ -29,7 +29,7 @@ function normalizeCashAmount(value: number | null | undefined): number | null {
 
 export async function driverBumpOrder(
   orderId:       string,
-  currentStatus: 'ready' | 'out_for_delivery',
+  currentStatus: 'ready' | 'out_for_delivery' | 'arrived',
   tipBhd?:       number,
   actualCollected?: number,
 ): Promise<DriverActionResult> {
@@ -69,10 +69,15 @@ export async function driverBumpOrder(
     return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
 
-  if (currentStatus === 'out_for_delivery' && order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
+  if ((currentStatus === 'out_for_delivery' || currentStatus === 'arrived')
+      && order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
     return { success: false, error: 'Unauthorized: This order is assigned to another driver' }
   }
 
+  // arrived_at is required before transitioning to 'delivered'. When the
+  // status is already 'arrived' that's implicit (markDriverArrived stamps
+  // both). When status is still 'out_for_delivery' we keep the legacy
+  // pre-117 path where drivers could deliver without flipping to 'arrived'.
   if (currentStatus === 'out_for_delivery' && !order.arrived_at) {
     return { success: false, error: 'Must mark as arrived before delivering' }
   }
@@ -154,7 +159,10 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
   if (fetchError || !order) return { success: false, error: 'Order not found' }
   // Audit fix #3: delivery only.
   if (order.order_type !== 'delivery') return { success: false, error: 'Order is not a delivery order' }
-  if (order.status !== 'out_for_delivery') return { success: false, error: 'Unexpected order state' }
+  // Accept 'arrived' as well so the call is idempotent on the second click.
+  if (order.status !== 'out_for_delivery' && order.status !== 'arrived') {
+    return { success: false, error: 'Unexpected order state' }
+  }
   // Branch guard (Owner/GM bypass).
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   if (!isGlobalAdmin && (!user.branch_id || order.branch_id !== user.branch_id)) {
@@ -168,9 +176,13 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
 
   const now = new Date().toISOString()
 
+  // Migration 117: flip the order status to 'arrived' AND stamp arrived_at.
+  // The status update lets downstream surfaces (delivery dashboard, KDS
+  // dispatcher) show the driver as on-site without requiring callers to
+  // read arrived_at separately.
   const { data: updatedRows, error } = await service
     .from('orders')
-    .update({ arrived_at: now, updated_at: now })
+    .update({ status: 'arrived', arrived_at: now, updated_at: now })
     .eq('id', orderId)
     .select('id')
 

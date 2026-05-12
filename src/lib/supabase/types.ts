@@ -2318,6 +2318,7 @@ export type Database = {
           platform_order_id: string | null
           promotion_discount_bhd: number
           promotion_id: string | null
+          ready_at: string | null
           restaurant_location: Json | null
           source: string
           status: Database["public"]["Enums"]["order_status"]
@@ -2370,6 +2371,7 @@ export type Database = {
           platform_order_id?: string | null
           promotion_discount_bhd?: number
           promotion_id?: string | null
+          ready_at?: string | null
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
@@ -2422,6 +2424,7 @@ export type Database = {
           platform_order_id?: string | null
           promotion_discount_bhd?: number
           promotion_id?: string | null
+          ready_at?: string | null
           restaurant_location?: Json | null
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
@@ -4852,6 +4855,7 @@ export type Database = {
         | "pending_payment"
         | "confirmed"
         | "returned"
+        | "arrived"
       payment_method: "cash" | "benefit_qr" | "tap_card" | "tap_knet"
       payment_status:
         | "pending"
@@ -5058,6 +5062,7 @@ export const Constants = {
         "pending_payment",
         "confirmed",
         "returned",
+        "arrived",
       ],
       payment_method: ["cash", "benefit_qr", "tap_card", "tap_knet"],
       payment_status: [

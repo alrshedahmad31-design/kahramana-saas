@@ -2270,7 +2270,79 @@
     "sync_success": "Synced from JSON",
     "sync_error": "Sync failed. Please try again.",
     "menu_empty_title": "Menu is Empty",
-    "menu_empty_description": "No items in the database yet. Sync from JSON or add items manually."
+    "menu_empty_description": "No items in the database yet. Sync from JSON or add items manually.",
+    "reservations": {
+      "title": "Reservations Management",
+      "subtitle": "Smart real-time restaurant reservation management",
+      "addNew": "New Reservation",
+      "searchPlaceholder": "Search by guest name or phone...",
+      "filterAll": "All",
+      "stats": {
+        "covers": "Total Covers",
+        "upcoming": "Upcoming Arrivals",
+        "occupied": "Occupied Tables",
+        "pending": "Pending Confirmations",
+        "active": "Active"
+      },
+      "table": {
+        "time": "Time",
+        "guest": "Guest",
+        "size": "Size",
+        "table": "Table",
+        "status": "Status",
+        "actions": "Actions",
+        "unassigned": "N/A",
+        "noResults": "No reservations found",
+        "noResultsDesc": "We couldn't find any reservations matching your search or in this section."
+      },
+      "statuses": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "seated": "Seated",
+        "completed": "Completed",
+        "no_show": "No Show",
+        "cancelled": "Cancelled"
+      },
+      "drawer": {
+        "details": "RESERVATION DETAILS",
+        "time": "TIME",
+        "size": "SIZE",
+        "phone": "PHONE",
+        "date": "DATE",
+        "table": "TABLE",
+        "source": "SOURCE",
+        "specialRequests": "SPECIAL REQUESTS",
+        "confirm": "Confirm Reservation",
+        "seat": "Seat Guests",
+        "noShow": "No Show",
+        "cancel": "Cancel",
+        "guestsCount": "{count} Guests",
+        "unassigned": "Unassigned"
+      },
+      "add": {
+        "title": "New Reservation",
+        "guestName": "GUEST NAME",
+        "phone": "PHONE",
+        "partySize": "PARTY SIZE",
+        "dateTime": "DATE/TIME",
+        "specialRequests": "SPECIAL REQUESTS",
+        "submit": "CREATE RESERVATION",
+        "seatingType": "SEATING TYPE"
+      },
+      "seatingType": {
+        "label": "Seating Type",
+        "family_section": "Family Section",
+        "arabic_seating": "Arabic Seating",
+        "outdoor": "Outdoor Seating",
+        "indoor": "Indoor Seating",
+        "any": "Any Seating"
+      },
+      "notifications": {
+        "statusUpdated": "Status updated",
+        "addSuccess": "Reservation added successfully"
+      }
+    }
+
   },
   "pos": {
     "title": "Point of Sale",
@@ -2546,6 +2618,31 @@
     "refreshError": "Could not refresh reservations.",
     "actionError": "Could not update the status. Try again."
   },
+  "deliveryTimes": {
+    "title": "Today's Delivery Times",
+    "legendUnder30": "< 30",
+    "legendOver45": "> 45",
+    "empty": "No completed deliveries today",
+    "minutesShort": "min",
+    "col": {
+      "order": "Order",
+      "customer": "Customer",
+      "readyForPickup": "Ready for pickup",
+      "pickedUp": "Picked up",
+      "delivered": "Delivered",
+      "duration": "Duration",
+      "status": "Status"
+    }
+  },
+  "driverPerformance": {
+    "title": "Driver Performance · Last 30 days",
+    "deliveredOrders": "Delivered orders",
+    "avgDeliveryTime": "Avg delivery time",
+    "onTimePercent": "On-time (< 45 min)",
+    "minutesShort": "min",
+    "emptyLast30Days": "No deliveries recorded in the last 30 days.",
+    "untimedHint": "{count} delivery without full timing data (pickup time missing)."
+  },
   "reserve": {
     "title": "Reserve a Table",
     "eyebrow": "Kahramana Baghdad",
@@ -2571,7 +2668,15 @@
     "errorConflict": "This time slot is taken. Please choose another.",
     "errorRateLimit": "Too many attempts. Please try again later.",
     "errorInvalidPhone": "Phone must start with +973 followed by 8 digits.",
-    "errorGeneric": "Something went wrong. Please try again."
+    "errorGeneric": "Something went wrong. Please try again.",
+    "seatingType": {
+      "label": "Seating Type",
+      "family_section": "Family Section",
+      "arabic_seating": "Arabic Seating",
+      "outdoor": "Outdoor Seating",
+      "indoor": "Indoor Seating",
+      "any": "Any Seating"
+    }
   },
   "analytics": {
     "labor": {
