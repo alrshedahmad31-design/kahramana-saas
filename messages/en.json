@@ -2544,6 +2544,33 @@
     "refreshError": "Could not refresh reservations.",
     "actionError": "Could not update the status. Try again."
   },
+  "reserve": {
+    "title": "Reserve a Table",
+    "eyebrow": "Kahramana Baghdad",
+    "subtitle": "Choose a branch, pick a time, and we will confirm with you on WhatsApp.",
+    "branch": "Branch",
+    "date": "Date",
+    "time": "Time",
+    "partySize": "Party size",
+    "guestName": "Your name",
+    "phone": "Phone number",
+    "specialRequests": "Special requests",
+    "specialRequestsPlaceholder": "Food allergies, special occasion, high chair…",
+    "checkingAvailability": "Checking availability…",
+    "submit": "Confirm Reservation",
+    "submitting": "Sending…",
+    "successTitle": "Reservation Received",
+    "successSubtitle": "We will contact you shortly to confirm.",
+    "whatsappConfirm": "Confirm on WhatsApp",
+    "selectBranch": "Please choose a branch.",
+    "selectDate": "Please choose a date.",
+    "selectTime": "Please choose a time.",
+    "selectPartySize": "Please choose a party size.",
+    "errorConflict": "This time slot is taken. Please choose another.",
+    "errorRateLimit": "Too many attempts. Please try again later.",
+    "errorInvalidPhone": "Phone must start with +973 followed by 8 digits.",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
   "analytics": {
     "labor": {
       "title": "Labor Cost vs Revenue",

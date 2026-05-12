@@ -2544,6 +2544,33 @@
     "refreshError": "تعذّر تحديث قائمة الحجوزات.",
     "actionError": "تعذّر تحديث الحالة. أعد المحاولة."
   },
+  "reserve": {
+    "title": "احجز طاولة",
+    "eyebrow": "كهرمانة بغداد",
+    "subtitle": "اختر الفرع وحدّد الوقت، وسنؤكّد الحجز معك عبر واتساب.",
+    "branch": "الفرع",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "partySize": "عدد الأشخاص",
+    "guestName": "الاسم",
+    "phone": "رقم الهاتف",
+    "specialRequests": "ملاحظات أو طلبات خاصة",
+    "specialRequestsPlaceholder": "حساسية من طعام معين، مناسبة خاصة، كرسي أطفال...",
+    "checkingAvailability": "جاري التحقق من التوفر…",
+    "submit": "تأكيد الحجز",
+    "submitting": "جاري الإرسال…",
+    "successTitle": "تم استلام حجزك",
+    "successSubtitle": "سنتواصل معك قريباً لتأكيد الحجز.",
+    "whatsappConfirm": "تأكيد عبر واتساب",
+    "selectBranch": "اختر الفرع.",
+    "selectDate": "اختر التاريخ.",
+    "selectTime": "اختر الوقت.",
+    "selectPartySize": "اختر عدد الأشخاص.",
+    "errorConflict": "هذا الوقت محجوز، يرجى اختيار وقت آخر.",
+    "errorRateLimit": "لقد تجاوزت الحد المسموح، حاول لاحقاً.",
+    "errorInvalidPhone": "رقم الهاتف يجب أن يبدأ بـ +973 ويتبعه ثمانية أرقام.",
+    "errorGeneric": "حدث خطأ، يرجى المحاولة مرة أخرى."
+  },
   "analytics": {
     "labor": {
       "title": "تكلفة العمالة مقابل الإيرادات",
