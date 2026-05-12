@@ -118,8 +118,8 @@ export default function StaffTable({
                         className="block hover:text-brand-gold transition-colors duration-150"
                       >
                         <p className="font-satoshi font-medium text-brand-text">{member.name}</p>
-                        <p className="font-satoshi text-xs text-brand-muted tabular-nums">
-                          #{member.id.slice(0, 8).toUpperCase()}
+                        <p className="font-satoshi text-xs text-brand-muted">
+                          {member.email}
                         </p>
                       </Link>
                     </td>
@@ -203,8 +203,8 @@ export default function StaffTable({
                     >
                       {member.name}
                     </Link>
-                    <p className="text-xs text-brand-muted mt-0.5 tabular-nums uppercase">
-                      #{member.id.slice(0, 8)} · {tR(member.role as Parameters<typeof tR>[0])}
+                    <p className="text-xs text-brand-muted mt-0.5 truncate">
+                      {member.email} · {tR(member.role as Parameters<typeof tR>[0])}
                     </p>
                   </div>
                   <span

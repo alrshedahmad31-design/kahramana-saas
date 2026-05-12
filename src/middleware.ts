@@ -49,14 +49,15 @@ function buildCsp(nonce: string): string {
 
   return [
     "default-src 'self'",
-    scriptSrc,
+    scriptSrc + ' blob:',
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://cdn.sanity.io https://images.unsplash.com https://*.google.com https://*.tile.openstreetmap.org https://*.openstreetmap.org",
     "font-src 'self'",
+    "worker-src 'self' blob:",
     // Sentry endpoints added so client SDK can fall back to direct ingest if
     // the /monitoring tunnel route is ever blocked. Wildcards cover both the
     // generic ingest hosts and the US region (current DSN).
-    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://sentry.io${__impeccableLiveDev}`,
+    `connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://sentry.io${__impeccableLiveDev}`,
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -203,8 +204,9 @@ export default async function middleware(request: NextRequest) {
           return response
         }
       } else {
-        // Non-drivers don't belong on /driver — push to their dashboard.
-        if (isDriverRoute) {
+        // Non-drivers don't belong on /driver UNLESS they are branch managers or above (for supervision).
+        const roleRank = ROLE_RANK[role] ?? 0
+        if (isDriverRoute && roleRank < BRANCH_MANAGER_RANK) {
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
@@ -214,7 +216,7 @@ export default async function middleware(request: NextRequest) {
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
         }
-        if (STAFF_ROUTE_PATTERN.test(pathname) && ROLE_RANK[role] < BRANCH_MANAGER_RANK) {
+        if (STAFF_ROUTE_PATTERN.test(pathname) && roleRank < BRANCH_MANAGER_RANK) {
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
