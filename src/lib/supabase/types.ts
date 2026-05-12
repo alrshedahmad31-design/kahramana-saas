@@ -3110,6 +3110,91 @@ export type Database = {
           },
         ]
       }
+      reservations: {
+        Row: {
+          branch_id: string
+          cancelled_at: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          created_by: string | null
+          duration_minutes: number
+          guest_name: string
+          id: string
+          party_size: number
+          phone: string
+          reserved_for: string
+          seated_at: string | null
+          source: string
+          special_requests: string | null
+          status: string
+          table_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          guest_name: string
+          id?: string
+          party_size: number
+          phone: string
+          reserved_for: string
+          seated_at?: string | null
+          source?: string
+          special_requests?: string | null
+          status?: string
+          table_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          guest_name?: string
+          id?: string
+          party_size?: number
+          phone?: string
+          reserved_for?: string
+          seated_at?: string | null
+          source?: string
+          special_requests?: string | null
+          status?: string
+          table_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+          {
+            foreignKeyName: "reservations_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_profile: {
         Row: {
           commercial_registration: string | null
@@ -4580,6 +4665,20 @@ export type Database = {
             }
             Returns: string
           }
+      rpc_create_reservation: {
+        Args: {
+          p_branch_id: string
+          p_duration_minutes?: number
+          p_guest_name: string
+          p_party_size: number
+          p_phone: string
+          p_reserved_for: string
+          p_source?: string
+          p_special_requests?: string
+          p_table_id?: string
+        }
+        Returns: string
+      }
       rpc_dead_stock_report: {
         Args: { p_branch_id: string; p_days_no_move?: number }
         Returns: {
@@ -4605,6 +4704,21 @@ export type Database = {
           name_en: string
           quantity_remaining: number
           stock_value_bhd: number
+        }[]
+      }
+      rpc_find_available_tables: {
+        Args: {
+          p_branch_id: string
+          p_duration_minutes?: number
+          p_party_size: number
+          p_reserved_for: string
+        }
+        Returns: {
+          capacity: number
+          label_ar: string
+          label_en: string
+          table_id: string
+          table_number: number
         }[]
       }
       rpc_get_driver_location: {
