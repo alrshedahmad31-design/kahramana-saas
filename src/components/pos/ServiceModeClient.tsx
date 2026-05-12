@@ -39,6 +39,7 @@ export default function ServiceModeClient({
     lockedBranchId ?? branches[0]?.id ?? '',
   )
   const [activeCat, setActiveCat] = useState<string>(categories[0]?.id ?? '')
+  const [activeTab, setActiveTab] = useState<'menu' | 'order'>('menu')
   const [tableNumber, setTableNumber] = useState<number | null>(null)
   const [cart, setCart] = useState<CartLine[]>([])
   const [pendingItem, setPendingItem] = useState<POSItem | null>(null)
@@ -126,6 +127,12 @@ export default function ServiceModeClient({
 
   function removeLine(key: string) {
     setCart((prev) => prev.filter((l) => l.key !== key))
+  }
+
+  function changeLineNotes(key: string, value: string) {
+    setCart((prev) =>
+      prev.map((l) => (l.key === key ? { ...l, itemNotes: value } : l)),
+    )
   }
 
   function reset() {
@@ -261,12 +268,37 @@ export default function ServiceModeClient({
         </Link>
       </header>
 
-      {/* ── Main 2-column area ──────────────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 flex">
+      {/* Mobile tab switcher — visible below lg */}
+      <div className="lg:hidden shrink-0 flex border-b border-brand-border bg-brand-black">
+        <button
+          type="button"
+          onClick={() => setActiveTab('menu')}
+          className={`flex-1 min-h-[48px] font-satoshi text-sm font-medium transition-colors
+            ${activeTab === 'menu' ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-brand-muted'}`}
+        >
+          {isAr ? 'المنيو' : 'Menu'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('order')}
+          className={`relative flex-1 min-h-[48px] font-satoshi text-sm font-medium transition-colors
+            ${activeTab === 'order' ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-brand-muted'}`}
+        >
+          {isAr ? 'الطلب' : 'Order'}
+          {itemCount > 0 && (
+            <span className="ms-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-brand-gold text-brand-black px-1.5 text-xs font-bold tabular-nums">
+              {itemCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ── Main area: column on mobile, row on lg+ ─────────────────────────── */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
         {/* LEFT — categories + items */}
-        <section className="flex-1 min-w-0 flex">
+        <section className={`flex-1 min-w-0 ${activeTab === 'menu' ? 'flex' : 'hidden lg:flex'}`}>
           {/* Vertical category sidebar */}
-          <nav className="shrink-0 w-40 sm:w-48 border-e border-brand-border bg-brand-surface overflow-y-auto">
+          <nav className="shrink-0 w-28 sm:w-40 lg:w-48 border-e border-brand-border bg-brand-surface overflow-y-auto">
             <ul className="flex flex-col py-2">
               {categories.map((c) => {
                 const active = c.id === activeCategory?.id
@@ -317,7 +349,7 @@ export default function ServiceModeClient({
         </section>
 
         {/* RIGHT — table selector + cart + submit */}
-        <aside className="shrink-0 w-[20rem] xl:w-[22rem] border-s border-brand-border bg-brand-surface flex flex-col">
+        <aside className={`shrink-0 w-full lg:w-[20rem] xl:w-[22rem] border-t lg:border-t-0 lg:border-s border-brand-border bg-brand-surface flex-col ${activeTab === 'order' ? 'flex' : 'hidden lg:flex'}`}>
           {/* Table picker */}
           <div className="shrink-0 px-4 py-3 border-b border-brand-border">
             <p className="text-[11px] uppercase tracking-wider text-brand-muted font-satoshi font-bold mb-2">
@@ -361,42 +393,52 @@ export default function ServiceModeClient({
                 {cart.map((line) => (
                   <li
                     key={line.key}
-                    className="flex items-start gap-2 rounded-lg border border-brand-border bg-brand-surface-2 p-2"
+                    className="flex flex-col gap-2 rounded-lg border border-brand-border bg-brand-surface-2 p-2"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm text-brand-text leading-snug ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                        {isAr ? line.nameAr : line.nameEn}
-                      </p>
-                      {(line.size || line.variantAr) && (
-                        <p className="text-[11px] text-brand-muted mt-0.5">
-                          {[line.size, isAr ? line.variantAr : line.variantEn]
-                            .filter(Boolean).join(' · ')}
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm text-brand-text leading-snug ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                          {isAr ? line.nameAr : line.nameEn}
                         </p>
-                      )}
-                      <p className="text-xs text-brand-muted tabular-nums mt-1">
-                        {line.unitPriceBhd.toFixed(3)} × {line.quantity} ={' '}
-                        <span className="text-brand-gold font-bold">
-                          {(line.unitPriceBhd * line.quantity).toFixed(3)}
+                        {(line.size || line.variantAr) && (
+                          <p className="text-[11px] text-brand-muted mt-0.5">
+                            {[line.size, isAr ? line.variantAr : line.variantEn]
+                              .filter(Boolean).join(' · ')}
+                          </p>
+                        )}
+                        <p className="text-xs text-brand-muted tabular-nums mt-1">
+                          {line.unitPriceBhd.toFixed(3)} × {line.quantity} ={' '}
+                          <span className="text-brand-gold font-bold">
+                            {(line.unitPriceBhd * line.quantity).toFixed(3)}
+                          </span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <QtyButton ariaLabel="−" onClick={() => changeQty(line.key, -1)}>−</QtyButton>
+                        <span className="font-satoshi text-sm tabular-nums w-6 text-center">
+                          {line.quantity}
                         </span>
-                      </p>
+                        <QtyButton ariaLabel="+" onClick={() => changeQty(line.key, 1)}>+</QtyButton>
+                        <button
+                          type="button"
+                          onClick={() => removeLine(line.key)}
+                          aria-label={t('remove')}
+                          className="ms-1 inline-flex items-center justify-center w-10 h-10 rounded-md text-brand-muted hover:text-brand-error hover:bg-brand-error/10 transition-colors"
+                        >
+                          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <QtyButton ariaLabel="−" onClick={() => changeQty(line.key, -1)}>−</QtyButton>
-                      <span className="font-satoshi text-sm tabular-nums w-6 text-center">
-                        {line.quantity}
-                      </span>
-                      <QtyButton ariaLabel="+" onClick={() => changeQty(line.key, 1)}>+</QtyButton>
-                      <button
-                        type="button"
-                        onClick={() => removeLine(line.key)}
-                        aria-label={t('remove')}
-                        className="ms-1 inline-flex items-center justify-center w-10 h-10 rounded-md text-brand-muted hover:text-brand-error hover:bg-brand-error/10 transition-colors"
-                      >
-                        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
+                    <input
+                      type="text"
+                      value={line.itemNotes}
+                      onChange={(e) => changeLineNotes(line.key, e.target.value)}
+                      placeholder={t('itemNotesPlaceholder')}
+                      maxLength={200}
+                      className={`w-full min-h-[36px] rounded-md bg-brand-surface border border-brand-border px-2.5 text-xs text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                    />
                   </li>
                 ))}
               </ul>
