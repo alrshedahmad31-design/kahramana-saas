@@ -38,7 +38,7 @@ export default function CinematicButton({
         )}
       </span>
       <span
-        className={`absolute inset-0 ${isPrimary ? 'bg-white/20' : 'bg-brand-gold/10'} translate-y-full group-hover:translate-y-0 transition-transform duration-500`} 
+        className={`absolute inset-0 ${isPrimary ? 'bg-brand-text/20' : 'bg-brand-gold/10'} translate-y-full group-hover:translate-y-0 transition-transform duration-500`} 
         aria-hidden="true"
       />
     </>
@@ -46,9 +46,9 @@ export default function CinematicButton({
 
   const baseClasses = `
     group relative overflow-hidden transition-all hover:scale-105 active:scale-95 inline-flex items-center justify-center
-    ${isPrimary 
-      ? 'bg-brand-gold text-brand-black shadow-[0_20px_50px_rgba(200,146,42,0.2)]' 
-      : 'border border-white/10 text-brand-text backdrop-blur-md hover:bg-white/5'}
+    ${isPrimary
+      ? 'bg-brand-gold text-brand-black'
+      : 'border border-brand-text/10 text-brand-text backdrop-blur-md hover:bg-brand-text/5'}
     ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
     ${className}
   `

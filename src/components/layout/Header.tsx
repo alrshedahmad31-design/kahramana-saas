@@ -182,7 +182,7 @@ export default function Header() {
                   ${isRTL ? 'font-cairo' : 'font-satoshi'}
                   ${pathname === href
                     ? 'text-brand-gold bg-brand-gold/10'
-                    : 'text-brand-muted hover:text-brand-text hover:bg-white/5'
+                    : 'text-brand-muted hover:text-brand-text hover:bg-brand-text/5'
                   }
                 `}
               >
@@ -196,7 +196,7 @@ export default function Header() {
             <button
               onClick={handleLocaleSwitch}
               aria-label={t('languageAlt')}
-              className="px-4 py-2 rounded-full text-sm font-bold text-brand-muted hover:text-brand-text hover:bg-white/5 transition-all"
+              className="px-4 py-2 rounded-full text-sm font-bold text-brand-muted hover:text-brand-text hover:bg-brand-text/5 transition-all"
             >
               {t('language')}
             </button>
@@ -204,7 +204,7 @@ export default function Header() {
             {/* Account button — gated on auth state */}
             {!authLoaded ? (
               // Reserve space to avoid layout shift while session resolves
-              <div className="w-10 h-10" aria-hidden />
+              <div className="w-11 h-11" aria-hidden />
             ) : !customer ? (
               <Link
                 href="/account"
@@ -221,7 +221,7 @@ export default function Header() {
                   aria-haspopup="menu"
                   aria-expanded={accountOpen}
                   aria-label={tAccount('title')}
-                  className="flex items-center gap-2 ps-2 pe-3 h-10 rounded-full border border-white/10 hover:border-brand-gold/50 hover:bg-white/5 transition-all"
+                  className="flex items-center gap-2 ps-2 pe-3 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-all"
                 >
                   <UserIcon />
                   <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
@@ -241,7 +241,7 @@ export default function Header() {
                     aria-orientation="vertical"
                     className="absolute top-full mt-2 end-0 w-64 p-2 glass-surface rounded-2xl text-start shadow-lg"
                   >
-                    <div className="px-3 py-2 border-b border-white/10">
+                    <div className="px-3 py-2 border-b border-brand-text/10">
                       <p className={`text-xs text-brand-muted ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                         {tAccount('title')}
                       </p>
@@ -261,7 +261,7 @@ export default function Header() {
                       href="/account"
                       onClick={() => setAccountOpen(false)}
                       role="menuitem"
-                      className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-white/5 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-brand-text/5 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
                     >
                       {tAccount('title')}
                     </Link>
@@ -269,7 +269,7 @@ export default function Header() {
                       type="button"
                       onClick={handleSignOut}
                       role="menuitem"
-                      className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-white/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-brand-text/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
                     >
                       {tAccount('signOut')}
                     </button>
@@ -281,7 +281,7 @@ export default function Header() {
             <button
               onClick={openCart}
               aria-label={t('cartAlt')}
-              className="relative flex items-center justify-center w-10 h-10 rounded-full border border-white/10 hover:border-brand-gold/50 hover:bg-white/5 transition-all"
+              className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-all"
             >
               <CartIcon />
               {totalItems > 0 && (
@@ -308,9 +308,9 @@ export default function Header() {
               <Link
                 href="/account"
                 aria-label={customer ? tAccount('title') : tAccount('loginOrRegister')}
-                className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-all ${
                   customer
-                    ? 'border border-white/10'
+                    ? 'border border-brand-text/10'
                     : 'border border-brand-gold/40 text-brand-gold'
                 }`}
               >
@@ -331,7 +331,7 @@ export default function Header() {
             <button
               onClick={openCart}
               aria-label={t('cartAlt')}
-              className="relative flex items-center justify-center w-10 h-10 rounded-full border border-white/10"
+              className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10"
             >
               <CartIcon />
               {totalItems > 0 && (
@@ -344,7 +344,7 @@ export default function Header() {
             <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? t('closeMenu') : t('openMenu')}
-              className="w-10 h-10 flex flex-col justify-center items-center gap-1.5"
+              className="w-11 h-11 flex flex-col justify-center items-center gap-1.5"
             >
               <span
                 className={`w-5 h-0.5 bg-brand-text block rounded-full transition-transform duration-300 ${isOpen ? 'translate-y-2 rotate-45' : ''}`}
@@ -369,7 +369,7 @@ export default function Header() {
                       href={href}
                       onClick={closeMenu}
                       className={`
-                        text-lg font-bold py-2 border-b border-white/5 last:border-0 text-start
+                        text-lg font-bold py-2 border-b border-brand-text/5 last:border-0 text-start
                         ${isRTL ? 'font-cairo' : 'font-satoshi'}
                         ${pathname === href ? 'text-brand-gold' : 'text-brand-text'}
                       `}
@@ -383,13 +383,13 @@ export default function Header() {
                   <Link
                     href="/account"
                     onClick={closeMenu}
-                    className={`text-lg font-bold py-2 border-b border-white/5 text-start text-brand-gold ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                    className={`text-lg font-bold py-2 border-b border-brand-text/5 text-start text-brand-gold ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
                   >
                     {tAccount('loginOrRegister')}
                   </Link>
                 )}
                 {authLoaded && customer && (
-                  <div className="border-b border-white/5 pb-3">
+                  <div className="border-b border-brand-text/5 pb-3">
                     <Link
                       href="/account"
                       onClick={closeMenu}
