@@ -1153,6 +1153,7 @@
     "offline": "أنت غير متصل",
     "offlineHint": "ستُزامَن تحديثات الحالة عند اتصالك مجدداً",
     "backToDashboard": "لوحة التحكم",
+    "emergency": "طوارئ",
     "completedToday": "مُسلَّمة اليوم",
     "noCompleted": "لم يتم تسليم أي طلبات بعد اليوم",
     "deliveredAt": "تم التسليم في",
@@ -2077,6 +2078,7 @@
       "pos": "نقطة البيع",
       "waiter": "تطبيق النادل",
       "waitlist": "قائمة الانتظار",
+      "reservations": "الحجوزات",
       "promotions": "العروض",
       "tables": "الطاولات و QR"
     },
@@ -2475,6 +2477,72 @@
     "refreshError": "تعذّر تحديث قائمة الانتظار",
     "addError": "تعذّرت إضافة الزبون. تحقق من البيانات وحاول مرة أخرى.",
     "actionError": "تعذّر تحديث الحالة. حاول مرة أخرى."
+  },
+  "reservations": {
+    "title": "الحجوزات",
+    "live": "مباشر",
+    "offline": "غير متصل",
+    "refresh": "تحديث",
+    "branch": "الفرع",
+    "apply": "تطبيق",
+    "empty": "لا توجد حجوزات قادمة",
+    "addReservation": "حجز جديد",
+    "guestName": "اسم الضيف",
+    "phone": "رقم الهاتف",
+    "partySize": "عدد الأشخاص",
+    "reservedFor": "موعد الحجز",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "duration": "المدة (بالدقائق)",
+    "specialRequests": "ملاحظات / طلبات خاصة",
+    "source": "المصدر",
+    "availableTables": "الطاولات المتاحة",
+    "noTablesAvailable": "لا توجد طاولات متاحة في هذا الوقت",
+    "checkingAvailability": "جاري التحقق من التوفر…",
+    "anyTable": "أي طاولة (تُحدَّد لاحقاً)",
+    "tableLabel": "الطاولة",
+    "cancel": "إلغاء",
+    "add": "حفظ",
+    "close": "إغلاق",
+    "pendingCount": "بانتظار التأكيد: {count}",
+    "confirmedCount": "مؤكدة: {count}",
+    "peopleCount": "{count} ضيف",
+    "seatCount": "السعة {count}",
+    "status": {
+      "pending": "بانتظار التأكيد",
+      "confirmed": "مؤكد",
+      "seated": "تم الجلوس",
+      "no_show": "لم يحضر",
+      "cancelled": "ملغى",
+      "completed": "اكتمل"
+    },
+    "actions": {
+      "confirm": "تأكيد",
+      "seat": "إجلاس",
+      "noShow": "لم يحضر",
+      "cancel": "إلغاء"
+    },
+    "sources": {
+      "website": "موقع إلكتروني",
+      "phone": "هاتف",
+      "walk_in": "زيارة مباشرة",
+      "staff": "موظف"
+    },
+    "columns": {
+      "time": "الوقت",
+      "guest": "الضيف",
+      "party": "العدد",
+      "table": "الطاولة",
+      "status": "الحالة",
+      "actions": "إجراءات"
+    },
+    "errorConflict": "تعارض في الحجز — الطاولة محجوزة في هذا الوقت.",
+    "errorInvalidPhone": "رقم الهاتف يجب أن يبدأ بـ +973 ويتبعه ثمانية أرقام.",
+    "errorInvalidPartySize": "عدد الأشخاص يجب أن يكون بين 1 و 50.",
+    "errorMissingFields": "أكمل الحقول المطلوبة.",
+    "errorGeneric": "حدث خطأ. أعد المحاولة.",
+    "refreshError": "تعذّر تحديث قائمة الحجوزات.",
+    "actionError": "تعذّر تحديث الحالة. أعد المحاولة."
   },
   "analytics": {
     "labor": {

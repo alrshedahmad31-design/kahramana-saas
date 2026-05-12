@@ -169,6 +169,18 @@ function POSIcon() {
   )
 }
 
+function ReservationsIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <circle cx="12" cy="15" r="1.5" fill="currentColor" />
+    </svg>
+  )
+}
+
 function ShiftIcon() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -223,6 +235,7 @@ const getNavItems = (prefix: string): NavItem[] => [
   { key: 'pos',       href: `${prefix}/dashboard/pos`,        icon: <POSIcon />,       section: 'pos' },
   { key: 'waiter',    href: `${prefix}/waiter`,               icon: <POSIcon />,       section: 'waiter' },
   { key: 'waitlist',  href: `${prefix}/dashboard/waitlist`,    icon: <StaffIcon />,     section: 'waitlist' },
+  { key: 'reservations', href: `${prefix}/dashboard/reservations`, icon: <ReservationsIcon />, section: 'reservations' },
   { key: 'tables',    href: `${prefix}/dashboard/tables`,     icon: <POSIcon />,       section: 'tables' },
   { key: 'driver',    href: `${prefix}/driver`,               icon: <DriverIcon />,    section: 'driver' },
   { key: 'delivery',  href: `${prefix}/dashboard/delivery`,   icon: <DeliveryBoardIcon />, section: 'delivery' },
@@ -271,6 +284,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     pos:             t('pos'),
     waiter:          t('waiter'),
     waitlist:        t('waitlist'),
+    reservations:    t('reservations'),
     tables:          t('tables'),
     driver:          t('driver'),
     delivery:        t('delivery'),

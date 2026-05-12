@@ -1,5 +1,8 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+import { buildWaLinkForPhone } from '@/constants/contact'
+
 interface Props {
   isOnline:          boolean
   onToggle:          () => void
@@ -14,6 +17,9 @@ interface Props {
 }
 
 export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute, completedToday, totalRevenue, avgDeliveryMins, hoursToday, isRTL, clock }: Props) {
+  const t = useTranslations('driver')
+  const emergencyPhone = process.env.NEXT_PUBLIC_EMERGENCY_PHONE
+
   return (
     <header className="shrink-0 border-b border-brand-border bg-brand-surface">
       {/* Main row */}
@@ -27,6 +33,21 @@ export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute
 
         <div className="flex items-center gap-2">
           <span suppressHydrationWarning className="font-satoshi text-sm text-brand-muted tabular-nums hidden sm:block">{clock}</span>
+
+          {/* Emergency Button */}
+          {emergencyPhone && (
+            <a
+              href={buildWaLinkForPhone(emergencyPhone, 'طارئ — أحتاج مساعدة فورية')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-150 animate-pulse-slow"
+            >
+              <span className="text-sm">🆘</span>
+              <span className={`font-black text-xs uppercase tracking-tight ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                {t('emergency')}
+              </span>
+            </a>
+          )}
 
           {/* Mute toggle */}
           <button
