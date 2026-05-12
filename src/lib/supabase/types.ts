@@ -2170,6 +2170,7 @@ export type Database = {
       order_item_station_status: {
         Row: {
           branch_id: string
+          bumped_at: string | null
           created_at: string
           id: string
           item_id: string | null
@@ -2180,6 +2181,7 @@ export type Database = {
         }
         Insert: {
           branch_id: string
+          bumped_at?: string | null
           created_at?: string
           id?: string
           item_id?: string | null
@@ -2190,6 +2192,7 @@ export type Database = {
         }
         Update: {
           branch_id?: string
+          bumped_at?: string | null
           created_at?: string
           id?: string
           item_id?: string | null
@@ -4375,11 +4378,8 @@ export type Database = {
         Returns: Database["public"]["Enums"]["staff_role"]
       }
       bump_station_order: {
-        Args: {
-          p_order_id: string
-          p_station: Database["public"]["Enums"]["kds_station"]
-        }
-        Returns: number
+        Args: { p_order_id: string; p_station: string }
+        Returns: undefined
       }
       calculate_loyalty_tier: {
         Args: { p_orders: number; p_spent: number }
@@ -4420,6 +4420,13 @@ export type Database = {
           total_revenue: number
         }[]
       }
+      get_station_daily_count: {
+        Args: {
+          p_branch_id: string
+          p_station: Database["public"]["Enums"]["kds_station"]
+        }
+        Returns: number
+      }
       increment_coupon_usage: {
         Args: { p_coupon_id: string }
         Returns: undefined
@@ -4435,6 +4442,18 @@ export type Database = {
         }
         Returns: Json
       }
+      recall_station_order:
+        | {
+            Args: {
+              p_order_id: string
+              p_station: Database["public"]["Enums"]["kds_station"]
+            }
+            Returns: undefined
+          }
+        | {
+            Args: { p_order_id: string; p_station: string }
+            Returns: undefined
+          }
       refresh_analytics_views: { Args: never; Returns: undefined }
       rpc_auto_generate_pos: { Args: never; Returns: undefined }
       rpc_budget_trend: {
@@ -4657,26 +4676,16 @@ export type Database = {
         Returns: undefined
       }
       rpc_update_abc_classification: { Args: never; Returns: undefined }
-      update_order_item_station_status:
-        | {
-            Args: {
-              p_item_id: string
-              p_order_id: string
-              p_station: Database["public"]["Enums"]["kds_station"]
-              p_status: Database["public"]["Enums"]["kds_item_status"]
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_expected_status?: Database["public"]["Enums"]["kds_item_status"]
-              p_item_id: string
-              p_order_id: string
-              p_station: Database["public"]["Enums"]["kds_station"]
-              p_status: Database["public"]["Enums"]["kds_item_status"]
-            }
-            Returns: undefined
-          }
+      update_order_item_station_status: {
+        Args: {
+          p_expected_status?: string
+          p_item_id: string
+          p_order_id: string
+          p_station: string
+          p_status: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       abc_class: "A" | "B" | "C"
@@ -4711,6 +4720,8 @@ export type Database = {
         | "fryer"
         | "cold"
         | "unassigned"
+        | "mains"
+        | "pizza"
       loyalty_tier: "bronze" | "silver" | "gold" | "platinum"
       order_status:
         | "new"
@@ -4914,6 +4925,8 @@ export const Constants = {
         "fryer",
         "cold",
         "unassigned",
+        "mains",
+        "pizza",
       ],
       loyalty_tier: ["bronze", "silver", "gold", "platinum"],
       order_status: [
