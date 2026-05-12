@@ -30,6 +30,55 @@ export default function DriverPWAShell({ locale, children }: Props) {
     }
   }, [])
 
+  // Screen Wake Lock API
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('wakeLock' in navigator)) return
+
+    let sentinel: any = null
+
+    async function acquire() {
+      if (sentinel) return
+      try {
+        sentinel = await (navigator as any).wakeLock.request('screen')
+      } catch (err) {
+        console.error('[WakeLock] Request failed:', err)
+      }
+    }
+
+    async function release() {
+      if (sentinel) {
+        try {
+          await sentinel.release()
+        } catch (err) {
+          console.error('[WakeLock] Release failed:', err)
+        }
+        sentinel = null
+      }
+    }
+
+    const handleEvent = (e: any) => {
+      if (e.detail?.active) acquire()
+      else release()
+    }
+
+    window.addEventListener('driver:wake-lock', handleEvent as EventListener)
+
+    const handleVisibility = () => {
+      if (sentinel !== null && document.visibilityState === 'visible') {
+        // Re-acquire if app returns to foreground and we previously had a lock
+        sentinel = null // reset local reference before re-requesting
+        acquire()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.removeEventListener('driver:wake-lock', handleEvent as EventListener)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      release()
+    }
+  }, [])
+
   // Online / offline detection
   useEffect(() => {
     setOffline(!navigator.onLine)

@@ -36,6 +36,8 @@ export type PointsTransactionType = 'earned' | 'redeemed' | 'expired' | 'bonus';
 export type ContactMessageStatus = 'new' | 'read' | 'replied';
 export type AuditLogAction       = 'INSERT' | 'UPDATE' | 'DELETE';
 export type WaitlistStatus       = 'waiting' | 'notified' | 'seated' | 'cancelled';
+export type ReservationStatus    = 'pending' | 'confirmed' | 'seated' | 'no_show' | 'cancelled' | 'completed';
+export type ReservationSource    = 'website' | 'phone' | 'walk_in' | 'staff';
 
 // ── Row aliases ──────────────────────────────────────────────────────────────
 
@@ -63,6 +65,7 @@ export type PaymentWebhookRow     = Tables<'payment_webhooks'>;
 export type ReportAuditLogRow     = Tables<'report_audit_log'>;
 export type CashHandoverRow       = Tables<'cash_handovers'>;
 export type WaitlistEntryRow      = Tables<'waitlist_entries'>;
+export type ReservationRow        = Tables<'reservations'>;
 
 // `staff_basic` already includes the extended employment columns, so the legacy
 // StaffExtendedRow alias points at the same row type.

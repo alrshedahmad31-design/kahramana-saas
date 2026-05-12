@@ -60,6 +60,19 @@ export default function DriverDashboard({
   const [clock,              setClock]              = useState(formatClock)
   const [showHandover,       setShowHandover]       = useState(false)
   const [reminderDismissed,  setReminderDismissed]  = useState(false)
+  
+  // Screen Wake Lock control: keep screen on if there is any active delivery
+  const hasActiveOrder = useMemo(() => 
+    orders.some(o => o.status === 'out_for_delivery'),
+    [orders]
+  )
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('driver:wake-lock', { 
+        detail: { active: hasActiveOrder } 
+      }))
+    }
+  }, [hasActiveOrder])
 
   const [userLocation,    setUserLocation]    = useState<{ lat: number, lng: number } | null>(null)
   const [gpsStatus,       setGpsStatus]       = useState<'idle' | 'tracking' | 'error' | 'denied'>('idle')

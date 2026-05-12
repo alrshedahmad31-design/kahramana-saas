@@ -34,6 +34,7 @@ export type DashboardSection =
   | 'pos'
   | 'waiter'
   | 'waitlist'
+  | 'reservations'
   | 'promotions'
   | 'tables'
 
@@ -67,6 +68,7 @@ const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   pos:                    ['owner', 'general_manager', 'branch_manager', 'cashier'],
   waiter:                 ['owner', 'general_manager', 'branch_manager', 'cashier', 'waiter'],
   waitlist:               ['owner', 'general_manager', 'branch_manager', 'cashier', 'waiter'],
+  reservations:           ['owner', 'general_manager', 'branch_manager', 'cashier', 'waiter'],
   promotions:             ['owner', 'general_manager', 'branch_manager', 'marketing'],
   tables:                 ['owner', 'general_manager', 'branch_manager', 'waiter'],
 }
