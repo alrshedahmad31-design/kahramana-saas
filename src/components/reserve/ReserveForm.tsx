@@ -1,14 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useMemo, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { Check, Loader2, MessageCircle } from 'lucide-react'
 import {
   createPublicReservation,
-  publicFindAvailableTables,
   type CreatePublicReservationInput,
-  type PublicAvailableTable,
   type CreatePublicReservationResult,
 } from '@/app/[locale]/reserve/actions'
 
@@ -97,42 +95,6 @@ export default function ReserveForm({ locale, branches }: Props) {
   const [turnstileToken, setTurnstileToken] = useState('')
   const turnstileRef = useRef<TurnstileInstance | null>(null)
 
-  // ── Availability lookup ────────────────────────────────────────────────
-  const [available, setAvailable] = useState<PublicAvailableTable[] | null>(null)
-  const [availLoading, setAvailLoading] = useState(false)
-
-  useEffect(() => {
-    const iso = combineDateTimeToISO(form.reserved_date, form.reserved_time)
-    if (!iso || !form.branch_id || form.party_size < 1) {
-      setAvailable(null)
-      return
-    }
-
-    let cancelled = false
-    setAvailLoading(true)
-    publicFindAvailableTables({
-      branch_id:        form.branch_id,
-      party_size:       form.party_size,
-      reserved_for:     iso,
-      duration_minutes: 90,
-    })
-      .then((rows) => {
-        if (cancelled) return
-        setAvailable(rows)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setAvailable([])
-      })
-      .finally(() => {
-        if (cancelled) return
-        setAvailLoading(false)
-      })
-
-    return () => { cancelled = true }
-  }, [form.branch_id, form.reserved_date, form.reserved_time, form.party_size])
-
-  const slotFull = available !== null && available.length === 0
   const minDate = useMemo(() => todayISODate(), [])
   const maxDate = useMemo(() => maxISODate(), [])
 
@@ -352,18 +314,6 @@ export default function ReserveForm({ locale, branches }: Props) {
             )
           })}
         </div>
-        {form.branch_id && form.reserved_date && form.reserved_time && (
-          <p className={`mt-3 text-xs ${slotFull ? 'text-brand-error' : 'text-brand-muted'}`}>
-            {availLoading ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                {t('checkingAvailability')}
-              </span>
-            ) : slotFull ? (
-              t('errorConflict')
-            ) : null}
-          </p>
-        )}
       </Section>
 
       {/* D. Party size */}
