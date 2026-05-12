@@ -158,15 +158,15 @@ export default function Header() {
             href="/"
             onClick={closeMenu}
             aria-label={isRTL ? 'الرئيسية' : 'Home'}
-            className="shrink-0 h-full flex items-center overflow-hidden transition-transform hover:scale-105 active:scale-95"
+            className="shrink-0 flex items-center transition-transform hover:scale-105 active:scale-95"
           >
             <Image
-              src="/assets/logo.svg"
+              src="/assets/brand/logo-full.webp"
               alt={isRTL ? 'كهرمانة بغداد' : 'Kahramana Baghdad'}
-              width={326}
-              height={766}
+              width={526}
+              height={335}
               priority
-              className={`transition-all duration-500 ${isScrolled ? 'w-5 h-auto' : 'w-7 h-auto'}`}
+              className={`transition-all duration-500 ${isScrolled ? 'h-8 w-auto' : 'h-10 w-auto'}`}
             />
           </Link>
 
