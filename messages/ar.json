@@ -1155,6 +1155,7 @@
     "offlineHint": "ستُزامَن تحديثات الحالة عند اتصالك مجدداً",
     "backToDashboard": "لوحة التحكم",
     "emergency": "طوارئ",
+    "emergencyMessage": "طارئ — أحتاج مساعدة فورية",
     "completedToday": "مُسلَّمة اليوم",
     "noCompleted": "لم يتم تسليم أي طلبات بعد اليوم",
     "deliveredAt": "تم التسليم في",

@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { useState, useEffect } from 'react'
 import { buildWaLinkForPhone } from '@/constants/contact'
 
 interface Props {
@@ -16,9 +17,20 @@ interface Props {
   clock:             string
 }
 
+function isValidPhone(p: string | undefined): boolean {
+  if (!p) return false
+  const digits = p.replace(/\D/g, '')
+  return digits.length >= 7
+}
+
 export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute, completedToday, totalRevenue, avgDeliveryMins, hoursToday, isRTL, clock }: Props) {
   const t = useTranslations('driver')
+  const [mounted, setMounted] = useState(false)
   const emergencyPhone = process.env.NEXT_PUBLIC_EMERGENCY_PHONE
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <header className="shrink-0 border-b border-brand-border bg-brand-surface">
@@ -27,23 +39,29 @@ export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute
         <div className="flex items-center gap-3">
           <div className={`w-2.5 h-2.5 rounded-full shrink-0 transition-colors duration-300 ${isOnline ? 'bg-brand-success animate-pulse' : 'bg-brand-muted'}`} />
           <h1 className={`font-satoshi font-black text-lg text-brand-text ${isRTL ? 'font-almarai' : ''}`}>
-            {isRTL ? 'شاشة التوصيل' : 'Deliveries'}
+            {t('title')}
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
-          <span suppressHydrationWarning className="font-satoshi text-sm text-brand-muted tabular-nums hidden sm:block">{clock}</span>
+          {mounted && (
+            <span className="font-satoshi text-sm text-brand-muted tabular-nums hidden sm:block">
+              {clock}
+            </span>
+          )}
 
           {/* Emergency Button */}
-          {emergencyPhone && (
+          {mounted && isValidPhone(emergencyPhone) && (
             <a
-              href={buildWaLinkForPhone(emergencyPhone, 'طارئ — أحتاج مساعدة فورية')}
+              id="driver-sos-button"
+              href={buildWaLinkForPhone(emergencyPhone!, t('emergencyMessage'))}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-150 animate-pulse-slow"
+              aria-label={t('emergency')}
             >
-              <span className="text-sm">🆘</span>
-              <span className={`font-black text-xs uppercase tracking-tight ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+              <span className="text-sm" aria-hidden="true">🆘</span>
+              <span className={`font-black text-xs uppercase tracking-tight pointer-events-none ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                 {t('emergency')}
               </span>
             </a>

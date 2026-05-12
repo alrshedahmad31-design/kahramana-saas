@@ -1155,6 +1155,7 @@
     "offlineHint": "Status updates will sync when you reconnect",
     "backToDashboard": "Dashboard",
     "emergency": "Emergency",
+    "emergencyMessage": "Emergency — I need immediate assistance",
     "completedToday": "Completed Today",
     "noCompleted": "No deliveries completed yet today",
     "deliveredAt": "Delivered at",

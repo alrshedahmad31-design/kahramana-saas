@@ -39,6 +39,7 @@ export async function driverBumpOrder(
   }
   // Audit fix #1: driver-only (expanded to Manager+ for supervision).
   if (!isDriver(user.role) && !isManagerPlus(user.role)) {
+    console.error(`[driver-actions] Auth failure: user ${user.id} with role ${user.role} tried to bump order ${orderId}`)
     return { success: false, error: 'Unauthorized: Driver access only' }
   }
 
@@ -138,7 +139,10 @@ export async function driverBumpOrder(
 export async function markDriverArrived(orderId: string): Promise<DriverActionResult> {
   const user = await getSession()
   // Audit fix #1: driver-only (expanded to Manager+ for supervision).
-  if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) return { success: false, error: 'Unauthorized' }
+  if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
+    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to mark arrived for ${orderId}`)
+    return { success: false, error: 'Unauthorized: Driver or Manager access required' }
+  }
 
   const service = createServiceClient()
   const { data: order, error: fetchError } = await service
@@ -158,7 +162,8 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
   }
   // Only the assigned driver may mark arrival (Managers bypass).
   if (order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
-    return { success: false, error: 'Unauthorized' }
+    console.error(`[driver-actions] Ownership failure: user ${user.id} tried to mark arrived for order ${orderId} assigned to ${order.assigned_driver_id}`)
+    return { success: false, error: 'Unauthorized: Order is assigned to another driver' }
   }
 
   const now = new Date().toISOString()
@@ -186,7 +191,8 @@ export async function postDriverLocation(
 ): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
-    return { success: false, error: 'Unauthorized' }
+    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to post location`)
+    return { success: false, error: 'Unauthorized: Driver role required for tracking' }
   }
 
   // Audit fix #2: verify the order this location belongs to is actually
@@ -240,7 +246,8 @@ export async function postDriverLocation(
 export async function toggleDriverAvailability(): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
-    return { success: false, error: 'Unauthorized' }
+    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to toggle availability`)
+    return { success: false, error: 'Unauthorized: Driver role required' }
   }
 
   const supabase = await createClient()
@@ -312,7 +319,8 @@ export async function submitCashHandover(
 ): Promise<DriverActionResult & { totalExpected?: number }> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
-    return { success: false, error: 'Unauthorized' }
+    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to submit handover`)
+    return { success: false, error: 'Unauthorized: Driver role required' }
   }
 
   // Audit fix #5: cash amount must be finite and non-negative.
@@ -413,7 +421,8 @@ export async function submitDriverIssue(
 ): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
-    return { success: false, error: 'Unauthorized' }
+    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to submit issue for ${orderId}`)
+    return { success: false, error: 'Unauthorized: Driver or Manager access required' }
   }
 
   if (!reason.trim()) {
@@ -439,7 +448,8 @@ export async function submitDriverIssue(
   const isOwnedByDriver = order.assigned_driver_id === user.id
   const isClaimable     = order.status === 'ready'
   if (!isOwnedByDriver && !isClaimable && !isManagerPlus(user.role)) {
-    return { success: false, error: 'Unauthorized' }
+    console.error(`[driver-actions] Auth failure: user ${user.id} tried to submit issue for ${orderId} (not owned, not claimable)`)
+    return { success: false, error: 'Unauthorized: You do not have permission for this order' }
   }
 
   const service = await createServiceClient()
@@ -465,7 +475,8 @@ export async function reportDeliveryFailure(
   const user = await getSession()
   // Audit fix #1: driver-only (expanded to Manager+ for supervision).
   if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
-    return { success: false, error: 'Unauthorized' }
+    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to report failure for ${orderId}`)
+    return { success: false, error: 'Unauthorized: Driver or Manager access required' }
   }
 
   if (!reason.trim()) {
@@ -541,8 +552,11 @@ export async function uploadDeliveryProof(
   imageFile: File
 ): Promise<DriverActionResult & { url?: string }> {
   const user = await getSession()
-  if (!user || user.role !== 'driver') {
-    return { success: false, error: 'Unauthorized' }
+  if (!user) return { success: false, error: 'Login Required' }
+
+  if (!isDriver(user.role) && !isManagerPlus(user.role)) {
+    console.error(`[driver-actions] Auth failure: user ${user.id} with role ${user.role} tried to upload proof for order ${orderId}`)
+    return { success: false, error: 'Unauthorized: Driver or Manager access only' }
   }
 
   const supabase = await createClient()
@@ -555,7 +569,10 @@ export async function uploadDeliveryProof(
     .single()
 
   if (fetchErr || !order) return { success: false, error: 'Order not found' }
-  if (order.assigned_driver_id !== user.id) {
+  
+  const isManager = isManagerPlus(user.role)
+  if (order.assigned_driver_id !== user.id && !isManager) {
+    console.error(`[driver-actions] Ownership failure: user ${user.id} tried to upload proof for order ${orderId} assigned to ${order.assigned_driver_id}`)
     return { success: false, error: 'Unauthorized: Order not assigned to you' }
   }
 
@@ -572,11 +589,6 @@ export async function uploadDeliveryProof(
   if (uploadErr) return { success: false, error: `Upload failed: ${uploadErr.message}` }
 
   // 3. Get public URL (or signed URL if private)
-  // Since the bucket is private (public: false in migration), we generate a signed URL.
-  // We'll give it a long expiry (e.g. 10 years) for archival purposes,
-  // or just store the path and let the UI handle signed URLs.
-  // The user prompt said: "3. احصل على signed URL أو public URL"
-  // For simplicity and to match "delivery_proof_url TEXT", we'll get a long-lived signed URL.
   const { data: signed } = await supabase.storage
     .from('delivery-proofs')
     .createSignedUrl(fileName, 315360000) // 10 years
