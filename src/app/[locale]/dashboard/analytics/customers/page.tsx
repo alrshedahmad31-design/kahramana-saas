@@ -34,16 +34,17 @@ export default async function CustomersAnalyticsPage({ params, searchParams }: P
   if (!user) redirect(`/${locale}/login`)
   if (!canAccessAnalytics(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
-  const range    = buildDateRange(sp.range ?? '30d', sp.from, sp.to)
-  const prev     = buildPrevRange(range)
-  const branchId = user.branch_id ?? undefined
+  const range         = buildDateRange(sp.range ?? '30d', sp.from, sp.to)
+  const prev          = buildPrevRange(range)
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  const branchId      = isGlobalAdmin ? undefined : (user.branch_id ?? undefined)
 
   const [metrics, secondary, segments, topCustomers, sources] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getSecondaryMetrics(range.from, range.to, branchId),
-    getCustomerSegmentSummary(),
-    getTopCustomers(10),
-    getOrderSourceBreakdown(),
+    getCustomerSegmentSummary(branchId),
+    getTopCustomers(10, branchId),
+    getOrderSourceBreakdown(branchId),
   ])
 
   const currency  = t('currency')

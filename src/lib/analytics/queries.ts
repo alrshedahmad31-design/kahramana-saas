@@ -383,7 +383,11 @@ export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: s
 
 // ── Branch comparison (summary per branch in the date range) ──────────────────
 
-export async function getBranchSummaries(from: Date, to: Date): Promise<BranchSummary[]> {
+export async function getBranchSummaries(
+  from:      Date,
+  to:        Date,
+  branchId?: string,
+): Promise<BranchSummary[]> {
   const sb = createServiceClient()
   let q = sb
     .from('orders')
@@ -392,7 +396,9 @@ export async function getBranchSummaries(from: Date, to: Date): Promise<BranchSu
     .gte('created_at', toISO(from))
     .lte('created_at', toISO(to))
 
-  if (HIDDEN_BRANCHES.length > 0) {
+  if (branchId) {
+    q = q.eq('branch_id', branchId)
+  } else if (HIDDEN_BRANCHES.length > 0) {
     q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
@@ -448,91 +454,331 @@ export async function getMenuReportData(
 }
 
 // ── Customer segment summary ──────────────────────────────────────────────────
+// Global path uses customer_segments_view (over customer_lifetime_value).
+// Scoped path re-aggregates from orders for a single branch since the view
+// has no branch_id column.
 
-export async function getCustomerSegmentSummary(): Promise<CustomerSegmentSummary[]> {
+function classifySegment(orderCount: number): CustomerSegmentSummary['segment'] {
+  if (orderCount >= 20) return 'vip'
+  if (orderCount >= 5)  return 'regular'
+  if (orderCount >= 2)  return 'occasional'
+  return 'one_time'
+}
+
+export async function getCustomerSegmentSummary(branchId?: string): Promise<CustomerSegmentSummary[]> {
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb as any)
-    .from('customer_segments_view')
-    .select('segment, total_spent_bhd, avg_order_value_bhd')
+
+  if (!branchId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (sb as any)
+      .from('customer_segments_view')
+      .select('segment, total_spent_bhd, avg_order_value_bhd')
+
+    if (error || !data) return []
+
+    const map = new Map<string, CustomerSegmentSummary>()
+    for (const row of data as { segment: string; total_spent_bhd: number; avg_order_value_bhd: number }[]) {
+      const seg = row.segment as CustomerSegmentSummary['segment']
+      const existing = map.get(seg)
+      if (existing) {
+        existing.customer_count += 1
+        existing.total_revenue  += row.total_spent_bhd ?? 0
+      } else {
+        map.set(seg, {
+          segment:       seg,
+          customer_count: 1,
+          total_revenue:  row.total_spent_bhd ?? 0,
+          avg_order_value: row.avg_order_value_bhd ?? 0,
+        })
+      }
+    }
+    return Array.from(map.values())
+  }
+
+  // Scoped: aggregate per-phone from orders within this branch
+  const { data, error } = await sb
+    .from('orders')
+    .select('customer_phone, total_bhd')
+    .eq('branch_id', branchId)
+    .not('status', 'in', `(${excludedStatuses().join(',')})`)
+    .not('customer_phone', 'is', null)
 
   if (error || !data) return []
 
-  const map = new Map<string, CustomerSegmentSummary>()
-  for (const row of data as { segment: string; total_spent_bhd: number; avg_order_value_bhd: number }[]) {
-    const seg = row.segment as CustomerSegmentSummary['segment']
-    const existing = map.get(seg)
-    if (existing) {
-      existing.customer_count += 1
-      existing.total_revenue  += row.total_spent_bhd ?? 0
-    } else {
-      map.set(seg, {
-        segment:       seg,
-        customer_count: 1,
-        total_revenue:  row.total_spent_bhd ?? 0,
-        avg_order_value: row.avg_order_value_bhd ?? 0,
-      })
-    }
+  const perPhone = new Map<string, { count: number; total: number }>()
+  for (const row of data) {
+    const phone = row.customer_phone as string | null
+    if (!phone) continue
+    const existing = perPhone.get(phone) ?? { count: 0, total: 0 }
+    existing.count += 1
+    existing.total += Number(row.total_bhd ?? 0)
+    perPhone.set(phone, existing)
   }
-  return Array.from(map.values())
+
+  const segMap = new Map<CustomerSegmentSummary['segment'], { count: number; total: number; aovSum: number; aovN: number }>()
+  for (const { count, total } of perPhone.values()) {
+    const seg = classifySegment(count)
+    const aov = count > 0 ? total / count : 0
+    const existing = segMap.get(seg) ?? { count: 0, total: 0, aovSum: 0, aovN: 0 }
+    existing.count  += 1
+    existing.total  += total
+    existing.aovSum += aov
+    existing.aovN   += 1
+    segMap.set(seg, existing)
+  }
+
+  return Array.from(segMap.entries()).map(([segment, agg]) => ({
+    segment,
+    customer_count:  agg.count,
+    total_revenue:   agg.total,
+    avg_order_value: agg.aovN > 0 ? agg.aovSum / agg.aovN : 0,
+  }))
 }
 
 // ── Top customers by lifetime value ──────────────────────────────────────────
 
-export async function getTopCustomers(limit = 10): Promise<TopCustomer[]> {
+export async function getTopCustomers(limit = 10, branchId?: string): Promise<TopCustomer[]> {
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb as any)
-    .from('customer_segments_view')
-    .select('customer_phone,customer_name,order_count,total_spent_bhd,avg_order_value_bhd,first_order_at,last_order_at,segment')
-    .order('total_spent_bhd', { ascending: false })
-    .limit(limit)
+
+  if (!branchId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (sb as any)
+      .from('customer_segments_view')
+      .select('customer_phone,customer_name,order_count,total_spent_bhd,avg_order_value_bhd,first_order_at,last_order_at,segment')
+      .order('total_spent_bhd', { ascending: false })
+      .limit(limit)
+
+    if (error || !data) return []
+    return data as TopCustomer[]
+  }
+
+  // Scoped: aggregate from orders within this branch
+  const { data, error } = await sb
+    .from('orders')
+    .select('customer_phone, customer_name, total_bhd, created_at')
+    .eq('branch_id', branchId)
+    .not('status', 'in', `(${excludedStatuses().join(',')})`)
+    .not('customer_phone', 'is', null)
 
   if (error || !data) return []
-  return data as TopCustomer[]
+
+  type Agg = { phone: string; name: string | null; count: number; total: number; first: string; last: string }
+  const perPhone = new Map<string, Agg>()
+  for (const row of data) {
+    const phone = row.customer_phone as string | null
+    if (!phone) continue
+    const total = Number(row.total_bhd ?? 0)
+    const created = String(row.created_at)
+    const existing = perPhone.get(phone)
+    if (existing) {
+      existing.count += 1
+      existing.total += total
+      if (created < existing.first) existing.first = created
+      if (created > existing.last)  existing.last  = created
+      if (!existing.name && row.customer_name) existing.name = row.customer_name as string
+    } else {
+      perPhone.set(phone, {
+        phone,
+        name:  (row.customer_name as string | null) ?? null,
+        count: 1,
+        total,
+        first: created,
+        last:  created,
+      })
+    }
+  }
+
+  return Array.from(perPhone.values())
+    .sort((a, b) => b.total - a.total)
+    .slice(0, limit)
+    .map((a) => ({
+      customer_phone:      a.phone,
+      customer_name:       a.name,
+      order_count:         a.count,
+      total_spent_bhd:     a.total,
+      avg_order_value_bhd: a.count > 0 ? a.total / a.count : 0,
+      first_order_at:      a.first,
+      last_order_at:       a.last,
+      segment:             classifySegment(a.count),
+    }))
 }
 
 // ── Menu item performance (from matview) ──────────────────────────────────────
+// Global path uses the matview (all-time, all branches).
+// Scoped path re-aggregates from order_items joined to orders within branch
+// and optional date range. Profit estimate keeps the matview's 65% margin.
 
-export async function getMenuItemPerformance(limit = 60): Promise<MenuItemPerformanceRow[]> {
+export async function getMenuItemPerformance(
+  limit     = 60,
+  branchId?: string,
+  from?:     Date,
+  to?:       Date,
+): Promise<MenuItemPerformanceRow[]> {
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb as any)
-    .from('menu_item_performance')
-    .select('*')
-    .order('total_revenue', { ascending: false })
-    .limit(limit)
 
+  if (!branchId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (sb as any)
+      .from('menu_item_performance')
+      .select('*')
+      .order('total_revenue', { ascending: false })
+      .limit(limit)
+
+    if (error || !data) return []
+    return data as MenuItemPerformanceRow[]
+  }
+
+  let q = sb
+    .from('order_items')
+    .select('menu_item_slug, name_ar, name_en, quantity, item_total_bhd, unit_price_bhd, orders!inner(branch_id, status, created_at)')
+    .eq('orders.branch_id', branchId)
+    .not('orders.status', 'in', `(${excludedStatuses().join(',')})`)
+  if (from) q = q.gte('orders.created_at', toISO(from))
+  if (to)   q = q.lte('orders.created_at', toISO(to))
+
+  const { data, error } = await q
   if (error || !data) return []
-  return data as MenuItemPerformanceRow[]
+
+  const map = new Map<string, MenuItemPerformanceRow & { _priceSum: number; _priceN: number }>()
+  for (const row of data) {
+    const slug = row.menu_item_slug as string
+    const qty  = Number(row.quantity ?? 0)
+    const rev  = Number(row.item_total_bhd ?? 0)
+    const unit = Number(row.unit_price_bhd ?? 0)
+    const existing = map.get(slug)
+    if (existing) {
+      existing.total_quantity   += qty
+      existing.order_count      += 1
+      existing.total_revenue    += rev
+      existing.estimated_profit += rev * 0.65
+      existing._priceSum        += unit
+      existing._priceN          += 1
+      existing.avg_price         = existing._priceSum / existing._priceN
+    } else {
+      map.set(slug, {
+        item_id:          slug,
+        name_ar:          row.name_ar as string,
+        name_en:          row.name_en as string,
+        total_quantity:   qty,
+        order_count:      1,
+        total_revenue:    rev,
+        avg_price:        unit,
+        estimated_profit: rev * 0.65,
+        _priceSum:        unit,
+        _priceN:          1,
+      })
+    }
+  }
+
+  return Array.from(map.values())
+    .map(({ _priceSum: _s, _priceN: _n, ...row }) => row)
+    .sort((a, b) => b.total_revenue - a.total_revenue)
+    .slice(0, limit)
 }
 
 // ── Coupon analytics (from view) ──────────────────────────────────────────────
+// Global path uses coupon_analytics_view. Scoped path joins coupons × orders
+// filtered to a single branch.
 
-export async function getCouponAnalytics(): Promise<CouponAnalyticsRow[]> {
+export async function getCouponAnalytics(branchId?: string): Promise<CouponAnalyticsRow[]> {
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb as any)
-    .from('coupon_analytics_view')
-    .select('*')
-    .order('revenue_with_coupon', { ascending: false })
 
-  if (error || !data) return []
-  return data as CouponAnalyticsRow[]
+  if (!branchId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (sb as any)
+      .from('coupon_analytics_view')
+      .select('*')
+      .order('revenue_with_coupon', { ascending: false })
+
+    if (error || !data) return []
+    return data as CouponAnalyticsRow[]
+  }
+
+  // Scoped: fetch coupons, then aggregate matching orders within branch.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const couponRes = await (sb as any)
+    .from('coupons')
+    .select('id, code, type, value, campaign_name, usage_count, usage_limit, is_active')
+  if (couponRes.error || !couponRes.data) return []
+  const coupons = couponRes.data as Array<Pick<CouponAnalyticsRow,
+    'id' | 'code' | 'type' | 'value' | 'campaign_name' | 'usage_count' | 'usage_limit' | 'is_active'>>
+
+  const { data: ordersData, error: ordersErr } = await sb
+    .from('orders')
+    .select('coupon_id, total_bhd, coupon_discount_bhd')
+    .eq('branch_id', branchId)
+    .not('coupon_id', 'is', null)
+    .not('status', 'in', `(${excludedStatuses().join(',')})`)
+  if (ordersErr || !ordersData) return []
+
+  const perCoupon = new Map<string, { rev: number; disc: number; count: number }>()
+  for (const row of ordersData) {
+    const id = row.coupon_id as string | null
+    if (!id) continue
+    const agg = perCoupon.get(id) ?? { rev: 0, disc: 0, count: 0 }
+    agg.rev   += Number(row.total_bhd ?? 0)
+    agg.disc  += Number(row.coupon_discount_bhd ?? 0)
+    agg.count += 1
+    perCoupon.set(id, agg)
+  }
+
+  return coupons
+    .map((c) => {
+      const agg = perCoupon.get(c.id) ?? { rev: 0, disc: 0, count: 0 }
+      const net = agg.rev - agg.disc
+      const roi = agg.disc === 0 ? null : Math.round((net / agg.disc) * 1000) / 10
+      return {
+        ...c,
+        revenue_with_coupon:     agg.rev,
+        total_discount_given:    agg.disc,
+        order_count_from_coupon: agg.count,
+        net_revenue:             net,
+        roi_percent:             roi,
+      }
+    })
+    .sort((a, b) => b.revenue_with_coupon - a.revenue_with_coupon)
 }
 
 // ── Order source breakdown ────────────────────────────────────────────────────
+// Global path uses order_source_summary view. Scoped path re-aggregates orders
+// directly for a single branch.
 
-export async function getOrderSourceBreakdown(): Promise<OrderSourceRow[]> {
+export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderSourceRow[]> {
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb as any)
-    .from('order_source_summary')
-    .select('*')
-    .order('revenue', { ascending: false })
+
+  if (!branchId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (sb as any)
+      .from('order_source_summary')
+      .select('*')
+      .order('revenue', { ascending: false })
+
+    if (error || !data) return []
+    return data as OrderSourceRow[]
+  }
+
+  const { data, error } = await sb
+    .from('orders')
+    .select('source, total_bhd')
+    .eq('branch_id', branchId)
+    .not('status', 'in', `(${excludedStatuses().join(',')})`)
 
   if (error || !data) return []
-  return data as OrderSourceRow[]
+
+  const map = new Map<string, OrderSourceRow>()
+  for (const row of data) {
+    const raw = (row.source as string | null) ?? ''
+    const src = raw.trim() === '' ? 'web' : raw.trim()
+    const existing = map.get(src)
+    if (existing) {
+      existing.order_count += 1
+      existing.revenue     += Number(row.total_bhd ?? 0)
+    } else {
+      map.set(src, { source: src, order_count: 1, revenue: Number(row.total_bhd ?? 0) })
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue)
 }
 
 // ── Operational metrics (live from orders table) ──────────────────────────────

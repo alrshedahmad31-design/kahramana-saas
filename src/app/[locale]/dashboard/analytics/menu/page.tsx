@@ -29,13 +29,14 @@ export default async function MenuAnalyticsPage({ params, searchParams }: Props)
   if (!user) redirect(`/${locale}/login`)
   if (!canAccessAnalytics(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
-  const range    = buildDateRange(sp.range ?? '30d', sp.from, sp.to)
-  const prev     = buildPrevRange(range)
-  const branchId = user.branch_id ?? undefined
+  const range         = buildDateRange(sp.range ?? '30d', sp.from, sp.to)
+  const prev          = buildPrevRange(range)
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  const branchId      = isGlobalAdmin ? undefined : (user.branch_id ?? undefined)
 
   const [_metrics, menuItems, topItemsPeriod] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
-    getMenuItemPerformance(60),
+    getMenuItemPerformance(60, branchId, range.from, range.to),
     getTopItems(range.from, range.to, 10, branchId),
   ])
 

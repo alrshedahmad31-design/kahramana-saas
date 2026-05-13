@@ -62,7 +62,7 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
     getDailySales(range.from, range.to, branchId),
     getTopItems(range.from, range.to, 10, branchId),
     getHourlyDistribution(range.from, range.to, branchId),
-    getBranchSummaries(range.from, range.to),
+    getBranchSummaries(range.from, range.to, branchId),
     getSecondaryMetrics(range.from, range.to, branchId),
     getLaborCostMetrics(range.from, range.to, branchId),
     getMenuEngineeringMatrix(range.from, range.to, branchId),
@@ -200,13 +200,15 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
           <TopItemsChart data={topItems} locale={locale} />
         </div>
 
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
-          <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-5
-            ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {isAr ? 'مقارنة الفروع' : 'Branch Comparison'}
-          </h2>
-          <BranchComparisonTable data={branches} currency={currency} locale={locale} />
-        </div>
+        {isGlobalAdmin && (
+          <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
+            <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-5
+              ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {isAr ? 'مقارنة الفروع' : 'Branch Comparison'}
+            </h2>
+            <BranchComparisonTable data={branches} currency={currency} locale={locale} />
+          </div>
+        )}
       </div>
 
       {/* Hourly heatmap */}

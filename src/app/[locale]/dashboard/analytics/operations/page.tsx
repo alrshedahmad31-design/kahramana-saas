@@ -27,14 +27,15 @@ export default async function OperationsAnalyticsPage({ params, searchParams }: 
   if (!user) redirect(`/${locale}/login`)
   if (!canAccessAnalytics(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
-  const range    = buildDateRange(sp.range ?? '7d', sp.from, sp.to)
-  const prev     = buildPrevRange(range)
-  const branchId = user.branch_id ?? undefined
+  const range         = buildDateRange(sp.range ?? '7d', sp.from, sp.to)
+  const prev          = buildPrevRange(range)
+  const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+  const branchId      = isGlobalAdmin ? undefined : (user.branch_id ?? undefined)
 
   const [metrics, opMetrics, hourly] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getOperationalMetrics(range.from, range.to, branchId),
-    getHourlyDistribution(),
+    getHourlyDistribution(range.from, range.to, branchId),
   ])
 
   const peakHour = hourly.length
