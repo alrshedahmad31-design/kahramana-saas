@@ -129,10 +129,14 @@ export async function getDashboardData(branchId?: string | null): Promise<Dashbo
   }
 
   const [
-    { data: todayRows },
-    { data: yestRows },
-    { data: itemRows },
+    { data: todayRows, error: todayErr },
+    { data: yestRows,  error: yestErr  },
+    { data: itemRows,  error: itemsErr },
   ] = await Promise.all([todayQ, yestQ, itemsQ])
+
+  if (todayErr) console.error('[dashboard:getDashboardData:today] DB error', todayErr)
+  if (yestErr)  console.error('[dashboard:getDashboardData:yesterday] DB error', yestErr)
+  if (itemsErr) console.error('[dashboard:getDashboardData:items] DB error', itemsErr)
 
   // ── Compute ──────────────────────────────────────────────────────────────────
 

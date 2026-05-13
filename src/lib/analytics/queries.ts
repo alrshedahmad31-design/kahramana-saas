@@ -194,6 +194,7 @@ export async function getMetrics(
     }
 
     const { data, error } = await q
+    if (error) console.error('[analytics:getMetrics:periodMetrics] DB error', error)
     if (error || !data) return { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, uniqueCustomers: 0 }
 
     const totalRevenue  = data.reduce((s, r) => s + (r.total_bhd ?? 0), 0)
@@ -244,6 +245,7 @@ export async function getDailySales(
   }
 
   const { data, error } = await q
+  if (error) console.error('[analytics:getDailySales] DB error', error)
   if (error || !data) return []
 
   // Group client-side into per-date-per-branch buckets
@@ -301,6 +303,7 @@ export async function getTopItems(
   }
 
   const { data, error } = await q
+  if (error) console.error('[analytics:getTopItems] DB error', error)
   if (error || !data) return []
 
   const map = new Map<string, TopItemRow>()
@@ -340,6 +343,7 @@ export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: s
       .from('hourly_order_distribution')
       .select('*')
       .order('hour_of_day', { ascending: true })
+    if (error) console.error('[analytics:getHourlyDistribution:matview] DB error', error)
     if (error || !data) return []
     return data as HourlyRow[]
   }
@@ -358,6 +362,7 @@ export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: s
   }
 
   const { data, error } = await q
+  if (error) console.error('[analytics:getHourlyDistribution:orders] DB error', error)
   if (error || !data) return []
 
   // Aggregate client-side by Bahrain hour (UTC+3)
@@ -404,6 +409,7 @@ export async function getBranchSummaries(
 
   const { data, error } = await q
 
+  if (error) console.error('[analytics:getBranchSummaries] DB error', error)
   if (error || !data) return []
 
   const map = new Map<string, BranchSummary>()
@@ -474,6 +480,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
       .from('customer_segments_view')
       .select('segment, total_spent_bhd, avg_order_value_bhd')
 
+    if (error) console.error('[analytics:getCustomerSegmentSummary:global] DB error', error)
     if (error || !data) return []
 
     const map = new Map<string, CustomerSegmentSummary>()
@@ -503,6 +510,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
     .not('customer_phone', 'is', null)
 
+  if (error) console.error('[analytics:getCustomerSegmentSummary:scoped] DB error', error)
   if (error || !data) return []
 
   const perPhone = new Map<string, { count: number; total: number }>()
@@ -548,6 +556,7 @@ export async function getTopCustomers(limit = 10, branchId?: string): Promise<To
       .order('total_spent_bhd', { ascending: false })
       .limit(limit)
 
+    if (error) console.error('[analytics:getTopCustomers:global] DB error', error)
     if (error || !data) return []
     return data as TopCustomer[]
   }
@@ -560,6 +569,7 @@ export async function getTopCustomers(limit = 10, branchId?: string): Promise<To
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
     .not('customer_phone', 'is', null)
 
+  if (error) console.error('[analytics:getTopCustomers:scoped] DB error', error)
   if (error || !data) return []
 
   type Agg = { phone: string; name: string | null; count: number; total: number; first: string; last: string }
@@ -624,6 +634,7 @@ export async function getMenuItemPerformance(
       .order('total_revenue', { ascending: false })
       .limit(limit)
 
+    if (error) console.error('[analytics:getMenuItemPerformance:global] DB error', error)
     if (error || !data) return []
     return data as MenuItemPerformanceRow[]
   }
@@ -637,6 +648,7 @@ export async function getMenuItemPerformance(
   if (to)   q = q.lte('orders.created_at', toISO(to))
 
   const { data, error } = await q
+  if (error) console.error('[analytics:getMenuItemPerformance:scoped] DB error', error)
   if (error || !data) return []
 
   const map = new Map<string, MenuItemPerformanceRow & { _priceSum: number; _priceN: number }>()
@@ -690,6 +702,7 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
       .select('*')
       .order('revenue_with_coupon', { ascending: false })
 
+    if (error) console.error('[analytics:getCouponAnalytics:global] DB error', error)
     if (error || !data) return []
     return data as CouponAnalyticsRow[]
   }
@@ -699,6 +712,7 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
   const couponRes = await (sb as any)
     .from('coupons')
     .select('id, code, type, value, campaign_name, usage_count, usage_limit, is_active')
+  if (couponRes.error) console.error('[analytics:getCouponAnalytics:scoped:coupons] DB error', couponRes.error)
   if (couponRes.error || !couponRes.data) return []
   const coupons = couponRes.data as Array<Pick<CouponAnalyticsRow,
     'id' | 'code' | 'type' | 'value' | 'campaign_name' | 'usage_count' | 'usage_limit' | 'is_active'>>
@@ -709,6 +723,7 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
     .eq('branch_id', branchId)
     .not('coupon_id', 'is', null)
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
+  if (ordersErr) console.error('[analytics:getCouponAnalytics:scoped:orders] DB error', ordersErr)
   if (ordersErr || !ordersData) return []
 
   const perCoupon = new Map<string, { rev: number; disc: number; count: number }>()
@@ -753,6 +768,7 @@ export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderS
       .select('*')
       .order('revenue', { ascending: false })
 
+    if (error) console.error('[analytics:getOrderSourceBreakdown:global] DB error', error)
     if (error || !data) return []
     return data as OrderSourceRow[]
   }
@@ -763,6 +779,7 @@ export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderS
     .eq('branch_id', branchId)
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
 
+  if (error) console.error('[analytics:getOrderSourceBreakdown:scoped] DB error', error)
   if (error || !data) return []
 
   const map = new Map<string, OrderSourceRow>()
@@ -802,6 +819,7 @@ export async function getOperationalMetrics(
   }
 
   const { data, error } = await q
+  if (error) console.error('[analytics:getOperationalMetrics] DB error', error)
   if (error || !data) {
     return { totalOrders: 0, cancelledOrders: 0, cancellationRate: 0, avgFulfillmentMinutes: 0, ordersWithFulfillmentData: 0 }
   }
@@ -844,6 +862,7 @@ export async function getCashReconciliationMetrics(
   }
 
   const { data, error } = await q
+  if (error) console.error('[analytics:getCashReconciliationMetrics] DB error', error)
   if (error || !data) {
     return { totalExpected: 0, totalActual: 0, totalDifference: 0, handoverCount: 0, pendingConfirmationCount: 0 }
   }
@@ -911,6 +930,10 @@ export async function getSecondaryMetrics(
 
   const [periodRes, prevRes, itemsRes] = await Promise.all([periodQ, prevQ, itemsQ])
 
+  if (periodRes.error) console.error('[analytics:getSecondaryMetrics:period] DB error', periodRes.error)
+  if (prevRes.error)   console.error('[analytics:getSecondaryMetrics:prev] DB error',   prevRes.error)
+  if (itemsRes.error)  console.error('[analytics:getSecondaryMetrics:items] DB error',  itemsRes.error)
+
   const periodPhones = new Set((periodRes.data ?? []).map((r) => r.customer_phone).filter(Boolean))
   const prevPhones   = new Set((prevRes.data   ?? []).map((r) => r.customer_phone).filter(Boolean))
 
@@ -945,6 +968,7 @@ export async function getLaborCostMetrics(
     p_branch_id: branchId ?? undefined,
   })
 
+  if (error) console.error('[analytics:getLaborCostMetrics] DB error', error)
   if (error || !data || data.length === 0) return null
   return data[0] as LaborCostMetrics
 }
@@ -963,6 +987,7 @@ export async function getMenuEngineeringMatrix(
     p_branch_id: branchId ?? undefined,
   })
 
+  if (error) console.error('[analytics:getMenuEngineeringMatrix] DB error', error)
   if (error || !data) return []
   return data as AnalyticsMenuEngineeringRow[]
 }
