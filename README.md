@@ -1,105 +1,39 @@
-# كهرمانة بغداد — Kahramana Baghdad
-**Full platform rebuild** | Agency: Wujood Digital | Live: kahramanat.com
+# Kahramana Baghdad — كهرمانة بغداد
+
+Production SaaS platform for a multi-branch restaurant operation in Baghdad. Live at **kahramanat.com**.
+
+Private repository. Not open source.
 
 ---
 
-## Agent Onboarding (READ FIRST)
+## Overview
 
-This project uses a structured execution system that works across all AI coding tools.
+Kahramana is a full-stack restaurant operations platform covering the customer-facing storefront and the back-of-house management surface for every branch. The system runs the menu, ordering, payments, loyalty, reservations, delivery dispatch, point-of-sale, inventory, and staff workflows from a single codebase.
 
-### File Hierarchy — Agent System
-
-```
-kahramana-web/               ← project root (open this in Antigravity)
-│
-├── .agents/                 ← Antigravity native directory
-│   ├── agents.md            ← 5 agent personas and roles
-│   ├── skills/
-│   │   ├── kahramana-context.md    ← architecture + business rules
-│   │   ├── design-system.md        ← colors, fonts, RTL, components ← load before ANY UI
-│   │   ├── phase-0-discovery.md    ← Phase 0 audit guide
-│   │   ├── project-setup.md        ← Phase 1 initialization steps
-│   │   └── phase-gate.md           ← phase verification protocol
-│   └── workflows/
-│       ├── start-session.md        ← /start-session
-│       ├── start-phase.md          ← /start-phase [N]
-│       ├── complete-phase.md        ← /complete-phase
-│       └── end-session.md          ← /end-session ← run before closing
-│
-├── .agent/                  ← tool-agnostic shared state
-│   ├── PLAN.md              ← 9-phase execution plan (source of truth)
-│   ├── phase-state.json     ← live state (update after every phase)
-│   ├── LAST-SESSION.md      ← session summary (paste into Claude.ai)
-│   └── RULES.md             ← shared enforcement rules
-│
-├── GEMINI.md                ← Antigravity-specific (highest priority)
-├── AGENTS.md                ← cross-tool shared rules
-├── CLAUDE.md                ← Claude Code wrapper
-├── GUARDRAILS.md            ← safety constraints
-├── .env.example             ← all required env vars
-├── .env.local               ← create from .env.example (never commit)
-│
-├── docs/
-│   ├── audit/               ← Phase 0 deliverables (5 files)
-│   └── KAHRAMANA-DESIGN-SYSTEM.docx  ← original design system (human reference)
-│
-│ ── BELOW: Next.js project (created at Phase 1 start) ──
-│
-├── src/
-│   ├── app/
-│   │   ├── (marketing)/     ← Homepage, Menu, About, Contact
-│   │   ├── (ordering)/      ← Cart, Checkout, Confirmation
-│   │   └── (dashboard)/     ← Admin panel
-│   ├── components/
-│   │   ├── menu/
-│   │   ├── cart/
-│   │   ├── checkout/
-│   │   ├── layout/
-│   │   └── ui/
-│   ├── lib/
-│   │   ├── design-tokens.ts ← SINGLE SOURCE — import all values from here
-│   │   ├── supabase/
-│   │   └── sanity/
-│   ├── i18n/
-│   └── messages/
-│       ├── ar.json          ← Arabic (primary)
-│       └── en.json          ← English (secondary)
-│
-├── public/
-│   ├── fonts/               ← Editorial New + Satoshi woff2 files
-│   └── images/
-│
-├── sanity/                  ← Sanity CMS schemas
-├── next.config.ts
-├── tailwind.config.ts
-└── package.json
-```
-
-### How to Start a Session
-
-**في Antigravity**: اكتب `/start-session`
-**في Claude Code**: الـ agent يقرأ `CLAUDE.md` ويعرض الحالة تلقائياً
-**في Claude.ai (هنا)**: انسخ محتوى `.agent/LAST-SESSION.md` في بداية المحادثة
-
-### How to End a Session
-
-**في Antigravity**: اكتب `/end-session` — يحدّث `phase-state.json` و`LAST-SESSION.md` معاً
-**في Claude Code**: حدّث `.agent/LAST-SESSION.md` يدوياً قبل الإغلاق
-
-### How to Progress a Phase
-
-1. Complete all deliverables listed in `.agent/PLAN.md` for the current phase
-2. Run `/complete-phase` (Antigravity) or the verification commands in `CLAUDE.md`
-3. All checks must pass — phase-state.json is updated only after verification
-4. Next phase unlocks automatically
+The interface is bilingual (Arabic primary, English secondary) with full RTL support, and the platform is designed for the Iraqi market — IQD currency, local payment rails, and WhatsApp-driven customer comms.
 
 ---
 
-## Current Status
+## Feature Surface
 
-See `.agent/phase-state.json` for live state.
+### Customer
+- Bilingual marketing site, menu, and branch pages
+- Cart, checkout, and order confirmation with Tap Payments + cash-on-delivery
+- Loyalty program with tiers, points accrual, and reward redemption
+- Reservations with branch-level availability
+- Order tracking and WhatsApp notifications
+- Delivery flow with live driver status
 
-**Phase 0** (Discovery & Audit) → **Status: pending**
+### Operations (Admin Dashboard)
+- Multi-branch management with per-branch menus, hours, and staff
+- Real-time order queue, kitchen display, and status transitions
+- Point-of-sale (POS) for in-store and takeaway orders
+- Inventory tracking with stock movements and low-stock alerts
+- Delivery dispatch, driver assignment, and earnings ledger
+- Reservations calendar and capacity management
+- Staff management — roles, schedules, PINs, shifts
+- Loyalty program controls and customer CRM
+- Reporting on sales, payments, refunds, and operational KPIs
 
 ---
 
@@ -107,26 +41,46 @@ See `.agent/phase-state.json` for live state.
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 15 App Router |
-| Language | TypeScript strict |
-| Styling | Tailwind CSS v4 (logical properties only) |
-| Database | Supabase |
-| CMS | Sanity |
-| i18n | next-intl (AR primary) |
-| Animations | Framer Motion |
-| Hosting | Vercel Pro |
+| Framework | Next.js 15 (App Router, React 19) |
+| Language | TypeScript (strict) |
+| Styling | Tailwind CSS v4 — CSS logical properties only (RTL-safe) |
+| Database | Supabase (Postgres + Row Level Security) |
+| Auth | Supabase Auth (`@supabase/ssr`) |
+| Realtime | Supabase Realtime channels |
+| CMS | Sanity (marketing content) |
+| i18n | next-intl — Arabic primary, English secondary |
+| Payments | Tap Payments (cards) + COD |
+| Messaging | WhatsApp Business API |
+| Monitoring | Sentry |
+| Rate limiting | Upstash Redis |
+| Hosting | Vercel (Pro) |
 
 ---
 
-## Critical Rules Summary
+## Architecture Notes
 
-```
-OK ps-4 pe-4 ms-auto me-4     (CSS logical properties — RTL safe)
-NO pl-4 pr-4 ml-auto mr-4     (FORBIDDEN — breaks RTL)
+- All data access goes through Supabase with RLS enforced on every table
+- Sensitive write paths use RPCs (`rpc_create_order`, etc.) with server-side validation
+- Bilingual content is split between next-intl message catalogues (`ar.json` / `en.json`) for UI and Sanity for marketing copy
+- A single design-token source (`src/lib/design-tokens.ts`) governs colors, typography, and spacing — no raw hex values in components
+- Background jobs and webhooks (Tap, WhatsApp) run as Next.js route handlers on Vercel Functions
 
-OK useTranslations('key')      (all text via next-intl)
-NO <h1>Arabic text here</h1>   (FORBIDDEN — hardcoded strings)
+---
 
-OK RLS on every Supabase table
-NO Table without RLS policy
-```
+## Deployment
+
+- **Platform**: Vercel Pro
+- **Primary domain**: kahramanat.com
+- **Branching**: `master` → production; preview deployments per PR
+- **Environment**: secrets managed via Vercel project env (mirrored locally in `.env.local`, never committed)
+- **Observability**: Sentry for errors + Vercel Analytics for performance
+
+---
+
+## Repository Conventions
+
+This codebase is governed by a structured agent workflow. See `AGENTS.md` (shared rules), `CLAUDE.md` (Claude Code wrapper), and `.agent/PLAN.md` (execution plan) for the working contract. Phase gates and verification commands are enforced before any phase is marked complete.
+
+---
+
+© Kahramana Baghdad. All rights reserved.
