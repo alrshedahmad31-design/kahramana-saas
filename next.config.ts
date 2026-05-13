@@ -149,11 +149,6 @@ const nextConfig: NextConfig = {
     // stripping legacy polyfills (Array.at, flat, Object.fromEntries, etc.)
     // without needing browsersListForSwc flag.
     optimizePackageImports: ['gsap', 'framer-motion', 'date-fns', 'lucide-react'],
-    // Emit sourcemaps for the server bundle so the Sentry build plugin can
-    // symbolicate the UUID-named server chunks (.next/server/chunks/*.js).
-    // Pairs with productionBrowserSourceMaps above; together they cover
-    // both halves of the deploy so stack traces are readable in Sentry.
-    serverSourceMaps: true,
   },
 }
 
@@ -180,6 +175,15 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   // turned off by an upstream default change.
   sourcemaps: {
     disable: false,
+  },
+
+  // Explicit glob covering both client (.next/static/**) and server
+  // (.next/server/**) chunks. Replaces experimental.serverSourceMaps,
+  // which Next.js 15.5 ignored for the UUID-named server chunks.
+  unstable_sentryWebpackPluginOptions: {
+    sourcemaps: {
+      assets: ['.next/**/*.js', '.next/**/*.js.map'],
+    },
   },
 
   // Upload a larger set of source maps for prettier stack traces (increases build time)
