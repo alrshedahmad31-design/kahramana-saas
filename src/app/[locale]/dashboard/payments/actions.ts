@@ -30,7 +30,10 @@ export async function refundPayment(
   if (fetchErr || !payment) return { error: 'payment_not_found' }
   if (payment.status !== 'completed') return { error: 'not_refundable' }
 
-  const { error: updateErr } = await supabase
+  // CAS on status='completed': two simultaneous refund clicks both pass the
+  // read-side check above; only one update will land. The other gets a clear
+  // error instead of an audit log entry claiming success.
+  const { data: updated, error: updateErr } = await supabase
     .from('payments')
     .update({
       status:     'refunded',
@@ -38,8 +41,13 @@ export async function refundPayment(
       refund_amount_bhd: payment.amount_bhd,
     })
     .eq('id', paymentId)
+    .eq('status', 'completed')
+    .select('id')
 
   if (updateErr) return { error: 'update_failed' }
+  if (!updated || updated.length === 0) {
+    return { error: 'refund_already_processed_or_status_changed' }
+  }
 
   // Financial event — must be auditable. Best-effort: do not fail the refund
   // if the log insert fails (matches the pattern in coupons/delivery actions).
