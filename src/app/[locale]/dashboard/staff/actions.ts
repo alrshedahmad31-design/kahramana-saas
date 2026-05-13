@@ -140,12 +140,22 @@ export async function updateStaff(input: UpdateStaffInput): Promise<ActionResult
   }
 
   const service = await createServiceClient()
-  const { error } = await service
+  // CAS: pin to the row state we just permission-checked. A concurrent role
+  // or branch reassignment will flip these columns and the update returns no
+  // rows — we bail with a retryable error rather than silently overwriting.
+  let q = service
     .from('staff_basic')
     .update({ name: input.name.trim(), role: input.role, branch_id: input.branch_id })
     .eq('id', input.id)
+    .eq('role', target.role)
+    .eq('is_active', target.is_active)
+  q = target.branch_id == null ? q.is('branch_id', null) : q.eq('branch_id', target.branch_id)
+  const { data: updated, error } = await q.select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'concurrent_change_retry' }
+  }
 
   await service.from('audit_logs').insert(
     auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'UPDATE', input.id, {
@@ -347,12 +357,19 @@ export async function toggleStaffActive(
   }
 
   const service = await createServiceClient()
-  const { error } = await service
+  // CAS: refuse to flip if another request already changed is_active in the
+  // moment between our read (permission check) and write.
+  const { data: updated, error } = await service
     .from('staff_basic')
     .update({ is_active: activate })
     .eq('id', id)
+    .eq('is_active', !activate)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'concurrent_change_retry' }
+  }
 
   await service.from('audit_logs').insert(
     auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'UPDATE', id, {

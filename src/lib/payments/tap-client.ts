@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 const TAP_BASE = 'https://api.tap.company/v2'
 
@@ -92,7 +92,10 @@ export function verifyWebhookSignature(
   ].join('')
 
   const expected = createHmac('sha256', secret).update(toHash).digest('hex')
-  return expected === hashstring
+  const expectedBuf = Buffer.from(expected, 'hex')
+  const actualBuf   = Buffer.from(hashstring, 'hex')
+  if (expectedBuf.length !== actualBuf.length) return false
+  return timingSafeEqual(expectedBuf, actualBuf)
 }
 
 // Maps Tap charge status strings to our payment_status enum
