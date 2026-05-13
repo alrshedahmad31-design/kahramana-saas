@@ -1,10 +1,37 @@
 'use server'
+import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { assertInventoryWriteAccess, getDashboardGuardErrorMessage, requireDashboardRole, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
 
 const PO_STATUSES = ['draft', 'ordered', 'partial', 'received', 'cancelled'] as const
 type POStatus = typeof PO_STATUSES[number]
+
+// 3-decimal money precision (Bahraini Dinar fils).
+const bhd3 = z.number()
+  .refine((n) => Number.isInteger(Math.round(n * 1000)) && Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6,
+    { message: 'value must have at most 3 decimal places' })
+
+const purchaseItemSchema = z.object({
+  ingredient_id:    z.string().uuid('ingredient_id must be a UUID'),
+  quantity_ordered: z.number().gt(0, 'quantity_ordered must be > 0').max(1_000_000).pipe(bhd3),
+  unit_cost:        z.number().min(0, 'unit_cost must be >= 0').max(1_000_000).pipe(bhd3),
+  lot_number:       z.string().max(50).optional(),
+  expiry_date:      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expiry_date must be YYYY-MM-DD').optional(),
+})
+
+const purchaseItemsSchema = z.array(purchaseItemSchema).min(0).max(200)
+
+const supplierSchema = z.object({
+  name_ar:        z.string().trim().min(1, 'اسم المورد مطلوب').max(120),
+  name_en:        z.string().trim().max(120).optional().nullable(),
+  phone:          z.string().trim().max(30).optional().nullable(),
+  email:          z.string().trim().email('email format invalid').max(120).optional().nullable().or(z.literal('').transform(() => null)),
+  lead_time_days: z.number().int('lead_time_days must be integer').min(0).max(365),
+  payment_terms:  z.string().trim().max(120).optional().nullable(),
+  is_active:      z.boolean(),
+  notes:          z.string().trim().max(2000).optional().nullable(),
+})
 
 // Server-enforced PO lifecycle. Workflow is forward-only except cancellation,
 // which is allowed up to (but not from) received.
@@ -52,13 +79,18 @@ export async function createPurchaseOrder(
 
   const itemsJson = formData.get('items') as string
   if (itemsJson) {
-    const items = JSON.parse(itemsJson) as Array<{
-      ingredient_id:    string
-      quantity_ordered: number
-      unit_cost:        number
-      lot_number?:      string
-      expiry_date?:     string
-    }>
+    let rawItems: unknown
+    try {
+      rawItems = JSON.parse(itemsJson)
+    } catch {
+      return { error: 'Items payload is not valid JSON' }
+    }
+    const parsedItems = purchaseItemsSchema.safeParse(rawItems)
+    if (!parsedItems.success) {
+      const issue = parsedItems.error.issues[0]
+      return { error: issue ? `items[${issue.path.join('.')}]: ${issue.message}` : 'Invalid items payload' }
+    }
+    const items = parsedItems.data
 
     if (items.length > 0) {
       const { error: itemsErr } = await supabase
@@ -145,18 +177,23 @@ export async function upsertSupplier(
 
   const supabase = createServiceClient()
   const id = formData.get('id') as string | null
-  const payload = {
+  const rawPayload = {
     name_ar:        formData.get('name_ar') as string,
     name_en:        (formData.get('name_en') as string) || null,
     phone:          (formData.get('phone') as string) || null,
     email:          (formData.get('email') as string) || null,
-    lead_time_days: Number(formData.get('lead_time_days') || 1),
+    lead_time_days: Number(formData.get('lead_time_days') ?? 1),
     payment_terms:  (formData.get('payment_terms') as string) || null,
     is_active:      formData.get('is_active') !== 'false',
     notes:          (formData.get('notes') as string) || null,
   }
 
-  if (!payload.name_ar) return { error: 'اسم المورد مطلوب' }
+  const parsed = supplierSchema.safeParse(rawPayload)
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0]
+    return { error: issue ? `${issue.path.join('.')}: ${issue.message}` : 'Invalid supplier payload' }
+  }
+  const payload = parsed.data
 
   if (id) {
     const { error } = await supabase.from('suppliers').update(payload).eq('id', id)

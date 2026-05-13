@@ -1,6 +1,7 @@
 'use server'
 
 import { createHash } from 'crypto'
+import { z } from 'zod'
 
 import { revalidatePath }      from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
@@ -10,6 +11,22 @@ import { assertBranchScope, getDashboardGuardErrorMessage } from '@/lib/auth/das
 import type { EmploymentType, StaffBasicRow, TablesUpdate } from '@/lib/supabase/custom-types'
 
 type ActionResult = { success: true } | { success: false; error: string }
+
+// 3-decimal precision matches Bahraini Dinar (fils). Cap is conservative —
+// well above any realistic restaurant hourly rate, blocks bogus values.
+const hourlyRateSchema = z.number()
+  .min(0, 'hourly_rate must be non-negative')
+  .max(100, 'hourly_rate exceeds maximum allowed (100 BHD/hr)')
+  .refine((n) => Number.isInteger(Math.round(n * 1000)) && Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6,
+    { message: 'hourly_rate must have at most 3 decimal places' })
+
+const dateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+
+// Leave window bounds: 30 days back (retroactive sick/emergency) through
+// one year forward; max duration is 90 days (annual leave ceiling).
+const LEAVE_PAST_DAYS    = 30
+const LEAVE_FUTURE_DAYS  = 365
+const LEAVE_MAX_DURATION = 90
 
 function revalidateProfile(id: string) {
   revalidatePath(`/dashboard/staff/${id}`)
@@ -49,6 +66,13 @@ export async function updateStaffProfile(input: UpdateProfileInput): Promise<Act
     return { success: false, error: 'PIN must be exactly 4 digits' }
   }
 
+  if (input.hourly_rate !== undefined && input.hourly_rate !== null) {
+    const parsed = hourlyRateSchema.safeParse(input.hourly_rate)
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Invalid hourly_rate' }
+    }
+  }
+
   const updates: TablesUpdate<'staff_basic'> = {}
   if (input.phone                   !== undefined) updates.phone                   = input.phone || null
   if (input.hire_date               !== undefined) updates.hire_date               = input.hire_date
@@ -86,8 +110,30 @@ export async function createLeaveRequest(input: LeaveRequestInput): Promise<Acti
   if (!caller) return { success: false, error: 'Unauthorized' }
   if (caller.id !== input.staff_id) return { success: false, error: 'Unauthorized' }
 
+  const startParsed = dateOnlySchema.safeParse(input.start_date)
+  const endParsed   = dateOnlySchema.safeParse(input.end_date)
+  if (!startParsed.success || !endParsed.success) {
+    return { success: false, error: 'Leave dates must be valid YYYY-MM-DD' }
+  }
+
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+  const minStart = new Date(today.getTime() - LEAVE_PAST_DAYS * 86_400_000)
+  const maxStart = new Date(today.getTime() + LEAVE_FUTURE_DAYS * 86_400_000)
+  const start    = new Date(input.start_date + 'T00:00:00Z')
+  const end      = new Date(input.end_date   + 'T00:00:00Z')
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return { success: false, error: 'Invalid leave date' }
+  }
+  if (start < minStart) return { success: false, error: `start_date must be within the last ${LEAVE_PAST_DAYS} days` }
+  if (start > maxStart) return { success: false, error: `start_date cannot be more than ${LEAVE_FUTURE_DAYS} days in the future` }
+
   const days = daysBetween(input.start_date, input.end_date)
   if (days < 1) return { success: false, error: 'End date must be after start date' }
+  if (days > LEAVE_MAX_DURATION) {
+    return { success: false, error: `Leave duration cannot exceed ${LEAVE_MAX_DURATION} days` }
+  }
 
   const service = await createServiceClient()
   const { error } = await service.from('leave_requests').insert({

@@ -1,12 +1,58 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canManageCoupons } from '@/lib/auth/rbac'
 import type { CouponInsert } from '@/lib/supabase/custom-types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AuthUser } from '@/lib/auth/session'
+
+// 3-decimal money precision (Bahraini Dinar fils).
+const bhd3 = z.number()
+  .refine((n) => Number.isInteger(Math.round(n * 1000)) && Math.abs(n * 1000 - Math.round(n * 1000)) < 1e-6,
+    { message: 'value must have at most 3 decimal places' })
+
+const couponSchema = z.object({
+  code:                  z.string().trim().min(1).max(40),
+  type:                  z.enum(['percentage', 'fixed_amount']),
+  value:                 z.number().min(0, 'value must be non-negative').max(10_000),
+  description_ar:        z.string().max(500).nullable(),
+  description_en:        z.string().max(500).nullable(),
+  min_order_value_bhd:   z.number().min(0).max(10_000).pipe(bhd3),
+  max_discount_bhd:      z.number().min(0).max(10_000).pipe(bhd3).nullable(),
+  usage_limit:           z.number().int('usage_limit must be integer').min(0).nullable(),
+  per_customer_limit:    z.number().int('per_customer_limit must be integer').min(0).max(1000),
+  valid_from:            z.string().min(1),
+  valid_until:           z.string().nullable(),
+  is_active:             z.boolean(),
+  locale:                z.string().max(8),
+  campaign_name:         z.string().max(120).nullable().optional(),
+  discount_type:         z.string().max(40).nullable().optional(),
+  max_discount_amount:   z.number().min(0).max(10_000).pipe(bhd3).nullable().optional(),
+  min_order_value:       z.number().min(0).max(10_000).pipe(bhd3).nullable().optional(),
+  applicable_branches:   z.array(z.string().max(50)).nullable().optional(),
+  applicable_items:      z.array(z.string().max(120)).nullable().optional(),
+  applicable_categories: z.array(z.string().max(120)).nullable().optional(),
+  customer_segment:      z.string().max(40).nullable().optional(),
+  days_active:           z.array(z.number().int().min(0).max(6)).nullable().optional(),
+  time_start:            z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'time_start must be HH:MM').nullable().optional(),
+  time_end:              z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'time_end must be HH:MM').nullable().optional(),
+  auto_apply:            z.boolean().optional(),
+}).refine((d) => {
+  if (!d.valid_until) return true
+  return new Date(d.valid_until).getTime() >= new Date(d.valid_from).getTime()
+}, { message: 'valid_until must be on or after valid_from', path: ['valid_until'] })
+
+function validateCouponPayload(data: CouponFormData): { ok: true } | { ok: false; error: string } {
+  const parsed = couponSchema.safeParse(data)
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0]
+    return { ok: false, error: issue ? `${issue.path.join('.')}: ${issue.message}` : 'Invalid coupon payload' }
+  }
+  return { ok: true }
+}
 
 export type ActionResult = { success: true } | { success: false; error: string }
 
@@ -103,6 +149,11 @@ export async function createCoupon(data: CouponFormData): Promise<ActionResult> 
   if (!caller) return { success: false, error: 'Unauthorized' }
   if (!canManageCoupons(caller)) return { success: false, error: 'Insufficient permissions' }
 
+  // Data-integrity validation runs for ALL roles. Admin bypass below only
+  // applies to business caps (assertCouponWithinLimits), not shape/precision.
+  const shape = validateCouponPayload(data)
+  if (!shape.ok) return { success: false, error: shape.error }
+
   const code = data.code.trim().toUpperCase()
   if (!code) return { success: false, error: 'Coupon code is required' }
 
@@ -176,6 +227,9 @@ export async function updateCoupon(
   const caller = await getSession()
   if (!caller) return { success: false, error: 'Unauthorized' }
   if (!canManageCoupons(caller)) return { success: false, error: 'Insufficient permissions' }
+
+  const shape = validateCouponPayload(data)
+  if (!shape.ok) return { success: false, error: shape.error }
 
   const code = data.code.trim().toUpperCase()
   if (!code) return { success: false, error: 'Coupon code is required' }
