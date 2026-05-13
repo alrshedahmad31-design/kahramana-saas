@@ -149,6 +149,11 @@ const nextConfig: NextConfig = {
     // stripping legacy polyfills (Array.at, flat, Object.fromEntries, etc.)
     // without needing browsersListForSwc flag.
     optimizePackageImports: ['gsap', 'framer-motion', 'date-fns', 'lucide-react'],
+    // Emit sourcemaps for the server bundle so the Sentry build plugin can
+    // symbolicate the UUID-named server chunks (.next/server/chunks/*.js).
+    // Pairs with productionBrowserSourceMaps above; together they cover
+    // both halves of the deploy so stack traces are readable in Sentry.
+    serverSourceMaps: true,
   },
 }
 
