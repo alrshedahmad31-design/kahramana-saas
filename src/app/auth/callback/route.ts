@@ -2,8 +2,21 @@ import { NextRequest, NextResponse }          from 'next/server'
 import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr'
 import { cookies }                           from 'next/headers'
 
+// Pin redirects to the env-configured site URL. Deriving from `request.url`
+// (`origin`) is vulnerable to Host-header confusion via a misrouted proxy +
+// a Supabase recovery link — landing the user on a clone post-auth. The env
+// var is required at runtime (not module-load — build collects page data
+// without prod env present).
+function safeRedirect(path: string): NextResponse {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  if (!siteUrl) {
+    throw new Error('NEXT_PUBLIC_SITE_URL is required for /auth/callback redirects')
+  }
+  return NextResponse.redirect(new URL(path, siteUrl))
+}
+
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
   const code        = searchParams.get('code')
   const type        = searchParams.get('type')
   const errorParam  = searchParams.get('error')
@@ -12,13 +25,11 @@ export async function GET(request: NextRequest) {
   // Supabase returned an error (e.g. expired magic link)
   if (errorParam) {
     const msg = errorDesc ?? errorParam
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(msg)}`
-    )
+    return safeRedirect(`/login?error=${encodeURIComponent(msg)}`)
   }
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=missing_code`)
+    return safeRedirect('/login?error=missing_code')
   }
 
   const cookieStore = await cookies()
@@ -42,14 +53,12 @@ export async function GET(request: NextRequest) {
 
   if (exchangeError) {
     console.error('[auth/callback] exchange failed:', exchangeError.message)
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(exchangeError.message)}`
-    )
+    return safeRedirect(`/login?error=${encodeURIComponent(exchangeError.message)}`)
   }
 
   // Password reset flow — send to set-password page
   if (type === 'recovery') {
-    return NextResponse.redirect(`${origin}/set-password`)
+    return safeRedirect('/set-password')
   }
 
   // Verify the user has an active staff profile before letting them in
@@ -64,12 +73,10 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (staffRow) {
-      return NextResponse.redirect(`${origin}/dashboard`)
+      return safeRedirect('/dashboard')
     }
   }
 
   // Auth succeeded but no staff profile — send to login with explanation
-  return NextResponse.redirect(
-    `${origin}/login?error=no_staff_profile`
-  )
+  return safeRedirect('/login?error=no_staff_profile')
 }
