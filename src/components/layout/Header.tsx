@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
-import { DEFAULT_BRANCH } from '@/constants/contact'
 import { useCartStore, selectTotalItems } from '@/lib/cart'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { createClient as createBrowserSupabase } from '@/lib/supabase/client'
@@ -23,7 +22,6 @@ interface CustomerSummary {
 
 const NAV_LINKS = [
   { key: 'menu',     href: '/menu'     as const },
-  { key: 'branches', href: '/branches' as const },
   { key: 'reserve',  href: '/reserve'  as const },
   { key: 'catering', href: '/catering' as const },
   { key: 'about',    href: '/about'    as const },
@@ -186,7 +184,7 @@ export default function Header() {
                   }
                 `}
               >
-                {t(key as 'menu' | 'branches' | 'reserve' | 'catering' | 'about' | 'contact')}
+                {t(key as 'menu' | 'reserve' | 'catering' | 'about' | 'contact')}
               </Link>
             ))}
           </nav>
@@ -292,12 +290,12 @@ export default function Header() {
             </button>
 
             <CinematicButton
-              href={DEFAULT_BRANCH.waLink}
+              href="/reserve"
               isRTL={isRTL}
-              aria-label={t('orderNow')}
+              aria-label={t('reserveTable')}
               className="px-5 py-2 text-sm font-bold rounded-full"
             >
-              {t('orderNow')}
+              {t('reserveTable')}
             </CinematicButton>
           </div>
 
@@ -374,7 +372,7 @@ export default function Header() {
                         ${pathname === href ? 'text-brand-gold' : 'text-brand-text'}
                       `}
                     >
-                    {t(key as 'menu' | 'branches' | 'reserve' | 'catering' | 'about' | 'contact')}
+                    {t(key as 'menu' | 'reserve' | 'catering' | 'about' | 'contact')}
                     </Link>
                 ))}
 
@@ -429,12 +427,12 @@ export default function Header() {
                     {t('language')}
                   </button>
                   <CinematicButton
-                    href={DEFAULT_BRANCH.waLink}
+                    href="/reserve"
                     isRTL={isRTL}
-                    aria-label={t('orderNow')}
+                    aria-label={t('reserveTable')}
                     className="px-6 py-3 rounded-full font-bold"
                   >
-                    {t('orderNow')}
+                    {t('reserveTable')}
                   </CinematicButton>
                 </div>
               </nav>
