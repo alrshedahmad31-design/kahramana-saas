@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-13 (session 93 — BL-004 RLS hardening (migrations 120-121), Owner Dashboard placeholder fixes, test-data cleanup (20 orders + 19 payments), pointer reconciled)",
+    "last_updated":  "2026-05-13 (session 93 close — BL-004 fully closed (migrations 120-122), header redesign, Vercel build unblocked, Sentry sourcemap pipeline rebuilt, 16 commits)",
     "current_phase":  null,
     "next_phase":  "7b",
     "pointer_note":  "No active phase. All numbered phases through 7 + 6b are done. 7b (Deliverect/POS) is locked on contract + Bahrain availability + POS API docs. 8 (AI) is locked on 6 months production data. Phase 6 Sprint 6B/6C (WhatsApp API + Benefit Pay) blocked on Meta verification + merchant approval.",
@@ -80,11 +80,12 @@
                                                      "118_delivery_arrived_status.sql — applied 2026-05-12",
                                                      "119_security_invoker_views.sql — applied 2026-05-12 (BL-003: 4 views flipped to security_invoker=on)",
                                                      "120_rls_bl004_fix.sql — applied 2026-05-13 (BL-004 high-severity: orders/order_items INSERT → service_role only; inventory_lots + supplier_price_history INSERT → staff; supplier_price_history + prep_items + prep_item_ingredients SELECT → staff)",
-                                                     "121_customers_insert_guard.sql — applied 2026-05-13 (BL-004 low-sev: customers anon INSERT now requires name 1-120 chars + Bahrain-style phone regex)"
+                                                     "121_customers_insert_guard.sql — applied 2026-05-13 (BL-004 low-sev: customers anon INSERT now requires name 1-120 chars + Bahrain-style phone regex)",
+                                                     "122_rls_bl004_p2.sql — applied 2026-05-13 (BL-004 P2: contact_messages shape guard; ingredient_allergens / restaurant_profile / unit_conversions SELECT scoped to staff)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-                       "last_git_commit":  "0401eb8 — fix(security): customers anon INSERT shape guard (migration 121) (session 93 series: bd4a06e → e9b2a81 → a0b351a → 1fc4137 → 0401eb8)",
+                       "last_git_commit":  "62112d6 — fix(sentry): explicit sourcemaps glob (session 93 final commit; full series: bd4a06e → e9b2a81 → a0b351a → 1fc4137 → 0401eb8 → a657d2e → c383235 → e615b91 → ab7368f → 4397ea6 → ffef5bd → 6a3ac93 → e5a2caf → 6da6fa7 → f90536d → be897f1 → 4547db6 → d456a1f → 2f2c69f → 62112d6)",
                        "vercel_push_pending":  false,
                        "supabase_key_rotation_required":  false,
                        "driver_page_fix":  "verified on production",
