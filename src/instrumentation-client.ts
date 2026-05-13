@@ -12,6 +12,9 @@ Sentry.init({
 
   // 10% trace sampling — production-appropriate; full sampling burns Sentry quota.
   tracesSampleRate: 0.1,
+  // Restrict trace propagation (sentry-trace + baggage headers) to internal API routes only.
+  // Prevents org_id / release SHA from leaking into HTML meta tags and third-party requests.
+  tracePropagationTargets: [/^\/api\//],
   // Enable logs to be sent to Sentry
   enableLogs: true,
 
