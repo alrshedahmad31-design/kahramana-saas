@@ -222,12 +222,15 @@ export async function updateCateringStatus(
   }
 
   const supabase = createServiceClient()
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('catering_orders')
     .update({ status: parsed.data.newStatus, updated_at: new Date().toISOString() })
     .eq('id', parsed.data.orderId)
+    .select('id')
+    .single()
 
   if (error) return { error: error.message }
+  if (!updated) return { error: 'طلب التقديم غير موجود' }
 
   revalidateCatering(parsed.data.orderId)
   return {}
@@ -457,12 +460,15 @@ export async function updateCateringOrder(
   const subtotal_bhd = rest.price_per_person_bhd * rest.guest_count
 
   const supabase = createServiceClient()
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('catering_orders')
     .update({ ...rest, subtotal_bhd, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .select('id')
+    .single()
 
   if (error) return { error: error.message }
+  if (!updated) return { error: 'طلب التقديم غير موجود' }
 
   revalidateCatering(id)
   return {}
@@ -511,12 +517,15 @@ export async function upsertCateringPackage(data: {
   const supabase = createServiceClient()
 
   if (id) {
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from('catering_packages')
       .update(payload)
       .eq('id', id)
+      .select('id')
+      .single()
 
     if (error) return { error: error.message }
+    if (!updated) return { error: 'باقة التقديم غير موجودة' }
 
     revalidateCatering()
     return { packageId: id }

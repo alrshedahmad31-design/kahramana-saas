@@ -120,12 +120,15 @@ export async function updatePOStatus(
     }
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('purchase_orders')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .select('id')
+    .single()
 
   if (error) return { error: error.message }
+  if (!updated) return { error: 'Purchase order not found' }
   revalidatePath('/dashboard/inventory/purchases')
   revalidatePath('/en/dashboard/inventory/purchases')
   return {}

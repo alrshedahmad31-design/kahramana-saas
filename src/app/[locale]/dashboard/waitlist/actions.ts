@@ -123,12 +123,15 @@ export async function updateStatus(id: string, status: WaitlistStatus): Promise<
     seated_at:   parsedStatus.data === 'seated' ? now : undefined,
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('waitlist_entries')
     .update(patch)
     .eq('id', parsedId.data)
+    .select('id')
+    .single()
 
   if (error) throw new Error(error.message)
+  if (!updated) throw new Error('Waitlist entry not found')
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/waitlist`)

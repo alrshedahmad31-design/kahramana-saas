@@ -233,12 +233,15 @@ export async function updateReservationStatus(
   if (parsedStatus.data === 'cancelled') patch.cancelled_at = now
   if (parsedStatus.data === 'completed') patch.completed_at = now
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('reservations')
     .update(patch)
     .eq('id', parsedId.data)
+    .select('id')
+    .single()
 
   if (error) throw new Error(error.message)
+  if (!updated) throw new Error('Reservation not found')
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/reservations`)

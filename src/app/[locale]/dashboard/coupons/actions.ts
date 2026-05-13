@@ -194,7 +194,7 @@ export async function updateCoupon(
   const scope = await assertCouponScope(supabase, id, caller)
   if (!scope.success) return scope
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('coupons')
     .update({
       code,
@@ -223,8 +223,11 @@ export async function updateCoupon(
       auto_apply:            data.auto_apply || false,
     })
     .eq('id', id)
+    .select('id')
+    .single()
 
   if (error) return { success: false, error: error.message }
+  if (!updated) return { success: false, error: 'Coupon not found' }
 
   await supabase.from('audit_logs').insert({
     table_name: 'coupons',
@@ -254,12 +257,15 @@ export async function toggleCouponActive(
   const scope = await assertCouponScope(supabase, id, caller)
   if (!scope.success) return scope
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('coupons')
     .update({ is_active: isActive })
     .eq('id', id)
+    .select('id')
+    .single()
 
   if (error) return { success: false, error: error.message }
+  if (!updated) return { success: false, error: 'Coupon not found' }
 
   await supabase.from('audit_logs').insert({
     table_name: 'coupons',
@@ -289,15 +295,18 @@ export async function toggleCouponPause(
   const scope = await assertCouponScope(supabase, id, caller)
   if (!scope.success) return scope
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('coupons')
     .update({
       paused: isPaused,
       paused_at: isPaused ? new Date().toISOString() : null
     })
     .eq('id', id)
+    .select('id')
+    .single()
 
   if (error) return { success: false, error: error.message }
+  if (!updated) return { success: false, error: 'Coupon not found' }
 
   await supabase.from('audit_logs').insert({
     table_name: 'coupons',

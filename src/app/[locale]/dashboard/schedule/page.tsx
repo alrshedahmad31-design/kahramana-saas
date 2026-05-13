@@ -62,7 +62,7 @@ export default async function SchedulePage({
   if (scopedBranchId) shiftsQ = shiftsQ.eq('branch_id', scopedBranchId)
 
   // leave_requests has no branch_id — scope via inner join on staff_basic.
-  let leavesQ = scopedBranchId
+  const leavesQ = scopedBranchId
     ? supabase
         .from('leave_requests')
         .select('*, staff_basic!inner(branch_id)', { count: 'exact', head: true })
