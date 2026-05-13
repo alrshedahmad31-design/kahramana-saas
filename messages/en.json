@@ -2115,7 +2115,7 @@
         "delayed":         "Delayed",
         "sources":         "Order Source",
         "topItems":        "Top 3 Items Today",
-        "bottomItems":     "Slowest Sellers (today)",
+        "bottomItems":     "Slowest today (tracked items)",
         "bottomHint":      "From today's tracked items only"
       },
       "sources": {
@@ -2149,8 +2149,8 @@
         "netMargin":        "Net margin {pct}%"
       },
       "service": {
-        "acceptanceTime":     "Avg Acceptance",
-        "acceptanceTimeHint": "Tracking not yet wired",
+        "acceptanceTime":     "Acceptance Time",
+        "acceptanceTimeHint": "Not tracked yet",
         "prepTime":           "Avg Prep Time",
         "mins":               "min",
         "basedOn":            "Based on {count} orders",

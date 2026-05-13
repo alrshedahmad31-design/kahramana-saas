@@ -2115,7 +2115,7 @@
         "delayed":         "متأخر",
         "sources":         "مصدر الطلب",
         "topItems":        "أعلى ٣ أصناف اليوم",
-        "bottomItems":     "الأقل مبيعاً اليوم",
+        "bottomItems":     "الأقل حركة اليوم (من المتابَعة)",
         "bottomHint":      "من ضمن الأصناف المسجلة اليوم فقط"
       },
       "sources": {
@@ -2149,8 +2149,8 @@
         "netMargin":        "هامش الربح {pct}٪"
       },
       "service": {
-        "acceptanceTime":     "متوسط القبول",
-        "acceptanceTimeHint": "غير متوفر حالياً",
+        "acceptanceTime":     "وقت القبول",
+        "acceptanceTimeHint": "غير متوفر",
         "prepTime":           "متوسط التحضير",
         "mins":               "دقيقة",
         "basedOn":            "بناءً على {count} طلب",

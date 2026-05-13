@@ -177,12 +177,13 @@ export default function OwnerDashboardClient({
     return raw ?? source
   }
 
-  // Top / bottom items today (we only have top-5 from dashboard)
-  const topItems = dashboard.topItems.slice(0, 3)
-  const bottomItems =
-    dashboard.topItems.length > 3
-      ? dashboard.topItems.slice(-Math.min(3, dashboard.topItems.length - 3))
-      : []
+  // Top / bottom items today.
+  // `topItems` from dashboard is ranked desc (top-5). We show ranks 1-3 as
+  // "top items" and ranks 3-5 (indexes 2..4) as "slowest tracked items today".
+  // The overlap on rank 3 is intentional: with only 5 tracked items the
+  // bottom set is by definition tail of the same list.
+  const topItems    = dashboard.topItems.slice(0, 3)
+  const bottomItems = dashboard.topItems.slice(2, 5)
 
   // Period-level revenue growths (already in metrics)
   const todayRevGrowth = calculateGrowth(metricsToday.totalRevenue,    metricsToday.prevTotalRevenue)
@@ -279,7 +280,9 @@ export default function OwnerDashboardClient({
             tone={lateCount > 0 ? 'red' : 'default'}
             primary={
               <span className={lateCount > 0 ? 'text-red-400' : 'text-brand-text'}>
-                {lateCount > 0 ? `${lateCount}+` : '0'}
+                {lateCount > 0
+                  ? <>≥{lateCount} <span className="text-sm font-medium text-brand-muted ms-1.5 font-satoshi">· {longestActiveMins}m</span></>
+                  : '0'}
               </span>
             }
             secondary={
