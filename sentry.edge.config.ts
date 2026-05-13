@@ -8,6 +8,11 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://9b5e98391a7e153c05562dfd5cebbb29@o4511364423352320.ingest.us.sentry.io/4511364426170368",
 
+  // Sanitized release name — short SHA only, consistent with server/client init.
+  release: process.env.VERCEL_GIT_COMMIT_REF
+    ? `kahramana-${process.env.VERCEL_GIT_COMMIT_REF}-${(process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7)}`
+    : undefined,
+
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 1,
 
