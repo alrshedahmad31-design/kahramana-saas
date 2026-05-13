@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import { BRANCH_LIST, GENERAL_CONTACT, SITE_URL } from '@/constants/contact'
 
 export async function generateMetadata({
@@ -24,8 +25,6 @@ export async function generateMetadata({
   }
 }
 
-const LAST_UPDATED = 'مايو ٢٠٢٦ · May 2026'
-
 export default async function PrivacyPolicyPage({
   params,
 }: {
@@ -33,6 +32,7 @@ export default async function PrivacyPolicyPage({
 }) {
   const { locale } = await params
   const isAr = locale === 'ar'
+  const t = await getTranslations({ locale, namespace: 'privacyPolicy' })
 
   return (
     <div
@@ -46,7 +46,28 @@ export default async function PrivacyPolicyPage({
         >
           {isAr ? 'سياسة الخصوصية' : 'Privacy Policy'}
         </h1>
-        <p className="font-satoshi text-sm text-brand-muted">{LAST_UPDATED}</p>
+        <p className={`text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+          {t('lastReviewed')}
+        </p>
+      </div>
+
+      <div className="mb-10 rounded-xl border border-brand-gold/20 bg-brand-gold/5 p-6">
+        <h2
+          className={`font-semibold text-brand-text mb-3
+            ${isAr ? 'font-cairo' : 'font-satoshi'}`}
+        >
+          {t('complianceTitle')}
+        </h2>
+        <ul
+          className={`flex flex-col gap-2 text-sm text-brand-muted leading-relaxed list-disc ${
+            isAr ? 'font-almarai ps-5' : 'font-satoshi ps-5'
+          }`}
+        >
+          <li>{t('dataController')}</li>
+          <li>{t('pdplReference')}</li>
+          <li>{t('lawfulBasis')}</li>
+          <li>{t('whatsappProcessor')}</li>
+        </ul>
       </div>
 
       {isAr ? <PrivacyArabic /> : <PrivacyEnglish />}

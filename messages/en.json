@@ -66,6 +66,14 @@
       "content": "For any enquiries about these terms, please contact us at:"
     }
   },
+  "privacyPolicy": {
+    "lastReviewed": "Last reviewed: May 2026",
+    "dataController": "Data Controller: Kahramana Baghdad, Manama, Bahrain",
+    "pdplReference": "This policy complies with Bahrain Personal Data Protection Law No. 30 of 2018",
+    "lawfulBasis": "Legal basis: explicit consent for order processing, legitimate interest for communications",
+    "whatsappProcessor": "WhatsApp is treated as an external data processor under Meta's data processing terms",
+    "complianceTitle": "Legal Compliance & Data Controller"
+  },
   "refund": {
     "title": "Refund & Cancellation Policy",
     "lastUpdated": "April 2026",
