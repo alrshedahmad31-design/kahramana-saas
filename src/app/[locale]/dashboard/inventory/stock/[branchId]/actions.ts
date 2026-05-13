@@ -26,59 +26,26 @@ export async function recordOpeningBalance(
 
   const supabase = createServiceClient()
 
-  // TODO(migration-123): swap the two-step pattern below for a single
-  // `rpc_record_opening_balance(branch_id, ingredient_id, quantity, performed_by)`
-  // call once migration 123 is applied to remote (supabase db push).
-  // The RPC wraps the movement insert + stock upsert in one transaction,
-  // closing the gap where step 2 could fail and leave a phantom movement row.
-  // Until then this two-step pattern stays — it works, just isn't atomic.
+  // Migration 123: atomic opening balance. Movement insert + stock upsert run
+  // in one transaction inside the RPC. Replaces the prior two-step pattern
+  // that could leave a phantom movement row if the stock upsert failed.
+  // The RPC also computes the delta server-side, closing the read-then-write
+  // race that the old client-side delta calc had.
+  // `as never` is the codebase convention for RPCs not yet in the auto-gen
+  // types (see src/lib/analytics/queries.ts:684). Remove once `supabase gen
+  // types --linked` is rerun.
+  const { error } = await supabase.rpc('rpc_record_opening_balance' as never, {
+    p_branch_id:     branchId,
+    p_ingredient_id: ingredientId,
+    p_quantity:      quantity,
+    p_performed_by:  session.id,
+  } as never)
 
-  // C3 FIX: read current on_hand so the movement records the actual signed
-  // delta. Without this: on_hand=100, new=30 → movement says +30 but stock
-  // actually dropped 70. Delta = new − old (negative = reduction).
-  const { data: existing } = await supabase
-    .from('inventory_stock')
-    .select('on_hand')
-    .eq('branch_id', branchId)
-    .eq('ingredient_id', ingredientId)
-    .maybeSingle()
-
-  const previousOnHand = existing?.on_hand ?? 0
-  const delta = quantity - previousOnHand
-
-  if (delta === 0) {
-    revalidatePath(`/dashboard/inventory/stock/${branchId}`)
-    revalidatePath(`/en/dashboard/inventory/stock/${branchId}`)
-    return {}
+  if (error) {
+    // RPC raises QUANTITY_NEGATIVE on negative input; we already guarded above.
+    // Any other error here is a real DB failure — surface its message.
+    return { error: error.message }
   }
-
-  const { error: mvError } = await supabase.from('inventory_movements').insert({
-    branch_id:     branchId,
-    ingredient_id: ingredientId,
-    movement_type: 'opening_balance',
-    quantity:      delta,
-    performed_by:  session.id,
-    performed_at:  new Date().toISOString(),
-    notes:         `Opening balance: ${previousOnHand} → ${quantity}`,
-  })
-
-  if (mvError) return { error: mvError.message }
-
-  const { error: stockError } = await supabase
-    .from('inventory_stock')
-    .upsert(
-      {
-        branch_id:         branchId,
-        ingredient_id:     ingredientId,
-        on_hand:           quantity,
-        reserved:          0,
-        catering_reserved: 0,
-        last_movement_at:  new Date().toISOString(),
-      },
-      { onConflict: 'branch_id,ingredient_id' }
-    )
-
-  if (stockError) return { error: stockError.message }
 
   revalidatePath(`/dashboard/inventory/stock/${branchId}`)
   revalidatePath(`/en/dashboard/inventory/stock/${branchId}`)

@@ -17,7 +17,7 @@
                        "pending_db_migrations":  [
 
                                                  ],
-                       "migration_status":  "090-122 ALL APPLIED AND TRACKED — verified 2026-05-12 via supabase migration list --linked, BL-004 fixes 120-122 applied 2026-05-13. Latest: 122_rls_bl004_p2.sql. Duplicate 102_kds_shawarma_routing.sql removed from disk. 114 + 115 backfilled into applied_db_migrations 2026-05-13 (session 94 audit). Repo state matches Supabase remote.",
+                       "migration_status":  "090-123 ALL APPLIED AND TRACKED — 123_rpc_record_opening_balance applied 2026-05-13 (session 95 data-integrity batch). BL-004 fixes 120-122 applied 2026-05-13. Latest: 123_rpc_record_opening_balance.sql. Duplicate 102_kds_shawarma_routing.sql removed from disk. 114 + 115 backfilled into applied_db_migrations 2026-05-13 (session 94 audit). Repo state matches Supabase remote. Types regen pending — `as never` cast at src/app/[locale]/dashboard/inventory/stock/[branchId]/actions.ts until `supabase gen types --linked` is rerun.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -83,7 +83,8 @@
                                                      "119_security_invoker_views.sql — applied 2026-05-12 (BL-003: 4 views flipped to security_invoker=on)",
                                                      "120_rls_bl004_fix.sql — applied 2026-05-13 (BL-004 high-severity: orders/order_items INSERT → service_role only; inventory_lots + supplier_price_history INSERT → staff; supplier_price_history + prep_items + prep_item_ingredients SELECT → staff)",
                                                      "121_customers_insert_guard.sql — applied 2026-05-13 (BL-004 low-sev: customers anon INSERT now requires name 1-120 chars + Bahrain-style phone regex)",
-                                                     "122_rls_bl004_p2.sql — applied 2026-05-13 (BL-004 P2: contact_messages shape guard; ingredient_allergens / restaurant_profile / unit_conversions SELECT scoped to staff)"
+                                                     "122_rls_bl004_p2.sql — applied 2026-05-13 (BL-004 P2: contact_messages shape guard; ingredient_allergens / restaurant_profile / unit_conversions SELECT scoped to staff)",
+                                                     "123_rpc_record_opening_balance.sql — applied 2026-05-13 (atomic opening-balance RPC: movement insert + stock upsert in one transaction; SECURITY DEFINER, locked search_path, service_role-only GRANT; closes the phantom-movement gap from the prior two-step JS pattern)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
