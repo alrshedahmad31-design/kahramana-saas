@@ -180,7 +180,8 @@
       "mcp__plugin_supabase_supabase__generate_typescript_types",
       "mcp__plugin_supabase_supabase__list_projects",
       "Bash(echo \"TSC_EXIT=$?\")",
-      "Bash(NEXT_BUILD_WORKERS=1 npm run build)"
+      "Bash(NEXT_BUILD_WORKERS=1 npm run build)",
+      "Bash(supabase migration *)"
     ]
   }
 }

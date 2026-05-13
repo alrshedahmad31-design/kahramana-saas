@@ -10,7 +10,7 @@ Private repository. Not open source.
 
 Kahramana is a full-stack restaurant operations platform covering the customer-facing storefront and the back-of-house management surface for every branch. The system runs the menu, ordering, payments, loyalty, reservations, delivery dispatch, point-of-sale, inventory, and staff workflows from a single codebase.
 
-The interface is bilingual (Arabic primary, English secondary) with full RTL support, and the platform is designed for the Iraqi market — IQD currency, local payment rails, and WhatsApp-driven customer comms.
+The interface is bilingual (Arabic primary, English secondary) with full RTL support, and the platform is designed for the Bahraini market — BHD currency, local payment rails, and WhatsApp-driven customer comms.
 
 ---
 
@@ -50,7 +50,8 @@ The interface is bilingual (Arabic primary, English secondary) with full RTL sup
 | CMS | Sanity (marketing content) |
 | i18n | next-intl — Arabic primary, English secondary |
 | Payments | Tap Payments (cards) + COD |
-| Messaging | WhatsApp Business API |
+| Messaging | WhatsApp Business API (Sprint 6B — pending Meta Business Verification) |
+| PIN auth | bcrypt (staff clock-in PINs, SHA-256 fallback for legacy) |
 | Monitoring | Sentry |
 | Rate limiting | Upstash Redis |
 | Hosting | Vercel (Pro) |
