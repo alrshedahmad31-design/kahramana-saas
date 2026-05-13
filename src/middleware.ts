@@ -56,8 +56,8 @@ function buildCsp(nonce: string): string {
     "img-src 'self' data: blob: https://cdn.sanity.io https://images.unsplash.com https://*.google.com https://*.tile.openstreetmap.org https://*.openstreetmap.org",
     "font-src 'self'",
     "worker-src 'self' blob:",
-    // Sentry endpoints added so client SDK can fall back to direct ingest if
-    // the /monitoring tunnel route is ever blocked. Wildcards cover both the
+    // Sentry direct ingest endpoints — primary path as of session 95 (tunnel
+    // route removed to save Fluid Active CPU). Wildcards cover both the
     // generic ingest hosts and the US region (current DSN).
     `connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://sentry.io${__impeccableLiveDev}`,
     "media-src 'self'",

@@ -204,11 +204,12 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
 
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  // This can increase your server load as well as your hosting bill.
-  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-  // side errors will fail.
-  tunnelRoute: "/monitoring",
+  // tunnelRoute removed (session 95) — was '/monitoring'. Every captured error
+  // was hitting a Next.js function, burning Fluid Active CPU on the free tier.
+  // Browser SDK now sends events directly to *.ingest.sentry.io; CSP
+  // connect-src already allows those origins (src/middleware.ts:62).
+  // Trade-off: aggressive ad-blockers may drop Sentry events. Acceptable
+  // for now — restaurant staff aren't using uBlock Origin in the dashboard.
 
   webpack: {
     // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
