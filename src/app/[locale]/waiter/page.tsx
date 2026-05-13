@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { getSession } from '@/lib/auth/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import { BRANCH_LIST } from '@/constants/contact'
@@ -51,28 +50,19 @@ export default async function WaiterHomePage({ params, searchParams }: PageProps
     : (user.branch_id ?? branchOptions[0]?.id ?? '')
   const branchId = isGlobalAdmin ? defaultBranch : (user.branch_id ?? '')
 
-  // Untyped client for restaurant_tables (migration 085 not yet in Database types).
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const untyped = url && key
-    ? createSupabaseClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
-    : null
-
-  const tablesResult = untyped
-    ? await untyped
-        .from('restaurant_tables')
-        .select('id, branch_id, table_number, label_ar, label_en, capacity, is_active')
-        .eq('branch_id', branchId)
-        .eq('is_active', true)
-        .order('table_number', { ascending: true })
-    : { data: [] as unknown[], error: null }
+  const tablesResult = await createServiceClient()
+    .from('restaurant_tables')
+    .select('id, branch_id, table_number, label_ar, label_en, capacity, is_active')
+    .eq('branch_id', branchId)
+    .eq('is_active', true)
+    .order('table_number', { ascending: true })
 
   if ('error' in tablesResult && tablesResult.error) {
     console.error('[waiter] restaurant_tables query failed:', tablesResult.error)
   }
   const tables = (tablesResult.data ?? []) as TableRow[]
 
-  const supabase = await createServiceClient()
+  const supabase = createServiceClient()
   const ACTIVE_STATUSES = ['new', 'accepted', 'preparing', 'ready'] as const
   const { data: ordersData, error: ordersError } = await supabase
     .from('orders')

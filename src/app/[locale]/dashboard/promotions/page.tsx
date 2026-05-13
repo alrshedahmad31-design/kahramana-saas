@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { requireDashboardSection, isDashboardGuardError } from '@/lib/auth/dashboard-guards'
 import { BRANCH_LIST } from '@/constants/contact'
 import PromotionsClient from './PromotionsClient'
@@ -23,13 +23,7 @@ export default async function PromotionsPage({ params }: PageProps) {
     redirect(`${prefix}/dashboard`)
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) redirect(`${prefix}/dashboard`)
-
-  const supabase = createSupabaseClient(url!, key!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  const supabase = createServiceClient()
 
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   let query = supabase

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { getMenuData } from '@/lib/menu.server'
 import { BRANCH_LIST } from '@/constants/contact'
@@ -39,15 +39,9 @@ interface RawOption {
 }
 
 async function loadModifierGroupsBySlug(): Promise<Map<string, POSModifierGroup[]>> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   const map = new Map<string, POSModifierGroup[]>()
-  if (!url || !key) return map
-
-  // Untyped client until `Database` types are regenerated for 082.
-  const supabase = createSupabaseClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  let supabase
+  try { supabase = createServiceClient() } catch { return map }
 
   const { data: groups, error: groupsError } = await supabase
     .from('menu_option_groups')

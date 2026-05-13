@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { requireDashboardSection, isDashboardGuardError } from '@/lib/auth/dashboard-guards'
 import { BRANCH_LIST, SITE_URL } from '@/constants/contact'
 import TablesClient, { type TableRow } from './TablesClient'
@@ -30,13 +30,7 @@ export default async function TablesPage({ params, searchParams }: PageProps) {
     ? (search.branch ?? branchOptions[0]?.id ?? '')
     : (user.branch_id ?? '')
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) redirect(`${prefix}/dashboard`)
-
-  const supabase = createSupabaseClient(url!, key!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  const supabase = createServiceClient()
 
   const { data: rawTables } = await supabase
     .from('restaurant_tables')
