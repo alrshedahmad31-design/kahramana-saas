@@ -1,5 +1,5 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 97/98: dashboard audit v3 close-out — batches A–E
+> Session 97/98/99: dashboard audit v3 close-out — batches A–E + migration grant audit
 > Date: 2026-05-13
 > Author: Claude Code (sole contributor)
 
@@ -9,8 +9,10 @@ Pure security + data-integrity session, no new features. Executed five
 user-defined batches targeting findings deferred from the v2 audit
 (#15/#16 staff TOCTOU, v3 branch criticals/highs) plus the info-disclosure
 surfaces identified in the audit follow-up (Sentry logs, API error bodies).
-Five commits on worktree branch `claude/musing-visvesvaraya-fa3bce`, two
-migrations (125, 126) applied to remote prod. TSC clean after every commit.
+Then performed a migration grant audit (114–126) which found one gap: the
+`reservations` table was missing a `service_role` GRANT.
+Six commits on worktree branch `claude/musing-visvesvaraya-fa3bce`, three
+migrations (125, 126, 127) applied to remote prod. TSC clean after every commit.
 
 ## COMMITS THIS SESSION (in order)
 
@@ -19,6 +21,7 @@ migrations (125, 126) applied to remote prod. TSC clean after every commit.
 - `ca7f6c0` fix(security): disable Sentry logs + scrub info-disclosure surfaces
 - `5d28752` fix(security): staff TOCTOU via atomic RPC (migration 126)
 - `8a78274` refactor: use createServiceClient in 5 dashboard pages
+- `80faad2` fix(security): grant service_role on reservations table (migration 127)
 
 Plus master was advanced by two FF merges from the Gemini-authored v3 branches:
 - `0c34619` fix(security): bcrypt PIN hashes with dual-read SHA-256 fallback
@@ -201,12 +204,12 @@ When `claude/musing-visvesvaraya-fa3bce` is PR'd to master, resolve the
 
 - **TSC**: clean after every commit (zero errors).
 - **Build**: not run this session (worktree branch, not on master).
-- **Migrations**: 125 + 126 applied to remote prod. Supabase remote is current.
-- **Git worktree**: 5 commits ahead of the merge-point with master.
+- **Migrations**: 125 + 126 + 127 applied to remote prod. Supabase remote is current.
+- **Git worktree**: 6 commits ahead of the merge-point with master (`80faad2`).
 - **master**: advanced to `37467c5` (v3-high tip), pushed.
 - **Working tree**: clean at session end.
 
-## SESSION 99 — DEFERRED CARRY-FORWARD
+## SESSION 100 — DEFERRED CARRY-FORWARD
 
 1. Wire `updateStaff()` to call `rpc_update_staff` RPC (1 commit)
 2. **#6 / #7 / #8** error swallowing (analytics + dashboard stats)
