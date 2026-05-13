@@ -1,159 +1,177 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 92: Owner Dashboard + Sidebar reorganisation + BL-003 + Menu pricing
-> Date: 2026-05-12
-> Authors: Claude Code (Owner Dashboard, group labels, BL-003); Gemini parallel
->          agent (sidebar workflow reorder, menu pricing, driver UI audit)
+> Session 93: BL-004 RLS hardening + Owner Dashboard fixes +
+> test-data cleanup
+> Date: 2026-05-13
+> Author: Claude Code (all work this session; Gemini active in
+>         parallel on shifts polish — see OPEN ISSUES)
 
 ## SUMMARY
-Mixed-agent day across four slices. Claude shipped the unified **Owner
-Dashboard** at `/dashboard/owner`, reworked the sidebar dividers into
-visible group headers, and fixed the BL-003 SECURITY DEFINER finding on
-4 views. Gemini did the upstream sidebar workflow reorder (4 groups),
-updated menu pricing for 5 items, and audited the driver PWA. Session
-ended on a recurring Turbopack stale-bundle hydration mismatch that
-restart-of-dev did not fully resolve before the user called it.
+Focused session on closing security audit findings and tightening
+operational data quality. Two migrations applied to prod (120, 121),
+five commits pushed (`bd4a06e` → `0401eb8`), Owner Dashboard placeholder
+metrics improved, 20 test orders + 19 cash-COD payment rows deleted
+from prod. Session 92's open hydration question was called resolved by
+Ahmed without recurrence.
 
 ## COMMITS THIS SESSION
-- `a5b3795` feat(dashboard): Owner unified view — ops, financial, service
-  quality, branch comparison *(Claude)*
-- `6092311` feat(sidebar): reorder nav items by workflow — operations,
-  customers, finance, admin *(Gemini)*
-- `d12339f` fix(sidebar): visible group dividers with labels *(Claude)*
-- `3a72b22` fix(security): SECURITY DEFINER views → security_invoker (BL-003)
-  *(Claude)*
-- `8e3787c` feat(menu): update prices for ribs, tikka, kabab, grills and
-  update bourek description *(Gemini)*
-- `fcec733` feat(menu): update price for kabab with rice to 2.500 BHD
-  *(Gemini)*
+- `bd4a06e` chore(state): reconcile phase-state pointer + session 92
+  bookkeeping
+- `e9b2a81` fix(security): BL-004 — close high-severity open
+  INSERT/SELECT policies (migration 120)
+- `a0b351a` fix(owner): improve placeholder metrics — late orders,
+  slowest items, acceptance hint
+- `1fc4137` chore(dev): add hydration mismatch probe script
+- `0401eb8` fix(security): add shape guard to customers anon INSERT
+  policy (migration 121)
 
 ## MIGRATIONS APPLIED TO PROD
-- **119** `security_invoker_views` — `ALTER VIEW … SET (security_invoker
-  = on)` on `order_source_summary`, `customer_segments_view`,
-  `coupon_analytics_view`, `v_kds_station_items`. Applied via MCP
-  `apply_migration`; remote logs `20260512194842_security_invoker_views`.
-  Verification: all 4 returned `option_value = 'on'`; row-count smoke
-  test 3 / 15 / 0 / 244 respectively.
-- **Runtime impact: zero.** All four views are queried via
-  `createServiceClient()` (service role bypasses RLS regardless of
-  invoker/definer). `v_kds_station_items` has no app-code reference
-  outside generated types.
+
+### 120 — `rls_bl004_fix`
+Closed 8 high-severity BL-004 findings. Targets:
+- `orders` + `order_items` INSERT: anon + authenticated dropped, replaced
+  with `service_role` only. Legitimate path is `rpc_create_order`
+  (SECURITY DEFINER → bypasses RLS); direct PostgREST inserts could
+  forge totals / status / branch, so they're now blocked.
+- `inventory_lots` INSERT: authenticated → owner/general_manager/
+  branch_manager/inventory_manager via `auth_user_role()::text IN (…)`.
+- `supplier_price_history` SELECT + INSERT: same staff set. Closed the
+  wholesale-cost leak and the COGS-poisoning vector.
+- `prep_items` + `prep_item_ingredients` SELECT: same staff set plus
+  `kitchen`. Closed recipe-BOM leak; kitchen role keeps prep access.
+
+Skipped (low severity, audited separately later in session):
+`ingredient_allergens`, `restaurant_profile`, `unit_conversions`,
+`contact_messages`, `customers`, `system_settings`.
+
+### 121 — `customers_insert_guard`
+Replaced `customers_insert_anon WITH CHECK (true)` with shape guard:
+- `char_length(name) BETWEEN 1 AND 120`
+- `phone ~ '^\+?[0-9\s\-()]{7,30}$'`
+
+NULL `name` or NULL `phone` now reject (intentional side-effect of
+char_length / regex on NULL). Legitimate guest checkout is unaffected
+because `rpc_create_order` is SECURITY DEFINER.
 
 ## FEATURES SHIPPED
 
-### Owner Dashboard (`/dashboard/owner`) — Claude
-- **Files:** `src/app/[locale]/dashboard/owner/page.tsx`,
-  `src/components/dashboard/owner/OwnerDashboardClient.tsx`.
-- **Guard:** `requireDashboardSection('owner')` → owner +
-  general_manager. Added `'owner'` to `DashboardSection` +
-  `SECTION_ROLES` in `src/lib/auth/rbac-ui.ts`.
-- **Data:** 13-promise parallel fetch — `getDashboardData`, 3×
-  `getMetrics` (today / 7d / month-to-date with prev-period growth),
-  2× `getOperationalMetrics`, 2× `getBranchSummaries`,
-  `getOrderSourceBreakdown`, `getSecondaryMetrics`,
-  `getLaborCostMetrics`, inline food-cost (mirrors reports/page.tsx),
-  branches list. **Zero new RPCs.**
-- **Blocks:**
-  - Operations — 4 KPI cards, status pills, source breakdown,
-    top-3 / slowest items.
-  - Financial — 3-row period table with growth %, Food Cost % +
-    Labor Cost % + Estimated Net Profit tiles
-    (rev − rev·food% − rev·labor% − 0.15·rev).
-  - Service Quality — acceptance time (placeholder, no `accepted_at`
-    column), avg prep, cancelled today + rate, repeat customer rate.
-  - Branch Comparison — card per visible branch (today + month).
-- **Known placeholders:** Late Orders / Delayed pill use
-  `activeOrders.longestMins > 30` as binary heuristic (0 or 1+); Bottom
-  3 items is the tail of top-5; Avg Acceptance is `--`.
-- **i18n:** new `dashboard.nav.owner` + full `dashboard.owner.*`
-  namespace in `messages/{ar,en}.json`.
+### Owner Dashboard placeholder fixes — commit `a0b351a`
+Files: `src/components/dashboard/owner/OwnerDashboardClient.tsx`,
+`messages/{ar,en}.json`.
 
-### Sidebar regrouping — joint (Gemini → Claude)
-- Gemini reordered `getNavItems` in
-  `src/components/dashboard/DashboardSidebar.tsx` into 4 logical groups:
-    1. **Daily Operations**: Home, Owner, Orders, POS, KDS, Tables,
-       Waiter, Driver, Delivery.
-    2. **Customer Management**: Waitlist, Reservations, Coupons,
-       Promotions.
-    3. **Finance & Reports**: Payments, Shifts, Analytics, Reports,
-       Audit.
-    4. **Administration**: Staff, Menu, Schedule, Inventory, Settings.
-  - Initial dividers were `border-t border-brand-border/30 my-2` after
-    `delivery`, `promotions`, `audit`.
-  - Inventory integrated into the main `visible.map` as a collapsible
-    accordion.
-- **Claude follow-up** (commit `d12339f`):
-  - Replaced the after-item dividers with `<div className="my-3 border-t
-    border-brand-border/50" />` between groups.
-  - Added a `<p>` group header at the top of each group with
-    `text-[10px] uppercase tracking-widest text-brand-muted/50`.
-  - Refactored the render from `visible.map` to a forEach with a
-    `prevGroup` tracker so RBAC-filtered empty groups don't produce
-    orphan labels or dividers.
-  - Group labels: Operations / Customers / Finance / Admin (AR:
-    التشغيل / العملاء / المالية / الإدارة). Keys at
-    `dashboard.nav.groups.*`.
+- **Late Orders KPI:** confirmed `orders.accepted_at` does not exist
+  (information_schema check). Kept the `longestMins > 30` heuristic
+  but changed primary value from misleading "1+" to "≥1 · 38m"
+  (count + minutes). Red tone unchanged.
+- **Slowest items today:** previous `slice(-Math.min(3, length-3))`
+  produced ≤2 entries when 5 items were tracked. Now
+  `topItems.slice(2, 5)` — ranks 3-5. Label key updated in both
+  locales to "Slowest today (tracked items)" / "الأقل حركة اليوم
+  (من المتابَعة)".
+- **Acceptance Time:** still no `accepted_at` column → primary stays
+  `--`, label renamed to "Acceptance Time" / "وقت القبول", hint
+  "Not tracked yet" / "غير متوفر".
 
-### Menu pricing & content — Gemini
-- Updated `src/data/menu.json`:
-  - **Premium Lamb Ribs:** S 2.800, M 5.500, L 8.000 BHD.
-  - **Meat Tikka:** 3.500 BHD.
-  - **Chicken Kabab:** S 1.500, M 2.500 BHD.
-  - **Chicken Grill Plates:** S 2.500 BHD.
-  - **Kabab with Rice:** 2.500 BHD.
-- **Crispy Cheese Burek** description rewritten ("Stuffed with seasoned
-  meat and cheese", AR/EN).
+### Hydration probe — commit `1fc4137`
+`scripts/check-hydration.mjs`: Playwright probe that loads /dashboard,
+optionally logs in with seeded creds, captures console + pageerror
+events. Used this session to confirm no hydration warnings on public
+routes (login auth failed for prod, so the inside-dashboard render was
+not verified — Ahmed manually confirmed gone).
 
-### Driver UI audit — Gemini
-- Audited `/driver` (DriverDashboard.tsx) for token compliance.
-- Confirmed `brand-gold`, `brand-black`, Satoshi/Almarai usage.
-- RTL behaviour verified.
+## DATABASE CLEANUP
+
+### Stale active orders (session 92 carry-over)
+- Audited 4 manual orders > 24h old in active statuses.
+- Cancelled 3 manual `preparing` orders (test session from 2026-05-08)
+  + the 332.300 BHD `accepted` dine-in from 2026-05-11. Notes tagged
+  `[stale_test_cleanup 2026-05-13]`.
+
+### Test/dummy order purge
+- Audit predicate: `customer_name IN ('احمد','ahmed','test','TEST',
+  'دافن','سبيسبيس','Table 1','Table 13','Table 18') OR notes LIKE
+  '%stale_test_cleanup%' OR total_bhd = 332.300`.
+- Matched 20 orders / 697.600 BHD total, span 2026-05-04 → 2026-05-11.
+- First DELETE blocked by `payments_order_id_fkey` (RESTRICT). Found
+  via `pg_constraint` audit. **Saved as memory
+  `feedback_orders_delete_fks`.**
+- Verified 19 payments tied to these orders were all
+  `method=cash / status=pending_cod` with zero gateway IDs and zero
+  refunds → no real-money trail.
+- Two-step CTE delete (`del_payments` → `del_orders`) removed 19
+  payments + 20 orders cleanly. CASCADE handled order_items +
+  coupon_redemptions + coupon_usages + driver_cash_handover_orders +
+  driver_order_issues + kds_queue + order_item_station_status.
+  SET NULL applied to driver_locations + points_transactions.
+
+## AUDITS PERFORMED (NO CHANGES)
+
+### BL-004 RLS audit
+54 policies matched `qual='true' OR with_check='true'`. Bucketed:
+- 31 `service_role`-only — not a finding.
+- 8 public-read SELECT — 7 intentional, 1 to verify (`system_settings`).
+- 6 authenticated SELECT — 2 high-severity flagged.
+- 8 open INSERT — 6 high-severity flagged.
+14 actionable; 8 high-severity closed in 120; 1 low-severity closed
+in 121; 4 remain (see OPEN ISSUES).
+
+### `system_settings` content audit
+Only 2 rows: `menu_display` (5 booleans) and `payment_methods`
+(`cash=true, benefit=false, tap=false`). No secrets, no internal
+toggles. Public-read policy can stay open. Optionally rename to
+`system_settings_public_read` for naming consistency.
 
 ## OPEN ISSUES (carry to next session)
 
-### Turbopack stale-bundle hydration mismatch (UNRESOLVED at end of session)
-After both the Owner Dashboard sidebar entry and the divider/label
-refactor, user reported the same hydration error twice. The diff was
-always: server-rendered first `<nav>` child was an item `<div>`, client
-rendered the `<p>` group label first. Current code is deterministic —
-for any role that sees `home`, the first nav child must be the
-operations `<p>` label — so a real code mismatch is impossible. This is
-Turbopack module-graph drift. Suggested escalation: kill all node
-processes, `Remove-Item -Recurse -Force .next`, unregister service
-workers in DevTools, clear site data, hard reload. **Did not get
-confirmation from Ahmed that this cleared it.** First thing to check
-next session.
+### Gemini sibling agent — actively editing Shifts page
+Two uncommitted files at session end, **growing diff** (was +37/-19
+at first audit, +132/-93 at second):
+- `src/app/[locale]/dashboard/shifts/page.tsx`
+- `src/components/dashboard/shifts/CloseShiftDialog.tsx`
 
-### Owner Dashboard placeholders
-If real numbers are wanted for Late Orders count, Avg Acceptance Time,
-and true Bottom-3 items, these need:
-- `orders.accepted_at` column + trigger (or RPC
-  `get_acceptance_metrics`).
-- A per-order late-flag query (or computed proxy).
-- An all-items-today query (extension of `getTopItems` without LIMIT).
+Pattern matches memory `project_cowork_sibling_agent`: brand-token /
+RTL polish (`muted-foreground` → `brand-muted`, `bg-secondary` →
+`brand-gold`, `font-cairo` titles, 44px touch targets). No migration
+number collision risk so far. Do not commit on Gemini's behalf —
+let it finish.
 
-### Working-tree drift
-`.agent/phase-state.json` + `.claude/settings.local.json` carry
-uncommitted modifications from session start. Not part of any feature.
-Left unstaged.
+### Remaining BL-004 low-severity (4)
+- `contact_messages` anon INSERT (rate-limited but unbounded by policy)
+- `ingredient_allergens` authenticated SELECT (reference data)
+- `restaurant_profile` authenticated SELECT (internal config)
+- `unit_conversions` authenticated SELECT (reference data)
+All low-severity; require trade-off calls. No urgency.
+
+### Phase-state pointer
+`current_phase: null`, `next_phase: "7b"`. Both 7b and 8 remain
+externally blocked (Deliverect contract / 6 months data). Sprint 6B
+(WhatsApp API) blocked on Meta verification; Sprint 6C (Benefit Pay)
+blocked on merchant approval.
 
 ## DECISIONS LOGGED
-- **No new RPCs for Owner Dashboard.** Brief said reuse existing
-  queries; honoured. Cost: 3 placeholder metrics, all documented in the
-  client component.
-- **BL-003 fix uses `ALTER VIEW`, not `CREATE OR REPLACE`.** Only the
-  `security_invoker` option changes; no need to re-emit the
-  definitions. Smaller blast radius.
-- **Sidebar group labels use `<p>`** so they're semantically a
-  paragraph, not a styled div. `text-[10px]` arbitrary Tailwind value
-  is intentional (spec).
+- **BL-004 fix strategy:** `service_role`-only for high-value INSERTs
+  (orders, order_items); `auth_user_role()::text IN (…)` for
+  staff-scoped policies. `::text` cast matches existing pattern from
+  migration 035 (avoids SQLSTATE 55P04 on staff_role enum).
+- **Owner Dashboard placeholders:** keep "--" for Acceptance Time
+  instead of inventing a column — honest empty state beats fake
+  precision. Confirmed by Ahmed via option (b) in session.
+- **Test-data delete vs cancel:** Ahmed chose hard DELETE (not
+  cancel+mark) for the broader test-order purge. Payment rows
+  reviewed first and confirmed safe to drop (no gateway IDs).
+- **Hydration mismatch closure:** Ahmed selected option (c) — call
+  resolved without further verification, since manual testing hadn't
+  reproduced it.
+
+## MEMORY UPDATES
+- New: `feedback_orders_delete_fks` — `DELETE FROM orders` is blocked
+  by `payments` (RESTRICT), `driver_earnings` and `inventory_movements`
+  (no action). Inventory child tables before any bulk delete.
+- Indexed in `MEMORY.md`.
 
 ## STATUS
 - **TSC:** clean after every commit.
-- **Git:** master pushed up through `fcec733` (Gemini menu commit) and
-  `3a72b22` (Claude BL-003 commit) at end-of-session.
-- **Migrations:** local `119_security_invoker_views.sql` matches the
-  prod state.
-- **Memory updates:**
-  `feedback_messages_stale_cache` generalised — pattern applies to any
-  mid-session edit (component code as well as messages JSON), not just
-  messages files.
+- **Git:** local `master` == `origin/master`. 5 commits pushed today.
+- **Migrations:** local 120 + 121 match prod state.
+- **Build:** not run this session — no consumer-facing changes that
+  warrant a fresh production build (Owner Dashboard is staff-only;
+  RLS migrations don't change page output).
