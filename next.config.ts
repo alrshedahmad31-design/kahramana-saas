@@ -165,11 +165,22 @@ export default withSentryConfig(withNextIntl(nextConfig), {
 
   project: "javascript-nextjs",
 
+  // Read the auth token from the env var explicitly so the upload step
+  // fails loudly (rather than silently no-op) if the secret is missing
+  // on Vercel.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
 
   // For all available options, see:
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+  // Sourcemap upload pipeline — explicit so it can't be accidentally
+  // turned off by an upstream default change.
+  sourcemaps: {
+    disable: false,
+  },
 
   // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
