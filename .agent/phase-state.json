@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-13 (session 93 close — BL-004 fully closed (migrations 120-122), header redesign, Vercel build unblocked, Sentry sourcemap pipeline rebuilt, 16 commits)",
+    "last_updated":  "2026-05-13 (session 94 — F-02/F-05/F-06/F-07 security fixes shipped (a867977/ef9fe86/a5f13a5/724f115); Sentry P2 hardening + webpack-plugin release alignment (a3bfba8): DSN→env, sendDefaultPii=false across server/edge/client, edge tracesSampleRate 1→0.1, release name binds runtime ↔ sourcemap upload via VERCEL_GIT_COMMIT_REF + short SHA; BL-001 closed in docs/qa/post-launch-backlog.md (loyalty/config split verified); migrations 114 + 115 backfilled into applied list)",
     "current_phase":  null,
     "next_phase":  "7b",
     "pointer_note":  "No active phase. All numbered phases through 7 + 6b are done. 7b (Deliverect/POS) is locked on contract + Bahrain availability + POS API docs. 8 (AI) is locked on 6 months production data. Phase 6 Sprint 6B/6C (WhatsApp API + Benefit Pay) blocked on Meta verification + merchant approval.",
@@ -17,7 +17,7 @@
                        "pending_db_migrations":  [
 
                                                  ],
-                       "migration_status":  "090-113 ALL APPLIED AND TRACKED — verified 2026-05-12 via supabase migration list --linked. Latest: 113_kds_strict_shawarma.sql. Duplicate 102_kds_shawarma_routing.sql removed from disk. Repo state matches Supabase remote.",
+                       "migration_status":  "090-122 ALL APPLIED AND TRACKED — verified 2026-05-12 via supabase migration list --linked, BL-004 fixes 120-122 applied 2026-05-13. Latest: 122_rls_bl004_p2.sql. Duplicate 102_kds_shawarma_routing.sql removed from disk. 114 + 115 backfilled into applied_db_migrations 2026-05-13 (session 94 audit). Repo state matches Supabase remote.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -75,6 +75,8 @@
                                                      "111_kds_breakfast_routing.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
                                                      "112_kds_backfill_breakfast.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
                                                      "113_kds_strict_shawarma.sql — applied 2026-05-11 (tracked in git 2026-05-12)",
+                                                     "114_reservations.sql — applied 2026-05-12 (reservations table + rpc_find_available_tables + rpc_create_reservation + RLS)",
+                                                     "115_delivery_proof.sql — applied 2026-05-12 (Proof of Delivery — photo/signature capture)",
                                                      "116_reservations_phone_international.sql — applied 2026-05-12",
                                                      "117_reservations_seating_type.sql — applied 2026-05-12",
                                                      "118_delivery_arrived_status.sql — applied 2026-05-12",
@@ -85,7 +87,7 @@
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-                       "last_git_commit":  "62112d6 — fix(sentry): explicit sourcemaps glob (session 93 final commit; full series: bd4a06e → e9b2a81 → a0b351a → 1fc4137 → 0401eb8 → a657d2e → c383235 → e615b91 → ab7368f → 4397ea6 → ffef5bd → 6a3ac93 → e5a2caf → 6da6fa7 → f90536d → be897f1 → 4547db6 → d456a1f → 2f2c69f → 62112d6)",
+                       "last_git_commit":  "a3bfba8 — fix(sentry): align webpack plugin release name + P2 config fixes (session 94 series: a867977 [F-02 tracePropagationTargets] → 724f115 [F-07 /privacy→/privacy-policy] → ef9fe86 [F-05 PDPL] → a5f13a5 [F-06 release sanitization] → a3bfba8 [DSN→env + sendDefaultPii=false + edge trace rate alignment + webpack-plugin release.name binding]; prior session 93 tail: 62112d6 → 2f2c69f → d456a1f → 4547db6)",
                        "vercel_push_pending":  false,
                        "supabase_key_rotation_required":  false,
                        "driver_page_fix":  "verified on production",

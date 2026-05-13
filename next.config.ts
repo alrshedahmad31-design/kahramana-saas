@@ -223,6 +223,7 @@ export default withSentryConfig(withNextIntl(nextConfig), {
     // Trade-off: automatic SSR/RSC performance traces are lost. Error
     // capture, manual Sentry.startSpan() calls, and client-side tracing
     // continue to work normally.
+    // F-08: baggage/meta leak closed; client router transactions acceptable trade-off
     autoInstrumentAppDirectory:   false,
     autoInstrumentServerFunctions: false,
     autoInstrumentMiddleware:     false,

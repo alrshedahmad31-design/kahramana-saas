@@ -19,12 +19,13 @@
 
 ## Items
 
-### BL-001 — Split loyalty pure helpers from server-only fetcher
+### BL-001 — Split loyalty pure helpers from server-only fetcher — ✅ CLOSED (2026-05-13)
 
 - **File:** `src/lib/loyalty/config.ts`
 - **Severity:** low
 - **Effort:** S
 - **Origin:** session 86 phase-completion gate 8 (service-role-key bundle scan)
+- **Closed:** 2026-05-13 — split landed with a stronger layout than the proposal: `config.ts` is a 2-line barrel; `config.server.ts` carries `import 'server-only'` (build-time guard) around `fetchLoyaltyConfig` + `getLoyaltyConfig`; `types.ts` holds `LoyaltyConfig` + `DEFAULT_LOYALTY_CONFIG`; pure math lives in `calculations.ts`. The `server-only` directive supersedes the originally-proposed `helpers.ts` filename convention.
 
 **Problem.** `src/lib/loyalty/config.ts` co-locates two unrelated concerns:
 1. Server-only DB fetcher: `fetchLoyaltyConfig`, `getLoyaltyConfig` (uses
@@ -133,3 +134,4 @@ again, honeypot remains active. No code change needed.
 |---|---|---|
 | 2026-05-10 | Claude Code session 86 | File created; BL-001 added (loyalty helpers split) |
 | 2026-05-10 | Claude Code session 87 | BL-002 added (Turnstile env-var provisioning in Cloudflare + Vercel) |
+| 2026-05-13 | Claude Code session 94 | BL-001 closed — split verified in src/lib/loyalty/ (config.ts barrel + config.server.ts + types.ts + calculations.ts; uses `import 'server-only'`) |
