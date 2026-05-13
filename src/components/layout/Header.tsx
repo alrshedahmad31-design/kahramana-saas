@@ -347,14 +347,6 @@ export default function Header() {
             </Link>
 
             <button
-              onClick={handleLocaleSwitch}
-              aria-label={t('languageAlt')}
-              className="flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 text-brand-muted text-xs font-bold tabular-nums hover:text-brand-text transition-colors"
-            >
-              {targetLocale === 'ar' ? 'ع' : 'EN'}
-            </button>
-
-            <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? t('closeMenu') : t('openMenu')}
               className="w-11 h-11 flex flex-col justify-center items-center gap-1.5"

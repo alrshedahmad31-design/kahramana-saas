@@ -540,10 +540,11 @@ test.describe('Contact page', () => {
       expect(inputs).toBeGreaterThan(0)
     })
 
-    test(`${locale.toUpperCase()}: phone link present`, async ({ page }) => {
+    test(`${locale.toUpperCase()}: branch phone visible`, async ({ page }) => {
       await page.goto(path)
-      const telLink = page.locator('a[href*="tel:"]').first()
-      await expect(telLink).toBeVisible({ timeout: 10_000 })
+      // Branch phone numbers are rendered as plain text inside Phone-iconned
+      // cards, not <a href="tel:…">. Assert the country-code substring.
+      await expect(page.getByText('+973').first()).toBeVisible({ timeout: 10_000 })
     })
   }
 })
