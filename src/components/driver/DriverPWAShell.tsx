@@ -34,12 +34,12 @@ export default function DriverPWAShell({ locale, children }: Props) {
   useEffect(() => {
     if (typeof window === 'undefined' || !('wakeLock' in navigator)) return
 
-    let sentinel: any = null
+    let sentinel: WakeLockSentinel | null = null
 
     async function acquire() {
       if (sentinel) return
       try {
-        sentinel = await (navigator as any).wakeLock.request('screen')
+        sentinel = await navigator.wakeLock.request('screen')
       } catch (err) {
         console.error('[WakeLock] Request failed:', err)
       }
@@ -56,12 +56,13 @@ export default function DriverPWAShell({ locale, children }: Props) {
       }
     }
 
-    const handleEvent = (e: any) => {
-      if (e.detail?.active) acquire()
+    const handleEvent = (e: Event) => {
+      const detail = (e as CustomEvent<{ active?: boolean }>).detail
+      if (detail?.active) acquire()
       else release()
     }
 
-    window.addEventListener('driver:wake-lock', handleEvent as EventListener)
+    window.addEventListener('driver:wake-lock', handleEvent)
 
     const handleVisibility = () => {
       if (sentinel !== null && document.visibilityState === 'visible') {
@@ -73,7 +74,7 @@ export default function DriverPWAShell({ locale, children }: Props) {
     document.addEventListener('visibilitychange', handleVisibility)
 
     return () => {
-      window.removeEventListener('driver:wake-lock', handleEvent as EventListener)
+      window.removeEventListener('driver:wake-lock', handleEvent)
       document.removeEventListener('visibilitychange', handleVisibility)
       release()
     }

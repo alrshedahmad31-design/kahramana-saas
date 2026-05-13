@@ -22,12 +22,14 @@ import {
   Filter,
   ExternalLink,
   Loader2,
+  type LucideIcon,
 } from 'lucide-react'
 import { format, isToday, parseISO, addMinutes, isAfter, isBefore } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from '@/lib/toast'
 import {
   type Reservation,
+  type CreateReservationInput,
   createReservation,
   updateReservationStatus,
   findAvailableTables,
@@ -66,12 +68,12 @@ function StatusPill({ status, locale }: { status: Reservation['status']; locale:
   )
 }
 
-function StatCard({ label, value, icon: Icon, trend, locale }: { 
-  label: string; 
-  value: string | number; 
-  icon: any; 
+function StatCard({ label, value, icon: Icon, trend, locale: _locale }: {
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
   trend?: string;
-  locale: 'ar' | 'en' 
+  locale: 'ar' | 'en'
 }) {
   return (
     <div className="bg-brand-surface border border-brand-border p-4 rounded-xl flex flex-col gap-1 transition-all hover:border-brand-gold/30 group">
@@ -146,8 +148,8 @@ export default function ReservationsClient({
       await updateReservationStatus(id, newStatus)
       setReservations(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r))
       toast.success(t('notifications.statusUpdated'))
-    } catch (err: any) {
-      toast.error(err.message)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(null)
     }
@@ -351,7 +353,7 @@ function DetailDrawer({ res, onClose, locale, onStatusChange, loading }: { res: 
   )
 }
 
-function InfoRow({ icon: Icon, label, value, isCapitalized }: { icon: any; label: string; value: string; isCapitalized?: boolean }) {
+function InfoRow({ icon: Icon, label, value, isCapitalized }: { icon: LucideIcon; label: string; value: string; isCapitalized?: boolean }) {
   return (
     <div className="flex items-center gap-4 group">
       <div className="w-10 h-10 rounded-lg bg-brand-black border border-brand-border flex items-center justify-center text-brand-muted"><Icon size={18} /></div>
@@ -396,13 +398,13 @@ function AddReservationDrawer({ isOpen, onClose, branchId, locale }: { isOpen: b
         table_id: tables[0]?.table_id || null, 
         source: 'staff',
         duration_minutes: 90,
-        seating_type: formData.seating_type as any
+        seating_type: formData.seating_type as CreateReservationInput['seating_type']
       })
-      toast.success(t('notifications.addSuccess')); 
+      toast.success(t('notifications.addSuccess'));
       window.location.reload()
-    } catch (err: any) { 
-      toast.error(err.message) 
-    } finally { 
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
+    } finally {
       setLoading(false) 
     }
   }

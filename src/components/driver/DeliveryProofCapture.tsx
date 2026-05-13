@@ -51,8 +51,8 @@ export default function DeliveryProofCapture({ orderId, onComplete, onSkip, isOp
       } else {
         toast.error(res.error)
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Upload failed')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setIsUploading(false)
     }
