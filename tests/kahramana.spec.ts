@@ -266,9 +266,9 @@ test.describe('Header', () => {
     await expect(page.locator('header').getByRole('link', { name: 'Menu' }).first()).toBeVisible({ timeout: 10_000 })
   })
 
-  test('EN: nav "Branches" link in header', async ({ page }) => {
+  test('EN: nav "Contact" link in header', async ({ page }) => {
     await page.goto('/en')
-    await expect(page.locator('header').getByRole('link', { name: 'Branches' }).first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('header').getByRole('link', { name: 'Contact' }).first()).toBeVisible({ timeout: 10_000 })
   })
 
   test('EN: locale switch button visible', async ({ page }) => {
@@ -540,10 +540,10 @@ test.describe('Contact page', () => {
       expect(inputs).toBeGreaterThan(0)
     })
 
-    test(`${locale.toUpperCase()}: WhatsApp link present`, async ({ page }) => {
+    test(`${locale.toUpperCase()}: phone link present`, async ({ page }) => {
       await page.goto(path)
-      const waLink = page.locator('a[href*="wa.me"], a[href*="whatsapp"]').first()
-      await expect(waLink).toBeVisible({ timeout: 10_000 })
+      const telLink = page.locator('a[href*="tel:"]').first()
+      await expect(telLink).toBeVisible({ timeout: 10_000 })
     })
   }
 })
