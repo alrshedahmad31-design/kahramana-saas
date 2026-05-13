@@ -1,10 +1,11 @@
 'use server'
 
-import { createHash }                from 'crypto'
-import { createServiceClient }       from '@/lib/supabase/server'
-import { headers }                   from 'next/headers'
-import { Ratelimit }                 from '@upstash/ratelimit'
-import { Redis }                     from '@upstash/redis'
+import bcrypt                          from 'bcrypt'
+import { createHash }                  from 'crypto'
+import { createServiceClient }         from '@/lib/supabase/server'
+import { headers }                     from 'next/headers'
+import { Ratelimit }                   from '@upstash/ratelimit'
+import { Redis }                       from '@upstash/redis'
 import { calcTotalHours, calcOvertimeHours } from '@/lib/staff/calculations'
 import type { StaffBasicRow, StaffRole } from '@/lib/supabase/custom-types'
 
@@ -13,8 +14,45 @@ export type ClockResult =
   | { success: false; error: string }
 
 // ── PIN hashing ─────────────────────────────────────────────────────────────
-function hashPin(pin: string): string {
+//
+// PINs are now bcrypt-hashed. Legacy unsalted SHA-256 hashes are still accepted
+// during migration: `comparePinAndMaybeUpgrade` transparently rehashes them on
+// successful login, so the column phases over to bcrypt without forcing staff
+// to re-enroll. Once `clock_pin_hash LIKE '$2%'` reaches ~100%, the SHA-256
+// fallback branch can be deleted.
+
+const BCRYPT_COST = 10
+
+async function hashPin(pin: string): Promise<string> {
+  return bcrypt.hash(pin, BCRYPT_COST)
+}
+
+function isBcryptHash(hash: string): boolean {
+  return hash.startsWith('$2')
+}
+
+function legacySha256(pin: string): string {
   return createHash('sha256').update(pin).digest('hex')
+}
+
+async function comparePinAndMaybeUpgrade(
+  pin: string,
+  storedHash: string | null | undefined,
+  staffId: string,
+): Promise<boolean> {
+  if (!storedHash) return false
+
+  if (isBcryptHash(storedHash)) {
+    return bcrypt.compare(pin, storedHash)
+  }
+
+  // Legacy SHA-256 row → verify with constant-equality, then upgrade in place.
+  if (legacySha256(pin) !== storedHash) return false
+
+  const upgraded = await hashPin(pin)
+  const service  = await createServiceClient()
+  await service.from('staff_basic').update({ clock_pin_hash: upgraded }).eq('id', staffId)
+  return true
 }
 
 // ── Rate limiting (Upstash Redis — works across Vercel serverless instances) ──
@@ -51,13 +89,14 @@ async function assertStaffPin(staffId: string, pin: string): Promise<boolean> {
   const service = await createServiceClient()
   const { data } = await service
     .from('staff_basic')
-    .select('id')
+    .select('id, clock_pin_hash, is_active')
     .eq('id', staffId)
-    .eq('clock_pin_hash', hashPin(pin))
     .eq('is_active', true)
     .maybeSingle()
 
-  return Boolean(data)
+  if (!data) return false
+  const row = data as { id: string; clock_pin_hash: string | null; is_active: boolean }
+  return comparePinAndMaybeUpgrade(pin, row.clock_pin_hash, row.id)
 }
 
 // ── verifyPin ─────────────────────────────────────────────────────────────────
@@ -69,29 +108,41 @@ export async function verifyPin(pin: string): Promise<ClockResult> {
   if (!allowed) return { success: false, error: 'Too many attempts. Try again shortly.' }
 
   const service = await createServiceClient()
+  // No SQL-level equality on bcrypt hashes (per-row salts). Pull active staff
+  // and compare app-side. Roster ≤ ~50 rows in practice; rate-limit + 4-digit
+  // PIN entropy make this acceptable.
   const { data, error } = await service
     .from('staff_basic')
-    .select('id, name, role, branch_id, is_active')
-    .eq('clock_pin_hash', hashPin(pin))
+    .select('id, name, role, branch_id, clock_pin_hash')
     .eq('is_active', true)
-    .maybeSingle()
 
   if (error || !data) {
     return { success: false, error: 'PIN not found' }
   }
 
-  const staff = data as { id: string; name: string; role: StaffRole; branch_id: string | null }
+  type Row = { id: string; name: string; role: StaffRole; branch_id: string | null; clock_pin_hash: string | null }
+  const rows = data as Row[]
+
+  let matched: Row | null = null
+  for (const row of rows) {
+    if (await comparePinAndMaybeUpgrade(pin, row.clock_pin_hash, row.id)) {
+      matched = row
+      break
+    }
+  }
+
+  if (!matched) return { success: false, error: 'PIN not found' }
 
   const { data: openEntry } = await service
     .from('time_entries')
     .select('id')
-    .eq('staff_id', staff.id)
+    .eq('staff_id', matched.id)
     .is('clock_out', null)
     .maybeSingle()
 
   return {
     success:     true,
-    staff:       { id: staff.id, name: staff.name, role: staff.role, branch_id: staff.branch_id },
+    staff:       { id: matched.id, name: matched.name, role: matched.role, branch_id: matched.branch_id },
     activeEntry: (openEntry as { id: string } | null)?.id ?? null,
   }
 }
