@@ -1125,7 +1125,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
           </p>
           <p className={`text-[11px] text-brand-muted opacity-60 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
             {t('termsPrefix')}{' '}
-            <Link href="/privacy" className="text-brand-gold hover:text-brand-gold-light">
+            <Link href="/privacy-policy" className="text-brand-gold hover:text-brand-gold-light">
               {t('privacyPolicy')}
             </Link>
             {' / '}
