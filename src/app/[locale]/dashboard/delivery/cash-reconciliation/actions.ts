@@ -180,7 +180,7 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  const { error: updateErr } = await service
+  const { data: updated, error: updateErr } = await service
     .from('cash_handovers')
     .update({
       manager_confirmed: true,
@@ -188,17 +188,21 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
       confirmed_at:      now
     })
     .eq('id', handoverId)
+    .eq('manager_confirmed', false)
+    .select('id')
+    .single()
 
   if (updateErr) return { error: updateErr.message }
+  if (!updated) return { error: 'Handover was confirmed concurrently' }
 
   await service.from('audit_logs').insert({
-    action: 'UPDATE',
+    action:     'UPDATE',
     table_name: 'cash_handovers',
-    record_id: handoverId,
-    user_id: user.id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    actor_role: user.role as any,
-    changes: { manager_confirmed: true, confirmed_by: user.id, confirmed_at: now }
+    record_id:  handoverId,
+    user_id:    user.id,
+    actor_role: user.role as never,
+    branch_id:  h.branch_id,
+    changes:    { manager_confirmed: true, confirmed_by: user.id, confirmed_at: now },
   })
 
   return { success: true }

@@ -158,11 +158,15 @@ export async function togglePromotion(id: string, isActive: boolean): Promise<Pr
 
   const supabase = getServiceClient()
   if (!supabase) return { error: 'Configuration error' }
-  const { error } = await supabase
+  const { data: affected, error } = await supabase
     .from('promotions')
     .update({ is_active: isActive })
     .eq('id', id)
+    .eq('is_active', !isActive)
+    .select('id')
+    .single()
   if (error) return { error: error.message }
+  if (!affected) return { error: 'Promotion status was modified concurrently' }
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/promotions`)
   return { ok: true, id }
@@ -180,8 +184,14 @@ export async function deletePromotion(id: string): Promise<PromotionMutationResu
 
   const supabase = getServiceClient()
   if (!supabase) return { error: 'Configuration error' }
-  const { error } = await supabase.from('promotions').delete().eq('id', id)
+  const { data: deleted, error } = await supabase
+    .from('promotions')
+    .delete()
+    .eq('id', id)
+    .select('id')
+    .single()
   if (error) return { error: error.message }
+  if (!deleted) return { error: 'Promotion not found or already deleted' }
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/promotions`)
   return { ok: true, id }

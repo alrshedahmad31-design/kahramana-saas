@@ -347,12 +347,16 @@ export async function toggleStaffActive(
   }
 
   const service = await createServiceClient()
-  const { error } = await service
+  const { data: affected, error } = await service
     .from('staff_basic')
     .update({ is_active: activate })
     .eq('id', id)
+    .eq('is_active', !activate)
+    .select('id')
+    .single()
 
   if (error) return { success: false, error: error.message }
+  if (!affected) return { success: false, error: 'Staff status was modified concurrently' }
 
   await service.from('audit_logs').insert(
     auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'UPDATE', id, {

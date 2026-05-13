@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { startOfDay, endOfDay } from 'date-fns'
 import {
@@ -19,6 +19,8 @@ export type ShiftErrorCode =
   | 'invalid_input'
   | 'branch_scope'
   | 'db_error'
+  | 'not_found'
+  | 'conflict'
   | 'unknown'
 
 export async function getShiftSummary(branchId: string, date: string) {
@@ -138,19 +140,47 @@ export async function approveShift(shiftId: string): Promise<ShiftActionResult> 
     return { success: false, code: 'invalid_input', error: 'Invalid shift id' }
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.from('shift_closings')
-    .update({
-      status:      'approved',
-      approved_by: user.id,
-      approved_at: new Date().toISOString(),
-    })
+  const supabase = createServiceClient()
+
+  const { data: current, error: fetchErr } = await supabase
+    .from('shift_closings')
+    .select('id, status, branch_id')
     .eq('id', idParsed.data)
+    .single()
+
+  if (fetchErr || !current) {
+    return { success: false, code: 'not_found', error: 'Shift not found' }
+  }
+  if (current.status === 'approved') {
+    return { success: false, code: 'invalid_input', error: 'Shift already approved' }
+  }
+
+  const now = new Date().toISOString()
+  const { data: updated, error } = await supabase
+    .from('shift_closings')
+    .update({ status: 'approved', approved_by: user.id, approved_at: now })
+    .eq('id', idParsed.data)
+    .eq('status', current.status)
+    .select('id')
+    .single()
 
   if (error) {
     console.error('[shifts] approveShift update failed:', error)
     return { success: false, code: 'db_error', error: error.message }
   }
+  if (!updated) {
+    return { success: false, code: 'conflict', error: 'Shift was modified concurrently' }
+  }
+
+  await supabase.from('audit_logs').insert({
+    action:     'UPDATE',
+    table_name: 'shift_closings',
+    record_id:  idParsed.data,
+    user_id:    user.id,
+    actor_role: user.role as never,
+    branch_id:  current.branch_id,
+    changes:    { status: 'approved', approved_by: user.id, approved_at: now },
+  })
 
   revalidatePath('/dashboard/shifts')
   revalidatePath('/en/dashboard/shifts')
