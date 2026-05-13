@@ -88,25 +88,23 @@ export async function createPurchaseOrder(
   }
 
   const supabase = createServiceClient()
-  // rpc_create_purchase_order params aren't in the regenerated Database
-  // types yet — `as never` per the project convention until `gen types` reruns.
   const { data: poId, error: rpcErr } = await supabase.rpc(
-    'rpc_create_purchase_order' as never,
+    'rpc_create_purchase_order',
     {
       p_supplier_id: supplier_id,
       p_branch_id:   branch_id,
       p_created_by:  session.id,
       p_items:       items,
-      p_expected_at: expected_at || null,
-      p_notes:       notes || null,
-    } as never,
+      p_expected_at: expected_at || undefined,
+      p_notes:       notes || undefined,
+    },
   )
 
   if (rpcErr || !poId) return { error: rpcErr?.message ?? 'Failed to create PO' }
 
   revalidatePath('/dashboard/inventory/purchases')
   revalidatePath('/en/dashboard/inventory/purchases')
-  return { id: poId as unknown as string }
+  return { id: poId }
 }
 
 export async function updatePOStatus(

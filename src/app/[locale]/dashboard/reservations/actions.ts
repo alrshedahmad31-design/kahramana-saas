@@ -10,12 +10,14 @@ import {
   isGlobalDashboardAdmin,
   requireDashboardSection,
 } from '@/lib/auth/dashboard-guards'
+import type { Tables } from '@/lib/supabase/types'
 import type {
-  ReservationRow,
   ReservationSource,
   ReservationStatus,
   SeatingType,
 } from '@/lib/supabase/custom-types'
+
+type ReservationDbRow = Tables<'reservations'>
 
 const RESERVATION_STATUSES: readonly ReservationStatus[] = [
   'pending', 'confirmed', 'seated', 'no_show', 'cancelled', 'completed',
@@ -58,10 +60,17 @@ const ALLOWED_RESERVATION_TRANSITIONS: Record<ReservationStatus, readonly Reserv
   completed: [],
 }
 
-export type Reservation = Omit<ReservationRow, 'status' | 'source' | 'seating_type'> & {
+export type Reservation = Omit<ReservationDbRow, 'status' | 'source' | 'seating_type'> & {
   status: ReservationStatus
   source: ReservationSource
-  seating_type?: SeatingType | null
+  seating_type: SeatingType | null
+}
+
+const SEATING_TYPES: readonly SeatingType[] = ['family_section', 'arabic_seating', 'outdoor', 'indoor']
+
+function normalizeSeatingType(s: string | null): SeatingType | null {
+  if (!s) return null
+  return SEATING_TYPES.includes(s as SeatingType) ? (s as SeatingType) : null
 }
 
 export type CreateReservationInput = z.infer<typeof createReservationSchema>
@@ -87,11 +96,12 @@ function normalizeSource(s: string): ReservationSource {
     : 'staff'
 }
 
-function normalize(row: ReservationRow): Reservation {
+function normalize(row: ReservationDbRow): Reservation {
   return {
     ...row,
-    status: normalizeStatus(row.status),
-    source: normalizeSource(row.source),
+    status:       normalizeStatus(row.status),
+    source:       normalizeSource(row.source),
+    seating_type: normalizeSeatingType(row.seating_type),
   }
 }
 

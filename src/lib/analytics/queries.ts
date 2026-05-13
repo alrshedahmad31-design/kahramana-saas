@@ -927,7 +927,7 @@ export async function getSecondaryMetrics(
 
 export async function refreshAnalyticsViews(): Promise<{ error: string | null }> {
   const sb = createServiceClient()
-  const { error } = await sb.rpc('refresh_analytics_views' as never)
+  const { error } = await sb.rpc('refresh_analytics_views')
   return { error: error?.message ?? null }
 }
 

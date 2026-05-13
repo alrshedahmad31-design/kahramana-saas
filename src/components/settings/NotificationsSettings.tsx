@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import type { Json } from '@/lib/supabase/types'
 
 interface NotifPrefs {
   email_new_order:    boolean
@@ -59,10 +60,9 @@ export default function NotificationsSettings() {
     setSaveState('saving')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaveState('error'); return }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase
       .from('user_preferences')
-      .upsert({ user_id: user.id, notification_prefs: prefs as never, updated_at: new Date().toISOString() })
+      .upsert({ user_id: user.id, notification_prefs: prefs as unknown as Json, updated_at: new Date().toISOString() })
     setSaveState(error ? 'error' : 'saved')
     if (!error) setTimeout(() => setSaveState('idle'), 2500)
   }

@@ -3128,6 +3128,7 @@ export type Database = {
           phone: string
           reserved_for: string
           seated_at: string | null
+          seating_type: string | null
           source: string
           special_requests: string | null
           status: string
@@ -3148,6 +3149,7 @@ export type Database = {
           phone: string
           reserved_for: string
           seated_at?: string | null
+          seating_type?: string | null
           source?: string
           special_requests?: string | null
           status?: string
@@ -3168,6 +3170,7 @@ export type Database = {
           phone?: string
           reserved_for?: string
           seated_at?: string | null
+          seating_type?: string | null
           source?: string
           special_requests?: string | null
           status?: string
@@ -4668,20 +4671,47 @@ export type Database = {
             }
             Returns: string
           }
-      rpc_create_reservation: {
+      rpc_create_purchase_order: {
         Args: {
           p_branch_id: string
-          p_duration_minutes?: number
-          p_guest_name: string
-          p_party_size: number
-          p_phone: string
-          p_reserved_for: string
-          p_source?: string
-          p_special_requests?: string
-          p_table_id?: string
+          p_created_by: string
+          p_expected_at?: string
+          p_items: Json
+          p_notes?: string
+          p_supplier_id: string
         }
         Returns: string
       }
+      rpc_create_reservation:
+        | {
+            Args: {
+              p_branch_id: string
+              p_duration_minutes?: number
+              p_guest_name: string
+              p_party_size: number
+              p_phone: string
+              p_reserved_for: string
+              p_source?: string
+              p_special_requests?: string
+              p_table_id?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_branch_id: string
+              p_duration_minutes?: number
+              p_guest_name: string
+              p_party_size: number
+              p_phone: string
+              p_reserved_for: string
+              p_seating_type?: string
+              p_source?: string
+              p_special_requests?: string
+              p_table_id?: string
+            }
+            Returns: string
+          }
       rpc_dead_stock_report: {
         Args: { p_branch_id: string; p_days_no_move?: number }
         Returns: {
@@ -4782,6 +4812,15 @@ export type Database = {
             Args: { p_lines: Json; p_po_id: string; p_received_by: string }
             Returns: undefined
           }
+      rpc_record_opening_balance: {
+        Args: {
+          p_branch_id: string
+          p_ingredient_id: string
+          p_performed_by: string
+          p_quantity: number
+        }
+        Returns: undefined
+      }
       rpc_transfer_stock: {
         Args: {
           p_from_branch: string
@@ -4793,6 +4832,15 @@ export type Database = {
         Returns: undefined
       }
       rpc_update_abc_classification: { Args: never; Returns: undefined }
+      rpc_update_staff: {
+        Args: {
+          p_branch_id: string
+          p_id: string
+          p_name: string
+          p_role: Database["public"]["Enums"]["staff_role"]
+        }
+        Returns: undefined
+      }
       update_order_item_station_status: {
         Args: {
           p_expected_status?: string

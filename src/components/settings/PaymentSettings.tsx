@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import type { Json } from '@/lib/supabase/types'
 
 interface PaymentMethods {
   cash:    boolean
@@ -40,10 +41,9 @@ export default function PaymentSettings() {
   async function save() {
     setSaveState('saving')
     const { data: { user } } = await supabase.auth.getUser()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase
       .from('system_settings')
-      .upsert({ key: 'payment_methods', value: methods as never, updated_by: user?.id ?? null, updated_at: new Date().toISOString() })
+      .upsert({ key: 'payment_methods', value: methods as unknown as Json, updated_by: user?.id ?? null, updated_at: new Date().toISOString() })
     setSaveState(error ? 'error' : 'saved')
     if (!error) setTimeout(() => setSaveState('idle'), 2500)
   }

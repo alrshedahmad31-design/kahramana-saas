@@ -26,7 +26,7 @@ interface Props {
   branchId:       string | null
 }
 
-const ACTIVE_STATUSES = ['accepted', 'preparing', 'ready', 'out_for_delivery']
+const ACTIVE_STATUSES = ['accepted', 'preparing', 'ready', 'out_for_delivery'] as const
 
 type DeliveryOrderRow = {
   id: string
@@ -102,7 +102,7 @@ export default function DeliveryPageClient({
         assigned_driver_id, delivery_address, expected_delivery_time,
         delivery_lat, delivery_lng, order_items(id)
       `)
-      .in('status', ACTIVE_STATUSES as never[])
+      .in('status', ACTIVE_STATUSES)
       // Audit fix #3: delivery dashboard only watches delivery orders.
       .eq('order_type', 'delivery')
       .order('created_at', { ascending: true })
