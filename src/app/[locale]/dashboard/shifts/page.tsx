@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Wallet, TrendingUp, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react'
+import CinematicButton from '@/components/ui/CinematicButton'
 import Link from 'next/link'
 
 interface ShiftClosingData {
@@ -74,9 +75,26 @@ export default async function ShiftsPage({
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved': return <Badge className="bg-green-100 text-green-700 border-green-200"><CheckCircle2 className="me-1 h-3 w-3" /> {t('approved')}</Badge>
-      case 'flagged':  return <Badge className="bg-red-100 text-red-700 border-red-200"><AlertTriangle className="me-1 h-3 w-3" /> {t('flagged')}</Badge>
-      default:         return <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">{t('pending')}</Badge>
+      case 'approved': 
+        return (
+          <Badge className="bg-brand-success/15 text-brand-success border-brand-success/20">
+            <CheckCircle2 className="me-1.5 h-3.5 w-3.5" /> 
+            {t('approved')}
+          </Badge>
+        )
+      case 'flagged':  
+        return (
+          <Badge className="bg-brand-error/15 text-brand-error border-brand-error/20">
+            <AlertTriangle className="me-1.5 h-3.5 w-3.5" /> 
+            {t('flagged')}
+          </Badge>
+        )
+      default:         
+        return (
+          <Badge variant="outline" className="bg-brand-muted/10 text-brand-muted border-brand-muted/20">
+            {t('pending')}
+          </Badge>
+        )
     }
   }
 
@@ -104,25 +122,25 @@ export default async function ShiftsPage({
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('shift_management')}</h1>
-          <p className="text-muted-foreground">{t('manage_shifts_description')}</p>
+          <h1 className="text-4xl font-bold tracking-tight font-cairo text-white text-glow mb-2">{t('shift_management')}</h1>
+          <p className="text-brand-gold uppercase tracking-[0.2em] text-[10px] font-bold opacity-80">{t('manage_shifts_description')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           {isGlobal && branches && (
             <div className="flex flex-wrap items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground me-1" />
+              <Building2 className="h-4 w-4 text-brand-muted me-1" />
               {branches.map((b) => (
-                <Link 
+                <CinematicButton 
                   key={b.id} 
-                  href={`/${locale}/dashboard/shifts?branch=${b.id}`}
-                  className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-                    activeBranchId === b.id 
-                      ? 'bg-secondary text-secondary-foreground border-secondary font-bold' 
-                      : 'bg-background hover:bg-muted border-input'
+                  href={`/dashboard/shifts?branch=${b.id}`}
+                  variant={activeBranchId === b.id ? 'primary' : 'secondary'}
+                  showIcon={false}
+                  className={`h-11 px-6 rounded-md text-xs font-bold ${
+                    activeBranchId === b.id ? 'shadow-[0_0_15px_rgba(200,146,42,0.3)]' : ''
                   }`}
                 >
                   {locale === 'ar' ? b.name_ar : b.name_en}
-                </Link>
+                </CinematicButton>
               ))}
             </div>
           )}
@@ -133,78 +151,86 @@ export default async function ShiftsPage({
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="glass-surface border-brand-gold/20 shadow-[0_0_30px_rgba(200,146,42,0.05)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">{t('total_revenue')}</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-bold tracking-widest text-brand-gold uppercase">{t('total_revenue')}</CardTitle>
+            <TrendingUp className="h-4 w-4 text-brand-gold text-glow" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {shifts.reduce((sum: number, s: ShiftClosingData) => sum + Number(s.actual_cash_bhd ?? 0), 0).toFixed(3)} BHD
+            <div className="text-3xl font-bold text-white">
+              {shifts.reduce((sum: number, s: ShiftClosingData) => sum + Number(s.actual_cash_bhd ?? 0), 0).toFixed(3)} <span className="text-xs text-brand-gold ms-1">BHD</span>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="glass-surface border-brand-gold/20 shadow-[0_0_30px_rgba(200,146,42,0.05)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">{t('total_shifts')}</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-[10px] font-bold tracking-widest text-brand-gold uppercase">{t('total_shifts')}</CardTitle>
+            <Wallet className="h-4 w-4 text-brand-gold text-glow" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{shifts.length}</div>
+            <div className="text-3xl font-bold text-white">{shifts.length}</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('shift_history')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>{t('date')}</TableHead>
-                  <TableHead>{t('branch')}</TableHead>
-                  <TableHead>{t('closed_by')}</TableHead>
-                  <TableHead>{t('expected')}</TableHead>
-                  <TableHead>{t('actual')}</TableHead>
-                  <TableHead>{t('difference')}</TableHead>
-                  <TableHead>{t('status')}</TableHead>
+      <div className="glass-surface border-brand-gold/10 rounded-xl overflow-hidden shadow-2xl">
+        <div className="p-6 border-b border-brand-gold/10 flex items-center justify-between bg-brand-gold/5">
+          <h2 className="text-sm font-bold tracking-widest text-brand-gold uppercase">{t('shift_history')}</h2>
+          <div className="h-px flex-1 bg-brand-gold/10 mx-6 hidden md:block" />
+        </div>
+        <Table>
+          <TableHeader className="bg-brand-black/50">
+            <TableRow className="border-brand-gold/10 hover:bg-transparent">
+              <TableHead className="text-brand-gold/70 font-bold uppercase text-[10px] tracking-wider py-4">{t('date')}</TableHead>
+              <TableHead className="text-brand-gold/70 font-bold uppercase text-[10px] tracking-wider">{t('branch')}</TableHead>
+              <TableHead className="text-brand-gold/70 font-bold uppercase text-[10px] tracking-wider">{t('closed_by')}</TableHead>
+              <TableHead className="text-brand-gold/70 font-bold uppercase text-[10px] tracking-wider">{t('expected')}</TableHead>
+              <TableHead className="text-brand-gold/70 font-bold uppercase text-[10px] tracking-wider">{t('actual')}</TableHead>
+              <TableHead className="text-brand-gold/70 font-bold uppercase text-[10px] tracking-wider">{t('difference')}</TableHead>
+              <TableHead className="text-brand-gold/70 font-bold uppercase text-[10px] tracking-wider text-end">{t('status')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {shifts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-48 text-center text-brand-muted italic">
+                  <div className="flex flex-col items-center gap-2">
+                    <Wallet className="w-8 h-8 opacity-20 mb-2" />
+                    {t('no_shifts_found')}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              shifts.map((shift: ShiftClosingData) => (
+                <TableRow key={shift.id} className="border-brand-gold/5 hover:bg-brand-gold/5 transition-colors group">
+                  <TableCell className="py-5">
+                    <div className="font-bold text-white group-hover:text-brand-gold transition-colors">{shift.shift_date}</div>
+                    <div className="text-[10px] text-brand-muted uppercase tracking-tighter">{shift.shift_type}</div>
+                  </TableCell>
+                  <TableCell className="text-brand-text/60 font-mono text-xs">{shift.branch_id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-brand-gold/20 flex items-center justify-center text-[10px] text-brand-gold font-bold border border-brand-gold/30">
+                        {shift.closed_by_staff?.name_ar?.charAt(0) || shift.closed_by_staff?.name_en?.charAt(0) || 'U'}
+                      </div>
+                      <span className="text-sm font-medium text-brand-text/90">
+                        {locale === 'ar' ? shift.closed_by_staff?.name_ar : shift.closed_by_staff?.name_en}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-brand-text/50 text-xs">{Number(shift.expected_cash_bhd ?? 0).toFixed(3)}</TableCell>
+                  <TableCell className="font-mono font-bold text-white">{Number(shift.actual_cash_bhd ?? 0).toFixed(3)}</TableCell>
+                  <TableCell className={`font-mono font-bold ${Number(shift.difference_bhd) < 0 ? 'text-brand-error' : Number(shift.difference_bhd) > 0 ? 'text-brand-success' : 'text-brand-gold/40'}`}>
+                    {Number(shift.difference_bhd ?? 0).toFixed(3)}
+                  </TableCell>
+                  <TableCell className="text-end">{getStatusBadge(shift.status)}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {shifts.map((shift: ShiftClosingData) => (
-                  <TableRow key={shift.id}>
-                    <TableCell>
-                      <div className="font-medium">{shift.shift_date}</div>
-                      <div className="text-xs text-muted-foreground uppercase">{shift.shift_type}</div>
-                    </TableCell>
-                    <TableCell>{shift.branch_id}</TableCell>
-                    <TableCell>
-                      {locale === 'ar' ? shift.closed_by_staff?.name_ar : shift.closed_by_staff?.name_en}
-                    </TableCell>
-                    <TableCell>{Number(shift.expected_cash_bhd ?? 0).toFixed(3)}</TableCell>
-                    <TableCell className="font-bold">{Number(shift.actual_cash_bhd ?? 0).toFixed(3)}</TableCell>
-                    <TableCell className={Number(shift.difference_bhd) < 0 ? 'text-red-600' : Number(shift.difference_bhd) > 0 ? 'text-green-600' : ''}>
-                      {Number(shift.difference_bhd ?? 0).toFixed(3)}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(shift.status)}</TableCell>
-                  </TableRow>
-                ))}
-                {!shifts.length && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      {t('no_shifts_found')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }

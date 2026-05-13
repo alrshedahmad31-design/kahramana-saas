@@ -18,7 +18,8 @@ import { Label } from '../../ui/label'
 import { Textarea } from '../../ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
 import { Card, CardContent } from '../../ui/card'
-import { Loader2, Calculator } from 'lucide-react'
+import { Loader2, Calculator, ShieldAlert } from 'lucide-react'
+import CinematicButton from '@/components/ui/CinematicButton'
 
 interface Translations {
   close_shift: string
@@ -110,15 +111,19 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-brand-gold hover:bg-brand-gold/90 text-brand-surface font-bold">
+        <CinematicButton 
+          variant="primary" 
+          showIcon={false}
+          className="h-11 px-8 rounded-md shadow-[0_0_20px_rgba(200,146,42,0.2)]"
+        >
           {t.close_shift}
-        </Button>
+        </CinematicButton>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] glass-surface border-brand-gold/30 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{t.close_shift_title}</DialogTitle>
-            <DialogDescription>{t.close_shift_description}</DialogDescription>
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-2xl font-bold font-cairo text-white text-glow">{t.close_shift_title}</DialogTitle>
+            <DialogDescription className="text-brand-muted text-xs uppercase tracking-wider">{t.close_shift_description}</DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
@@ -139,19 +144,19 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
               </Select>
             </div>
 
-            <Card className="bg-muted/50 border-none">
+            <Card className="bg-brand-gold/5 border border-brand-gold/20 rounded-lg overflow-hidden">
               <CardContent className="p-4 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <Calculator className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{t.expected_cash}</span>
+                  <Calculator className="h-4 w-4 text-brand-gold" />
+                  <span className="text-[10px] font-bold tracking-widest text-brand-gold uppercase">{t.expected_cash}</span>
                 </div>
-                <span className="font-bold">{summary.expectedCash.toFixed(3)} BHD</span>
+                <span className="font-mono font-bold text-white text-lg">{summary.expectedCash.toFixed(3)} <span className="text-[10px] text-brand-gold opacity-60">BHD</span></span>
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="actual_cash" className="text-right font-bold">{t.actual_cash}</Label>
-              <div className="col-span-3 relative">
+            <div className="grid gap-2">
+              <Label htmlFor="actual_cash" className="text-[10px] font-bold tracking-widest text-brand-gold uppercase">{t.actual_cash}</Label>
+              <div className="relative">
                 <Input 
                   id="actual_cash" 
                   type="number" 
@@ -160,22 +165,24 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
                   placeholder="0.000"
                   value={formData.actual_cash}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, actual_cash: e.target.value})}
-                  className={isDiscrepancy ? 'border-red-500' : ''}
+                  className={`text-base h-12 bg-brand-black/40 ${isDiscrepancy ? 'border-brand-error focus-visible:ring-brand-error text-brand-error' : 'border-brand-gold/30 focus-visible:ring-brand-gold text-white'}`}
                 />
-                <span className="absolute end-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">BHD</span>
+                <span className="absolute end-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-gold/40">BHD</span>
               </div>
             </div>
 
             {isDiscrepancy && (
-              <div className="grid gap-2">
-                <div className="flex justify-between text-sm px-1">
-                  <span className="text-red-600 font-bold">{t.discrepancy}: {diff.toFixed(3)} BHD</span>
+              <div className="grid gap-2 p-3 rounded-lg border border-brand-error/20 bg-brand-error/5">
+                <div className="flex items-center gap-2 mb-1">
+                  <ShieldAlert className="w-4 h-4 text-brand-error animate-pulse" />
+                  <span className="text-[10px] font-bold tracking-widest text-brand-error uppercase">{t.discrepancy}: {diff.toFixed(3)} BHD</span>
                 </div>
                 <Textarea 
                   placeholder={t.explain_discrepancy}
                   required={isDiscrepancy}
                   value={formData.discrepancy_reason}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, discrepancy_reason: e.target.value})}
+                  className="text-base min-h-[80px] bg-brand-black/40 border-brand-error/30 focus-visible:ring-brand-error text-white"
                 />
               </div>
             )}
@@ -191,10 +198,16 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.submit_closing}
-            </Button>
+          <DialogFooter className="mt-4">
+            <CinematicButton 
+              type="submit" 
+              disabled={loading} 
+              variant="primary"
+              showIcon={!loading}
+              className="w-full h-12 rounded-lg text-sm font-bold shadow-[0_0_30px_rgba(200,146,42,0.1)]"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.submit_closing}
+            </CinematicButton>
           </DialogFooter>
         </form>
       </DialogContent>
