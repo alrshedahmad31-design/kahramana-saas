@@ -61,23 +61,17 @@ export async function createPurchaseOrder(
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  const supabase = createServiceClient()
-  const { data: po, error: poErr } = await supabase
-    .from('purchase_orders')
-    .insert({
-      supplier_id,
-      branch_id,
-      expected_at:  expected_at || null,
-      notes:        notes || null,
-      created_by:   session.id,
-      status:       'draft',
-    })
-    .select('id')
-    .single()
-
-  if (poErr || !po) return { error: poErr?.message ?? 'Failed to create PO' }
-
-  const itemsJson = formData.get('items') as string
+  // Parse items BEFORE the PO insert so a bad payload cannot leave an
+  // orphan PO behind. The RPC then writes the PO + items in a single
+  // transaction (migration 124).
+  const itemsJson = formData.get('items') as string | null
+  let items: Array<{
+    ingredient_id:    string
+    quantity_ordered: number
+    unit_cost:        number
+    lot_number?:      string
+    expiry_date?:     string
+  }> = []
   if (itemsJson) {
     let rawItems: unknown
     try {
@@ -90,29 +84,29 @@ export async function createPurchaseOrder(
       const issue = parsedItems.error.issues[0]
       return { error: issue ? `items[${issue.path.join('.')}]: ${issue.message}` : 'Invalid items payload' }
     }
-    const items = parsedItems.data
-
-    if (items.length > 0) {
-      const { error: itemsErr } = await supabase
-        .from('purchase_order_items')
-        .insert(
-          items.map((item) => ({
-            purchase_order_id: po.id,
-            ingredient_id:     item.ingredient_id,
-            quantity_ordered:  item.quantity_ordered,
-            unit_cost:         item.unit_cost,
-            lot_number:        item.lot_number || null,
-            expiry_date:       item.expiry_date || null,
-            quantity_received: 0,
-          })),
-        )
-      if (itemsErr) return { error: itemsErr.message }
-    }
+    items = parsedItems.data
   }
+
+  const supabase = createServiceClient()
+  // rpc_create_purchase_order params aren't in the regenerated Database
+  // types yet — `as never` per the project convention until `gen types` reruns.
+  const { data: poId, error: rpcErr } = await supabase.rpc(
+    'rpc_create_purchase_order' as never,
+    {
+      p_supplier_id: supplier_id,
+      p_branch_id:   branch_id,
+      p_created_by:  session.id,
+      p_items:       items,
+      p_expected_at: expected_at || null,
+      p_notes:       notes || null,
+    } as never,
+  )
+
+  if (rpcErr || !poId) return { error: rpcErr?.message ?? 'Failed to create PO' }
 
   revalidatePath('/dashboard/inventory/purchases')
   revalidatePath('/en/dashboard/inventory/purchases')
-  return { id: po.id }
+  return { id: poId as unknown as string }
 }
 
 export async function updatePOStatus(
