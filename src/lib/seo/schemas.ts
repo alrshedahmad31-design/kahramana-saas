@@ -38,6 +38,18 @@ const BRANCH_RATINGS: Partial<Record<string, { ratingValue: string; reviewCount:
   qallali: { ratingValue: '4.4', reviewCount: '121',  bestRating: '5', worstRating: '1' },
 }
 
+// Per-branch amenityFeature lists for Schema.org LocationFeatureSpecification.
+// Surfaces Gulf-relevant differentiators (family rooms, jalsa floor seating,
+// outdoor seating) in branch-level rich results. Add Qallali entries here
+// when its amenities are confirmed.
+const BRANCH_AMENITIES: Partial<Record<string, Array<{ '@type': 'LocationFeatureSpecification'; name: string; value: boolean }>>> = {
+  riffa: [
+    { '@type': 'LocationFeatureSpecification', name: 'Private Family Rooms', value: true },
+    { '@type': 'LocationFeatureSpecification', name: 'Floor Seating (Jalsa)', value: true },
+    { '@type': 'LocationFeatureSpecification', name: 'Outdoor Seating',      value: true },
+  ],
+}
+
 const BRAND_RATING = { ratingValue: '4.5', reviewCount: '1650', bestRating: '5', worstRating: '1' }
 
 // Schema.org requires "25:00" format when closing time crosses midnight.
@@ -123,6 +135,11 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
     if (extData.imageUrl) {
       base.image = `${SITE}${extData.imageUrl}`
     }
+  }
+
+  const amenities = BRANCH_AMENITIES[branch.id]
+  if (amenities && amenities.length > 0) {
+    base.amenityFeature = amenities
   }
 
   // Strip undefined values so the JSON-LD output is clean
