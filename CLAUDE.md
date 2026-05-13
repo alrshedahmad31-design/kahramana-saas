@@ -70,8 +70,9 @@ grep -rn "97317\|wa\.me/" src/ app/ components/ --include="*.tsx" --include="*.t
 #   - src/lib/delivery/tokens.ts — delivery surface + Google Maps style tokens
 grep -rn "#[0-9a-fA-F]\{6\}" app/ components/ --include="*.tsx" --include="*.ts"
 
-# 8. i18n completeness — all keys must exist in both files
-npx ts-node scripts/check-i18n.ts 2>/dev/null || echo "Warning:  check-i18n script not yet created — verify manually"
+# 8. i18n completeness — parity check (ar.json ↔ en.json) + t() usage scan
+#    (t.raw() allowed against intermediate nodes; t/.rich/.markup must hit leaves)
+npx tsx scripts/check-i18n.ts
 
 # 9. Build check
 npm run build
