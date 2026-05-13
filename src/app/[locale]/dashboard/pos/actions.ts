@@ -114,11 +114,13 @@ export async function createManualOrder(
     return { error: 'Invalid branch' }
   }
 
-  // Branch managers and cashiers may only create orders for their own branch
+  // Branch managers and cashiers may only create orders for their own branch.
+  // Fail-closed: a caller missing branch_id is REJECTED (not bypassed) — a
+  // NULL branch_id on a scoped role is a data integrity hole, not a wildcard.
   if (
     caller.role === 'branch_manager' || caller.role === 'cashier'
   ) {
-    if (caller.branch_id && caller.branch_id !== data.branchId) {
+    if (!caller.branch_id || caller.branch_id !== data.branchId) {
       return { error: 'Forbidden: branch scope violation' }
     }
   }

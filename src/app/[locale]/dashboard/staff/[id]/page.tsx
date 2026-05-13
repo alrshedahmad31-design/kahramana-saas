@@ -2,7 +2,7 @@ import { notFound, redirect }   from 'next/navigation'
 import Link                       from 'next/link'
 import { getSession }             from '@/lib/auth/session'
 import { createClient }           from '@/lib/supabase/server'
-import { canManageStaff }         from '@/lib/auth/rbac'
+import { canManageStaff, canViewStaff } from '@/lib/auth/rbac'
 import StaffProfileTabs           from '@/components/staff/StaffProfileTabs'
 import StaffOverview              from '@/components/staff/StaffOverview'
 import StaffScheduleTab           from '@/components/staff/StaffScheduleTab'
@@ -35,6 +35,14 @@ export default async function StaffProfilePage({ params }: Props) {
   if (!staffData) notFound()
 
   const staff: StaffExtendedRow = staffData
+
+  // Page-level permission gate — do not rely on RLS or middleware alone.
+  // canViewStaff allows: self, owner/general_manager, branch_manager of same branch.
+  // Reject as notFound() (don't leak existence by redirecting differently).
+  if (!canViewStaff(user, { id: staff.id, branch_id: staff.branch_id ?? null })) {
+    notFound()
+  }
+
   const canEdit = canManageStaff(user, { id: staff.id, role: staff.role, branch_id: staff.branch_id ?? null })
 
   // Parallel data fetches

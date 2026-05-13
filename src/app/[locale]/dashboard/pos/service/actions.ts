@@ -85,11 +85,14 @@ export async function createServiceOrder(
     return { error: 'Invalid branch' }
   }
 
+  // Fail-closed branch scope for scoped roles. NULL branch_id is REJECTED
+  // (not treated as wildcard) — see pos/actions.ts for the same pattern.
   if (
-    (caller.role === 'branch_manager' || caller.role === 'cashier' || caller.role === 'waiter') &&
-    caller.branch_id && caller.branch_id !== data.branchId
+    caller.role === 'branch_manager' || caller.role === 'cashier' || caller.role === 'waiter'
   ) {
-    return { error: 'Forbidden: branch scope violation' }
+    if (!caller.branch_id || caller.branch_id !== data.branchId) {
+      return { error: 'Forbidden: branch scope violation' }
+    }
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
