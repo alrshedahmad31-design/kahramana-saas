@@ -34,7 +34,7 @@ const plannedBranches = BRANCH_LIST.filter((b) => b.status === 'planned')
 
 // Ratings confirmed via GBP dashboard. Per-branch values + brand-level aggregate.
 const BRANCH_RATINGS: Partial<Record<string, { ratingValue: string; reviewCount: string; bestRating: string; worstRating: string }>> = {
-  riffa:   { ratingValue: '4.5', reviewCount: '1600', bestRating: '5', worstRating: '1' },
+  riffa:   { ratingValue: '4.6', reviewCount: '1662', bestRating: '5', worstRating: '1' },
   qallali: { ratingValue: '4.4', reviewCount: '121',  bestRating: '5', worstRating: '1' },
 }
 
@@ -50,7 +50,7 @@ const BRANCH_AMENITIES: Partial<Record<string, Array<{ '@type': 'LocationFeature
   ],
 }
 
-const BRAND_RATING = { ratingValue: '4.5', reviewCount: '1650', bestRating: '5', worstRating: '1' }
+const BRAND_RATING = { ratingValue: '4.6', reviewCount: '1662', bestRating: '5', worstRating: '1' }
 
 // Schema.org requires "25:00" format when closing time crosses midnight.
 function schemaClosesTime(time: string): string {
@@ -94,9 +94,9 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
     url,
     telephone: branch.phone || undefined,
     servesCuisine: ['Iraqi', 'Middle Eastern', 'عراقي'],
-    priceRange: '$$',
+    priceRange: 'BHD 1-5',
     currenciesAccepted: 'BHD',
-    paymentAccepted: 'Cash, Credit Card, Benefit',
+    paymentAccepted: ['Cash', 'Credit Card', 'BENEFIT Pay'],
     address: {
       '@type': 'PostalAddress',
       streetAddress:    localized(locale, branch.addressAr, branch.addressEn),
@@ -140,6 +140,11 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
   const amenities = BRANCH_AMENITIES[branch.id]
   if (amenities && amenities.length > 0) {
     base.amenityFeature = amenities
+  }
+
+  // Reservations: Riffa accepts dine-in reservations; Qallali walk-in only.
+  if (branch.id === 'riffa') {
+    base.acceptsReservations = true
   }
 
   // Strip undefined values so the JSON-LD output is clean
@@ -248,8 +253,8 @@ export function buildOrganizationSchema(locale: Locale) {
     alternateName: 'Kahramana Baghdad',
     description: localized(
       locale,
-      'كهرمانة بغداد مطعم عراقي أصيل في البحرين، يقدم أكثر من 168 طبقاً بغدادياً في فرعين: الرفاع وقلالي. تشمل أبرز الأطباق: سمك المسگوف المشوي على الفحم، القوزي، المشاوي العراقية، والإفطار البغدادي. تقييم ٤٫٥ من ٥ بناءً على أكثر من ١٦٠٠ تقييم على جوجل في فرع الرفاع. يتوفر جلسات عائلية وخدمة التموين للمناسبات.',
-      'Kahramana Baghdad is an authentic Iraqi restaurant in Bahrain, serving over 168 traditional Baghdadi dishes across two branches in Riffa and Qallali. Signature dishes include Masgouf (charcoal-grilled fish), Quzi (slow-cooked lamb), Iraqi kebab, and Baghdadi breakfast. Rated 4.5 stars from 1,600 Google reviews at the Riffa branch. Family seating and event catering available.'
+      'كهرمانة بغداد مطعم عراقي أصيل في البحرين، يقدم أكثر من 175 طبقاً بغدادياً في فرعين: الرفاع وقلالي. تشمل أبرز الأطباق: سمك المسگوف المشوي على الفحم، القوزي، المشاوي العراقية، والإفطار البغدادي. تقييم ٤٫٦ من ٥ بناءً على أكثر من ١٦٦٢ تقييم على جوجل في فرع الرفاع. يتوفر جلسات عائلية وخدمة التموين للمناسبات.',
+      'Kahramana Baghdad is an authentic Iraqi restaurant in Bahrain, serving over 175 traditional Baghdadi dishes across two branches in Riffa and Qallali. Signature dishes include Masgouf (charcoal-grilled fish), Quzi (slow-cooked lamb), Iraqi kebab, and Baghdadi breakfast. Rated 4.6 stars from 1,662 Google reviews at the Riffa branch. Family seating and event catering available.'
     ),
     url: SITE,
     telephone: primaryBranch.phone,
@@ -267,8 +272,9 @@ export function buildOrganizationSchema(locale: Locale) {
     logo: `${SITE}/assets/brand/logo.svg`,
     image: `${SITE}/assets/brand/og-image.webp`,
     servesCuisine: ['Iraqi', 'Middle Eastern', 'عراقي'],
-    priceRange: '$$',
+    priceRange: 'BHD 1-5',
     currenciesAccepted: 'BHD',
+    paymentAccepted: ['Cash', 'Credit Card', 'BENEFIT Pay'],
     hasMenu: `${SITE}/${locale === 'en' ? 'en/' : ''}menu`,
     contactPoint: contactPoints,
     sameAs: [
