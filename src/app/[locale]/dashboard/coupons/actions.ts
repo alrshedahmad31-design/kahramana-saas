@@ -164,6 +164,26 @@ export async function updateCoupon(
 
   const supabase = await createClient()
 
+  // Branch scope: branch_managers may only edit coupons where their branch is
+  // in applicable_branches OR they are the creator. Global coupons
+  // (applicable_branches IS NULL) are owner/GM territory unless the
+  // branch_manager owns them.
+  if (caller.role === 'branch_manager') {
+    const { data: existing, error: scopeErr } = await supabase
+      .from('coupons')
+      .select('applicable_branches, created_by')
+      .eq('id', id)
+      .single()
+    if (scopeErr || !existing) return { success: false, error: 'Coupon not found' }
+
+    const isCreator = existing.created_by === caller.id
+    const branches  = existing.applicable_branches ?? []
+    const inScope   = caller.branch_id != null && branches.includes(caller.branch_id)
+    if (!isCreator && !inScope) {
+      return { success: false, error: 'Coupon scope violation' }
+    }
+  }
+
   const { error } = await supabase
     .from('coupons')
     .update({

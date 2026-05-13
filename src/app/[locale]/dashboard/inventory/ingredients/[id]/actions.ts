@@ -54,8 +54,10 @@ const ingredientSchema = z.object({
 })
 
 export async function upsertIngredient(formData: FormData): Promise<{ error?: string; id?: string }> {
+  // Align with rbac-ui.ts inventory_ingredients section (inventory_manager has UI access).
+  // deleteIngredient below stays stricter (owner/GM only) — destructive ops kept tight.
   try {
-    await requireDashboardRole(['owner', 'general_manager'])
+    await requireDashboardRole(['owner', 'general_manager', 'inventory_manager'])
   } catch (error) {
     return { error: getDashboardGuardErrorMessage(error) }
   }

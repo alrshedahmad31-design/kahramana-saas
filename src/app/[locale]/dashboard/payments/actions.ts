@@ -41,6 +41,23 @@ export async function refundPayment(
 
   if (updateErr) return { error: 'update_failed' }
 
+  // Financial event — must be auditable. Best-effort: do not fail the refund
+  // if the log insert fails (matches the pattern in coupons/delivery actions).
+  await supabase.from('audit_logs').insert({
+    table_name: 'payments',
+    action:     'UPDATE',
+    user_id:    user.id,
+    record_id:  paymentId,
+    changes: {
+      operation:         'refund',
+      previous_status:   payment.status,
+      new_status:        'refunded',
+      refund_amount_bhd: payment.amount_bhd,
+    },
+    branch_id:  user.branch_id,
+    actor_role: user.role,
+  })
+
   revalidatePath(locale === 'en' ? '/en/dashboard/payments' : '/dashboard/payments')
   return { success: true }
 }

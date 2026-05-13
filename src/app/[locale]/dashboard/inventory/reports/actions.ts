@@ -5,6 +5,14 @@ export async function exportToExcel(
   columns: { key: string; header: string }[],
   sheetName: string,
 ): Promise<{ base64?: string; error?: string }> {
+  // Gate before doing any work. Roles match rbac-ui.ts inventory_reports section.
+  const { getDashboardGuardErrorMessage, requireDashboardRole } = await import('@/lib/auth/dashboard-guards')
+  try {
+    await requireDashboardRole(['owner', 'general_manager', 'branch_manager', 'inventory_manager'])
+  } catch (error) {
+    return { error: getDashboardGuardErrorMessage(error) }
+  }
+
   try {
     const ExcelJS = (await import('exceljs')).default
     const wb = new ExcelJS.Workbook()
