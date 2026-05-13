@@ -448,10 +448,14 @@
                                                             "src/app/[locale]/payment/[orderId]/error.tsx",
                                                             "src/lib/supabase/types.ts (PaymentMethod, PaymentStatus, PaymentRow, PaymentWebhookRow)",
                                                             "messages/en.json + ar.json (payment namespace)",
-                                                            "src/components/checkout/CheckoutForm.tsx (redirect -> /payment/[orderId])"
+                                                            "src/components/checkout/CheckoutForm.tsx (redirect -> /payment/[orderId])",
+                                                            "src/app/[locale]/dashboard/payments/page.tsx (staff payments dashboard — stats, filters, paginated table, cash handovers, branch-scoped for branch_manager, HIDDEN_BRANCHES filtered for global admin)",
+                                                            "src/app/[locale]/dashboard/payments/actions.ts (refundPayment server action — owner/GM only, DB-level status flip from completed to refunded with refunded_at + refund_amount_bhd)",
+                                                            "src/app/[locale]/dashboard/payments/error.tsx + loading.tsx",
+                                                            "src/components/payments/PaymentStatsCards.tsx + PaymentFilters.tsx + PaymentsTable.tsx + CashHandoversSection.tsx (4 supporting components, ~487 LOC)"
                                                         ],
                              "deliverables_pending":  [
-                                                           "app/(dashboard)/payments/ — payment dashboard for staff",
+                                                           "Tap refund API call — refundPayment action currently flips DB state only; does NOT call Tap to push money back to customer's card. Blocked on Tap merchant keys (TAP_SECRET_KEY).",
                                                            "Sprint 6B: WhatsApp API integration (blocked on Meta verification)",
                                                            "Sprint 6C: Benefit Pay API upgrade (blocked on merchant approval)"
                                                        ],
