@@ -137,8 +137,11 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
   },
 
-  // Vercel: disable source maps in production to reduce bundle size
-  productionBrowserSourceMaps: false,
+  // Emit production sourcemaps so the Sentry build plugin can upload them
+  // for symbolicated stack traces. Maps are uploaded to Sentry and then
+  // deleted from the deploy bundle by the plugin, so this does not bloat
+  // what reaches the client.
+  productionBrowserSourceMaps: true,
 
   experimental: {
     // Tree-shake large packages -- only import used modules into the bundle.

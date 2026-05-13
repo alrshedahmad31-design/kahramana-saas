@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { notFound, redirect } from 'next/navigation'
+import Image from 'next/image'
 import { createServiceClient } from '@/lib/supabase/server'
 import {
   requireDashboardSection,
@@ -161,10 +162,12 @@ export default async function OrderDetailPage({ params }: Props) {
         <section className="bg-brand-surface border border-brand-border rounded-xl p-5">
           <h2 className="font-satoshi font-semibold text-brand-text mb-4">{t('deliveryProof')}</h2>
           <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-brand-border bg-black/20">
-            <img 
-              src={order.delivery_proof_url} 
-              alt="Delivery Proof" 
-              className="h-full w-full object-contain"
+            <Image
+              src={order.delivery_proof_url}
+              alt="Delivery Proof"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain"
             />
             <a 
               href={order.delivery_proof_url} 

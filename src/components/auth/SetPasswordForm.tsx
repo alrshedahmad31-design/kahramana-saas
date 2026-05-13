@@ -32,7 +32,7 @@ export default function SetPasswordForm() {
       setCheckingSession(false)
     }
     checkSession()
-  }, [supabase])
+  }, [supabase, t])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

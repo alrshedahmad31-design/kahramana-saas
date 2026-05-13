@@ -320,7 +320,7 @@ export default function DriverOrderCard({
     setShowProofModal(true)
   }
 
-  async function finishDelivery(proofUrl?: string) {
+  async function finishDelivery(_proofUrl?: string) {
     setShowProofModal(false)
     setBusy(true)
     setConfirmDeliver(false)

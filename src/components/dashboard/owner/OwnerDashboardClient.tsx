@@ -211,7 +211,7 @@ export default function OwnerDashboardClient({
       : null
 
   // Build per-branch view
-  const branchById = new Map(branches.map((b) => [b.id, b]))
+  const _branchById = new Map(branches.map((b) => [b.id, b]))
   const todayByBranch = new Map(branchSummariesToday.map((r) => [r.branch_id, r]))
   const monthByBranch = new Map(branchSummariesMonth.map((r) => [r.branch_id, r]))
 

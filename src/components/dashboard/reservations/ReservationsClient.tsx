@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   Search,
@@ -46,7 +46,7 @@ interface ReservationsClientProps {
   locale: 'ar' | 'en'
 }
 
-function StatusPill({ status, locale }: { status: Reservation['status']; locale: 'ar' | 'en' }) {
+function StatusPill({ status, locale: _locale }: { status: Reservation['status']; locale: 'ar' | 'en' }) {
   const t = useTranslations('dashboard.reservations.statuses')
   const styles = {
     pending:   'bg-brand-gold/10 text-brand-gold border-brand-gold/20',
@@ -100,8 +100,8 @@ function StatCard({ label, value, icon: Icon, trend, locale: _locale }: {
 export default function ReservationsClient({
   initialReservations,
   branchId,
-  branches,
-  isGlobalAdmin,
+  branches: _branches,
+  isGlobalAdmin: _isGlobalAdmin,
   locale,
 }: ReservationsClientProps) {
   const t = useTranslations('dashboard.reservations')
@@ -362,7 +362,7 @@ function InfoRow({ icon: Icon, label, value, isCapitalized }: { icon: LucideIcon
   )
 }
 
-function AddReservationDrawer({ isOpen, onClose, branchId, locale }: { isOpen: boolean; onClose: () => void; branchId: string; locale: 'ar' | 'en'; }) {
+function AddReservationDrawer({ isOpen: _isOpen, onClose, branchId, locale }: { isOpen: boolean; onClose: () => void; branchId: string; locale: 'ar' | 'en'; }) {
   const t = useTranslations('dashboard.reservations')
   const isAr = locale === 'ar'
   const [formData, setFormData] = useState<{

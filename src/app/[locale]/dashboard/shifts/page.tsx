@@ -13,7 +13,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Wallet, TrendingUp, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react'
 import CinematicButton from '@/components/ui/CinematicButton'
-import Link from 'next/link'
 
 interface ShiftClosingData {
   id: string

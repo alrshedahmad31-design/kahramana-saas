@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import NextImage from 'next/image'
 import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { tokens } from '@/lib/design-tokens'
@@ -92,7 +93,14 @@ export default function DeliveryProofCapture({ orderId, onComplete, onSkip, isOp
           <div className="p-6">
             <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-brand-gold/20 bg-black/20">
               {preview ? (
-                <img src={preview} alt="Proof" className="h-full w-full object-cover" />
+                <NextImage
+                  src={preview}
+                  alt="Proof"
+                  fill
+                  unoptimized
+                  sizes="(max-width: 640px) 100vw, 400px"
+                  className="object-cover"
+                />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center space-y-3">
                   <div className="rounded-full bg-brand-gold/10 p-4">
