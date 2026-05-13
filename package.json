@@ -78,7 +78,7 @@
     "import-in-the-middle": "3.0.1"
   },
   "engines": {
-    "node": "20.x",
+    "node": ">=20.0.0",
     "npm": ">=9.0.0"
   },
   "browserslist": [

@@ -70,7 +70,23 @@ export async function registerAction(
 
   const supabase = await createClient()
 
-  const { data: authData, error: signUpErr } = await supabase.auth.signUp({ email, password })
+  // raw_user_meta_data is read by the `on_customer_registered` AFTER INSERT
+  // trigger on auth.users (migration 130). When the trigger fires inside the
+  // same transaction as the auth.users insert, customer_profiles is created
+  // synchronously — eliminating the FK race that produced the Sentry
+  // `customer_profiles_id_fkey` events. `flow` scopes the trigger so it does
+  // NOT fire for staff users created via authAdmin.createUser.
+  const { data: authData, error: signUpErr } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        flow:  'customer_register',
+        phone: normalizedPhone,
+        name:  name.trim(),
+      },
+    },
+  })
   if (signUpErr || !authData.user?.id) {
     Sentry.captureException(signUpErr ?? new Error('signUp returned no user id'), {
       tags: { stage: 'auth.signUp' },
@@ -78,27 +94,45 @@ export async function registerAction(
     return { success: false, error: 'signup_error' }
   }
 
-  // Insert the customer profile via service-role.
-  //
-  // Why service-role and not the rpc_create_customer_profile RPC: the RPC
-  // requires auth.uid() to resolve, but Supabase's email-confirmation flow
-  // does NOT create a session on signUp — no session cookies are set, so
-  // auth.uid() returns NULL and the RPC raises AUTH_REQUIRED. Bypassing
-  // RLS with service-role and using the user.id from the signUp response
-  // works regardless of email-confirmation settings.
+  // Belt-and-suspenders fallback: the trigger handles the happy path, but we
+  // still run a service-role UPSERT to cover three cases:
+  //   1. Trigger skipped because metadata.phone was somehow missing (defense
+  //      in depth — shouldn't happen given we just set it above).
+  //   2. Migration 130 was rolled back without redeploying this code.
+  //   3. Future schema columns we want to populate that the trigger doesn't
+  //      know about (none today, but the path stays open).
+  // Why UPSERT not INSERT: the trigger already created the row, so INSERT
+  // would 23505 (unique_violation). ON CONFLICT (id) DO NOTHING keeps it
+  // idempotent. The 23503 retry below catches the original race only when
+  // the trigger somehow didn't run.
   const admin = createServiceClient()
-  const { error: profileErr } = await admin
-    .from('customer_profiles')
-    .insert({
-      id:    authData.user.id,
-      phone: normalizedPhone,
-      name:  name.trim() || null,
-      email,
-    })
+  const profile = {
+    id:    authData.user.id,
+    phone: normalizedPhone,
+    name:  name.trim() || null,
+    email,
+  }
 
-  if (profileErr) {
-    Sentry.captureException(profileErr, {
-      tags: { stage: 'customer_profile.insert' },
+  const MAX_ATTEMPTS = 3
+  let lastErr: { code?: string; message: string } | null = null
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const { error: upsertErr } = await admin
+      .from('customer_profiles')
+      .upsert(profile, { onConflict: 'id', ignoreDuplicates: true })
+    if (!upsertErr) { lastErr = null; break }
+    lastErr = upsertErr
+    // 23503 = foreign_key_violation. auth.users replication can lag for a
+    // few ms across pgbouncer connections; back off and retry. Any other
+    // error is non-retryable and we surface immediately.
+    if (upsertErr.code !== '23503') break
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise((r) => setTimeout(r, 100 * attempt))
+    }
+  }
+
+  if (lastErr) {
+    Sentry.captureException(new Error(lastErr.message), {
+      tags: { stage: 'customer_profile.upsert', code: lastErr.code ?? 'unknown' },
       extra: { userId: authData.user.id },
     })
     return { success: false, error: 'signup_error' }
