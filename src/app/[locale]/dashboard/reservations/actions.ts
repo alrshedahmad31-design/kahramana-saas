@@ -233,15 +233,20 @@ export async function updateReservationStatus(
   if (parsedStatus.data === 'cancelled') patch.cancelled_at = now
   if (parsedStatus.data === 'completed') patch.completed_at = now
 
+  // CAS on status: two managers viewing the same `pending` reservation can
+  // both pass the transition matrix check above (read). Without this predicate
+  // the last writer wins (e.g. A→confirmed, B→cancelled both succeed). The
+  // `currentStatus` we fetched at line 215 is the snapshot we're pinning to.
   const { data: updated, error } = await supabase
     .from('reservations')
     .update(patch)
     .eq('id', parsedId.data)
+    .eq('status', currentStatus)
     .select('id')
     .single()
 
   if (error) throw new Error(error.message)
-  if (!updated) throw new Error('Reservation not found')
+  if (!updated) throw new Error('Reservation status changed concurrently; refresh and try again')
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/reservations`)

@@ -146,15 +146,19 @@ export async function updatePOStatus(
     }
   }
 
+  // CAS on status: two users pressing different state buttons on the same PO
+  // both pass the transition-matrix check above (read). Pin the update to the
+  // status snapshot we fetched so only one transition lands.
   const { data: updated, error } = await supabase
     .from('purchase_orders')
     .update({ status, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('status', currentStatus)
     .select('id')
     .single()
 
   if (error) return { error: error.message }
-  if (!updated) return { error: 'Purchase order not found' }
+  if (!updated) return { error: 'Purchase order status changed concurrently; refresh and try again' }
   revalidatePath('/dashboard/inventory/purchases')
   revalidatePath('/en/dashboard/inventory/purchases')
   return {}

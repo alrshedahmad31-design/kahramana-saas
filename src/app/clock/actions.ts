@@ -1,9 +1,9 @@
 'use server'
 
 import bcrypt                          from 'bcrypt'
-import { createHash }                  from 'crypto'
+import { createHash, randomUUID }      from 'crypto'
 import { createServiceClient }         from '@/lib/supabase/server'
-import { headers }                     from 'next/headers'
+import { cookies, headers }            from 'next/headers'
 import { Ratelimit }                   from '@upstash/ratelimit'
 import { Redis }                       from '@upstash/redis'
 import { calcTotalHours, calcOvertimeHours } from '@/lib/staff/calculations'
@@ -56,7 +56,19 @@ async function comparePinAndMaybeUpgrade(
 }
 
 // ── Rate limiting (Upstash Redis — works across Vercel serverless instances) ──
-let ratelimit: Ratelimit | null = null
+//
+// Two buckets:
+//   - IP+device bucket (5 attempts / 60s) on the verify path — defends against
+//     drive-by PIN guessing. Spoofable `x-forwarded-for` was the original
+//     source; we now prefer `x-real-ip` / `cf-connecting-ip` (set by the
+//     platform, not echoed from the request) and bind a long-lived
+//     httpOnly device cookie so a "fresh IP" attacker can't reset the bucket
+//     by also rotating the cookie unless they replay it.
+//   - Per-staff bucket (10 attempts / 1h) on `assertStaffPin` — even if an
+//     attacker rotates IPs, they can't burn more than 10 attempts on any
+//     specific staff_id per hour.
+let ratelimit:      Ratelimit | null = null
+let staffRatelimit: Ratelimit | null = null
 
 function getRatelimit(): Ratelimit | null {
   if (ratelimit) return ratelimit
@@ -71,20 +83,75 @@ function getRatelimit(): Ratelimit | null {
   return ratelimit
 }
 
+function getStaffRatelimit(): Ratelimit | null {
+  if (staffRatelimit) return staffRatelimit
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  staffRatelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(10, '3600 s'),
+    prefix:  'clock_pin_staff',
+  })
+  return staffRatelimit
+}
+
 async function getAttemptKey(): Promise<string> {
   const h = await headers()
-  return h.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  // Vercel/Cloudflare set these from the TCP source IP; not echoed from the
+  // request. `x-forwarded-for` remains as a last-ditch fallback for non-Vercel
+  // hosts but we drop it to the leftmost token only.
+  const ip = h.get('x-real-ip')?.trim()
+    || h.get('cf-connecting-ip')?.trim()
+    || h.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || ''
+
+  // Long-lived httpOnly device cookie. New visitors get a fresh UUID; the
+  // cookie persists across attempts so even when `ip` falls back to '' the
+  // bucket isn't shared across all anonymous attackers.
+  const cookieStore = await cookies()
+  let deviceId = cookieStore.get('clock_device')?.value
+  if (!deviceId || !/^[0-9a-f-]{36}$/i.test(deviceId)) {
+    deviceId = randomUUID()
+    cookieStore.set('clock_device', deviceId, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure:   process.env.NODE_ENV === 'production',
+      path:     '/',
+      maxAge:   60 * 60 * 24 * 365,
+    })
+  }
+
+  return `${ip || 'noip'}::${deviceId}`
 }
 
 async function checkRateLimit(key: string): Promise<{ allowed: boolean }> {
+  // Dev shares 127.0.0.1; the 5/min budget collapses if multiple tabs hit the
+  // clock page at once. Production gate keeps the limiter active in prod only.
+  if (process.env.NODE_ENV !== 'production') return { allowed: true }
   const rl = getRatelimit()
   if (!rl) return { allowed: true }
   const { success } = await rl.limit(key)
   return { allowed: success }
 }
 
+async function checkStaffRateLimit(staffId: string): Promise<{ allowed: boolean }> {
+  if (process.env.NODE_ENV !== 'production') return { allowed: true }
+  const rl = getStaffRatelimit()
+  if (!rl) return { allowed: true }
+  const { success } = await rl.limit(`staff:${staffId}`)
+  return { allowed: success }
+}
+
 async function assertStaffPin(staffId: string, pin: string): Promise<boolean> {
   if (!/^\d{4}$/.test(pin)) return false
+  // UUID guard: prevents the per-staff bucket key from being filled with junk.
+  if (!/^[0-9a-f-]{36}$/i.test(staffId)) return false
+
+  // Per-staff bucket: even an attacker rotating IPs cannot exceed 10 attempts
+  // per hour against any single staff_id.
+  const { allowed } = await checkStaffRateLimit(staffId)
+  if (!allowed) return false
 
   const service = await createServiceClient()
   const { data } = await service
