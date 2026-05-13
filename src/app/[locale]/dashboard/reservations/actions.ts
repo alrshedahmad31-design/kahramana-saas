@@ -46,6 +46,18 @@ const findAvailableSchema = z.object({
 
 const statusSchema = z.enum(['pending', 'confirmed', 'seated', 'no_show', 'cancelled', 'completed'])
 
+// Server-enforced lifecycle. Staff cannot jump pending → completed or revive
+// terminal states (no_show / cancelled / completed). Keep parallel with
+// supabase migration if/when a DB-side check is added.
+const ALLOWED_RESERVATION_TRANSITIONS: Record<ReservationStatus, readonly ReservationStatus[]> = {
+  pending:   ['confirmed', 'cancelled', 'no_show'],
+  confirmed: ['seated', 'cancelled', 'no_show'],
+  seated:    ['completed', 'cancelled'],
+  no_show:   [],
+  cancelled: [],
+  completed: [],
+}
+
 export type Reservation = Omit<ReservationRow, 'status' | 'source' | 'seating_type'> & {
   status: ReservationStatus
   source: ReservationSource
@@ -193,12 +205,20 @@ export async function updateReservationStatus(
   const supabase = createServiceClient()
   const { data: row, error: fetchError } = await supabase
     .from('reservations')
-    .select('id, branch_id')
+    .select('id, branch_id, status')
     .eq('id', parsedId.data)
     .single()
 
   if (fetchError || !row) throw new Error(fetchError?.message ?? 'Reservation not found')
   if (!isGlobalDashboardAdmin(user)) assertBranchScope(user, row.branch_id)
+
+  const currentStatus = normalizeStatus(row.status)
+  if (currentStatus !== parsedStatus.data) {
+    const allowed = ALLOWED_RESERVATION_TRANSITIONS[currentStatus]
+    if (!allowed.includes(parsedStatus.data)) {
+      throw new Error(`Invalid reservation transition: ${currentStatus} → ${parsedStatus.data}`)
+    }
+  }
 
   const now = new Date().toISOString()
   const patch: {

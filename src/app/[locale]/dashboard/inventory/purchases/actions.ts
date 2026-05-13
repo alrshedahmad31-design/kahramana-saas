@@ -6,6 +6,16 @@ import { revalidatePath } from 'next/cache'
 const PO_STATUSES = ['draft', 'ordered', 'partial', 'received', 'cancelled'] as const
 type POStatus = typeof PO_STATUSES[number]
 
+// Server-enforced PO lifecycle. Workflow is forward-only except cancellation,
+// which is allowed up to (but not from) received.
+const ALLOWED_PO_TRANSITIONS: Record<POStatus, readonly POStatus[]> = {
+  draft:     ['ordered', 'cancelled'],
+  ordered:   ['partial', 'received', 'cancelled'],
+  partial:   ['received', 'cancelled'],
+  received:  [],
+  cancelled: [],
+}
+
 export async function createPurchaseOrder(
   formData: FormData,
 ): Promise<{ error?: string; id?: string }> {
@@ -90,7 +100,7 @@ export async function updatePOStatus(
   const supabase = createServiceClient()
   const { data: po, error: fetchError } = await supabase
     .from('purchase_orders')
-    .select('branch_id')
+    .select('branch_id, status')
     .eq('id', id)
     .single()
 
@@ -100,6 +110,14 @@ export async function updatePOStatus(
     assertInventoryWriteAccess(session, po.branch_id)
   } catch (error) {
     return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  const currentStatus = po.status as POStatus
+  if (currentStatus !== status) {
+    const allowed = ALLOWED_PO_TRANSITIONS[currentStatus] ?? []
+    if (!allowed.includes(status)) {
+      return { error: `Invalid PO transition: ${currentStatus} → ${status}` }
+    }
   }
 
   const { error } = await supabase

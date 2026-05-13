@@ -14,6 +14,18 @@ import type { CateringOrderRow, CateringOrderStatus, CateringPackageItem, Cateri
 
 const CATERING_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager'] as const
 
+// Server-enforced catering order lifecycle. Workflow is forward-only except
+// for cancellation, which is allowed up to (but not from) delivered/invoiced.
+const ALLOWED_CATERING_TRANSITIONS: Record<CateringOrderStatus, readonly CateringOrderStatus[]> = {
+  draft:        ['quoted', 'cancelled'],
+  quoted:       ['confirmed', 'cancelled'],
+  confirmed:    ['prep_started', 'cancelled'],
+  prep_started: ['delivered', 'cancelled'],
+  delivered:    ['invoiced'],
+  invoiced:     [],
+  cancelled:    [],
+}
+
 async function requireCateringRole() {
   try {
     return { session: await requireDashboardRole(CATERING_ROLES), error: null } as const
@@ -200,6 +212,13 @@ export async function updateCateringStatus(
     assertInventoryWriteAccess(session, scope.branchId)
   } catch (error) {
     return { error: getDashboardGuardErrorMessage(error) }
+  }
+
+  if (scope.status && scope.status !== parsed.data.newStatus) {
+    const allowed = ALLOWED_CATERING_TRANSITIONS[scope.status]
+    if (!allowed.includes(parsed.data.newStatus)) {
+      return { error: `Invalid catering transition: ${scope.status} → ${parsed.data.newStatus}` }
+    }
   }
 
   const supabase = createServiceClient()

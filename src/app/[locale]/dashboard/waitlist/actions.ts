@@ -24,6 +24,14 @@ const addWaitlistSchema = z.object({
 
 const statusSchema = z.enum(['waiting', 'notified', 'seated', 'cancelled'])
 
+// Server-enforced lifecycle for waitlist entries.
+const ALLOWED_WAITLIST_TRANSITIONS: Record<WaitlistStatus, readonly WaitlistStatus[]> = {
+  waiting:   ['notified', 'seated', 'cancelled'],
+  notified:  ['seated', 'cancelled'],
+  seated:    [],
+  cancelled: [],
+}
+
 export type WaitlistEntry = Omit<WaitlistEntryRow, 'status'> & {
   status: WaitlistStatus
 }
@@ -93,12 +101,20 @@ export async function updateStatus(id: string, status: WaitlistStatus): Promise<
   const supabase = createServiceClient()
   const { data: entry, error: fetchError } = await supabase
     .from('waitlist_entries')
-    .select('id, branch_id')
+    .select('id, branch_id, status')
     .eq('id', parsedId.data)
     .single()
 
   if (fetchError || !entry) throw new Error(fetchError?.message ?? 'Waitlist entry not found')
   if (!isGlobalDashboardAdmin(user)) assertBranchScope(user, entry.branch_id)
+
+  const currentStatus = normalizeStatus(entry.status)
+  if (currentStatus !== parsedStatus.data) {
+    const allowed = ALLOWED_WAITLIST_TRANSITIONS[currentStatus]
+    if (!allowed.includes(parsedStatus.data)) {
+      throw new Error(`Invalid waitlist transition: ${currentStatus} → ${parsedStatus.data}`)
+    }
+  }
 
   const now = new Date().toISOString()
   const patch = {
