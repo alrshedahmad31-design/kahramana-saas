@@ -18,7 +18,13 @@
     "required": "This field is required",
     "optional": "Optional",
     "reasonPlaceholder": "Enter reason…",
-    "systemOperational": "System Operational"
+    "systemOperational": "System Operational",
+    "ingredient": "Ingredient",
+    "price": "Price",
+    "branch": "Branch",
+    "noResults": "No results",
+    "report": "Report",
+    "lastUpdated": "Last updated"
   },
   "terms": {
     "title": "Terms of Service",
@@ -1280,7 +1286,14 @@
     "createAccountHint": "Create an account to earn loyalty points and track your order history.",
     "pointsHistory": "Points History",
     "signOut": "Sign Out",
-    "pointsShort": "pts"
+    "pointsShort": "pts",
+    "noTransactions": "No transactions yet",
+    "transactions": {
+      "earned": "Earned",
+      "redeemed": "Redeemed",
+      "bonus": "Bonus",
+      "expired": "Expired"
+    }
   },
   "payment": {
     "title": "Complete Your Payment",
@@ -1688,7 +1701,8 @@
         "date": "Date",
         "supplier": "Supplier",
         "change": "Change",
-        "chartTitle": "Price Trend for {name}"
+        "chartTitle": "Price Trend for {name}",
+        "unspecified": "Unspecified"
       },
       "abcAnalysis": {
         "title": "ABC Analysis",

@@ -18,7 +18,13 @@
     "required": "هذا الحقل مطلوب",
     "optional": "اختياري",
     "reasonPlaceholder": "أدخل السبب…",
-    "systemOperational": "النظام نشط"
+    "systemOperational": "النظام نشط",
+    "ingredient": "المكوّن",
+    "price": "السعر",
+    "branch": "الفرع",
+    "noResults": "لا توجد نتائج",
+    "report": "تقرير",
+    "lastUpdated": "آخر تحديث"
   },
   "terms": {
     "title": "شروط الخدمة",
@@ -1280,7 +1286,14 @@
     "createAccountHint": "أنشئ حساباً لكسب نقاط الولاء وتتبع سجل طلباتك.",
     "pointsHistory": "سجل النقاط",
     "signOut": "تسجيل الخروج",
-    "pointsShort": "نقطة"
+    "pointsShort": "نقطة",
+    "noTransactions": "لا توجد عمليات بعد",
+    "transactions": {
+      "earned": "نقاط مكتسبة",
+      "redeemed": "نقاط مستخدمة",
+      "bonus": "نقاط إضافية",
+      "expired": "نقاط منتهية"
+    }
   },
   "payment": {
     "title": "أكمل الدفع",
@@ -1688,7 +1701,8 @@
         "date": "التاريخ",
         "supplier": "المورد",
         "change": "التغير",
-        "chartTitle": "منحنى تغير السعر لـ {name}"
+        "chartTitle": "منحنى تغير السعر لـ {name}",
+        "unspecified": "غير محدد"
       },
       "abcAnalysis": {
         "title": "تحليل ABC",
