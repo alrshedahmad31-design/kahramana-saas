@@ -32,9 +32,16 @@ export default async function DashboardHomePage({ params }: Props) {
   const prefix  = locale === 'en' ? '/en' : ''
   const currency = t('currency')
 
+  const isGlobal       = user.role === 'owner' || user.role === 'general_manager'
+
+  // Fail-closed: a scoped role with NULL branch_id would otherwise pass null
+  // to getDashboardData and receive all-branch metrics (the global view).
+  if (!isGlobal && !user.branch_id) {
+    throw new Error('Forbidden: account requires a branch assignment')
+  }
+
   const data = await getDashboardData(user.branch_id ?? null)
 
-  const isGlobal       = user.role === 'owner' || user.role === 'general_manager'
   const showInventory  = canAccessSection(user.role, 'inventory')
 
   const supabase = await createClient()

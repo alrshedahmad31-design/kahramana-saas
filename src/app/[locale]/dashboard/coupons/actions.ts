@@ -5,8 +5,35 @@ import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canManageCoupons } from '@/lib/auth/rbac'
 import type { CouponInsert } from '@/lib/supabase/custom-types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AuthUser } from '@/lib/auth/session'
 
 export type ActionResult = { success: true } | { success: false; error: string }
+
+// Branch-scope gate for coupon mutations on an existing row.
+// Branch managers may only touch coupons they created OR coupons whose
+// applicable_branches contains their branch. Owner / GM bypass.
+async function assertCouponScope(
+  supabase: SupabaseClient,
+  couponId: string,
+  caller:   AuthUser,
+): Promise<ActionResult> {
+  if (caller.role !== 'branch_manager') return { success: true }
+  const { data: existing, error } = await supabase
+    .from('coupons')
+    .select('applicable_branches, created_by')
+    .eq('id', couponId)
+    .single<{ applicable_branches: string[] | null; created_by: string | null }>()
+  if (error || !existing) return { success: false, error: 'Coupon not found' }
+
+  const isCreator = existing.created_by === caller.id
+  const branches  = existing.applicable_branches ?? []
+  const inScope   = caller.branch_id != null && branches.includes(caller.branch_id)
+  if (!isCreator && !inScope) {
+    return { success: false, error: 'Coupon scope violation' }
+  }
+  return { success: true }
+}
 
 // ── Server-side coupon limits ─────────────────────────────────────────────────
 // D-C1: Hard limits enforced for non-admin roles (marketing, branch_manager).
@@ -164,25 +191,8 @@ export async function updateCoupon(
 
   const supabase = await createClient()
 
-  // Branch scope: branch_managers may only edit coupons where their branch is
-  // in applicable_branches OR they are the creator. Global coupons
-  // (applicable_branches IS NULL) are owner/GM territory unless the
-  // branch_manager owns them.
-  if (caller.role === 'branch_manager') {
-    const { data: existing, error: scopeErr } = await supabase
-      .from('coupons')
-      .select('applicable_branches, created_by')
-      .eq('id', id)
-      .single()
-    if (scopeErr || !existing) return { success: false, error: 'Coupon not found' }
-
-    const isCreator = existing.created_by === caller.id
-    const branches  = existing.applicable_branches ?? []
-    const inScope   = caller.branch_id != null && branches.includes(caller.branch_id)
-    if (!isCreator && !inScope) {
-      return { success: false, error: 'Coupon scope violation' }
-    }
-  }
+  const scope = await assertCouponScope(supabase, id, caller)
+  if (!scope.success) return scope
 
   const { error } = await supabase
     .from('coupons')
@@ -241,6 +251,9 @@ export async function toggleCouponActive(
 
   const supabase = await createClient()
 
+  const scope = await assertCouponScope(supabase, id, caller)
+  if (!scope.success) return scope
+
   const { error } = await supabase
     .from('coupons')
     .update({ is_active: isActive })
@@ -272,6 +285,9 @@ export async function toggleCouponPause(
   if (!canManageCoupons(caller)) return { success: false, error: 'Insufficient permissions' }
 
   const supabase = await createClient()
+
+  const scope = await assertCouponScope(supabase, id, caller)
+  if (!scope.success) return scope
 
   const { error } = await supabase
     .from('coupons')

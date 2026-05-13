@@ -72,11 +72,15 @@ export async function createWaiterOrder(
   }
   const data = parsed.data
 
+  // Fail-closed: a scoped role missing branch_id is REJECTED (not bypassed) —
+  // NULL branch_id on a scoped account is a data integrity hole, not a wildcard.
+  // Mirrors pos/actions.ts (8f956ed).
   if (
-    (caller.role === 'branch_manager' || caller.role === 'cashier' || caller.role === 'waiter') &&
-    caller.branch_id && caller.branch_id !== data.branchId
+    caller.role === 'branch_manager' || caller.role === 'cashier' || caller.role === 'waiter'
   ) {
-    return { error: 'Forbidden: branch scope violation' }
+    if (!caller.branch_id || caller.branch_id !== data.branchId) {
+      return { error: 'Forbidden: branch scope violation' }
+    }
   }
 
   // Single untyped service-role client for the whole transaction.
