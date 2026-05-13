@@ -1,6 +1,6 @@
 {
     "project":  "kahramana-baghdad",
-    "last_updated":  "2026-05-13 (session 94 — F-02/F-05/F-06/F-07 security fixes shipped (a867977/ef9fe86/a5f13a5/724f115); Sentry P2 hardening + webpack-plugin release alignment (a3bfba8): DSN→env, sendDefaultPii=false across server/edge/client, edge tracesSampleRate 1→0.1, release name binds runtime ↔ sourcemap upload via VERCEL_GIT_COMMIT_REF + short SHA; BL-001 closed in docs/qa/post-launch-backlog.md (loyalty/config split verified); migrations 114 + 115 backfilled into applied list)",
+    "last_updated":  "2026-05-13 (session 96 — dashboard audit v2 batches 1-7 shipped (e1c1e32 → 36742de, 8 commits): branch-scope security across waiter/dashboard/coupons/analytics/schedule; transition matrices for reservations/waitlist/catering/PO; row-count checks on 7 update sites; zod validation for staff/purchases/supplier/coupons; migration 124 — rpc_create_purchase_order live on remote. Deferred to session 97: #6/#7/#8 error swallowing, #15/#16 staff TOCTOU (needs RPC), supabase gen types regen, Sentry sourcemap verification, Vercel CPU re-check.)",
     "current_phase":  null,
     "next_phase":  "7b",
     "pointer_note":  "No active phase. All numbered phases through 7 + 6b are done. 7b (Deliverect/POS) is locked on contract + Bahrain availability + POS API docs. 8 (AI) is locked on 6 months production data. Phase 6 Sprint 6B/6C (WhatsApp API + Benefit Pay) blocked on Meta verification + merchant approval.",
@@ -17,7 +17,7 @@
                        "pending_db_migrations":  [
 
                                                  ],
-                       "migration_status":  "090-123 ALL APPLIED AND TRACKED — 123_rpc_record_opening_balance applied 2026-05-13 (session 95 data-integrity batch). BL-004 fixes 120-122 applied 2026-05-13. Latest: 123_rpc_record_opening_balance.sql. Duplicate 102_kds_shawarma_routing.sql removed from disk. 114 + 115 backfilled into applied_db_migrations 2026-05-13 (session 94 audit). Repo state matches Supabase remote. Types regen pending — `as never` cast at src/app/[locale]/dashboard/inventory/stock/[branchId]/actions.ts until `supabase gen types --linked` is rerun.",
+                       "migration_status":  "090-124 ALL APPLIED AND TRACKED — 124_rpc_create_purchase_order applied 2026-05-13 (session 96 dashboard audit v2 batch 7). 123_rpc_record_opening_balance applied 2026-05-13 (session 95). BL-004 fixes 120-122 applied 2026-05-13. Latest: 124_rpc_create_purchase_order.sql. Repo state matches Supabase remote. Types regen pending — `as never` casts now at TWO sites: src/app/[locale]/dashboard/inventory/stock/[branchId]/actions.ts (migration 123) and src/app/[locale]/dashboard/inventory/purchases/actions.ts (migration 124). Both stripped in one cleanup commit after `supabase gen types --linked` is rerun.",
                        "applied_db_migrations":  [
                                                      "019_report_audit_log.sql — applied 2026-04-29",
                                                      "020_restaurant_profile.sql — applied 2026-04-29",
@@ -84,11 +84,12 @@
                                                      "120_rls_bl004_fix.sql — applied 2026-05-13 (BL-004 high-severity: orders/order_items INSERT → service_role only; inventory_lots + supplier_price_history INSERT → staff; supplier_price_history + prep_items + prep_item_ingredients SELECT → staff)",
                                                      "121_customers_insert_guard.sql — applied 2026-05-13 (BL-004 low-sev: customers anon INSERT now requires name 1-120 chars + Bahrain-style phone regex)",
                                                      "122_rls_bl004_p2.sql — applied 2026-05-13 (BL-004 P2: contact_messages shape guard; ingredient_allergens / restaurant_profile / unit_conversions SELECT scoped to staff)",
-                                                     "123_rpc_record_opening_balance.sql — applied 2026-05-13 (atomic opening-balance RPC: movement insert + stock upsert in one transaction; SECURITY DEFINER, locked search_path, service_role-only GRANT; closes the phantom-movement gap from the prior two-step JS pattern)"
+                                                     "123_rpc_record_opening_balance.sql — applied 2026-05-13 (atomic opening-balance RPC: movement insert + stock upsert in one transaction; SECURITY DEFINER, locked search_path, service_role-only GRANT; closes the phantom-movement gap from the prior two-step JS pattern)",
+                                                     "124_rpc_create_purchase_order.sql — applied 2026-05-13 (atomic PO + items RPC: purchase_orders insert + purchase_order_items insert in one transaction; jsonb items array, empty array still creates draft PO; SECURITY DEFINER, locked search_path, service_role-only GRANT; closes the orphan-PO gap from the prior two-step JS pattern in inventory/purchases/actions.ts)"
                                                  ],
                        "settings_page":  "deployed",
                        "git_remote":  "https://github.com/alrshedahmad31-design/kahramana-saas.git — CONNECTED, master pushed",
-                       "last_git_commit":  "a3bfba8 — fix(sentry): align webpack plugin release name + P2 config fixes (session 94 series: a867977 [F-02 tracePropagationTargets] → 724f115 [F-07 /privacy→/privacy-policy] → ef9fe86 [F-05 PDPL] → a5f13a5 [F-06 release sanitization] → a3bfba8 [DSN→env + sendDefaultPii=false + edge trace rate alignment + webpack-plugin release.name binding]; prior session 93 tail: 62112d6 → 2f2c69f → d456a1f → 4547db6)",
+                       "last_git_commit":  "36742de — fix(data-integrity): create PO via atomic RPC (session 96 — dashboard audit v2 batches 1-7: e1c1e32 [#4/#5/#26 branch scope] → 4066a9f [#1/#2/#33-36 analytics scope] → 98f47c8 [#3 schedule scope] → cf54028 [#9/#10/#11/#21 transitions] → c778f44 [#12/#13/#14/#22/#25/#27/#28 row-count] → 7ddca54 [#17/#18/#20/#23/#24 zod] → 3d25cc3 [migration 124] → 36742de [#19 PO RPC call site])",
                        "vercel_push_pending":  false,
                        "supabase_key_rotation_required":  false,
                        "driver_page_fix":  "verified on production",

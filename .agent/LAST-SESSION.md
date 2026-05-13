@@ -1,333 +1,306 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 95: dashboard security audit close-out (CRITICAL + HIGH + Batch 1
-> + Batch 2), i18n gate 8 script, header dedup, Sentry tunnel removal,
-> migration 123 (atomic stock RPC)
+> Session 96: dashboard audit v2 close-out — batches 1-7 of 7
+> (deferred batches DEFER list carried to session 97)
 > Date: 2026-05-13
-> Author: Claude Code (sole contributor; sibling Gemini agent inactive on
->         repo this session but applied 8 ad-hoc DB migrations via Studio
->         between 2026-05-12 16:46 and 2026-05-13 07:10 — see Open Issues)
+> Author: Claude Code (sole contributor)
 
 ## SUMMARY
-Heavy security + data-integrity session. 11 commits pushed (`8f956ed` →
-`aa25dd2`). Five threads:
 
-1. **Dashboard audit close-out** — 9 findings actioned across CRITICAL
-   (fail-closed branch scope, staff page guard), HIGH (delivery race
-   condition, inventory Zod), Batch 1 security (exportToExcel guard,
-   coupon scope, ingredient RBAC, refund audit log), Batch 2 data-
-   integrity (allergen smart-diff, atomic stock RPC, dine_in mapping).
-2. **i18n gate 8 — script + 13 key fixes** — `scripts/check-i18n.ts`
-   built (parity + t() usage scan; handles t.raw against intermediate
-   nodes, multi-scope translator aliasing). First run found 13 genuine
-   missing-key bugs; all 13 added with reviewed AR/EN copy.
-3. **Header dedup** — removed duplicate CSP from vercel.json (session
-   94); this session removed duplicate Cache-Control + 4 duplicate
-   security headers from vercel.json, fixed the /driver no-store
-   override caused by the next.config.ts catch-all stomping on it.
-4. **Migration 123** — `rpc_record_opening_balance` (atomic movement
-   insert + stock upsert in one transaction). Applied to prod via
-   `supabase db push` after drift investigation (see Open Issues).
-   Stock action rewritten to call the RPC; the prior 30-line two-step
-   pattern collapsed to a single typed call.
-5. **Sentry tunnel route removed** — `/monitoring` route deleted from
-   `next.config.ts`. Was a Fluid Active CPU drain (every error event
-   = one function invocation). Free-tier alert at 75% prompted the
-   change; CSP `connect-src` already allowed `*.ingest.sentry.io`.
+Pure security + data-integrity session, no new features. The 36-finding
+dashboard audit v2 (`docs/audit/dashboard-audit-2026-05-10-v2.md`) was
+executed in 7 user-defined batches. 22 findings closed across 8 commits
+(`e1c1e32` → `36742de`). One Supabase migration (124) shipped + applied
+to remote prod. Build + TSC clean after every commit; final
+`NEXT_BUILD_WORKERS=1 npm run build` → 548 pages, 0 errors.
+
+The 7 batches were sequenced by blast-radius and shared SQL surface,
+not by audit numbering:
+
+1. **Branch-scope security** (#4 waiter, #5 dashboard root, #26 coupon
+   toggles) — mirror of the `pos/actions.ts` 8f956ed fail-closed fix.
+2. **Analytics helpers** (#1/#2/#33/#34/#35/#36) — six query helpers
+   gained `branchId?` parameter; non-global users now get re-aggregated
+   per-branch results instead of the global matview/view fast path.
+3. **Schedule reads** (#3) — staff / shifts / pending-leave count now
+   branch-scoped; leave count uses `staff_basic!inner` join since
+   `leave_requests` has no own `branch_id`.
+4. **Transition matrices** (#9/#10/#11/#21) — reservations, waitlist,
+   catering orders, purchase orders all gained `ALLOWED_*_TRANSITIONS`
+   maps and reject out-of-lifecycle moves.
+5. **Row-count guards** (#12/#13/#14/#22/#25/#27/#28) — `.select('id')
+   .single()` appended to seven update sites so concurrent deletes
+   can't return success on a no-op.
+6. **Zod validation** (#17/#18/#20/#23/#24) — staff hourly_rate, leave
+   dates, purchase items, supplier upsert, and the full coupon form.
+7. **PO atomic RPC** (#19) — migration 124 + actions.ts rewrite.
 
 ## COMMITS THIS SESSION (in order)
 
-- `8f956ed` fix(security): fail-closed branch scope + staff page guard
-- `1273096` fix(actions): delivery race condition + inventory Zod
-  validation
-- `3619569` feat(i18n): add gate 8 check-i18n script — parity + t()
-  usage scan
-- `7925e1c` fix(i18n): add 13 missing keys — common, account.
-  transactions, priceHistory.unspecified
-- `97ad38d` chore(state): mark /dashboard/payments delivered — Tap
-  refund API still merchant-blocked
-- `481fcbb` fix(headers): resolve cache conflicts + remove duplicate
-  vercel.json headers
-- `e41c051` fix(security): exportToExcel guard + coupon scope +
-  ingredient RBAC + refund audit log
-- `44ddc38` fix(data-integrity): atomic allergen upsert + stock
-  movement + dine_in order type
-- `90e7c29` fix(data-integrity): stock opening balance via atomic RPC
-  (migration 123)
-- `aa25dd2` perf(sentry): remove tunnel route — send events direct to
-  ingest
+- `e1c1e32` fix(security): waiter fail-closed + dashboard null branch
+  guard + coupon toggle scope
+- `4066a9f` fix(security): branch-scope analytics helpers + gate
+  cross-branch panels
+- `98f47c8` fix(security): branch-scope schedule page reads (staff,
+  shifts, pending leaves)
+- `cf54028` fix(data-integrity): server-enforced status transition
+  matrices
+- `c778f44` fix(data-integrity): row-count checks on .update() mutations
+- `7ddca54` fix(data-integrity): zod validation for staff, purchase,
+  supplier, coupon writes
+- `3d25cc3` feat(data-integrity): rpc_create_purchase_order migration
+- `36742de` fix(data-integrity): create PO via atomic RPC (migration 124)
 
 ## SECURITY / DATA-INTEGRITY CHANGES — DETAIL
 
-### Branch scope fail-closed — `8f956ed`
-`pos/actions.ts:117-124` and `pos/service/actions.ts:88-93` had the
-classic `caller.branch_id && caller.branch_id !== input.branch_id`
-short-circuit bug: a `branch_manager`/`cashier`/`waiter` with NULL
-`branch_id` (data integrity hole, role demotion artefact, seed-script
-miss) would bypass the check entirely and submit orders to any branch.
-Both files now use `!caller.branch_id || caller.branch_id !== input.branch_id`.
+### Batch 1 — branch-scope fail-closed (`e1c1e32`)
 
-### Staff profile page guard — `8f956ed`
-`dashboard/staff/[id]/page.tsx` only checked `if (!user)` then rendered
-profile + shifts + timesheets + leave. Any authenticated staff member
-could hit any other's profile by URL. Added `canViewStaff(user, staff)`
-between fetch and render — owner/GM, self, or branch_manager-of-same-
-branch. Rejects via `notFound()` (no existence leak).
+- `waiter/actions.ts:75-84` — same `caller.branch_id &&` short-circuit
+  bug as `pos/actions.ts` pre-`8f956ed`. Replaced with
+  `!caller.branch_id || caller.branch_id !== data.branchId`. A
+  branch_manager / cashier / waiter with NULL `branch_id` is now
+  rejected, not bypassed.
+- `dashboard/page.tsx:35` — `getDashboardData(user.branch_id ?? null)`
+  was rendering all-branch metrics for any scoped user with NULL
+  `branch_id` (because the helper treats `null` as "global"). Added
+  early `throw new Error('Forbidden: account requires a branch
+  assignment')` for non-global callers.
+- `coupons/actions.ts` — `toggleCouponActive` + `toggleCouponPause`
+  had no scope check at all; only `canManageCoupons(caller)`. Extracted
+  the existing branch_manager scope check from `updateCoupon` into a
+  shared `assertCouponScope(supabase, id, caller)` helper and called
+  it from all three mutators (update + both toggles).
 
-### Delivery confirm race — `1273096`
-`delivery/actions.ts:confirmDelivery` read `order.status` then wrote
-`status='delivered'` unconditionally. Concurrent cancel/reassign could
-flip the order between read and write. Now compare-and-swap:
-`.update(...).eq('id', ...).eq('status', order.status).select('id')`
-— 0-row response → returns "status changed — please refresh".
+### Batch 2 — analytics branch scope (`4066a9f`)
 
-### Inventory Zod validation — `1273096`
-`upsertIngredient` and `upsertPrepItem` previously took raw FormData
-into the DB after only a name-required check. NaN, negatives, empty
-trim, out-of-range percentages all sailed through. Both now use full
-Zod schemas with enum validation against the CHECK-constrained sets;
-`prepIngredientSchema` also added for `savePrepItemIngredients` rows.
+Six analytics helpers in `src/lib/analytics/queries.ts` leaked
+all-branch data because their views/matviews have no `branch_id`
+column. Strategy: keep the matview/view fast path for global admins,
+add a branch-aware re-aggregation path for scoped callers.
 
-### Coupon branch-scope — `e41c051`
-`updateCoupon` allowed any `branch_manager` (passing `canManageCoupons`)
-to edit ANY coupon. Now: after the role gate, branch_managers must
-either be `created_by` of the coupon OR have their `branch_id` in
-`applicable_branches`. Global coupons (`applicable_branches IS NULL`)
-are owner/GM only unless the branch_manager created them.
+- `getBranchSummaries(from, to, branchId?)` — direct `.eq` on
+  `orders.branch_id`.
+- `getCustomerSegmentSummary(branchId?)` — when scoped, aggregates
+  per-phone from `orders` and classifies via `classifySegment`.
+- `getTopCustomers(limit, branchId?)` — same per-phone aggregation,
+  sorted/sliced.
+- `getMenuItemPerformance(limit, branchId?, from?, to?)` — re-aggregates
+  from `order_items ⨝ orders` filtered by branch + date range; preserves
+  the matview's 65% margin estimate.
+- `getCouponAnalytics(branchId?)` — coupons ⨝ orders filtered by
+  branch; preserves the view's `roi_percent` shape.
+- `getOrderSourceBreakdown(branchId?)` — direct aggregation from
+  `orders.source`.
 
-### exportToExcel guard — `e41c051`
-`inventory/reports/actions.ts:exportToExcel` was a public server action
-with zero auth. Free server-side compute primitive (ExcelJS) callable
-by anyone with cookies. Gated to
-`[owner, general_manager, branch_manager, inventory_manager]` (matches
-`rbac-ui.ts inventory_reports`).
+Five page call sites updated; analytics root page additionally hides
+`BranchComparisonTable` entirely for non-global users
+(`isGlobalAdmin` gate). `owner/page.tsx` and `reports/actions.ts`
+correctly continue to call without `branchId` (both are owner/GM-only
+routes).
 
-### Refund audit log — `e41c051`
-`payments/actions.ts:refundPayment` flipped DB state from completed →
-refunded with no audit trail. For a financial event this is missing
-basic compliance. Added best-effort `audit_logs` insert with
-`operation: 'refund'`, prev/new status, amount, caller identity +
-branch. Failure logging does NOT fail the refund (matches
-coupons/delivery pattern).
+### Batch 3 — schedule branch scope (`98f47c8`)
 
-### Ingredient RBAC alignment — `e41c051`
-`upsertIngredient` blocked `inventory_manager`; `rbac-ui.ts` granted
-them UI access. Added to allowed roles. `deleteIngredient` left
-stricter (owner/GM only) — destructive ops kept tight.
+`/dashboard/schedule` is reachable by `branch_manager` via
+`canManageSchedule`, but the three reads (`staff_basic`, `shifts`,
+`leave_requests` count) had no branch filter. Added fail-closed
+null-branch check + `.eq('branch_id', user.branch_id)` on staff/shifts;
+leave count uses `staff_basic!inner(branch_id)` join + filter on the
+joined column.
 
-### Allergen smart-diff — `44ddc38`
-`ingredients/[id]/actions.ts:115-126` did `delete-all → insert-new`;
-if the insert failed, ingredient ended up with ZERO allergens (food-
-safety data). Reversed order: `upsert(new_set, ignoreDuplicates)` first,
-then `delete WHERE allergen NOT IN (new_set)`. If step 2 fails, worst
-case is EXTRA allergens (over-warning customers — safe) instead of
-missing ones. Allergen values pre-validated against
-`ALLOWED_ALLERGENS` constant so the IN-list is injection-safe.
+### Batch 4 — transition matrices (`cf54028`)
 
-### POS dine_in mapping — `44ddc38`
-`pos/actions.ts:251` was still mapping `dine_in → 'pickup'` with stale
-"orders table only supports pickup/delivery" comment. Migration 087
-(applied 2026-05-09) added `dine_in` to the CHECK constraint. Now maps
-`dine_in → 'dine_in'` so KDS/analytics/waiter views can distinguish
-tablet-served dine-in from walk-in pickup.
+Four lifecycle-managed entities previously accepted any enum value
+from any current state. Each `actions.ts` now declares an
+`ALLOWED_*_TRANSITIONS` const and rejects invalid moves before
+`.update()`:
 
-### Atomic stock opening balance — `44ddc38` + `90e7c29`
-**Migration 123** (`123_rpc_record_opening_balance.sql`) ships a
-`SECURITY DEFINER` PL/pgSQL function that wraps the movement insert +
-stock upsert in one transaction, with locked `search_path` and
-service-role-only `GRANT EXECUTE`. Two-commit safe sequence:
-- Commit 1 (`44ddc38`) — migration file + TODO comment, no behavior change
-- User applied via `supabase db push` (drift had to be resolved first
-  — see Open Issues)
-- Commit 2 (`90e7c29`) — `stock/[branchId]/actions.ts` rewritten to
-  call the RPC, 30-line two-step pattern collapsed. Uses
-  `'rpc_record_opening_balance' as never` cast (codebase convention,
-  see `src/lib/analytics/queries.ts:684`) until `supabase gen types
-  --linked` is rerun.
+- **Reservations**: pending → confirmed/cancelled/no_show; confirmed →
+  seated/cancelled/no_show; seated → completed/cancelled; no_show,
+  cancelled, completed are terminal.
+- **Waitlist**: waiting → notified/seated/cancelled; notified →
+  seated/cancelled; seated, cancelled terminal.
+- **Catering**: forward-only draft → quoted → confirmed → prep_started
+  → delivered → invoiced; cancel allowed from draft through prep_started
+  only.
+- **Purchase orders**: draft → ordered → partial → received; cancel
+  allowed up to (but not from) received.
 
-## OTHER CHANGES — DETAIL
+All four implementations no-op when `newStatus === currentStatus` so
+idempotent UI clicks still succeed.
 
-### Gate 8 i18n script — `3619569`
-`scripts/check-i18n.ts` does two checks:
-- **Parity** — every leaf key in ar.json must exist in en.json and
-  vice versa. Leaf-only; intermediate nodes are structural.
-- **Usage** — every static `t('x')`/`t.rich('x')`/`t.markup('x')`/
-  `t.raw('x')` call in src/ resolves to a key in EITHER messages
-  file. `t.raw()` may target intermediate object nodes (legitimate
-  next-intl pattern, e.g. `t.raw('story.milestones.m1')` returning a
-  `{year,title,desc}` subtree); plain `t()` must target leaves.
+### Batch 5 — row-count guards (`c778f44`)
 
-Handles same-identifier scope shadowing (e.g. `[locale]/page.tsx` has
-one `t` for `seo` namespace in `generateMetadata` and a no-namespace
-`t` in the page body — script tries both candidates, passes if any
-resolves). Exits 0/1/2; `--json` flag for CI parsing. CLAUDE.md gate
-8 command updated from non-installed `ts-node` to actually-installed
-`tsx`.
+Seven `.update().eq('id', ...)` sites returned success on no-op
+(concurrent delete or RLS-filtered row). All seven now end with
+`.select('id').single()` and a not-found check:
 
-### 13 i18n key fixes — `7925e1c`
-First gate 8 run found 13 `t()` calls referencing nonexistent keys
-(would render raw key string via next-intl `MISSING_MESSAGE` in
-production). Added: `common.{ingredient,price,branch,noResults,
-report,lastUpdated}`, `account.{noTransactions,transactions.
-{earned,redeemed,bonus,expired}}`, `inventory.reports.priceHistory.
-unspecified`. AR/EN values reviewed before write. Gate 8 now passes
-2,223 keys / 2,223 keys, 593 source files, zero findings.
+- catering: status update, order edits, package update
+- PO: status update
+- coupons: full update + toggleActive + togglePause
+- reservations: status update
+- waitlist: status update
 
-### Header dedup — `481fcbb`
-Two real bugs + four redundancies fixed:
-- `/driver(.*)` had `Cache-Control: no-store` in vercel.json but
-  next.config.ts catch-all `(?!_next/static)` ALSO matched and added
-  `public, s-maxage=86400`. Driver PWA HTML could go stale up to 24h.
-- `/images/*` had two conflicting Cache-Control rules.
-- 4 exact-duplicate Cache-Control entries + 4 duplicate security
-  headers across both files.
-Fix: next.config.ts catch-all → `(?!_next/static|driver|images)`;
-vercel.json stripped to just `/driver(.*) no-store` and
-`/images/(.*) 1d+7d-SWR`. From 59 lines → 26 lines.
+Also folded a `let → const` lint cleanup on `schedule/page.tsx`
+`leavesQ`.
 
-### /dashboard/payments — `97ad38d`
-Discovered during the queue review: page already shipped (738 LOC
-across 8 files including PaymentStatsCards, PaymentFilters,
-PaymentsTable, CashHandoversSection). Stale "deliverables_pending"
-entry in phase-state.json from Phase 6. Moved to delivered. Tap
-refund API call (vs. DB-only refund flip) IS still pending merchant
-keys — noted as a separate pending item.
+### Batch 6 — zod validation (`7ddca54`)
 
-### Sentry tunnel route removal — `aa25dd2`
-`tunnelRoute: "/monitoring"` removed from `next.config.ts`. Vercel
-free-tier hit 75% Fluid Active CPU usage and triggered the alert
-that prompted this. Every Sentry event was routing through a Next.js
-function (≈1 function invocation per captured error). Browser SDK
-now sends events directly to `*.ingest.sentry.io`; CSP
-`connect-src` already allowed those origins
-(`src/middleware.ts:62`). Trade-off: aggressive ad-blockers may
-drop events. Acceptable — restaurant staff aren't running uBlock
-in the dashboard.
+Five write paths now validate before service-role insert/update:
 
-## OPEN ISSUES (carry to session 96)
+- **staff `hourly_rate`** (#17): `z.number().min(0).max(100)` + 3-
+  decimal precision refinement (Bahraini fils).
+- **leave dates** (#18): YYYY-MM-DD regex, start within
+  [today − 30d, today + 365d], duration ≤ 90 days.
+- **purchase items** (#20): `z.array(...).max(200)` of
+  `{ ingredient_id: uuid, quantity_ordered: >0 + 3-decimal,
+  unit_cost: ≥0 + 3-decimal, lot_number?: ≤50, expiry_date?: YYYY-MM-DD }`.
+- **supplier upsert** (#23): `name_ar` required, email valid OR empty,
+  `lead_time_days` int 0..365, length caps on free-text.
+- **coupons** (#24): full `couponSchema` covering type/value ranges,
+  3-decimal money precision, integer limits, HH:MM time, days 0..6, and
+  a `valid_until >= valid_from` refinement. Shape validation runs for
+  ALL roles; the existing admin bypass remains for business caps only.
 
-### **8 ad-hoc timestamp migrations on remote — UNRESOLVED**
-Discovered during the migration-123 push attempt. Remote
-`schema_migrations` has 8 versions with no local file:
-```
-20260512164612, 20260512174235, 20260512181529, 20260512182545,
-20260512194842, 20260513062035, 20260513065509, 20260513071015
-```
+### Batch 7 — PO atomic RPC (`3d25cc3` + `36742de`)
 
-These were applied via Supabase Studio's SQL editor or MCP
-`apply_migration` — outside `supabase db push`. The `.agent/
-db_migration_state.md` standing rule was violated 8 times: "After
-applying a migration outside `supabase db push`, register it
-manually in `schema_migrations` so future `db push` doesn't re-run
-it."
+Two-commit pattern matching migration 123:
 
-Most likely culprit: sibling Gemini agent (per memory
-`project_cowork_sibling_agent.md`).
+1. **Migration**: `124_rpc_create_purchase_order` (SECURITY DEFINER,
+   locked `search_path`, service_role-only GRANT). Inserts PO +
+   jsonb_array_elements of items in one transaction. Empty items array
+   still creates a draft PO (matches current app behaviour).
+2. **Call site**: `inventory/purchases/actions.ts:createPurchaseOrder`
+   now parses items BEFORE any DB write, then calls the single RPC.
+   A bad payload can no longer leave an empty PO row behind. New `as
+   never` cast at the RPC boundary until types regen (see Open Issues).
 
-**To unblock future migrations**, run in Supabase SQL editor:
-```sql
-SELECT version, name, statements
-FROM supabase_migrations.schema_migrations
-WHERE version IN (
-  '20260512164612','20260512174235','20260512181529','20260512182545',
-  '20260512194842','20260513062035','20260513065509','20260513071015'
-)
-ORDER BY version;
-```
+Migration 124 was applied to remote prod via `supabase db push
+--include-all`. `supabase migration list` confirms `LOCAL=124 |
+REMOTE=124`.
 
-Then for each: either backfill as a numbered local file (matching
-the SQL the dashboard ran) or `supabase migration repair --status
-applied <timestamp>` if the change was a one-time no-op.
+## OPEN ISSUES (carry to session 97)
 
-(For migration 123, the user applied via path that bypassed the
-drift block — recorded as "Migration 123 applied" in the
-conversation. The drift remains.)
+### #6 / #7 / #8 — error swallowing (DEFERRED, high blast radius)
 
-### Supabase types regen pending
-`stock/[branchId]/actions.ts:30,35` uses `'rpc_record_opening_
-balance' as never` and `as never` on the args object. Both will
-silently keep "working" forever — they don't auto-fail when types
-catch up. Run when convenient:
+Analytics helpers (`src/lib/analytics/queries.ts`, ~15 sites) and
+`src/lib/dashboard/stats.ts:131` destructure `{ error }` from Supabase
+calls and return empty arrays / zeros instead of surfacing the failure.
+Reports look valid but empty when the DB/RPC/view fails. Audit calls
+for typed `{ data, error }` returns or thrown errors with route-level
+error boundaries. Defer reason: changes the contract of helpers used
+across all analytics pages — needs paired error-boundary work and a
+careful blast-radius review.
+
+### #15 / #16 — staff TOCTOU (DEFERRED, needs RPC)
+
+`staff/actions.ts:143` and `:350` (staff update + activate/deactivate)
+check permissions against current row, then update by `id` only. A
+concurrent role/branch flip between read and write can defeat the
+permission check, and no row-count guard. Fix needs either
+compare-and-swap on `role + branch_id` in the update predicate, or a
+new `rpc_update_staff` doing both checks atomically. Defer reason:
+RPC migration design + types regen overhead; not on the critical path
+for this audit.
+
+### #29 / #30 / #31 / #32 — informational (BACKLOG)
+
+POS coordinate persistence (#29), waiter empty-table error UX (#30),
+missing waiter `loading.tsx` / `error.tsx` (#31), `/pos` 404 vs
+`/dashboard/pos` (#32). All `I` (informational) severity — UX polish
+rather than security/integrity. Track in regular backlog.
+
+### Supabase types regen — TWO sites pending
+
+`as never` casts at:
+- `src/app/[locale]/dashboard/inventory/stock/[branchId]/actions.ts`
+  (migration 123 — session 95)
+- `src/app/[locale]/dashboard/inventory/purchases/actions.ts`
+  (migration 124 — this session)
+
+Both silently keep working forever; they don't fail when types catch
+up. Run when convenient:
+
 ```
 npx supabase gen types typescript --linked --schema public > src/lib/supabase/types.ts
 ```
-Then strip the casts in a 2-line cleanup commit.
+
+Then a single 2-site cleanup commit strips the `as never`.
 
 ### Sentry sourcemap pipeline — still unverified
-Build logs for sessions 94 + 95 commits (`a3bfba8`, `4707f7f`,
-`aa25dd2`) not yet inspected. Scan for `Successfully uploaded N
-files` with release matching `kahramana-master-{short-sha}` AND
-no `could not auto-detect referenced sourcemap` lines on
-`.next/server/**` or `.next/static/**`.
 
-### Vercel env vars — verify before next deploy
-- `NEXT_PUBLIC_SENTRY_DSN` must exist for Preview + Production
-  (DSN no longer inlined since session 94 commit `a3bfba8`).
-- `SENTRY_AUTH_TOKEN` confirmed Production; Preview never
-  explicitly verified.
+Build logs not inspected for sessions 94/95/96. Scan latest build for
+`Successfully uploaded N files` with release matching
+`kahramana-master-{short-sha}` AND no `could not auto-detect
+referenced sourcemap` warnings on `.next/server/**` or
+`.next/static/**`. Carried forward unchanged from session 95.
 
-### Deferred from dashboard audit (session 96+ candidates)
-- #5 reservations: actions throw `Error` instead of returning
-  `{ success, error }` — refactor needed (low risk, isolated).
-- #7 POS full transaction: order + payment + audit are separate
-  calls; failure leaves orphan order rows. Needs an RPC like the
-  inventory work. Complex.
-- #16 slug resolution — flagged "read first, report before
-  touching" in audit. Untouched this session.
-- #11–#15 audit findings — backlog.
+### Vercel CPU re-check post-tunnel-removal
 
-### Free-tier CPU
-Tunnel removal should produce a meaningful drop. Re-check Vercel
-dashboard after 24h. If still climbing, options on the table:
-- Reconsider `force-dynamic` on dashboard pages (some can revalidate)
-- Set Sentry `tracesSampleRate: 0` in production (currently 0.1)
-- Upgrade to Pro plan (~$20/mo/seat, 100 CPU-hrs/mo + on-demand)
+Session 95 removed the `/monitoring` Sentry tunnel route. Free-tier
+Active CPU was the trigger. Re-check Vercel dashboard ~24-48h after
+that deploy to confirm the drop. If still climbing, fallback options
+remain (Sentry `tracesSampleRate: 0` in production, drop
+`force-dynamic` from select dashboard pages, or upgrade Pro plan).
 
 ## DECISIONS LOGGED
 
-- **F-08 (route structure in Sentry transactions)** verified-low,
-  no change — comment added in next.config.ts. Routes are already
-  public in `_buildManifest.js`; sanitizing transactions would
-  destroy Sentry debugging utility for zero real attack-surface
-  reduction.
-- **Allergen fix: insert-first then delete-stale** chosen over a
-  new RPC migration. The failure mode improvement (over-warning
-  vs under-warning) is what matters for food safety; full
-  atomicity wasn't required.
-- **Stock fix: full RPC migration** chosen over compensating-
-  delete fallback. Different tables, can't be done in one
-  Supabase JS call; financial-trail data warrants real
-  atomicity.
-- **Two-commit migration sequence for #8** instead of single
-  commit with fallback code — avoids a window where prod runs
-  against a non-existent RPC.
-- **Sentry tunnel: remove vs keep** — removed. Restaurant staff
-  use case doesn't include ad-blockers; CPU savings outweigh.
-- **vercel.json CSP removed (session 94), now Cache-Control +
-  security headers also removed (session 95)** — middleware +
-  next.config.ts is now the single source of truth for headers.
-- **deleteIngredient kept stricter than upsertIngredient** —
-  `inventory_manager` can upsert but only owner/GM can delete.
-  Destructive ops kept tight; not scope creep on this fix.
+- **Batch sequencing** — by shared SQL surface, not audit numbering.
+  Batch 4 (transitions) before Batch 5 (row-count) because both touch
+  the same `.update()` sites and a single read fetches status + branch.
+- **Analytics fast/slow path split** — preserve the matview/view fast
+  path for owner/GM (the common case) instead of forcing all callers
+  through the re-aggregation. The `branchId?` parameter is the switch.
+  Pattern lifted from existing `getHourlyDistribution` (which already
+  had it).
+- **BranchComparisonTable gated, not scoped** — for scoped users, a
+  single-row "branch comparison" is meaningless. Hiding the panel for
+  non-global matches the audit's "render only for owner/general_manager
+  or with scoped data" guidance and is clearer UX.
+- **Coupon shape validation runs for all roles** — the existing
+  `assertCouponWithinLimits` admin bypass is a business policy (let
+  owner/GM create exception coupons). Data integrity (negative values,
+  date order, 3-decimal precision) is not a business policy and should
+  run for everyone, including admins.
+- **Empty PO items allowed by RPC** — matches current behaviour: a
+  draft PO can be created with no line items and edited later. Decision
+  is encoded in the RPC's `IF jsonb_array_length(p_items) > 0` guard.
+- **Two-commit pattern for migration 124** — matches migration 123
+  precedent. Avoids a window where prod runs against a non-existent
+  RPC.
+- **`fetchCateringOrderBranch` already returns `status`** — batch 4
+  reused it; reservations and PO fetches gained `status` in their
+  `.select(...)` because they only fetched `id, branch_id`.
 
 ## MEMORY UPDATES
 
-None new this session. Existing memories
-(`feedback_supabase_types_lag_enum`,
-`project_cowork_sibling_agent`, `db_migration_state`) remain
-relevant; the 8 timestamp-migration drift is a fresh instance of
-the documented sibling-agent risk.
+None new this session. Existing memories still relevant:
+- `feedback_supabase_types_lag_enum` — now applies to TWO sites
+  (123 + 124) until next types regen.
+- `feedback_use_server_exports` — observed when adding `assertCouponScope`
+  helper; non-exported async helpers are fine in `'use server'` files.
+- `feedback_windows_build_race` — used `NEXT_BUILD_WORKERS=1` for the
+  build verification; clean.
 
 ## STATUS
 
 - **TSC**: clean after every commit.
-- **Local `npm run build`**: clean after every commit. Only
-  warning remains the pre-existing `@sentry/nextjs` deprecation
-  notice for `unstable_sentryWebpackPluginOptions` (deferred from
-  session 93, unrelated).
-- **Gate 8 (i18n)**: PASS — 2,223 keys / 2,223 keys, 593 files,
-  zero findings.
-- **Git**: local `master` == `origin/master` (last push:
-  `aa25dd2`).
-- **Migrations**: 123 latest on prod. Drift of 8 unknown timestamp
-  entries on remote — must be resolved before next `db push`.
-- **Working tree**: clean at end of session.
+- **Local `npm run build`**: clean — 548 pages, 0 errors, 69s compile.
+  Only warning remains the pre-existing `@sentry/nextjs`
+  `unstable_sentryWebpackPluginOptions` deprecation (unrelated).
+- **Migrations**: `LOCAL=124 | REMOTE=124` confirmed via
+  `supabase migration list`. No drift.
+- **Git**: this hand-off commit pushes `master` past `36742de`.
+- **Working tree at session start**: clean. At session end: clean
+  after hand-off commit.
+- **Audit doc**: `docs/audit/dashboard-audit-2026-05-10-v2.md` —
+  source for this session; included in the hand-off commit for
+  traceability.
+
+## SESSION 97 — DEFERRED CARRY-FORWARD
+
+1. **#6 / #7 / #8** error swallowing (analytics + dashboard stats)
+2. **#15 / #16** staff TOCTOU (needs new RPC migration)
+3. **`supabase gen types --linked`** → strip `as never` casts at the
+   two boundary sites (migrations 123 + 124) in a single cleanup
+   commit
+4. **Sentry sourcemap verification** — inspect latest build log
+5. **Vercel Active CPU re-check** post-tunnel-removal (session 95)
