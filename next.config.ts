@@ -57,8 +57,11 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // All other routes: security headers + daily revalidation for HTML
-        source: '/((?!_next/static).*)',
+        // All other routes: security headers + daily revalidation for HTML.
+        // Exclusions: _next/static (immutable above), driver (no-store in
+        // vercel.json — realtime GPS PWA), images (longer SWR in vercel.json
+        // for user-uploaded menu images that change occasionally).
+        source: '/((?!_next/static|driver|images).*)',
         headers: [
           ...securityHeaders,
           { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=43200' },
