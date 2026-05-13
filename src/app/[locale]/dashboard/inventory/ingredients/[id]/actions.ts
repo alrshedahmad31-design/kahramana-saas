@@ -110,19 +110,40 @@ export async function upsertIngredient(formData: FormData): Promise<{ error?: st
     ingredientId = data.id as string
   }
 
-  // Handle allergens
-  const allergens = formData.getAll('allergens') as string[]
+  // Handle allergens. Order matters here for food-safety: insert-new-first,
+  // then delete-stale. If the second step fails, the ingredient ends up with
+  // EXTRA allergens (over-warning customers — safe) rather than the old
+  // delete-then-insert pattern, where a failed insert wiped all allergens
+  // (under-warning — dangerous).
+  // Validate against the CHECK-constrained set so the IN-list below is safe.
+  const ALLOWED_ALLERGENS = new Set([
+    'gluten','dairy','eggs','nuts','peanuts','soy','fish','shellfish',
+    'sesame','mustard','celery','lupin','molluscs','sulphites',
+  ])
+  const rawAllergens = formData.getAll('allergens') as string[]
+  const allergens = rawAllergens.filter((a) => ALLOWED_ALLERGENS.has(a))
+
   if (ingredientId) {
-    await supabase
+    if (allergens.length > 0) {
+      const { error: aErr } = await supabase
+        .from('ingredient_allergens')
+        .upsert(
+          allergens.map((a) => ({ ingredient_id: ingredientId!, allergen: a })),
+          { onConflict: 'ingredient_id,allergen', ignoreDuplicates: true },
+        )
+      if (aErr) return { error: `Allergen update failed: ${aErr.message}` }
+    }
+
+    // Remove rows for allergens NOT in the new set. When new set is empty,
+    // this collapses to "delete all allergens for this ingredient".
+    let staleQ = supabase
       .from('ingredient_allergens')
       .delete()
       .eq('ingredient_id', ingredientId)
-
     if (allergens.length > 0) {
-      await supabase
-        .from('ingredient_allergens')
-        .insert(allergens.map((a) => ({ ingredient_id: ingredientId!, allergen: a })))
+      staleQ = staleQ.not('allergen', 'in', `(${allergens.join(',')})`)
     }
+    await staleQ
   }
 
   revalidatePath('/dashboard/inventory/ingredients')

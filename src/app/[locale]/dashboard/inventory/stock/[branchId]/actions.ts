@@ -26,6 +26,13 @@ export async function recordOpeningBalance(
 
   const supabase = createServiceClient()
 
+  // TODO(migration-123): swap the two-step pattern below for a single
+  // `rpc_record_opening_balance(branch_id, ingredient_id, quantity, performed_by)`
+  // call once migration 123 is applied to remote (supabase db push).
+  // The RPC wraps the movement insert + stock upsert in one transaction,
+  // closing the gap where step 2 could fail and leave a phantom movement row.
+  // Until then this two-step pattern stays — it works, just isn't atomic.
+
   // C3 FIX: read current on_hand so the movement records the actual signed
   // delta. Without this: on_hand=100, new=30 → movement says +30 but stock
   // actually dropped 70. Delta = new − old (negative = reduction).

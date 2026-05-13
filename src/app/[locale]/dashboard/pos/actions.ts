@@ -245,11 +245,17 @@ export async function createManualOrder(
       { onConflict: 'id' },
     )
 
-  // Map POS order types to schema-supported values.
-  // The orders table supports 'pickup' and 'delivery'; phone/dine_in are mapped
-  // to 'pickup' and tagged via source='manual' + notes for clarity.
-  const dbOrderType: 'pickup' | 'delivery' =
-    data.orderType === 'delivery' ? 'delivery' : 'pickup'
+  // Map POS order types to schema-supported values. Migration 087 expanded
+  // orders.order_type CHECK to ('delivery','pickup','dine_in'); persisting
+  // 'dine_in' explicitly lets KDS, analytics, and waiter views distinguish
+  // tablet/dine-in orders from pickups. 'phone' stays mapped to 'pickup'
+  // because phone-placed orders are functionally a walk-in pickup.
+  const dbOrderType: 'pickup' | 'delivery' | 'dine_in' =
+    data.orderType === 'delivery'
+      ? 'delivery'
+      : data.orderType === 'dine_in'
+        ? 'dine_in'
+        : 'pickup'
 
   const orderTypeNote =
     data.orderType === 'dine_in'
