@@ -84,9 +84,21 @@ export async function updateStaffProfile(input: UpdateProfileInput): Promise<Act
   if (input.clock_pin               !== undefined) updates.clock_pin_hash           = input.clock_pin ? await bcrypt.hash(input.clock_pin, 10) : null
   if (input.staff_notes             !== undefined) updates.staff_notes             = input.staff_notes || null
 
-  const { error } = await service.from('staff_basic').update(updates).eq('id', input.id)
+  // CAS: pin to the row state we just permission-checked. A concurrent role
+  // or branch reassignment would otherwise allow our profile update to slip
+  // past the freshly-elevated target's protections.
+  const tgt = target as Pick<StaffBasicRow, 'id' | 'role' | 'branch_id' | 'is_active'>
+  let q = service.from('staff_basic').update(updates)
+    .eq('id', input.id)
+    .eq('role', tgt.role)
+    .eq('is_active', tgt.is_active)
+  q = tgt.branch_id == null ? q.is('branch_id', null) : q.eq('branch_id', tgt.branch_id)
+  const { data: updated, error } = await q.select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'concurrent_change_retry' }
+  }
   revalidateProfile(input.id)
   return { success: true }
 }
@@ -183,12 +195,17 @@ export async function approveTimeEntry(entryId: string): Promise<ActionResult> {
     return { success: false, error: getDashboardGuardErrorMessage(scopeError) }
   }
 
-  const { error } = await service.from('time_entries').update({
+  // CAS: only approve if currently unapproved. Prevents double-approval and
+  // protects against concurrent reject/approve races.
+  const { data: updated, error } = await service.from('time_entries').update({
     approved_by: caller.id,
     approved_at: new Date().toISOString(),
-  }).eq('id', entryId)
+  }).eq('id', entryId).is('approved_by', null).select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'concurrent_change_retry' }
+  }
   revalidatePath('/dashboard/staff')
   return { success: true }
 }

@@ -45,14 +45,17 @@ async function assertStaffScope(
   return { success: true }
 }
 
+type ShiftRow = { id: string; branch_id: string | null; status: ShiftStatus; updated_at: string }
+type ShiftScopeResult = { success: true; shift: ShiftRow } | { success: false; error: string }
+
 async function assertShiftScope(
   service: ReturnType<typeof createServiceClient>,
   caller: BranchScopedCaller,
   shiftId: string,
-): Promise<ActionResult> {
+): Promise<ShiftScopeResult> {
   const { data: shift, error } = await service
     .from('shifts')
-    .select('id, branch_id')
+    .select('id, branch_id, status, updated_at')
     .eq('id', shiftId)
     .single()
 
@@ -64,23 +67,28 @@ async function assertShiftScope(
     return { success: false, error: getDashboardGuardErrorMessage(guardError) }
   }
 
-  return { success: true }
+  return { success: true, shift: shift as ShiftRow }
 }
+
+type LeaveRow = { id: string; staff_id: string; status: 'pending' | 'approved' | 'rejected' }
+type LeaveScopeResult = { success: true; leave: LeaveRow } | { success: false; error: string }
 
 async function assertLeaveScope(
   service: ReturnType<typeof createServiceClient>,
   caller: BranchScopedCaller,
   leaveId: string,
-): Promise<ActionResult> {
+): Promise<LeaveScopeResult> {
   const { data: leave, error } = await service
     .from('leave_requests')
-    .select('id, staff_id')
+    .select('id, staff_id, status')
     .eq('id', leaveId)
     .single()
 
   if (error || !leave) return { success: false, error: 'Leave request not found' }
 
-  return assertStaffScope(service, caller, leave.staff_id)
+  const staffScope = await assertStaffScope(service, caller, leave.staff_id)
+  if (!staffScope.success) return staffScope
+  return { success: true, leave: leave as LeaveRow }
 }
 
 function revalidateSchedule() {
@@ -139,9 +147,18 @@ export async function updateShiftStatus(shiftId: string, status: ShiftStatus): P
   const shiftScope = await assertShiftScope(service, caller, shiftId)
   if (!shiftScope.success) return shiftScope
 
-  const { error } = await service.from('shifts').update({ status, updated_at: new Date().toISOString() }).eq('id', shiftId)
+  // CAS on status: refuse to transition if a concurrent edit already changed
+  // the shift state.
+  const { data: updated, error } = await service.from('shifts')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', shiftId)
+    .eq('status', shiftScope.shift.status)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'concurrent_change_retry' }
+  }
   revalidateSchedule()
   return { success: true }
 }
@@ -156,9 +173,18 @@ export async function deleteShift(shiftId: string): Promise<ActionResult> {
   const shiftScope = await assertShiftScope(service, caller, shiftId)
   if (!shiftScope.success) return shiftScope
 
-  const { error } = await service.from('shifts').delete().eq('id', shiftId)
+  // CAS on updated_at: any concurrent edit bumps updated_at, so we refuse
+  // the delete if the row mutated between scope-fetch and delete.
+  const { data: deleted, error } = await service.from('shifts')
+    .delete()
+    .eq('id', shiftId)
+    .eq('updated_at', shiftScope.shift.updated_at)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!deleted || deleted.length === 0) {
+    return { success: false, error: 'concurrent_change_retry' }
+  }
   revalidateSchedule()
   return { success: true }
 }
@@ -177,14 +203,21 @@ export async function reviewLeaveRequest(
   const leaveScope = await assertLeaveScope(service, caller, leaveId)
   if (!leaveScope.success) return leaveScope
 
-  const { error } = await service.from('leave_requests').update({
+  // CAS on status: only review if currently pending. Prevents double-review
+  // races (two managers approving + rejecting the same request).
+  const { data: updated, error } = await service.from('leave_requests').update({
     status:         decision,
     reviewed_by:    caller.id,
     reviewed_at:    new Date().toISOString(),
     reviewer_notes: notes ?? null,
   }).eq('id', leaveId)
+    .eq('status', leaveScope.leave.status)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'concurrent_change_retry' }
+  }
   revalidateSchedule()
   return { success: true }
 }
