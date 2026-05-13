@@ -1,8 +1,35 @@
 'use server'
 
+import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 import { revalidatePath } from 'next/cache'
+
+const STORAGE_TEMPS = ['frozen','chilled','ambient','dry'] as const
+
+const requiredStr = z.string().trim().min(1)
+const optionalStr = z.string().trim().transform((v) => (v === '' ? null : v)).nullable()
+
+// Reject NaN, negatives, and empty required fields.
+const prepItemSchema = z.object({
+  name_ar: requiredStr,
+  name_en: requiredStr,
+  unit: requiredStr,
+  batch_yield_qty: z.preprocess((v) => Number(v ?? 1), z.number().finite().positive()),
+  shelf_life_hours: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().finite().positive().nullable(),
+  ),
+  storage_temp: z.enum(STORAGE_TEMPS).nullable(),
+  is_active: z.boolean(),
+  notes: optionalStr,
+})
+
+const prepIngredientSchema = z.object({
+  ingredient_id: z.string().trim().min(1),
+  quantity: z.number().finite().positive(),
+  yield_factor: z.number().finite().positive().nullable(),
+})
 
 export async function upsertPrepItem(formData: FormData): Promise<{ error?: string; id?: string }> {
   try {
@@ -14,22 +41,24 @@ export async function upsertPrepItem(formData: FormData): Promise<{ error?: stri
   const supabase = createServiceClient()
   const id = formData.get('id') as string | null
 
-  const payload = {
-    name_ar: formData.get('name_ar') as string,
-    name_en: formData.get('name_en') as string,
-    unit: formData.get('unit') as string,
-    batch_yield_qty: Number(formData.get('batch_yield_qty') || 1),
-    shelf_life_hours: formData.get('shelf_life_hours')
-      ? Number(formData.get('shelf_life_hours'))
-      : null,
-    storage_temp: (formData.get('storage_temp') as string) || null,
+  const raw = {
+    name_ar: formData.get('name_ar'),
+    name_en: formData.get('name_en'),
+    unit: formData.get('unit'),
+    batch_yield_qty: formData.get('batch_yield_qty'),
+    shelf_life_hours: formData.get('shelf_life_hours'),
+    storage_temp: (formData.get('storage_temp') as string | null) || null,
     is_active: formData.get('is_active') === 'true',
-    notes: (formData.get('notes') as string) || null,
+    notes: formData.get('notes'),
   }
 
-  if (!payload.name_ar || !payload.name_en || !payload.unit) {
-    return { error: 'الاسم والوحدة مطلوبان' }
+  const parsed = prepItemSchema.safeParse(raw)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid payload' }
   }
+
+  const payload = parsed.data
 
   let prepId = id
 
@@ -68,6 +97,17 @@ export async function savePrepItemIngredients(
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
+  if (!prepItemId || prepItemId.trim() === '') {
+    return { error: 'prep_item_id is required' }
+  }
+
+  const parsed = z.array(prepIngredientSchema).safeParse(rows)
+  if (!parsed.success) {
+    const first = parsed.error.issues[0]
+    return { error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid ingredient row' }
+  }
+  const validatedRows = parsed.data
+
   const supabase = createServiceClient()
 
   // Delete all existing ingredient rows for this prep item
@@ -79,9 +119,9 @@ export async function savePrepItemIngredients(
   if (delError) return { error: delError.message }
 
   // Re-insert
-  if (rows.length > 0) {
+  if (validatedRows.length > 0) {
     const { error: insError } = await supabase.from('prep_item_ingredients').insert(
-      rows.map((r) => ({
+      validatedRows.map((r) => ({
         prep_item_id: prepItemId,
         ingredient_id: r.ingredient_id,
         quantity: r.quantity,

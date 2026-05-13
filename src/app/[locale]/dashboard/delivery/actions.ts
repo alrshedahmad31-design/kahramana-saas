@@ -229,13 +229,21 @@ export async function confirmDelivery(orderId: string): Promise<DispatchActionRe
     return { success: false, error: 'Order is not out for delivery' }
   }
 
+  // Compare-and-swap: only flip to 'delivered' if the row's status hasn't
+  // changed between our read above and this write. Prevents racing against a
+  // concurrent cancel / reassignment that flipped the status out from under us.
   const now = new Date().toISOString()
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('orders')
     .update({ status: 'delivered', delivered_at: now, updated_at: now })
     .eq('id', orderId)
+    .eq('status', order.status)
+    .select('id')
 
   if (error) return { success: false, error: error.message }
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'Order status changed — please refresh and retry' }
+  }
 
   await supabase.from('audit_logs').insert({
     table_name: 'orders',
