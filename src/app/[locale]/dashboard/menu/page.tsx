@@ -7,6 +7,11 @@ import MenuManager from '@/components/dashboard/menu/MenuManager'
 import SyncMenuButton from '@/components/dashboard/menu/SyncMenuButton'
 import ExportMenuButton from '@/components/dashboard/menu/ExportMenuButton'
 
+// Auth-gated route — getSession() reads cookies, so static prerender is
+// impossible. Marking dynamic up front silences the DYNAMIC_SERVER_USAGE
+// warning that otherwise spams Vercel build logs on every deploy.
+export const dynamic = 'force-dynamic'
+
 export default async function MenuDashboardPage({
   params,
 }: {
