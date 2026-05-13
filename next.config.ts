@@ -4,6 +4,15 @@ import createNextIntlPlugin from 'next-intl/plugin'
 
 const withNextIntl = createNextIntlPlugin()
 
+// Sanitized Sentry release name — must match the `release` set in the three
+// Sentry.init() configs (instrumentation-client, sentry.server, sentry.edge)
+// so sourcemap uploads bind to the same release ID emitted by runtime events.
+// Code-side only: do NOT set SENTRY_RELEASE as a Vercel env var.
+const sentryRelease =
+  process.env.VERCEL_GIT_COMMIT_REF && process.env.VERCEL_GIT_COMMIT_SHA
+    ? `kahramana-${process.env.VERCEL_GIT_COMMIT_REF}-${process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)}`
+    : undefined;
+
 // CSP is injected per-request with a nonce in src/middleware.ts
 const securityHeaders = [
   { key: 'X-Frame-Options',           value: 'DENY' },
@@ -159,6 +168,9 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   org: "kahramana-4f",
 
   project: "javascript-nextjs",
+
+  // Bind uploaded sourcemaps to the same release string used at runtime.
+  release: { name: sentryRelease },
 
   // Read the auth token from the env var explicitly so the upload step
   // fails loudly (rather than silently no-op) if the secret is missing

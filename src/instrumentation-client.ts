@@ -5,7 +5,7 @@
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  dsn: "https://9b5e98391a7e153c05562dfd5cebbb29@o4511364423352320.ingest.us.sentry.io/4511364426170368",
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Sanitized release name — avoids leaking the full commit SHA into client bundles.
   // Falls back to undefined locally so dev events aren't bucketed under a fake release.
@@ -32,9 +32,9 @@ Sentry.init({
   // Define how likely Replay events are sampled when an error occurs.
   replaysOnErrorSampleRate: 1.0,
 
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
+  // Aligned with sentry.server.config.ts — do not auto-collect PII (IPs, cookies, headers).
+  // Attach user context explicitly at the call sites that actually need it.
+  sendDefaultPii: false,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
