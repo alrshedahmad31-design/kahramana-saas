@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Payment processing failed' }, { status: 500 })
   }
 
   const processed = typeof data === 'object' && data !== null && 'processed' in data

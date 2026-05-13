@@ -11,10 +11,7 @@ export async function GET(request: NextRequest) {
 
   // Supabase returned an error (e.g. expired magic link)
   if (errorParam) {
-    const msg = errorDesc ?? errorParam
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(msg)}`
-    )
+    return NextResponse.redirect(`${origin}/login?error=authentication_failed`)
   }
 
   if (!code) {
@@ -42,9 +39,7 @@ export async function GET(request: NextRequest) {
 
   if (exchangeError) {
     console.error('[auth/callback] exchange failed:', exchangeError.message)
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(exchangeError.message)}`
-    )
+    return NextResponse.redirect(`${origin}/login?error=authentication_failed`)
   }
 
   // Password reset flow — send to set-password page

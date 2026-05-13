@@ -47,13 +47,13 @@ async function checkDatabase(): Promise<CheckResult> {
       .select('*', { count: 'exact', head: true })
     const latencyMs = Date.now() - startedAt
     return error
-      ? { ok: false, latencyMs, error: error.message }
+      ? { ok: false, latencyMs, error: 'Database check failed' }
       : { ok: true,  latencyMs }
-  } catch (err) {
+  } catch {
     return {
       ok: false,
       latencyMs: Date.now() - startedAt,
-      error: err instanceof Error ? err.message : String(err),
+      error: 'Database check failed',
     }
   }
 }
