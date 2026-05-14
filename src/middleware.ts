@@ -8,11 +8,18 @@ import type { StaffRole } from '@/lib/supabase/custom-types'
 const intlMiddleware = createMiddleware(routing)
 
 const DASHBOARD_PATTERN   = /^(\/(ar|en))?\/dashboard(\/.*)?$/
+const ACCOUNT_PATTERN     = /^(\/(ar|en))?\/account(\/.*)?$/
 const LOGIN_PATTERN        = /^(\/(ar|en))?\/login$/
 const FORGOT_PASSWORD_PATTERN = /^(\/(ar|en))?\/forgot-password$/
 const SET_PASSWORD_PATTERN    = /^(\/(ar|en))?\/set-password$/
 const STAFF_ROUTE_PATTERN  = /^(\/(ar|en))?\/dashboard\/staff(\/.*)?$/
 const DRIVER_PATTERN       = /^(\/(ar|en))?\/driver(\/.*)?$/
+const WAITER_PATTERN       = /^(\/(ar|en))?\/waiter(\/.*)?$/
+const TABLE_PATTERN        = /^(\/(ar|en))?\/table(\/.*)?$/
+const POS_PATTERN          = /^(\/(ar|en))?\/pos(\/.*)?$/
+const CHECKOUT_PATTERN     = /^(\/(ar|en))?\/checkout(\/.*)?$/
+const PAYMENT_PATTERN      = /^(\/(ar|en))?\/payment(\/.*)?$/
+const ORDER_PATTERN        = /^(\/(ar|en))?\/order(\/.*)?$/
 // Drivers are mono-locale (Arabic only). This pattern matches the canonical
 // unprefixed path so we know when NOT to redirect (avoids an infinite loop
 // when forcing /en/driver → /driver).
@@ -72,11 +79,41 @@ function buildCsp(nonce: string): string {
   ].join('; ')
 }
 
+function buildPublicCsp(): string {
+  const isDev = process.env.NODE_ENV !== 'production'
+  const SCRIPT_HOSTS =
+    'https://www.googletagmanager.com https://www.google-analytics.com ' +
+    'https://www.clarity.ms https://cdn.sanity.io https://va.vercel-scripts.com ' +
+    'https://challenges.cloudflare.com'
+
+  const __impeccableLiveDev = isDev ? ' http://localhost:8400' : ''
+  const scriptSrc = isDev
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${SCRIPT_HOSTS}${__impeccableLiveDev}`
+    : `script-src 'self' 'unsafe-inline' ${SCRIPT_HOSTS}`
+
+  return [
+    "default-src 'self'",
+    scriptSrc + ' blob:',
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://cdn.sanity.io https://images.unsplash.com https://*.google.com https://*.tile.openstreetmap.org https://*.openstreetmap.org",
+    "font-src 'self'",
+    "worker-src 'self' blob:",
+    `connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.sanity.io https://cdn.sanity.io https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://www.clarity.ms https://dc.services.visualstudio.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://sentry.io${__impeccableLiveDev}`,
+    "media-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "frame-src 'self' https://www.google.com https://challenges.cloudflare.com",
+    "upgrade-insecure-requests",
+  ].join('; ')
+}
+
 // ── Finalize a "next" response: forward nonce + add CSP + merge cookies ───────
 
 function finalizeResponse(
-  headersWithNonce: Headers,
-  nonce:            string,
+  requestHeaders:   Headers,
+  csp:              string,
   supabaseResponse: NextResponse,
   intlResponse:     NextResponse,
 ): NextResponse {
@@ -88,14 +125,12 @@ function finalizeResponse(
       const response = NextResponse.redirect(location, intlResponse.status)
       supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
       intlResponse.cookies.getAll().forEach((c)     => response.cookies.set(c))
-      response.headers.set('Content-Security-Policy', buildCsp(nonce))
+      response.headers.set('Content-Security-Policy', csp)
       return response
     }
   }
 
-  // Create a fresh "next" response that forwards the nonce to Server Components
-  // via modified request headers (readable via headers() in Server Components)
-  const response = NextResponse.next({ request: { headers: headersWithNonce } })
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
 
   // Copy intl response headers (e.g. locale cookie, Link header, x-middleware-rewrite)
   intlResponse.headers.forEach((value, key) => {
@@ -108,38 +143,78 @@ function finalizeResponse(
   supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
   intlResponse.cookies.getAll().forEach((c)     => response.cookies.set(c))
 
-  response.headers.set('Content-Security-Policy', buildCsp(nonce))
+  response.headers.set('Content-Security-Policy', csp)
+  return response
+}
+
+function finalizePublicResponse(intlResponse: NextResponse): NextResponse {
+  if (intlResponse.status >= 300 && intlResponse.status < 400) {
+    intlResponse.headers.set('Content-Security-Policy', buildPublicCsp())
+    return intlResponse
+  }
+
+  const response = NextResponse.next()
+
+  intlResponse.headers.forEach((value, key) => {
+    if (key.toLowerCase() !== 'content-security-policy') {
+      response.headers.set(key, value)
+    }
+  })
+  intlResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+
+  response.headers.set('Content-Security-Policy', buildPublicCsp())
   return response
 }
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-  const headersWithNonce = new Headers(request.headers)
-  headersWithNonce.set('x-nonce', nonce)
-  headersWithNonce.set('x-pathname', pathname)
-
-  // 1. Always run intl middleware first to handle redirects/cookies
-  const intlResponse = intlMiddleware(request)
-
-  // 2. If it's a redirect (e.g. locale change), return it immediately
-  if (intlResponse.status >= 300 && intlResponse.status < 400) {
-    intlResponse.headers.set('Content-Security-Policy', buildCsp(nonce))
-    return intlResponse
-  }
-
-  const isDashboard   = DASHBOARD_PATTERN.test(pathname)
+  const isDashboard      = DASHBOARD_PATTERN.test(pathname)
+  const isAccount        = ACCOUNT_PATTERN.test(pathname)
   const isLogin          = LOGIN_PATTERN.test(pathname)
   const isForgotPassword = FORGOT_PASSWORD_PATTERN.test(pathname)
   const isSetPassword    = SET_PASSWORD_PATTERN.test(pathname)
   const isDriverRoute    = DRIVER_PATTERN.test(pathname)
+  const isProtectedRoute =
+    isDashboard ||
+    isAccount ||
+    isLogin ||
+    isForgotPassword ||
+    isSetPassword ||
+    isDriverRoute ||
+    WAITER_PATTERN.test(pathname) ||
+    TABLE_PATTERN.test(pathname) ||
+    POS_PATTERN.test(pathname) ||
+    CHECKOUT_PATTERN.test(pathname) ||
+    PAYMENT_PATTERN.test(pathname) ||
+    ORDER_PATTERN.test(pathname)
+
+  // 1. Always run intl middleware first to handle redirects/cookies
+  const intlResponse = intlMiddleware(request)
+
+  if (!isProtectedRoute) {
+    return finalizePublicResponse(intlResponse)
+  }
+
+  const usesNonceCsp = ORDER_PATTERN.test(pathname)
+  const nonce = usesNonceCsp ? Buffer.from(crypto.randomUUID()).toString('base64') : null
+  const requestHeaders = new Headers(request.headers)
+  const csp = nonce ? buildCsp(nonce) : buildPublicCsp()
+  if (nonce) {
+    requestHeaders.set('x-nonce', nonce)
+  }
+
+  // 2. If it's a redirect (e.g. locale change), return it immediately
+  if (intlResponse.status >= 300 && intlResponse.status < 400) {
+    intlResponse.headers.set('Content-Security-Policy', csp)
+    return intlResponse
+  }
 
   // ── Public routes: skip Supabase entirely ─────────────────────────────────
   // /driver is included because drivers must be forced into Arabic and
   // bounced off /en/driver — that check needs the user's role.
   if (!isDashboard && !isLogin && !isForgotPassword && !isSetPassword && !isDriverRoute) {
-    return finalizeResponse(headersWithNonce, nonce, NextResponse.next(), intlResponse)
+    return finalizeResponse(requestHeaders, csp, NextResponse.next(), intlResponse)
   }
 
   // ── Auth routes: Supabase logic ──────────────────────────────────────────
@@ -147,16 +222,16 @@ export default async function middleware(request: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    return finalizeResponse(headersWithNonce, nonce, NextResponse.next(), intlResponse)
+    return finalizeResponse(requestHeaders, csp, NextResponse.next(), intlResponse)
   }
 
-  let supabaseResponse = NextResponse.next({ request: { headers: headersWithNonce } })
+  let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet) => {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-        supabaseResponse = NextResponse.next({ request: { headers: headersWithNonce } })
+        supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options),
         )
@@ -229,7 +304,7 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  return finalizeResponse(headersWithNonce, nonce, supabaseResponse, intlResponse)
+  return finalizeResponse(requestHeaders, csp, supabaseResponse, intlResponse)
 }
 
 export const config = {

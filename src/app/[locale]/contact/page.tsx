@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { headers } from 'next/headers'
 import { BRANCH_LIST, GENERAL_CONTACT, SITE_URL } from '@/constants/contact'
 import { BRANCHES as SEO_BRANCHES } from '@/lib/constants/branches'
 import ContactForm from '@/components/contact/ContactForm'
@@ -41,7 +40,6 @@ export default async function ContactPage({
   const { locale } = await params
   const isRTL = locale === 'ar'
   const t = await getTranslations('contact')
-  const nonce = (await headers()).get('x-nonce') ?? undefined
 
   const jsonLd = buildContactPageSchema(locale === 'ar' ? 'ar' : 'en')
   const breadcrumb = buildBreadcrumb([
@@ -54,13 +52,11 @@ export default async function ContactPage({
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
 

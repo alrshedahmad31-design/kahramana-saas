@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { headers } from 'next/headers'
 import {
   getCategorySlugs,
   getAllMenuItems,
@@ -90,7 +89,6 @@ export default async function MenuCategoryPage({ params }: Props) {
   }
 
   const isRTL = locale === 'ar'
-  const nonce = (await headers()).get('x-nonce') ?? undefined
   const t = await getTranslations({ locale, namespace: 'menu' })
   const categoryName = isRTL ? category.name.ar : category.name.en
 
@@ -106,7 +104,6 @@ export default async function MenuCategoryPage({ params }: Props) {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
       <MenuHero

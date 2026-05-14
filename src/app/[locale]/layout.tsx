@@ -4,7 +4,6 @@ import localFont from 'next/font/local'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { routing } from '@/i18n/routing'
 import { tokens } from '@/lib/design-tokens'
@@ -200,9 +199,6 @@ interface LayoutProps {
 
 export default async function LocaleLayout({ children, params }: LayoutProps) {
   const { locale } = await params
-  const requestHeaders = await headers()
-  const nonce = requestHeaders.get('x-nonce') ?? undefined
-  const pathname = requestHeaders.get('x-pathname') ?? ''
 
   if (!routing.locales.includes(locale as 'ar' | 'en')) {
     notFound()
@@ -211,41 +207,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
   setRequestLocale(locale)
 
   const allMessages = await getMessages()
-  const normalizedPathname = pathname.replace(/^\/(ar|en)(?=\/|$)/, '') || '/'
-  const isOperationalRoute = /^\/(dashboard|driver|waiter|table|pos)(?=\/|$)/.test(normalizedPathname)
 
-  // Keep server-only/copy-heavy storefront namespaces out of operational pages.
-  // Dashboard shells still retain nav/common/auth/cart keys used by shared client chrome.
+  // Keep server-only/copy-heavy storefront namespaces out of the client bundle.
   const SERVER_ONLY_NS = new Set(['home', 'seo', 'tracking'])
-  const OPERATIONAL_CLIENT_NS = new Set([
-    'account',
-    'analytics',
-    'auth',
-    'branches',
-    'cart',
-    'common',
-    'dashboard',
-    'delivery',
-    'driver',
-    'errors',
-    'inventory',
-    'kds',
-    'menu',
-    'nav',
-    'order',
-    'payment',
-    'pos',
-    'promotions',
-    'qrOrder',
-    'reports',
-    'staff',
-    'tablesAdmin',
-    'waiter',
-    'waitlist',
-  ])
   const clientMessages = Object.fromEntries(
     (Object.entries(allMessages) as [string, unknown][]).filter(
-      ([k]) => !SERVER_ONLY_NS.has(k) && (!isOperationalRoute || OPERATIONAL_CLIENT_NS.has(k)),
+      ([k]) => !SERVER_ONLY_NS.has(k),
     ),
   ) as typeof allMessages
 
@@ -274,7 +241,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         {/* hreflang is handled by metadata.alternates.languages below —
             duplicate <link> tags here were causing canonical/hreflang conflicts */}
         <script
-          nonce={nonce}
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(buildOrganizationSchema(locale as 'ar' | 'en')),
@@ -302,7 +268,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         </NextIntlClientProvider>
 
         {/* GA4 + Clarity moved into <Analytics> — gated on cookie consent */}
-        <Analytics nonce={nonce} />
+        <Analytics />
 
         <SpeedInsights />
       </body>
