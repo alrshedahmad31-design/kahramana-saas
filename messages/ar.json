@@ -2543,7 +2543,7 @@
       "tableNumber": "رقم الطاولة",
       "carNumber": "رقم السيارة",
       "sendToKitchen": "أرسل للمطبخ",
-      "noTableSelected": "يرجى اختيار رقم الطاولة",
+      "noTableOrCar": "يرجى اختيار رقم الطاولة أو إدخال رقم السيارة",
       "openServiceMode": "وضع الخدمة"
     }
   },

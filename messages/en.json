@@ -2543,7 +2543,7 @@
       "tableNumber": "Table Number",
       "carNumber": "Car Number",
       "sendToKitchen": "Send to Kitchen",
-      "noTableSelected": "Please select a table number",
+      "noTableOrCar": "Please select a table number or enter a car number",
       "openServiceMode": "Service Mode"
     }
   },

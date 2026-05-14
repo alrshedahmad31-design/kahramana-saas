@@ -46,12 +46,23 @@ const itemSchema = z.object({
 
 const payloadSchema = z.object({
   branchId:      z.string().min(1).max(50),
-  tableNumber:   z.number().int().min(1).max(200),
+  // Car-side (curbside) orders identify by plate number, so either tableNumber
+  // OR carNumber must be present — enforced in superRefine below.
+  tableNumber:   z.number().int().min(1).max(200).nullable(),
+  carNumber:     z.string().max(20).optional(),
   items:         z.array(itemSchema).min(1).max(60),
   notes:         z.string().max(500).nullable().optional(),
   customerName:  z.string().max(120).optional(),
   customerPhone: z.string().max(20).optional(),
   idempotencyKey: z.string().uuid().optional(),
+}).superRefine((value, ctx) => {
+  if (value.tableNumber == null && !value.carNumber?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['tableNumber'],
+      message: 'TABLE_OR_CAR_REQUIRED',
+    })
+  }
 })
 
 export type ServiceOrderPayload = z.infer<typeof payloadSchema>
@@ -197,7 +208,13 @@ export async function createServiceOrder(
   const customerName  = data.customerName?.trim() || 'دائن'
   const customerPhone = data.customerPhone?.trim() || WAITER_PLACEHOLDER_PHONE
 
-  const baseNote = `[Service] Table ${data.tableNumber}`
+  // Base note identifies where the order is going: table or car (curbside).
+  // When both are present (rare — staff typed plate AND tapped table), prefer
+  // the table label and keep the plate in data.notes (already prefixed "سيارة:").
+  const carNote = data.carNumber?.trim()
+  const baseNote = data.tableNumber != null
+    ? `[Service] Table ${data.tableNumber}`
+    : `[Service] Car ${carNote ?? ''}`.trimEnd()
   const combinedNotes = data.notes?.trim()
     ? `${baseNote} — ${data.notes.trim()}`
     : baseNote

@@ -149,8 +149,10 @@ export default function ServiceModeClient({
       setError(t('errorCartEmpty'))
       return
     }
-    if (tableNumber == null) {
-      setError(t('service.noTableSelected'))
+    // Car-side orders identify by plate number instead of table — accept
+    // either, but require one. Reject only when both are empty.
+    if (tableNumber == null && !carNumber.trim()) {
+      setError(t('service.noTableOrCar'))
       return
     }
 
@@ -162,6 +164,7 @@ export default function ServiceModeClient({
     const payload: ServiceOrderPayload = {
       branchId,
       tableNumber,
+      carNumber: carNote || undefined,
       notes: carNote ? `سيارة: ${carNote}` : undefined,
       items: cart.map((l) => ({
         menuItemId:   l.itemId,
@@ -492,7 +495,7 @@ export default function ServiceModeClient({
 
             <button
               type="button"
-              disabled={isPending || cart.length === 0 || tableNumber == null}
+              disabled={isPending || cart.length === 0 || (tableNumber == null && !carNumber.trim())}
               onClick={submit}
               className="w-full min-h-[64px] rounded-lg bg-brand-gold text-brand-black font-satoshi text-base font-bold hover:bg-brand-gold-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
