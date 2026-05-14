@@ -182,6 +182,26 @@ export async function registerAction(
     }
   }
 
+  // 23505 = unique_violation on the phone column. Migration 145's trigger used
+  // ON CONFLICT DO NOTHING, so it silently skipped when the phone was already
+  // taken — leaving the auth.users row committed but no customer_profiles row
+  // (orphan). Delete the orphaned auth user so the registrant is not locked out,
+  // then return generic success to prevent phone-number enumeration.
+  if (lastErr?.code === '23505') {
+    Sentry.captureException(new Error('phone conflict — orphan cleanup'), {
+      tags: { stage: 'signup_phone_orphan_recovered' },
+      extra: { userId: authData.user.id },
+    })
+    const { error: deleteErr } = await admin.auth.admin.deleteUser(authData.user.id)
+    if (deleteErr) {
+      Sentry.captureException(deleteErr, {
+        tags: { stage: 'signup_phone_orphan_failed' },
+        extra: { userId: authData.user.id },
+      })
+    }
+    return { success: true }
+  }
+
   if (lastErr) {
     Sentry.captureException(new Error(lastErr.message), {
       tags: { stage: 'customer_profile.upsert', code: lastErr.code ?? 'unknown' },
