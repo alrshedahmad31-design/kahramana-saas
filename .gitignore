@@ -74,3 +74,4 @@ scratch/
 # Impeccable live helper runtime state (per-session, ephemeral)
 .impeccable/live/server.json
 .impeccable/live/sessions/
+.claude/settings.local.json
