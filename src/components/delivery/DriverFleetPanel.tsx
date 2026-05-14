@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { DV, DRIVER_STATUS } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
+import { Icon } from '@/components/ui/Icon'
 
 const KNOWN_DRIVER_STATUSES = ['available','delivering','busy','returning','offline'] as const
 type KnownDriverStatus = typeof KNOWN_DRIVER_STATUSES[number]
@@ -38,7 +39,7 @@ interface Props {
 
 function DailyRating({ completed }: { completed: number }) {
   const t = useTranslations('delivery.fleet')
-  // 0–2 → 1★, 3–5 → 2★, 6–8 → 3★, 9–11 → 4★, 12+ → 5★ (0 = no orders yet)
+  // Completed order bands map to a one-to-five star visual score.
   const stars = completed === 0 ? 0
     : completed <= 2  ? 1
     : completed <= 5  ? 2
@@ -59,7 +60,7 @@ function DailyRating({ completed }: { completed: number }) {
       <span style={{ fontSize: '10px', color: DV.muted }}>{t('dailyRating')}</span>
       <span style={{ fontSize: '13px', letterSpacing: '1px', lineHeight: 1 }}>
         {Array.from({ length: 5 }, (_, i) => (
-          <span key={i} style={{ color: i < stars ? DV.amber : `${DV.amber}30` }}>★</span>
+          <Icon key={i} name="star" size={13} style={{ color: i < stars ? DV.amber : `${DV.amber}30` }} />
         ))}
       </span>
     </div>

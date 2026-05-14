@@ -272,7 +272,7 @@ export default function CateringPackageForm({
                   onClick={() => removeItem(item.menu_item_slug)}
                   className="font-satoshi text-xs text-brand-muted hover:text-red-400 transition-colors leading-none"
                 >
-                  ✕
+                  x
                 </button>
               </div>
             ))}

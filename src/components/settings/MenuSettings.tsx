@@ -157,7 +157,7 @@ export default function MenuSettings() {
         </button>
         {saveState === 'saved' && (
           <span className={`text-brand-success text-sm font-bold ${font}`}>
-            {isAr ? '✓ تم الحفظ' : '✓ Saved'}
+            {isAr ? 'تم الحفظ' : 'Saved'}
           </span>
         )}
         {saveState === 'error' && (

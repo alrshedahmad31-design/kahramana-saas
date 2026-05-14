@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { useState, useEffect } from 'react'
 import { buildWaLinkForPhone } from '@/constants/contact'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   isOnline:          boolean
@@ -60,7 +61,7 @@ export default function DriverHeader({ isOnline, onToggle, isMuted, onToggleMute
               className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-150 animate-pulse-slow"
               aria-label={t('emergency')}
             >
-              <span className="text-sm" aria-hidden="true">🆘</span>
+              <Icon name="sos" size={14} />
               <span className={`font-black text-xs uppercase tracking-tight pointer-events-none ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                 {t('emergency')}
               </span>

@@ -9,6 +9,7 @@ import { createClient }                   from '@/lib/supabase/client'
 import { cancelDeliveryOrder, confirmDelivery } from '@/app/[locale]/dashboard/delivery/actions'
 import { DV, DV_STATUS, STATUS_BORDER } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver, OrderItem } from '@/lib/delivery/types'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   order:      DeliveryOrder | null
@@ -183,7 +184,7 @@ export default function OrderDetailDrawer({ order, drivers, open, onClose, onDis
 
               {/* Customer */}
               <Section title={t('drawer.customerSection')}>
-                <InfoRow icon={<span style={{ fontSize: '14px' }}>👤</span>} label={order.customer_name ?? '—'} />
+                <InfoRow icon={<Icon name="user" size={14} style={{ color: DV.muted }} />} label={order.customer_name ?? '—'} />
                 {order.customer_phone && (
                   <InfoRow
                     icon={<Phone size={13} color={DV.muted} />}

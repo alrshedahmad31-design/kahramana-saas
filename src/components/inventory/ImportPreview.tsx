@@ -2,6 +2,7 @@
 
 import type { ImportError, ImportWarning } from '@/lib/inventory/excel-parser'
 import type { ImportSummary } from '@/app/[locale]/dashboard/inventory/import/actions'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   summary: ImportSummary
@@ -19,7 +20,7 @@ function SummaryRow({ label, count }: { label: string; count: number }) {
   if (count === 0) return null
   return (
     <div className="flex items-center gap-3 py-1.5">
-      <span className="text-brand-success text-base">✓</span>
+      <Icon name="check" size={16} className="text-brand-success" />
       <span className="font-satoshi text-sm text-brand-text flex-1">{label}</span>
       <span className="font-satoshi text-sm font-semibold text-brand-gold tabular-nums">{count}</span>
     </div>

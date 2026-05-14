@@ -5,6 +5,7 @@ import type { StaffRole, EmploymentType } from '@/lib/supabase/custom-types'
 import { createStaffFull } from '@/app/[locale]/dashboard/staff/actions'
 import type { CreateStaffFullResult } from '@/app/[locale]/dashboard/staff/actions'
 import { createClient }    from '@/lib/supabase/client'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   locale:        string
@@ -304,7 +305,7 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
               >
                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-black
                   ${i === step ? 'bg-brand-black/20' : i < step ? 'bg-brand-success/20' : 'bg-brand-border'}`}>
-                  {i < step ? '✓' : i + 1}
+                  {i < step ? <Icon name="check" size={13} /> : i + 1}
                 </span>
                 {isAr ? s.ar : s.en}
               </button>

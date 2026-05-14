@@ -13,6 +13,7 @@ import AnalyticsSubNav    from '@/components/analytics/AnalyticsSubNav'
 import AnalyticsRefresher from '@/components/analytics/AnalyticsRefresher'
 import PLStatement        from '@/components/analytics/financial/PLStatement'
 import FinancialRatios    from '@/components/analytics/financial/FinancialRatios'
+import { Icon } from '@/components/ui/Icon'
 
 export const dynamic = 'force-dynamic'
 
@@ -108,7 +109,7 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
       {/* Warning: no budget row → costs are estimated */}
       {!hasBudget && branchId && (
         <div className={`flex items-start gap-3 rounded-xl border border-brand-gold/30 bg-brand-gold/5 px-4 py-3 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-          <span className="shrink-0 mt-0.5">⚠️</span>
+          <Icon name="warning" size={16} className="shrink-0 mt-0.5" />
           <p className="text-sm text-brand-gold">
             {isAr
               ? 'لا توجد ميزانية مُعدَّة لهذه الفترة — يتم عرض نسب تكلفة صناعية تقديرية. أضف ميزانية من صفحة الميزانية للحصول على أرقام أدق.'

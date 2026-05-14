@@ -6,6 +6,7 @@ import { UserPlus, ExternalLink, Clock, Truck } from 'lucide-react'
 import { DV, DV_STATUS, DRIVER_STATUS }         from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver }           from '@/lib/delivery/types'
 import PromptDialog from '@/components/ui/PromptDialog'
+import { Icon } from '@/components/ui/Icon'
 
 // ── Column config ─────────────────────────────────────────────────────────────
 
@@ -187,7 +188,7 @@ function KanbanCard({
               padding:      '2px 7px',
               borderRadius: '4px',
             }}>
-              ✓ {isAr ? 'مكتمل' : 'Done'}
+              {isAr ? 'مكتمل' : 'Done'}
             </span>
           )}
         </div>
@@ -208,7 +209,7 @@ function KanbanCard({
                 textOverflow: 'ellipsis',
                 maxWidth:   '100%',
               }}>
-                📍 {order.customer_address}
+                <Icon name="location" size={13} style={{ display: 'inline-block', marginInlineEnd: 4, verticalAlign: -2 }} />{order.customer_address}
               </p>
             )}
           </div>
@@ -516,7 +517,7 @@ function KanbanColumn({
             borderRadius: '4px',
             animation:    'pulse 1.2s ease-in-out infinite',
           }}>
-            ⚡ {urgentCount}
+            <Icon name="fire" size={12} style={{ display: 'inline-block', marginInlineEnd: 3, verticalAlign: -2 }} />{urgentCount}
           </span>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
 import { formatPrice } from '@/lib/format'
+import { Icon } from '@/components/ui/Icon'
 
 interface LoyaltyRedemptionWidgetProps {
   pointsBalance: number
@@ -25,7 +26,7 @@ export function LoyaltyRedemptionWidget({
     const needed = MIN_REDEMPTION - pointsBalance
     return (
       <div className="flex items-center gap-3 rounded-xl border border-brand-border bg-brand-surface-2 p-4 opacity-60">
-        <span className="flex-shrink-0 text-xl">✦</span>
+        <Icon name="sparkle" size={20} className="flex-shrink-0 text-brand-gold" />
         <p className="text-sm text-brand-muted">
           {t('checkout.loyalty.needMore', { count: needed })}
         </p>
@@ -59,7 +60,7 @@ export function LoyaltyRedemptionWidget({
             ].join(' ')}
             aria-hidden="true"
           >
-            ✦
+            <Icon name="sparkle" size={18} />
           </div>
 
           <div className="min-w-0">

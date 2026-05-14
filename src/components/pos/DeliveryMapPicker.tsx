@@ -149,7 +149,7 @@ export default function DeliveryMapPicker({
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1000]">
               <div className="bg-brand-black/80 backdrop-blur-sm rounded-xl px-5 py-3 text-center border border-brand-border">
                 <p className={`text-sm text-brand-gold font-bold ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-                  {isAr ? '👆 انقر على الخريطة' : '👆 Tap the map to drop a pin'}
+                  {isAr ? 'انقر على الخريطة' : 'Tap the map to drop a pin'}
                 </p>
               </div>
             </div>

@@ -8,8 +8,13 @@ import { useRouter } from '@/i18n/navigation'
 import { useCartStore, selectTotalItems, selectCartTotalFils, selectLineTotalFils, SIZE_LABELS, type CartItem } from '@/lib/cart'
 import { formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
-import CinematicButton from '@/components/ui/CinematicButton'
-import { X, Trash2, Minus, Plus, ShoppingBag, MapPin } from 'lucide-react'
+import { X, Trash2, Minus, Plus, ShoppingBag, MapPin, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+
+// Tailwind class shared by the two primary cart CTAs (إضافة المزيد + متابعة الطلب).
+// Both render as solid-gold pills with dark text — a true equal-weight pair.
+const CART_CTA_CLASS =
+  'inline-flex h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-brand-gold text-brand-black text-sm font-black uppercase tracking-wide shadow-[0_4px_16px_rgba(200,146,42,0.35)] transition-all hover:bg-brand-gold-light hover:shadow-[0_6px_20px_rgba(200,146,42,0.5)] active:scale-[0.98]'
 
 export default function CartBottomSheet() {
   const locale = useLocale()
@@ -210,7 +215,7 @@ export default function CartBottomSheet() {
 
             {/* Footer Summary */}
             {items.length > 0 && (
-              <div className="border-t border-brand-border/30 bg-brand-black p-6 pb-10 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] lg:pb-8">
+              <div className="shrink-0 border-t border-brand-border/30 bg-brand-black p-6 pb-10 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] lg:pb-8">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold uppercase tracking-wider text-brand-muted/60">{t('subtotal')}</span>
@@ -221,23 +226,54 @@ export default function CartBottomSheet() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
-                  <CinematicButton
+                {/* Dual primary CTAs — equal-weight gold pills.
+                    Right (RTL start) = checkout (forward). Left (RTL end) = add more (back).
+                    Each carries an arrow in the natural direction for its action. */}
+                <div className={`grid grid-cols-2 gap-3 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                  <button
+                    type="button"
                     onClick={() => { closeCart(); router.push('/checkout') }}
-                    isRTL={isRTL}
-                    className="h-[64px] rounded-2xl text-lg font-black"
+                    className={CART_CTA_CLASS}
                   >
-                    {t('checkout')}
-                  </CinematicButton>
+                    {isRTL ? (
+                      <>
+                        <ArrowLeft size={18} className="shrink-0" />
+                        <span>{t('checkout')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{t('checkout')}</span>
+                        <ArrowRight size={18} className="shrink-0" />
+                      </>
+                    )}
+                  </button>
 
                   <button
-                    onClick={handleClearCart}
-                    className="flex items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-widest text-brand-muted/40 transition-colors hover:text-brand-error"
+                    type="button"
+                    onClick={() => { closeCart(); router.push('/menu') }}
+                    className={CART_CTA_CLASS}
                   >
-                    <Trash2 size={12} />
-                    {t('clearAll')}
+                    {isRTL ? (
+                      <>
+                        <span>{t('addMore')}</span>
+                        <ArrowRight size={18} className="shrink-0" />
+                      </>
+                    ) : (
+                      <>
+                        <ArrowLeft size={18} className="shrink-0" />
+                        <span>{t('addMore')}</span>
+                      </>
+                    )}
                   </button>
                 </div>
+
+                <button
+                  onClick={handleClearCart}
+                  className="mt-4 flex w-full items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-widest text-brand-muted/40 transition-colors hover:text-brand-error"
+                >
+                  <Trash2 size={12} />
+                  {t('clearAll')}
+                </button>
               </div>
             )}
           </motion.div>
@@ -374,7 +410,7 @@ function CartItemRow({ item, isRTL, locale, labels, onRemove, onUpdateQty, onUpd
             onClick={() => setNotesOpen(true)}
             className={`text-[11px] text-brand-gold/70 hover:text-brand-gold transition-colors ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
           >
-            ✏️ {item.notes}
+            <Icon name="edit" size={12} className="me-1 inline-block" /> {item.notes}
           </button>
         ) : notesOpen ? (
           <textarea

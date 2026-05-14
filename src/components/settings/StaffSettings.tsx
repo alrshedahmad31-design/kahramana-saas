@@ -2,6 +2,7 @@
 
 import { useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 export default function StaffSettings() {
   const isAr   = useLocale() === 'ar'
@@ -50,12 +51,12 @@ export default function StaffSettings() {
       {/* Quick stats placeholder */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { labelAr: 'إجمالي الموظفين', labelEn: 'Total Staff',       glyph: '👥' },
-          { labelAr: 'نشطون الآن',      labelEn: 'Active Now',        glyph: '🟢' },
-          { labelAr: 'الأدوار',         labelEn: 'Roles Configured',  glyph: '🔑' },
+          { labelAr: 'إجمالي الموظفين', labelEn: 'Total Staff',       glyph: 'users' },
+          { labelAr: 'نشطون الآن',      labelEn: 'Active Now',        glyph: 'alert-dot' },
+          { labelAr: 'الأدوار',         labelEn: 'Roles Configured',  glyph: 'key' },
         ].map((item, i) => (
           <div key={i} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl border border-brand-border bg-brand-surface-2">
-            <span className="text-2xl">{item.glyph}</span>
+            <Icon name={item.glyph as IconName} size={24} className="text-brand-gold" />
             <span className={`text-[11px] text-brand-muted text-center ${font}`}>
               {isAr ? item.labelAr : item.labelEn}
             </span>

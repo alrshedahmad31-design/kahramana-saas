@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
 
 interface StockRow {
   branch_id: string
@@ -84,8 +85,12 @@ export default function StockTable({ stocks, locale = 'ar' }: Props) {
   })
 
   function SortIndicator({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <span className="opacity-30 ms-1">↕</span>
-    return <span className="ms-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+    if (sortKey !== col) {
+      return <ChevronsUpDown size={12} className="opacity-30 ms-1" aria-hidden="true" />
+    }
+    return sortDir === 'asc'
+      ? <ArrowUp   size={12} className="ms-1" aria-hidden="true" />
+      : <ArrowDown size={12} className="ms-1" aria-hidden="true" />
   }
 
   function ThBtn({ col, children }: { col: SortKey; children: React.ReactNode }) {

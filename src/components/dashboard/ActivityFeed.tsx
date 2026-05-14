@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { ActivityOrder } from '@/lib/dashboard/stats'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 interface Props {
   orders: ActivityOrder[]
@@ -16,17 +17,17 @@ function timeAgo(iso: string, isRTL: boolean): string {
   return isRTL ? `منذ ${hrs} س` : `${hrs}h ago`
 }
 
-const STATUS_CONFIG: Record<string, { dot: string; icon: string }> = {
-  new:              { dot: 'bg-brand-muted',   icon: '🆕' },
-  under_review:     { dot: 'bg-brand-muted',   icon: '👀' },
-  accepted:         { dot: 'bg-brand-gold',    icon: '✅' },
-  preparing:        { dot: 'bg-brand-gold',    icon: '🔥' },
-  ready:            { dot: 'bg-brand-success', icon: '✅' },
-  out_for_delivery: { dot: 'bg-brand-success', icon: '🚗' },
-  delivered:        { dot: 'bg-brand-success', icon: '📦' },
-  completed:        { dot: 'bg-brand-success', icon: '✅' },
-  cancelled:        { dot: 'bg-brand-error',   icon: '❌' },
-  payment_failed:   { dot: 'bg-brand-error',   icon: '❌' },
+const STATUS_CONFIG: Record<string, { dot: string; icon: IconName }> = {
+  new:              { dot: 'bg-brand-muted',   icon: 'sparkle' },
+  under_review:     { dot: 'bg-brand-muted',   icon: 'eye' },
+  accepted:         { dot: 'bg-brand-gold',    icon: 'check' },
+  preparing:        { dot: 'bg-brand-gold',    icon: 'fire' },
+  ready:            { dot: 'bg-brand-success', icon: 'check' },
+  out_for_delivery: { dot: 'bg-brand-success', icon: 'car' },
+  delivered:        { dot: 'bg-brand-success', icon: 'package' },
+  completed:        { dot: 'bg-brand-success', icon: 'check' },
+  cancelled:        { dot: 'bg-brand-error',   icon: 'x' },
+  payment_failed:   { dot: 'bg-brand-error',   icon: 'x' },
 }
 
 const STATUS_LABEL_EN: Record<string, string> = {
@@ -83,7 +84,7 @@ export default function ActivityFeed({ orders, isRTL }: Props) {
       ) : (
         <div className="flex flex-col gap-0 overflow-y-auto max-h-[420px] scrollbar-hide">
           {orders.map((order) => {
-            const cfg  = STATUS_CONFIG[order.status] ?? { dot: 'bg-brand-muted', icon: '•' }
+            const cfg  = STATUS_CONFIG[order.status] ?? { dot: 'bg-brand-muted', icon: 'info' as IconName }
             const lbl  = isRTL ? STATUS_LABEL_AR[order.status] : STATUS_LABEL_EN[order.status]
             const ago  = timeAgo(order.updated_at, isRTL)
 
@@ -98,7 +99,10 @@ export default function ActivityFeed({ orders, isRTL }: Props) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-satoshi font-bold text-xs text-brand-text">
-                      {cfg.icon} {lbl}
+                      <span className="inline-flex items-center gap-1.5">
+                        <Icon name={cfg.icon} size={14} className="text-brand-gold" />
+                        <span>{lbl}</span>
+                      </span>
                     </p>
                     <span className="font-satoshi text-xs text-brand-muted/50 tabular-nums shrink-0">{ago}</span>
                   </div>

@@ -18,6 +18,7 @@ import {
 } from '@/lib/reports/templates'
 import ReportCard       from '@/components/reports/ReportCard'
 import ValidationAlerts from '@/components/reports/ValidationAlerts'
+import { Icon } from '@/components/ui/Icon'
 import ExportButtons    from '@/components/reports/ExportButtons'
 import type { ReportFiltersInput } from '@/lib/reports/validator'
 
@@ -322,7 +323,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
       {/* Error */}
       {error && (
         <div className="px-4 py-3 rounded-xl border border-brand-error/40 bg-brand-error/15 text-brand-error text-sm font-satoshi">
-          ✕ {error}
+          <span className="inline-flex items-center gap-2"><Icon name="x" size={14} /> {error}</span>
         </div>
       )}
 

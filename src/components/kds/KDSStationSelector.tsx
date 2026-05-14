@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import type { KDSStation } from '@/lib/supabase/custom-types'
 import { STATION_CONFIG } from '@/constants/kds'
 import { useRouter, usePathname } from 'next/navigation'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   // pending+preparing item counts per station (server-fetched).
@@ -60,7 +61,7 @@ export function KDSStationSelector({ stationCounts = {} }: Props) {
               onClick={() => handleSelect(key)}
               className="group relative flex items-center gap-5 ps-5 pe-5 py-4 rounded-xl border border-brand-border bg-brand-surface hover:border-brand-gold/60 transition-colors text-start"
             >
-              <span className="text-4xl leading-none shrink-0">{config.icon}</span>
+              <Icon name={config.icon} size={40} className="shrink-0" />
 
               <div className="flex-1 min-w-0">
                 <div className={`text-xl font-black tracking-tight ${isAr ? 'font-cairo' : 'font-editorial'}`}>

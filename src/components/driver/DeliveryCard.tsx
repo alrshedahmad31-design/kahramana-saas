@@ -2,6 +2,7 @@
 
 import { Link } from '@/i18n/navigation'
 import { buildCustomerContactLink } from '@/lib/whatsapp'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 interface DeliveryCardProps {
   delivery: {
@@ -32,7 +33,7 @@ const STATUS_CFG = {
     borderCls: 'border-brand-gold',
     bgCls:    'bg-brand-gold/20',
     textCls:  'text-brand-gold',
-    icon:     '📦',
+    icon:     'package',
     action:   'استلم الطلب',
   },
   picked_up: {
@@ -40,7 +41,7 @@ const STATUS_CFG = {
     borderCls: 'border-brand-gold',
     bgCls:    'bg-brand-gold/10',
     textCls:  'text-brand-gold',
-    icon:     '🚗',
+    icon:     'car',
     action:   'أنا في الطريق',
   },
   en_route: {
@@ -48,7 +49,7 @@ const STATUS_CFG = {
     borderCls: 'border-brand-success',
     bgCls:    'bg-brand-success/20',
     textCls:  'text-brand-success',
-    icon:     '🏃',
+    icon:     'run',
     action:   'وصلت للعميل',
   },
   delivered: {
@@ -56,7 +57,7 @@ const STATUS_CFG = {
     borderCls: 'border-brand-success',
     bgCls:    'bg-brand-success/10',
     textCls:  'text-brand-success',
-    icon:     '✅',
+    icon:     'check',
     action:   'تم',
   },
 } as const
@@ -93,7 +94,7 @@ export function DeliveryCard({ delivery, isActive, sequenceNumber, onSelect }: D
               #{delivery.order_number}
             </div>
             <div className={`inline-flex items-center gap-1 mt-1 px-2 py-1 rounded-lg text-xs font-almarai font-bold ${cfg.bgCls} ${cfg.textCls}`}>
-              <span>{cfg.icon}</span>
+              <Icon name={cfg.icon as IconName} size={14} />
               <span>{cfg.label}</span>
             </div>
           </div>
@@ -151,7 +152,8 @@ export function DeliveryCard({ delivery, isActive, sequenceNumber, onSelect }: D
           ${delivery.payment_method === 'cash'
             ? 'bg-brand-success/20 text-brand-success'
             : 'bg-brand-gold/20 text-brand-gold'}`}>
-          {delivery.payment_method === 'cash' ? '💵 نقداً' : '💳 بطاقة'}
+          <Icon name={delivery.payment_method === 'cash' ? 'cash' : 'wallet'} size={14} className="inline-block me-1" />
+          {delivery.payment_method === 'cash' ? 'نقداً' : 'بطاقة'}
         </span>
       </div>
 

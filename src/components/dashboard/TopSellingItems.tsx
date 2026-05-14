@@ -1,4 +1,5 @@
 import type { TopItem } from '@/lib/dashboard/stats'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   items: TopItem[]
@@ -24,7 +25,7 @@ export default function TopSellingItems({ items, isRTL }: Props) {
   return (
     <div className="bg-brand-surface border border-brand-border rounded-xl p-5">
       <div className="flex items-center gap-2 mb-5">
-        <span className="text-base">🔥</span>
+        <Icon name="fire" size={16} className="text-brand-gold" />
         <h2 className={`font-satoshi font-black text-sm text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : ''}`}>
           {isRTL ? 'الأكثر مبيعاً اليوم' : 'Best Sellers Today'}
         </h2>

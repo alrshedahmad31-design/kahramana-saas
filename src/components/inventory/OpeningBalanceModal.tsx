@@ -65,7 +65,7 @@ export default function OpeningBalanceModal({ branchId, ingredients, locale, rec
                 onClick={() => setOpen(false)}
                 className="text-brand-muted hover:text-brand-text transition-colors"
               >
-                ✕
+                x
               </button>
             </div>
 

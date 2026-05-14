@@ -1,3 +1,5 @@
+import { Icon } from '@/components/ui/Icon'
+
 interface Props {
   status: string
   locale: string
@@ -46,7 +48,7 @@ export default function POStatusTimeline({ status, locale }: Props) {
                       : 'bg-brand-surface-2 text-brand-muted'
                 }`}
               >
-                {isCompleted ? '✓' : index + 1}
+                {isCompleted ? <Icon name="check" size={14} /> : index + 1}
               </div>
               <p
                 className={`font-satoshi text-xs text-center ${

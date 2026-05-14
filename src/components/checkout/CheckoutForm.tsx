@@ -27,6 +27,7 @@ import { useCartStore, selectCartTotalFils, selectLineTotalFils, selectTotalItem
 import { filsToBhd, formatPrice, formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, BRANCHES, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
+import { Icon } from '@/components/ui/Icon'
 import CouponInput from '@/components/checkout/CouponInput'
 import { LoyaltyRedemptionWidget } from '@/components/loyalty/LoyaltyRedemptionWidget'
 import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
@@ -547,7 +548,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
         </div>
         {errors.branchId && (
           <p className="mt-3 text-xs text-brand-error font-almarai flex items-center gap-1">
-            <span className="shrink-0">⚠</span> {errors.branchId}
+            <Icon name="warning" size={14} className="shrink-0" /> {errors.branchId}
           </p>
         )}
         {selectedBranchSupport && (
@@ -582,7 +583,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       {!customerProfile && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-brand-gold/30 bg-brand-gold/5 ps-4 pe-3 py-3">
           <p className={`text-sm text-brand-text ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-            <span aria-hidden className="me-2">✦</span>
+            <Icon name="sparkle" size={16} className="me-2 inline-block text-brand-gold" />
             {t('loyalty.signinPrompt')}
           </p>
           <Link
@@ -842,7 +843,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
         {errors.address && (
           <p className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-2 bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
-            <span className="shrink-0 text-lg">⚠</span> {errors.address}
+            <Icon name="warning" size={18} className="shrink-0" /> {errors.address}
           </p>
         )}
         {(errors.deliveryArea || errors.deliveryBuilding || errors.deliveryStreet) && (
@@ -1048,8 +1049,9 @@ export default function CheckoutForm({ customerProfile }: Props) {
       />
       <div className="space-y-4">
         {stockWarnings.length > 0 && (
-          <div className="rounded-xl border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm text-brand-gold font-almarai">
-            ⚠ {t('stockWarningPrefix')} {stockWarnings.join(t('listSeparator'))}
+          <div className="flex items-start gap-2 rounded-xl border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-sm text-brand-gold font-almarai">
+            <Icon name="warning" size={16} className="mt-0.5 shrink-0" />
+            <span>{t('stockWarningPrefix')} {stockWarnings.join(t('listSeparator'))}</span>
           </div>
         )}
 
@@ -1083,8 +1085,9 @@ export default function CheckoutForm({ customerProfile }: Props) {
         )}
 
         {submitError && (
-          <div className="rounded-xl border border-brand-error/50 bg-brand-error/10 px-4 py-3 text-sm text-brand-error font-almarai text-center">
-            ⚠ {submitError}
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-brand-error/50 bg-brand-error/10 px-4 py-3 text-sm text-brand-error font-almarai text-center">
+            <Icon name="warning" size={16} className="shrink-0" />
+            <span>{submitError}</span>
           </div>
         )}
 

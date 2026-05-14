@@ -106,7 +106,7 @@ export async function assignDriverToOrder(
   revalidatePath(`/${locale}/dashboard/delivery`)
 
   await sendPushToDriver(driverId, {
-    title: '😋 طلب جديد',
+    title: 'طلب جديد',
     body:  'تم تعيينك لطلب جديد — افتح التطبيق للمعاينة',
     url:   `/${locale}/driver`,
     tag:   'driver-order',

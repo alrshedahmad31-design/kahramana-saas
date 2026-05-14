@@ -171,7 +171,7 @@ export default function POReceiveForm({ poId, items, locale, receiveAction }: Pr
                           }`}
                           aria-label={`${star} stars`}
                         >
-                          ★
+                          *
                         </button>
                       ))}
                     </div>

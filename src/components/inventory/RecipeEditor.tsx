@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import type { RecipeRow } from '@/lib/supabase/custom-types'
 import { useTranslations } from 'next-intl'
+import { Icon } from '@/components/ui/Icon'
 
 export interface RecipeRowInput {
   ingredient_id?: string | null
@@ -293,7 +294,7 @@ export default function RecipeEditor({
                           onClick={() => removeIngRow(row.key)}
                           className="text-brand-muted hover:text-brand-error transition-colors"
                         >
-                          ✕
+                          <Icon name="x" size={14} />
                         </button>
                       </td>
                     </tr>
@@ -384,7 +385,7 @@ export default function RecipeEditor({
                             onClick={() => removePrepRow(row.key)}
                             className="text-brand-muted hover:text-brand-error transition-colors"
                           >
-                            ✕
+                            <Icon name="x" size={14} />
                           </button>
                         </td>
                       </tr>

@@ -216,7 +216,7 @@ export default function BranchesSettings() {
                     <div className="flex items-center gap-2">
                       {saveState === 'saved' && (
                         <span className={`text-brand-success text-xs font-bold ${font}`}>
-                          {isAr ? '✓ تم الحفظ' : '✓ Saved'}
+                          {isAr ? 'تم الحفظ' : 'Saved'}
                         </span>
                       )}
                       {saveState === 'error' && (

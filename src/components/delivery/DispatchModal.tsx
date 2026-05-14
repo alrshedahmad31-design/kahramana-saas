@@ -6,6 +6,7 @@ import { X, Check, MapPin }  from 'lucide-react'
 import { assignDriverToOrder } from '@/app/[locale]/dashboard/delivery/actions'
 import { DV, DV_STATUS, DRIVER_STATUS } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   order:   DeliveryOrder | null
@@ -230,7 +231,7 @@ export default function DispatchModal({ order, drivers, orders: _orders, onClose
         }}>
           {error && (
             <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold font-almarai">
-              ⚠️ {error}
+              <span className="inline-flex items-center gap-1.5"><Icon name="warning" size={14} /> {error}</span>
             </div>
           )}
           <div style={{ display: 'flex', gap: '8px' }}>

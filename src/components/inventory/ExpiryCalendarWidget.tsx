@@ -35,7 +35,7 @@ export default function ExpiryCalendarWidget({ rows, prefix, isAr = true }: Prop
         <WidgetHeader prefix={prefix} isAr={isAr} />
         <div className="flex-1 flex items-center justify-center">
           <p className="font-satoshi text-sm text-brand-muted text-center py-4">
-            {isAr ? '✅ لا توجد أصناف قاربت على الانتهاء' : '✅ No items expiring soon'}
+            {isAr ? 'لا توجد أصناف قاربت على الانتهاء' : 'No items expiring soon'}
           </p>
         </div>
       </div>

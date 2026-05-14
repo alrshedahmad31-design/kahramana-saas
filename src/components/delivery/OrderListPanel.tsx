@@ -6,6 +6,7 @@ import { motion, AnimatePresence }     from 'framer-motion'
 import { Clock, Bike, AlertCircle }    from 'lucide-react'
 import { DV, DV_STATUS, STATUS_BORDER } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver }  from '@/lib/delivery/types'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   orders:    DeliveryOrder[]
@@ -232,7 +233,7 @@ export default function OrderListPanel({ orders, drivers, onSelect, onHover, isA
             color:          DV.muted,
             gridColumn:     fullWidth ? '1 / -1' : undefined,
           }}>
-            <span style={{ fontSize: '32px' }}>📦</span>
+            <Icon name="package" size={32} />
             <span style={{ fontSize: '13px' }}>{t('noActiveOrders')}</span>
           </div>
         )}

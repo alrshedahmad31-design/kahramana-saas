@@ -185,7 +185,7 @@ export default async function CateringPage({ params, searchParams }: PageProps) 
                       {order.deposit_bhd > 0 && (
                         <p className={`${font} text-xs mt-1 font-medium ${order.deposit_paid ? 'text-green-400' : 'text-brand-muted'}`}>
                           {t('deposit', { val: Number(order.deposit_bhd).toFixed(3), currency })}
-                          {order.deposit_paid ? ` ✓ ${t('paid')}` : ''}
+                          {order.deposit_paid ? ` ${t('paid')}` : ''}
                         </p>
                       )}
                     </div>

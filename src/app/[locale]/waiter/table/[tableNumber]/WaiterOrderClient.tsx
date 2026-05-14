@@ -367,7 +367,7 @@ export default function WaiterOrderClient({
               {warning && (
                 <div className="rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-3 py-2 text-sm text-brand-gold" role="alert">
                   <p className="font-bold mb-0.5">
-                    {isAr ? '⚠ يلزم تدخّل المدير' : '⚠ Manager resolution required'}
+                    {isAr ? 'يلزم تدخّل المدير' : 'Manager resolution required'}
                   </p>
                   <p className="text-xs text-brand-gold/90">{warning}</p>
                 </div>

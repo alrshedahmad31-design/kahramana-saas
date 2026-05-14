@@ -41,7 +41,7 @@ export default function BudgetProgressBar({
         </p>
         {overBudget && (
           <p className={`${font} text-[10px] text-brand-error font-bold animate-pulse`}>
-             {isAr ? '⚠ تجاوز الميزانية' : '⚠ Over budget'}
+             {isAr ? 'تجاوز الميزانية' : 'Over budget'}
           </p>
         )}
       </div>

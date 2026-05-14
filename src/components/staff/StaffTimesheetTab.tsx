@@ -95,7 +95,7 @@ export default function StaffTimesheetTab({ entries, isRTL }: Props) {
                     <td className="px-4 py-3">
                       {entry.approved_at ? (
                         <span className="inline-flex items-center gap-1 text-xs font-satoshi text-brand-success">
-                          ✓ {isRTL ? 'موافق عليه' : 'Approved'}
+                          {isRTL ? 'موافق عليه' : 'Approved'}
                         </span>
                       ) : entry.clock_out ? (
                         <span className="inline-flex items-center gap-1 text-xs font-satoshi text-brand-gold">

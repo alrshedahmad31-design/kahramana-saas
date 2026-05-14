@@ -1,4 +1,5 @@
 import type { MenuItemPerformanceRow } from '@/lib/analytics/queries'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 interface MatrixItem extends MenuItemPerformanceRow {
   quadrant: 'star' | 'puzzle' | 'plowhorse' | 'dog'
@@ -22,7 +23,7 @@ const QUADRANT_META = {
     labelEn: 'Stars',        labelAr: 'النجوم',
     descEn:  'High profit, high volume — protect & maintain',
     descAr:  'ربح عالٍ وحجم عالٍ — احمِ هذه الأصناف',
-    icon:    '★',
+    icon:    'star',
     border:  'border-brand-gold',
     bg:      'bg-brand-gold/5',
     titleColor: 'text-brand-gold',
@@ -31,7 +32,7 @@ const QUADRANT_META = {
     labelEn: 'Puzzles',      labelAr: 'الألغاز',
     descEn:  'High profit, low volume — promote more',
     descAr:  'ربح عالٍ وحجم منخفض — روّج أكثر',
-    icon:    '?',
+    icon:    'question',
     border:  'border-brand-success',
     bg:      'bg-brand-success/5',
     titleColor: 'text-brand-success',
@@ -40,7 +41,7 @@ const QUADRANT_META = {
     labelEn: 'Plowhorses',   labelAr: 'الأحصنة',
     descEn:  'Low profit, high volume — re-price or bundle',
     descAr:  'ربح منخفض وحجم عالٍ — أعِد التسعير أو ادمج',
-    icon:    '~',
+    icon:    'trending-up',
     border:  'border-brand-border',
     bg:      'bg-brand-surface-2',
     titleColor: 'text-brand-text',
@@ -49,7 +50,7 @@ const QUADRANT_META = {
     labelEn: 'Dogs',         labelAr: 'الكلاب',
     descEn:  'Low profit, low volume — review or remove',
     descAr:  'ربح منخفض وحجم منخفض — راجع أو احذف',
-    icon:    '×',
+    icon:    'x',
     border:  'border-brand-error/50',
     bg:      'bg-brand-error/5',
     titleColor: 'text-brand-error',
@@ -93,7 +94,7 @@ export default function MenuMatrix({ items, isRTL }: Props) {
             className={`rounded-xl border ${meta.border} ${meta.bg} p-4 min-h-[160px]`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <span className={`text-lg font-bold ${meta.titleColor}`}>{meta.icon}</span>
+              <Icon name={meta.icon as IconName} size={18} className={meta.titleColor} />
               <div>
                 <p className={`text-sm font-bold ${meta.titleColor} ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
                   {isRTL ? meta.labelAr : meta.labelEn}

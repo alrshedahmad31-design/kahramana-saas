@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { verifyPin, clockIn, clockOut } from './actions'
 import { BRANCHES } from '@/constants/contact'
 import type { StaffRole } from '@/lib/supabase/custom-types'
+import { Icon } from '@/components/ui/Icon'
 
 const ROLE_LABEL: Record<StaffRole, string> = {
   owner:             'Owner',
@@ -126,7 +127,7 @@ export default function ClockClient() {
         {/* Done state */}
         {done ? (
           <div className="rounded-xl border border-brand-success/30 bg-brand-success/10 p-6 text-center flex flex-col gap-2">
-            <div className="text-4xl mb-2">✓</div>
+            <Icon name="check" size={40} className="mx-auto mb-2 text-brand-success" />
             <p className="font-satoshi font-black text-xl text-brand-success">{done.message}</p>
             {done.hours !== undefined && (
               <p className="font-satoshi text-sm text-brand-muted">

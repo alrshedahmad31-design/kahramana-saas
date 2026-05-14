@@ -8,6 +8,7 @@ import { updateOrderStatus } from '@/app/[locale]/dashboard/orders/actions'
 import { buildCustomerContactLink } from '@/lib/whatsapp'
 import { ALLOWED_TRANSITIONS } from '@/lib/auth/permissions'
 import { BRANCHES } from '@/constants/contact'
+import { Icon } from '@/components/ui/Icon'
 import type { OrderCardData } from './OrderCard'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 
@@ -132,8 +133,9 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
             </span>
           )}
         </div>
-        <span className={`text-[10px] tabular-nums ${elapsed >= 20 ? 'text-brand-error font-black' : 'text-brand-muted'} ${font}`}>
-          ⏱ {timeAgo}
+        <span className={`inline-flex items-center gap-1 text-[10px] tabular-nums ${elapsed >= 20 ? 'text-brand-error font-black' : 'text-brand-muted'} ${font}`}>
+          <Icon name="clock" size={11} />
+          {timeAgo}
         </span>
       </div>
 
