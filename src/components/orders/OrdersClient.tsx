@@ -131,6 +131,20 @@ export default function OrdersClient({
   const [view,       setView]       = useState<ViewMode>('kanban')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
+  // Restore persisted view on mount, then persist on every change.
+  // Default to 'kanban' so cashiers always land on the fast queue view.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem('orders_view')
+      if (stored === 'card' || stored === 'table' || stored === 'kanban') {
+        setView(stored)
+      }
+    } catch {}
+  }, [])
+  useEffect(() => {
+    try { window.localStorage.setItem('orders_view', view) } catch {}
+  }, [view])
+
   // Skip the first useEffect fetch when the server already provided initial data
   const skipInitialFetch = useRef(initialOrders.length > 0)
 

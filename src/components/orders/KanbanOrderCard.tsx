@@ -133,10 +133,20 @@ export default function KanbanOrderCard({ order, userRole: _userRole, onStatusCh
             </span>
           )}
         </div>
-        <span className={`inline-flex items-center gap-1 text-[10px] tabular-nums ${elapsed >= 20 ? 'text-brand-error font-black' : 'text-brand-muted'} ${font}`}>
-          <Icon name="clock" size={11} />
-          {timeAgo}
-        </span>
+        <div className="flex items-center gap-2">
+          {order.is_late && (
+            <span
+              className="inline-flex items-center rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-400"
+              title={isAr ? 'تأخر التوصيل أكثر من 45 دقيقة' : 'Delivery overdue: more than 45 minutes since pickup'}
+            >
+              {isAr ? 'متأخر' : 'Late'}
+            </span>
+          )}
+          <span className={`inline-flex items-center gap-1 text-[10px] tabular-nums ${elapsed >= 20 ? 'text-brand-error font-black' : 'text-brand-muted'} ${font}`}>
+            <Icon name="clock" size={11} />
+            {timeAgo}
+          </span>
+        </div>
       </div>
 
       <div className="h-px bg-brand-border/60 mx-4" />
