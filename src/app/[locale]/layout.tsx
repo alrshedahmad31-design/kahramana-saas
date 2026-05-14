@@ -284,20 +284,11 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
         <link rel="dns-prefetch" href="https://wa.me" />
       </head>
       <body
-        className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col"
-        style={{
-          margin: 0,
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
-          minWidth: 0,
-          overflowX: 'clip',
-        }}
+        className="bg-brand-black text-brand-text font-almarai antialiased min-h-screen flex flex-col w-full min-w-0 overflow-x-clip m-0"
       >
         <NextIntlClientProvider locale={locale} messages={clientMessages}>
           <Header />
-          <main className="flex-1 pt-20 md:pt-24" style={{ width: '100%', minWidth: 0 }}>
+          <main className="flex-1 pt-20 md:pt-24 w-full min-w-0">
             <div className="pb-24 md:pb-0">
               {children}
             </div>

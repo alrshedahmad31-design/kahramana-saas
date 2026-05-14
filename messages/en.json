@@ -813,6 +813,8 @@
     "networkError": "Connection failed — check your internet and try again",
     "invalidCredentials": "Invalid email or password",
     "signupError": "An error occurred during registration, please try again",
+    "invalidPhone": "Invalid phone number — enter a Bahraini number like 36001122 or +97312345678",
+    "emailExists": "This email is already registered — go to the \"Sign In\" tab to log in",
     "rateLimited": "Too many attempts, please try again shortly",
     "captchaRequired": "Please complete the human verification before submitting",
     "currentPassword": "Current Password",

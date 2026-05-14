@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import * as Sentry from '@sentry/nextjs'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-type AuthError = 'rate_limited' | 'invalid_credentials' | 'signup_error'
+type AuthError = 'rate_limited' | 'invalid_credentials' | 'signup_error' | 'invalid_phone' | 'email_exists'
 type AuthResult = { success: true } | { success: false; error: AuthError }
 
 // Per-action limits: login is tighter (credential-stuffing surface);
@@ -65,7 +65,7 @@ export async function registerAction(
 
   const normalizedPhone = normalizePhone(phone)
   if (!/^\+973[0-9]{8}$/.test(normalizedPhone)) {
-    return { success: false, error: 'signup_error' }
+    return { success: false, error: 'invalid_phone' }
   }
 
   const supabase = await createClient()
@@ -88,6 +88,19 @@ export async function registerAction(
     },
   })
   if (signUpErr || !authData.user?.id) {
+    // Supabase v2 + "Confirm email" ON: signing up with an already-confirmed
+    // email returns { user: null, session: null, error: null } — a silent no-op
+    // to prevent email enumeration. Detect it by the absence of both an error
+    // AND a user id, and surface a clear "switch to login" message.
+    const msg = signUpErr?.message?.toLowerCase() ?? ''
+    const isEmailTaken =
+      msg.includes('already registered') ||
+      msg.includes('already exists') ||
+      signUpErr?.status === 422 ||
+      (!signUpErr && !authData.user?.id)
+    if (isEmailTaken) {
+      return { success: false, error: 'email_exists' }
+    }
     Sentry.captureException(signUpErr ?? new Error('signUp returned no user id'), {
       tags: { stage: 'auth.signUp' },
     })

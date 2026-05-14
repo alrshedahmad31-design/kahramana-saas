@@ -1,8 +1,9 @@
 'use server'
 
-import { headers }             from 'next/headers'
-import { createServiceClient } from '@/lib/supabase/server'
-import { z }                   from 'zod'
+import { headers }                  from 'next/headers'
+import { createServiceClient }      from '@/lib/supabase/server'
+import { sendContactNotification }  from '@/lib/email/send'
+import { z }                        from 'zod'
 
 const schema = z.object({
   name:      z.string().min(2).max(100),
@@ -99,5 +100,19 @@ export async function submitContactMessage(payload: {
   })
 
   if (error) return { success: false, error: 'server_error' }
+
+  // Fire-and-forget — a failed email must never block the user's submission
+  void sendContactNotification({
+    name:       result.data.name,
+    email:      result.data.email,
+    phone:      result.data.phone || undefined,
+    message:    result.data.message,
+    receivedAt: new Date().toLocaleString('ar-BH', {
+      timeZone:     'Asia/Bahrain',
+      dateStyle:    'long',
+      timeStyle:    'short',
+    }),
+  })
+
   return { success: true }
 }

@@ -6,6 +6,7 @@ import MagicLink from '../../../emails/templates/MagicLink'
 import ResetPassword from '../../../emails/templates/ResetPassword'
 import OrderConfirmation, { type OrderItem } from '../../../emails/templates/OrderConfirmation'
 import OrderStatusUpdate from '../../../emails/templates/OrderStatusUpdate'
+import ContactNotification from '../../../emails/templates/ContactNotification'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.EMAIL_FROM ?? 'كهرمانة <noreply@kahramanat.com>'
@@ -85,6 +86,26 @@ export async function sendOrderConfirmation(
     to,
     `تأكيد طلبك #${props.orderId.slice(-6).toUpperCase()} — كهرمانة`,
     OrderConfirmation(props) as React.ReactElement,
+  )
+}
+
+export async function sendContactNotification(props: {
+  name: string
+  email: string
+  phone?: string
+  branchName?: string
+  message: string
+  receivedAt: string
+}): Promise<SendResult> {
+  const to = process.env.CONTACT_NOTIFY_EMAIL
+  if (!to) {
+    console.warn('[email] CONTACT_NOTIFY_EMAIL not set — skipping contact notification')
+    return { success: false, error: 'CONTACT_NOTIFY_EMAIL not configured' }
+  }
+  return send(
+    to,
+    `رسالة جديدة من ${props.name} — نموذج التواصل`,
+    ContactNotification(props) as React.ReactElement,
   )
 }
 
