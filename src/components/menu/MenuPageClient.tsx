@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import type { CategoryWithItems } from '@/lib/menu'
 import MenuHero from './menu-hero'
-import StickyFilterBar from './StickyFilterBar'
+import MenuCategoryNav from './MenuCategoryNav'
 import { MobileSearchOverlay } from './MobileSearchOverlay'
 import FeaturedCarousel from './FeaturedCarousel'
 import TopOrderHighlights from './TopOrderHighlights'
@@ -12,6 +12,8 @@ import MenuSection from './MenuSection'
 import { EmptyState } from './EmptyState'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronUp } from 'lucide-react'
+import { useCartStore } from '@/lib/cart'
+import { getRestrictedSubcategoryIds } from '@/constants/menu-categories'
 
 interface MenuPageClientProps {
   categories: CategoryWithItems[]
@@ -31,6 +33,14 @@ export default function MenuPageClient({
   const [isSearchOpen, setIsSearchOpen] = useState(!!initialQuery)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const observerRef = useRef<IntersectionObserver | null>(null)
+
+  const branchId = useCartStore((s) => s.branchId)
+  const visibleCategories = useMemo(() => {
+    const restricted = getRestrictedSubcategoryIds(branchId)
+    return restricted.length > 0
+      ? categories.filter((c) => !restricted.includes(c.id))
+      : categories
+  }, [categories, branchId])
 
   const featuredItems = useMemo(
     () => categories.flatMap(c => c.items).filter(i => featuredSlugs.includes(i.id)),
@@ -95,16 +105,16 @@ export default function MenuPageClient({
       )}
 
       <div id="menu-content">
-        <StickyFilterBar
-          categories={categories}
+        <MenuCategoryNav
+          categories={visibleCategories}
           activeCategory={activeCategory}
           onSearchOpen={() => setIsSearchOpen(true)}
           locale={locale}
         />
 
         <div className="max-w-7xl mx-auto pb-24">
-          {categories.length > 0 ? (
-            categories.map((cat) => (
+          {visibleCategories.length > 0 ? (
+            visibleCategories.map((cat) => (
               <MenuSection
                 key={cat.id}
                 id={`section-${cat.id}`}
@@ -122,7 +132,7 @@ export default function MenuPageClient({
       <MobileSearchOverlay
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        categories={categories}
+        categories={visibleCategories}
         locale={locale}
         initialQuery={initialQuery}
       />

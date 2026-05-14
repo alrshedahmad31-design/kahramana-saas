@@ -42,3 +42,92 @@ export function getMenuCategory(id: string) {
 export function getSlugPrefix(categoryId: string): string {
   return MENU_CATEGORIES.find((c) => c.id === categoryId)?.slugPrefix ?? categoryId
 }
+
+// ── Two-level nav ─────────────────────────────────────────────────────────────
+
+type MainCategory = {
+  id: string
+  label: { ar: string; en: string }
+  icon: string
+  /** null = all branches; string[] = only these branch ids can see it */
+  branchRestriction: string[] | null
+  /** Ordered list of MENU_CATEGORIES ids that belong to this group */
+  subcategories: string[]
+}
+
+export const BREAKFAST_RESTRICTED_BRANCHES: string[] = ['qallali']
+
+export const MAIN_CATEGORIES: MainCategory[] = [
+  {
+    id: 'breakfast',
+    label: { ar: 'فطور كهرمانة', en: 'Kahramana Breakfast' },
+    icon: '🌅',
+    branchRestriction: ['riffa'],
+    subcategories: ['the-heritage-breakfast', 'the-fatteh-collection'],
+  },
+  {
+    id: 'appetizers',
+    label: { ar: 'المقبلات', en: 'Appetizers' },
+    icon: '🥗',
+    branchRestriction: null,
+    subcategories: [
+      'the-cold-mezza-garden',
+      'the-hot-mezza-garden',
+      'garden-fresh-salads',
+      'warm-and-comforting-soups',
+    ],
+  },
+  {
+    id: 'grills',
+    label: { ar: 'المشاوي والأطباق', en: 'Grills & Mains' },
+    icon: '🔥',
+    branchRestriction: null,
+    subcategories: [
+      'kahramana-signature-selection',
+      'baghdadi-culinary-masterpieces',
+      'the-authentic-stew-house',
+      'baghdadi-tandoor-selection',
+      'the-shawarma-suite-kaas',
+    ],
+  },
+  {
+    id: 'sandwiches',
+    label: { ar: 'السندويشات', en: 'Sandwiches' },
+    icon: '🌯',
+    branchRestriction: null,
+    subcategories: ['artisan-stone-oven-pizza', 'traditional-sandwiches'],
+  },
+  {
+    id: 'desserts',
+    label: { ar: 'الحلويات والمشروبات', en: 'Desserts & Drinks' },
+    icon: '🍰',
+    branchRestriction: null,
+    subcategories: [
+      'the-sweet-finale',
+      'fresh-signature-juices',
+      'the-heritage-tea-and-coffee',
+    ],
+  },
+]
+
+/** Returns main categories visible for the given branch. null branchId = show all. */
+export function getVisibleMainCategories(branchId: string | null): MainCategory[] {
+  return MAIN_CATEGORIES.filter((cat) => {
+    if (!cat.branchRestriction) return true
+    if (!branchId) return true
+    return cat.branchRestriction.includes(branchId)
+  })
+}
+
+/** Returns the id of the main category that owns a given subcategory id, or null. */
+export function getMainCategoryForSubcategory(subId: string): string | null {
+  return MAIN_CATEGORIES.find((m) => m.subcategories.includes(subId))?.id ?? null
+}
+
+/** Returns all subcategory ids that are restricted (hidden) for the given branch. */
+export function getRestrictedSubcategoryIds(branchId: string | null): string[] {
+  if (!branchId) return []
+  return MAIN_CATEGORIES.filter(
+    (m) => m.branchRestriction !== null && !m.branchRestriction.includes(branchId),
+  ).flatMap((m) => m.subcategories)
+}

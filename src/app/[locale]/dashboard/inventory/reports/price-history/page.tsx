@@ -112,7 +112,7 @@ export default async function PriceHistoryPage({ params, searchParams }: PagePro
       ) : history.length === 0 ? (
         <EmptyReport
           title={t('noDataTitle')}
-          description={t('noDataDesc', { name: isAr ? selectedIngredient?.name_ar : selectedIngredient?.name_en })}
+          description={t('noDataDesc', { name: isAr ? (selectedIngredient?.name_ar ?? '') : (selectedIngredient?.name_en ?? '') })}
         />
       ) : (
         <>
