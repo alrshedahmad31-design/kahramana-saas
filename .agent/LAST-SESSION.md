@@ -1,4 +1,149 @@
 # LAST-SESSION.md — Kahramana Baghdad
+> Session 101: pre-launch hardening sweep — session-99 + session-100 carry-forward landed, 5 new migrations, 1 race-window close, 1 new HIGH finding (VULN-RBAC-05) discovered + closed
+> Date: 2026-05-14
+> Author: Claude Code (Opus 4.7)
+
+## SESSION 101 — SUMMARY
+
+Sixteen commits pushed from session start `853ccff` → `cbd34dc`. Master pushed to origin. tsc clean at every gate. Build clean (after Windows retries on flaky `Collecting page data` step — see `feedback_windows_build_race`).
+
+Items closed this session:
+- **VULN-RBAC-01/02/04** — session-99 work was on-disk; committed and pushed (`1ccb487`).
+- **VULN-104** — `rpc_create_order` CASE inversion (`013f859` = migration 134) + legacy 25-arg overload dropped (`684c193` = migration 135). 25-arg body inspection confirmed it still carried the source-first buggy CASE — would have been a live VULN-104 path if any caller reached it.
+- **VULN-AUTH-04/06 + VULN-SEC-01 (Path A)** — session-100 auth trio committed (`c6c1b6a`). Path A then failed at runtime (see below).
+- **VULN-SEC-01 (Path B)** — `app_config` table-driven gate (migration 136 → `e896cb5`). Live on prod. Verified `RAISE EXCEPTION 'gate active'` fires.
+- **VULN-CRY-01/03** — webhook payload hardening (`c49d921`) and race-window short-circuit (`bef64f1`). 400 with audit log when `reference.order` present but `gateway_transaction_id` binding absent.
+- **VULN-INJ-01/02** — inventory `.or()` escapeSearch + XLSX formula injection guard (`fda3db7`).
+- **VULN-AUTH-01/02** — staff `requireDashboardSection` gate + unified denial string + per-target + per-caller invite rate-limit (`f59b9f6`).
+- **VULN-1.07** — health endpoint sha + DB-error redaction (`9331158`). NOTE: status string flipped `'unhealthy'` → `'error'`; Better Stack assertion swap required.
+- **KAH-2026-05-04 → VULN-RBAC-05** — see "Discovered finding" below (`64535e3` = migration 137).
+- **KAH-2026-05-12** — null-branch bypass on 3 service-role-reading dashboard pages (`b20cfc2`).
+- **KAH-2026-05-06 / AUD-V3-014** — atomic RPCs for refund/closeShift/POS finalize (`cbd34dc` = migration 138). closeShift previously had NO audit at all; rpc_close_shift now adds it inside the transaction.
+
+## COMMITS THIS SESSION (in order)
+
+| Hash | Subject |
+|---|---|
+| `1ccb487` | fix(rbac): null branch_id fail-closed, delivery completion restriction, approveShift CAS (VULN-RBAC-01/02/04) |
+| `013f859` | fix(rpc): invert payment_method priority in rpc_create_order — breaks CHAIN-001 cash-skim (VULN-104) |
+| `c6c1b6a` | fix(auth): forgot-password rate limit + Turnstile, set-password recovery gate, seed migration prod env-gate (VULN-AUTH-04/06, VULN-SEC-01) |
+| `684c193` | fix(rpc): drop legacy 25-arg rpc_create_order overload — unreachable + carried VULN-104 buggy CASE |
+| `c49d921` | fix(payments): HMAC amount normalization + order-ref binding + toSafeError (VULN-CRY-01/03) |
+| `0f9ab6a` | test: add unit test suite + 11 Tap webhook tests (Gemini sibling) |
+| `fda3db7` | fix(inventory): escapeSearch on .or() builders + sanitizeCell XLSX formula injection (VULN-INJ-01/02) |
+| `f59b9f6` | fix(staff+orders): requireDashboardSection gate + error redaction + invite rate-limit (VULN-AUTH-01/02) |
+| `4ceb6cc` | fix(checkout+clock): raw error.message redaction via toSafeError |
+| `9331158` | fix(health): remove DB error + commit SHA from public response (VULN-1.07) |
+| `bb8fb9c` | chore: update session notes (session-100 LAST-SESSION snapshot) |
+| `bef64f1` | fix(webhook): short-circuit 400 when reference present but gateway_id binding absent — closes VULN-CRY-01 race window |
+| `e896cb5` | fix(seed-guard): replace cluster-GUC env-gate with app_config table — Supabase managed blocks ALTER DATABASE SET (VULN-SEC-01 Path B) |
+| `64535e3` | fix(kds): harden bump/recall_station_order text overloads + drop redundant kds_station — closes RBAC bypass (KAH-2026-05-04, VULN-RBAC-05) |
+| `b20cfc2` | fix(rbac): fail-closed branch check on 3 service-role-reading dashboard pages — null branch_id no longer wildcard (KAH-2026-05-12) |
+| `cbd34dc` | fix(audit): atomic RPCs for refundPayment, closeShift, POS finalize — audit failure now rolls back parent (KAH-2026-05-06, AUD-V3-014) |
+
+## VULN-SEC-01 — PATH A → B PIVOT
+
+Path A (cluster GUC): `ALTER DATABASE postgres SET app.environment = 'production'` returned `42501 permission denied` in BOTH the CLI session (postgres @ is_superuser=off) AND Studio SQL Editor. Supabase managed strips superuser from `postgres`; only `supabase_admin` retains it and is unreachable. Confirmed via `SELECT current_user, current_setting('is_superuser')` → `postgres, off`.
+
+Path B (table-driven): migration 136 creates `public.app_config` with staff-only RLS read + owner-writable INSERT (Studio runs as `postgres`, the table owner, so it can write without superuser). Migration 006's env-gate rewritten to `SELECT value FROM app_config WHERE key='environment'` with `EXCEPTION WHEN undefined_table THEN NULL` for fresh envs (006 runs before 136 in fresh-clone migrate-up). Operator INSERTed the production flag via Studio. Verified gate fires by dry-running 006's DO block — returned `ERROR: P0001: gate active` as expected.
+
+Generalizable lesson: any future runtime config flags that need to be set against Supabase managed will hit the same superuser wall. Standardize on `app_config` rows rather than GUCs.
+
+## VULN-RBAC-05 — DISCOVERED IN ITEM 1 (KAH-2026-05-04)
+
+Carry-forward framing was "DROP text overloads if unreachable". Investigation showed text overloads are the LIVE JS-call path — supabase-js sends the station param as JSON text, so PostgreSQL resolves to `(uuid, text)` not `(uuid, kds_station)`. The `kds_station` overload of `recall_station_order` carried full role + branch + 60s + bumped_at checks; the text overload (live) only had a NULL-bypass-prone branch check.
+
+Impact: ANY authenticated session (driver, marketing, support, cashier, waiter) calling `recall_station_order` directly via supabase-js could revert any completed order at any age. JS wrapper (`recallStationOrder` in `kds/actions.ts:201`) enforces role + branch — but bypassing the wrapper (direct rpc call from a hijacked session, server-action smuggling, future code that forgets the wrapper) lands in the unprotected RPC. `bump_station_order` had the same shape with no kds_station sibling at all.
+
+Migration 137: CREATE OR REPLACE both text overloads with full hardening mirroring the kds_station body. DROP `recall_station_order(uuid, kds_station)` — now redundant; eliminates drift risk where future migrations diverge the two paths again. Verified `KDSStationBoard.tsx:140-143` already drops recall entries client-side after 60s, so the legitimate kitchen UI flow is unaffected.
+
+## KAH-2026-05-12 — DASHBOARD BRANCH-FILTER AUDIT
+
+Surveyed all 11 `createServiceClient`-using page.tsx files:
+
+| Page | Status |
+|---|---|
+| `owner/page.tsx` | PASS — section gate restricts to global roles only |
+| `reports/page.tsx` | PASS — `canAccessReports` = `isGlobalAdmin` only |
+| `kds/page.tsx` | PASS — explicit fail-closed redirect for non-global with null branch (L53) |
+| `inventory/budget/page.tsx` | PASS — early return when activeBranchId null |
+| `inventory/catering/page.tsx` | PASS — ternary handles each case explicitly |
+| `inventory/catering/new/page.tsx` | PASS — redirect when branchId null |
+| `inventory/catering/packages/page.tsx` | PASS — `?? ''` fallback creates impossible-match |
+| `inventory/catering/packages/new/page.tsx` | PASS — redirect when branchId null |
+| `orders/[id]/page.tsx` | **FIXED** — `user.branch_id &&` short-circuit at L60 was active VULN-RBAC-01 |
+| `inventory/catering/[id]/page.tsx` | **FIXED** — defensive gap on `order.branch_id` null bypass |
+| `inventory/catering/packages/[id]/page.tsx` | **FIXED** — defensive gap on `pkg.branch_id` null bypass |
+
+Plus: bonus fix at `shifts/actions.ts:91` (closeShift branch-scope check had the same null-bypass shape; folded into Item 3's RPC migration).
+
+## KAH-2026-05-06 — ATOMIC AUDIT (Migration 138)
+
+Three new SECURITY DEFINER PL/pgSQL functions; failure of the audit insert now rolls back the parent operation:
+
+1. **`rpc_refund_payment(p_payment_id, p_actor_id, p_actor_role, p_actor_branch_id)`**: CAS update on `payments.status` from 'completed' → 'refunded' + audit_logs INSERT. Returns JSONB `{success, code?}` for domain errors (PAYMENT_NOT_FOUND, NOT_REFUNDABLE, CONCURRENT_CHANGE).
+2. **`rpc_close_shift(...11 args)`**: shift_closings INSERT + audit_logs INSERT. Previously closeShift had NO audit at all — this both atomizes and ADDS the missing trail.
+3. **`rpc_pos_finalize_order(p_order_id, p_amount_bhd, p_method, p_payment_status, p_audit_changes, p_actor_id, p_actor_role, p_actor_branch_id)`**: payments INSERT + audit_logs INSERT atomically after rpc_create_order. Decision: the order itself stays in rpc_create_order (already atomic + idempotent + is the financial source of truth). Bundling all three into one mega-RPC would have required adding optional audit params to rpc_create_order, churning a heavily-used function for marginal benefit. Net effect: every POS order either has BOTH payment + audit, or NEITHER — no more orphan orders with missing audit.
+
+ACL: REVOKE FROM anon, GRANT TO authenticated + service_role. Internal role check inside each function further restricts.
+
+Schema sanity-checks done before apply: confirmed `audit_logs.record_id` is text (cast uuid→text in INSERTs), `audit_logs.actor_role` is `staff_role` enum (cast text→enum in INSERTs), `payments.method` is `payment_method` enum, `payments.status` is `payment_status` enum.
+
+## OPEN CARRY-FORWARD
+
+### Operator actions (Ahmed)
+- 🔴 **Better Stack monitor** — change assertion from `'unhealthy'` to `body.status === 'ok'` (or HTTP 200/503). Alerts are silently passing since `9331158`.
+- 🔴 **Cowork branch merge** — `claude/wonderful-euler-85228a` commit `26c059e` still unpushed. Migration 131 is live on prod DB but the file is untracked in master. Merge to align repo with remote.
+- 🟠 Cloudflare DNS CNAME → Vercel for kahramanat.com
+- 🟠 TAP merchant keys in Vercel env (`TAP_SECRET_KEY`, `PAYMENT_WEBHOOK_SECRET`)
+- 🟠 Turnstile keys in Vercel env (forgot-password captcha in soft-launch fallthrough)
+- 🟠 Supabase Free → Pro (Leaked Password Protection toggle returns 402 on Free)
+- 🟠 Vercel Node 20.x vs 24.x decision (package.json accepts both)
+- 🟠 ME region (dxb1) decision — in Cowork's unpushed config
+
+### Dev actions (next session)
+- **KAH-2026-05-05 / AUD-V3-011** — 15+ `as any` casts (4 new this session via the new RPCs in `payments`/`shifts`/`pos` actions). Types regen would clear most.
+- **KAH-2026-05-07** — Tap webhook IP allowlist + quarterly secret rotation policy.
+- **AUD-V3-007** — next-intl@4.12 major bump.
+- Audit migrations 125, 129, 130 for the `migration repair --status applied` desync pattern that hit 123.
+- Delete dead client files: `forgot-password/ForgotPasswordClient.tsx`, `set-password/SetPasswordClient.tsx` (unused duplicates of the live forms).
+- KAH-2026-05-11 — Clock PIN bcrypt dead code (no PINs provisioned).
+
+### Long-blocked (external)
+- Meta verification → Sprint 6B (WhatsApp API). Months-long.
+- CBB merchant approval → Sprint 6C (Benefit Pay native). 2-4 months.
+- Deliverect contract + Bahrain availability + POS API docs → Phase 7b.
+
+## DECISIONS LOGGED
+
+- **POS atomicity scope** (Item 3): `rpc_pos_finalize_order` atomizes (payments INSERT + audit INSERT) AFTER `rpc_create_order` rather than bundling all three into one mega-RPC. Order itself is the financial source of truth and `rpc_create_order` stays single-purpose + idempotent. If finalize fails, the order persists with a paymentWarning surfaced to the cashier for manual resolution. Trade-off: closes 2/3 of the audit gap with minimal blast radius vs. modifying `rpc_create_order` to take audit params (would force re-deploy of a heavily-used function and impact 5 callers).
+- **VULN-RBAC-05 fix shape**: rewrite text overloads in place + drop kds_station sibling. One function per name, no overload-resolution ambiguity, supabase-js hits hardened body unconditionally. Confirmed kitchen UI flow doesn't depend on missing checks (KDSStationBoard drops recall entries client-side after 60s already).
+- **Path A→B pivot on VULN-SEC-01**: Supabase managed superuser restriction is permanent. Future runtime flags should default to `app_config` table rows, not GUCs. Pattern is now established.
+- **Race-window short-circuit on Tap webhook** (`bef64f1`): chose 400 (Tap retries) over silent acceptance. Genuine race recovery is now an operator job — `webhook_errors` rows surface orphans for manual reconciliation via staff payments dashboard. Acceptable trade for closing a free-orders attack vector.
+- **Pre-commit hook auto-staging** (`cbd34dc`): 5 unrelated files (reserve/page.tsx, LoginForm.tsx, Footer.tsx, ReserveForm.tsx, SectionHeader.tsx) snuck into the Item-3 commit despite explicit-path `git add`. Hook is auto-staging beyond what's passed. All 5 were clean Gemini-sibling UX/a11y changes — no security impact — but worth knowing for future commits. New memory saved.
+
+## STATUS AT SESSION END
+
+- **TSC**: clean (`npx tsc --noEmit` = 0 errors)
+- **Migrations**: LOCAL=138 | REMOTE=138 confirmed. Plus migration 131 (Cowork's, unpushed in `claude/wonderful-euler-85228a`) is live on remote but file is untracked in master.
+- **Git**: master at `cbd34dc`, pushed to origin
+- **Working tree**: clean except for untracked Cowork items:
+  - `.claude/worktrees/`
+  - `supabase/migrations/131_revoke_public_execute.sql`
+
+## SESSION 102 — DEFERRED CARRY-FORWARD
+
+1. Better Stack assertion swap (operator, ~30s)
+2. Cowork branch merge — bring migration 131 + Vercel config into master under their authorship
+3. KAH-2026-05-05 / AUD-V3-011 — regen Supabase types + clear `as any` casts (4 new from this session's RPCs)
+4. KAH-2026-05-07 — Tap webhook IP allowlist + secret rotation policy
+5. Audit migrations 125/129/130 for `migration repair` desync pattern
+6. Delete dead `forgot-password/ForgotPasswordClient.tsx` + `set-password/SetPasswordClient.tsx`
+7. AUD-V3-007 — next-intl@4.12 bump (low urgency)
+
+---
+
+## SESSION 100 — (previous)
 > Session 100: auth vuln fixes — VULN-AUTH-04, VULN-AUTH-06, VULN-SEC-01
 > Date: 2026-05-14
 > Author: Claude Code (Opus 4.7)
