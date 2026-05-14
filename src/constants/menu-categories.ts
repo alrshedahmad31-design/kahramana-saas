@@ -63,7 +63,7 @@ export interface MenuMainCategory {
   /** i18n key under `menu.mainCategories.*` */
   i18nKey: string
   /** Icon name from src/components/ui/Icon.tsx */
-  icon: 'breakfast' | 'appetizers' | 'grills' | 'sandwiches' | 'desserts' | 'dish' | 'pizza'
+  icon: 'breakfast' | 'appetizers' | 'grills' | 'sandwiches' | 'desserts' | 'dish' | 'pizza' | 'fire'
   /** Whitelist of BranchId values; null means all branches */
   branchRestriction: string[] | null
   subcategories: MenuSubcategory[]
@@ -109,7 +109,15 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
     branchRestriction: null,
     subcategories: [
       { id: 'kahramana-selections', i18nKey: 'kahramanaSelections', categorySlugs: ['kahramana-signature-selection'] },
-      { id: 'iraqi-shawarma',       i18nKey: 'iraqiShawarma',       categorySlugs: ['the-shawarma-suite-kaas'] },
+    ],
+  },
+  {
+    id: 'shawarma',
+    i18nKey: 'shawarma',
+    icon: 'fire',
+    branchRestriction: null,
+    subcategories: [
+      { id: 'iraqi-shawarma', i18nKey: 'iraqiShawarma', categorySlugs: ['the-shawarma-suite-kaas'] },
     ],
   },
   {
