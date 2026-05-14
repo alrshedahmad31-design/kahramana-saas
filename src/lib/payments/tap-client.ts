@@ -146,6 +146,65 @@ export function verifyWebhookSignature(
   return timingSafeEqual(expectedBuf, actualBuf)
 }
 
+// ── Refund flow (VULN-102) ───────────────────────────────────────────────────
+// Hits POST /v2/refunds with the original charge id. Tap accepts amount in
+// the smallest currency unit (fils for BHD: 1 BHD = 1000 fils) — same scale
+// as createCharge above. Throws TapRefundError on any non-2xx response so
+// the caller can short-circuit BEFORE flipping local DB state.
+
+export class TapRefundError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly body:   string,
+  ) {
+    super(message)
+    this.name = 'TapRefundError'
+  }
+}
+
+export interface TapRefund {
+  id:       string
+  status:   string
+  amount:   number
+  currency: string
+  charge:   { id: string }
+}
+
+export async function refundCharge(
+  chargeId: string,
+  amountBhd: number,
+): Promise<{ id: string; status: string }> {
+  const secretKey = process.env.TAP_SECRET_KEY
+  if (!secretKey) throw new TapRefundError('TAP_SECRET_KEY not configured', 0, '')
+
+  const amountFils = Math.round(amountBhd * 1000)
+
+  const body = {
+    charge_id: chargeId,
+    amount:    amountFils,
+    currency:  'BHD',
+    reason:    'requested_by_customer',
+  }
+
+  const res = await fetch(`${TAP_BASE}/refunds`, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      Authorization:   `Bearer ${secretKey}`,
+    },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new TapRefundError(`Tap refund API ${res.status}`, res.status, errText)
+  }
+
+  const json = await res.json() as TapRefund
+  return { id: json.id, status: json.status }
+}
+
 // Maps Tap charge status strings to our payment_status enum
 export function tapStatusToPaymentStatus(
   tapStatus: string,

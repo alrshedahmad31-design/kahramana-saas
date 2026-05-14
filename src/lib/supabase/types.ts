@@ -2577,6 +2577,7 @@ export type Database = {
           amount_bhd: number
           created_at: string
           expires_at: string | null
+          gateway_refund_id: string | null
           gateway_response: Json | null
           gateway_transaction_id: string | null
           id: string
@@ -2593,6 +2594,7 @@ export type Database = {
           amount_bhd: number
           created_at?: string
           expires_at?: string | null
+          gateway_refund_id?: string | null
           gateway_response?: Json | null
           gateway_transaction_id?: string | null
           id?: string
@@ -2609,6 +2611,7 @@ export type Database = {
           amount_bhd?: number
           created_at?: string
           expires_at?: string | null
+          gateway_refund_id?: string | null
           gateway_response?: Json | null
           gateway_transaction_id?: string | null
           id?: string
@@ -4856,6 +4859,7 @@ export type Database = {
           p_actor_branch_id: string | null
           p_actor_id: string
           p_actor_role: string
+          p_gateway_refund_id: string
           p_payment_id: string
         }
         Returns: Json
