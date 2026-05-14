@@ -27,6 +27,7 @@ const ARABIC_DRIVER_PATTERN = /^\/driver($|\/)/
 
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
 const PUBLIC_HTML_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=43200'
+const PRIVATE_HTML_CACHE_CONTROL = 'private, no-cache, no-store, max-age=0, must-revalidate'
 
 // ── CSP builder (nonce injected per request) ──────────────────────────────────
 // Strategy:
@@ -127,6 +128,7 @@ function finalizeResponse(
       supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
       intlResponse.cookies.getAll().forEach((c)     => response.cookies.set(c))
       response.headers.set('Content-Security-Policy', csp)
+      response.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
       return response
     }
   }
@@ -211,6 +213,7 @@ export default async function middleware(request: NextRequest) {
   // 2. If it's a redirect (e.g. locale change), return it immediately
   if (intlResponse.status >= 300 && intlResponse.status < 400) {
     intlResponse.headers.set('Content-Security-Policy', csp)
+    intlResponse.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
     return intlResponse
   }
 
@@ -258,6 +261,8 @@ export default async function middleware(request: NextRequest) {
     if (isDashboard || isDriverRoute) {
       const response = NextResponse.redirect(loginUrl(pathname))
       supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+      response.headers.set('Content-Security-Policy', csp)
+      response.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
       return response
     }
   } else {
@@ -272,6 +277,8 @@ export default async function middleware(request: NextRequest) {
       if (isDashboard || isDriverRoute) {
         const response = NextResponse.redirect(loginUrl())
         supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+        response.headers.set('Content-Security-Policy', csp)
+        response.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
         return response
       }
     } else {
@@ -284,6 +291,8 @@ export default async function middleware(request: NextRequest) {
         if (!ARABIC_DRIVER_PATTERN.test(pathname)) {
           const response = NextResponse.redirect(new URL('/driver', request.url))
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          response.headers.set('Content-Security-Policy', csp)
+          response.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
           return response
         }
       } else {
@@ -292,16 +301,22 @@ export default async function middleware(request: NextRequest) {
         if (isDriverRoute && roleRank < BRANCH_MANAGER_RANK) {
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          response.headers.set('Content-Security-Policy', csp)
+          response.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
           return response
         }
         if (isLogin || isForgotPassword) {
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          response.headers.set('Content-Security-Policy', csp)
+          response.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
           return response
         }
         if (STAFF_ROUTE_PATTERN.test(pathname) && roleRank < BRANCH_MANAGER_RANK) {
           const response = NextResponse.redirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
+          response.headers.set('Content-Security-Policy', csp)
+          response.headers.set('Cache-Control', PRIVATE_HTML_CACHE_CONTROL)
           return response
         }
       }
