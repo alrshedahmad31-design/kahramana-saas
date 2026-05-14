@@ -139,17 +139,51 @@ export async function approveShift(shiftId: string): Promise<ShiftActionResult> 
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.from('shift_closings')
+
+  // VULN-RBAC-04: status-CAS — refuse to re-approve an already-approved shift.
+  // Pin the update to status='pending' and verify a row was updated, so a
+  // double-click or concurrent approval can't overwrite approved_by/approved_at.
+  const { data: current, error: fetchErr } = await supabase
+    .from('shift_closings')
+    .select('status')
+    .eq('id', idParsed.data)
+    .maybeSingle()
+
+  if (fetchErr) {
+    console.error('[shifts] approveShift fetch failed:', fetchErr)
+    return { success: false, code: 'db_error', error: fetchErr.message }
+  }
+  if (!current) {
+    return { success: false, code: 'invalid_input', error: 'Shift not found' }
+  }
+  if (current.status !== 'pending') {
+    return {
+      success: false,
+      code: 'invalid_input',
+      error: `Shift is already ${current.status} — cannot approve`,
+    }
+  }
+
+  const { data: updatedRows, error } = await supabase.from('shift_closings')
     .update({
       status:      'approved',
       approved_by: user.id,
       approved_at: new Date().toISOString(),
     })
     .eq('id', idParsed.data)
+    .eq('status', 'pending')
+    .select('id')
 
   if (error) {
     console.error('[shifts] approveShift update failed:', error)
     return { success: false, code: 'db_error', error: error.message }
+  }
+  if (!updatedRows || updatedRows.length === 0) {
+    return {
+      success: false,
+      code: 'invalid_input',
+      error: 'Shift status changed — refresh and retry',
+    }
   }
 
   revalidatePath('/dashboard/shifts')

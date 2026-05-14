@@ -69,8 +69,12 @@ export async function driverBumpOrder(
     return { success: false, error: 'Unauthorized: Order belongs to another branch' }
   }
 
+  // VULN-RBAC-02: completing a delivery (collecting tip/cash) is segregated.
+  // Only the assigned driver — or owner/general_manager — may close out the
+  // delivery. branch_manager must NOT be able to complete a delivery they are
+  // not assigned to.
   if ((currentStatus === 'out_for_delivery' || currentStatus === 'arrived')
-      && order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
+      && order.assigned_driver_id !== user.id && !isGlobalAdmin) {
     return { success: false, error: 'Unauthorized: This order is assigned to another driver' }
   }
 

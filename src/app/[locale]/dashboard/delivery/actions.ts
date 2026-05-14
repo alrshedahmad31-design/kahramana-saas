@@ -54,7 +54,12 @@ export async function assignDriverToOrder(
     return { success: false, error: 'Invalid driver' }
   }
 
-  if (driver.branch_id !== null && driver.branch_id !== order.branch_id) {
+  // VULN-RBAC-01: a NULL branch_id is an invalid driver state, not a wildcard.
+  // Reject before any branch-scoped dispatch.
+  if (driver.branch_id === null) {
+    return { success: false, error: 'Driver has no branch assigned' }
+  }
+  if (driver.branch_id !== order.branch_id) {
     return { success: false, error: 'Driver does not serve this branch' }
   }
 
@@ -289,7 +294,11 @@ export async function reassignDriver(orderId: string, driverId: string): Promise
   if (newDriver.role !== 'driver' || !newDriver.is_active) {
     return { success: false, error: 'Invalid driver' }
   }
-  if (newDriver.branch_id !== null && newDriver.branch_id !== order.branch_id) {
+  // VULN-RBAC-01: NULL branch_id is invalid state, never a wildcard.
+  if (newDriver.branch_id === null) {
+    return { success: false, error: 'Driver has no branch assigned' }
+  }
+  if (newDriver.branch_id !== order.branch_id) {
     return { success: false, error: 'Driver does not serve this branch' }
   }
 
