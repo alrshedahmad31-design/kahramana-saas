@@ -223,7 +223,16 @@ export default function QRTableClient({
 
       {/* Menu */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <WaiterMenuBrowser categories={categories} isAr={isAr} onAdd={handleAdd} />
+        <WaiterMenuBrowser
+          categories={categories}
+          isAr={isAr}
+          onAdd={handleAdd}
+          labels={{
+            search:        tw('search'),
+            allCategories: tw('allCategories'),
+            outOfStock:    tw('outOfStock'),
+          }}
+        />
       </div>
 
       {/* Sticky cart bar */}

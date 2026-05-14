@@ -539,6 +539,11 @@ export default function POSClient({
             categories={categories}
             isAr={isAr}
             onAdd={handleAddRequest}
+            labels={{
+              search:        t('search'),
+              allCategories: t('allCategories'),
+              outOfStock:    t('outOfStock'),
+            }}
           />
         </div>
 

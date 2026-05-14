@@ -2,21 +2,27 @@
 
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { MAIN_CATEGORIES } from '@/constants/menu-categories'
 import type { POSCategory, POSItem } from './types'
 import { resolveMenuItemPrice } from './types'
+
+interface BrowserLabels {
+  search:        string
+  allCategories: string
+  outOfStock:    string
+}
 
 interface Props {
   categories: POSCategory[]
   isAr:       boolean
   onAdd:      (item: POSItem) => void
+  labels:     BrowserLabels
 }
 
 const ALL = '__all__'
 
-export default function MenuBrowser({ categories, isAr, onAdd }: Props) {
-  const t = useTranslations('pos')
-  const [activeCat, setActiveCat] = useState<string>(ALL)
+export default function MenuBrowser({ categories, isAr, onAdd, labels }: Props) {
+  const [activeMainCat, setActiveMainCat] = useState<string>(ALL)
   const [query, setQuery] = useState('')
 
   const visibleCategories = useMemo(() => {
@@ -28,14 +34,21 @@ export default function MenuBrowser({ categories, isAr, onAdd }: Props) {
         item.nameEn.toLowerCase().includes(q)
       )
     }
-    const cats =
-      activeCat === ALL
-        ? categories
-        : categories.filter((c) => c.id === activeCat)
+
+    const slugs =
+      activeMainCat === ALL
+        ? null
+        : (MAIN_CATEGORIES.find((c) => c.id === activeMainCat)
+            ?.subcategories.flatMap((s) => s.categorySlugs) ?? null)
+
+    const cats = slugs
+      ? categories.filter((c) => slugs.includes(c.id))
+      : categories
+
     return cats
       .map((c) => ({ ...c, items: c.items.filter(filterItem) }))
       .filter((c) => c.items.length > 0)
-  }, [categories, activeCat, query])
+  }, [categories, activeMainCat, query])
 
   return (
     <div className="flex flex-col h-full">
@@ -43,7 +56,7 @@ export default function MenuBrowser({ categories, isAr, onAdd }: Props) {
       <div className="sticky top-0 lg:top-0 z-20 bg-brand-black border-b border-brand-border px-4 py-3">
         <div className="relative">
           <span className="absolute inset-y-0 start-3 flex items-center text-brand-muted">
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <circle cx="11" cy="11" r="7" />
               <path strokeLinecap="round" d="M21 21l-4.3-4.3" />
             </svg>
@@ -52,24 +65,24 @@ export default function MenuBrowser({ categories, isAr, onAdd }: Props) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('search')}
+            placeholder={labels.search}
             className="w-full min-h-[44px] rounded-lg bg-brand-surface border border-brand-border ps-9 pe-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
           />
         </div>
 
-        {/* Category tabs */}
+        {/* 8 operational main-category tabs */}
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
           <CatButton
-            active={activeCat === ALL}
-            label={t('allCategories')}
-            onClick={() => setActiveCat(ALL)}
+            active={activeMainCat === ALL}
+            label={labels.allCategories}
+            onClick={() => setActiveMainCat(ALL)}
           />
-          {categories.map((c) => (
+          {MAIN_CATEGORIES.map((main) => (
             <CatButton
-              key={c.id}
-              active={activeCat === c.id}
-              label={isAr ? c.nameAr : c.nameEn}
-              onClick={() => setActiveCat(c.id)}
+              key={main.id}
+              active={activeMainCat === main.id}
+              label={isAr ? main.nameAr : main.nameEn}
+              onClick={() => setActiveMainCat(main.id)}
             />
           ))}
         </div>
@@ -93,6 +106,7 @@ export default function MenuBrowser({ categories, isAr, onAdd }: Props) {
                     key={item.id}
                     item={item}
                     isAr={isAr}
+                    outOfStockLabel={labels.outOfStock}
                     onAdd={() => onAdd(item)}
                   />
                 ))}
@@ -124,11 +138,9 @@ function CatButton({
 }
 
 function ItemCard({
-  item, isAr, onAdd,
-}: { item: POSItem; isAr: boolean; onAdd: () => void }) {
-  const t = useTranslations('pos')
+  item, isAr, outOfStockLabel, onAdd,
+}: { item: POSItem; isAr: boolean; outOfStockLabel: string; onAdd: () => void }) {
   const [price] = useState(() => resolveMenuItemPrice(item))
-
   const disabled = !item.available
 
   return (
@@ -155,7 +167,7 @@ function ItemCard({
         />
         {disabled && (
           <span className="absolute top-2 start-2 text-[10px] font-bold uppercase tracking-wide rounded bg-brand-error/90 text-brand-black px-2 py-0.5">
-            {t('outOfStock')}
+            {outOfStockLabel}
           </span>
         )}
       </div>

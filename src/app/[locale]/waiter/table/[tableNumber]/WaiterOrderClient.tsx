@@ -228,6 +228,11 @@ export default function WaiterOrderClient({
             categories={categories}
             isAr={isAr}
             onAdd={handleAddRequest}
+            labels={{
+              search:        tP('search'),
+              allCategories: tP('allCategories'),
+              outOfStock:    tP('outOfStock'),
+            }}
           />
         </div>
 

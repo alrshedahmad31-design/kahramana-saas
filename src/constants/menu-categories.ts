@@ -62,6 +62,9 @@ export interface MenuMainCategory {
   id: string
   /** i18n key under `menu.mainCategories.*` */
   i18nKey: string
+  /** Short operational label shown in POS / waiter tabs */
+  nameAr: string
+  nameEn: string
   /** Icon name from src/components/ui/Icon.tsx */
   icon: 'breakfast' | 'appetizers' | 'grills' | 'sandwiches' | 'desserts' | 'dish' | 'pizza' | 'fire'
   /** Whitelist of BranchId values; null means all branches */
@@ -73,6 +76,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'breakfast',
     i18nKey: 'breakfast',
+    nameAr: 'الفطور',
+    nameEn: 'Breakfast',
     icon: 'breakfast',
     branchRestriction: ['riffa'],
     subcategories: [
@@ -83,6 +88,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'appetizers',
     i18nKey: 'appetizers',
+    nameAr: 'المقبلات',
+    nameEn: 'Appetizers',
     icon: 'appetizers',
     branchRestriction: null,
     subcategories: [
@@ -95,6 +102,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'main-dishes',
     i18nKey: 'mainDishes',
+    nameAr: 'الأطباق الرئيسية',
+    nameEn: 'Main Dishes',
     icon: 'dish',
     branchRestriction: null,
     subcategories: [
@@ -105,6 +114,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'grills',
     i18nKey: 'grills',
+    nameAr: 'المشاوي',
+    nameEn: 'Grills',
     icon: 'grills',
     branchRestriction: null,
     subcategories: [
@@ -114,6 +125,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'shawarma',
     i18nKey: 'shawarma',
+    nameAr: 'الشاورما',
+    nameEn: 'Shawarma',
     icon: 'fire',
     branchRestriction: null,
     subcategories: [
@@ -123,6 +136,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'pizza-pastries',
     i18nKey: 'pizzaPastries',
+    nameAr: 'بيتزا ومعجنات',
+    nameEn: 'Pizza & Pastries',
     icon: 'pizza',
     branchRestriction: null,
     subcategories: [
@@ -133,6 +148,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'sandwiches',
     i18nKey: 'sandwiches',
+    nameAr: 'سندويشات',
+    nameEn: 'Sandwiches',
     icon: 'sandwiches',
     branchRestriction: null,
     subcategories: [
@@ -142,6 +159,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
   {
     id: 'desserts-drinks',
     i18nKey: 'dessertsDrinks',
+    nameAr: 'حلويات ومشروبات',
+    nameEn: 'Desserts & Drinks',
     icon: 'desserts',
     branchRestriction: null,
     subcategories: [
