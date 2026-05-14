@@ -63,7 +63,7 @@ export interface MenuMainCategory {
   /** i18n key under `menu.mainCategories.*` */
   i18nKey: string
   /** Icon name from src/components/ui/Icon.tsx */
-  icon: 'breakfast' | 'appetizers' | 'grills' | 'sandwiches' | 'desserts'
+  icon: 'breakfast' | 'appetizers' | 'grills' | 'sandwiches' | 'desserts' | 'dish' | 'pizza'
   /** Whitelist of BranchId values; null means all branches */
   branchRestriction: string[] | null
   subcategories: MenuSubcategory[]
@@ -76,9 +76,8 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
     icon: 'breakfast',
     branchRestriction: ['riffa'],
     subcategories: [
-      { id: 'baghdad-breakfast',    i18nKey: 'baghdadBreakfast',    categorySlugs: ['the-heritage-breakfast'] },
-      { id: 'kahramana-selections', i18nKey: 'kahramanaSelections', categorySlugs: ['kahramana-signature-selection'] },
-      { id: 'fatta',                i18nKey: 'fatta',               categorySlugs: ['the-fatteh-collection'] },
+      { id: 'baghdad-breakfast', i18nKey: 'baghdadBreakfast', categorySlugs: ['the-heritage-breakfast'] },
+      { id: 'fatta',             i18nKey: 'fatta',            categorySlugs: ['the-fatteh-collection'] },
     ],
   },
   {
@@ -94,15 +93,33 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
     ],
   },
   {
+    id: 'main-dishes',
+    i18nKey: 'mainDishes',
+    icon: 'dish',
+    branchRestriction: null,
+    subcategories: [
+      { id: 'main-dishes', i18nKey: 'mainDishes', categorySlugs: ['baghdadi-culinary-masterpieces'] },
+      { id: 'iraqi-stews', i18nKey: 'iraqiStews', categorySlugs: ['the-authentic-stew-house'] },
+    ],
+  },
+  {
     id: 'grills',
     i18nKey: 'grills',
     icon: 'grills',
     branchRestriction: null,
     subcategories: [
-      { id: 'grills-tannour', i18nKey: 'grillsTannour', categorySlugs: ['baghdadi-tandoor-selection'] },
-      { id: 'iraqi-stews',    i18nKey: 'iraqiStews',    categorySlugs: ['the-authentic-stew-house'] },
-      { id: 'main-dishes',    i18nKey: 'mainDishes',    categorySlugs: ['baghdadi-culinary-masterpieces'] },
-      { id: 'iraqi-shawarma', i18nKey: 'iraqiShawarma', categorySlugs: ['the-shawarma-suite-kaas'] },
+      { id: 'kahramana-selections', i18nKey: 'kahramanaSelections', categorySlugs: ['kahramana-signature-selection'] },
+      { id: 'iraqi-shawarma',       i18nKey: 'iraqiShawarma',       categorySlugs: ['the-shawarma-suite-kaas'] },
+    ],
+  },
+  {
+    id: 'pizza-pastries',
+    i18nKey: 'pizzaPastries',
+    icon: 'pizza',
+    branchRestriction: null,
+    subcategories: [
+      { id: 'kahramana-pizza',   i18nKey: 'kahramanaPizza',   categorySlugs: ['artisan-stone-oven-pizza'] },
+      { id: 'tandoor-pastries',  i18nKey: 'tandoorPastries',  categorySlugs: ['baghdadi-tandoor-selection'] },
     ],
   },
   {
@@ -111,8 +128,7 @@ export const MAIN_CATEGORIES: MenuMainCategory[] = [
     icon: 'sandwiches',
     branchRestriction: null,
     subcategories: [
-      { id: 'sandwiches',      i18nKey: 'sandwiches',     categorySlugs: ['traditional-sandwiches'] },
-      { id: 'kahramana-pizza', i18nKey: 'kahramanaPizza', categorySlugs: ['artisan-stone-oven-pizza'] },
+      { id: 'sandwiches', i18nKey: 'sandwiches', categorySlugs: ['traditional-sandwiches'] },
     ],
   },
   {

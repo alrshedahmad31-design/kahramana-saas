@@ -27,7 +27,9 @@ export default function MenuCategoryNav({
 }: MenuCategoryNavProps) {
   const t = useTranslations('menu')
   const activeMain = visibleCategories.find((c) => c.id === activeCategoryId) ?? null
-  const hasSubs = (activeMain?.subcategories.length ?? 0) > 0
+  // Hide level 2 when there's only one subcategory — showing "All" + a single
+  // pill would be redundant and visually noisy.
+  const hasSubs = (activeMain?.subcategories.length ?? 0) > 1
 
   return (
     <nav

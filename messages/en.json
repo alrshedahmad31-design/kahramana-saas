@@ -546,9 +546,11 @@
     },
     "mainCategories": {
       "ariaLabel": "Main categories",
-      "breakfast": "Kahramana Breakfast",
+      "breakfast": "Breakfast",
       "appetizers": "Appetizers",
-      "grills": "Grills & Mains",
+      "mainDishes": "Main Dishes",
+      "grills": "Grills",
+      "pizzaPastries": "Pizza & Pastries",
       "sandwiches": "Sandwiches",
       "dessertsDrinks": "Desserts & Drinks"
     },
@@ -568,6 +570,7 @@
       "iraqiShawarma": "Iraqi Shawarma",
       "sandwiches": "Sandwiches",
       "kahramanaPizza": "Kahramana Pizza",
+      "tandoorPastries": "Tandoor Pastries",
       "desserts": "Desserts",
       "freshJuices": "Fresh Juices",
       "teaCoffee": "Tea & Coffee"

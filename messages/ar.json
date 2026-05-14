@@ -546,9 +546,11 @@
     },
     "mainCategories": {
       "ariaLabel": "التصنيفات الرئيسية",
-      "breakfast": "فطور كهرمانة",
+      "breakfast": "الفطور",
       "appetizers": "المقبلات",
-      "grills": "المشاوي والأطباق",
+      "mainDishes": "الأطباق الرئيسية",
+      "grills": "المشاوي",
+      "pizzaPastries": "البيتزا والمعجنات",
       "sandwiches": "السندويشات",
       "dessertsDrinks": "الحلويات والمشروبات"
     },
@@ -568,6 +570,7 @@
       "iraqiShawarma": "الشاورما العراقية",
       "sandwiches": "السندويشات",
       "kahramanaPizza": "بيتزا كهرمانة",
+      "tandoorPastries": "المعجنات",
       "desserts": "الحلويات",
       "freshJuices": "العصائر الطازجة",
       "teaCoffee": "الشاي والقهوة"
