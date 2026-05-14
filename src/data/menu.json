@@ -2462,7 +2462,7 @@
           "en": "The famous Iraqi Makhlama (eggs and meat) served in a warm sandwich."
         },
         "price_bhd": 1,
-        "image_url": "/assets/gallery/makhlama-sandwich.webp",
+        "image_url": "/assets/gallery/egg-with-meat-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2477,7 +2477,7 @@
           "en": "Eggs simmered with tomatoes and spices, wrapped in tandoor bread."
         },
         "price_bhd": 0.9,
-        "image_url": "/assets/gallery/shakshouka-sandwich.webp",
+        "image_url": "/assets/gallery/shakshuka-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2492,7 +2492,7 @@
           "en": "Shakshouka with cream cheese served in a warm sandwich."
         },
         "price_bhd": 1,
-        "image_url": "/assets/gallery/special-shakshouka-sandwich.webp",
+        "image_url": "/assets/gallery/special-shakshuka-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2507,7 +2507,7 @@
           "en": "Grilled and caramelized tomatoes served in a warm sandwich."
         },
         "price_bhd": 0.8,
-        "image_url": "/assets/gallery/tomato-special-tawa-sandwich.webp",
+        "image_url": "/assets/gallery/special-tawa-sandwich.webp",
         "available": true,
         "ingredients": []
       }
@@ -2564,7 +2564,7 @@
           "en": "Sunny-side-up eggs fried in rich ghee, delivering the authentic taste of a classic Iraqi breakfast."
         },
         "price_bhd": 1.6,
-        "image_url": "/assets/gallery/fried-eggs.webp",
+        "image_url": "/assets/gallery/egg-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2594,7 +2594,7 @@
           "en": "Tender, perfectly seasoned minced meat cooked with eggs for a rich and hearty breakfast experience."
         },
         "price_bhd": 2.5,
-        "image_url": "/assets/gallery/eggs-meat.webp",
+        "image_url": "/assets/gallery/egg-meat-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2609,7 +2609,7 @@
           "en": "Fried eggs cooked with highly seasoned basterma, delivering a bold, rich, and slightly smoky flavor."
         },
         "price_bhd": 2.5,
-        "image_url": "/assets/gallery/eggs-basterma.webp",
+        "image_url": "/assets/gallery/egg-pastrami-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2804,7 +2804,7 @@
           "en": "Eggs simmered with fresh, juicy tomatoes for a hearty favorite."
         },
         "price_bhd": 1.9,
-        "image_url": "/assets/gallery/eggs-tomatoes.webp",
+        "image_url": "/assets/gallery/egg-tomato-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2834,7 +2834,7 @@
           "en": "Fried eggs cooked with golden, crispy potatoes—a simple, hearty dish."
         },
         "price_bhd": 1.7,
-        "image_url": "/assets/gallery/eggs-potato.webp",
+        "image_url": "/assets/gallery/egg-potato-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2849,7 +2849,7 @@
           "en": "Softly scrambled eggs folded with beautifully melted cheese."
         },
         "price_bhd": 2.1,
-        "image_url": "/assets/gallery/eggs-cheese.webp",
+        "image_url": "/assets/gallery/egg-cheese-sandwich.webp",
         "available": true,
         "ingredients": []
       },
@@ -2864,7 +2864,7 @@
           "en": "Fried eggs sprinkled with aromatic za'atar, blending earthy notes with a classic touch."
         },
         "price_bhd": 2.1,
-        "image_url": "/assets/gallery/eggs-zaatar.webp",
+        "image_url": "/assets/gallery/egg-zaatar-sandwich.webp",
         "available": true,
         "ingredients": []
       }

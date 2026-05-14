@@ -201,9 +201,10 @@ export async function POST(request: Request) {
   }
 
   // VULN-101: pass the normalized amount scalar so the RPC can enforce
-  // ABS(p_amount - payments.amount_bhd) <= 0.001 BHD before flipping status
-  // to a captured-class state. Tap's BHD webhook returns major-unit decimals
-  // (5.000 BHD), so the scalar maps directly onto payments.amount_bhd's scale.
+  // ABS(amount - payments.amount_bhd) <= 0.001 BHD before flipping status
+  // to a captured-class state. For BHD, Tap echoes the same scale we sent
+  // on charge creation (fils — i.e. amount * 1000); the RPC (migration 142)
+  // detects p_amount > 500 and divides by 1000 to reach major units.
   const amountScalar = extractAmountScalar(body as Record<string, unknown>)
 
   const { data, error } = await supabase.rpc('process_tap_webhook', {
