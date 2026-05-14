@@ -165,6 +165,8 @@ function finalizePublicResponse(intlResponse: NextResponse): NextResponse {
 
   response.headers.set('Content-Security-Policy', buildPublicCsp())
   response.headers.set('Cache-Control', PUBLIC_HTML_CACHE_CONTROL)
+  response.headers.set('CDN-Cache-Control', PUBLIC_HTML_CACHE_CONTROL)
+  response.headers.set('Vercel-CDN-Cache-Control', PUBLIC_HTML_CACHE_CONTROL)
   return response
 }
 
