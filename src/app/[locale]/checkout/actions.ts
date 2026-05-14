@@ -1,7 +1,7 @@
 'use server'
 
 import { z } from 'zod'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient as createAnonClient, createServiceClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { pointsToCredit } from '@/lib/loyalty/calculations'
@@ -330,9 +330,41 @@ function computeSubtotal(items: PricedItemBase[]): number {
   return items.reduce((sum, item) => sum + item.item_total_bhd, 0)
 }
 
-function repriceCheckoutItems(
+// ── Live DB price prefetch ───────────────────────────────────────────────────
+// menu.json is a deploy-time snapshot; dashboard price edits land in
+// menu_items.price_bhd. Reading prices from menu.json at checkout means edits
+// don't reach customers until the next deploy. Fetch the live row per cart in
+// one query (anon client — public_read_menu_items RLS policy / mig 075).
+// Size/variant pricing isn't in DB yet, so those continue to resolve from JSON.
+async function fetchCheckoutPriceMap(slugs: string[]): Promise<Map<string, number>> {
+  const map = new Map<string, number>()
+  if (slugs.length === 0) return map
+  try {
+    const anon = await createAnonClient()
+    const { data, error } = await anon
+      .from('menu_items')
+      .select('id, price_bhd')
+      .in('id', Array.from(new Set(slugs)))
+      .eq('is_available', true)
+    if (error) {
+      console.error('[checkout] menu_items price prefetch failed:', error)
+      return map
+    }
+    for (const row of data ?? []) {
+      if (row.price_bhd != null) {
+        map.set(row.id, Number(row.price_bhd))
+      }
+    }
+  } catch (err) {
+    console.error('[checkout] menu_items price prefetch threw:', err)
+  }
+  return map
+}
+
+async function repriceCheckoutItems(
   items: ItemBase[],
-): { items: PricedItemBase[]; subtotal: number } | { error: string } {
+): Promise<{ items: PricedItemBase[]; subtotal: number } | { error: string }> {
+  const dbPriceMap = await fetchCheckoutPriceMap(items.map((i) => i.menu_item_slug))
   const pricedItems: PricedItemBase[] = []
 
   for (const item of items) {
@@ -343,6 +375,22 @@ function repriceCheckoutItems(
 
     if ('error' in resolved) return { error: resolved.error }
 
+    // For single-price items: prefer live DB price (reflects dashboard edits).
+    // For size/variant items: keep JSON-derived price — per-size/variant
+    // pricing hasn't been migrated to menu_items yet.
+    const hasSizes    = Boolean(resolved.item.sizes && Object.keys(resolved.item.sizes).length > 0)
+    const hasVariants = Boolean(resolved.item.variants && resolved.item.variants.length > 0)
+
+    let unitPriceBhd = resolved.unitPriceBhd
+    if (!hasSizes && !hasVariants) {
+      const dbPrice = dbPriceMap.get(item.menu_item_slug)
+      if (typeof dbPrice === 'number' && dbPrice > 0) {
+        unitPriceBhd = dbPrice
+      }
+    } else {
+      console.warn('[checkout] size/variant price from JSON:', item.menu_item_slug)
+    }
+
     pricedItems.push({
       menu_item_slug:   resolved.item.slug,
       name_ar:          resolved.item.name.ar,
@@ -351,8 +399,8 @@ function repriceCheckoutItems(
       selected_variant: resolved.selectedVariant,
       quantity:         item.quantity,
       notes:            item.notes?.trim() || null,
-      unit_price_bhd:   resolved.unitPriceBhd,
-      item_total_bhd:   Number((item.quantity * resolved.unitPriceBhd).toFixed(3)),
+      unit_price_bhd:   unitPriceBhd,
+      item_total_bhd:   Number((item.quantity * unitPriceBhd).toFixed(3)),
     })
   }
 
@@ -457,7 +505,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     const existingOrder = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
     if (existingOrder) return existingOrder
 
-    const repriced = repriceCheckoutItems(items)
+    const repriced = await repriceCheckoutItems(items)
     if ('error' in repriced) {
       return { orderId: '', finalTotal: 0, error: repriced.error }
     }
