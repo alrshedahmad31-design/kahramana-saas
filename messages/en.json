@@ -622,7 +622,8 @@
     "undo": "Undo",
     "notesPlaceholder": "e.g. no onions, extra spicy...",
     "specialInstructions": "Special instructions",
-    "browseMenu": "Browse Menu"
+    "browseMenu": "Browse Menu",
+    "continueShopping": "Continue Shopping"
   },
   "checkout": {
     "title": "Place Your Order",

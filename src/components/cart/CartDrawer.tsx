@@ -9,7 +9,7 @@ import { useCartStore, selectTotalItems, selectCartTotalFils, selectLineTotalFil
 import { formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
-import { X, Trash2, Minus, Plus, ShoppingBag, MapPin } from 'lucide-react'
+import { X, Trash2, Minus, Plus, ShoppingBag, MapPin, ArrowLeft, ArrowRight } from 'lucide-react'
 import { Icon } from '@/components/ui/Icon'
 
 export default function CartBottomSheet() {
@@ -230,6 +230,15 @@ export default function CartBottomSheet() {
                   >
                     {t('checkout')}
                   </CinematicButton>
+
+                  <button
+                    type="button"
+                    onClick={() => { closeCart(); router.push('/menu') }}
+                    className={`inline-flex items-center justify-center gap-2 py-2 text-sm font-bold text-brand-muted transition-colors hover:text-brand-gold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+                  >
+                    {isRTL ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+                    {t('continueShopping')}
+                  </button>
 
                   <button
                     onClick={handleClearCart}

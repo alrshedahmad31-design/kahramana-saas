@@ -622,7 +622,8 @@
     "undo": "تراجع",
     "notesPlaceholder": "مثال: بدون بصل، حار زيادة...",
     "specialInstructions": "ملاحظات خاصة",
-    "browseMenu": "تصفح المنيو"
+    "browseMenu": "تصفح المنيو",
+    "continueShopping": "متابعة التسوق"
   },
   "checkout": {
     "title": "إتمام الطلب",
