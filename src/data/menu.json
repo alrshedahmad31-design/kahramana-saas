@@ -2510,6 +2510,111 @@
         "image_url": "/assets/gallery/tomato-special-tawa-sandwich.webp",
         "available": true,
         "ingredients": []
+      },
+      {
+        "id": "sandwiches-egg",
+        "name": {
+          "ar": "سندويش بيض",
+          "en": "Egg Sandwich"
+        },
+        "description": {
+          "ar": "بيض مقلي طري يُلف في خبز التنور الطازج الدافئ.",
+          "en": "Soft fried egg wrapped in warm fresh tandoor bread."
+        },
+        "price_bhd": 1.0,
+        "image_url": "/assets/gallery/egg-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-egg-zaatar",
+        "name": {
+          "ar": "سندويش بيض بالزعتر",
+          "en": "Egg & Za'atar Sandwich"
+        },
+        "description": {
+          "ar": "بيض مقلي مع رشة زعتر عطري، يُلف في خبز التنور الطازج.",
+          "en": "Fried egg with aromatic za'atar wrapped in fresh tandoor bread."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/egg-zaatar-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-egg-meat",
+        "name": {
+          "ar": "سندويش بيض لحم",
+          "en": "Egg & Meat Sandwich"
+        },
+        "description": {
+          "ar": "بيض مطهو مع اللحم المفروم المتبل، يُلف في خبز التنور الدافئ.",
+          "en": "Egg cooked with seasoned minced meat, wrapped in warm tandoor bread."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/egg-meat-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-egg-potato",
+        "name": {
+          "ar": "سندويش بيض مع بطاطس",
+          "en": "Egg & Potato Sandwich"
+        },
+        "description": {
+          "ar": "بيض مقلي مع قطع البطاطس المقرمشة، يُلف في خبز التنور.",
+          "en": "Fried egg with crispy potato pieces wrapped in tandoor bread."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/egg-potato-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-egg-pastrami",
+        "name": {
+          "ar": "سندويش بيض وباسترما",
+          "en": "Egg & Basterma Sandwich"
+        },
+        "description": {
+          "ar": "بيض مقلي مع شرائح البسترما الغنية، يُلف في خبز التنور.",
+          "en": "Fried egg with rich basterma slices wrapped in tandoor bread."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/egg-pastrami-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-egg-cheese",
+        "name": {
+          "ar": "سندويش بيض وجبن",
+          "en": "Egg & Cheese Sandwich"
+        },
+        "description": {
+          "ar": "بيض مخفوق مع الجبن الذائب، يُلف في خبز التنور الطازج.",
+          "en": "Scrambled egg with melted cheese wrapped in fresh tandoor bread."
+        },
+        "price_bhd": 1.5,
+        "image_url": "/assets/gallery/egg-cheese-sandwich.webp",
+        "available": true,
+        "ingredients": []
+      },
+      {
+        "id": "sandwiches-egg-tomato",
+        "name": {
+          "ar": "سندويش بيض وطماطم",
+          "en": "Egg & Tomato Sandwich"
+        },
+        "description": {
+          "ar": "بيض مطهو مع الطماطم الطازجة، يُلف في خبز التنور الدافئ.",
+          "en": "Egg cooked with fresh tomatoes wrapped in warm tandoor bread."
+        },
+        "price_bhd": 1.2,
+        "image_url": "/assets/gallery/egg-tomato-sandwich.webp",
+        "available": true,
+        "ingredients": []
       }
     ]
   },
