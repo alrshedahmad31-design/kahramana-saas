@@ -160,7 +160,6 @@ function finalizePublicResponse(intlResponse: NextResponse): NextResponse {
       response.headers.set(key, value)
     }
   })
-  intlResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
 
   response.headers.set('Content-Security-Policy', buildPublicCsp())
   return response
