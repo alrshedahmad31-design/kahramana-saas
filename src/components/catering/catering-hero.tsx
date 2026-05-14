@@ -32,7 +32,7 @@ export default function CateringHero() {
                 {t('primaryCta')}
               </a>
               <Link
-                href="/menu"
+                href="/contact"
                 aria-label={t('secondaryCta')}
                 className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/10 px-6 py-3 text-sm font-bold text-brand-text transition-colors duration-200 hover:border-brand-gold hover:text-brand-gold"
               >

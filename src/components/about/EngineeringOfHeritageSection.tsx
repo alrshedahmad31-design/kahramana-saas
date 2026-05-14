@@ -161,7 +161,7 @@ export function EngineeringOfHeritageSection({ isRTL }: EngineeringOfHeritageSec
                <div className="relative w-4/5 h-4/5 max-w-4xl opacity-50 group-hover:scale-110 transition-transform duration-1000">
                  <Image
                     src="/assets/brand/kahramana-baghdad-brand-heritage-emblem.webp"
-                    alt="Immersion"
+                    alt="كهرمانة بغداد"
                     fill
                     className="object-contain"
                  />
@@ -181,7 +181,7 @@ export function EngineeringOfHeritageSection({ isRTL }: EngineeringOfHeritageSec
            <div className="mb-12 opacity-40 hover:opacity-100 transition-all duration-1000">
               <Image 
                 src="/assets/brand/kahramana-baghdad-brand-heritage-emblem.webp" 
-                alt="Emblem Seal" 
+                alt="شعار كهرمانة بغداد"
                 width={120} 
                 height={120} 
                 className="mx-auto drop-shadow-[0_0_30px_rgba(200,146,42,0.2)]"

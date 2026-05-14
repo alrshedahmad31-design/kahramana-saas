@@ -157,7 +157,7 @@ export default function BranchCard({
               href={detailHref as '/'}
               className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold text-xs font-bold transition-colors ${isAr ? 'font-almarai' : 'font-satoshi'}`}
             >
-              {isAr ? 'تفاصيل الفرع' : 'Branch Details'}
+              {isAr ? `تفاصيل ${branch.nameAr}` : `${branch.nameEn} Details`}
             </Link>
           )}
         </div>

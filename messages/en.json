@@ -270,7 +270,7 @@
       "title": "Iraqi hospitality made for your occasions",
       "description": "From family gatherings to business meetings, Kahramana Baghdad prepares special orders with care, structure, and a level of hospitality worthy of the occasion.",
       "primaryCta": "Request a Catering Quote",
-      "secondaryCta": "View Menu",
+      "secondaryCta": "Contact Us",
       "microcopy": "Details and pricing are confirmed after the Kahramana team reviews your request.",
       "visualAlt": "Luxury Iraqi hospitality by Kahramana Baghdad for private occasions",
       "visualLabel": "Requests by occasion",
@@ -334,17 +334,17 @@
         "familyOrder": {
           "title": "Family Order",
           "description": "Ideal for home and family gatherings, with main dishes and appetizers selected based on guest count.",
-          "cta": "Request a Suggestion"
+          "cta": "Request a Catering Quote"
         },
         "corporateHospitality": {
           "title": "Corporate Hospitality",
           "description": "Organized selections for business meetings and professional hospitality, based on timing and attendees.",
-          "cta": "Request a Quote"
+          "cta": "Request a Catering Quote"
         },
         "iraqiFeast": {
           "title": "Special Banquet",
           "description": "A more complete experience for large occasions, coordinated after reviewing the details.",
-          "cta": "Discuss Details"
+          "cta": "Request a Catering Quote"
         }
       },
       "note": "No fixed prices are shown here; pricing depends on selected dishes, quantity, timing, and area."
@@ -477,7 +477,7 @@
     "finalCta": {
       "title": "Let us arrange hospitality worthy of your occasion",
       "description": "Send the essential details and the Kahramana team will review availability and suitable selections before confirming.",
-      "cta": "Start Catering Request"
+      "cta": "Request a Catering Quote"
     }
   },
   "menu": {
