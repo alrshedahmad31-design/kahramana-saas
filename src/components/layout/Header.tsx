@@ -34,7 +34,7 @@ export default function Header() {
   const t        = useTranslations('nav')
   const tAccount = useTranslations('account')
   const locale   = useLocale()
-  const pathname = usePathname()
+  const pathname = usePathname() ?? '/'
   const router   = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)

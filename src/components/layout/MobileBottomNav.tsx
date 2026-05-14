@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 const EXCLUDED_PATHS = ['/dashboard', '/driver', '/waiter', '/table/', '/login', '/set-password', '/forgot-password', '/register']
 
 export default function MobileBottomNav() {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? '/'
   const params = useParams()
   const locale = params?.locale as string || 'ar'
 
