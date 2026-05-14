@@ -6,24 +6,40 @@
 -- driver) with CLEAR-TEXT passwords baked into the file (`owner123` etc.).
 -- These credentials are safe ONLY because:
 --   1. They exist only in local Supabase / preview environments.
---   2. The env-gate below RAISEs and aborts the transaction if
---      `app.environment = 'production'` is set on the target cluster.
+--   2. The env-gate below RAISEs and aborts the transaction if the
+--      app_config table contains an ('environment','production') row.
 --
 -- If you are about to point the Supabase CLI / db push at production:
---   • Ensure `app.environment` is set to 'production' on the prod DB:
---       ALTER DATABASE postgres SET app.environment = 'production';
+--   • Ensure migration 136_app_config has been applied, then in Studio:
+--       INSERT INTO public.app_config (key, value)
+--       VALUES ('environment', 'production')
+--       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 --   • This migration will then refuse to run and the deploy will fail loudly.
 --   • If you need to skip this file entirely in prod, rename it out of the
 --     migrations directory before running `supabase db push`.
+--
+-- Why a table instead of a GUC: Supabase managed strips superuser from the
+-- `postgres` role, so `ALTER DATABASE postgres SET app.environment = ...`
+-- returns 42501 in both the CLI and Studio. A row in app_config is owner-
+-- writable from Studio without superuser. See 136_app_config.sql.
 --
 -- VULN-SEC-01 — keep this banner intact; reviewers grep for it.
 -- ═════════════════════════════════════════════════════════════════════════════
 
 DO $$
+DECLARE
+  v_env TEXT;
 BEGIN
-  IF current_setting('app.environment', true) = 'production' THEN
-    RAISE EXCEPTION 'Seed migration 006_seed_test_staff must not run in production (app.environment=production).';
+  SELECT value INTO v_env FROM public.app_config WHERE key = 'environment';
+  IF v_env = 'production' THEN
+    RAISE EXCEPTION 'Seed migration 006_seed_test_staff must not run in production (app_config.environment=production).';
   END IF;
+EXCEPTION
+  -- Fresh environments apply migrations in order — 006 runs before 136, so
+  -- app_config does not exist yet. Swallow undefined_table and fall through.
+  -- Once 136 is applied, this branch becomes unreachable.
+  WHEN undefined_table THEN
+    NULL;
 END $$;
 
 -- auth.users requires pgcrypto (enabled by default in Supabase)
