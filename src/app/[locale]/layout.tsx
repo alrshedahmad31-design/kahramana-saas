@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Cairo, Almarai } from 'next/font/google'
 import localFont from 'next/font/local'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
@@ -18,27 +17,28 @@ import CartDrawer from '@/components/cart/CartDrawerDynamic'
 import MobileBottomNav from '@/components/layout/MobileBottomNav'
 import '../globals.css'
 
-// ── Arabic fonts via next/font/google (self-host when files available) ────────
-const cairo = Cairo({
-  subsets: ['arabic'],
-  weight: ['800'],
+// ── Arabic fonts self-hosted from /public/fonts (zero Google CDN calls) ──────
+const cairo = localFont({
+  src: [
+    { path: '../../../public/fonts/cairo/cairo-v31-arabic_latin-800.woff2', weight: '800', style: 'normal' },
+  ],
   variable: '--cairo',
   display: 'swap',
   preload: true,
-  // Adjusts fallback font metrics to minimise layout shift before Cairo loads
-  adjustFontFallback: true,
   fallback: ['Tahoma', 'Arial', 'sans-serif'],
+  adjustFontFallback: 'Arial',
 })
 
-const almarai = Almarai({
-  subsets: ['arabic'],
-  weight: ['400', '700'],
+const almarai = localFont({
+  src: [
+    { path: '../../../public/fonts/almarai/almarai-v19-arabic_latin-regular.woff2', weight: '400', style: 'normal' },
+    { path: '../../../public/fonts/almarai/almarai-v19-arabic_latin-700.woff2',     weight: '700', style: 'normal' },
+  ],
   variable: '--almarai',
   display: 'swap',
   preload: false,
-  // Adjusts fallback font metrics to minimise layout shift before Almarai loads
-  adjustFontFallback: true,
   fallback: ['Tahoma', 'Arial', 'sans-serif'],
+  adjustFontFallback: 'Arial',
 })
 
 // ── English fonts from /public/fonts (self-hosted) ────────────────────────────
