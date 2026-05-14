@@ -1865,6 +1865,21 @@
         "image_url": "/assets/gallery/spinach-pie.webp",
         "available": true,
         "ingredients": []
+      },
+      {
+        "id": "shawarma-samoon-meat",
+        "name": {
+          "ar": "صمون عراقي لحم (كص)",
+          "en": "Meat Shawarma in Samoon"
+        },
+        "description": {
+          "ar": "شاورما لحم في خبز الصمون العراقي التقليدي.",
+          "en": "Meat shawarma in traditional Iraqi samoon bread."
+        },
+        "price_bhd": 1.1,
+        "image_url": "/assets/gallery/french-samoon.webp",
+        "available": true,
+        "ingredients": []
       }
     ]
   },
@@ -1970,21 +1985,6 @@
         },
         "price_bhd": 1.7,
         "image_url": "/assets/gallery/arabi-chicken-shawarma.webp",
-        "available": true,
-        "ingredients": []
-      },
-      {
-        "id": "shawarma-samoon-meat",
-        "name": {
-          "ar": "صمون عراقي لحم (كص)",
-          "en": "Meat Shawarma in Samoon"
-        },
-        "description": {
-          "ar": "شاورما لحم في خبز الصمون العراقي التقليدي.",
-          "en": "Meat shawarma in traditional Iraqi samoon bread."
-        },
-        "price_bhd": 1.1,
-        "image_url": "/assets/gallery/french-samoon.webp",
         "available": true,
         "ingredients": []
       },
@@ -2521,7 +2521,7 @@
           "ar": "بيض مقلي طري يُلف في خبز التنور الطازج الدافئ.",
           "en": "Soft fried egg wrapped in warm fresh tandoor bread."
         },
-        "price_bhd": 1.0,
+        "price_bhd": 1,
         "image_url": "/assets/gallery/egg-sandwich.webp",
         "available": true,
         "ingredients": []
