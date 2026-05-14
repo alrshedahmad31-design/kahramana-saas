@@ -42,3 +42,118 @@ export function getMenuCategory(id: string) {
 export function getSlugPrefix(categoryId: string): string {
   return MENU_CATEGORIES.find((c) => c.id === categoryId)?.slugPrefix ?? categoryId
 }
+
+// ── Two-level customer-facing menu navigation ────────────────────────────────
+// MAIN_CATEGORIES groups the 16 atomic MENU_CATEGORIES into 5 customer-facing
+// sections shown in MenuCategoryNav. `categorySlugs` lists which atomic
+// categories (by their MENU_CATEGORIES.id) belong to each subcategory.
+// `branchRestriction` (whitelist) — when set, the main category is only shown
+// for those branches. null = available everywhere.
+
+export interface MenuSubcategory {
+  id: string
+  /** i18n key under `menu.subcategories.*` */
+  i18nKey: string
+  /** MENU_CATEGORIES.id values whose items belong to this subcategory */
+  categorySlugs: string[]
+}
+
+export interface MenuMainCategory {
+  id: string
+  /** i18n key under `menu.mainCategories.*` */
+  i18nKey: string
+  /** Icon name from src/components/ui/Icon.tsx */
+  icon: 'breakfast' | 'appetizers' | 'grills' | 'sandwiches' | 'desserts'
+  /** Whitelist of BranchId values; null means all branches */
+  branchRestriction: string[] | null
+  subcategories: MenuSubcategory[]
+}
+
+export const MAIN_CATEGORIES: MenuMainCategory[] = [
+  {
+    id: 'breakfast',
+    i18nKey: 'breakfast',
+    icon: 'breakfast',
+    branchRestriction: ['riffa'],
+    subcategories: [
+      { id: 'baghdad-breakfast',    i18nKey: 'baghdadBreakfast',    categorySlugs: ['the-heritage-breakfast'] },
+      { id: 'kahramana-selections', i18nKey: 'kahramanaSelections', categorySlugs: ['kahramana-signature-selection'] },
+      { id: 'fatta',                i18nKey: 'fatta',               categorySlugs: ['the-fatteh-collection'] },
+    ],
+  },
+  {
+    id: 'appetizers',
+    i18nKey: 'appetizers',
+    icon: 'appetizers',
+    branchRestriction: null,
+    subcategories: [
+      { id: 'cold-apps', i18nKey: 'coldAppetizers', categorySlugs: ['the-cold-mezza-garden'] },
+      { id: 'hot-apps',  i18nKey: 'hotAppetizers',  categorySlugs: ['the-hot-mezza-garden'] },
+      { id: 'salads',    i18nKey: 'salads',         categorySlugs: ['garden-fresh-salads'] },
+      { id: 'soups',     i18nKey: 'soups',          categorySlugs: ['warm-and-comforting-soups'] },
+    ],
+  },
+  {
+    id: 'grills',
+    i18nKey: 'grills',
+    icon: 'grills',
+    branchRestriction: null,
+    subcategories: [
+      { id: 'grills-tannour', i18nKey: 'grillsTannour', categorySlugs: ['baghdadi-tandoor-selection'] },
+      { id: 'iraqi-stews',    i18nKey: 'iraqiStews',    categorySlugs: ['the-authentic-stew-house'] },
+      { id: 'main-dishes',    i18nKey: 'mainDishes',    categorySlugs: ['baghdadi-culinary-masterpieces'] },
+      { id: 'iraqi-shawarma', i18nKey: 'iraqiShawarma', categorySlugs: ['the-shawarma-suite-kaas'] },
+    ],
+  },
+  {
+    id: 'sandwiches',
+    i18nKey: 'sandwiches',
+    icon: 'sandwiches',
+    branchRestriction: null,
+    subcategories: [
+      { id: 'sandwiches',      i18nKey: 'sandwiches',     categorySlugs: ['traditional-sandwiches'] },
+      { id: 'kahramana-pizza', i18nKey: 'kahramanaPizza', categorySlugs: ['artisan-stone-oven-pizza'] },
+    ],
+  },
+  {
+    id: 'desserts-drinks',
+    i18nKey: 'dessertsDrinks',
+    icon: 'desserts',
+    branchRestriction: null,
+    subcategories: [
+      { id: 'desserts',     i18nKey: 'desserts',     categorySlugs: ['the-sweet-finale'] },
+      { id: 'fresh-juices', i18nKey: 'freshJuices',  categorySlugs: ['fresh-signature-juices'] },
+      { id: 'tea-coffee',   i18nKey: 'teaCoffee',    categorySlugs: ['the-heritage-tea-and-coffee'] },
+    ],
+  },
+]
+
+/**
+ * Filter MAIN_CATEGORIES by branch restriction.
+ * `branchId == null` means no branch chosen yet — show everything.
+ */
+export function getVisibleCategories(branchId: string | null): MenuMainCategory[] {
+  return MAIN_CATEGORIES.filter((cat) => {
+    if (!cat.branchRestriction) return true
+    if (!branchId) return true
+    return cat.branchRestriction.includes(branchId)
+  })
+}
+
+/**
+ * Returns the set of categorySlug values that belong to a main category, or to
+ * a specific subcategory inside it. Used by the menu page to filter the rendered
+ * sections based on the active nav selection.
+ */
+export function getCategorySlugsFor(
+  mainCategoryId: string,
+  subcategoryId: string | null,
+  visibleCategories: MenuMainCategory[] = MAIN_CATEGORIES,
+): string[] {
+  const main = visibleCategories.find((c) => c.id === mainCategoryId)
+  if (!main) return []
+  if (subcategoryId) {
+    return main.subcategories.find((s) => s.id === subcategoryId)?.categorySlugs ?? []
+  }
+  return main.subcategories.flatMap((s) => s.categorySlugs)
+}

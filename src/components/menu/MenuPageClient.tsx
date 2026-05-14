@@ -1,10 +1,16 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import type { CategoryWithItems } from '@/lib/menu'
+import { useCartStore } from '@/lib/cart'
+import {
+  getVisibleCategories,
+  getCategorySlugsFor,
+  MAIN_CATEGORIES,
+} from '@/constants/menu-categories'
 import MenuHero from './menu-hero'
-import StickyFilterBar from './StickyFilterBar'
+import MenuCategoryNav from './MenuCategoryNav'
 import { MobileSearchOverlay } from './MobileSearchOverlay'
 import FeaturedCarousel from './FeaturedCarousel'
 import TopOrderHighlights from './TopOrderHighlights'
@@ -20,55 +26,67 @@ interface MenuPageClientProps {
   initialQuery?: string
 }
 
-export default function MenuPageClient({ 
-  categories, 
-  locale, 
+export default function MenuPageClient({
+  categories,
+  locale,
   featuredSlugs,
-  initialQuery 
+  initialQuery,
 }: MenuPageClientProps) {
   const isAr = locale === 'ar'
-  const [activeCategory, setActiveCategory] = useState('all')
-  const [isSearchOpen, setIsSearchOpen] = useState(!!initialQuery)
-  const [showScrollTop, setShowScrollTop] = useState(false)
-  const observerRef = useRef<IntersectionObserver | null>(null)
+  const branchId = useCartStore((state) => state.branchId)
 
-  const featuredItems = useMemo(
-    () => categories.flatMap(c => c.items).filter(i => featuredSlugs.includes(i.id)),
-    [categories, featuredSlugs]
+  const visibleCategories = useMemo(
+    () => getVisibleCategories(branchId ?? null),
+    [branchId],
   )
 
-  // ── SCROLL TRACKING ──
+  const [activeCategoryId, setActiveCategoryId] = useState<string>(
+    () => (visibleCategories[0] ?? MAIN_CATEGORIES[0]).id,
+  )
+  const [activeSubcategoryId, setActiveSubcategoryId] = useState<string | null>(null)
+  const [isSearchOpen, setIsSearchOpen] = useState(!!initialQuery)
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  // If the active main category becomes hidden after a branch change,
+  // fall back to the first visible one and reset the subcategory.
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.pageYOffset > 500)
+    if (!visibleCategories.some((c) => c.id === activeCategoryId)) {
+      setActiveCategoryId(visibleCategories[0]?.id ?? MAIN_CATEGORIES[0].id)
+      setActiveSubcategoryId(null)
     }
+  }, [visibleCategories, activeCategoryId])
 
-    window.addEventListener('scroll', handleScroll)
-    
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const categoryId = entry.target.getAttribute('data-category-id')
-            if (categoryId) setActiveCategory(categoryId)
-          }
-        })
-      },
-      { root: null, rootMargin: '-160px 0px -60% 0px', threshold: 0 }
+  const featuredItems = useMemo(
+    () => categories.flatMap((c) => c.items).filter((i) => featuredSlugs.includes(i.id)),
+    [categories, featuredSlugs],
+  )
+
+  // Apply main + sub filter to the rendered category sections.
+  const filteredCategories = useMemo<CategoryWithItems[]>(() => {
+    const allowedSlugs = new Set(
+      getCategorySlugsFor(activeCategoryId, activeSubcategoryId, visibleCategories),
     )
+    if (allowedSlugs.size === 0) return []
+    return categories.filter((cat) => allowedSlugs.has(cat.id))
+  }, [categories, activeCategoryId, activeSubcategoryId, visibleCategories])
 
-    const sections = document.querySelectorAll('[data-category-section]')
-    sections.forEach((section) => observerRef.current?.observe(section))
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.pageYOffset > 500)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
-    return () => {
-      observerRef.current?.disconnect()
-      window.removeEventListener('scroll', handleScroll)
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+
+  const handleCategoryChange = (categoryId: string) => {
+    setActiveCategoryId(categoryId)
+    setActiveSubcategoryId(null)
+    const el = document.getElementById('menu-content')
+    if (el) {
+      const offset = 160
+      const top = el.getBoundingClientRect().top + window.pageYOffset - offset
+      window.scrollTo({ top, behavior: 'smooth' })
     }
-  }, [categories])
-
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const t = useTranslations('menu')
@@ -95,16 +113,19 @@ export default function MenuPageClient({
       )}
 
       <div id="menu-content">
-        <StickyFilterBar
-          categories={categories}
-          activeCategory={activeCategory}
+        <MenuCategoryNav
+          visibleCategories={visibleCategories}
+          activeCategoryId={activeCategoryId}
+          activeSubcategoryId={activeSubcategoryId}
+          onCategoryChange={handleCategoryChange}
+          onSubcategoryChange={setActiveSubcategoryId}
           onSearchOpen={() => setIsSearchOpen(true)}
-          locale={locale}
+          isRTL={isAr}
         />
 
         <div className="max-w-7xl mx-auto pb-24">
-          {categories.length > 0 ? (
-            categories.map((cat) => (
+          {filteredCategories.length > 0 ? (
+            filteredCategories.map((cat) => (
               <MenuSection
                 key={cat.id}
                 id={`section-${cat.id}`}
@@ -117,7 +138,6 @@ export default function MenuPageClient({
           )}
         </div>
       </div>
-
 
       <MobileSearchOverlay
         isOpen={isSearchOpen}
