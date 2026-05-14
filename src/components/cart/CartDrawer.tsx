@@ -209,15 +209,18 @@ export default function CartBottomSheet() {
               )}
             </div>
 
-            {/* Continue-Shopping bar — its own row in the flex column so it
-                stays pinned above the CTA footer regardless of viewport
-                height or how many items the customer has stacked. */}
+            {/* Continue-Shopping bar — own flex row so it stays pinned above
+                the CTA footer regardless of viewport height. `relative z-10`
+                + opaque background lift it above the footer's upward
+                box-shadow, which would otherwise paint over this bar.
+                Rendered as a gold-outlined chip (not muted text) because on
+                this dark UI a "ghost/text" treatment was disappearing. */}
             {items.length > 0 && (
-              <div className="shrink-0 border-t border-brand-border/30 bg-brand-surface-2/30 px-6 py-3">
+              <div className="relative z-10 shrink-0 border-t border-brand-border/30 bg-brand-surface px-6 py-4">
                 <button
                   type="button"
                   onClick={() => { closeCart(); router.push('/menu') }}
-                  className={`inline-flex w-full items-center justify-center gap-2 py-1 text-sm font-bold text-brand-muted transition-colors hover:text-brand-gold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-brand-gold/40 bg-brand-gold/5 py-3 text-sm font-bold text-brand-gold transition-all hover:bg-brand-gold/15 hover:border-brand-gold/70 active:scale-[0.99] ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
                 >
                   {isRTL ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
                   {t('continueShopping')}
