@@ -8,6 +8,7 @@ import {
   verifyWebhookSignature,
   tapStatusToPaymentStatus,
   extractOrderReference,
+  extractAmountScalar,
 } from '@/lib/payments/tap-client'
 import { toSafeError } from '@/lib/utils/safe-error'
 import type { Json } from '@/lib/supabase/custom-types'
@@ -199,15 +200,31 @@ export async function POST(request: Request) {
     }
   }
 
+  // VULN-101: pass the normalized amount scalar so the RPC can enforce
+  // ABS(p_amount - payments.amount_bhd) <= 0.001 BHD before flipping status
+  // to a captured-class state. Tap's BHD webhook returns major-unit decimals
+  // (5.000 BHD), so the scalar maps directly onto payments.amount_bhd's scale.
+  const amountScalar = extractAmountScalar(body as Record<string, unknown>)
+
   const { data, error } = await supabase.rpc('process_tap_webhook', {
     p_payload:         body as unknown as Json,
     p_event_type:      eventType,
     p_gateway_id:      gatewayId,
     p_status:          status ?? 'pending',
     p_order_reference: orderReference ?? '',
+    p_amount:          amountScalar,
   })
 
   if (error) {
+    // VULN-101: amount-mismatch raises a domain-specific 22023 exception.
+    // Return 400 (not 500) and never echo the underlying message to the
+    // caller — toSafeError collapses it in production.
+    if (error.message?.includes('AMOUNT_MISMATCH') || error.code === '22023') {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[webhooks/tap] amount mismatch:', error.message)
+      }
+      return NextResponse.json({ error: toSafeError(error) }, { status: 400 })
+    }
     if (process.env.NODE_ENV === 'development') {
       console.error('[webhooks/tap] rpc error:', error.message)
     }

@@ -4525,6 +4525,7 @@ export type Database = {
       normalize_bahrain_phone: { Args: { p: string }; Returns: string }
       process_tap_webhook: {
         Args: {
+          p_amount?: number | null
           p_event_type: string
           p_gateway_id: string
           p_order_reference: string
