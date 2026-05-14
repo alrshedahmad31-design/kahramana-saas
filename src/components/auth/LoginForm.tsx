@@ -76,7 +76,7 @@ export default function LoginForm() {
         <input
           id="email"
           type="email"
-          autoComplete="off"
+          autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

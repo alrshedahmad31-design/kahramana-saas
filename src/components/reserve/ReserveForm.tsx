@@ -286,6 +286,7 @@ export default function ReserveForm({ locale, branches }: Props) {
       <Section label={t('date')} error={fieldErrors.date} isAr={isAr}>
         <input
           type="date"
+          name="reserved_date"
           required
           min={minDate}
           max={maxDate}
@@ -383,7 +384,9 @@ export default function ReserveForm({ locale, branches }: Props) {
       <Section label={t('guestName')} error={fieldErrors.name} isAr={isAr}>
         <input
           type="text"
+          name="guest_name"
           required
+          autoComplete="name"
           maxLength={120}
           value={form.guest_name}
           onChange={(e) => update('guest_name', e.target.value)}
@@ -395,6 +398,7 @@ export default function ReserveForm({ locale, branches }: Props) {
       <Section label={t('phone')} error={fieldErrors.phone} isAr={isAr}>
         <input
           type="tel"
+          name="phone"
           required
           inputMode="tel"
           dir="ltr"
@@ -410,6 +414,7 @@ export default function ReserveForm({ locale, branches }: Props) {
       {/* G. Special requests */}
       <Section label={t('specialRequests')} isAr={isAr}>
         <textarea
+          name="special_requests"
           rows={4}
           maxLength={500}
           value={form.special_requests}

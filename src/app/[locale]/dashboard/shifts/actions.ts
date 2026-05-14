@@ -88,7 +88,8 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
   }
   const v = parsed.data
 
-  if (!isGlobalDashboardAdmin(user) && user.branch_id && user.branch_id !== v.branch_id) {
+  // Fail-closed for null user.branch_id on non-global staff (VULN-RBAC-01 shape).
+  if (!isGlobalDashboardAdmin(user) && (!user.branch_id || user.branch_id !== v.branch_id)) {
     return { success: false, code: 'branch_scope', error: 'Forbidden: branch scope violation' }
   }
 
@@ -97,23 +98,32 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
   const revenue  = round3(v.total_revenue_bhd)
 
   const supabase = await createClient()
-  const { error } = await supabase.from('shift_closings').insert({
-    branch_id:          v.branch_id,
-    shift_date:         v.shift_date,
-    shift_type:         v.shift_type,
-    actual_cash_bhd:    actual,
-    expected_cash_bhd:  expected,
-    total_orders:       v.total_orders,
-    total_revenue_bhd:  revenue,
-    notes:              v.notes ?? null,
-    discrepancy_reason: v.discrepancy_reason ?? null,
-    closed_by:          user.id,
-    status:             Math.abs(actual - expected) > 0.005 ? 'flagged' : 'pending',
+  // Atomic: shift_closings INSERT + audit_logs INSERT in one transaction.
+  // Previously the JS side did only the insert and skipped audit entirely
+  // (KAH-2026-05-06 — financial-event audit gap).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rpcData, error: rpcErr } = await (supabase.rpc as any)('rpc_close_shift', {
+    p_branch_id:          v.branch_id,
+    p_shift_date:         v.shift_date,
+    p_shift_type:         v.shift_type,
+    p_actual_cash_bhd:    actual,
+    p_expected_cash_bhd:  expected,
+    p_total_orders:       v.total_orders,
+    p_total_revenue_bhd:  revenue,
+    p_notes:              v.notes ?? null,
+    p_discrepancy_reason: v.discrepancy_reason ?? null,
+    p_actor_id:           user.id,
+    p_actor_role:         user.role,
   })
 
-  if (error) {
-    console.error('[shifts] closeShift insert failed:', error)
-    return { success: false, code: 'db_error', error: error.message }
+  if (rpcErr) {
+    console.error('[shifts] rpc_close_shift failed:', rpcErr)
+    return { success: false, code: 'db_error', error: 'An unexpected error occurred.' }
+  }
+
+  const result = rpcData as { success: boolean; code?: string } | null
+  if (!result?.success) {
+    return { success: false, code: 'db_error', error: result?.code ?? 'unknown' }
   }
 
   revalidatePath('/dashboard/shifts')

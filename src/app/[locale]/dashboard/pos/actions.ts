@@ -326,45 +326,42 @@ export async function createManualOrder(
     return { error: rpcError?.message ?? 'Order creation failed' }
   }
 
-  // ── Payment record ─────────────────────────────────────────────────────
-  // Map POS payment selection to schema-supported method codes.
+  // ── Atomic payments + audit (KAH-2026-05-06) ───────────────────────────
+  // rpc_pos_finalize_order does both inserts in one transaction so the
+  // payment row and the audit row either both land or both fail. The order
+  // itself is the financial source of truth and stays in rpc_create_order.
   const paymentMethodForRecord: 'cash' | 'tap_card' =
     data.paymentMethod === 'cash' ? 'cash' : 'tap_card'
-  const { error: paymentError } = await supabase.from('payments').insert({
-    order_id:   orderId,
-    amount_bhd: subtotal,
-    method:     paymentMethodForRecord,
-    status:     data.paymentMethod === 'cash' ? 'pending_cod' : 'pending',
-  })
-
-  // Order is committed but payment row failed — surface as partial failure
-  // so the cashier can resolve manually (reconciliation depends on payments).
-  let paymentWarning: string | undefined
-  if (paymentError) {
-    console.error('[pos] payment insert failed for order', orderId, paymentError)
-    paymentWarning = `Order created but payment record failed: ${paymentError.message}. Manager resolution required.`
-  }
-
-  // ── Audit log (best-effort: log on failure, never blocks order) ────────
-  const { error: auditError } = await supabase.from('audit_logs').insert({
-    table_name: 'orders',
-    action:     'INSERT',
-    user_id:    caller.id,
-    record_id:  orderId,
-    actor_role: caller.role,
-    branch_id:  data.branchId,
-    changes:    {
-      action:        'manual_order_created',
-      order_id:      orderId,
-      created_by:    caller.id,
-      total_bhd:     subtotal,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: finalizeData, error: finalizeError } = await (supabase.rpc as any)('rpc_pos_finalize_order', {
+    p_order_id:        orderId,
+    p_amount_bhd:      subtotal,
+    p_method:          paymentMethodForRecord,
+    p_payment_status:  data.paymentMethod === 'cash' ? 'pending_cod' : 'pending',
+    p_audit_changes:   {
+      action:         'manual_order_created',
+      order_id:       orderId,
+      created_by:     caller.id,
+      total_bhd:      subtotal,
       pos_order_type: data.orderType,
       payment_method: data.paymentMethod,
-      item_count:    pricedItems.length,
+      item_count:     pricedItems.length,
     },
+    p_actor_id:        caller.id,
+    p_actor_role:      caller.role,
+    p_actor_branch_id: data.branchId,
   })
-  if (auditError) {
-    console.error('[pos] audit_logs insert failed for order', orderId, auditError)
+
+  let paymentWarning: string | undefined
+  if (finalizeError) {
+    console.error('[pos] rpc_pos_finalize_order failed for order', orderId, finalizeError)
+    paymentWarning = `Order created but payment+audit failed. Manager resolution required.`
+  } else {
+    const result = finalizeData as { success: boolean; code?: string } | null
+    if (!result?.success) {
+      console.error('[pos] rpc_pos_finalize_order returned non-success for order', orderId, result?.code)
+      paymentWarning = `Order created but payment+audit failed (${result?.code ?? 'unknown'}). Manager resolution required.`
+    }
   }
 
   // ── Persist user-pinned coordinates OR fall back to Nominatim geocoding ──

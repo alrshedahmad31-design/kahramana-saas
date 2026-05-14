@@ -69,7 +69,7 @@ export default async function ReservePage({ params }: Props) {
       />
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-12 sm:pt-28 scroll-mt-28">
-        <SectionHeader title={t('title')} subtitle={t('eyebrow')} />
+        <SectionHeader title={t('title')} subtitle={t('eyebrow')} as="h1" />
         <p
           className={`mx-auto mt-6 max-w-2xl text-center text-base leading-7 text-brand-muted ${
             isAr ? 'font-almarai' : 'font-satoshi'

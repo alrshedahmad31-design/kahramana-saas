@@ -2,14 +2,17 @@ interface SectionHeaderProps {
   title: string
   subtitle?: string
   className?: string
+  /** Override heading level — defaults to h2. Pass 1 on the page's main hero section. */
+  as?: 'h1' | 'h2' | 'h3'
   /** Deprecated: font direction now follows the nearest dir attribute. */
   isRTL?: boolean
 }
 
-export default function SectionHeader({ 
-  title, 
-  subtitle, 
+export default function SectionHeader({
+  title,
+  subtitle,
   className = '',
+  as: Heading = 'h2',
 }: SectionHeaderProps) {
   return (
     <div
@@ -20,9 +23,9 @@ export default function SectionHeader({
           {subtitle}
         </span>
       )}
-      <h2 className="section-title section-title-localized">
+      <Heading className="section-title section-title-localized">
         {title}
-      </h2>
+      </Heading>
     </div>
   )
 }

@@ -21,50 +21,30 @@ export async function refundPayment(
 
   const supabase = await createClient()
 
-  const { data: payment, error: fetchErr } = await supabase
-    .from('payments')
-    .select('id, status, amount_bhd')
-    .eq('id', paymentId)
-    .single()
+  // Atomic: the RPC does the CAS update on payments + audit_logs INSERT in a
+  // single transaction. Audit failure rolls back the refund (KAH-2026-05-06).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error: rpcErr } = await (supabase.rpc as any)('rpc_refund_payment', {
+    p_payment_id:      paymentId,
+    p_actor_id:        user.id,
+    p_actor_role:      user.role,
+    p_actor_branch_id: user.branch_id,
+  })
 
-  if (fetchErr || !payment) return { error: 'payment_not_found' }
-  if (payment.status !== 'completed') return { error: 'not_refundable' }
-
-  // CAS on status='completed': two simultaneous refund clicks both pass the
-  // read-side check above; only one update will land. The other gets a clear
-  // error instead of an audit log entry claiming success.
-  const { data: updated, error: updateErr } = await supabase
-    .from('payments')
-    .update({
-      status:     'refunded',
-      refunded_at: new Date().toISOString(),
-      refund_amount_bhd: payment.amount_bhd,
-    })
-    .eq('id', paymentId)
-    .eq('status', 'completed')
-    .select('id')
-
-  if (updateErr) return { error: 'update_failed' }
-  if (!updated || updated.length === 0) {
-    return { error: 'refund_already_processed_or_status_changed' }
+  if (rpcErr) {
+    console.error('[payments] rpc_refund_payment failed:', rpcErr)
+    return { error: 'update_failed' }
   }
 
-  // Financial event — must be auditable. Best-effort: do not fail the refund
-  // if the log insert fails (matches the pattern in coupons/delivery actions).
-  await supabase.from('audit_logs').insert({
-    table_name: 'payments',
-    action:     'UPDATE',
-    user_id:    user.id,
-    record_id:  paymentId,
-    changes: {
-      operation:         'refund',
-      previous_status:   payment.status,
-      new_status:        'refunded',
-      refund_amount_bhd: payment.amount_bhd,
-    },
-    branch_id:  user.branch_id,
-    actor_role: user.role,
-  })
+  const result = data as { success: boolean; code?: string } | null
+  if (!result?.success) {
+    switch (result?.code) {
+      case 'PAYMENT_NOT_FOUND':  return { error: 'payment_not_found' }
+      case 'NOT_REFUNDABLE':     return { error: 'not_refundable' }
+      case 'CONCURRENT_CHANGE':  return { error: 'refund_already_processed_or_status_changed' }
+      default:                   return { error: 'update_failed' }
+    }
+  }
 
   revalidatePath(locale === 'en' ? '/en/dashboard/payments' : '/dashboard/payments')
   return { success: true }

@@ -109,6 +109,7 @@ export default async function Footer() {
               {[
                 { label: tNav('menu'),     href: '/menu' },
                 { label: tNav('branches'), href: '/branches' },
+                { label: tNav('catering'), href: '/catering' },
                 { label: isRTL ? 'تواصل معنا' : 'Contact', href: '/contact' },
                 { label: isRTL ? 'من نحن' : 'About Us', href: '/about' },
                 { label: isRTL ? 'سياسة الاسترجاع' : 'Refund Policy', href: '/refund-policy' },
