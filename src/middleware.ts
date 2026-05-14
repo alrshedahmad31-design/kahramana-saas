@@ -26,6 +26,7 @@ const ORDER_PATTERN        = /^(\/(ar|en))?\/order(\/.*)?$/
 const ARABIC_DRIVER_PATTERN = /^\/driver($|\/)/
 
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
+const PUBLIC_HTML_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=43200'
 
 // ── CSP builder (nonce injected per request) ──────────────────────────────────
 // Strategy:
@@ -163,6 +164,7 @@ function finalizePublicResponse(intlResponse: NextResponse): NextResponse {
   })
 
   response.headers.set('Content-Security-Policy', buildPublicCsp())
+  response.headers.set('Cache-Control', PUBLIC_HTML_CACHE_CONTROL)
   return response
 }
 
