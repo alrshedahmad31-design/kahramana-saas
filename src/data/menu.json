@@ -889,8 +889,8 @@
           "en": "Kahramana Deluxe Mixed Appetizers"
         },
         "description": {
-          "ar": "تشكيلة فاخرة من أفضل مقبلاتنا الباردة؛ تضم الحمص، المتبل، ورق العنب، والجاجيك، في طبق واحد يرضي جميع الأذواق.",
-          "en": "A curated selection of our finest cold starters featuring hummus, moutabal, vine leaves, and jajeek. Perfect for those who want to taste it all."
+          "ar": "تشكيلة راقية من أشهى مقبلاتنا الباردة، تضم الحمص، المتبل، التبولة، الجاجيك، وسلطة الباذنجان في طبق واحد غني بالنكهات يناسب جميع الأذواق.",
+          "en": "A refined selection of our finest cold appetizers, featuring hummus, moutabbal, tabbouleh, jajik, and eggplant salad — served together in one flavorful platter made to please every taste."
         },
         "price_bhd": 3,
         "image_url": "/assets/gallery/mezze-platter.webp",
@@ -2766,12 +2766,12 @@
       {
         "id": "breakfast-plates-debis-dehin",
         "name": {
-          "ar": "دبس ودهن (حلو ومالح)",
-          "en": "Debis w Dehin (Sweet & Savory)"
+          "ar": "دبس ودهن (تراث بغدادي)",
+          "en": "Debis w Dehin — (A Baghdadi Heritage Classic)"
         },
         "description": {
-          "ar": "باقلاء مطهوة بعناية في الدهن الحر ومزينة بخطوط من دبس التمر، لمزيج عراقي ساحر.",
-          "en": "Slow-cooked fava beans enriched with ghee and drizzled with date molasses."
+          "ar": "تناغم عراقي أصيل يجمع بين حلاوة دبس التمر الفاخر وغنى وعراقة الدهن الحر النقي. تجربة بغدادية دافئة تنقلك إلى جذور الضيافة، وتكتمل روعتها مع خبز التنور الطازج.",
+          "en": "An authentic Iraqi harmony of premium date molasses and pure traditional ghee, rich in warmth and heritage. A comforting Baghdadi experience rooted in timeless hospitality, best enjoyed with freshly baked tanoor bread."
         },
         "price_bhd": 2,
         "image_url": "/assets/gallery/debis-dehin.webp",
