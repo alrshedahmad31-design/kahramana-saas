@@ -3,6 +3,7 @@
 import { useState }             from 'react'
 import Link                     from 'next/link'
 import type { CashHandoverRow, ReconciliationStatus } from '@/app/[locale]/dashboard/delivery/cash-reconciliation/page'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   handovers: CashHandoverRow[]
@@ -280,7 +281,7 @@ function HandoverCard({ handover: h, isAr }: { handover: CashHandoverRow; isAr: 
 
           {error && (
             <p className={`text-xs text-red-400 font-bold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              ⚠️ {error}
+              <span className="inline-flex items-center gap-1.5"><Icon name="warning" size={14} /> {error}</span>
             </p>
           )}
 
@@ -301,7 +302,7 @@ function HandoverCard({ handover: h, isAr }: { handover: CashHandoverRow; isAr: 
               `}
             >
               {loading ? '…' : isWithin
-                ? (isAr ? 'تأكيد التسوية ✓' : 'Verify ✓')
+                ? (isAr ? 'تأكيد التسوية' : 'Verify')
                 : (isAr ? 'تسجيل الفرق' : 'Record Discrepancy')
               }
             </button>
@@ -348,7 +349,7 @@ function HandoverCard({ handover: h, isAr }: { handover: CashHandoverRow; isAr: 
 
             {error && (
               <p className={`text-xs text-red-400 font-bold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                ⚠️ {error}
+                <span className="inline-flex items-center gap-1.5"><Icon name="warning" size={14} /> {error}</span>
               </p>
             )}
 

@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { AlertSeverity } from '@/lib/supabase/custom-types'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 interface AlertPayload {
   id:       string
@@ -14,10 +15,10 @@ interface ToastItem extends AlertPayload {
   key: number
 }
 
-function severityIcon(s: AlertSeverity) {
-  if (s === 'critical') return '🔴'
-  if (s === 'warning')  return '🟡'
-  return '⚪'
+function severityIcon(s: AlertSeverity): IconName {
+  if (s === 'critical') return 'warning'
+  if (s === 'warning')  return 'alert-dot'
+  return 'info'
 }
 
 function severityStyle(s: AlertSeverity) {
@@ -42,14 +43,14 @@ function AlertToast({ item, onDismiss }: { item: ToastItem; onDismiss: (key: num
     <div
       className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 shadow-lg font-satoshi text-sm max-w-xs animate-in slide-in-from-end-5 fade-in duration-300 ${severityStyle(item.severity)}`}
     >
-      <span className="shrink-0 mt-0.5">{severityIcon(item.severity)}</span>
+      <Icon name={severityIcon(item.severity)} size={16} className="shrink-0 mt-0.5" />
       <p className="flex-1 leading-snug">{item.message}</p>
       <button
         onClick={() => onDismiss(item.key)}
         className="shrink-0 opacity-50 hover:opacity-100 transition-opacity ms-1"
         aria-label="إغلاق"
       >
-        ✕
+        <Icon name="x" size={14} />
       </button>
     </div>
   )

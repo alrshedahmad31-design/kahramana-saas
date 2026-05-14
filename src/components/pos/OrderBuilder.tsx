@@ -279,7 +279,7 @@ export default function OrderBuilder(props: Props) {
                 </svg>
                 <span className={isAr ? 'font-cairo' : 'font-satoshi'}>
                   {props.deliveryLat != null
-                    ? (isAr ? '✓ تم تحديد الموقع على الخريطة' : '✓ Location pinned on map')
+                    ? (isAr ? 'تم تحديد الموقع على الخريطة' : 'Location pinned on map')
                     : (isAr ? 'تحديد الموقع على الخريطة' : 'Pin on Map')}
                 </span>
               </button>

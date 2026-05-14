@@ -15,6 +15,7 @@ import CashHandoverReminderBanner from './CashHandoverReminderBanner'
 import { resolveExpectedAt, getUrgencyLevel } from '@/lib/utils/delivery'
 import { toast } from '@/lib/toast'
 import type { DriverOrder } from '@/lib/supabase/custom-types'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   initialOrders:          DriverOrder[]
@@ -433,7 +434,7 @@ export default function DriverDashboard({
           {pendingSync > 0 && (
             <div className="flex items-center justify-between p-3 rounded-xl bg-brand-gold/10 border border-brand-gold/30 animate-pulse">
               <div className="flex items-center gap-3">
-                <span className="text-xl">🔄</span>
+                <Icon name="refresh" size={20} className="text-brand-gold" />
                 <div>
                   <p className={`font-bold text-sm text-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
                     {isAr ? `جاري مزامنة ${pendingSync} عمليات...` : `Syncing ${pendingSync} actions...`}
@@ -566,7 +567,7 @@ export default function DriverDashboard({
                   onClick={() => setShowHandover(true)}
                   className="shrink-0 flex items-center gap-1.5 rounded-xl px-3 py-1.5 bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25 transition-colors duration-150"
                 >
-                  <span className="text-sm leading-none">💵</span>
+                  <Icon name="cash" size={14} />
                   <span className={`font-bold text-xs ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
                     {isAr ? 'تسليم النقد' : 'Cash Handover'}
                   </span>

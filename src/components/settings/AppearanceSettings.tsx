@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from '@/i18n/routing'
+import { Icon } from '@/components/ui/Icon'
 
 type Theme      = 'dark'
 type DateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'
@@ -126,7 +127,7 @@ export default function AppearanceSettings() {
           {isAr ? 'نظام الألوان' : 'Color Theme'}
         </label>
         <div className="flex items-center gap-3 px-5 py-4 rounded-xl border border-brand-gold bg-brand-gold/10">
-          <span className="text-xl">🌙</span>
+          <Icon name="moon" size={20} className="text-brand-gold" />
           <div className="flex-1">
             <span className={`text-sm font-black text-brand-gold ${font}`}>
               {isAr ? 'داكن' : 'Dark'}
@@ -211,7 +212,7 @@ export default function AppearanceSettings() {
         </button>
         {saveState === 'saved' && (
           <span className={`text-brand-success text-sm font-bold ${font}`}>
-            {isAr ? '✓ تم الحفظ' : '✓ Saved'}
+            {isAr ? 'تم الحفظ' : 'Saved'}
           </span>
         )}
         {saveState === 'error' && (

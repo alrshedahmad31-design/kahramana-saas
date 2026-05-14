@@ -1,4 +1,5 @@
 import type { DashboardData } from '@/lib/dashboard/stats'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   data:     DashboardData
@@ -43,7 +44,7 @@ export default function TodaySummary({ data, currency, isRTL }: Props) {
   return (
     <div className="bg-brand-surface border border-brand-border/60 rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm">📊</span>
+        <Icon name="chart" size={16} className="text-brand-gold" />
         <h2 className={`font-satoshi font-black text-sm text-brand-muted uppercase tracking-wider ${isRTL ? 'font-almarai' : ''}`}>
           {isRTL ? 'ملخص اليوم' : "Today's Summary"}
         </h2>

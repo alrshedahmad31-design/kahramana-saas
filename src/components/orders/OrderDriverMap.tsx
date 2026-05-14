@@ -18,7 +18,7 @@ const createMarkerIcon = (color: string) => L.divIcon({
 const DRIVER_ICON = L.divIcon({
   className: 'driver-div-icon',
   html: `<div style="background-color: ${tokens.color.gold}; width: 28px; height: 28px; border-radius: 50%; border: 3px solid ${tokens.color.black}; display: flex; items-center; justify-center; box-shadow: 0 0 15px rgba(200, 146, 42, 0.6);">
-    <span style="font-size: 14px;">🛵</span>
+    <span style="font-size: 14px;">D</span>
   </div>`,
   iconSize: [28, 28],
   iconAnchor: [14, 14],

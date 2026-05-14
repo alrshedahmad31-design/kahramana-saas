@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { MenuItemPerformanceRow } from '@/lib/analytics/queries'
 import { colors } from '@/lib/design-tokens'
+import { Icon } from '@/components/ui/Icon'
 
 type SortKey = 'total_revenue' | 'total_quantity' | 'estimated_profit' | 'avg_price'
 
@@ -80,7 +81,7 @@ export default function ItemProfitability({ items, isRTL }: Props) {
                   <p className={`text-brand-text font-medium truncate max-w-[180px]
                                  ${isRTL ? 'font-almarai' : 'font-satoshi'}
                                  ${isTop3 ? 'text-brand-gold' : ''}`}>
-                    {isTop3 && <span className="me-1">{['★', '★', '★'][idx]}</span>}
+                    {isTop3 && <Icon name="star" size={13} className="me-1 inline-block align-[-1px]" />}
                     {isRTL ? item.name_ar : item.name_en}
                   </p>
                 </td>

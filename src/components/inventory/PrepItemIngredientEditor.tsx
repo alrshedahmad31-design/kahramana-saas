@@ -165,7 +165,7 @@ export default function PrepItemIngredientEditor({ prepItemId, existingRows, all
                       onClick={() => removeRow(row.key)}
                       className="text-brand-muted hover:text-brand-error transition-colors"
                     >
-                      ✕
+                      x
                     </button>
                   </td>
                 </tr>

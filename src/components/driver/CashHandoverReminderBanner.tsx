@@ -1,5 +1,7 @@
 'use client'
 
+import { Icon } from '@/components/ui/Icon'
+
 interface Props {
   unsettledCount: number
   unsettledTotal: number
@@ -16,7 +18,7 @@ export default function CashHandoverReminderBanner({
       dir={isRTL ? 'rtl' : 'ltr'}
       className="flex items-center gap-3 rounded-2xl border border-red-500/40 bg-red-500/15 px-4 py-3 animate-pulse"
     >
-      <span className="text-xl leading-none shrink-0">💵</span>
+      <Icon name="cash" size={22} className="shrink-0 text-red-300" />
       <div className="flex-1 min-w-0">
         <p className={`font-black text-sm text-red-300 leading-tight ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
           {isRTL

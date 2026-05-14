@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import type { Json } from '@/lib/supabase/types'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 interface PaymentMethods {
   cash:    boolean
@@ -70,7 +71,7 @@ export default function PaymentSettings() {
       <div className="flex flex-col gap-3">
         {/* Cash on Delivery */}
         <PaymentCard
-          icon="💵"
+          icon="cash"
           labelAr="الدفع نقداً"
           labelEn="Cash on Delivery"
           descAr="الطريقة الأكثر شيوعاً — متاح دائماً"
@@ -86,7 +87,7 @@ export default function PaymentSettings() {
 
         {/* Benefit Pay */}
         <PaymentCard
-          icon="🏦"
+          icon="bank"
           labelAr="بنفيت باي (رمز QR)"
           labelEn="Benefit Pay (QR Code)"
           descAr="دفع سريع عبر رمز QR — يتطلب اعتماد التاجر"
@@ -111,7 +112,7 @@ export default function PaymentSettings() {
             </span>
           </div>
           <div className="flex items-center gap-4 px-5 py-4 opacity-40">
-            <span className="text-2xl">💳</span>
+            <Icon name="wallet" size={24} className="text-brand-gold" />
             <div className="flex-1">
               <span className={`text-sm font-black text-brand-text block ${font}`}>
                 {isAr ? 'بطاقات الدفع (Tap Payments)' : 'Card Payments (Tap Payments)'}
@@ -140,7 +141,7 @@ export default function PaymentSettings() {
         </button>
         {saveState === 'saved' && (
           <span className={`text-brand-success text-sm font-bold ${font}`}>
-            {isAr ? '✓ تم الحفظ' : '✓ Saved'}
+            {isAr ? 'تم الحفظ' : 'Saved'}
           </span>
         )}
         {saveState === 'error' && (
@@ -158,7 +159,7 @@ function PaymentCard({
   checked, onToggle, statusAr, statusEn, statusType, configNote,
   font, isAr,
 }: {
-  icon:        string
+  icon:        IconName
   labelAr:     string
   labelEn:     string
   descAr:      string
@@ -176,7 +177,7 @@ function PaymentCard({
     <div className={`rounded-2xl border transition-all duration-200
       ${checked ? 'border-brand-gold/30 bg-brand-surface' : 'border-brand-border bg-brand-surface-2'}`}>
       <div className="flex items-center gap-4 px-5 py-4">
-        <span className="text-2xl">{icon}</span>
+        <Icon name={icon} size={24} className="text-brand-gold" />
         <div className="flex-1 min-w-0">
           <span className={`text-sm font-black text-brand-text block ${font}`}>
             {isAr ? labelAr : labelEn}

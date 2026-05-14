@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { colors, fonts } from '@/lib/design-tokens'
 import { useLocale, useTranslations } from 'next-intl'
 import type { AnalyticsMenuEngineeringRow } from '@/lib/analytics/queries'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 interface Props {
   data:      AnalyticsMenuEngineeringRow[]
@@ -198,14 +199,14 @@ export default function AnalyticsMenuMatrix({ data, isLoading }: Props) {
       {/* Quadrant Legend Mobile/Info */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { key: 'Star', icon: '⭐', desc: t('descStar') },
-          { key: 'Plowhorse', icon: '🐎', desc: t('descPlowhorse') },
-          { key: 'Puzzle', icon: '🧩', desc: t('descPuzzle') },
-          { key: 'Dog', icon: '🐕', desc: t('descDog') }
+          { key: 'Star', icon: 'star', desc: t('descStar') },
+          { key: 'Plowhorse', icon: 'trending-up', desc: t('descPlowhorse') },
+          { key: 'Puzzle', icon: 'question', desc: t('descPuzzle') },
+          { key: 'Dog', icon: 'trending-down', desc: t('descDog') }
         ].map((item) => (
           <div key={item.key} className="p-3 rounded-lg border border-brand-border/30 bg-brand-surface-2/30">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-sm">{item.icon}</span>
+              <Icon name={item.icon as IconName} size={14} style={{ color: getClassificationColor(item.key) }} />
               <span className={`${headingFont} text-[11px] font-bold`} style={{ color: getClassificationColor(item.key) }}>
                 {t(`class${item.key}`)}
               </span>

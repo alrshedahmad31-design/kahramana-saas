@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { Icon } from '@/components/ui/Icon'
 import { useState, useRef, useCallback } from 'react'
 import ImportPreview from './ImportPreview'
 import { importInventoryExcel } from '@/app/[locale]/dashboard/inventory/import/actions'
@@ -274,7 +275,7 @@ export default function ImportDropzone({ locale }: Props) {
       {phase === 'done' && importSuccess && (
         <div className="rounded-xl border border-brand-success/30 bg-brand-success/5 p-5 flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <span className="text-brand-success text-2xl">✓</span>
+            <Icon name="check" size={24} className="text-brand-success" />
             <h3 className="font-cairo text-lg font-bold text-brand-success">
               {t('success')}
             </h3>

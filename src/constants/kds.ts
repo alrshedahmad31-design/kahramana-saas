@@ -1,42 +1,43 @@
 import { KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
 import { tokens } from '@/lib/design-tokens'
+import type { IconName } from '@/components/ui/Icon'
 
 // Canonical 5-station taxonomy + explicit unassigned queue (migration 093/094).
 // Legacy stations (shawarma, bakery, appetizer_drinks, main, fry, salads,
 // packing) are intentionally NOT listed here — they only appear on legacy
 // in-flight rows and fall through to `unassigned` via getStationConfig().
 export const STATION_CONFIG: Partial<Record<KDSStation, {
-  icon: string
+  icon: IconName
   color: string
   label: { ar: string; en: string }
 }>> = {
   mains: {
-    icon: '🥘',
+    icon: 'dish',
     color: tokens.color.kdsAmber,
     label: { ar: 'الأطباق الرئيسية', en: 'Mains' },
   },
   grill: {
-    icon: '🔥',
+    icon: 'grills',
     color: tokens.color.kdsOrange,
     label: { ar: 'المشاوي', en: 'Grill' },
   },
   shawarma: {
-    icon: '🌯',
+    icon: 'sandwiches',
     color: tokens.color.kdsBlue,
     label: { ar: 'الشاورما والسندويشات', en: 'Shawarma' },
   },
   pizza: {
-    icon: '🍕',
+    icon: 'pizza',
     color: tokens.color.gold,
     label: { ar: 'البيتزا والفطائر', en: 'Pizza' },
   },
   cold: {
-    icon: '🥗',
+    icon: 'appetizers',
     color: tokens.color.success,
     label: { ar: 'المقبلات والحلويات', en: 'Cold' },
   },
   unassigned: {
-    icon: '❓',
+    icon: 'question',
     color: tokens.color.muted,
     label: { ar: 'غير مُعيَّن', en: 'Unassigned' },
   },

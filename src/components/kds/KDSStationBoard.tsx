@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { tokens } from '@/lib/design-tokens'
 import type { KDSOrder, KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
 import { getStationConfig } from '@/constants/kds'
+import { Icon } from '@/components/ui/Icon'
 import KDSStationOrderCard from './KDSStationOrderCard'
 import KDSDialog from './KDSDialog'
 import { playBumpTone, playTripleBeep } from '@/lib/kds/audio'
@@ -286,7 +287,7 @@ export default function KDSStationBoard({
           >
             <BackIcon className={`w-6 h-6 text-brand-muted ${isAr ? 'rotate-180' : ''}`} />
           </button>
-          <span className="text-3xl leading-none">{stationConfig.icon}</span>
+          <Icon name={stationConfig.icon} size={32} className="leading-none" />
           <h1 className="text-2xl font-black font-cairo tracking-tight">
             {isAr ? stationConfig.label.ar : stationConfig.label.en}
           </h1>
@@ -430,7 +431,7 @@ export default function KDSStationBoard({
 
           {activeOrders.length === 0 && stalledOrders.length === 0 && !refreshError && (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 opacity-20 select-none">
-              <span className="text-8xl leading-none">{stationConfig.icon}</span>
+              <Icon name={stationConfig.icon} size={96} className="leading-none" />
               <p className="text-2xl font-bold">{t('noOrders')}</p>
             </div>
           )}

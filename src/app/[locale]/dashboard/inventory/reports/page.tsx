@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -9,18 +10,18 @@ interface PageProps {
 }
 
 const REPORTS = [
-  { key: 'cogs',             icon: '💰', titleAr: 'تكلفة الأصناف (COGS)',          descAr: 'هامش الربح لكل طبق',                         titleEn: 'Dish COGS',            descEn: 'Profit margin per dish' },
-  { key: 'variance',         icon: '📊', titleAr: 'تقرير التباين',                  descAr: 'الفرق بين الاستهلاك الفعلي والنظري',          titleEn: 'Variance Report',      descEn: 'Actual vs theoretical usage' },
-  { key: 'waste',            icon: '🗑️', titleAr: 'تقرير الهدر',                   descAr: 'تحليل الهدر حسب السبب والمكوّن',              titleEn: 'Waste Report',         descEn: 'Waste analysis by reason' },
-  { key: 'valuation',        icon: '🏦', titleAr: 'تقييم المخزون',                  descAr: 'القيمة الإجمالية للمخزون بالفرع',             titleEn: 'Inventory Valuation',  descEn: 'Total stock value by branch' },
-  { key: 'menu-engineering', icon: '🗺️', titleAr: 'هندسة القائمة',                 descAr: 'مصفوفة Stars/Puzzles/Plowhorses/Dogs',        titleEn: 'Menu Engineering',     descEn: 'Stars/Puzzles/Plowhorses/Dogs matrix' },
-  { key: 'vendor',           icon: '🏪', titleAr: 'أداء الموردين',                  descAr: 'دقة التسليم والجودة والإنفاق',                titleEn: 'Vendor Performance',   descEn: 'Delivery accuracy, quality, spend' },
-  { key: 'dead-stock',       icon: '💤', titleAr: 'المخزون الراكد',                 descAr: 'أصناف لم تتحرك منذ فترة',                    titleEn: 'Dead Stock',           descEn: 'Items with no movement' },
-  { key: 'expiry',           icon: '⏰', titleAr: 'تقرير الصلاحية',                 descAr: 'المخزون القريب من الانتهاء',                  titleEn: 'Expiry Report',        descEn: 'Stock nearing expiry' },
-  { key: 'price-history',    icon: '📈', titleAr: 'سجل الأسعار',                   descAr: 'تاريخ أسعار المشتريات من الموردين',           titleEn: 'Price History',        descEn: 'Purchase price history by supplier' },
-  { key: 'abc-analysis',     icon: '🔤', titleAr: 'تحليل ABC',                     descAr: 'تصنيف المخزون حسب القيمة',                    titleEn: 'ABC Analysis',         descEn: 'Inventory classification by value' },
-  { key: 'food-cost',        icon: '🍽️', titleAr: 'تكلفة الغذاء',                  descAr: 'نسبة تكلفة الغذاء الفعلية مقابل الهدف',      titleEn: 'Food Cost',            descEn: 'Actual vs target food cost %' },
-]
+  { key: 'cogs',             icon: 'wallet',      titleAr: 'تكلفة الأصناف (COGS)',          descAr: 'هامش الربح لكل طبق',                         titleEn: 'Dish COGS',            descEn: 'Profit margin per dish' },
+  { key: 'variance',         icon: 'chart',       titleAr: 'تقرير التباين',                  descAr: 'الفرق بين الاستهلاك الفعلي والنظري',          titleEn: 'Variance Report',      descEn: 'Actual vs theoretical usage' },
+  { key: 'waste',            icon: 'trash',       titleAr: 'تقرير الهدر',                   descAr: 'تحليل الهدر حسب السبب والمكوّن',              titleEn: 'Waste Report',         descEn: 'Waste analysis by reason' },
+  { key: 'valuation',        icon: 'bank',        titleAr: 'تقييم المخزون',                  descAr: 'القيمة الإجمالية للمخزون بالفرع',             titleEn: 'Inventory Valuation',  descEn: 'Total stock value by branch' },
+  { key: 'menu-engineering', icon: 'map',         titleAr: 'هندسة القائمة',                 descAr: 'مصفوفة Stars/Puzzles/Plowhorses/Dogs',        titleEn: 'Menu Engineering',     descEn: 'Stars/Puzzles/Plowhorses/Dogs matrix' },
+  { key: 'vendor',           icon: 'store',       titleAr: 'أداء الموردين',                  descAr: 'دقة التسليم والجودة والإنفاق',                titleEn: 'Vendor Performance',   descEn: 'Delivery accuracy, quality, spend' },
+  { key: 'dead-stock',       icon: 'sleep',       titleAr: 'المخزون الراكد',                 descAr: 'أصناف لم تتحرك منذ فترة',                    titleEn: 'Dead Stock',           descEn: 'Items with no movement' },
+  { key: 'expiry',           icon: 'clock',       titleAr: 'تقرير الصلاحية',                 descAr: 'المخزون القريب من الانتهاء',                  titleEn: 'Expiry Report',        descEn: 'Stock nearing expiry' },
+  { key: 'price-history',    icon: 'trending-up', titleAr: 'سجل الأسعار',                   descAr: 'تاريخ أسعار المشتريات من الموردين',           titleEn: 'Price History',        descEn: 'Purchase price history by supplier' },
+  { key: 'abc-analysis',     icon: 'alphabet',    titleAr: 'تحليل ABC',                     descAr: 'تصنيف المخزون حسب القيمة',                    titleEn: 'ABC Analysis',         descEn: 'Inventory classification by value' },
+  { key: 'food-cost',        icon: 'dish',        titleAr: 'تكلفة الغذاء',                  descAr: 'نسبة تكلفة الغذاء الفعلية مقابل الهدف',      titleEn: 'Food Cost',            descEn: 'Actual vs target food cost %' },
+] satisfies Array<{ key: string; icon: IconName; titleAr: string; descAr: string; titleEn: string; descEn: string }>
 
 const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager']
 
@@ -47,7 +48,7 @@ export default async function ReportsHubPage({ params }: PageProps) {
             href={`${prefix}/dashboard/inventory/reports/${report.key}`}
             className="group flex flex-col gap-3 rounded-xl border border-brand-border bg-brand-surface p-5 hover:border-brand-gold hover:bg-brand-surface-2 transition-colors duration-150"
           >
-            <span className="text-3xl">{report.icon}</span>
+            <Icon name={report.icon} size={28} className="text-brand-gold" />
             <div>
               <p className="font-cairo text-sm font-black text-brand-text group-hover:text-brand-gold transition-colors">
                 {isAr ? report.titleAr : report.titleEn}

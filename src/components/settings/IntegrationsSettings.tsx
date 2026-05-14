@@ -1,12 +1,13 @@
 'use client'
 
 import { useLocale } from 'next-intl'
+import { Icon, type IconName } from '@/components/ui/Icon'
 
 type IntStatus = 'connected' | 'coming_soon'
 
 interface Integration {
   id:      string
-  icon:    string
+  icon:    IconName
   labelAr: string
   labelEn: string
   descAr:  string
@@ -17,7 +18,7 @@ interface Integration {
 const INTEGRATIONS: Integration[] = [
   {
     id:      'google_analytics',
-    icon:    '📊',
+    icon:    'chart',
     labelAr: 'Google Analytics',
     labelEn: 'Google Analytics',
     descAr:  'تتبع أداء الموقع وسلوك الزوار',
@@ -26,7 +27,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id:      'whatsapp',
-    icon:    '💬',
+    icon:    'message',
     labelAr: 'WhatsApp Business API',
     labelEn: 'WhatsApp Business API',
     descAr:  'إرسال إشعارات الطلبات للعملاء تلقائياً',
@@ -35,7 +36,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id:      'sendgrid',
-    icon:    '📧',
+    icon:    'email',
     labelAr: 'البريد الإلكتروني (SendGrid)',
     labelEn: 'Email Service (SendGrid)',
     descAr:  'إرسال رسائل بريد إلكتروني للمعاملات',
@@ -44,7 +45,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id:      'deliverect',
-    icon:    '🚴',
+    icon:    'driver',
     labelAr: 'Deliverect (منصات التوصيل)',
     labelEn: 'Deliverect (Delivery Platforms)',
     descAr:  'تكامل مع Talabat وCareem وغيرها',
@@ -53,7 +54,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id:      'pos',
-    icon:    '🖥️',
+    icon:    'monitor',
     labelAr: 'نظام نقطة البيع (POS)',
     labelEn: 'POS System',
     descAr:  'مزامنة الطلبات مع نظام الكاشير',
@@ -135,7 +136,7 @@ function IntCard({
     <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all
       ${isConnected ? 'border-brand-gold/30 bg-brand-surface' : 'border-brand-border bg-brand-surface-2 opacity-70'}`}
     >
-      <span className="text-2xl shrink-0">{int.icon}</span>
+      <Icon name={int.icon} size={24} className="shrink-0 text-brand-gold" />
       <div className="flex-1 min-w-0">
         <span className={`text-sm font-black text-brand-text block ${font}`}>
           {isAr ? int.labelAr : int.labelEn}
@@ -148,7 +149,7 @@ function IntCard({
         {isConnected ? (
           <>
             <span className={`text-[10px] text-brand-success border border-brand-success/30 bg-brand-success/5 px-2.5 py-1 rounded-full font-bold ${font}`}>
-              {isAr ? 'متصل ✓' : 'Connected ✓'}
+              {isAr ? 'متصل' : 'Connected'}
             </span>
             <button
               type="button"

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { Icon } from '@/components/ui/Icon'
 
 interface Profile {
   id:                      string
@@ -151,7 +152,7 @@ export default function ProfileSettings() {
           <div className="relative w-20 h-20 rounded-2xl bg-brand-surface-2 border border-brand-border overflow-hidden flex items-center justify-center shrink-0">
             {logoPreview
               ? <Image src={logoPreview} alt="logo" fill sizes="80px" className="object-cover" />
-              : <span className={`text-brand-muted text-2xl ${font}`}>🏪</span>
+              : <Icon name="store" size={28} className={`text-brand-muted ${font}`} />
             }
           </div>
           <div className="flex flex-col gap-2">
@@ -303,7 +304,7 @@ export default function ProfileSettings() {
 
         {saveState === 'saved' && (
           <span className={`text-brand-success text-sm font-bold ${font}`}>
-            {isAr ? '✓ تم الحفظ' : '✓ Saved'}
+            {isAr ? 'تم الحفظ' : 'Saved'}
           </span>
         )}
         {saveState === 'error' && (

@@ -99,7 +99,7 @@ export default function TransferForm({
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-brand-surface-2 text-brand-muted hover:text-brand-text transition-colors"
           >
-            ✕
+            x
           </button>
         </div>
 

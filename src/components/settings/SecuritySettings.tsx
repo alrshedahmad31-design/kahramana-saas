@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { Icon } from '@/components/ui/Icon'
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -95,7 +96,7 @@ export default function SecuritySettings() {
           </button>
           {saveState === 'saved' && (
             <span className={`text-brand-success text-sm font-bold ${font}`}>
-              {isAr ? '✓ تم التحديث' : '✓ Updated'}
+              {isAr ? 'تم التحديث' : 'Updated'}
             </span>
           )}
         </div>
@@ -111,7 +112,7 @@ export default function SecuritySettings() {
         </label>
         <div className="flex items-center justify-between gap-4 px-4 py-4 rounded-xl bg-brand-surface-2 border border-brand-border">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">💻</span>
+            <Icon name="laptop" size={24} className="text-brand-gold" />
             <div className="flex flex-col gap-0.5">
               <span className={`text-sm font-bold text-brand-text ${font}`}>
                 {isAr ? 'الجلسة الحالية' : 'Current session'}

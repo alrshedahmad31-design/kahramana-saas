@@ -156,7 +156,7 @@ export default function CashHandoverModal({ cashOrders, isPartial, isRTL, onClos
             `}
           >
             {done
-              ? (isRTL ? 'تم التسليم ✓' : 'Confirmed ✓')
+              ? (isRTL ? 'تم التسليم' : 'Confirmed')
               : loading
                 ? '…'
                 : (isRTL ? 'تأكيد التسليم للمطعم' : 'Confirm Handed to Restaurant')

@@ -10,6 +10,7 @@ import { formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { X, Trash2, Minus, Plus, ShoppingBag, MapPin } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 
 export default function CartBottomSheet() {
   const locale = useLocale()
@@ -374,7 +375,7 @@ function CartItemRow({ item, isRTL, locale, labels, onRemove, onUpdateQty, onUpd
             onClick={() => setNotesOpen(true)}
             className={`text-[11px] text-brand-gold/70 hover:text-brand-gold transition-colors ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
           >
-            ✏️ {item.notes}
+            <Icon name="edit" size={12} className="me-1 inline-block" /> {item.notes}
           </button>
         ) : notesOpen ? (
           <textarea

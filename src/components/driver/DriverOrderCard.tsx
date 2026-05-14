@@ -14,6 +14,7 @@ import DeliveryFailedModal                                    from '@/components
 import DeliveryProofCapture                                   from '@/components/driver/DeliveryProofCapture'
 import type { DriverOrder }                                   from '@/lib/supabase/custom-types'
 import type { BranchId }                                      from '@/constants/contact'
+import { Icon, type IconName }                                from '@/components/ui/Icon'
 
 type DriverActiveStatus = 'ready' | 'out_for_delivery'
 type Urgency            = 'critical' | 'urgent' | 'normal'
@@ -61,11 +62,11 @@ const URGENCY_CFG: Record<Urgency, {
   },
 }
 
-const PAYMENT_LABEL: Record<string, { en: string; ar: string; icon: string }> = {
-  cash:       { en: 'Cash',       ar: 'كاش',   icon: '💵' },
-  benefit_qr: { en: 'BenefitPay', ar: 'بنفت',  icon: '📱' },
-  tap_card:   { en: 'Card',       ar: 'بطاقة',  icon: '💳' },
-  tap_knet:   { en: 'KNET',       ar: 'كي-نت',  icon: '💳' },
+const PAYMENT_LABEL: Record<string, { en: string; ar: string; icon: IconName }> = {
+  cash:       { en: 'Cash',       ar: 'كاش',   icon: 'cash' },
+  benefit_qr: { en: 'BenefitPay', ar: 'بنفت',  icon: 'phone' },
+  tap_card:   { en: 'Card',       ar: 'بطاقة',  icon: 'wallet' },
+  tap_knet:   { en: 'KNET',       ar: 'كي-نت',  icon: 'wallet' },
 }
 
 // ── Progress step derivation ───────────────────────────────────────────────────
@@ -476,7 +477,7 @@ export default function DriverOrderCard({
                     ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-gold text-brand-black'}
                   `}
                 >
-                  {busy ? '…' : (isRTL ? 'استلام وبدء التوصيل ✓' : 'ACCEPT & PICK UP ✓')}
+                  {busy ? '…' : (isRTL ? 'استلام وبدء التوصيل' : 'ACCEPT & PICK UP')}
                 </button>
               )}
 
@@ -496,7 +497,7 @@ export default function DriverOrderCard({
                     }
                   `}
                 >
-                  {busy ? '…' : (isRTL ? 'وصلت للزبون 📍' : 'ARRIVED 📍')}
+                  {busy ? '…' : (isRTL ? 'وصلت للزبون' : 'ARRIVED')}
                 </button>
               )}
 
@@ -567,7 +568,7 @@ export default function DriverOrderCard({
                           disabled={busy}
                           className="flex-[2] rounded-xl py-2 bg-brand-success text-brand-black text-sm font-black"
                         >
-                          {busy ? '…' : (isRTL ? 'نعم، تم التسليم ✓' : 'Yes, Delivered ✓')}
+                          {busy ? '…' : (isRTL ? 'نعم، تم التسليم' : 'Yes, Delivered')}
                         </button>
                       </div>
                     </div>
@@ -585,7 +586,7 @@ export default function DriverOrderCard({
                         ${busy ? 'bg-brand-surface-2 text-brand-muted' : 'bg-brand-success text-brand-black'}
                       `}
                     >
-                      {busy ? '…' : (isRTL ? 'تم تسليم الطلب ✓' : 'DELIVERED ✓')}
+                      {busy ? '…' : (isRTL ? 'تم تسليم الطلب' : 'DELIVERED')}
                     </button>
                   )}
                 </>
@@ -594,7 +595,7 @@ export default function DriverOrderCard({
               {/* Action error */}
               {actionError && (
                 <div className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2.5 bg-red-500/15 border border-red-500/30">
-                  <span className="text-red-400 text-base leading-none shrink-0">⚠️</span>
+                  <Icon name="warning" size={16} className="text-red-400 shrink-0" />
                   <span className={`text-sm text-red-400 font-bold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                     {actionError === 'Unexpected order state'
                       ? (isRTL ? 'استُلم هذا الطلب من قِبل سائق آخر' : 'Another driver already took this order')
@@ -611,7 +612,7 @@ export default function DriverOrderCard({
           {/* ── Payment alert — cash (active orders only) ──────────────────────── */}
           {!isCompleted && paymentInfo?.en === 'Cash' && (
             <div className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 border bg-red-500/15 border-red-500/40 ${uc.pulse ? 'animate-pulse' : ''}`}>
-              <span className="text-base leading-none">💵</span>
+              <Icon name="cash" size={18} className="text-red-400" />
               <div>
                 <p className={`font-black text-xs text-red-400 uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                   {isRTL ? 'المبلغ المطلوب تحصيله' : 'Cash to collect'}
@@ -627,7 +628,7 @@ export default function DriverOrderCard({
           {/* ── Prepaid badge (active orders only) ────────────────────────────── */}
           {!isCompleted && paymentInfo && paymentInfo.en !== 'Cash' && (
             <div className="flex items-center justify-center gap-2 rounded-xl px-3 py-2 border bg-brand-success/10 border-brand-success/25">
-              <span className="text-sm leading-none">{paymentInfo.icon}</span>
+              <Icon name={paymentInfo.icon} size={16} className="text-brand-success" />
               <span className={`font-bold text-xs text-brand-success ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                 {isRTL ? `مدفوع مسبقًا — ${paymentInfo.ar}` : `Pre-paid — ${paymentInfo.en}`}
               </span>
@@ -775,7 +776,7 @@ export default function DriverOrderCard({
                   {order.notes && (
                     <div className="mt-2 rounded-lg border border-brand-error/30 bg-brand-error/10 px-3 py-2">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-sm leading-none shrink-0">📝</span>
+                        <Icon name="note" size={14} className="shrink-0 text-brand-error" />
                         <span className={`text-[10px] font-black text-brand-error uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                           {isRTL ? 'ملاحظة التوصيل:' : 'Delivery Note:'}
                         </span>
@@ -820,7 +821,7 @@ export default function DriverOrderCard({
               {order.notes && (
                 <div className="mt-2.5 mx-1 mb-1 rounded-lg border border-brand-error/30 bg-brand-error/10 px-3 py-2">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm leading-none shrink-0">📝</span>
+                    <Icon name="note" size={14} className="shrink-0 text-brand-error" />
                     <span className={`text-[10px] font-black text-brand-error uppercase tracking-wider ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                       {isRTL ? 'ملاحظة التوصيل:' : 'Delivery Note:'}
                     </span>

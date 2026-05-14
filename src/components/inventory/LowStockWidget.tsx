@@ -24,7 +24,7 @@ export default function LowStockWidget({ items, prefix, locale = 'ar' }: Props) 
         <WidgetHeader hasCrit={false} prefix={prefix} isAr={isAr} total={0} />
         <div className="flex-1 flex items-center justify-center">
           <p className="font-satoshi text-sm text-brand-muted text-center py-4">
-            {isAr ? '✅ المخزون كافٍ' : '✅ Stock levels sufficient'}
+            {isAr ? 'المخزون كافٍ' : 'Stock levels sufficient'}
           </p>
         </div>
       </div>

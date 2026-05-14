@@ -1,6 +1,7 @@
 'use client'
 
 import { useLocale } from 'next-intl'
+import { Icon } from '@/components/ui/Icon'
 
 interface Props {
   title: string
@@ -16,7 +17,7 @@ export default function EmptyReport({ title, description, cta }: Props) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-4 text-center bg-brand-surface/50 rounded-2xl border border-dashed border-brand-border/60">
       <div className="w-20 h-20 rounded-full bg-brand-surface-2 flex items-center justify-center text-3xl shadow-inner">
-        📊
+        <Icon name="chart" size={32} className="text-brand-gold" />
       </div>
       <div className="space-y-1">
         <p className={`${isAr ? 'font-cairo' : 'font-satoshi'} text-lg font-black text-brand-text`}>{title}</p>
@@ -33,4 +34,3 @@ export default function EmptyReport({ title, description, cta }: Props) {
     </div>
   )
 }
-

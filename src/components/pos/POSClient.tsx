@@ -433,7 +433,7 @@ export default function POSClient({
           {success.warning && (
             <div className={`mb-6 rounded-lg border border-brand-gold/40 bg-brand-gold/10 px-4 py-3 text-start ${isAr ? 'font-almarai' : 'font-satoshi'}`} role="alert">
               <p className="text-sm font-bold text-brand-gold mb-1">
-                {isAr ? '⚠ يلزم تدخّل المدير' : '⚠ Manager resolution required'}
+                {isAr ? 'يلزم تدخّل المدير' : 'Manager resolution required'}
               </p>
               <p className="text-xs text-brand-gold/90">
                 {success.warning}
