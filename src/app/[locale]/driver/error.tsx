@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useLocale } from 'next-intl'
+import { useParams } from 'next/navigation'
 
 interface Props {
   error: Error & { digest?: string }
@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function DriverError({ error, reset }: Props) {
-  const isAr = useLocale() === 'ar'
+  const { locale } = useParams<{ locale: string }>()
+  const isAr = locale === 'ar'
 
   useEffect(() => {
     console.error('[DriverError]', error)

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { requireDashboardSection, isDashboardGuardError } from '@/lib/auth/dashboard-guards'
 import { BRANCH_LIST, SITE_URL } from '@/constants/contact'
@@ -15,6 +16,7 @@ export default async function TablesPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   const search = await searchParams
   const prefix = locale === 'en' ? '/en' : ''
+  const t = await getTranslations({ locale, namespace: 'tablesAdmin' })
 
   let user
   try {
@@ -54,6 +56,14 @@ export default async function TablesPage({ params, searchParams }: PageProps) {
       isGlobalAdmin={isGlobalAdmin}
       siteUrl={SITE_URL}
       locale={locale === 'en' ? 'en' : 'ar'}
+      messages={{
+        title:       t('title'),
+        subtitle:    t('subtitle'),
+        downloadQr:  t('downloadQr'),
+        downloadAll: t('downloadAll'),
+        empty:       t('empty'),
+        inactive:    t('inactive'),
+      }}
     />
   )
 }

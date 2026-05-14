@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useLocale } from 'next-intl'
+import { useParams } from 'next/navigation'
 import { Link } from '@/i18n/navigation'
 
 interface Props {
@@ -10,7 +10,8 @@ interface Props {
 }
 
 export default function CheckoutError({ error, reset }: Props) {
-  const isAr = useLocale() === 'ar'
+  const { locale } = useParams<{ locale: string }>()
+  const isAr = locale === 'ar'
 
   useEffect(() => {
     console.error('[CheckoutError]', error)

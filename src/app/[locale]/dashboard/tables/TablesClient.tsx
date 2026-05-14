@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import QRCode from 'qrcode'
 import { Download, Loader2 } from 'lucide-react'
 import { tokens } from '@/lib/design-tokens'
@@ -22,6 +21,15 @@ interface BranchOption {
   nameEn: string
 }
 
+interface TablesMessages {
+  title:       string
+  subtitle:    string
+  downloadQr:  string
+  downloadAll: string
+  empty:       string
+  inactive:    string
+}
+
 interface Props {
   tables:        TableRow[]
   branchId:      string
@@ -29,12 +37,12 @@ interface Props {
   isGlobalAdmin: boolean
   siteUrl:       string
   locale:        'ar' | 'en'
+  messages:      TablesMessages
 }
 
 export default function TablesClient({
-  tables, branchId, branches, isGlobalAdmin, siteUrl, locale,
+  tables, branchId, branches, isGlobalAdmin, siteUrl, locale, messages,
 }: Props) {
-  const t = useTranslations('tablesAdmin')
   const isAr = locale === 'ar'
 
   const [downloading, setDownloading] = useState<string | null>(null)
@@ -100,10 +108,10 @@ export default function TablesClient({
       <header className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <div>
           <h1 className={`text-2xl font-black text-brand-text ${isAr ? 'font-cairo' : 'font-satoshi'}`}>
-            {t('title')}
+            {messages.title}
           </h1>
           <p className={`text-sm text-brand-muted mt-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {t('subtitle')}
+            {messages.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -136,7 +144,7 @@ export default function TablesClient({
             } ${isAr ? 'font-cairo' : 'font-satoshi'}`}
           >
             {bulkLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            {t('downloadAll')}
+            {messages.downloadAll}
           </button>
         </div>
       </header>
@@ -144,7 +152,7 @@ export default function TablesClient({
       {tables.length === 0 ? (
         <div className="bg-brand-surface border border-brand-border rounded-xl p-8 text-center">
           <p className={`text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {t('empty')}
+            {messages.empty}
           </p>
         </div>
       ) : (
@@ -171,7 +179,7 @@ export default function TablesClient({
                     </p>
                     {!table.is_active && (
                       <span className={`inline-block mt-1 text-[10px] uppercase tracking-wide rounded bg-brand-error/20 text-brand-error px-2 py-0.5 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-                        {t('inactive')}
+                        {messages.inactive}
                       </span>
                     )}
                   </div>
@@ -190,7 +198,7 @@ export default function TablesClient({
                     ) : (
                       <Download size={14} />
                     )}
-                    {t('downloadQr')}
+                    {messages.downloadQr}
                   </button>
                 </div>
               </li>
