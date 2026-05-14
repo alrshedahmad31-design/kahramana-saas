@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { useAudioAlert } from '@/hooks/useAudioAlert'
+import { useKitchenAlert } from '@/hooks/useKitchenAlert'
 import StatusBadge from '@/components/dashboard/StatusBadge'
 import OrderStatusSelect from '@/components/dashboard/OrderStatusSelect'
 import OrderStatsBar from '@/components/dashboard/OrderStatsBar'
@@ -112,7 +113,8 @@ export default function OrdersClient({
   const locale = useLocale()
   const isAr   = locale === 'ar'
 
-  const { isMuted, toggleMute, alert: bellAlert } = useAudioAlert()
+  const { isMuted, toggleMute, alert: bellAlert, mutedRef } = useAudioAlert()
+  const { startAlert: startKitchenAlert, stopAlert: stopKitchenAlert } = useKitchenAlert(mutedRef)
 
   const [orders,        setOrders]        = useState<OrderCardData[]>(initialOrders)
   useEffect(() => { console.log('Orders State Updated at', new Date().toLocaleTimeString(), ':', orders.map(o => o.status)) }, [orders])
@@ -243,6 +245,25 @@ export default function OrdersClient({
   // bellAlert is stable (useCallback with empty deps) — intentionally omitted
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, fetchOrders])
+
+  // Persistent kitchen alarm — loops while any New/Under-Review order has been
+  // sitting in the queue for ≥ 3 minutes. Mute toggle is shared via mutedRef
+  // (useAudioAlert), so the existing speaker button silences this too.
+  useEffect(() => {
+    const THRESHOLD_MS = 3 * 60 * 1000
+    const evaluate = () => {
+      const now = Date.now()
+      const stuck = orders.some(o =>
+        (o.status === 'new' || o.status === 'under_review') &&
+        now - new Date(o.created_at).getTime() >= THRESHOLD_MS,
+      )
+      if (stuck) startKitchenAlert()
+      else stopKitchenAlert()
+    }
+    evaluate()
+    const tick = setInterval(evaluate, 10_000)
+    return () => clearInterval(tick)
+  }, [orders, startKitchenAlert, stopKitchenAlert])
 
   function handleStatusChange(orderId: string, next: OrderStatus) {
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: next } : o)))
