@@ -7,6 +7,7 @@ import { cookies, headers }            from 'next/headers'
 import { Ratelimit }                   from '@upstash/ratelimit'
 import { Redis }                       from '@upstash/redis'
 import { calcTotalHours, calcOvertimeHours } from '@/lib/staff/calculations'
+import { toSafeError }                  from '@/lib/utils/safe-error'
 import type { StaffBasicRow, StaffRole } from '@/lib/supabase/custom-types'
 
 export type ClockResult =
@@ -239,7 +240,7 @@ export async function clockIn(
     .select('id')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   return { success: true, entryId: (data as { id: string }).id }
 }
 
@@ -274,6 +275,6 @@ export async function clockOut(
     overtime_hours: overtimeHours,
   }).eq('id', entryId)
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   return { success: true, hoursWorked: totalHours }
 }

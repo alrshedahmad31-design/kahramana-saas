@@ -14,6 +14,7 @@ import { resolveBestPromotion } from '@/lib/promotions/server'
 import { buildOrderTrackingUrl, buildPricedCheckoutWhatsAppLinks } from '@/lib/whatsapp'
 import { sendOrderConfirmation } from '@/lib/email/send'
 import { geocodeBahrainAddress } from '@/lib/utils/geocode'
+import { toSafeError } from '@/lib/utils/safe-error'
 
 function normalizePhone(raw: string): string {
   const s = raw.replace(/[\s\-().]/g, '')
@@ -300,7 +301,7 @@ async function ensureCheckoutBranch(
     .eq('id', branchId)
     .maybeSingle()
 
-  if (selectError) return { error: selectError.message }
+  if (selectError) return { error: toSafeError(selectError) }
   if (existing) return { branchId }
 
   const { error: upsertError } = await supabase
@@ -316,7 +317,7 @@ async function ensureCheckoutBranch(
       is_active: branch.status === 'active',
     }, { onConflict: 'id' })
 
-  if (upsertError) return { error: upsertError.message }
+  if (upsertError) return { error: toSafeError(upsertError) }
 
   return { branchId }
 }
@@ -415,7 +416,7 @@ async function fetchAndComputeCouponDiscount(
     .eq('coupon_id', couponId)
     .eq('customer_id', customerId)
 
-  if (usageError) return { error: usageError.message }
+  if (usageError) return { error: toSafeError(usageError) }
   if ((customerUsageCount ?? 0) >= coupon.per_customer_limit) {
     return { error: 'Coupon customer limit reached' }
   }
@@ -475,7 +476,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       })
 
       if (stockError) {
-        return { orderId: '', finalTotal: 0, error: stockError.message }
+        return { orderId: '', finalTotal: 0, error: toSafeError(stockError) }
       }
 
       for (const row of stockRows ?? []) {
@@ -678,7 +679,10 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
         const existing = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
         if (existing) return existing
       }
-      return { orderId: '', finalTotal: 0, error: rpcError.message ?? 'Order creation failed' }
+      // Sentinel codes above (COUPON_INVALID, PRICE_MISMATCH, AUTH_REQUIRED)
+      // pass through with user-safe strings. Anything else collapses to a
+      // generic message to keep RPC internals out of the public response.
+      return { orderId: '', finalTotal: 0, error: toSafeError(rpcError) }
     }
 
     if (!orderId) return { orderId: '', finalTotal: 0, error: 'Order creation failed' }
