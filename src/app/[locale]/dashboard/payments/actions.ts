@@ -7,6 +7,7 @@ import {
   isDashboardGuardError,
 } from '@/lib/auth/dashboard-guards'
 import { refundCharge, TapRefundError } from '@/lib/payments/tap-client'
+import { restoreLoyaltyForReversedOrder } from '@/lib/loyalty/restore'
 
 export async function refundPayment(
   paymentId: string,
@@ -84,7 +85,7 @@ export async function refundPayment(
     return { error: 'refund_recorded_at_gateway_db_pending' }
   }
 
-  const result = data as { success: boolean; code?: string } | null
+  const result = data as { success: boolean; code?: string; order_id?: string } | null
   if (!result?.success) {
     switch (result?.code) {
       case 'PAYMENT_NOT_FOUND':  return { error: 'payment_not_found' }
@@ -93,6 +94,16 @@ export async function refundPayment(
       case 'NO_GATEWAY_CHARGE':  return { error: 'no_gateway_charge' }
       case 'NO_REFUND_ID':       return { error: 'update_failed' }
       default:                   return { error: 'update_failed' }
+    }
+  }
+
+  // VULN-103: restore redeemed loyalty points on refund. Idempotent + atomic
+  // inside the RPC; a failure here does NOT roll back the refund (Tap and DB
+  // have already recorded it) — log and let operators reconcile via audit.
+  if (result.order_id) {
+    const restore = await restoreLoyaltyForReversedOrder(result.order_id, user)
+    if (!restore.ok) {
+      console.error('[payments] loyalty restore failed for refunded order', result.order_id, restore.error)
     }
   }
 

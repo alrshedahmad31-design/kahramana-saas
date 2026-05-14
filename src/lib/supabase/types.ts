@@ -4864,6 +4864,15 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_restore_redeemed_loyalty_points: {
+        Args: {
+          p_actor_branch_id: string | null
+          p_actor_id: string
+          p_actor_role: string
+          p_order_id: string
+        }
+        Returns: Json
+      }
       rpc_transfer_stock: {
         Args: {
           p_from_branch: string

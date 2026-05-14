@@ -15,6 +15,7 @@ import type { OrderStatus } from '@/lib/supabase/custom-types'
 import { sendOrderStatusUpdate } from '@/lib/email/send'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { toSafeError } from '@/lib/utils/safe-error'
+import { restoreLoyaltyForReversedOrder } from '@/lib/loyalty/restore'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -166,6 +167,16 @@ export async function updateOrderStatus(
     }
   }
 
+  // VULN-103: cancelled/returned orders restore redeemed loyalty points.
+  // Atomic + idempotent inside the RPC. Failures are logged but do not
+  // unwind the status change — the audit row is the durable trail.
+  if (nextStatus === 'cancelled' || nextStatus === 'returned') {
+    const restore = await restoreLoyaltyForReversedOrder(orderId, caller)
+    if (!restore.ok) {
+      console.error('[orders] loyalty restore failed for', orderId, restore.error)
+    }
+  }
+
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/orders`)
   revalidatePath(`/${locale}/dashboard/delivery`)
@@ -298,6 +309,12 @@ export async function updateOrderWithReason(
     // Order is already mutated — log durable warning but still report success
     // so the UI doesn't double-submit. Operations should monitor this log.
     console.error('[orders] audit_logs insert failed for cancel/return', v.orderId, auditError)
+  }
+
+  // VULN-103: restore redeemed loyalty points for the cancelled/returned order.
+  const restore = await restoreLoyaltyForReversedOrder(v.orderId, caller)
+  if (!restore.ok) {
+    console.error('[orders] loyalty restore failed for', v.orderId, restore.error)
   }
 
   const locale = await getLocale()
