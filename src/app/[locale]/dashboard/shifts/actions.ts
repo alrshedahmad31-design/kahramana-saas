@@ -113,8 +113,8 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
     p_expected_cash_bhd:  expected,
     p_total_orders:       v.total_orders,
     p_total_revenue_bhd:  revenue,
-    p_notes:              v.notes ?? null,
-    p_discrepancy_reason: v.discrepancy_reason ?? null,
+    p_notes:              v.notes ?? '',
+    p_discrepancy_reason: v.discrepancy_reason ?? '',
     p_actor_id:           user.id,
     p_actor_role:         user.role,
   })

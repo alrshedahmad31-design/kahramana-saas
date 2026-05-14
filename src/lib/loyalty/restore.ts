@@ -29,7 +29,7 @@ export async function restoreLoyaltyForReversedOrder(
     p_order_id:        orderId,
     p_actor_id:        actor.id,
     p_actor_role:      actor.role ?? '',
-    p_actor_branch_id: actor.branch_id,
+    p_actor_branch_id: actor.branch_id ?? '',
   })
 
   if (error) {

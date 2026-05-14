@@ -660,7 +660,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       p_points_to_redeem:       pointsToRedeem,
       // C-1: pass customer UUID so service_role call can lock the correct profile
       p_customer_id:            customerSession?.id ?? undefined,
-      p_promotion_id:           promo?.promotion_id ?? null,
+      p_promotion_id:           promo?.promotion_id ?? undefined,
       p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
     })
 

@@ -12,8 +12,51 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      app_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -700,6 +743,13 @@ export type Database = {
       }
       customer_profiles: {
         Row: {
+          default_area: string | null
+          default_block: string | null
+          default_building: string | null
+          default_flat: string | null
+          default_lat: number | null
+          default_lng: number | null
+          default_road: string | null
           email: string | null
           id: string
           joined_at: string
@@ -712,6 +762,13 @@ export type Database = {
           total_spent_bhd: number
         }
         Insert: {
+          default_area?: string | null
+          default_block?: string | null
+          default_building?: string | null
+          default_flat?: string | null
+          default_lat?: number | null
+          default_lng?: number | null
+          default_road?: string | null
           email?: string | null
           id: string
           joined_at?: string
@@ -724,6 +781,13 @@ export type Database = {
           total_spent_bhd?: number
         }
         Update: {
+          default_area?: string | null
+          default_block?: string | null
+          default_building?: string | null
+          default_flat?: string | null
+          default_lat?: number | null
+          default_lng?: number | null
+          default_road?: string | null
           email?: string | null
           id?: string
           joined_at?: string
@@ -4528,7 +4592,7 @@ export type Database = {
       normalize_bahrain_phone: { Args: { p: string }; Returns: string }
       process_tap_webhook: {
         Args: {
-          p_amount?: number | null
+          p_amount?: number
           p_event_type: string
           p_gateway_id: string
           p_order_reference: string
@@ -4537,18 +4601,10 @@ export type Database = {
         }
         Returns: Json
       }
-      recall_station_order:
-        | {
-            Args: {
-              p_order_id: string
-              p_station: Database["public"]["Enums"]["kds_station"]
-            }
-            Returns: undefined
-          }
-        | {
-            Args: { p_order_id: string; p_station: string }
-            Returns: undefined
-          }
+      recall_station_order: {
+        Args: { p_order_id: string; p_station: string }
+        Returns: undefined
+      }
       refresh_analytics_views: { Args: never; Returns: undefined }
       rpc_auto_generate_pos: { Args: never; Returns: undefined }
       rpc_budget_trend: {
@@ -4613,9 +4669,9 @@ export type Database = {
           p_actor_role: string
           p_actual_cash_bhd: number
           p_branch_id: string
-          p_discrepancy_reason: string | null
+          p_discrepancy_reason: string
           p_expected_cash_bhd: number
-          p_notes: string | null
+          p_notes: string
           p_shift_date: string
           p_shift_type: string
           p_total_orders: number
@@ -4627,70 +4683,39 @@ export type Database = {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined
       }
-      rpc_create_order:
-        | {
-            Args: {
-              p_branch_id: string
-              p_coupon_discount_bhd?: number
-              p_coupon_id?: string
-              p_customer_id?: string
-              p_customer_name: string
-              p_customer_notes?: string
-              p_customer_phone: string
-              p_delivery_address?: string
-              p_delivery_area?: string
-              p_delivery_building?: string
-              p_delivery_city?: string
-              p_delivery_lat?: number
-              p_delivery_lng?: number
-              p_delivery_street?: string
-              p_expires_at?: string
-              p_idempotency_key: string
-              p_items: Json
-              p_loyalty_discount_bhd?: number
-              p_notes?: string
-              p_order_type: string
-              p_payment_method?: string
-              p_points_to_redeem?: number
-              p_source?: string
-              p_status?: string
-              p_total_bhd: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_branch_id: string
-              p_coupon_discount_bhd?: number
-              p_coupon_id?: string
-              p_customer_id?: string
-              p_customer_name: string
-              p_customer_notes?: string
-              p_customer_phone: string
-              p_delivery_address?: string
-              p_delivery_area?: string
-              p_delivery_building?: string
-              p_delivery_city?: string
-              p_delivery_lat?: number
-              p_delivery_lng?: number
-              p_delivery_street?: string
-              p_expires_at?: string
-              p_idempotency_key: string
-              p_items: Json
-              p_loyalty_discount_bhd?: number
-              p_notes?: string
-              p_order_type: string
-              p_payment_method?: string
-              p_points_to_redeem?: number
-              p_promotion_discount_bhd?: number
-              p_promotion_id?: string
-              p_source?: string
-              p_status?: string
-              p_table_number?: number
-              p_total_bhd: number
-            }
-            Returns: string
-          }
+      rpc_create_order: {
+        Args: {
+          p_branch_id: string
+          p_coupon_discount_bhd?: number
+          p_coupon_id?: string
+          p_customer_id?: string
+          p_customer_name: string
+          p_customer_notes?: string
+          p_customer_phone: string
+          p_delivery_address?: string
+          p_delivery_area?: string
+          p_delivery_building?: string
+          p_delivery_city?: string
+          p_delivery_lat?: number
+          p_delivery_lng?: number
+          p_delivery_street?: string
+          p_expires_at?: string
+          p_idempotency_key: string
+          p_items: Json
+          p_loyalty_discount_bhd?: number
+          p_notes?: string
+          p_order_type: string
+          p_payment_method?: string
+          p_points_to_redeem?: number
+          p_promotion_discount_bhd?: number
+          p_promotion_id?: string
+          p_source?: string
+          p_status?: string
+          p_table_number?: number
+          p_total_bhd: number
+        }
+        Returns: string
+      }
       rpc_create_purchase_order: {
         Args: {
           p_branch_id: string
@@ -4856,7 +4881,7 @@ export type Database = {
       }
       rpc_refund_payment: {
         Args: {
-          p_actor_branch_id: string | null
+          p_actor_branch_id: string
           p_actor_id: string
           p_actor_role: string
           p_gateway_refund_id: string
@@ -4866,7 +4891,7 @@ export type Database = {
       }
       rpc_restore_redeemed_loyalty_points: {
         Args: {
-          p_actor_branch_id: string | null
+          p_actor_branch_id: string
           p_actor_id: string
           p_actor_role: string
           p_order_id: string
@@ -5108,6 +5133,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       abc_class: ["A", "B", "C"],

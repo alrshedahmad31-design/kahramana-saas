@@ -258,7 +258,7 @@ export async function POST(request: Request) {
     p_gateway_id:      gatewayId,
     p_status:          status ?? 'pending',
     p_order_reference: orderReference ?? '',
-    p_amount:          amountScalar,
+    p_amount:          amountScalar ?? undefined,
   })
 
   if (error) {

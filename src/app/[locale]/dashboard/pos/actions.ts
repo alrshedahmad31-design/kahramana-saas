@@ -327,7 +327,7 @@ export async function createManualOrder(
     // POS orders are confirmed by staff at the counter — skip 'new' and go
     // straight to 'accepted' so the KDS picks them up immediately.
     p_status:                 'accepted',
-    p_promotion_id:           promo?.promotion_id ?? null,
+    p_promotion_id:           promo?.promotion_id ?? undefined,
     p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
   })
 

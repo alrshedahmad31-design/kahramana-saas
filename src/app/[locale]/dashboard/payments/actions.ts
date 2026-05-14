@@ -74,7 +74,7 @@ export async function refundPayment(
     p_gateway_refund_id: tapRefundId,
     p_actor_id:          user.id,
     p_actor_role:        user.role,
-    p_actor_branch_id:   user.branch_id,
+    p_actor_branch_id:   user.branch_id ?? '',
   })
 
   if (rpcErr) {
