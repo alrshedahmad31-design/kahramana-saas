@@ -4,7 +4,16 @@ import { headers } from 'next/headers'
 import * as Sentry from '@sentry/nextjs'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-type AuthError = 'rate_limited' | 'invalid_credentials' | 'signup_error' | 'invalid_phone' | 'email_exists'
+type AuthError =
+  | 'rate_limited'
+  | 'invalid_credentials'
+  | 'signup_error'
+  | 'invalid_phone'
+  | 'email_exists'
+  | 'password_too_short'
+  | 'password_too_weak'
+  | 'name_too_long'
+
 type AuthResult = { success: true } | { success: false; error: AuthError }
 
 // Per-action limits: login is tighter (credential-stuffing surface);
@@ -15,7 +24,13 @@ const RATE_LIMITS: Record<'login' | 'register', number> = {
   register: 10,
 }
 
+// rate limiting disabled in dev/preview — per feedback_rate_limit_node_env_gate.md
+// Dev/preview share 127.0.0.1, so the shared budget collapses and blocks the
+// next contributor on the same network.
 async function checkRateLimit(key: 'login' | 'register'): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production') {
+    return true
+  }
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     return true
   }
@@ -62,6 +77,22 @@ export async function registerAction(
 ): Promise<AuthResult> {
   const allowed = await checkRateLimit('register')
   if (!allowed) return { success: false, error: 'rate_limited' }
+
+  // H1 — password strength gate. Client mirrors this for UX, but the server
+  // is the security boundary so we re-check every value here.
+  if (password.length < 8) {
+    return { success: false, error: 'password_too_short' }
+  }
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+    return { success: false, error: 'password_too_weak' }
+  }
+
+  // M6 — name length cap. customer_profiles.name has no DB constraint but
+  // surfaces in WhatsApp messages and emails — clamp before the trigger row
+  // is materialized.
+  if (name.length > 120) {
+    return { success: false, error: 'name_too_long' }
+  }
 
   const normalizedPhone = normalizePhone(phone)
   if (!/^\+973[0-9]{8}$/.test(normalizedPhone)) {
