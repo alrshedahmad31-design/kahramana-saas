@@ -26,14 +26,14 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from('.info-card', {
-        opacity: 0,
         y: 30,
         stagger: 0.2,
         duration: 1,
         ease: 'power3.out',
+        clearProps: 'transform',
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: 'top 95%', // Trigger earlier
+          start: 'top 95%',
         },
       })
 
@@ -52,7 +52,7 @@ export default function BranchDetailsContent({ branch, metadata, isAr, waLink }:
   }, [])
 
   return (
-    <div ref={sectionRef} className="max-w-7xl mx-auto px-6 sm:px-16 -mt-20 relative z-20 pb-24">
+    <div ref={sectionRef} className="max-w-7xl mx-auto px-6 sm:px-16 mt-12 relative z-20 pb-24">
       {/* ── Info Grid ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
         

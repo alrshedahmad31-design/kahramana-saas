@@ -3,10 +3,11 @@
 import { usePathname } from '@/i18n/navigation'
 import { useParams } from 'next/navigation'
 import { Link } from '@/i18n/navigation'
-import { UtensilsCrossed, Star, Info, Phone } from 'lucide-react'
+import { UtensilsCrossed, MapPin, Star, Info, Phone } from 'lucide-react'
 
 const NAV_ITEMS = [
   { key: 'menu',     icon: UtensilsCrossed, href: '/menu' },
+  { key: 'branches', icon: MapPin,          href: '/branches' },
   { key: 'catering', icon: Star,            href: '/catering' },
   { key: 'about',    icon: Info,            href: '/about' },
   { key: 'contact',  icon: Phone,           href: '/contact' },
@@ -63,6 +64,7 @@ function getAriaLabel(key: string, locale: string): string {
   const isAr = locale === 'ar'
   switch (key) {
     case 'menu':     return isAr ? 'المنيو' : 'Menu'
+    case 'branches': return isAr ? 'الفروع' : 'Branches'
     case 'catering': return isAr ? 'المناسبات' : 'Catering'
     case 'about':    return isAr ? 'من نحن' : 'About'
     case 'contact':  return isAr ? 'تواصل' : 'Contact'

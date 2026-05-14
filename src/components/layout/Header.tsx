@@ -22,6 +22,7 @@ interface CustomerSummary {
 
 const NAV_LINKS = [
   { key: 'menu',     href: '/menu'     as const },
+  { key: 'branches', href: '/branches' as const },
   { key: 'catering', href: '/catering' as const },
   { key: 'about',    href: '/about'    as const },
   { key: 'contact',  href: '/contact'  as const },
@@ -183,7 +184,7 @@ export default function Header() {
                   }
                 `}
               >
-                {t(key as 'menu' | 'catering' | 'about' | 'contact')}
+                {t(key as 'menu' | 'branches' | 'catering' | 'about' | 'contact')}
               </Link>
             ))}
           </nav>
@@ -379,7 +380,7 @@ export default function Header() {
                         ${pathname === href ? 'text-brand-gold' : 'text-brand-text'}
                       `}
                     >
-                    {t(key as 'menu' | 'catering' | 'about' | 'contact')}
+                    {t(key as 'menu' | 'branches' | 'catering' | 'about' | 'contact')}
                     </Link>
                 ))}
 
