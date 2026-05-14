@@ -176,7 +176,7 @@ const CATEGORY_PRESENTATION: Record<
   'the-fatteh-collection': {
     order: 90,
     name: {
-      ar: 'الفتّة',
+      ar: 'الفتة',
       en: 'Fatteh',
     },
   },
