@@ -82,6 +82,33 @@ async function getClientIp(): Promise<string> {
   )
 }
 
+// ── IP allowlist (KAH-2026-05-07) ────────────────────────────────────────────
+// Tap's webhook source IPs are not publicly documented; operator pulls the
+// real production list from Tap support (or observes them in
+// payment_webhooks) and pins them via TAP_WEBHOOK_ALLOWED_IPS.
+// Soft-launch mode: when the env var is unset, the check is skipped so the
+// gate can be deployed before we have the canonical IP list.
+// Parsed once per Function instance; Fluid Compute reuse keeps this hot.
+let allowedIpsCache: Set<string> | null = null
+let allowedIpsRaw: string | undefined = undefined
+
+function getAllowedIps(): Set<string> | null {
+  const raw = process.env.TAP_WEBHOOK_ALLOWED_IPS
+  if (!raw) return null
+  if (allowedIpsCache && allowedIpsRaw === raw) return allowedIpsCache
+  allowedIpsRaw = raw
+  allowedIpsCache = new Set(
+    raw.split(',').map((s) => s.trim()).filter(Boolean),
+  )
+  return allowedIpsCache
+}
+
+function isIpAllowed(ip: string): { allowed: boolean; enforced: boolean } {
+  const list = getAllowedIps()
+  if (!list) return { allowed: true, enforced: false }
+  return { allowed: list.has(ip), enforced: true }
+}
+
 async function checkRateLimit(ip: string): Promise<boolean> {
   if (process.env.NODE_ENV !== 'production') return true
   const rl = getRatelimit()
@@ -97,10 +124,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
   }
 
-  // ── Rate limit (KAH-2026-05-02) ─────────────────────────────────────────────
-  // Earliest cheap gate. Flooders are blocked before we touch JSON parsing
-  // or HMAC verification.
   const ip = await getClientIp()
+
+  // ── IP allowlist (KAH-2026-05-07) ───────────────────────────────────────────
+  // Earliest gate when enforced — runs before rate-limit so a hostile source
+  // can't burn the per-IP rate-limit budget for a legitimate Tap source IP.
+  // Soft-launch (env unset) skips the check.
+  const ipCheck = isIpAllowed(ip)
+  if (ipCheck.enforced && !ipCheck.allowed) {
+    const supabase = await createServiceClient()
+    await supabase.from('webhook_errors').insert({
+      provider:   'tap',
+      gateway_id: null,
+      order_id:   null,
+      reason:     'ip_not_allowed',
+      payload:    { ip } as unknown as Json,
+    })
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // ── Rate limit (KAH-2026-05-02) ─────────────────────────────────────────────
+  // Earliest cheap gate after IP allowlist. Flooders are blocked before we
+  // touch JSON parsing or HMAC verification.
   if (!(await checkRateLimit(ip))) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
