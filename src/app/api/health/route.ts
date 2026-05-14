@@ -5,19 +5,23 @@ export const runtime = 'nodejs'
 
 const TIMEOUT_MS = 4000
 
+// Public health endpoint. We deliberately do NOT return the underlying DB
+// error message or the deployed commit SHA — both are reconnaissance gifts
+// that help attackers correlate this build to known CVEs in pinned deps.
+// `status` is the only consumer-visible signal; operators can read the full
+// error from Sentry / platform logs.
 type CheckResult =
   | { ok: true;  latencyMs: number }
-  | { ok: false; latencyMs: number; error: string }
+  | { ok: false; latencyMs: number }
 
 export async function GET() {
   const startedAt = Date.now()
-  const sha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'local'
 
   const db = await Promise.race<CheckResult>([
     checkDatabase(),
     new Promise<CheckResult>((resolve) =>
       setTimeout(
-        () => resolve({ ok: false, latencyMs: TIMEOUT_MS, error: 'timeout' }),
+        () => resolve({ ok: false, latencyMs: TIMEOUT_MS }),
         TIMEOUT_MS,
       ),
     ),
@@ -25,8 +29,7 @@ export async function GET() {
 
   const ok = db.ok
   const body = {
-    status: ok ? 'ok' : 'unhealthy',
-    sha,
+    status: ok ? 'ok' : 'error',
     iso: new Date().toISOString(),
     latencyMs: Date.now() - startedAt,
     checks: { db },
@@ -46,14 +49,17 @@ async function checkDatabase(): Promise<CheckResult> {
       .from('branches')
       .select('*', { count: 'exact', head: true })
     const latencyMs = Date.now() - startedAt
-    return error
-      ? { ok: false, latencyMs, error: error.message }
-      : { ok: true,  latencyMs }
-  } catch (err) {
-    return {
-      ok: false,
-      latencyMs: Date.now() - startedAt,
-      error: err instanceof Error ? err.message : String(err),
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[health] db check failed:', error.message)
+      }
+      return { ok: false, latencyMs }
     }
+    return { ok: true, latencyMs }
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[health] db check threw:', err)
+    }
+    return { ok: false, latencyMs: Date.now() - startedAt }
   }
 }
