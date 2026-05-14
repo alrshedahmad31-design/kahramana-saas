@@ -3,10 +3,62 @@
 import bcrypt from 'bcrypt'
 
 import { revalidatePath } from 'next/cache'
+import { Ratelimit }      from '@upstash/ratelimit'
+import { Redis }          from '@upstash/redis'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
-import { assertCanManageTargetStaff, getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
+import {
+  assertCanManageTargetStaff,
+  getDashboardGuardErrorMessage,
+  requireDashboardSection,
+  requireDashboardSession,
+} from '@/lib/auth/dashboard-guards'
 import { canManageStaff, canDeactivateStaff } from '@/lib/auth/rbac'
+import { toSafeError } from '@/lib/utils/safe-error'
 import type { StaffRole, StaffBasicRow, EmploymentType, TablesUpdate, Json } from '@/lib/supabase/custom-types'
+
+// Unified denial string for resendStaffInvitation — same shape as
+// VULN-AUTH-01 in staff/[id]/actions.ts. Prevents staff-ID enumeration via
+// the previously-distinct "Staff member not found" / "Insufficient
+// permissions" messages.
+const INVITE_DENIED = 'Insufficient permissions'
+
+// ── Resend-invitation rate limits (VULN-AUTH-02) ──────────────────────────────
+// Two layers, both gated on production (dev shares 127.0.0.1 and the budget
+// would collapse — see feedback_rate_limit_node_env_gate memory):
+//   1. Per-TARGET cool-down (5 min) — prevents email-bomb pretext against a
+//      single staff member regardless of how many callers are involved.
+//   2. Per-CALLER quota (10 / hour) — caps total resends a single session can
+//      trigger; closes the broad-cast amplification path even if the caller
+//      iterates targets.
+// Lazy singletons keep the Redis client warm under Fluid Compute.
+let inviteTargetRatelimit: Ratelimit | null = null
+let inviteCallerRatelimit: Ratelimit | null = null
+
+function getInviteTargetRatelimit(): Ratelimit | null {
+  if (inviteTargetRatelimit) return inviteTargetRatelimit
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  inviteTargetRatelimit = new Ratelimit({
+    redis:   Redis.fromEnv(),
+    limiter: Ratelimit.fixedWindow(1, '300 s'),
+    prefix:  'resend_invite',
+  })
+  return inviteTargetRatelimit
+}
+
+function getInviteCallerRatelimit(): Ratelimit | null {
+  if (inviteCallerRatelimit) return inviteCallerRatelimit
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  inviteCallerRatelimit = new Ratelimit({
+    redis:   Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(10, '3600 s'),
+    prefix:  'resend_invite_caller',
+  })
+  return inviteCallerRatelimit
+}
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -74,7 +126,7 @@ export async function createStaff(input: CreateStaffInput): Promise<ActionResult
   })
 
   if (authError || !authData.user) {
-    return { success: false, error: authError?.message ?? 'Failed to create auth user' }
+    return { success: false, error: authError ? toSafeError(authError) : 'Failed to create auth user' }
   }
 
   const staffId: string = authData.user.id
@@ -89,7 +141,7 @@ export async function createStaff(input: CreateStaffInput): Promise<ActionResult
 
   if (insertError) {
     await authAdmin.deleteUser(staffId)
-    return { success: false, error: insertError.message }
+    return { success: false, error: toSafeError(insertError) }
   }
 
   await service.from('audit_logs').insert(
@@ -152,7 +204,7 @@ export async function updateStaff(input: UpdateStaffInput): Promise<ActionResult
   q = target.branch_id == null ? q.is('branch_id', null) : q.eq('branch_id', target.branch_id)
   const { data: updated, error } = await q.select('id')
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   if (!updated || updated.length === 0) {
     return { success: false, error: 'concurrent_change_retry' }
   }
@@ -226,7 +278,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
     user_metadata:  { name: input.name, role: input.role },
   })
   if (authError || !authData.user) {
-    return { success: false, error: authError?.message ?? 'Failed to create auth user' }
+    return { success: false, error: authError ? toSafeError(authError) : 'Failed to create auth user' }
   }
 
   const staffId: string = authData.user.id
@@ -237,7 +289,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
   })
   if (insertError) {
     await authAdmin.deleteUser(staffId)
-    return { success: false, error: insertError.message }
+    return { success: false, error: toSafeError(insertError) }
   }
 
   const profile: TablesUpdate<'staff_basic'> = {}
@@ -290,11 +342,27 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
 // ── resendStaffInvitation ─────────────────────────────────────────────────────
 
 export async function resendStaffInvitation(staffId: string): Promise<ActionResult> {
+  // Gate by section — previously this only required ANY active staff
+  // session, which let drivers / marketing / support / kitchen / waiter
+  // / cashier trigger invite emails and enumerate staff IDs via error-string
+  // differential (VULN-AUTH-02).
   let caller
   try {
-    caller = await requireDashboardSession()
+    caller = await requireDashboardSection('staff')
   } catch (error) {
     return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
+
+  // Per-CALLER quota — 10 invitations / hour. Closes the broadcast path
+  // even if the attacker rotates through staff IDs.
+  if (process.env.NODE_ENV === 'production') {
+    const callerRl = getInviteCallerRatelimit()
+    if (callerRl) {
+      const { success } = await callerRl.limit(caller.id)
+      if (!success) {
+        return { success: false, error: 'Too many invitations sent. Try again later.' }
+      }
+    }
   }
 
   const service = await createServiceClient()
@@ -304,11 +372,24 @@ export async function resendStaffInvitation(staffId: string): Promise<ActionResu
     .eq('id', staffId)
     .single()
 
-  if (staffError || !staff) return { success: false, error: 'Staff member not found' }
+  if (staffError || !staff) return { success: false, error: INVITE_DENIED }
 
   const target = staff as Pick<StaffBasicRow, 'id' | 'role' | 'branch_id'>
   if (!canManageStaff(caller, target)) {
-    return { success: false, error: 'Insufficient permissions' }
+    return { success: false, error: INVITE_DENIED }
+  }
+
+  // Per-TARGET cool-down — at most one invite every 5 minutes per staff ID,
+  // regardless of which (authorized) manager triggered it. Stops the
+  // phishing-pretext email-bomb against a specific target.
+  if (process.env.NODE_ENV === 'production') {
+    const targetRl = getInviteTargetRatelimit()
+    if (targetRl) {
+      const { success } = await targetRl.limit(staffId)
+      if (!success) {
+        return { success: false, error: 'An invitation was just sent. Please wait before resending.' }
+      }
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -316,11 +397,16 @@ export async function resendStaffInvitation(staffId: string): Promise<ActionResu
 
   const { data: userData, error: userError } = await authAdmin.getUserById(staffId)
   if (userError || !userData?.user?.email) {
-    return { success: false, error: 'Could not find email for this staff member' }
+    return { success: false, error: INVITE_DENIED }
   }
 
   const { error: inviteError } = await authAdmin.inviteUserByEmail(userData.user.email)
-  if (inviteError) return { success: false, error: inviteError.message }
+  if (inviteError) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[resendStaffInvitation] invite failed:', inviteError.message)
+    }
+    return { success: false, error: 'Failed to send invitation' }
+  }
 
   return { success: true }
 }
@@ -366,7 +452,7 @@ export async function toggleStaffActive(
     .eq('is_active', !activate)
     .select('id')
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   if (!updated || updated.length === 0) {
     return { success: false, error: 'concurrent_change_retry' }
   }

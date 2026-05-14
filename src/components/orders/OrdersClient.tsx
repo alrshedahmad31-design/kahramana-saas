@@ -15,18 +15,9 @@ import KanbanOrderCard from '@/components/orders/KanbanOrderCard'
 import type { OrderCardData } from '@/components/orders/OrderCard'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
 import { BRANCHES, HIDDEN_BRANCHES } from '@/constants/contact'
+import { escapeSearch } from '@/lib/utils/postgrest'
 
 const PAGE_SIZE = 20
-
-// Sanitize search input for PostgREST .or() with ilike. Three concerns:
-//  1. `,` `(` `)` `:` are .or()-syntax delimiters → strip
-//  2. `%` `_` `\` are ilike wildcards → escape with backslash so the match is literal
-//  3. `"` would unbalance a quoted value → strip
-function escapeSearch(input: string): string {
-  return input
-    .replace(/[\\%_]/g, '\\$&')
-    .replace(/[,()":]/g, '')
-}
 
 const STATUS_MAP: Record<StatusFilter, OrderStatus[] | null> = {
   all:              null,

@@ -14,6 +14,7 @@ import type { OrderRow, OrderItemRow, PaymentStatus } from '@/lib/supabase/custo
 import type { OrderStatus } from '@/lib/supabase/custom-types'
 import { sendOrderStatusUpdate } from '@/lib/email/send'
 import { BRANCHES, type BranchId } from '@/constants/contact'
+import { toSafeError } from '@/lib/utils/safe-error'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -96,7 +97,7 @@ async function hasCapturedPayment(
     .eq('order_id', orderId)
     .in('status', PAID_PAYMENT_STATUSES)
     .limit(1)
-  if (error) return { paid: false, error: error.message }
+  if (error) return { paid: false, error: toSafeError(error) }
   return { paid: (data ?? []).length > 0 }
 }
 
@@ -156,7 +157,7 @@ export async function updateOrderStatus(
     .eq('status', order.status)
     .select('id')
 
-  if (updateError) return { success: false, code: 'db_error', error: updateError.message }
+  if (updateError) return { success: false, code: 'db_error', error: toSafeError(updateError) }
   if (!updated || updated.length === 0) {
     return {
       success: false,
@@ -231,7 +232,7 @@ export async function updateOrderWithReason(
     .single()
 
   if (fetchError) {
-    return { success: false, code: 'db_error', error: fetchError.message }
+    return { success: false, code: 'db_error', error: toSafeError(fetchError) }
   }
   if (!order) {
     return { success: false, code: 'not_found', error: 'Order not found' }
@@ -274,7 +275,7 @@ export async function updateOrderWithReason(
     .eq('status', order.status)
     .select('id')
 
-  if (updateError) return { success: false, code: 'db_error', error: updateError.message }
+  if (updateError) return { success: false, code: 'db_error', error: toSafeError(updateError) }
   if (!updated || updated.length === 0) {
     return {
       success: false,

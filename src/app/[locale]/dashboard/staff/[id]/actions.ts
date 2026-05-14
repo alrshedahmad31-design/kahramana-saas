@@ -7,8 +7,17 @@ import { revalidatePath }      from 'next/cache'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession }          from '@/lib/auth/session'
 import { canManageStaff }      from '@/lib/auth/rbac'
-import { assertBranchScope, getDashboardGuardErrorMessage } from '@/lib/auth/dashboard-guards'
+import {
+  assertBranchScope,
+  getDashboardGuardErrorMessage,
+  requireDashboardSection,
+} from '@/lib/auth/dashboard-guards'
 import type { EmploymentType, StaffBasicRow, TablesUpdate } from '@/lib/supabase/custom-types'
+
+// Single error string for both "target not found" and "permission denied".
+// Returning differentiable messages turned this action into an oracle for
+// enumerating staff IDs from any logged-in session (VULN-AUTH-01).
+const STAFF_ACCESS_DENIED = 'Insufficient permissions'
 
 type ActionResult = { success: true } | { success: false; error: string }
 
@@ -50,16 +59,27 @@ export interface UpdateProfileInput {
 }
 
 export async function updateStaffProfile(input: UpdateProfileInput): Promise<ActionResult> {
-  const caller = await getSession()
-  if (!caller) return { success: false, error: 'Unauthorized' }
+  // Gate first — this prevents any service-role read from happening for
+  // callers without 'staff' section access (drivers, marketing, support,
+  // kitchen, waiter, cashier). VULN-AUTH-01: previously the staff row was
+  // fetched before the permission check, leaking row existence via
+  // differential error strings.
+  let caller
+  try {
+    caller = await requireDashboardSection('staff')
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
+  }
 
   const service = await createServiceClient()
   const { data: target } = await service.from('staff_basic')
     .select('id, role, branch_id, is_active').eq('id', input.id).single()
 
-  if (!target) return { success: false, error: 'Staff member not found' }
+  // Unified error message: "not found" and "insufficient permissions" must
+  // be indistinguishable so the caller cannot oracle which staff IDs exist.
+  if (!target) return { success: false, error: STAFF_ACCESS_DENIED }
   if (!canManageStaff(caller, target as Pick<StaffBasicRow, 'id' | 'role' | 'branch_id' | 'is_active'>)) {
-    return { success: false, error: 'Insufficient permissions' }
+    return { success: false, error: STAFF_ACCESS_DENIED }
   }
 
   if (input.clock_pin && !/^\d{4}$/.test(input.clock_pin)) {
