@@ -49,6 +49,9 @@ export default function Header() {
 
   const isRTL        = locale === 'ar'
   const targetLocale = isRTL ? 'en' : 'ar'
+  const hasSupabaseEnv = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  )
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,6 +63,12 @@ export default function Header() {
 
   // Resolve customer session + loyalty summary; refresh on auth state changes.
   useEffect(() => {
+    if (!hasSupabaseEnv) {
+      setCustomer(null)
+      setAuthLoaded(true)
+      return
+    }
+
     const supabase = createBrowserSupabase()
     let cancelled = false
 
@@ -91,7 +100,7 @@ export default function Header() {
       cancelled = true
       subscription.unsubscribe()
     }
-  }, [])
+  }, [hasSupabaseEnv])
 
   // Close account dropdown on outside click / Escape.
   useEffect(() => {
@@ -119,6 +128,7 @@ export default function Header() {
   }
 
   async function handleSignOut() {
+    if (!hasSupabaseEnv) return
     const supabase = createBrowserSupabase()
     await supabase.auth.signOut()
     setAccountOpen(false)
