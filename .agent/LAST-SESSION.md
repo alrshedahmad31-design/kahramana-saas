@@ -1,4 +1,185 @@
 # LAST-SESSION.md — Kahramana Baghdad
+> Session 100: auth vuln fixes — VULN-AUTH-04, VULN-AUTH-06, VULN-SEC-01
+> Date: 2026-05-14
+> Author: Claude Code (Opus 4.7)
+
+## SESSION 100 — SUMMARY
+
+Three auth/seed vulnerabilities closed. **Not committed** — changes
+left in working tree alongside session-99 RBAC work (also uncommitted).
+`npx tsc --noEmit` → exit 0.
+
+### 1. VULN-AUTH-04 — forgot-password had no rate limit
+Hoisted the flow off the direct client `supabase.auth.resetPasswordForEmail`
+call and behind a new server action that enforces 3 req / 15 min per
+IP via Upstash sliding-window (production-only, matching the existing
+contact/reserve gate per [[feedback_rate_limit_node_env_gate]]).
+Optional Cloudflare Turnstile wired in — soft-launch: verifies when
+`TURNSTILE_SECRET_KEY` is set, falls through otherwise.
+
+NEW: `src/app/[locale]/forgot-password/actions.ts`
+MOD: `src/components/auth/ForgotPasswordForm.tsx` — calls server
+action; renders Turnstile widget when `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+is set.
+
+### 2. VULN-AUTH-06 — set-password accepted any active session
+ANY logged-in session could rotate the password, so a hijacked
+normal-login session was equivalent to a reset link. Fix:
+`/auth/callback` now sets a one-shot httpOnly `kah_recovery_flow`
+cookie (10-min TTL) when `type=recovery`. The new set-password
+server action treats that cookie as the only trusted recovery
+marker — non-recovery sessions must supply `currentPassword` which
+is re-verified via `signInWithPassword` before `updateUser` runs.
+Cookie cleared on success; client signs out + bounces to /login.
+
+Picked the cookie approach over JWT-amr decoding because
+supabase-js doesn't expose `amr` on the User object, and decoding
+the access token by hand would be fragile across SDK versions.
+The cookie's trust boundary is in our own callback route — easy to
+audit.
+
+NEW: `src/app/[locale]/set-password/actions.ts` —
+  `setPasswordAction` + `getRecoveryFlowState` helper.
+MOD: `src/app/auth/callback/route.ts` — sets cookie on recovery.
+MOD: `src/app/[locale]/set-password/page.tsx` — reads recovery
+  state server-side; passes `isRecovery` to form.
+MOD: `src/components/auth/SetPasswordForm.tsx` — accepts
+  `isRecovery`, shows Current Password field when false, calls
+  server action, signs out on success.
+
+### 3. VULN-SEC-01 — clear-text dev passwords in seed migration
+`supabase/migrations/006_seed_test_staff.sql` ships
+`owner123`/`manager123`/`kitchen123`/`driver123`. Added a prominent
+warning banner + a `DO $$ ... RAISE EXCEPTION` env-gate that aborts
+the migration if `app.environment = 'production'`. File version is
+unchanged (`006_`), so supabase-cli migration tracking is
+unaffected for environments where it already ran.
+
+### Translation keys added (en.json + ar.json)
+- `auth.captchaRequired`
+- `auth.currentPassword`
+- `auth.currentPasswordPlaceholder`
+- `auth.reauthFailed`
+
+## FILES TOUCHED (Session 100)
+
+NEW:
+- `src/app/[locale]/forgot-password/actions.ts`
+- `src/app/[locale]/set-password/actions.ts`
+
+MODIFIED:
+- `src/app/auth/callback/route.ts`
+- `src/app/[locale]/set-password/page.tsx`
+- `src/components/auth/ForgotPasswordForm.tsx`
+- `src/components/auth/SetPasswordForm.tsx`
+- `supabase/migrations/006_seed_test_staff.sql`
+- `messages/en.json` + `messages/ar.json`
+
+DEAD CODE LEFT ALONE (intentional):
+- `src/app/[locale]/forgot-password/ForgotPasswordClient.tsx`
+- `src/app/[locale]/set-password/SetPasswordClient.tsx`
+Neither is imported anywhere. The live page.tsx files use the
+`@/components/auth/{Forgot,Set}PasswordForm` variants. Worth
+deleting in a future cleanup.
+
+## NEXT ACTIONS
+
+1. Review session-100 diffs and commit (separate from session-99
+   RBAC + migration 134 work, which is also still uncommitted).
+2. Add `TURNSTILE_SECRET_KEY` + `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+   to Vercel env so the forgot-password widget activates.
+3. On production DB run:
+   `ALTER DATABASE postgres SET app.environment = 'production';`
+   so the 006 seed migration's new env-gate has the setting it
+   checks. Without this, the gate is silent.
+4. QA happy path: forgot-password → recovery link → callback sets
+   cookie → set-password accepts new password without
+   current-password prompt → signOut → login with new password.
+5. QA non-recovery path: logged-in user visits /set-password,
+   sees Current Password field, wrong password returns
+   "Current password is incorrect", right password rotates and
+   signs them out.
+6. Consider deleting the two dead client files (above) — they
+   duplicate the live forms and could mislead future auditors.
+
+---
+
+## SESSION 99 — SUMMARY
+
+Four security fixes applied this session. **Not committed** — left in
+working tree for review. tsc clean after each batch.
+
+### 1. VULN-RBAC-01 — driver.branch_id null is invalid, not a wildcard
+File: `src/app/[locale]/dashboard/delivery/actions.ts`
+Both `assignDriverToOrder` (~L57) and `reassignDriver` (~L292) had:
+```
+if (driver.branch_id !== null && driver.branch_id !== order.branch_id) reject
+```
+A driver row with NULL branch_id slipped past the check and could be
+assigned to any branch. Fixed by adding an explicit
+`driver.branch_id === null` rejection ahead of the equality check.
+
+### 2. VULN-RBAC-02 — branch_manager cannot complete another driver's delivery
+File: `src/app/[locale]/driver/actions.ts:72-76`
+`driverBumpOrder` bypassed the "assigned driver" check with
+`!isManagerPlus(user.role)`, which let `branch_manager` close out a
+delivery (collecting tip/cash) for an order assigned to someone else —
+segregation-of-duties violation. Narrowed bypass to `!isGlobalAdmin`
+(owner/general_manager only). branch_manager still has visibility from
+the delivery dashboard but cannot complete other drivers' deliveries.
+
+### 3. VULN-RBAC-04 — approveShift status-CAS
+File: `src/app/[locale]/dashboard/shifts/actions.ts:approveShift`
+Approve was a blind UPDATE with no status precondition. A double-click
+or concurrent approval could overwrite an already-approved shift's
+`approved_by` / `approved_at`. Added the same CAS pattern used in
+`confirmDelivery` / `unassignDriver`: pre-fetch status, reject unless
+`pending`, then UPDATE with `.eq('status','pending').select('id')` and
+verify a row was returned.
+
+### 4. VULN-104 — rpc_create_order payment_method priority inversion
+File: `supabase/migrations/134_rpc_create_order_payment_method_priority.sql` (NEW)
+The CASE in `rpc_create_order` checked `p_source='manual'` first, so a
+manual+tap order jumped straight to `accepted` with no `expires_at`
+and no `pending_payment` window — the Tap webhook reconciler had no
+row to settle. New migration inverts the priority:
+
+```
+1. payment_method = 'tap'                              -> pending_payment
+2. payment_method = 'cash' + source IN(manual/waiter/qr) -> accepted
+3. source IN(manual,waiter,qr)                         -> accepted  (existing)
+4. payment_method IN(benefit_pay, online)              -> pending_payment
+5. else                                                -> new
+```
+
+Function body otherwise byte-identical to migration 091 (the latest
+complete signature including promotion_id/table_number/modifiers).
+No GRANT statements emitted — CREATE OR REPLACE preserves the ACL set
+by migrations 091/131/132. Migration not yet applied to remote.
+
+## FILES TOUCHED (Session 99)
+
+- `src/app/[locale]/dashboard/delivery/actions.ts` (modified)
+- `src/app/[locale]/driver/actions.ts` (modified)
+- `src/app/[locale]/dashboard/shifts/actions.ts` (modified)
+- `supabase/migrations/134_rpc_create_order_payment_method_priority.sql` (new)
+
+## NEXT ACTIONS
+
+1. Review the four diffs, then commit as a single security batch (or
+   split RBAC vs migration into two commits).
+2. Apply migration 134 to remote:
+   `supabase db query -f supabase/migrations/134_rpc_create_order_payment_method_priority.sql`
+   then `supabase migration repair --status applied 134`. Verify the
+   new CASE is live by SELECTing `pg_get_functiondef('rpc_create_order'::regproc)`.
+3. The working tree carried in a lot of Gemini-sibling work
+   (messages/, several dashboard pages, auth flows, etc.) that is NOT
+   part of session 99 — review separately before committing.
+
+---
+
+## SESSION 98 — (previous)
+
 > Session 98: AUD-V3 carry-forward + dashboard security audit + Tap webhook hardening + SEO data refresh
 > Date: 2026-05-14
 > Author: Claude Code (Opus 4.7)
