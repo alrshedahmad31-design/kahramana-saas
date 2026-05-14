@@ -209,9 +209,25 @@ export default function CartBottomSheet() {
               )}
             </div>
 
+            {/* Continue-Shopping bar — its own row in the flex column so it
+                stays pinned above the CTA footer regardless of viewport
+                height or how many items the customer has stacked. */}
+            {items.length > 0 && (
+              <div className="shrink-0 border-t border-brand-border/30 bg-brand-surface-2/30 px-6 py-3">
+                <button
+                  type="button"
+                  onClick={() => { closeCart(); router.push('/menu') }}
+                  className={`inline-flex w-full items-center justify-center gap-2 py-1 text-sm font-bold text-brand-muted transition-colors hover:text-brand-gold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+                >
+                  {isRTL ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+                  {t('continueShopping')}
+                </button>
+              </div>
+            )}
+
             {/* Footer Summary */}
             {items.length > 0 && (
-              <div className="border-t border-brand-border/30 bg-brand-black p-6 pb-10 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] lg:pb-8">
+              <div className="shrink-0 border-t border-brand-border/30 bg-brand-black p-6 pb-10 shadow-[0_-20px_40px_rgba(0,0,0,0.5)] lg:pb-8">
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold uppercase tracking-wider text-brand-muted/60">{t('subtotal')}</span>
@@ -230,15 +246,6 @@ export default function CartBottomSheet() {
                   >
                     {t('checkout')}
                   </CinematicButton>
-
-                  <button
-                    type="button"
-                    onClick={() => { closeCart(); router.push('/menu') }}
-                    className={`inline-flex items-center justify-center gap-2 py-2 text-sm font-bold text-brand-muted transition-colors hover:text-brand-gold ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
-                  >
-                    {isRTL ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-                    {t('continueShopping')}
-                  </button>
 
                   <button
                     onClick={handleClearCart}
