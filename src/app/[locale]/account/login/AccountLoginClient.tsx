@@ -44,7 +44,6 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
           setError(
             result.error === 'rate_limited'  ? tAuth('rateLimited') :
             result.error === 'invalid_phone' ? tAuth('invalidPhone') :
-            result.error === 'email_exists'  ? tAuth('emailExists') :
                                                tAuth('signupError')
           )
           return

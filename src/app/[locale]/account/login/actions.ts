@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import * as Sentry from '@sentry/nextjs'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-type AuthError = 'rate_limited' | 'invalid_credentials' | 'signup_error' | 'invalid_phone' | 'email_exists'
+type AuthError = 'rate_limited' | 'invalid_credentials' | 'signup_error' | 'invalid_phone'
 type AuthResult = { success: true } | { success: false; error: AuthError }
 
 // Per-action limits: login is tighter (credential-stuffing surface);
@@ -99,7 +99,11 @@ export async function registerAction(
       signUpErr?.status === 422 ||
       (!signUpErr && !authData.user?.id)
     if (isEmailTaken) {
-      return { success: false, error: 'email_exists' }
+      // Anti-enumeration: mirror the successful-registration response so
+      // callers cannot distinguish a new signup from a duplicate email.
+      // Supabase's silent no-op (no email sent on dup) makes this safe —
+      // the legitimate user simply receives no confirmation mail.
+      return { success: true }
     }
     Sentry.captureException(signUpErr ?? new Error('signUp returned no user id'), {
       tags: { stage: 'auth.signUp' },
