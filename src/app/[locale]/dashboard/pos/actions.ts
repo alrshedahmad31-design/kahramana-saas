@@ -332,8 +332,7 @@ export async function createManualOrder(
   // itself is the financial source of truth and stays in rpc_create_order.
   const paymentMethodForRecord: 'cash' | 'tap_card' =
     data.paymentMethod === 'cash' ? 'cash' : 'tap_card'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: finalizeData, error: finalizeError } = await (supabase.rpc as any)('rpc_pos_finalize_order', {
+  const { data: finalizeData, error: finalizeError } = await supabase.rpc('rpc_pos_finalize_order', {
     p_order_id:        orderId,
     p_amount_bhd:      subtotal,
     p_method:          paymentMethodForRecord,

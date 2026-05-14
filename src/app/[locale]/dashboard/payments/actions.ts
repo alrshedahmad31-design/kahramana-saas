@@ -23,8 +23,7 @@ export async function refundPayment(
 
   // Atomic: the RPC does the CAS update on payments + audit_logs INSERT in a
   // single transaction. Audit failure rolls back the refund (KAH-2026-05-06).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error: rpcErr } = await (supabase.rpc as any)('rpc_refund_payment', {
+  const { data, error: rpcErr } = await supabase.rpc('rpc_refund_payment', {
     p_payment_id:      paymentId,
     p_actor_id:        user.id,
     p_actor_role:      user.role,

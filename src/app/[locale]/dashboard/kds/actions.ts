@@ -138,13 +138,12 @@ export async function updateItemStatus(
   //   - server-side transition graph
   //   - p_expected_status optimistic-concurrency check
   const userClient = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (userClient.rpc as any)('update_order_item_station_status', {
+  const { error } = await userClient.rpc('update_order_item_station_status', {
     p_order_id:        orderId,
     p_item_id:         itemId,
     p_station:         station,
     p_status:          status,
-    p_expected_status: expectedStatus ?? null,
+    p_expected_status: expectedStatus ?? undefined,
   })
 
   if (error) {
@@ -185,8 +184,7 @@ export async function bumpStationOrder(
 
   console.log(`[KDS Action] Executing bump_station_order RPC for ${orderId} / ${station}...`);
   const userClient = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (userClient.rpc as any)('bump_station_order', {
+  const { error } = await userClient.rpc('bump_station_order', {
     p_order_id: orderId,
     p_station:  station,
   })
@@ -223,8 +221,7 @@ export async function recallStationOrder(
 
   // User-context client — see bumpStationOrder for rationale.
   const userClient = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (userClient.rpc as any)('recall_station_order', {
+  const { error } = await userClient.rpc('recall_station_order', {
     p_order_id: orderId,
     p_station:  station,
   })
@@ -247,8 +244,7 @@ export async function getStationDailyCount(
   if (!canAccessKDS(caller)) return { error: 'Unauthorized' }
 
   const userClient = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (userClient.rpc as any)('get_station_daily_count', {
+  const { data, error } = await userClient.rpc('get_station_daily_count', {
     p_station:   station,
     p_branch_id: branchId,
   })

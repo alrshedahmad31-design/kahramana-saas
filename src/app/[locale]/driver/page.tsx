@@ -49,8 +49,7 @@ export default async function DriverPage({ params }: Props) {
   // driver's in-transit order leaks assignment data and clutters the UI.
   // Audit fix #3: filter by order_type='delivery' so dine-in/pickup orders
   // never appear on the driver app.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let readyQ = (supabase as any)
+  let readyQ = supabase
     .from('orders')
     .select(ORDER_SELECT)
     .eq('status', 'ready')

@@ -92,6 +92,10 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
   if (!isGlobalDashboardAdmin(user) && (!user.branch_id || user.branch_id !== v.branch_id)) {
     return { success: false, code: 'branch_scope', error: 'Forbidden: branch scope violation' }
   }
+  // Guard-asserted but TS-narrowed: requireDashboardSection rejects null roles.
+  if (!user.role) {
+    return { success: false, code: 'forbidden', error: 'No role assigned' }
+  }
 
   const actual   = round3(v.actual_cash_bhd)
   const expected = round3(v.expected_cash_bhd)
@@ -101,8 +105,7 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
   // Atomic: shift_closings INSERT + audit_logs INSERT in one transaction.
   // Previously the JS side did only the insert and skipped audit entirely
   // (KAH-2026-05-06 — financial-event audit gap).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rpcData, error: rpcErr } = await (supabase.rpc as any)('rpc_close_shift', {
+  const { data: rpcData, error: rpcErr } = await supabase.rpc('rpc_close_shift', {
     p_branch_id:          v.branch_id,
     p_shift_date:         v.shift_date,
     p_shift_type:         v.shift_type,

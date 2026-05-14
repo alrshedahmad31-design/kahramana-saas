@@ -69,24 +69,40 @@ export default async function CashReconciliationPage({ params, searchParams: _se
   }
 
   const { data: handoversData } = await newQuery
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const newHandovers: CashHandoverRow[] = (handoversData ?? []).map((h: any) => ({
-    id:                    h.id,
-    driver_id:             h.driver_id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    driver_name:           (h.staff_basic as any)?.name ?? h.driver_id.slice(0, 8),
-    shift_date:            h.created_at.split('T')[0],
-    total_cash:            Number(h.expected_amount),
-    order_ids:             h.order_ids ?? [],
-    handed_at:             h.created_at,
-    verified:              h.manager_confirmed,
-    notes:                 null,
-    reconciliation_status: h.manager_confirmed ? 'verified' : 'pending',
-    actual_received:       Number(h.actual_amount),
-    discrepancy:           Number(h.difference),
-    manager_notes:         null,
-    is_new_system:         true
-  }))
+  type NewHandoverRow = {
+    id:                string
+    driver_id:         string
+    expected_amount:   number | string
+    actual_amount:     number | string
+    difference:        number | string
+    manager_confirmed: boolean
+    order_ids:         string[] | null
+    created_at:        string
+    staff_basic:       { name: string | null } | { name: string | null }[] | null
+  }
+  const pickStaffName = (s: NewHandoverRow['staff_basic']): string | null => {
+    const row = Array.isArray(s) ? s[0] : s
+    return row?.name ?? null
+  }
+  const newHandovers: CashHandoverRow[] = (handoversData ?? []).map((h) => {
+    const row = h as unknown as NewHandoverRow
+    return {
+      id:                    row.id,
+      driver_id:             row.driver_id,
+      driver_name:           pickStaffName(row.staff_basic) ?? row.driver_id.slice(0, 8),
+      shift_date:            row.created_at.split('T')[0],
+      total_cash:            Number(row.expected_amount),
+      order_ids:             row.order_ids ?? [],
+      handed_at:             row.created_at,
+      verified:              row.manager_confirmed,
+      notes:                 null,
+      reconciliation_status: row.manager_confirmed ? 'verified' : 'pending',
+      actual_received:       Number(row.actual_amount),
+      discrepancy:           Number(row.difference),
+      manager_notes:         null,
+      is_new_system:         true,
+    }
+  })
 
   // ── Legacy Table ────────────────────────────────────────────────────────
   let query = supabase
@@ -105,23 +121,39 @@ export default async function CashReconciliationPage({ params, searchParams: _se
 
   const { data: raw } = await query
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const oldHandovers: CashHandoverRow[] = (raw ?? []).map((r: any) => ({
-    id:                    r.id,
-    driver_id:             r.driver_id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    driver_name:           (r.staff_basic as any)?.name ?? r.driver_id.slice(0, 8),
-    shift_date:            r.shift_date,
-    total_cash:            Number(r.total_cash),
-    order_ids:             r.order_ids ?? [],
-    handed_at:             r.handed_at,
-    verified:              r.verified,
-    notes:                 r.notes,
-    reconciliation_status: (r.reconciliation_status ?? 'pending') as ReconciliationStatus,
-    actual_received:       r.actual_received != null ? Number(r.actual_received) : null,
-    discrepancy:           r.discrepancy != null ? Number(r.discrepancy) : null,
-    manager_notes:         r.manager_notes,
-  }))
+  type LegacyHandoverRow = {
+    id:                    string
+    driver_id:             string
+    shift_date:            string
+    total_cash:            number | string
+    order_ids:             string[] | null
+    handed_at:             string
+    verified:              boolean
+    notes:                 string | null
+    reconciliation_status: string | null
+    actual_received:       number | string | null
+    discrepancy:           number | string | null
+    manager_notes:         string | null
+    staff_basic:           { name: string | null } | { name: string | null }[] | null
+  }
+  const oldHandovers: CashHandoverRow[] = (raw ?? []).map((entry) => {
+    const r = entry as unknown as LegacyHandoverRow
+    return {
+      id:                    r.id,
+      driver_id:             r.driver_id,
+      driver_name:           pickStaffName(r.staff_basic) ?? r.driver_id.slice(0, 8),
+      shift_date:            r.shift_date,
+      total_cash:            Number(r.total_cash),
+      order_ids:             r.order_ids ?? [],
+      handed_at:             r.handed_at,
+      verified:              r.verified,
+      notes:                 r.notes,
+      reconciliation_status: (r.reconciliation_status ?? 'pending') as ReconciliationStatus,
+      actual_received:       r.actual_received != null ? Number(r.actual_received) : null,
+      discrepancy:           r.discrepancy != null ? Number(r.discrepancy) : null,
+      manager_notes:         r.manager_notes,
+    }
+  })
 
   const handovers = [...newHandovers, ...oldHandovers].sort(
     (a, b) => new Date(b.handed_at).getTime() - new Date(a.handed_at).getTime()

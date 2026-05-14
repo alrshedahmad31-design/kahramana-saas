@@ -145,8 +145,7 @@ export async function validateCustomerData(): Promise<ValidationResult> {
   const flags: ValidationFlag[] = []
 
   const sb = createServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb as any)
+  const { data, error } = await sb
     .from('customer_segments_view')
     .select('customer_phone')
     .limit(1)
@@ -160,15 +159,14 @@ export async function validateCustomerData(): Promise<ValidationResult> {
     flags.push({ level: 'info', message: 'No identified customers yet — phone number is required for customer tracking' })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count } = await (sb as any)
+  const { count } = await sb
     .from('customer_segments_view')
     .select('*', { count: 'exact', head: true })
 
   return {
     valid:      true,
     flags,
-    rowCount:   (count as number) ?? 0,
+    rowCount:   count ?? 0,
     dataSource: 'customer_segments_view (live)',
   }
 }

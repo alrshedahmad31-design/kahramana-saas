@@ -4603,6 +4603,22 @@ export type Database = {
           shortage_required: number
         }[]
       }
+      rpc_close_shift: {
+        Args: {
+          p_actor_id: string
+          p_actor_role: string
+          p_actual_cash_bhd: number
+          p_branch_id: string
+          p_discrepancy_reason: string | null
+          p_expected_cash_bhd: number
+          p_notes: string | null
+          p_shift_date: string
+          p_shift_type: string
+          p_total_orders: number
+          p_total_revenue_bhd: number
+        }
+        Returns: Json
+      }
       rpc_create_customer_profile: {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined
@@ -4806,6 +4822,19 @@ export type Database = {
           total_sold: number
         }[]
       }
+      rpc_pos_finalize_order: {
+        Args: {
+          p_actor_branch_id: string
+          p_actor_id: string
+          p_actor_role: string
+          p_amount_bhd: number
+          p_audit_changes: Json
+          p_method: string
+          p_order_id: string
+          p_payment_status: string
+        }
+        Returns: Json
+      }
       rpc_receive_purchase_order:
         | { Args: { p_lines: Json; p_po_id: string }; Returns: undefined }
         | {
@@ -4820,6 +4849,15 @@ export type Database = {
           p_quantity: number
         }
         Returns: undefined
+      }
+      rpc_refund_payment: {
+        Args: {
+          p_actor_branch_id: string | null
+          p_actor_id: string
+          p_actor_role: string
+          p_payment_id: string
+        }
+        Returns: Json
       }
       rpc_transfer_stock: {
         Args: {

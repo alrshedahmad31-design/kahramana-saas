@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+}
+
 interface Props {
   locale:   string
   children: React.ReactNode
@@ -14,7 +18,7 @@ export default function WaiterPWAShell({ locale, children }: Props) {
   const isAr = locale === 'ar'
 
   const [offline, setOffline]             = useState(false)
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null)
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showInstall, setShowInstall]     = useState(false)
 
   useEffect(() => {
@@ -38,7 +42,7 @@ export default function WaiterPWAShell({ locale, children }: Props) {
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault()
-      setInstallPrompt(e)
+      setInstallPrompt(e as BeforeInstallPromptEvent)
       setShowInstall(true)
     }
     window.addEventListener('beforeinstallprompt', handler)
@@ -47,8 +51,7 @@ export default function WaiterPWAShell({ locale, children }: Props) {
 
   async function handleInstall() {
     if (!installPrompt) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (installPrompt as any).prompt()
+    await installPrompt.prompt()
     setShowInstall(false)
   }
 

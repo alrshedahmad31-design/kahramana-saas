@@ -2,6 +2,7 @@
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { assertBranchScope, getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
+import type { Database } from '@/lib/supabase/custom-types'
 
 const TOLERANCE_BD  = 0.5
 
@@ -196,8 +197,7 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
     table_name: 'cash_handovers',
     record_id: handoverId,
     user_id: user.id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    actor_role: user.role as any,
+    actor_role: user.role as Database['public']['Enums']['staff_role'],
     changes: { manager_confirmed: true, confirmed_by: user.id, confirmed_at: now }
   })
 

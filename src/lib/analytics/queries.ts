@@ -475,8 +475,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
   const sb = createServiceClient()
 
   if (!branchId) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('customer_segments_view')
       .select('segment, total_spent_bhd, avg_order_value_bhd')
 
@@ -484,7 +483,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
     if (error || !data) return []
 
     const map = new Map<string, CustomerSegmentSummary>()
-    for (const row of data as { segment: string; total_spent_bhd: number; avg_order_value_bhd: number }[]) {
+    for (const row of data) {
       const seg = row.segment as CustomerSegmentSummary['segment']
       const existing = map.get(seg)
       if (existing) {
@@ -549,8 +548,7 @@ export async function getTopCustomers(limit = 10, branchId?: string): Promise<To
   const sb = createServiceClient()
 
   if (!branchId) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('customer_segments_view')
       .select('customer_phone,customer_name,order_count,total_spent_bhd,avg_order_value_bhd,first_order_at,last_order_at,segment')
       .order('total_spent_bhd', { ascending: false })
@@ -627,8 +625,7 @@ export async function getMenuItemPerformance(
   const sb = createServiceClient()
 
   if (!branchId) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('menu_item_performance')
       .select('*')
       .order('total_revenue', { ascending: false })
@@ -696,8 +693,7 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
   const sb = createServiceClient()
 
   if (!branchId) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('coupon_analytics_view')
       .select('*')
       .order('revenue_with_coupon', { ascending: false })
@@ -708,8 +704,7 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
   }
 
   // Scoped: fetch coupons, then aggregate matching orders within branch.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const couponRes = await (sb as any)
+  const couponRes = await sb
     .from('coupons')
     .select('id, code, type, value, campaign_name, usage_count, usage_limit, is_active')
   if (couponRes.error) console.error('[analytics:getCouponAnalytics:scoped:coupons] DB error', couponRes.error)
@@ -762,8 +757,7 @@ export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderS
   const sb = createServiceClient()
 
   if (!branchId) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (sb as any)
+    const { data, error } = await sb
       .from('order_source_summary')
       .select('*')
       .order('revenue', { ascending: false })

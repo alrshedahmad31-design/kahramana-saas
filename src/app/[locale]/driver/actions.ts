@@ -2,7 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
-import type { DriverLocationInsert } from '@/lib/supabase/custom-types'
+import type { Database, DriverLocationInsert } from '@/lib/supabase/custom-types'
 import { revalidatePath } from 'next/cache'
 
 // Audit fix #1: driver mutations are driver-only. Managers monitor and
@@ -95,6 +95,8 @@ export async function driverBumpOrder(
     assigned_driver_id?: string
     picked_up_at?:      string
     delivered_at?:      string
+    tip_bhd?:           number
+    actual_collected?:  number
   }
   const orderUpdate: OrderUpdate = { status: nextStatus, updated_at: now }
   if (currentStatus === 'ready') {
@@ -107,8 +109,7 @@ export async function driverBumpOrder(
       if (!Number.isFinite(tipBhd) || tipBhd > 50) {
         return { success: false, error: 'Tip exceeds maximum (50 BD) or is invalid' }
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(orderUpdate as any).tip_bhd = Math.round(tipBhd * 1000) / 1000
+      orderUpdate.tip_bhd = Math.round(tipBhd * 1000) / 1000
     }
     // Audit fix #5: validate actualCollected via shared helper.
     if (actualCollected !== undefined && actualCollected !== null) {
@@ -116,8 +117,7 @@ export async function driverBumpOrder(
       if (normalized === null || Number.isNaN(normalized)) {
         return { success: false, error: 'Cash collected must be a non-negative finite number' }
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(orderUpdate as any).actual_collected = normalized
+      orderUpdate.actual_collected = normalized
     }
   }
 
@@ -357,21 +357,32 @@ export async function submitCashHandover(
 
     if (!orders || orders.length === 0) return { success: false, error: 'Orders not found' }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const typedOrders = orders as any[]
+    type HandoverOrder = {
+      id:                  string
+      assigned_driver_id:  string | null
+      total_bhd:           number
+      status:              string | null
+      branch_id:           string | null
+      payments:            { method: string | null } | { method: string | null }[] | null
+      actual_collected:    number | null
+      tip_bhd:             number | null
+    }
+    const typedOrders = orders as unknown as HandoverOrder[]
 
     branchId = typedOrders[0].branch_id
-    const invalid = typedOrders.filter(
-      o =>
+    const invalid = typedOrders.filter(o => {
+      const paymentMethod = Array.isArray(o.payments) ? o.payments[0]?.method : o.payments?.method
+      return (
         o.assigned_driver_id !== user.id ||
         o.status             !== 'delivered' ||
-        o.payments?.method   !== 'cash' ||
+        paymentMethod        !== 'cash' ||
         o.branch_id          !== branchId
-    )
+      )
+    })
     if (invalid.length > 0) return { success: false, error: 'Invalid orders in handover' }
 
     totalExpected = typedOrders.reduce(
-      (s: number, o) => s + Number(o.actual_collected ?? o.total_bhd) + Number(o.tip_bhd ?? 0),
+      (s, o) => s + Number(o.actual_collected ?? o.total_bhd) + Number(o.tip_bhd ?? 0),
       0
     )
   } else {
@@ -416,8 +427,7 @@ export async function submitCashHandover(
     table_name: 'cash_handovers',
     record_id: handover.id,
     user_id: user.id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    actor_role: user.role as any,
+    actor_role: user.role as Database['public']['Enums']['staff_role'],
     branch_id: branchId,
     changes: {
       order_ids: orderIds,
