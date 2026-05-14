@@ -1,107 +1,86 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 107: Menu/orders audit follow-up — 4 targeted fixes from the audit queue. CRITICAL price-drift bug fixed at checkout. 4 own commits + 2 sibling commits pushed, master at `c60e748`.
+> Session 110: Saved address + auth form hardening — Track A (migration 147 + checkout pre-fill / auto-save / profile edit) and Track B (auth H1–H6 + M3/M6). 4 own commits pushed, master at `57b7bbc`.
 > Date: 2026-05-14
 > Author: Claude Code (Opus 4.7)
 
-## SESSION 107 — SUMMARY
+## SESSION 110 — SUMMARY
 
-Four targeted fixes from a menu/orders audit, executed in strict order. TSC clean after every step; production build verified after the price-source change (the only checkout-critical edit). All commits pushed; rebased over 2 sibling-agent commits (`652b84b`, `41b1187`) before the first push and again during the session for `0fff18e` / `c60e748`.
+Two independent tracks, run in strict order. Track A added saved-address infrastructure to customer_profiles and wired it through three surfaces (checkout pre-fill, post-order auto-save, account profile edit). Track B closed eight a11y / security gaps on the login & register flow. TSC clean after every step; production build verified at 562 pages.
 
-### Items closed this session
+### Track A — Saved address + phone
 
-- **Modifier loader duplicated across 4 callers** — `loadModifierGroupsBySlug` was copy-pasted into `dashboard/pos/page.tsx`, `dashboard/pos/service/page.tsx`, `waiter/table/[tableNumber]/page.tsx`, `table/[branchId]/[tableNumber]/page.tsx` with divergent error handling (POS variants logged + fail-closed; Waiter / QR copies silently swallowed errors). Consolidated into `src/lib/modifiers.server.ts` with the strictest behavior (log + fail-closed on BOTH `menu_option_groups` and `menu_options` queries, single `[modifiers]` log prefix). 4 inline copies deleted; 246 lines removed net. Commit `f82148b`.
+- **Migration 147** (`bf5d00e`) — Added `default_block / default_road / default_building / default_flat / default_area / default_lat / default_lng` to `customer_profiles` with column-level `GRANT UPDATE TO authenticated`, mirroring the migration 064 pattern for name/email/phone. Applied via `npx supabase db push --linked --include-all` and verified live (`information_schema.columns` probe).
+  - Deviation: dropped the `INSERT INTO public.schema_migrations` line from the spec — that table doesn't exist in this repo; the CLI tracks in `supabase_migrations.schema_migrations` internally and migrations 142–145 all follow the same no-INSERT convention.
 
-- **CRITICAL: Checkout reading menu prices from build-time JSON** — `resolveCheckoutMenuItemPrice` resolved from `src/data/menu.json`, so dashboard `menu_items.price_bhd` edits were invisible to checkout until the next deploy. Customers got stale prices. Fixed in commit `946ea1d`: added `fetchCheckoutPriceMap` in `checkout/actions.ts` that prefetches all cart-slug prices via the anon client (`public_read_menu_items` RLS policy from mig 075) in **one batched query per checkout**. `repriceCheckoutItems` is now async; for single-price items it uses the live DB `price_bhd`, for size/variant items it keeps JSON + emits `console.warn('[checkout] size/variant price from JSON:', slug)`. `PRICE_MISMATCH` guard still protects vs. client tampering. Build green at **562 pages**.
+- **Types regen** (`6431ab1`) — Regenerated `src/lib/supabase/types.ts` (not `src/types/supabase.ts` as the spec said — that path doesn't exist). Stripped two known pollution artifacts per `feedback_supabase_gen_types_pollution.md`: line-1 "Initialising login role…" and the EOF `<claude-code-hint />` tag. The new types tightened RPC-param nullability and broke 7 unrelated call sites — fixed each with `?? ''` / `?? undefined` coercions: `checkout/actions.ts`, `dashboard/payments/actions.ts`, `dashboard/pos/actions.ts`, `dashboard/shifts/actions.ts` (×2), `webhooks/tap/route.ts`, `lib/loyalty/restore.ts`.
 
-- **`useKitchenAlert` hook was dead code** — Fully implemented hook with looping bell logic, zero callers in the repo. Cashiers who stepped away missed silent new orders. Wired into `OrdersClient.tsx`: shares `mutedRef` from `useAudioAlert` (the existing speaker button silences this too — no new mute UI), 10-second re-evaluation tick, starts the loop when any order in `{new, under_review}` has `created_at` ≥ 3 minutes ago, stops when the queue clears. Commit `a959e3f`.
+- **Checkout pre-fill + auto-save + profile edit** (`84e0d9a`) — Three coordinated edits:
+  - `src/components/checkout/CheckoutForm.tsx` (actual path; spec was wrong): extended the existing customer-pre-fill useEffect to also populate block/road/building/flat and GPS coords from `customerProfile.default_*` when block is on file. Added a subtle `text-xs text-brand-muted` hint below the address grid (i18n key `checkout.address.prefilledHint`) so the customer knows to verify or edit before submitting. No auto-submit.
+  - `src/app/[locale]/checkout/actions.ts`: silent UPDATE to `customer_profiles` after `rpc_create_order` succeeds, gated on `order_type === 'delivery'` + authenticated session. Uses the cookie-bound anon client (not service role) so RLS + the column-level grant from 147 apply. Wrapped in try/catch; any failure logs to Sentry under `checkout.address_save_failed` and the order response is never blocked.
+  - New `src/app/[locale]/account/ProfileEditForm.tsx` + `src/app/[locale]/account/actions.ts` (`updateCustomerProfile` server action). Lets signed-in customers edit name, phone, and the saved default address from the account page. Phone validated server-side against `/^\+973[0-9]{8}$/`, name capped at 120. Inline `Saved ✓` feedback via `useTransition`, unique-violation surfaces as typed `phone_taken` error. Added `account.myInfo.*` i18n keys (AR + EN parity confirmed by gate 8).
+  - Note: the form has no `area` input field. `default_area` is read/saved alongside `default_block` (same value in this codebase's address shape) but not assigned to a dedicated UI input.
 
-- **Kanban view wasn't sticky + late badge missing from Kanban cards** — Default view defaulted to `kanban` on mount but cashiers who flipped to Card/Table got reset to Kanban on every visit. Added `localStorage` persistence under key `orders_view` (restore on mount, persist on change, falls back to `kanban` on invalid stored value). Also copied the existing `is_late` red pill from `OrderCard.tsx` to `KanbanOrderCard.tsx` — same `order.is_late` server-computed flag (set in `orders/page.tsx`), same red styling, placed top-right alongside `timeAgo`. Commit `da1bea8`.
+### Track B — Auth form H1–H6 + M3/M6 (`57b7bbc`)
 
-### Also done this session (smaller items)
+All eight fixes in `src/app/[locale]/account/login/AccountLoginClient.tsx` + `actions.ts`:
 
-- **`.claude/settings.local.json` untracked** — The line existed in `.gitignore` (line 77) but the file was already in the index, so `.gitignore` was a no-op for it. The harness mutates the file on every new tool permission, dirtying the working tree and breaking `git pull --rebase` mid-session. Fixed in `89bcb62` via `git rm --cached`. Sibling agent's earlier commit `0fff18e` had also added the gitignore entry (we landed on the same fix from two angles).
+- **H1** — Server enforces `password.length ≥ 8` + at least one letter + one digit before `supabase.auth.signUp`; client mirrors with a 3-stage strength meter (weak/medium/strong) under the password input on the register tab. Server remains the security boundary; client meter is UX only.
+- **H2** — Real `<label htmlFor>` + `id` pairs on name/email/phone/password inputs. `aria-label` retained as belt-and-suspenders.
+- **H3** — Error and success messages wrapped in `role="alert" aria-live="polite" aria-atomic="true"`.
+- **H4** — `autocomplete` attributes: `email`, `tel`, `name`, `new-password` vs `current-password` (mode-aware).
+- **H5** — Inline client phone validation against `/^\+9[0-9]{11}$|^[0-9]{8}$/` (matches the server `normalizePhone` accepted range); shows red error below the phone field until valid, server still validates as the gate.
+- **H6** — Rate limit block now also gates on `NODE_ENV === 'production'` per `feedback_rate_limit_node_env_gate.md`. Comment cites the memory by name so the why survives a future audit.
+- **M3** — Tab toggle now resets every form field plus error/success state so a half-typed login doesn't leak into the register tab and vice versa.
+- **M6** — Server rejects `name.length > 120` with typed `name_too_long` error before signUp.
 
-- **Audit doc decay caution** — When listing remaining open items from the audit (medium: `getMenuAvailabilityMap` double-fetch, `menu_items_sync` drift; low: image fallback; large: sizes/variants → DB), did not re-verify each against current code. Per memory `feedback_audit_doc_decay.md`, these should be re-checked before being treated as a queue at session 108 start.
+Added 9 new auth i18n keys (`passwordTooShort/Weak`, `passwordStrengthWeak/Medium/Strong`, `nameTooLong`, `phoneFormatInvalid`) to both `messages/ar.json` and `messages/en.json`. i18n gate 8 PASS (2,283 keys each side).
 
 ## COMMITS THIS SESSION (in order)
 
 | Hash | Subject | Author |
 |---|---|---|
-| `f82148b` | refactor(menu): extract loadModifierGroupsBySlug → lib/modifiers.server.ts (4 callers) | me |
-| `946ea1d` | fix(checkout): resolveCheckoutMenuItemPrice reads DB not JSON — fixes CRITICAL price drift (AUD-MENU-001) | me |
-| `a959e3f` | feat(orders): wire useKitchenAlert — looping alert for orders stuck in New ≥ 3 min | me |
-| `da1bea8` | fix(orders): persist Kanban view in localStorage + late-delivery badge in Kanban column | me |
-| `0fff18e` | chore: ignore .claude/settings.local.json (harness auto-mutations) | sibling agent |
-| `89bcb62` | chore: untrack .claude/settings.local.json — harness mutates it mid-session | me |
-| `c60e748` | chore(migrations): add placeholder for migration 131 (applied via cowork branch 26c059e) | sibling agent |
+| `bf5d00e` | feat(db): migration 147 — default address columns on customer_profiles | me |
+| `6431ab1` | chore(types): regen supabase types after migration 147 | me |
+| `84e0d9a` | feat(account): saved address — checkout pre-fill + auto-save + profile edit (migration 147) | me |
+| `57b7bbc` | fix(auth): H1-H6 + M3/M6 — password strength, labels, aria-live, autocomplete, phone validation, rate limit NODE_ENV gate | me |
 
-All pushed (`origin/master` at `c60e748`).
+All pushed (`origin/master` at `57b7bbc`). No sibling-agent commits landed on master this session, though the cowork agent did edit `account/actions.ts` mid-session to inline the `CustomerProfileUpdate` type — I consolidated to a single declaration before committing.
 
-## MIGRATIONS APPLIED TO PROD (session 107)
+## MIGRATIONS APPLIED TO PROD (session 110)
 
-None applied this session. Note: sibling agent landed migration `131_revoke_public_execute.sql` via cowork branch `26c059e` and added the placeholder file in `c60e748`. Whether that migration is applied to prod is not verified by me — recommend `npx supabase migration list --linked` at session 108 start.
+- **147** — `default_block / default_road / default_building / default_flat / default_area / default_lat / default_lng` columns on `customer_profiles` + column-level `GRANT UPDATE TO authenticated`. Verified via `information_schema.columns` probe. CLI-tracked in `supabase_migrations.schema_migrations`; no `public.schema_migrations` INSERT (table doesn't exist here).
 
-## DECISIONS LOGGED
+## VERIFICATION
 
-- **Modifier loader consolidation kept the strictest error path** — POS variants logged + fail-closed; Waiter/QR variants silently swallowed errors. Consolidated to the strict version (log + fail-closed) for ALL 4 callers. Risk: a silent-failure caller now logs to console; behavior change is "more visibility, same safety net" — modifier-validation downstream still rejects unknown modifiers, so the user-facing outcome is unchanged. Single `[modifiers]` log prefix replaces the per-caller `[pos]` / `[pos:service]` prefixes; trade traceability for DRY.
+- `npx tsc --noEmit` — **0 errors** after every commit.
+- `npx tsx scripts/check-i18n.ts` — gate 8 PASS, AR 2,283 / EN 2,283 keys.
+- `NEXT_BUILD_WORKERS=1 npm run build` after `rm -rf .next` — **562/562 pages**, 0 errors. (Required `NEXT_BUILD_WORKERS=1` per `feedback_windows_build_race.md`; required `rm -rf .next` per `feedback_turbopack_pollutes_production_build.md`.)
+- RTL spot-check on `src/app/[locale]/account/` + `src/components/loyalty/` — one pre-existing finding (`LoyaltyRedemptionWidget.tsx:99` `left-0.5`, introduced by `eee9f4b8` on 2026-05-07), unrelated to this session's edits.
 
-- **Checkout price source: in-line override, not a function rewrite** — Brief literally said "Rewrite resolveCheckoutMenuItemPrice()" but it also said "Return shape must be identical" + "no caller changes needed" + "one query per checkout, not one per item." These constraints are incompatible with rewriting a sync function in `menu.ts` shared with POS/waiter/table. Resolved by: (a) keeping `resolveCheckoutMenuItemPrice` in `menu.ts` untouched (POS/waiter/table unaffected), (b) adding `fetchCheckoutPriceMap` + DB-price override inside `repriceCheckoutItems` in `checkout/actions.ts`. Honors all three constraints; the EFFECTIVE checkout price path now reads DB.
+## WHAT'S NEXT (deferred / not done this session)
 
-- **Anon client (not service role) for the price prefetch** — `menu_items` has `public_read_menu_items FOR SELECT TO public USING (true)` (mig 075), so anon is sufficient. Honored the brief's explicit "anon Supabase client" guidance even though the surrounding action uses `createServiceClient` — keeps the read at the lowest necessary privilege. Imported as `createAnonClient` alias to avoid shadowing `createServiceClient`.
+Per the spec's explicit deferred list:
 
-- **`useKitchenAlert` shares `mutedRef` from `useAudioAlert`** — Did NOT add a separate mute toggle. The hook already reads from a `MutableRefObject<boolean>`, so passing `mutedRef` from `useAudioAlert` ties both bell systems to the same speaker button. Single source of truth for "is sound on?" — matches the brief's "respect the existing mute toggle — if bells are muted, useKitchenAlert must also be silent."
+- **Multi-address book** (Option B) — needs a new `customer_addresses` table with FK to `customer_profiles`. Current session implemented single-default only (Option A).
+- **GPS pre-fill in profile page** — profile edit form has no map picker. Checkout still has the GPS button; only the profile surface is text-only.
+- **Birthday field + gift countdown** — separate migration needed; not scoped this session.
+- **Loyalty page UX** (tier journey, redemption widget) — Session 109 prompt already exists, not run this session.
 
-- **Kanban view persistence: simple two-effect pattern, not lazy initializer** — Lazy `useState(() => localStorage.getItem(...))` would cause hydration mismatch on SSR (server has no localStorage → `kanban`; client first paint might be `card`). Used instead: `useState('kanban')` + restore effect + persist effect. Brief transient where both effects fire on mount (persist writes 'kanban' before restore sets 'card'); resolves in 1 microtask. No observable issue.
+Worth flagging for session 111 start:
 
-- **Late badge in Kanban: copied verbatim, no redesign** — Same `order.is_late` source (server-computed in `orders/page.tsx`), same red pill markup, same `title` attribute. Placed in the kanban header's right cluster next to `timeAgo`. Did not unify into a shared component — 8 lines of duplication is below the abstraction threshold per Ahmed's working style.
+- **Sentry tag noise risk** — `checkout.address_save_failed` is a new tag. If RLS isn't quite right (e.g., a customer with no `customer_profiles` row triggers the UPDATE), Sentry will collect noise. Watch the tag for a few days.
+- **`default_area` semantics** — In this form's shape, "block" and "area" are nearly synonymous in Bahrain addressing. The migration created both columns but the form uses only block. If a future session adds a separate Area input, the round-trip will need a clearer split (currently both default_block and default_area get the same delivery_area value on auto-save).
+- **Audit doc decay caution** — Same note from session 107 still applies: any open item from older audit docs needs re-verification against current code before being treated as a work queue.
 
-- **`.claude/settings.local.json`: `git rm --cached`, not `--skip-worktree`** — `.gitignore` already contained the line; the fix was untracking, not adding to ignore. `--skip-worktree` would have been local-only; the `rm --cached` commit propagates to all clones so no other contributor / agent sees the file in their status either. Same outcome the sibling-agent commit `0fff18e` partially attempted (it added the gitignore line without untracking, so the file still appeared in their `git status` — my commit completed the fix).
+## CARRY FILES (not staged this session)
 
-## STATUS AT SESSION END
+Pre-existing dirty tree at session start, untouched by me:
+- `src/app/[locale]/contact/page.tsx`
+- `src/app/[locale]/layout.tsx`
+- `src/app/[locale]/menu/[slug]/page.tsx`
+- `src/app/[locale]/menu/item/[slug]/page.tsx`
+- `src/middleware.ts`
+- `.agent/probe-fatteh-items.sql`, `.agent/probe-stray-categories.sql`, `.agent/probe-147.sql` (my probe — leftover)
+- `.claude/worktrees/`
 
-- **TSC**: ✅ clean after every step (`npx tsc --noEmit` returned 0 errors 4 times this session)
-- **Build**: ✅ `NEXT_BUILD_WORKERS=1 npm run build` after TASK 2 → **562 pages** generated, no errors
-- **CI**: not re-checked this session (no test changes; assume green if e2e workflow was last green)
-- **Migrations**: LOCAL=144 | REMOTE=? — sibling agent added 131 placeholder this session, status of 131 on remote unverified. Run `npx supabase migration list --linked` at session 108 start.
-- **Git**: master at `c60e748`, pushed and synced with origin
-- **Working tree**: pre-existing dirty/untracked carry-files unchanged. NEW from this session: nothing — `.claude/settings.local.json` is now ignored properly so the harness's mid-session writes no longer show up in `git status`.
-
-## OPEN CARRY-FORWARD
-
-### Audit follow-up (from session 107 brief — verify before treating as queue per `feedback_audit_doc_decay`)
-
-- **MEDIUM**: Consolidate `getMenuAvailabilityMap` double-fetch on website
-- **MEDIUM**: `menu_items_sync` drift (catering pages)
-- **LOW**: Image fallback single source
-- **LARGE (separate session)**: Sizes/variants → DB (`menu_item_sizes` + `menu_item_variants` tables don't exist yet — TASK 5 placeholder)
-
-### Operator actions (Ahmed) — carried from prior sessions
-
-- 🟠 **`SENTRY_AUTH_TOKEN` rotation** — current token returns 401 (carried from 104)
-- 🟠 **`npx supabase migration repair --status applied …`** — carried from 103, expand to cover any 143/144/131 that lag tracking
-- 🟠 **Populate `TAP_WEBHOOK_ALLOWED_IPS` in Vercel prod env** (carried from 103)
-- 🟠 **Triage `سندويش/`** — still untracked (carried from 102+)
-- 🟠 Cloudflare DNS → Vercel for kahramanat.com (carried)
-- 🟠 Tap merchant keys + Turnstile keys in Vercel env (carried)
-- 🟠 Supabase Free → Pro toggle (carried)
-
-### Dev actions (session 108)
-
-- **Verify migration 131 status** — sibling agent added `131_revoke_public_execute.sql` placeholder in `c60e748`. Confirm via `npx supabase migration list --linked` and whether the underlying GRANT/REVOKE has actually run against prod.
-- **Re-verify the audit follow-up MEDIUM items** before doing them — audit doc decay is fast in this repo (memory `feedback_audit_doc_decay` documents the 10/15-stale-in-30-hours v3 example).
-- **Watch checkout PRICE_MISMATCH telemetry post-deploy** — the DB-price source now actively reflects dashboard edits, so if a customer browses with stale client cache and then submits, the server's repriced subtotal will reject with `PRICE_MISMATCH`. This is correct behavior, but the UX (force-refresh modal) should be confirmed for clarity. Watch Sentry / order logs for a few days for the error rate.
-- **Confirm `useKitchenAlert` actually fires in production** — wired up but only ringer telemetry would confirm. Worth a 5-minute manual test: place an order, leave it in `new` for 4+ minutes, confirm the bell loops every 6 seconds.
-- **Confirm Kanban localStorage persistence works for cashiers** — switch to Card view, refresh, confirm view is restored. Trivial but new behavior.
-
-### Long-blocked (external)
-
-- Meta verification → Sprint 6B (WhatsApp API)
-- CBB merchant approval → Sprint 6C (Benefit Pay native)
-- Deliverect contract → Phase 7b
-
-## SESSION 108 — STARTING POINT
-
-1. Read this file and `.agent/phase-state.json`.
-2. Run `npx supabase migration list --linked` — confirm migration 131 state and any other drift.
-3. If continuing the menu/orders audit, **re-verify** the 3 MEDIUM/LOW items against current code before treating them as a queue (memory `feedback_audit_doc_decay`).
-4. Monitor Sentry for `PRICE_MISMATCH` rate post the checkout change in `946ea1d` — small uptick expected (and desired — it means stale client carts are being rejected), large uptick = UX problem.
+If session 111 starts on master without dealing with these, expect the same `git status` noise.
