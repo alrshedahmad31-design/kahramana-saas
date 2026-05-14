@@ -4,7 +4,12 @@ import { z } from 'zod'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { createServiceClient } from '@/lib/supabase/server'
-import { verifyWebhookSignature, tapStatusToPaymentStatus } from '@/lib/payments/tap-client'
+import {
+  verifyWebhookSignature,
+  tapStatusToPaymentStatus,
+  extractOrderReference,
+} from '@/lib/payments/tap-client'
+import { toSafeError } from '@/lib/utils/safe-error'
 import type { Json } from '@/lib/supabase/custom-types'
 
 // Hard cap on webhook body size to keep a malicious POST from filling up
@@ -125,7 +130,7 @@ export async function POST(request: Request) {
 
   // ── Signature verification ──────────────────────────────────────────────────
   // Last gate before any DB write. verifyWebhookSignature fails-closed when
-  // PAYMENT_WEBHOOK_SECRET is unset.
+  // PAYMENT_WEBHOOK_SECRET is unset and normalizes the object-form `amount`.
   if (!verifyWebhookSignature(body as Record<string, unknown>, body.hashstring)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -139,12 +144,43 @@ export async function POST(request: Request) {
     : null
 
   // `reference` may be a string ('order-id') or an object ({order, transaction}).
-  // Extract the order field consistently and validate UUID shape.
-  const referenceRaw =
-    typeof body.reference === 'string'
-      ? body.reference
-      : body.reference?.order
+  // Extract the order field consistently and validate UUID shape. Empty/invalid
+  // values become null — VULN-1.05 closed by passing null through (the RPC
+  // then short-circuits the order-reference fallback).
+  const referenceRaw = extractOrderReference(body as Record<string, unknown>)
   const orderReference = referenceRaw && UUID_RE.test(referenceRaw) ? referenceRaw : null
+
+  // ── Server-side order binding (VULN-CRY-01) ─────────────────────────────────
+  // Tap's hashstring does NOT cover `reference.order`, so a replayed payload
+  // with rewritten reference would otherwise be accepted. We bind here using
+  // the mapping persisted at charge creation (initiateTapPayment writes
+  // payments.gateway_transaction_id = charge.id immediately after
+  // createCharge returns — see src/app/[locale]/payment/[orderId]/actions.ts).
+  // If we find a payment row keyed by gateway_id whose order_id differs from
+  // the webhook's reference.order, treat the request as a replay and reject.
+  // Absence of the mapping (no row yet) is permissible — the RPC handles the
+  // race where Tap fires before our `update payments` commits, and falls
+  // back to looking up the payment by order_id.
+  if (orderReference) {
+    const { data: paymentRow } = await supabase
+      .from('payments')
+      .select('order_id')
+      .eq('gateway_transaction_id', gatewayId)
+      .maybeSingle()
+
+    if (paymentRow && paymentRow.order_id !== orderReference) {
+      // Stash an audit row for security review; do not leak the mismatch
+      // detail to the caller (which on a real attack is the attacker).
+      await supabase.from('webhook_errors').insert({
+        provider:   'tap',
+        gateway_id: gatewayId,
+        order_id:   orderReference,
+        reason:     'order_reference_mismatch',
+        payload:    body as unknown as Json,
+      })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
 
   const { data, error } = await supabase.rpc('process_tap_webhook', {
     p_payload:         body as unknown as Json,
@@ -155,7 +191,10 @@ export async function POST(request: Request) {
   })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[webhooks/tap] rpc error:', error.message)
+    }
+    return NextResponse.json({ error: toSafeError(error) }, { status: 500 })
   }
 
   const processed = typeof data === 'object' && data !== null && 'processed' in data

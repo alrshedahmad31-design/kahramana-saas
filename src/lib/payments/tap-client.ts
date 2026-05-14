@@ -74,8 +74,48 @@ export async function createCharge(req: TapChargeRequest): Promise<TapCharge> {
   return res.json() as Promise<TapCharge>
 }
 
+// ── Amount + reference normalizers (KAH-2026-05-04 / VULN-CRY-03) ─────────────
+// Tap's webhook body uses `amount` either as a numeric scalar OR as
+// `{ value, currency }`. Without this normalization `String({value,currency})`
+// becomes the literal "[object Object]" — the canonicalization-fragile bug
+// described by VULN-CRY-03: every object-form charge fails signature
+// verification with 401. The same helper is also re-exported for the
+// webhook route to use during DB-binding checks.
+export function extractAmountScalar(payload: Record<string, unknown>): number | null {
+  const raw = payload['amount']
+  if (typeof raw === 'number') return raw
+  if (raw !== null && typeof raw === 'object' && 'value' in (raw as Record<string, unknown>)) {
+    const v = (raw as Record<string, unknown>).value
+    return typeof v === 'number' ? v : null
+  }
+  return null
+}
+
+// `reference` can be a plain string or `{ order, transaction }`. Returns the
+// order field (or the string itself) — caller is responsible for asserting
+// UUID shape before trusting it as a DB key.
+export function extractOrderReference(payload: Record<string, unknown>): string | null {
+  const raw = payload['reference']
+  if (typeof raw === 'string') return raw
+  if (raw !== null && typeof raw === 'object') {
+    const order = (raw as Record<string, unknown>).order
+    return typeof order === 'string' ? order : null
+  }
+  return null
+}
+
 // Tap webhooks include a `hashstring` field in the JSON body.
-// Hash = HMAC-SHA256( id + amount + currency + status + secret )
+// Tap-side hash recipe = HMAC-SHA256( id + amount + currency + status + secret )
+// where `amount` is the canonical numeric scalar (in fils for BHD). We
+// normalize before hashing so both wire shapes verify against Tap's signature
+// — the previous String(payload.amount) path turned the object form into
+// "[object Object]" and broke verification end-to-end.
+//
+// Note: VULN-CRY-01 (cross-order replay via attacker-rewritten
+// `reference.order`) is NOT mitigated by changing this recipe — Tap signs
+// what Tap signs. The replay-binding check lives in the webhook route, which
+// looks up the order from the previously persisted
+// `payments.gateway_transaction_id` mapping and rejects mismatches.
 export function verifyWebhookSignature(
   payload:    Record<string, unknown>,
   hashstring: string,
@@ -83,11 +123,19 @@ export function verifyWebhookSignature(
   const secret = process.env.PAYMENT_WEBHOOK_SECRET
   if (!secret || !hashstring) return false
 
+  const amountScalar = extractAmountScalar(payload)
+  // Currency may live at top level (scalar-amount form) or nested under
+  // amount.currency (object-amount form). Match Tap's serialization order.
+  let currency = payload['currency']
+  if (currency === undefined && typeof payload['amount'] === 'object' && payload['amount'] !== null) {
+    currency = (payload['amount'] as Record<string, unknown>).currency
+  }
+
   const toHash = [
-    String(payload['id']       ?? ''),
-    String(payload['amount']   ?? ''),
-    String(payload['currency'] ?? ''),
-    String(payload['status']   ?? ''),
+    String(payload['id']    ?? ''),
+    amountScalar === null ? '' : String(amountScalar),
+    String(currency         ?? ''),
+    String(payload['status'] ?? ''),
     secret,
   ].join('')
 

@@ -253,6 +253,10 @@ export async function initiateTapPayment(
       redirectUrl,
     })
 
+    // Persist the tap_charge_id → order_id binding. The Tap webhook handler
+    // reads this back to detect cross-order replay (VULN-CRY-01): if a
+    // signed webhook arrives whose `reference.order` doesn't match the
+    // order_id we stored against this charge.id, the handler rejects it.
     await supabase
       .from('payments')
       .update({
