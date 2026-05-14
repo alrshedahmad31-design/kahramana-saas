@@ -158,9 +158,15 @@ export async function POST(request: Request) {
   // createCharge returns — see src/app/[locale]/payment/[orderId]/actions.ts).
   // If we find a payment row keyed by gateway_id whose order_id differs from
   // the webhook's reference.order, treat the request as a replay and reject.
-  // Absence of the mapping (no row yet) is permissible — the RPC handles the
-  // race where Tap fires before our `update payments` commits, and falls
-  // back to looking up the payment by order_id.
+  //
+  // Absence of the mapping when reference.order IS present is treated as an
+  // attack: the RPC has an order_id fallback path that would otherwise mark
+  // the attacker-supplied order as paid. The "race" the fallback was designed
+  // for (Tap fires before our update commits) is effectively non-existent in
+  // production — initiateTapPayment writes the binding synchronously before
+  // returning the redirect URL, and the user-side roundtrip through Tap's
+  // payment page takes seconds. Reject + audit; operator can reconcile any
+  // genuine orphan via the staff payments dashboard.
   if (orderReference) {
     const { data: paymentRow } = await supabase
       .from('payments')
@@ -179,6 +185,17 @@ export async function POST(request: Request) {
         payload:    body as unknown as Json,
       })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!paymentRow) {
+      await supabase.from('webhook_errors').insert({
+        provider:   'tap',
+        gateway_id: gatewayId,
+        order_id:   orderReference,
+        reason:     'binding_absent_with_reference',
+        payload:    body as unknown as Json,
+      })
+      return NextResponse.json({ error: 'Bad Request' }, { status: 400 })
     }
   }
 
