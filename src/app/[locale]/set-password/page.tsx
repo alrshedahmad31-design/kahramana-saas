@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import SetPasswordForm from '@/components/auth/SetPasswordForm'
+import { getRecoveryFlowState } from './actions'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('auth.setPassword')
@@ -12,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SetPasswordPage() {
   const t = await getTranslations('auth.setPassword')
+  const { isRecovery } = await getRecoveryFlowState()
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
@@ -26,7 +28,7 @@ export default async function SetPasswordPage() {
         </div>
 
         <div className="bg-brand-surface border border-brand-border rounded-xl p-6 sm:p-8">
-          <SetPasswordForm />
+          <SetPasswordForm isRecovery={isRecovery} />
         </div>
       </div>
     </div>

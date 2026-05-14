@@ -1,6 +1,30 @@
--- ⚠️  DEVELOPMENT ONLY — do NOT run on production
--- Creates test auth users + staff_basic rows for local dashboard testing.
--- Safe to re-run: ON CONFLICT DO NOTHING on all inserts.
+-- ═════════════════════════════════════════════════════════════════════════════
+-- ⚠️  ⚠️  ⚠️   DEVELOPMENT-ONLY SEED — DO NOT RUN AGAINST PRODUCTION   ⚠️  ⚠️  ⚠️
+-- ═════════════════════════════════════════════════════════════════════════════
+--
+-- This migration inserts four test auth users (owner / manager / kitchen /
+-- driver) with CLEAR-TEXT passwords baked into the file (`owner123` etc.).
+-- These credentials are safe ONLY because:
+--   1. They exist only in local Supabase / preview environments.
+--   2. The env-gate below RAISEs and aborts the transaction if
+--      `app.environment = 'production'` is set on the target cluster.
+--
+-- If you are about to point the Supabase CLI / db push at production:
+--   • Ensure `app.environment` is set to 'production' on the prod DB:
+--       ALTER DATABASE postgres SET app.environment = 'production';
+--   • This migration will then refuse to run and the deploy will fail loudly.
+--   • If you need to skip this file entirely in prod, rename it out of the
+--     migrations directory before running `supabase db push`.
+--
+-- VULN-SEC-01 — keep this banner intact; reviewers grep for it.
+-- ═════════════════════════════════════════════════════════════════════════════
+
+DO $$
+BEGIN
+  IF current_setting('app.environment', true) = 'production' THEN
+    RAISE EXCEPTION 'Seed migration 006_seed_test_staff must not run in production (app.environment=production).';
+  END IF;
+END $$;
 
 -- auth.users requires pgcrypto (enabled by default in Supabase)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

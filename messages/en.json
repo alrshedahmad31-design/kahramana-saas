@@ -780,6 +780,10 @@
     "invalidCredentials": "Invalid email or password",
     "signupError": "An error occurred during registration, please try again",
     "rateLimited": "Too many attempts, please try again shortly",
+    "captchaRequired": "Please complete the human verification before submitting",
+    "currentPassword": "Current Password",
+    "currentPasswordPlaceholder": "Enter your current password",
+    "reauthFailed": "Current password is incorrect",
     "forgotPassword": {
       "title": "Forgot Password",
       "description": "Enter your email and we'll send you a reset link",

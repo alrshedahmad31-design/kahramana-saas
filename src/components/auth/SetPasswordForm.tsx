@@ -6,8 +6,11 @@ import { useTranslations, useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { toast } from '@/lib/toast'
+import { setPasswordAction } from '@/app/[locale]/set-password/actions'
 
-export default function SetPasswordForm() {
+type Props = { isRecovery: boolean }
+
+export default function SetPasswordForm({ isRecovery }: Props) {
   const t      = useTranslations('auth.setPassword')
   const authT  = useTranslations('auth')
   const locale = useLocale()
@@ -17,6 +20,7 @@ export default function SetPasswordForm() {
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
@@ -48,21 +52,34 @@ export default function SetPasswordForm() {
       return
     }
 
+    if (!isRecovery && !currentPassword) {
+      setError(authT('reauthFailed'))
+      return
+    }
+
     setLoading(true)
 
-    const { error: authError } = await supabase.auth.updateUser({
-      password: password,
-    })
+    const result = await setPasswordAction(password, isRecovery ? undefined : currentPassword)
 
-    if (authError) {
-      setError(authError.message.includes('rate limit') ? authT('rateLimited') : t('error'))
+    if (!result.success) {
       setLoading(false)
+      if (result.error === 'reauth_required' || result.error === 'reauth_failed') {
+        setError(authT('reauthFailed'))
+      } else if (result.error === 'too_short') {
+        setError(t('tooShort'))
+      } else if (result.error === 'no_session') {
+        setError(t('sessionExpired'))
+      } else {
+        setError(t('error'))
+      }
       return
     }
 
     toast.success(t('success'))
-    
-    // Give the user a moment to see the success state before redirecting
+
+    // Sign out of the now-rotated session and bounce to login so the user
+    // (or attacker) has to authenticate fresh with the new credential.
+    await supabase.auth.signOut()
     setTimeout(() => {
       router.push(`/${locale}/login`)
     }, 2000)
@@ -83,6 +100,37 @@ export default function SetPasswordForm() {
       className="w-full max-w-sm mx-auto flex flex-col gap-5"
       noValidate
     >
+      {/* Current password — only when this isn't a recovery-link landing.
+          Forces normal logged-in users to re-prove their identity before
+          rotating the credential (VULN-AUTH-06). */}
+      {!isRecovery && (
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="currentPassword"
+            className={`${font} text-sm font-medium text-brand-text`}
+          >
+            {authT('currentPassword')}
+          </label>
+          <input
+            id="currentPassword"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder={authT('currentPasswordPlaceholder')}
+            className={`min-h-[48px] w-full rounded-lg border border-brand-border
+                       bg-brand-surface px-4 py-3
+                       ${font} text-base text-brand-text
+                       placeholder:text-brand-muted/50
+                       focus:outline-none focus:ring-2 focus:ring-brand-gold/50
+                       focus:border-brand-gold transition-colors duration-150
+                       disabled:opacity-50`}
+            disabled={loading}
+          />
+        </div>
+      )}
+
       {/* New Password */}
       <div className="flex flex-col gap-1.5">
         <label
@@ -149,7 +197,7 @@ export default function SetPasswordForm() {
 
       <CinematicButton
         type="submit"
-        disabled={loading || !password || !confirmPassword}
+        disabled={loading || !password || !confirmPassword || (!isRecovery && !currentPassword)}
         isRTL={isAr}
         className="w-full py-4 font-bold rounded-2xl"
       >

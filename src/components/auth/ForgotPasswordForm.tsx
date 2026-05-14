@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { createClient } from '@/lib/supabase/client'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import CinematicButton from '@/components/ui/CinematicButton'
 import Link from 'next/link'
+import { forgotPasswordAction } from '@/app/[locale]/forgot-password/actions'
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 export default function ForgotPasswordForm() {
   const t      = useTranslations('auth.forgotPassword')
@@ -17,25 +20,33 @@ export default function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileInstance | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(authT('captchaRequired'))
+      return
+    }
+
     setLoading(true)
+    const redirectTo = `${window.location.origin}/auth/callback?type=recovery`
+    const result = await forgotPasswordAction(email, redirectTo, turnstileToken)
+    setLoading(false)
 
-    const supabase = createClient()
-    const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${window.location.origin}/${locale}/set-password`,
-    })
-
-    if (authError) {
-      setError(authError.message.includes('rate limit') ? authT('rateLimited') : t('error'))
-      setLoading(false)
+    if (!result.success) {
+      turnstileRef.current?.reset()
+      setTurnstileToken('')
+      if (result.error === 'rate_limited')   setError(authT('rateLimited'))
+      else if (result.error === 'captcha')   setError(authT('captchaRequired'))
+      else                                    setError(t('error'))
       return
     }
 
     setSuccess(true)
-    setLoading(false)
   }
 
   if (success) {
@@ -108,6 +119,22 @@ export default function ForgotPasswordForm() {
           disabled={loading}
         />
       </div>
+
+      {TURNSTILE_SITE_KEY && (
+        <div className="flex justify-center">
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={TURNSTILE_SITE_KEY}
+            onSuccess={(token) => {
+              setTurnstileToken(token)
+              if (error === authT('captchaRequired')) setError(null)
+            }}
+            onError={() => setTurnstileToken('')}
+            onExpire={() => setTurnstileToken('')}
+            options={{ theme: 'dark', language: isAr ? 'ar' : 'en' }}
+          />
+        </div>
+      )}
 
       {error && (
         <p

@@ -52,12 +52,27 @@ export async function GET(request: NextRequest) {
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
   if (exchangeError) {
+    // Log the full reason for ops, but never reflect it into the redirect
+    // URL — the message may contain JWT internals, code-verifier hints, or
+    // user-existence signals that aid recon. The /login page handles the
+    // generic 'exchange_failed' sentinel.
     console.error('[auth/callback] exchange failed:', exchangeError.message)
-    return safeRedirect(`/login?error=${encodeURIComponent(exchangeError.message)}`)
+    return safeRedirect('/login?error=exchange_failed')
   }
 
-  // Password reset flow — send to set-password page
+  // Password reset flow — send to set-password page.
+  // Mark this session as having arrived via recovery so set-password can
+  // distinguish a reset-token landing from a normal logged-in user changing
+  // their password. Without this marker any active session would pass for
+  // reset proof (VULN-AUTH-06). Short TTL — recovery should complete fast.
   if (type === 'recovery') {
+    cookieStore.set('kah_recovery_flow', '1', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure:   process.env.NODE_ENV === 'production',
+      path:     '/',
+      maxAge:   60 * 10,
+    })
     return safeRedirect('/set-password')
   }
 
