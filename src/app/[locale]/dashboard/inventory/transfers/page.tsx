@@ -5,6 +5,11 @@ import Link from 'next/link'
 import TransferPageClient from './TransferPageClient'
 import { createTransfer } from './actions'
 
+// Branch IDs are UUIDs. Anything else is rejected before being interpolated
+// into the PostgREST .or() expression — the DSL is parsed server-side and
+// raw input would let a caller widen the predicate.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 interface PageProps {
   params: Promise<{ locale: string }>
   searchParams: Promise<{ branch?: string; status?: string; page?: string }>
@@ -42,14 +47,26 @@ export default async function TransfersPage({ params, searchParams }: PageProps)
     .range(from, from + 19)
 
   if (!isGlobal) {
-    query = query.or(
-      `from_branch_id.eq.${session.branch_id},to_branch_id.eq.${session.branch_id}`,
-    )
-  } else if (branch) {
+    // session.branch_id is server-derived, but assert UUID shape anyway so a
+    // future regression that lets a non-UUID value reach here can't break
+    // out of the .or() expression.
+    const sBranch = session.branch_id && UUID_RE.test(session.branch_id) ? session.branch_id : null
+    if (sBranch) {
+      query = query.or(
+        `from_branch_id.eq.${sBranch},to_branch_id.eq.${sBranch}`,
+      )
+    } else {
+      // Scoped role without a branch must see nothing rather than everything.
+      query = query.eq('from_branch_id', '00000000-0000-0000-0000-000000000000')
+    }
+  } else if (branch && UUID_RE.test(branch)) {
     query = query.or(`from_branch_id.eq.${branch},to_branch_id.eq.${branch}`)
   }
 
-  if (status) {
+  // Allowlist of legal status enum values — anything else is dropped so it
+  // can't be used to inject DSL via .eq() (.eq accepts arbitrary strings).
+  const STATUS_ALLOWED = new Set(['pending', 'in_transit', 'received', 'cancelled'])
+  if (status && STATUS_ALLOWED.has(status)) {
     query = query.eq('status', status)
   }
 

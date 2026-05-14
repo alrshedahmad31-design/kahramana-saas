@@ -1,6 +1,30 @@
 import ExcelJS from 'exceljs'
 import { createServiceClient } from '@/lib/supabase/server'
 
+// ─── CSV / XLSX formula-injection guard ──────────────────────────────────────
+// Excel and Google Sheets interpret a cell whose first character is `=`, `+`,
+// `-`, `@`, TAB, or CR as a formula. An attacker with write access to an
+// upstream field (ingredient name, supplier name, allergen, recipe slug…)
+// can stash `=HYPERLINK(...)` / DDE payloads that fire when an owner opens
+// the export. Prefixing with a leading apostrophe neutralizes the formula
+// while remaining visually invisible in the rendered cell.
+
+const FORMULA_PREFIXES = ['=', '+', '-', '@', '\t', '\r']
+
+function sanitizeCell(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  if (FORMULA_PREFIXES.some((p) => value.startsWith(p))) return `'${value}`
+  return value
+}
+
+// Apply sanitizeCell across every string value in a row object before
+// handing it to ExcelJS. Non-string values (numbers, nulls) pass through.
+function safeRow<T extends Record<string, unknown>>(row: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const k of Object.keys(row)) out[k] = sanitizeCell(row[k])
+  return out
+}
+
 // ─── styles (mirrors excel-template.ts) ──────────────────────────────────────
 
 const HEADER_FILL: ExcelJS.Fill = {
@@ -68,7 +92,7 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
   for (const r of ingRows ?? []) {
     const supplierData = r.suppliers as { name_ar: string } | null
     const allergensData = r.ingredient_allergens as { allergen: string }[]
-    wsIng.addRow({
+    wsIng.addRow(safeRow({
       name_ar: r.name_ar,
       name_en: r.name_en,
       unit: r.unit,
@@ -85,7 +109,7 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
       barcode: r.barcode ?? '',
       supplier_name: supplierData?.name_ar ?? '',
       allergens: allergensData?.map((a) => a.allergen).join(',') ?? '',
-    })
+    }))
   }
 
   // ── Sheet 2: prep_items ──────────────────────────────────────────────────
@@ -108,12 +132,12 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
     .order('name_ar')
 
   for (const r of prepRows ?? []) {
-    wsPrep.addRow({
+    wsPrep.addRow(safeRow({
       name_ar: r.name_ar, name_en: r.name_en, unit: r.unit,
       batch_yield_qty: r.batch_yield_qty,
       shelf_life_hours: r.shelf_life_hours ?? '',
       storage_temp: r.storage_temp ?? '',
-    })
+    }))
   }
 
   // ── Sheet 3: prep_ingredients ─────────────────────────────────────────────
@@ -135,12 +159,12 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
   for (const r of pIngRows ?? []) {
     const pItem = r.prep_items as { name_ar: string } | null
     const ing   = r.ingredients as { name_ar: string } | null
-    wsPrepIng.addRow({
+    wsPrepIng.addRow(safeRow({
       prep_item_name_ar: pItem?.name_ar ?? '',
       ingredient_name_ar: ing?.name_ar ?? '',
       quantity: r.quantity,
       yield_factor_override: r.yield_factor ?? '',
-    })
+    }))
   }
 
   // ── Sheet 4: recipes ──────────────────────────────────────────────────────
@@ -165,7 +189,7 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
   for (const r of recRows ?? []) {
     const ing   = r.ingredients as { name_ar: string } | null
     const pItem = r.prep_items  as { name_ar: string } | null
-    wsRec.addRow({
+    wsRec.addRow(safeRow({
       menu_item_slug: r.menu_item_slug,
       ingredient_name_ar: ing?.name_ar ?? '',
       prep_item_name_ar: pItem?.name_ar ?? '',
@@ -173,7 +197,7 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
       variant_key: r.variant_key ?? '',
       yield_factor_override: r.yield_factor ?? '',
       is_optional: r.is_optional ? 'yes' : 'no',
-    })
+    }))
   }
 
   // ── Sheet 5: opening_stock ────────────────────────────────────────────────
@@ -195,12 +219,12 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
   for (const r of stockRows ?? []) {
     const ing    = r.ingredients as { name_ar: string } | null
     const branch = r.branches    as { name_ar: string } | null
-    wsStock.addRow({
+    wsStock.addRow(safeRow({
       ingredient_name_ar: ing?.name_ar ?? '',
       branch_name: branch?.name_ar ?? '',
       on_hand: r.on_hand,
       reorder_point_override: r.reorder_point ?? '',
-    })
+    }))
   }
 
   // ── Sheet 6: par_levels ───────────────────────────────────────────────────
@@ -223,13 +247,13 @@ export async function exportInventoryExcel(): Promise<ArrayBuffer> {
   for (const r of parRows ?? []) {
     const ing    = r.ingredients as { name_ar: string } | null
     const branch = r.branches    as { name_ar: string } | null
-    wsPar.addRow({
+    wsPar.addRow(safeRow({
       ingredient_name_ar: ing?.name_ar ?? '',
       branch_name: branch?.name_ar ?? '',
       day_type: r.day_type,
       par_qty: r.par_qty,
       reorder_qty: r.reorder_qty,
-    })
+    }))
   }
 
   const raw = await wb.xlsx.writeBuffer()

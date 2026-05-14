@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { translateUnit } from '@/lib/inventory/units'
+import { escapeSearch } from '@/lib/utils/postgrest'
 import type { IngredientRow, IngredientCategory, AbcClass } from '@/lib/supabase/custom-types'
 
 interface PageProps {
@@ -58,7 +59,12 @@ export default async function IngredientsPage({ params, searchParams }: PageProp
     .select('*', { count: 'exact' })
     .order('name_ar')
 
-  if (search) q = q.or(`name_ar.ilike.%${search}%,name_en.ilike.%${search}%`)
+  // Sanitize before interpolation — raw input into PostgREST .or() lets a
+  // caller widen the predicate via the DSL's `,` `(` `)` `:` tokens.
+  if (search) {
+    const s = escapeSearch(search.trim())
+    if (s) q = q.or(`name_ar.ilike.%${s}%,name_en.ilike.%${s}%`)
+  }
   if (category) q = q.eq('category', category as IngredientCategory)
   if (abc) q = q.eq('abc_class', abc as AbcClass)
 
