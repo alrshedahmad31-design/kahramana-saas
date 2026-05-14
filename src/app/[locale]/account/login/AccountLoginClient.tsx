@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { loginAction, registerAction } from './actions'
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 type Mode = 'login' | 'register'
 
@@ -12,39 +15,57 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
   const isAr   = locale === 'ar'
   const tAuth  = useTranslations('auth')
 
-  const [mode,     setMode]     = useState<Mode>(initialMode ?? 'login')
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [phone,    setPhone]    = useState('')
-  const [name,     setName]     = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
-  const [success,  setSuccess]  = useState<string | null>(null)
+  const [mode,           setMode]           = useState<Mode>(initialMode ?? 'login')
+  const [email,          setEmail]          = useState('')
+  const [password,       setPassword]       = useState('')
+  const [phone,          setPhone]          = useState('')
+  const [name,           setName]           = useState('')
+  const [loading,        setLoading]        = useState(false)
+  const [error,          setError]          = useState<string | null>(null)
+  const [success,        setSuccess]        = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileInstance | null>(null)
+
+  function resetTurnstile() {
+    turnstileRef.current?.reset()
+    setTurnstileToken('')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setSuccess(null)
+
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(tAuth('captchaRequired'))
+      return
+    }
+
     setLoading(true)
 
     try {
       if (mode === 'login') {
-        const result = await loginAction(email, password)
+        const result = await loginAction(email, password, turnstileToken)
         if (!result.success) {
-          setError(result.error === 'rate_limited'
-            ? tAuth('rateLimited')
-            : tAuth('invalidCredentials'))
+          resetTurnstile()
+          setError(
+            result.error === 'rate_limited' ? tAuth('rateLimited') :
+            result.error === 'captcha'      ? tAuth('captchaRequired') :
+                                              tAuth('invalidCredentials'),
+          )
           return
         }
         window.location.href = isAr ? '/account' : '/en/account'
 
       } else {
-        const result = await registerAction(email, password, phone, name)
+        const result = await registerAction(email, password, phone, name, turnstileToken)
         if (!result.success) {
+          resetTurnstile()
           setError(
             result.error === 'rate_limited'  ? tAuth('rateLimited') :
+            result.error === 'captcha'       ? tAuth('captchaRequired') :
             result.error === 'invalid_phone' ? tAuth('invalidPhone') :
-                                               tAuth('signupError')
+                                               tAuth('signupError'),
           )
           return
         }
@@ -151,6 +172,22 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
                        ps-4 pe-4 py-3 text-brand-text font-satoshi placeholder:text-brand-muted
                        focus:border-brand-gold focus:outline-none"
           />
+
+          {TURNSTILE_SITE_KEY && (
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => {
+                  setTurnstileToken(token)
+                  if (error === tAuth('captchaRequired')) setError(null)
+                }}
+                onError={() => setTurnstileToken('')}
+                onExpire={() => setTurnstileToken('')}
+                options={{ theme: 'dark', language: isAr ? 'ar' : 'en' }}
+              />
+            </div>
+          )}
 
           {error && (
             <p className={`text-sm text-brand-error ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
