@@ -57,7 +57,9 @@ export default async function OrderDetailPage({ params }: Props) {
   const order = orderData as unknown as OrderRow
 
   // Branch scope: branch-bound staff may only view orders within their branch.
-  if (!isGlobalDashboardAdmin(user) && user.branch_id && user.branch_id !== order.branch_id) {
+  // Fail-closed for null user.branch_id — a non-global staff session without a
+  // branch is an invalid state, not a wildcard (same shape as VULN-RBAC-01).
+  if (!isGlobalDashboardAdmin(user) && (!user.branch_id || user.branch_id !== order.branch_id)) {
     redirect(`${prefix}/dashboard/orders`)
   }
 

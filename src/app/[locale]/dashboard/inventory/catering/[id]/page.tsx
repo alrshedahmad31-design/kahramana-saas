@@ -38,8 +38,11 @@ export default async function CateringOrderDetailPage({ params }: PageProps) {
 
   const order = data as unknown as CateringOrderRow
 
-  if (order.branch_id && !['owner', 'general_manager'].includes(user.role ?? '')) {
-    if (order.branch_id !== user.branch_id) {
+  // Branch scope: branch-bound roles must match the order's branch. Treat a
+  // null order.branch_id as anomalous (catering_orders are always created with
+  // a branch — see catering/new/page.tsx) and deny non-globals either way.
+  if (!['owner', 'general_manager'].includes(user.role ?? '')) {
+    if (!order.branch_id || !user.branch_id || order.branch_id !== user.branch_id) {
       redirect(`${prefix}/dashboard/inventory/catering`)
     }
   }

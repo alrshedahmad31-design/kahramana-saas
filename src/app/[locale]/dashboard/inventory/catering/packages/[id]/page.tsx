@@ -36,8 +36,11 @@ export default async function EditCateringPackagePage({ params }: PageProps) {
 
   const pkg = data as unknown as CateringPackageRow
 
-  if (pkg.branch_id && !['owner', 'general_manager'].includes(user.role ?? '')) {
-    if (pkg.branch_id !== user.branch_id) {
+  // Branch scope: branch-bound roles must match the package's branch. Treat a
+  // null pkg.branch_id as anomalous (packages are always created with a branch
+  // — see packages/new/page.tsx) and deny non-globals either way.
+  if (!['owner', 'general_manager'].includes(user.role ?? '')) {
+    if (!pkg.branch_id || !user.branch_id || pkg.branch_id !== user.branch_id) {
       redirect(`${prefix}/dashboard/inventory/catering`)
     }
   }
