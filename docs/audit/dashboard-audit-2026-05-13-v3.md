@@ -9,6 +9,41 @@
 
 ---
 
+## STATUS UPDATE — 2026-05-14 (Session 105 verification)
+
+A code-grounded re-walk of every CRITICAL / HIGH / MEDIUM finding below shows that **the audit doc is comprehensively stale**. Most findings landed in commits during the 24 hours after the audit was written (sessions 99–101) and were never back-annotated into this file. Verified state as of `master @ 2999306`:
+
+| ID | Original severity | Status | Closing reference |
+|---|---|---|---|
+| AUD-V3-001 | 🔴 CRITICAL | **CLOSED** (in progress) | `src/app/clock/actions.ts:25-57` — bcrypt with legacy SHA-256 upgrade-on-login. Operator finalization (force re-enroll once `clock_pin_hash LIKE '$2%'` ~100%) remains. |
+| AUD-V3-002 | 🔴 CRITICAL | **OPEN** | `npm audit fix` — out of scope for this session (no package.json edits). Carry to next session. |
+| AUD-V3-003 | 🟠 HIGH | **CLOSED** | commit `e60ee48` (2026-05-13 18:55) — `timingSafeEqual` at `src/lib/payments/tap-client.ts:142-146`. |
+| AUD-V3-004 | 🟠 HIGH | **CLOSED** (all 7 sites) | `staff/actions.ts:195,446`, `staff/[id]/actions.ts:107,218`, `schedule/actions.ts:150,176,206` — every site carries `CAS:` comment + `concurrent_change_retry` return. |
+| AUD-V3-005 | 🟠 HIGH | **CLOSED** | commit `35ce5c7` (CAS predicate) + `cbd34dc` (migration 138 atomic `rpc_refund_payment`). Tap API call now happens BEFORE any DB write. |
+| AUD-V3-006 | 🟠 HIGH | **CLOSED** | `src/app/auth/callback/route.ts:10-16` — `safeRedirect()` pins all 5 redirects to `NEXT_PUBLIC_SITE_URL`. |
+| AUD-V3-007 | 🟠 HIGH | **DEFERRED** | next-intl major bump — explicitly deferred per session 101 notes (separate PR + full i18n smoke test required). |
+| AUD-V3-008 | 🟡 MEDIUM | **OPEN** | Error swallowing in `analytics/queries.ts` — 6 hr refactor; reserve for a dedicated session. |
+| AUD-V3-009 | 🟡 MEDIUM | **CLOSED** | `reservations/actions.ts:254` + `inventory/purchases/actions.ts:154` — both have `.eq('status', currentStatus)` CAS predicate. |
+| AUD-V3-010 | 🟡 MEDIUM | **CLOSED** | `clock/actions.ts:59-70` — x-real-ip/cf-connecting-ip primary + httpOnly device cookie + per-staff bucket (10/1h). |
+| AUD-V3-011 | 🟡 MEDIUM | **CLOSED** | commit `f921e66` — all `as any` casts removed. |
+| AUD-V3-012 | 🟡 MEDIUM | **OPEN** | Service-role for analytics reads — 3 hr; defense-in-depth, not exploitable today. |
+| AUD-V3-013 | 🟡 MEDIUM | **CLOSED** | `webhooks/tap/route.ts:28-50,168` — `tapWebhookSchema` zod-validates body before RPC call. |
+| AUD-V3-014 | 🟡 MEDIUM | **CLOSED** | commit `cbd34dc` (migration 138) + `c0f8826` — atomic refund RPC + real Tap API call + audit-log durability. |
+| AUD-V3-015 | 🔵 LOW | **OPEN** | postcss dev-dep CVE — out of scope (package.json). |
+| AUD-V3-016 | 🔵 LOW | **CLOSED** | Session 98 — `supabase gen types --linked` regenerated, all `as never` casts stripped. |
+| AUD-V3-017 | 🔵 LOW | **OPEN** | `createServiceClient` sync/async inconsistency — 79 non-awaited + 69 awaited sites. Either direction is a ~70-file diff. Low value (await on non-promise is a no-op); leave until a natural refactor touches the supabase helpers. |
+| AUD-V3-018 | 🔵 LOW | **ACCEPTED** | Author already noted "Not an XSS finding". |
+| AUD-V3-019 | 🔵 LOW | **ACCEPTED** | Author already noted "Acceptable; no fix". |
+| AUD-V3-020 → 023 | ⚫ INFO | unchanged | Design decisions, no fix required. |
+
+**Genuinely-open net of accept/defer:** AUD-V3-002 (package CVEs), AUD-V3-008 (analytics error refactor), AUD-V3-012 (analytics anon client), AUD-V3-015 (postcss dev CVE), AUD-V3-017 (await consistency).
+
+**Implication:** Production Ready posture from this audit ("CAUTION — 4 must-fix items") is no longer accurate. The 2 critical and 4 high deploy-blockers are all closed except AUD-V3-002 (npm audit fix), which is a package-lockfile-only change pending a deps session. A v4 audit refresh would more accurately read: Security Score ~88 / 100, Production Ready: GREEN modulo `npm audit fix`.
+
+The detailed findings below are preserved as-is for historical reference. Use this table as the authoritative status going forward.
+
+---
+
 ```
 ╔══════════════════════════════════════════════════════════╗
 ║     MASTER AUDIT REPORT — Kahramana Baghdad Dashboard    ║
