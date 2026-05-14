@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
 import { getSession } from '@/lib/auth/session'
-import { resolveCheckoutMenuItemPrice } from '@/lib/menu'
+import { fetchCheckoutPriceMap, resolveOrderItemPrice } from '@/lib/checkout-pricing.server'
 import { WAITER_PLACEHOLDER_PHONE } from '@/constants/contact'
 import { resolveBestPromotion } from '@/lib/promotions/server'
 import type { StaffRole } from '@/lib/supabase/custom-types'
@@ -143,12 +143,19 @@ export async function createWaiterOrder(
     modifiers:        ModifierSnapshot[]
   }
 
+  // Prefetch live DB prices once for the whole cart (anon client / RLS 075).
+  const dbPriceMap = await fetchCheckoutPriceMap(data.items.map((i) => i.menuItemId))
+
   const pricedItems: PricedItem[] = []
   for (const item of data.items) {
-    const resolved = resolveCheckoutMenuItemPrice(item.menuItemId, {
-      size:    item.sizeName?.trim() || undefined,
-      variant: item.variantName?.trim() || undefined,
-    })
+    const resolved = resolveOrderItemPrice(
+      item.menuItemId,
+      {
+        size:    item.sizeName?.trim() || undefined,
+        variant: item.variantName?.trim() || undefined,
+      },
+      dbPriceMap,
+    )
     if ('error' in resolved) return { error: resolved.error }
 
     const validatedModifiers: ModifierSnapshot[] = (item.modifiers ?? []).map((m) => ({
