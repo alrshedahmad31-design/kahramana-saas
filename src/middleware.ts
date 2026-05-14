@@ -156,7 +156,8 @@ function finalizePublicResponse(intlResponse: NextResponse): NextResponse {
   const response = NextResponse.next()
 
   intlResponse.headers.forEach((value, key) => {
-    if (key.toLowerCase() !== 'content-security-policy') {
+    const lowerKey = key.toLowerCase()
+    if (lowerKey !== 'content-security-policy' && lowerKey !== 'set-cookie') {
       response.headers.set(key, value)
     }
   })
