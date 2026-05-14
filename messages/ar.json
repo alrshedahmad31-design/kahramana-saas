@@ -623,7 +623,8 @@
     "notesPlaceholder": "مثال: بدون بصل، حار زيادة...",
     "specialInstructions": "ملاحظات خاصة",
     "browseMenu": "تصفح المنيو",
-    "continueShopping": "متابعة التسوق"
+    "continueShopping": "متابعة التسوق",
+    "addMore": "إضافة المزيد"
   },
   "checkout": {
     "title": "إتمام الطلب",
