@@ -1,7 +1,8 @@
 'use server'
 
 import { z } from 'zod'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import * as Sentry from '@sentry/nextjs'
 import { fetchCheckoutPriceMap, resolveOrderItemPrice } from '@/lib/checkout-pricing.server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { BRANCHES, type BranchId } from '@/constants/contact'
@@ -734,6 +735,43 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
         branchName:   locale === 'ar' ? branch.nameAr : branch.nameEn,
         deliveryType: resolvedOrderData.order_type,
       }).catch(() => {})
+    }
+
+    // Silent auto-save of default address to customer_profiles (migration 147).
+    // Only for authenticated customers on delivery orders. Uses the cookie-bound
+    // anon client so the row-level + column-level grants apply — never the
+    // service role. Order success must not depend on this; on any failure we
+    // log to Sentry and move on.
+    if (resolvedOrderData.order_type === 'delivery') {
+      try {
+        const sessionForSave = customerSession ?? await getCustomerSession()
+        if (sessionForSave) {
+          const auth = await createClient()
+          const { error: addrErr } = await auth
+            .from('customer_profiles')
+            .update({
+              default_block:    resolvedOrderData.delivery_area     ?? null,
+              default_road:     resolvedOrderData.delivery_street   ?? null,
+              default_building: resolvedOrderData.delivery_building ?? null,
+              default_flat:     null,
+              default_area:     resolvedOrderData.delivery_area     ?? null,
+              default_lat:      resolvedOrderData.delivery_lat      ?? null,
+              default_lng:      resolvedOrderData.delivery_lng      ?? null,
+            })
+            .eq('id', sessionForSave.id)
+          if (addrErr) {
+            Sentry.captureException(new Error(addrErr.message), {
+              tags: { stage: 'checkout.address_save_failed', code: addrErr.code ?? 'unknown' },
+              extra: { userId: sessionForSave.id, orderId },
+            })
+          }
+        }
+      } catch (saveErr) {
+        Sentry.captureException(saveErr instanceof Error ? saveErr : new Error(String(saveErr)), {
+          tags: { stage: 'checkout.address_save_failed' },
+          extra: { orderId },
+        })
+      }
     }
 
     return {

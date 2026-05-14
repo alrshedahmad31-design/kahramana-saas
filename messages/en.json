@@ -656,7 +656,8 @@
       "directionsPlaceholder": "Near landmark or any other details...",
       "gpsSuccess": "Location shared successfully",
       "gpsWaiting": "Getting your location...",
-      "gpsDriverHint": "Your precise GPS location will be sent with your address to help the driver arrive faster."
+      "gpsDriverHint": "Your precise GPS location will be sent with your address to help the driver arrive faster.",
+      "prefilledHint": "Filled from your saved address — feel free to edit"
     },
     "orderSummary": "Order Summary",
     "deliveryFee": "Delivery Fee",
@@ -1333,6 +1334,26 @@
       "redeemed": "Redeemed",
       "bonus": "Bonus",
       "expired": "Expired"
+    },
+    "myInfo": {
+      "heading": "My Info",
+      "name": "Name",
+      "phone": "Phone",
+      "block": "Block",
+      "road": "Road",
+      "building": "Building",
+      "flat": "Flat (optional)",
+      "area": "Area (optional)",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved ✓",
+      "errors": {
+        "nameTooLong": "Name is too long (120 characters max)",
+        "phoneInvalid": "Enter a valid Bahrain number (+97336XXXXXX)",
+        "phoneTaken": "This phone number is already in use",
+        "notAuthenticated": "Please sign in again",
+        "updateFailed": "Could not save changes — please try again"
+      }
     }
   },
   "payment": {

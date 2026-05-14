@@ -152,6 +152,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const [gpsCoords,  setGpsCoords]    = useState<{ lat: number; lng: number } | null>(null)
   const [gpsLoading, setGpsLoading]   = useState(false)
   const [gpsError,   setGpsError]     = useState<string | null>(null)
+  const [addressPrefilled, setAddressPrefilled] = useState(false)
 
   // ── Points state ──────────────────────────────────────────────────────────
   const [usePoints, setUsePoints] = useState(false)
@@ -162,6 +163,35 @@ export default function CheckoutForm({ customerProfile }: Props) {
     if (!customerProfile) return
     setName((current) => current || customerProfile.name || '')
     setPhone((current) => current || customerProfile.phone || '')
+
+    // Pre-fill saved default address (migration 147). Only pre-fill when at
+    // least the block is on file — otherwise the user has never saved an
+    // address and the fields should stay empty. The customer still has to
+    // confirm/edit before placing the order; we never auto-submit.
+    if (customerProfile.default_block) {
+      setManualAddr((current) => {
+        const next: ManualAddress = {
+          block:    current.block    || (customerProfile.default_block    ?? ''),
+          road:     current.road     || (customerProfile.default_road     ?? ''),
+          building: current.building || (customerProfile.default_building ?? ''),
+          flat:     current.flat     || (customerProfile.default_flat     ?? ''),
+        }
+        const changed =
+          next.block !== current.block ||
+          next.road !== current.road ||
+          next.building !== current.building ||
+          next.flat !== current.flat
+        if (changed) setAddressPrefilled(true)
+        return next
+      })
+    }
+
+    if (customerProfile.default_lat != null && customerProfile.default_lng != null) {
+      setGpsCoords((current) => current ?? {
+        lat: Number(customerProfile.default_lat),
+        lng: Number(customerProfile.default_lng),
+      })
+    }
   }, [customerProfile])
 
   useEffect(() => {
@@ -837,6 +867,12 @@ export default function CheckoutForm({ customerProfile }: Props) {
                   />
                 </div>
               </div>
+
+              {addressPrefilled && (
+                <p className={`text-xs text-brand-muted ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+                  {t('address.prefilledHint')}
+                </p>
+              )}
             </div>
           </div>
         )}

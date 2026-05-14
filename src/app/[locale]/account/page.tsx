@@ -4,6 +4,7 @@ import { getCustomerSession } from '@/lib/auth/customerSession'
 import { createClient } from '@/lib/supabase/server'
 import TierBadge from '@/components/loyalty/TierBadge'
 import PointsHistory from '@/components/loyalty/PointsHistory'
+import ProfileEditForm from './ProfileEditForm'
 import {
   formatPoints,
   pointsToCredit,
@@ -235,6 +236,19 @@ export default async function AccountPage({ params }: Props) {
             ))}
           </ul>
         </div>
+
+        {/* ── My Info — edit name/phone/saved address (migration 147) ──── */}
+        <ProfileEditForm
+          initial={{
+            name:             customer.name,
+            phone:            customer.phone,
+            default_block:    customer.default_block,
+            default_road:     customer.default_road,
+            default_building: customer.default_building,
+            default_flat:     customer.default_flat,
+            default_area:     customer.default_area,
+          }}
+        />
 
         {/* ── Points history ────────────────────────────────────────────── */}
         <div>
