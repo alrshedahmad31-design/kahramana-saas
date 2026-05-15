@@ -2,8 +2,10 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { createClient } from '@/lib/supabase/server'
-import TierBadge from '@/components/loyalty/TierBadge'
 import PointsHistory from '@/components/loyalty/PointsHistory'
+import MembershipCard from '@/components/loyalty/MembershipCard'
+import TierJourney from '@/components/loyalty/TierJourney'
+import TierBenefitsCards from '@/components/loyalty/TierBenefitsCards'
 import ProfileEditForm from './ProfileEditForm'
 import {
   formatPoints,
@@ -11,7 +13,7 @@ import {
   tierProgressToNext,
   getNextTier,
   TIER_THRESHOLDS_LEGACY as TIER_THRESHOLDS,
-  TIER_BENEFITS,
+  POINT_VALUE_BHD,
 } from '@/lib/loyalty/calculations'
 import { TIER_COLORS } from '@/lib/design-tokens'
 import type { PointsTransactionRow } from '@/lib/supabase/custom-types'
@@ -79,86 +81,119 @@ export default async function AccountPage({ params }: Props) {
 
   const transactions = (txRaw ?? []) as PointsTransactionRow[]
 
+  // Compute total saved from all redemption transactions (separate aggregate fetch
+  // because the history above is capped at 100 rows)
+  let totalSavedBhd = 0
+  try {
+    const { data: redemptionsRaw } = await supabase
+      .from('points_transactions')
+      .select('points_spent')
+      .eq('customer_id', customer.id)
+      .eq('transaction_type', 'redeemed')
+
+    const totalPointsSpent = (redemptionsRaw ?? []).reduce(
+      (sum, r) => sum + Number(r.points_spent ?? 0),
+      0,
+    )
+    totalSavedBhd = totalPointsSpent * POINT_VALUE_BHD
+  } catch {
+    totalSavedBhd = 0
+  }
+
   const progress  = tierProgressToNext(customer.total_orders, customer.total_spent_bhd, customer.loyalty_tier)
   const nextTier  = getNextTier(customer.loyalty_tier)
-  const benefits  = TIER_BENEFITS[customer.loyalty_tier][isAr ? 'ar' : 'en']
   const tierColor = TIER_COLORS[customer.loyalty_tier]
   const bhdValue  = pointsToCredit(customer.points_balance)
+
+  const nextTierLabel = nextTier ? t(`tierName.${nextTier}`) : null
+  const ordersRemaining = nextTier
+    ? Math.max(TIER_THRESHOLDS[nextTier].minOrders - customer.total_orders, 0)
+    : 0
 
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
       className="min-h-screen bg-brand-black py-8 px-4"
     >
-      <div className="max-w-2xl mx-auto flex flex-col gap-8">
+      <div className="max-w-2xl mx-auto flex flex-col gap-6">
 
-        {/* ── Profile card ─────────────────────────────────────────────── */}
-        <div
-          className="rounded-2xl border p-6"
-          style={{ borderColor: tierColor.border, backgroundColor: tierColor.bg }}
-        >
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h1 className={`text-2xl font-black text-brand-text mb-1
-                ${isAr ? 'font-cairo' : 'font-editorial'}`}>
-                {customer.name ?? t('title')}
-              </h1>
-              <p className="font-satoshi text-sm text-brand-muted">
-                {customer.phone}
-              </p>
+        {/* ── S1 — Membership card ─────────────────────────────────────── */}
+        <MembershipCard
+          userId={customer.id}
+          name={customer.name}
+          tier={customer.loyalty_tier}
+          joinedAt={customer.joined_at}
+        />
+
+        {/* ── S2 — Points balance + Total saved ────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Points balance */}
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-5">
+            <p
+              className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-3
+                ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+            >
+              {t('pointsBalance')}
+            </p>
+            <div className="flex items-end gap-2 mb-1">
+              <span
+                className="font-satoshi font-black text-4xl tabular-nums leading-none"
+                style={{ color: tierColor.text }}
+              >
+                {formatPoints(customer.points_balance)}
+              </span>
+              <span
+                className={`text-brand-muted text-sm mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+              >
+                {tL('points')}
+              </span>
             </div>
-            <TierBadge tier={customer.loyalty_tier} size="lg" locale={locale} />
+            <p className="font-satoshi text-xs text-brand-muted">
+              ≈ {bhdValue.toFixed(3)} BD {isAr ? 'قابلة للاسترداد' : 'redeemable'}
+            </p>
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            {[
-              { label: tL('totalOrders'), value: String(customer.total_orders) },
-              { label: tL('totalSpent'),  value: `${Number(customer.total_spent_bhd).toFixed(3)} BD` },
-              { label: tL('memberSince'), value: new Date(customer.joined_at).toLocaleDateString(
-                  isAr ? 'ar-BH' : 'en-BH', { month: 'short', year: 'numeric' }
-                ) },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-brand-surface/60 rounded-xl p-3 text-center">
-                <p className="font-satoshi text-xs text-brand-muted mb-1">{stat.label}</p>
-                <p className="font-satoshi font-bold text-brand-text text-sm tabular-nums">{stat.value}</p>
-              </div>
-            ))}
+          {/* Total saved */}
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-5">
+            <p
+              className={`text-xs font-bold text-brand-muted uppercase tracking-wide mb-3
+                ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+            >
+              {t('totalSaved')}
+            </p>
+            <div className="flex items-end gap-2 mb-1">
+              <span
+                className={`text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+              >
+                {t('youSaved')}
+              </span>
+              <span
+                className="font-satoshi font-black text-4xl tabular-nums leading-none text-brand-gold"
+              >
+                {totalSavedBhd.toFixed(3)}
+              </span>
+              <span
+                className={`text-brand-muted text-sm mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+              >
+                BD
+              </span>
+            </div>
+            <p className="font-satoshi text-xs text-brand-muted">
+              {tL('expiryNote')}
+            </p>
           </div>
         </div>
 
-        {/* ── Points balance ────────────────────────────────────────────── */}
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
-          <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-4
-            ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {tL('pointsBalance')}
-          </h2>
-          <div className="flex items-end gap-3 mb-2">
-            <span className="font-satoshi font-black text-5xl tabular-nums"
-                  style={{ color: TIER_COLORS[customer.loyalty_tier].text }}>
-              {formatPoints(customer.points_balance)}
-            </span>
-            <span className={`text-brand-muted mb-1 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {tL('points')}
-            </span>
-          </div>
-          <p className="font-satoshi text-sm text-brand-muted">
-            ≈ {bhdValue.toFixed(3)} BD {isAr ? 'قابلة للاسترداد' : 'redeemable'}
-          </p>
-          <p className="font-satoshi text-xs text-brand-muted/60 mt-1">
-            {tL('pointValue')} · {tL('expiryNote')}
-          </p>
-        </div>
+        {/* ── S3 — Tier journey + progress ─────────────────────────────── */}
+        <TierJourney currentTier={customer.loyalty_tier} />
 
-        {/* ── Tier progress ─────────────────────────────────────────────── */}
-        {progress && nextTier && (
+        {progress && nextTier && nextTierLabel && (
           <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
-            <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-4
-              ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {tL('progressToNextTier', { tier: isAr
-                ? { silver: 'الفضي', gold: 'الذهبي', platinum: 'البلاتيني', bronze: 'البرونزي' }[nextTier]
-                : nextTier.charAt(0).toUpperCase() + nextTier.slice(1)
-              })}
+            <h2
+              className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-4
+                ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+            >
+              {tL('progressToNextTier', { tier: nextTierLabel })}
             </h2>
 
             <div className="flex flex-col gap-3">
@@ -176,7 +211,7 @@ export default async function AccountPage({ params }: Props) {
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.round(progress.byOrders * 100)}%`,
+                      width:           `${Math.round(progress.byOrders * 100)}%`,
                       backgroundColor: tierColor.text,
                     }}
                   />
@@ -197,7 +232,7 @@ export default async function AccountPage({ params }: Props) {
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.round(progress.bySpend * 100)}%`,
+                      width:           `${Math.round(progress.bySpend * 100)}%`,
                       backgroundColor: tierColor.text,
                     }}
                   />
@@ -205,39 +240,32 @@ export default async function AccountPage({ params }: Props) {
               </div>
             </div>
 
-            <p className={`text-xs text-brand-muted mt-3 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-              {isAr
-                ? 'يكفي تحقيق أحد الشرطين للارتقاء للمستوى التالي'
-                : 'Either condition alone qualifies you for the next tier'}
+            <p className={`text-xs text-brand-gold mt-3 ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {ordersRemaining === 1
+                ? t('oneOrderToNext', { tier: nextTierLabel })
+                : t('ordersToNext',   { n: ordersRemaining, tier: nextTierLabel })}
             </p>
           </div>
         )}
 
-        {/* ── Benefits ──────────────────────────────────────────────────── */}
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6">
-          <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-4
-            ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-            {tL('benefits')}
-          </h2>
-          <ul className="flex flex-col gap-2">
-            {benefits.map((b) => (
-              <li
-                key={b}
-                className={`flex items-start gap-2 text-sm text-brand-text
-                  ${isAr ? 'font-almarai' : 'font-satoshi'}`}
-              >
-                <span className="mt-1 shrink-0" style={{ color: tierColor.text }}>
-                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                {b}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {!nextTier && (
+          <p
+            className={`text-center text-sm text-brand-gold font-bold
+              ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+          >
+            {t('topTier')}
+          </p>
+        )}
 
-        {/* ── My Info — edit name/phone/saved address (migration 147) ──── */}
+        {/* ── S4 — Redemption widget (skipped — see report)
+            LoyaltyRedemptionWidget is a checkout-only control that requires
+            isActive + onToggle props tied to an active order. Not applicable
+            on the account page; redemption happens at checkout. */}
+
+        {/* ── S5 — Tier benefits cards ─────────────────────────────────── */}
+        <TierBenefitsCards currentTier={customer.loyalty_tier} />
+
+        {/* ── S6 — My Info ─────────────────────────────────────────────── */}
         <ProfileEditForm
           initial={{
             name:             customer.name,
@@ -250,7 +278,7 @@ export default async function AccountPage({ params }: Props) {
           }}
         />
 
-        {/* ── Points history ────────────────────────────────────────────── */}
+        {/* ── S7 — Points history ──────────────────────────────────────── */}
         <div>
           <h2 className={`text-sm font-bold text-brand-muted uppercase tracking-wide mb-4
             ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
