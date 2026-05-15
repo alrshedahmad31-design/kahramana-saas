@@ -1,6 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
 type SetPasswordResult =
@@ -31,7 +32,16 @@ export async function setPasswordAction(
 
   if (!isRecovery) {
     if (!currentPassword) return { success: false, error: 'reauth_required' }
-    const { error: reauthErr } = await supabase.auth.signInWithPassword({
+    // Non-cookied probe client: verify current password without touching the
+    // user's live session cookies. A failed signInWithPassword on the cookied
+    // client would mutate auth cookie state mid-flight; this one-shot client
+    // has persistSession:false so the probe is side-effect-free (M2).
+    const probeClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    )
+    const { error: reauthErr } = await probeClient.auth.signInWithPassword({
       email:    user.email,
       password: currentPassword,
     })
