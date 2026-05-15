@@ -10,6 +10,12 @@ export default async function CinematicHero() {
 
   return (
     <>
+      <link
+        rel="preload"
+        as="image"
+        href="/assets/hero/hero-poster.webp"
+        fetchPriority="high"
+      />
       <section className="relative min-h-[calc(100svh-5rem)] md:min-h-[calc(100svh-6rem)] w-full overflow-hidden flex items-end pb-20 sm:pb-32 px-6 sm:px-16">
         <div className="absolute inset-0 z-0">
           <Image
