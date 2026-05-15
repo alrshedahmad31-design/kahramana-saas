@@ -1451,6 +1451,7 @@
     }
   },
   "inventory": {
+    "recipeNoIngredients": "Add ingredients to the inventory catalog first",
     "units": {
       "g": "g",
       "kg": "kg",

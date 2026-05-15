@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import type { RecipeRow } from '@/lib/supabase/custom-types'
 import { useTranslations } from 'next-intl'
 import { Icon } from '@/components/ui/Icon'
@@ -63,9 +64,12 @@ export default function RecipeEditor({
   saveAction, locale
 }: Props) {
   const t = useTranslations('inventory.recipes')
+  const tInv = useTranslations('inventory')
   const tCommon = useTranslations('common')
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const prefix = locale === 'en' ? '/en' : ''
+  const catalogEmpty = allIngredients.length === 0
 
   const [ingRows, setIngRows] = useState<IngRow[]>(() =>
     existingIngredients.map((r) => ({
@@ -209,6 +213,22 @@ export default function RecipeEditor({
 
       {/* Ingredient Rows */}
       <div>
+        {/* Empty-catalog notice — shown above the add button so the user knows
+            why it is disabled and where to go to populate the catalog. */}
+        {catalogEmpty && (
+          <div
+            className={`mb-3 flex items-center gap-2 rounded-lg border border-brand-border bg-brand-surface-2 px-3 py-2 ${font} text-sm text-brand-muted`}
+          >
+            <span>{tInv('recipeNoIngredients')}</span>
+            <Link
+              href={`${prefix}/dashboard/inventory/ingredients/new`}
+              className="inline-flex items-center gap-1 text-brand-gold hover:underline"
+              aria-label={tInv('recipeNoIngredients')}
+            >
+              <Icon name={isAr ? 'arrow-left' : 'arrow-right'} size={14} />
+            </Link>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-cairo text-base font-bold text-brand-text">
             {t('directIngredients')}
@@ -216,7 +236,8 @@ export default function RecipeEditor({
           <button
             type="button"
             onClick={addIngRow}
-            className={`inline-flex items-center gap-2 rounded-lg border border-brand-border px-3 py-1.5 ${font} text-sm text-brand-muted hover:border-brand-gold hover:text-brand-gold transition-colors`}
+            disabled={catalogEmpty}
+            className={`inline-flex items-center gap-2 rounded-lg border border-brand-border px-3 py-1.5 ${font} text-sm text-brand-muted transition-colors hover:border-brand-gold hover:text-brand-gold disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-brand-border disabled:hover:text-brand-muted`}
           >
             <span>+</span>
             {t('addIngredient')}
