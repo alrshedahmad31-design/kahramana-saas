@@ -7,7 +7,7 @@ import {
   calculateDistance, calculateETA, getUrgencyLevel,
   resolveExpectedAt, fmtDistance, fmtETA,
 }                                                             from '@/lib/utils/delivery'
-import { mapsDirectionsUrl }                                  from '@/lib/utils/distance'
+import { mapsDirectionsUrl, mapsSearchUrl }                   from '@/lib/utils/distance'
 import { buildCustomerContactLink }                           from '@/lib/whatsapp'
 import IssueReportModal                                       from '@/components/driver/IssueReportModal'
 import DeliveryFailedModal                                    from '@/components/driver/DeliveryFailedModal'
@@ -226,44 +226,45 @@ export default function DriverOrderCard({
     // Include city if stored (delivery_city added in migration 076)
     const city = order.delivery_city
     if (city)                    parts.push(city)
-    if (parts.length === 0) return deliveryAddrText || ''
+    // Only use raw text when it looks like a real address (has digits + Arabic block prefix).
+    // Avoids geocoding freeform notes ("قرب المسجد") to a random location.
+    if (parts.length === 0) {
+      const text = deliveryAddrText?.trim() || ''
+      return /[مش]\d/.test(text) ? text : null
+    }
     return parts.join(', ')
   })()
 
-  // Use extracted URL first, then lat/lng, then search query
+  // Priority: shared Maps URL → DB lat/lng → structured address search
   const customerNavUrl = useMemo(() => {
-    // 1. If we have coordinates in the extracted URL, wrap them in a directions URL
+    // 1. Shared Google Maps URL present in delivery_address
     if (extractedUrl) {
-      const coordMatch = extractedUrl.match(/(?:q=|@|place\/|destination=)(-?\d+\.\d+),(-?\d+\.\d+)/)
+      // Extract coordinates from standard Maps URLs (?q=, @viewport, destination=, place/)
+      // Require ≥4 decimal places to avoid matching non-coordinate numbers in the path
+      const coordMatch = extractedUrl.match(
+        /(?:q=|@|[?&]destination=)(-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})/
+      )
       if (coordMatch) {
-        return mapsDirectionsUrl(
-          `${coordMatch[1]},${coordMatch[2]}`,
-          driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined
-        )
+        // Simple ?q= format: opens native Maps app on iOS and Android, drops a pin
+        return `https://www.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}`
       }
-      // If it's already a directions URL, return as is (to preserve parameters like travelmode)
-      if (extractedUrl.includes('dir/?api=1')) return extractedUrl
+      // goo.gl / maps.app.goo.gl short links — open as-is; device follows redirect
+      // to the customer's exact saved location (no server call needed)
       return extractedUrl
     }
 
-    // 2. If we have explicit lat/lng from DB
+    // 2. Explicit coordinates from DB (customer shared browser GPS at checkout)
     if (order.delivery_lat != null && order.delivery_lng != null) {
-      return mapsDirectionsUrl(
-        `${order.delivery_lat},${order.delivery_lng}`,
-        driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined
-      )
+      return `https://www.google.com/maps?q=${order.delivery_lat},${order.delivery_lng}`
     }
 
-    // 3. Fallback to text search
+    // 3. Structured address → text search (only real structured fields, never raw notes)
     if (mapsSearchQuery) {
-      return mapsDirectionsUrl(
-        `${mapsSearchQuery}, Bahrain`,
-        driverLocation ? `${driverLocation.lat},${driverLocation.lng}` : undefined
-      )
+      return mapsSearchUrl(`${mapsSearchQuery}, Bahrain`)
     }
 
     return null
-  }, [extractedUrl, order.delivery_lat, order.delivery_lng, mapsSearchQuery, driverLocation])
+  }, [extractedUrl, order.delivery_lat, order.delivery_lng, mapsSearchQuery])
 
   // Distance + ETA
   const deliveryDist =
