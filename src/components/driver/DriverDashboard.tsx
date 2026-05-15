@@ -63,8 +63,8 @@ export default function DriverDashboard({
   const [reminderDismissed,  setReminderDismissed]  = useState(false)
   
   // Screen Wake Lock control: keep screen on if there is any active delivery
-  const hasActiveOrder = useMemo(() => 
-    orders.some(o => o.status === 'out_for_delivery'),
+  const hasActiveOrder = useMemo(() =>
+    orders.some(o => o.status === 'out_for_delivery' || o.status === 'arrived'),
     [orders]
   )
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function DriverDashboard({
         payments(method)
       `)
       .eq('order_type', 'delivery')
-      .in('status', ['ready', 'out_for_delivery'])
+      .in('status', ['ready', 'out_for_delivery', 'arrived'])
       .order('created_at', { ascending: true })
 
     if (branchId) q = q.eq('branch_id', branchId)
@@ -256,7 +256,13 @@ export default function DriverDashboard({
       for (const action of actions) {
         try {
           const metadata = action.metadata as { tipBhd?: number, actualCollected?: number } | null
-          const res = await driverBumpOrder(action.orderId, action.currentStatus as 'ready' | 'out_for_delivery', metadata?.tipBhd, metadata?.actualCollected)
+          const cs = action.currentStatus
+          if (cs !== 'ready' && cs !== 'out_for_delivery' && cs !== 'arrived') {
+            // Unknown queued status — discard so it doesn't retry forever
+            if (action.id) await deletePendingAction(action.id)
+            continue
+          }
+          const res = await driverBumpOrder(action.orderId, cs, metadata?.tipBhd, metadata?.actualCollected)
           if (res.success) {
             if (action.id) await deletePendingAction(action.id)
           }
@@ -291,7 +297,7 @@ export default function DriverDashboard({
     if (!result.success) setIsOnline((v) => !v) // revert on DB error
   }
 
-  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery', metadata?: { tipBhd?: number, actualCollected?: number }): Promise<string | null> {
+  async function handleAction(orderId: string, currentStatus: 'ready' | 'out_for_delivery' | 'arrived', metadata?: { tipBhd?: number, actualCollected?: number }): Promise<string | null> {
     const nextStatus = currentStatus === 'ready' ? 'out_for_delivery' : 'delivered'
     const now = new Date().toISOString()
 
@@ -365,7 +371,7 @@ export default function DriverDashboard({
     return null
   }
 
-  const activeOrders    = orders.filter((o) => o.status === 'out_for_delivery')
+  const activeOrders    = orders.filter((o) => o.status === 'out_for_delivery' || o.status === 'arrived')
   const availableOrders = orders.filter((o) => o.status === 'ready')
   const totalRevenue    = completedOrders.reduce((s, o) => s + Number(o.total_bhd), 0)
 

@@ -16,7 +16,7 @@ import type { DriverOrder }                                   from '@/lib/supaba
 import type { BranchId }                                      from '@/constants/contact'
 import { Icon, type IconName }                                from '@/components/ui/Icon'
 
-type DriverActiveStatus = 'ready' | 'out_for_delivery'
+type DriverActiveStatus = 'ready' | 'out_for_delivery' | 'arrived'
 type Urgency            = 'critical' | 'urgent' | 'normal'
 type StepStatus         = 'done' | 'current' | 'upcoming'
 
@@ -81,18 +81,23 @@ interface StepDef {
 }
 
 function deriveSteps(order: DriverOrder): StepDef[] {
-  const isDelivered = order.status === 'delivered'
-  const isOnRoad    = order.status === 'out_for_delivery'
-  const hasArrived  = !!order.arrived_at
+  const isDelivered  = order.status === 'delivered'
+  const isOnRoad     = order.status === 'out_for_delivery'
+  const isAtCustomer = order.status === 'arrived'
+  // The "in-transit + already arrived" branch (status still out_for_delivery
+  // but arrived_at stamped) and the canonical 'arrived' status are equivalent
+  // for step rendering.
+  const hasArrived   = !!order.arrived_at || isAtCustomer
+  const isActive     = isOnRoad || isAtCustomer
 
   // step 1: always done if we can see this order
   const s1: StepStatus = 'done'
-  // step 2: done once picked up (out_for_delivery sets picked_up_at)
-  const s2: StepStatus = (isOnRoad || isDelivered) ? 'done' : isOnRoad ? 'current' : 'upcoming'
+  // step 2: done once picked up (out_for_delivery or arrived both imply pickup)
+  const s2: StepStatus = (isActive || isDelivered) ? 'done' : 'upcoming'
   // step 3: done when arrived_at is set or delivered
-  const s3Raw = (hasArrived || isDelivered) ? 'done' : (isOnRoad && !hasArrived) ? 'current' : 'upcoming'
-  // step 4: done when delivered
-  const s4Raw: StepStatus = isDelivered ? 'done' : (isOnRoad && hasArrived) ? 'current' : 'upcoming'
+  const s3Raw = (hasArrived || isDelivered) ? 'done' : (isActive && !hasArrived) ? 'current' : 'upcoming'
+  // step 4: done when delivered, current when at customer
+  const s4Raw: StepStatus = isDelivered ? 'done' : (isActive && hasArrived) ? 'current' : 'upcoming'
 
   // Resolve: when step 2 is 'done', step 3 should be 'current' if not yet done
   const s3: StepStatus = s3Raw
@@ -143,11 +148,15 @@ export default function DriverOrderCard({
     }
   }, [confirmDeliver, order.total_bhd, setActualCollected])
 
-  const isCompleted = variant === 'completed'
-  const isReady     = order.status === 'ready'
-  const isOnRoad    = order.status === 'out_for_delivery'
-  const hasArrived  = !!order.arrived_at
-  const isCash      = order.payments?.method === 'cash'
+  const isCompleted  = variant === 'completed'
+  const isReady      = order.status === 'ready'
+  const isOnRoad     = order.status === 'out_for_delivery'
+  const isAtCustomer = order.status === 'arrived'
+  // Treat status='arrived' as implicit arrival, even before arrived_at lands
+  // locally — covers the realtime-refresh window between markDriverArrived
+  // returning and the optimistic state catching up.
+  const hasArrived   = !!order.arrived_at || isAtCustomer
+  const isCash       = order.payments?.method === 'cash'
 
   const orderRef = order.id.slice(-4).toUpperCase()
 
@@ -273,9 +282,9 @@ export default function DriverOrderCard({
 
   // Next-action label
   const nextActionLabel: string = (() => {
-    if (isReady)           return isRTL ? 'استلم الطلب من الفرع' : 'Pick up the order from branch'
-    if (isOnRoad && !hasArrived) return isRTL ? 'أكد وصولك للزبون' : 'Confirm you arrived at customer'
-    if (isOnRoad && hasArrived)  return isRTL ? 'سلّم الطلب وأكد التسليم' : 'Hand over the order and confirm delivery'
+    if (isReady)                                  return isRTL ? 'استلم الطلب من الفرع' : 'Pick up the order from branch'
+    if (isOnRoad && !hasArrived)                  return isRTL ? 'أكد وصولك للزبون' : 'Confirm you arrived at customer'
+    if (isAtCustomer || (isOnRoad && hasArrived)) return isRTL ? 'سلّم الطلب وأكد التسليم' : 'Hand over the order and confirm delivery'
     return isRTL ? 'تم التسليم' : 'Delivered'
   })()
 
@@ -327,7 +336,10 @@ export default function DriverOrderCard({
     setConfirmDeliver(false)
     setActionError(null)
     try {
-      const error = await onAction!(order.id, 'out_for_delivery', {
+      // Pass the actual current status — the server action accepts both
+      // 'out_for_delivery' and 'arrived' as inputs that transition to 'delivered'.
+      const currentStatus: DriverActiveStatus = isAtCustomer ? 'arrived' : 'out_for_delivery'
+      const error = await onAction!(order.id, currentStatus, {
         tipBhd: isCash && tipBhd > 0 ? tipBhd : undefined,
         actualCollected: isCash && actualCollected !== null ? actualCollected : undefined,
       })
@@ -385,14 +397,14 @@ export default function DriverOrderCard({
           ) : (
             <span className={`
               text-xs font-satoshi font-black rounded-lg px-3 py-1.5
-              ${isOnRoad
+              ${(isOnRoad || isAtCustomer)
                 ? 'bg-brand-success/20 text-brand-success border border-brand-success/30'
                 : 'bg-brand-gold/20 text-brand-gold border border-brand-gold/30'
               }
             `}>
               {isRTL
-                ? (isOnRoad ? (hasArrived ? 'وصل للزبون' : 'جاري التوصيل') : 'جاهز للاستلام')
-                : (isOnRoad ? (hasArrived ? 'Arrived'    : 'On Route')      : 'Ready')
+                ? ((isOnRoad || isAtCustomer) ? (hasArrived ? 'وصل للزبون' : 'جاري التوصيل') : 'جاهز للاستلام')
+                : ((isOnRoad || isAtCustomer) ? (hasArrived ? 'Arrived'    : 'On Route')      : 'Ready')
               }
             </span>
           )}
@@ -453,7 +465,7 @@ export default function DriverOrderCard({
         <div className="px-4 pb-4 flex flex-col gap-3">
 
           {/* ── Next action card (active orders only) ─────────────────────────── */}
-          {!isCompleted && (isReady || isOnRoad) && (
+          {!isCompleted && (isReady || isOnRoad || isAtCustomer) && (
             <div className="rounded-2xl border border-brand-gold/20 bg-brand-gold/5 px-4 py-3">
               <p className={`text-xs font-bold text-brand-gold uppercase tracking-wider mb-2 ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
                 {isRTL ? 'الخطوة التالية' : 'Next Step'}
@@ -481,7 +493,9 @@ export default function DriverOrderCard({
                 </button>
               )}
 
-              {/* Step 2: on road, not arrived yet → arrived at customer */}
+              {/* Step 2: on road, not arrived yet → arrived at customer.
+                  Once status flips to 'arrived' (or arrived_at lands locally),
+                  hasArrived is true and this button is replaced by Deliver. */}
               {isOnRoad && !hasArrived && onArrive && (
                 <button
                   type="button"
@@ -501,8 +515,12 @@ export default function DriverOrderCard({
                 </button>
               )}
 
-              {/* Step 3: arrived (or no arrive step) → deliver */}
-              {isOnRoad && (hasArrived || !onArrive) && (
+              {/* Step 3: arrived (or no arrive step) → deliver.
+                  Visible whenever the order is at the customer: either
+                  status='arrived', or status='out_for_delivery' with the
+                  arrived_at stamp set, or the legacy callsite that omits
+                  onArrive entirely. */}
+              {(isAtCustomer || (isOnRoad && (hasArrived || !onArrive))) && (
                 <>
                   {/* Cash confirmation prompt */}
                   {confirmDeliver && isCash && (

@@ -57,10 +57,13 @@ export default async function DriverPage({ params }: Props) {
     .order('created_at', { ascending: true })
   if (user.branch_id) readyQ = readyQ.eq('branch_id', user.branch_id)
 
+  // Include 'arrived' so drivers who marked arrival can still complete delivery.
+  // Without this the order vanishes from the driver app and never reaches
+  // 'delivered' — blocking loyalty awards, COD reconciliation, and ETA close-out.
   const transitQ = supabase
     .from('orders')
     .select(ORDER_SELECT)
-    .eq('status', 'out_for_delivery')
+    .in('status', ['out_for_delivery', 'arrived'])
     .eq('order_type', 'delivery')
     .eq('assigned_driver_id', user.id)
     .order('created_at', { ascending: true })

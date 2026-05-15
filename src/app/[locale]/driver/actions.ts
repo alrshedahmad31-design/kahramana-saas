@@ -142,6 +142,30 @@ export async function driverBumpOrder(
     }
   }
 
+  // Audit log every driver-initiated status transition. The two transitions
+  // routed through this action — ready → out_for_delivery and (out_for_delivery
+  // OR arrived) → delivered — are both money-relevant (COD reconciliation,
+  // loyalty award, ETA close-out). Non-fatal on failure so the workflow still
+  // advances; operations should monitor the warning.
+  const service = await createServiceClient()
+  const { error: auditError } = await service.from('audit_logs').insert({
+    action:     'UPDATE',
+    table_name: 'orders',
+    record_id:  orderId,
+    user_id:    user.id,
+    actor_role: user.role as Database['public']['Enums']['staff_role'],
+    branch_id:  order.branch_id,
+    changes:    { prev_status: currentStatus, status: nextStatus },
+  })
+  if (auditError) {
+    console.error('[driver-actions] audit_logs insert failed for bump', orderId, auditError)
+  }
+
+  // The driver dashboard pulls fresh data on a 15 s interval and on realtime
+  // events, but revalidating the route invalidates any SSR/ISR cache so the
+  // next navigation reflects the new status immediately.
+  revalidatePath(`/[locale]/driver`, 'page')
+
   return { success: true }
 }
 
