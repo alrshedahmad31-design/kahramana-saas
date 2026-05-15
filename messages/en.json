@@ -1336,7 +1336,6 @@
     "signOut": "Sign Out",
     "pointsShort": "pts",
     "noTransactions": "No transactions yet",
-<<<<<<< Updated upstream
     "memberCard": "Membership Card",
     "memberId": "Member ID",
     "memberSince": "Member since",
@@ -1355,7 +1354,6 @@
       "silver": "Silver",
       "gold": "Gold",
       "platinum": "Platinum"
-=======
     "browseMenu": "Browse menu",
     "historyEmptyTitle": "Your points journey starts with your next order",
     "historyEmptyCopy": "Every completed order adds new credit to your Kahramana Club membership.",
@@ -1390,7 +1388,6 @@
       "benefitExpiry": "months validity",
       "benefitOffers": "exclusive member discounts",
       "myDataTab": "My data"
->>>>>>> Stashed changes
     },
     "transactions": {
       "earned": "Earned",

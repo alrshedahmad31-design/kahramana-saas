@@ -1336,7 +1336,6 @@
     "signOut": "تسجيل الخروج",
     "pointsShort": "نقطة",
     "noTransactions": "لا توجد عمليات بعد",
-<<<<<<< Updated upstream
     "memberCard": "بطاقة العضوية",
     "memberId": "رقم العضوية",
     "memberSince": "عضو منذ",
@@ -1355,7 +1354,6 @@
       "silver": "الفضي",
       "gold": "الذهبي",
       "platinum": "البلاتيني"
-=======
     "browseMenu": "تصفح المنيو",
     "historyEmptyTitle": "رحلة النقاط تبدأ من طلبك القادم",
     "historyEmptyCopy": "كل طلب مكتمل يضيف رصيداً جديداً إلى عضويتك في كهرمانة كلوب.",
@@ -1390,7 +1388,6 @@
       "benefitExpiry": "شهراً صلاحية",
       "benefitOffers": "خصومات حصرية للأعضاء",
       "myDataTab": "بياناتي"
->>>>>>> Stashed changes
     },
     "transactions": {
       "earned": "نقاط مكتسبة",
