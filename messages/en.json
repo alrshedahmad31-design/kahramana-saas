@@ -852,7 +852,8 @@
       "mismatch": "Passwords do not match",
       "tooShort": "Password must be at least 8 characters",
       "error": "Something went wrong, please try again",
-      "sessionExpired": "Reset link has expired, please request a new one"
+      "sessionExpired": "Reset link has expired, please request a new one",
+      "recoveryUserMismatch": "This reset link belongs to a different account. Please request a new reset link."
     }
   },
   "branches": {

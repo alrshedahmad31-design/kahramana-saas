@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse }          from 'next/server'
 import { createServerClient, type CookieOptionsWithName } from '@supabase/ssr'
 import { cookies }                           from 'next/headers'
+import {
+  RECOVERY_COOKIE_NAME,
+  RECOVERY_COOKIE_MAX_AGE_SECONDS,
+  signRecoveryCookie,
+} from '@/lib/auth/recoveryCookie'
 
 // Pin redirects to the env-configured site URL. Deriving from `request.url`
 // (`origin`) is vulnerable to Host-header confusion via a misrouted proxy +
@@ -65,13 +70,22 @@ export async function GET(request: NextRequest) {
   // distinguish a reset-token landing from a normal logged-in user changing
   // their password. Without this marker any active session would pass for
   // reset proof (VULN-AUTH-06). Short TTL — recovery should complete fast.
+  //
+  // L1: cookie value is HMAC-bound to the freshly exchanged user_id so a
+  // session-swap between this hop and /set-password (shared kiosk, browser
+  // switch-user) can't leak the recovery proof onto another account.
   if (type === 'recovery') {
-    cookieStore.set('kah_recovery_flow', '1', {
+    const { data: { user: recoveryUser } } = await supabase.auth.getUser()
+    if (!recoveryUser?.id) {
+      // exchange succeeded but no user resolved — refuse to set the cookie
+      return safeRedirect('/login?error=recovery_session_failed')
+    }
+    cookieStore.set(RECOVERY_COOKIE_NAME, signRecoveryCookie(recoveryUser.id), {
       httpOnly: true,
       sameSite: 'lax',
       secure:   process.env.NODE_ENV === 'production',
       path:     '/',
-      maxAge:   60 * 10,
+      maxAge:   RECOVERY_COOKIE_MAX_AGE_SECONDS,
     })
     return safeRedirect('/set-password')
   }

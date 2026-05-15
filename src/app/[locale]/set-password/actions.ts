@@ -3,12 +3,21 @@
 import { cookies } from 'next/headers'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import {
+  RECOVERY_COOKIE_NAME,
+  verifyRecoveryCookie,
+} from '@/lib/auth/recoveryCookie'
 
 type SetPasswordResult =
   | { success: true }
-  | { success: false; error: 'no_session' | 'too_short' | 'reauth_required' | 'reauth_failed' | 'server_error' }
-
-const RECOVERY_COOKIE = 'kah_recovery_flow'
+  | { success: false; error:
+        | 'no_session'
+        | 'too_short'
+        | 'reauth_required'
+        | 'reauth_failed'
+        | 'recovery_user_mismatch'
+        | 'server_error'
+    }
 
 export async function setPasswordAction(
   newPassword: string,
@@ -27,8 +36,21 @@ export async function setPasswordAction(
   // it, an attacker who hijacks an active session could just rotate the
   // password (VULN-AUTH-06). Non-recovery sessions must re-prove the
   // current password before we let updateUser through.
+  //
+  // L1: cookie value is HMAC-bound to the user_id it was minted for. We
+  // verify the HMAC AND that the bound user matches the live session user
+  // — closes the cross-account session-swap vector (recovery proof from
+  // user A applied to user B's session in the same browser).
   const cookieStore = await cookies()
-  const isRecovery = cookieStore.get(RECOVERY_COOKIE)?.value === '1'
+  const verified = verifyRecoveryCookie(cookieStore.get(RECOVERY_COOKIE_NAME)?.value)
+  const isRecovery = verified.ok && verified.userId === user.id
+
+  // Bound to a different user — reject loudly. Don't fall through to the
+  // currentPassword path: that would silently rotate the wrong account's
+  // password if the caller knows the current password by coincidence.
+  if (verified.ok && verified.userId !== user.id) {
+    return { success: false, error: 'recovery_user_mismatch' }
+  }
 
   if (!isRecovery) {
     if (!currentPassword) return { success: false, error: 'reauth_required' }
@@ -54,7 +76,7 @@ export async function setPasswordAction(
   // One-shot — clear the recovery marker the moment we accept it so a stale
   // tab can't reuse it after the user navigates away.
   if (isRecovery) {
-    cookieStore.set(RECOVERY_COOKIE, '', {
+    cookieStore.set(RECOVERY_COOKIE_NAME, '', {
       httpOnly: true,
       sameSite: 'lax',
       secure:   process.env.NODE_ENV === 'production',
@@ -68,5 +90,13 @@ export async function setPasswordAction(
 
 export async function getRecoveryFlowState(): Promise<{ isRecovery: boolean }> {
   const cookieStore = await cookies()
-  return { isRecovery: cookieStore.get(RECOVERY_COOKIE)?.value === '1' }
+  const verified = verifyRecoveryCookie(cookieStore.get(RECOVERY_COOKIE_NAME)?.value)
+  if (!verified.ok) return { isRecovery: false }
+
+  // Cross-check live session — only report `isRecovery: true` when the
+  // cookie's bound user matches the live session user. Prevents the
+  // set-password UI from offering the simplified flow to the wrong account.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return { isRecovery: !!user && verified.userId === user.id }
 }

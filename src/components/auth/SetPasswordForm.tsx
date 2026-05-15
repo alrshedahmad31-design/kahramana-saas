@@ -69,6 +69,10 @@ export default function SetPasswordForm({ isRecovery }: Props) {
         setError(t('tooShort'))
       } else if (result.error === 'no_session') {
         setError(t('sessionExpired'))
+      } else if (result.error === 'recovery_user_mismatch') {
+        // L1: recovery cookie was minted for a different user than the
+        // current session — refuse and force a fresh recovery flow.
+        setError(t('recoveryUserMismatch'))
       } else {
         setError(t('error'))
       }
