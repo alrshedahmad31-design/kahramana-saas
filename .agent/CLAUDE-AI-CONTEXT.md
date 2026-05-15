@@ -13,7 +13,7 @@ COMPLETED 2026-05-15:
 - Supabase new signups disabled
 - order_item_station_status added to Realtime (8→9 tables)
 - Turnstile keys live (NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY)
-- SENTRY_AUTH_TOKEN rotated (deployment 6F9Nps8SG)
+- ~~SENTRY_AUTH_TOKEN rotated (deployment 6F9Nps8SG)~~ — REGRESSED, see below
 
 STILL PENDING:
 - Supabase Free → Pro + Singapore migration
@@ -25,6 +25,18 @@ ADDED 2026-05-16 (session 120):
   Generate: `openssl rand -hex 32`
   Without this, /auth/callback recovery flow throws at runtime
   (L1 commit 81eb296 enforces it via getSecret()).
+
+- SENTRY_AUTH_TOKEN re-rotation needed (REGRESSED from 2026-05-15).
+  Symptom: `cef2850` deploy logs (02:30) show Sentry CLI 401 "Invalid token"
+  on `releases new` and `sourcemaps upload` across Node/Edge/Client runtimes.
+  Build itself succeeded (562/562 pages); only release tagging + sourcemap
+  upload failed → prod stack traces will be minified until token is fixed.
+  Fix path:
+    1. New token at https://sentry.io/settings/account/api/auth-tokens/
+       Scopes: project:releases, org:read, project:read
+    2. Vercel → kahramana → env vars → SENTRY_AUTH_TOKEN (Production + Preview)
+    3. Redeploy (or wait for next push to trigger a fresh build)
+  Not a launch blocker — observability is degraded, not the deploy itself.
 
 ## ACTIVE DEV PRIORITIES (in order)
 
