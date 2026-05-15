@@ -241,6 +241,17 @@ export default async function middleware(request: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
+    // Fail closed: if the env vars ever drop in production, refusing the
+    // request is safer than letting an unauthenticated user reach /dashboard
+    // or /driver. Limited to auth-gated routes so a stray missing env doesn't
+    // black out public pages.
+    const requiresAuth = isDashboard || isDriverRoute
+    if (requiresAuth && process.env.NODE_ENV === 'production') {
+      return new NextResponse(
+        JSON.stringify({ error: 'Auth service unavailable' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
     return finalizeResponse(requestHeaders, csp, NextResponse.next(), intlResponse)
   }
 
