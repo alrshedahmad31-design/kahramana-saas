@@ -215,6 +215,10 @@ export default async function middleware(request: NextRequest) {
   const usesNonceCsp = ORDER_PATTERN.test(pathname)
   const nonce = usesNonceCsp ? Buffer.from(crypto.randomUUID()).toString('base64') : null
   const requestHeaders = new Headers(request.headers)
+  // Strip any attacker-supplied x-nonce before optionally setting the
+  // server-generated one. Without this, a client could poison the value
+  // on non-nonce routes and trick downstream readers into trusting it.
+  requestHeaders.delete('x-nonce')
   const csp = nonce ? buildCsp(nonce) : buildPublicCsp()
   if (nonce) {
     requestHeaders.set('x-nonce', nonce)
