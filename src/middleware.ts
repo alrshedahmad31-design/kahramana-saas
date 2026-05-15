@@ -28,6 +28,18 @@ const ARABIC_DRIVER_PATTERN = /^\/driver($|\/)/
 const BRANCH_MANAGER_RANK = ROLE_RANK['branch_manager']
 const PUBLIC_HTML_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=43200'
 
+// Auth-gated redirects must never be cached by the shared CDN — otherwise the
+// 307 → /login response is served to subsequent authenticated visitors. The
+// per-route headers() rules in next.config.ts don't apply to middleware-issued
+// redirects, so we set it explicitly on every NextResponse.redirect() below.
+const PRIVATE_NO_STORE = 'private, no-cache, no-store, max-age=0, must-revalidate'
+
+function authRedirect(url: URL | string, status?: number): NextResponse {
+  const response = status ? NextResponse.redirect(url, status) : NextResponse.redirect(url)
+  response.headers.set('Cache-Control', PRIVATE_NO_STORE)
+  return response
+}
+
 // ── CSP builder (nonce injected per request) ──────────────────────────────────
 // Strategy:
 //   - Production: nonce-based + 'strict-dynamic'. Modern browsers ignore
@@ -208,9 +220,12 @@ export default async function middleware(request: NextRequest) {
     requestHeaders.set('x-nonce', nonce)
   }
 
-  // 2. If it's a redirect (e.g. locale change), return it immediately
+  // 2. If it's a redirect (e.g. locale change), return it immediately.
+  // Protected-route redirects must be no-store so the shared CDN cannot
+  // cache the 307 hop between authenticated and anonymous visitors.
   if (intlResponse.status >= 300 && intlResponse.status < 400) {
     intlResponse.headers.set('Content-Security-Policy', csp)
+    intlResponse.headers.set('Cache-Control', PRIVATE_NO_STORE)
     return intlResponse
   }
 
@@ -256,7 +271,7 @@ export default async function middleware(request: NextRequest) {
 
   if (!user) {
     if (isDashboard || isDriverRoute) {
-      const response = NextResponse.redirect(loginUrl(pathname))
+      const response = authRedirect(loginUrl(pathname))
       supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
       return response
     }
@@ -270,7 +285,7 @@ export default async function middleware(request: NextRequest) {
 
     if (!staffRow) {
       if (isDashboard || isDriverRoute) {
-        const response = NextResponse.redirect(loginUrl())
+        const response = authRedirect(loginUrl())
         supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
         return response
       }
@@ -282,7 +297,7 @@ export default async function middleware(request: NextRequest) {
         // /en/login). Skip the redirect when already on /driver to avoid a
         // loop.
         if (!ARABIC_DRIVER_PATTERN.test(pathname)) {
-          const response = NextResponse.redirect(new URL('/driver', request.url))
+          const response = authRedirect(new URL('/driver', request.url))
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
         }
@@ -290,17 +305,17 @@ export default async function middleware(request: NextRequest) {
         // Non-drivers don't belong on /driver UNLESS they are branch managers or above (for supervision).
         const roleRank = ROLE_RANK[role] ?? 0
         if (isDriverRoute && roleRank < BRANCH_MANAGER_RANK) {
-          const response = NextResponse.redirect(dashboardUrl())
+          const response = authRedirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
         }
         if (isLogin || isForgotPassword) {
-          const response = NextResponse.redirect(dashboardUrl())
+          const response = authRedirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
         }
         if (STAFF_ROUTE_PATTERN.test(pathname) && roleRank < BRANCH_MANAGER_RANK) {
-          const response = NextResponse.redirect(dashboardUrl())
+          const response = authRedirect(dashboardUrl())
           supabaseResponse.cookies.getAll().forEach((c) => response.cookies.set(c))
           return response
         }
