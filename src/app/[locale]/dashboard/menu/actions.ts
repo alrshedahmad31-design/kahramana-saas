@@ -270,11 +270,13 @@ export async function createMenuItem(
 
   const supabase = await createServiceClient()
 
-  // Uniqueness check against menu_items_sync (canonical slug registry).
+  // Uniqueness check against menu_items (the live editable table).
+  // menu_items.id stores the slug value (TEXT PRIMARY KEY); there is no
+  // separate slug column on this table.
   const { data: existing, error: lookupError } = await supabase
-    .from('menu_items_sync')
-    .select('slug')
-    .eq('slug', generatedSlug)
+    .from('menu_items')
+    .select('id')
+    .eq('id', generatedSlug)
     .maybeSingle()
 
   if (lookupError) {
