@@ -1340,6 +1340,8 @@
     "memberId": "Member ID",
     "memberSince": "Member since",
     "kahramanaMember": "Kahramana Member",
+    "premiumMember": "Premium Member",
+    "validThru": "Valid Thru",
     "pointsBalance": "Points Balance",
     "totalSaved": "Total Saved",
     "youSaved": "You saved",

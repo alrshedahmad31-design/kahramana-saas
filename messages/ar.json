@@ -1340,6 +1340,8 @@
     "memberId": "رقم العضوية",
     "memberSince": "عضو منذ",
     "kahramanaMember": "عضو كهرمانة",
+    "premiumMember": "عضو كهرمانة المميز",
+    "validThru": "صالح حتى",
     "pointsBalance": "رصيد النقاط",
     "totalSaved": "إجمالي ما وفّرته",
     "youSaved": "وفّرت",

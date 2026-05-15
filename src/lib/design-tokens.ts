@@ -23,6 +23,15 @@ export const tokens = {
     kdsIndigo:  '#4F46E5',
     qrInk:      '#0A0A0A',
     qrPaper:    '#F5F5F5',
+    membership: {
+      // Gold stroke for the inline SVG guilloché pattern overlay on MembershipCard.
+      // Matches tokens.color.gold today; named separately so the card surface
+      // can diverge from the brand gold without affecting the rest of the UI.
+      guilloche: '#C8922A',
+      // Base linear-gradient layer for the MembershipCard background.
+      // Stops correspond to tokens.color.black / surface / surface2 today.
+      cardGradient: 'linear-gradient(135deg, #0A0A0A 0%, #141210 55%, #1C1A16 100%)',
+    },
   },
   font: {
     arHeading: 'Cairo',
