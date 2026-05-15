@@ -1336,6 +1336,7 @@
     "signOut": "Sign Out",
     "pointsShort": "pts",
     "noTransactions": "No transactions yet",
+<<<<<<< Updated upstream
     "memberCard": "Membership Card",
     "memberId": "Member ID",
     "memberSince": "Member since",
@@ -1354,6 +1355,42 @@
       "silver": "Silver",
       "gold": "Gold",
       "platinum": "Platinum"
+=======
+    "browseMenu": "Browse menu",
+    "historyEmptyTitle": "Your points journey starts with your next order",
+    "historyEmptyCopy": "Every completed order adds new credit to your Kahramana Club membership.",
+    "noFilteredTransactions": "No transactions in this category.",
+    "notLinked": "Not linked",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "historyColumns": {
+      "date": "Date",
+      "type": "Type",
+      "order": "Order #",
+      "points": "Points"
+    },
+    "loyaltyDashboard": {
+      "membership": "Membership Card",
+      "tier": "Tier",
+      "rewardValue": "Reward Value",
+      "memberId": "Member ID",
+      "browseMenu": "Browse menu",
+      "startEarning": "Start earning points",
+      "pointsValueRule": "Every {points} points = {value}",
+      "months": "{count} months",
+      "availableRewards": "Available Rewards",
+      "rewardReadyTitle": "You have a reward ready to redeem",
+      "rewardReadyCopy": "You can use up to {value} on your next order, subject to the cart redemption limit.",
+      "noRewardsTitle": "No rewards available yet",
+      "noRewardsCopy": "Earn {points} more points to unlock your first redeemable reward.",
+      "remainingToNext": "{orders} orders or {spend} remain to reach {tier}.",
+      "ordersProgress": "Orders: {current} of {target}",
+      "spendProgress": "Spend: {current} of {target}",
+      "benefitPoints": "points per dinar",
+      "benefitExpiry": "months validity",
+      "benefitOffers": "exclusive member discounts",
+      "myDataTab": "My data"
+>>>>>>> Stashed changes
     },
     "transactions": {
       "earned": "Earned",

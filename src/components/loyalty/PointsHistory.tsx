@@ -33,10 +33,20 @@ export default function PointsHistory({ transactions }: Props) {
 
   if (transactions.length === 0) {
     return (
-      <div className="bg-brand-surface border border-brand-border rounded-xl p-8 text-center">
-        <p className={`text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
-          {t('noTransactions')}
+      <div className="rounded-3xl border border-brand-border bg-brand-surface p-8 text-center">
+        <p className={`text-lg font-bold text-brand-text ${isAr ? 'font-cairo' : 'font-editorial'}`}>
+          {t('historyEmptyTitle')}
         </p>
+        <p className={`mx-auto mt-3 max-w-md text-sm leading-6 text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+          {t('historyEmptyCopy')}
+        </p>
+        <a
+          href={isAr ? '/menu' : '/en/menu'}
+          aria-label={t('browseMenu')}
+          className={`mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-brand-gold px-5 py-3 text-sm font-bold text-brand-black transition-colors hover:bg-brand-gold-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+        >
+          {t('browseMenu')}
+        </a>
       </div>
     )
   }
@@ -50,6 +60,7 @@ export default function PointsHistory({ transactions }: Props) {
             key={opt.value}
             type="button"
             onClick={() => { setFilter(opt.value); setPage(1) }}
+            aria-label={opt.label}
             className={`font-satoshi text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors duration-150
               ${filter === opt.value
                 ? 'bg-brand-gold text-brand-black border-brand-gold'
@@ -62,14 +73,15 @@ export default function PointsHistory({ transactions }: Props) {
       </div>
 
       {/* Table */}
-      <div className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden">
+      <div className="overflow-hidden rounded-3xl border border-brand-border bg-brand-surface">
         <table className="w-full text-sm" dir={isAr ? 'rtl' : 'ltr'}>
           <thead>
             <tr className="border-b border-brand-border">
               {[
-                isAr ? 'التاريخ' : 'Date',
-                isAr ? 'رقم الطلب' : 'Order #',
-                isAr ? 'النقاط'  : 'Points',
+                t('historyColumns.date'),
+                t('historyColumns.type'),
+                t('historyColumns.order'),
+                t('historyColumns.points'),
               ].map((h) => (
                 <th key={h} className="px-4 py-3 text-xs font-bold text-brand-muted uppercase tracking-wide text-start font-satoshi">
                   {h}
@@ -79,8 +91,9 @@ export default function PointsHistory({ transactions }: Props) {
           </thead>
           <tbody>
             {visible.map((tx) => {
-              const shortOrderId = tx.order_id ? `#${tx.order_id.slice(-8).toUpperCase()}` : '—'
+              const shortOrderId = tx.order_id ? `#${tx.order_id.slice(-8).toUpperCase()}` : t('notLinked')
               const isEarned = tx.transaction_type === 'earned' || tx.transaction_type === 'bonus'
+              const pointsValue = isEarned ? tx.points_earned : tx.points_spent
               
               return (
                 <tr key={tx.id} className="border-b border-brand-border last:border-0 hover:bg-brand-surface-2 transition-colors">
@@ -89,17 +102,28 @@ export default function PointsHistory({ transactions }: Props) {
                       day: 'numeric', month: 'short', year: 'numeric',
                     })}
                   </td>
+                  <td className={`px-4 py-3 text-xs font-bold text-brand-text ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                    {t(`transactions.${tx.transaction_type}`)}
+                  </td>
                   <td className="px-4 py-3 font-satoshi text-xs text-brand-text font-bold tabular-nums">
                     {shortOrderId}
                   </td>
                   <td className={`px-4 py-3 font-satoshi tabular-nums font-bold ${isEarned ? 'text-brand-success' : 'text-brand-gold'}`}>
-                    {isEarned ? `+${tx.points_earned}` : `-${tx.points_spent}`}
+                    {isEarned ? `+${pointsValue}` : `-${pointsValue}`}
                   </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
+
+        {visible.length === 0 && (
+          <div className="px-4 py-8 text-center">
+            <p className={`text-sm text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+              {t('noFilteredTransactions')}
+            </p>
+          </div>
+        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -108,9 +132,10 @@ export default function PointsHistory({ transactions }: Props) {
               type="button"
               disabled={page === 1}
               onClick={() => setPage(p => p - 1)}
-              className="font-satoshi text-sm text-brand-gold disabled:opacity-30 hover:text-brand-gold-light transition-colors"
+              aria-label={t('paginationPrevious')}
+              className="min-h-11 rounded-full px-3 font-satoshi text-sm text-brand-gold transition-colors hover:text-brand-gold-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold disabled:opacity-30"
             >
-              {isAr ? 'التالي' : 'Prev'}
+              {t('paginationPrevious')}
             </button>
             <span className="font-satoshi text-xs text-brand-muted tabular-nums">
               {page} / {totalPages}
@@ -119,9 +144,10 @@ export default function PointsHistory({ transactions }: Props) {
               type="button"
               disabled={page === totalPages}
               onClick={() => setPage(p => p + 1)}
-              className="font-satoshi text-sm text-brand-gold disabled:opacity-30 hover:text-brand-gold-light transition-colors"
+              aria-label={t('paginationNext')}
+              className="min-h-11 rounded-full px-3 font-satoshi text-sm text-brand-gold transition-colors hover:text-brand-gold-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-gold disabled:opacity-30"
             >
-              {isAr ? 'السابق' : 'Next'}
+              {t('paginationNext')}
             </button>
           </div>
         )}

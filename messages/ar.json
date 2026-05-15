@@ -1336,6 +1336,7 @@
     "signOut": "تسجيل الخروج",
     "pointsShort": "نقطة",
     "noTransactions": "لا توجد عمليات بعد",
+<<<<<<< Updated upstream
     "memberCard": "بطاقة العضوية",
     "memberId": "رقم العضوية",
     "memberSince": "عضو منذ",
@@ -1354,6 +1355,42 @@
       "silver": "الفضي",
       "gold": "الذهبي",
       "platinum": "البلاتيني"
+=======
+    "browseMenu": "تصفح المنيو",
+    "historyEmptyTitle": "رحلة النقاط تبدأ من طلبك القادم",
+    "historyEmptyCopy": "كل طلب مكتمل يضيف رصيداً جديداً إلى عضويتك في كهرمانة كلوب.",
+    "noFilteredTransactions": "لا توجد عمليات ضمن هذا التصنيف.",
+    "notLinked": "غير مرتبط",
+    "paginationPrevious": "السابق",
+    "paginationNext": "التالي",
+    "historyColumns": {
+      "date": "التاريخ",
+      "type": "نوع العملية",
+      "order": "رقم الطلب",
+      "points": "النقاط"
+    },
+    "loyaltyDashboard": {
+      "membership": "بطاقة العضوية",
+      "tier": "المستوى",
+      "rewardValue": "قيمة المكافآت",
+      "memberId": "رقم العضوية",
+      "browseMenu": "تصفح المنيو",
+      "startEarning": "ابدأ بجمع النقاط",
+      "pointsValueRule": "كل {points} نقطة = {value}",
+      "months": "{count} شهراً",
+      "availableRewards": "المكافآت المتاحة",
+      "rewardReadyTitle": "لديك مكافأة جاهزة للاستبدال",
+      "rewardReadyCopy": "يمكنك استخدام رصيد يصل إلى {value} على طلبك القادم حسب حد الاستبدال في السلة.",
+      "noRewardsTitle": "لا توجد مكافآت متاحة حالياً",
+      "noRewardsCopy": "تبقى {points} نقطة للوصول إلى أول مكافأة قابلة للاستبدال.",
+      "remainingToNext": "تبقى {orders} طلبات أو {spend} للوصول إلى مستوى {tier}.",
+      "ordersProgress": "الطلبات: {current} من {target}",
+      "spendProgress": "الإنفاق: {current} من {target}",
+      "benefitPoints": "نقاط لكل دينار",
+      "benefitExpiry": "شهراً صلاحية",
+      "benefitOffers": "خصومات حصرية للأعضاء",
+      "myDataTab": "بياناتي"
+>>>>>>> Stashed changes
     },
     "transactions": {
       "earned": "نقاط مكتسبة",
