@@ -4,8 +4,10 @@ import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency } from '@/lib/analytics/calculations'
 import { getMetrics, getMenuItemPerformance, getTopItems } from '@/lib/analytics/queries'
+import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
 
 import DateRangePicker    from '@/components/analytics/DateRangePicker'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import MetricCard         from '@/components/analytics/MetricCard'
 import AnalyticsSubNav    from '@/components/analytics/AnalyticsSubNav'
 import AnalyticsRefresher from '@/components/analytics/AnalyticsRefresher'
@@ -34,11 +36,22 @@ export default async function MenuAnalyticsPage({ params, searchParams }: Props)
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   const branchId      = isGlobalAdmin ? undefined : (user.branch_id ?? undefined)
 
-  const [_metrics, menuItems, topItemsPeriod] = await Promise.all([
+  const [metricsRes, menuItemsRes, topItemsPeriodRes] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getMenuItemPerformance(60, branchId, range.from, range.to),
     getTopItems(range.from, range.to, 10, branchId),
   ])
+
+  const failure = firstAnalyticsFailure([metricsRes, menuItemsRes, topItemsPeriodRes])
+  if (failure || !menuItemsRes.ok || !topItemsPeriodRes.ok) {
+    return (
+      <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
+        <AnalyticsErrorState functionName={failure?.function} />
+      </div>
+    )
+  }
+  const menuItems      = menuItemsRes.data
+  const topItemsPeriod = topItemsPeriodRes.data
 
   const currency = t('currency')
 

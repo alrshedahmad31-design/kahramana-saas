@@ -3,8 +3,10 @@ import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange } from '@/lib/analytics/calculations'
 import { getMetrics, getOperationalMetrics, getHourlyDistribution } from '@/lib/analytics/queries'
+import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
 
 import DateRangePicker    from '@/components/analytics/DateRangePicker'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import MetricCard         from '@/components/analytics/MetricCard'
 import AnalyticsSubNav    from '@/components/analytics/AnalyticsSubNav'
 import AnalyticsRefresher from '@/components/analytics/AnalyticsRefresher'
@@ -32,11 +34,23 @@ export default async function OperationsAnalyticsPage({ params, searchParams }: 
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   const branchId      = isGlobalAdmin ? undefined : (user.branch_id ?? undefined)
 
-  const [metrics, opMetrics, hourly] = await Promise.all([
+  const [metricsRes, opMetricsRes, hourlyRes] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getOperationalMetrics(range.from, range.to, branchId),
     getHourlyDistribution(range.from, range.to, branchId),
   ])
+
+  const failure = firstAnalyticsFailure([metricsRes, opMetricsRes, hourlyRes])
+  if (failure || !metricsRes.ok || !opMetricsRes.ok || !hourlyRes.ok) {
+    return (
+      <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
+        <AnalyticsErrorState functionName={failure?.function} />
+      </div>
+    )
+  }
+  const metrics   = metricsRes.data
+  const opMetrics = opMetricsRes.data
+  const hourly    = hourlyRes.data
 
   const peakHour = hourly.length
     ? hourly.reduce((peak, r) => r.order_count > peak.order_count ? r : peak).hour_of_day

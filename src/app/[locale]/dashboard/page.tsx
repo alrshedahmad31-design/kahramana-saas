@@ -2,6 +2,7 @@ import { Suspense }          from 'react'
 import { redirect }          from 'next/navigation'
 import { getSession }         from '@/lib/auth/session'
 import { getDashboardData }   from '@/lib/dashboard/stats'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import { canAccessSection }   from '@/lib/auth/rbac-ui'
 import HeroMetrics            from '@/components/dashboard/HeroMetrics'
 import TodayRevenueChart      from '@/components/dashboard/TodayRevenueChart'
@@ -11,6 +12,7 @@ import QuickActionsPanel      from '@/components/dashboard/QuickActionsPanel'
 import ActivityFeed           from '@/components/dashboard/ActivityFeed'
 import TodaySummary           from '@/components/dashboard/TodaySummary'
 import AnalyticsRefresher     from '@/components/analytics/AnalyticsRefresher'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import InventoryWidgetsSection from '@/components/inventory/InventoryWidgetsSection'
 import InventoryWidgetsSkeleton from '@/components/inventory/InventoryWidgetsSkeleton'
 import OnboardingAlerts        from '@/components/dashboard/OnboardingAlerts'
@@ -40,7 +42,16 @@ export default async function DashboardHomePage({ params }: Props) {
     throw new Error('Forbidden: account requires a branch assignment')
   }
 
-  const data = await getDashboardData(user.branch_id ?? null)
+  const dashboardResult = await getDashboardData(user.branch_id ?? null)
+  if (!dashboardResult.ok) {
+    captureAnalyticsError(dashboardResult.error)
+    return (
+      <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-5">
+        <AnalyticsErrorState functionName={dashboardResult.error.function} />
+      </div>
+    )
+  }
+  const data = dashboardResult.data
 
   const showInventory  = canAccessSection(user.role, 'inventory')
 

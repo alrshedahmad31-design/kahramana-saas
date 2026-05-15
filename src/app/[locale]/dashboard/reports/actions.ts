@@ -17,6 +17,7 @@ import {
   getTopCustomers, getCouponAnalytics,
   getCashReconciliationMetrics,
 } from '@/lib/analytics/queries'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import {
   buildPrevRange, formatCurrency, calculateGrowth,
 } from '@/lib/analytics/calculations'
@@ -189,12 +190,19 @@ async function buildSalesSummary(
   const to    = new Date(`${filters.to}T23:59:59+03:00`)
   const prev  = buildPrevRange({ from, to, label: 'custom' })
 
-  const [validation, metrics, dailySales, cashMetrics] = await Promise.all([
+  const [validation, metricsRes, dailySalesRes, cashMetricsRes] = await Promise.all([
     validateSalesData(filters),
     getMetrics(from, to, prev.from, prev.to, filters.branchId),
     getDailySales(from, to, filters.branchId),
     getCashReconciliationMetrics(from, to, filters.branchId),
   ])
+
+  if (!metricsRes.ok)     { captureAnalyticsError(metricsRes.error);     return { ok: false, error: metricsRes.error.message } }
+  if (!dailySalesRes.ok)  { captureAnalyticsError(dailySalesRes.error);  return { ok: false, error: dailySalesRes.error.message } }
+  if (!cashMetricsRes.ok) { captureAnalyticsError(cashMetricsRes.error); return { ok: false, error: cashMetricsRes.error.message } }
+  const metrics     = metricsRes.data
+  const dailySales  = dailySalesRes.data
+  const cashMetrics = cashMetricsRes.data
 
   const branchName = filters.branchId ? await resolveBranchName(filters.branchId) : null
 
@@ -267,10 +275,13 @@ async function buildMenuPerformance(
   const from = new Date(`${filters.from}T00:00:00+03:00`)
   const to   = new Date(`${filters.to}T23:59:59+03:00`)
 
-  const [validation, items] = await Promise.all([
+  const [validation, itemsRes] = await Promise.all([
     validateMenuData(filters),
     getTopItems(from, to, 150, filters.branchId),
   ])
+
+  if (!itemsRes.ok) { captureAnalyticsError(itemsRes.error); return { ok: false, error: itemsRes.error.message } }
+  const items = itemsRes.data
 
   const totalRevenue = items.reduce((s, r) => s + r.total_revenue_bhd, 0)
   const totalQty     = items.reduce((s, r) => s + r.total_quantity,    0)
@@ -331,10 +342,13 @@ async function buildMenuPerformance(
 async function buildCustomerCLV(
   userId: string,
 ): Promise<ActionResult<ReportResult>> {
-  const [validation, customers] = await Promise.all([
+  const [validation, customersRes] = await Promise.all([
     validateCustomerData(),
     getTopCustomers(100),
   ])
+
+  if (!customersRes.ok) { captureAnalyticsError(customersRes.error); return { ok: false, error: customersRes.error.message } }
+  const customers = customersRes.data
 
   const rows: (string | number)[][] = customers.map((c) => [
     c.customer_phone,
@@ -394,10 +408,13 @@ async function buildCustomerCLV(
 async function buildCouponPerformance(
   userId: string,
 ): Promise<ActionResult<ReportResult>> {
-  const [validation, coupons] = await Promise.all([
+  const [validation, couponsRes] = await Promise.all([
     validateCouponData(),
     getCouponAnalytics(),
   ])
+
+  if (!couponsRes.ok) { captureAnalyticsError(couponsRes.error); return { ok: false, error: couponsRes.error.message } }
+  const coupons = couponsRes.data
 
   const rows: (string | number)[][] = coupons.map((c) => [
     c.code,
@@ -460,10 +477,15 @@ async function buildOperationalSummary(
   const from = new Date(`${filters.from}T00:00:00+03:00`)
   const to   = new Date(`${filters.to}T23:59:59+03:00`)
 
-  const [hourly, ops] = await Promise.all([
+  const [hourlyRes, opsRes] = await Promise.all([
     getHourlyDistribution(),
     getOperationalMetrics(from, to, filters.branchId),
   ])
+
+  if (!hourlyRes.ok) { captureAnalyticsError(hourlyRes.error); return { ok: false, error: hourlyRes.error.message } }
+  if (!opsRes.ok)    { captureAnalyticsError(opsRes.error);    return { ok: false, error: opsRes.error.message } }
+  const hourly = hourlyRes.data
+  const ops    = opsRes.data
 
   const rows: (string | number)[][] = hourly.map((r) => {
     const h = r.hour_of_day

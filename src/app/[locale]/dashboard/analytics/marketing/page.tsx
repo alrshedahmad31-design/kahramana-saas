@@ -4,8 +4,10 @@ import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency } from '@/lib/analytics/calculations'
 import { getMetrics, getCouponAnalytics, getOrderSourceBreakdown } from '@/lib/analytics/queries'
+import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
 
 import DateRangePicker    from '@/components/analytics/DateRangePicker'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import MetricCard         from '@/components/analytics/MetricCard'
 import AnalyticsSubNav    from '@/components/analytics/AnalyticsSubNav'
 import AnalyticsRefresher from '@/components/analytics/AnalyticsRefresher'
@@ -33,11 +35,22 @@ export default async function MarketingAnalyticsPage({ params, searchParams }: P
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   const branchId      = isGlobalAdmin ? undefined : (user.branch_id ?? undefined)
 
-  const [_metrics, coupons, sources] = await Promise.all([
+  const [metricsRes, couponsRes, sourcesRes] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getCouponAnalytics(branchId),
     getOrderSourceBreakdown(branchId),
   ])
+
+  const failure = firstAnalyticsFailure([metricsRes, couponsRes, sourcesRes])
+  if (failure || !couponsRes.ok || !sourcesRes.ok) {
+    return (
+      <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
+        <AnalyticsErrorState functionName={failure?.function} />
+      </div>
+    )
+  }
+  const coupons = couponsRes.data
+  const sources = sourcesRes.data
 
   const currency = t('currency')
 

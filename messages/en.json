@@ -2910,6 +2910,10 @@
     }
   },
   "analytics": {
+    "errorState": {
+      "title": "Failed to load data",
+      "description": "An error occurred while fetching analytics. Try refreshing the page."
+    },
     "labor": {
       "title": "Labor Cost vs Revenue",
       "noData": "No labor data for this period",

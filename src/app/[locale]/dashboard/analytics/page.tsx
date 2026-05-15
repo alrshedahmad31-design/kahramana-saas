@@ -12,6 +12,8 @@ import {
   getSecondaryMetrics,
   getLaborCostMetrics, getMenuEngineeringMatrix,
 } from '@/lib/analytics/queries'
+import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import { getTranslations } from 'next-intl/server'
 import { generateInsights } from '@/lib/analytics/insights'
 
@@ -57,7 +59,7 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   const branchId      = isGlobalAdmin && sp.branch ? sp.branch : (user.branch_id ?? undefined)
 
-  const [metrics, dailySales, topItems, hourly, branches, secondary, labor, menuMatrix] = await Promise.all([
+  const [metricsRes, dailySalesRes, topItemsRes, hourlyRes, branchesRes, secondary, laborRes, menuMatrixRes] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     getDailySales(range.from, range.to, branchId),
     getTopItems(range.from, range.to, 10, branchId),
@@ -67,6 +69,26 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
     getLaborCostMetrics(range.from, range.to, branchId),
     getMenuEngineeringMatrix(range.from, range.to, branchId),
   ])
+
+  const failure = firstAnalyticsFailure([
+    metricsRes, dailySalesRes, topItemsRes, hourlyRes,
+    branchesRes, laborRes, menuMatrixRes,
+  ])
+  if (failure || !metricsRes.ok || !dailySalesRes.ok || !topItemsRes.ok
+       || !hourlyRes.ok || !branchesRes.ok || !laborRes.ok || !menuMatrixRes.ok) {
+    return (
+      <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
+        <AnalyticsErrorState functionName={failure?.function} />
+      </div>
+    )
+  }
+  const metrics    = metricsRes.data
+  const dailySales = dailySalesRes.data
+  const topItems   = topItemsRes.data
+  const hourly     = hourlyRes.data
+  const branches   = branchesRes.data
+  const labor      = laborRes.data
+  const menuMatrix = menuMatrixRes.data
 
   const filledSales = fillDailyGaps(dailySales, range.from, range.to, {
     branch_id: branchId ?? 'all',

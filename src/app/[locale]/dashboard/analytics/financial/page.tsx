@@ -4,10 +4,12 @@ import { getSession }         from '@/lib/auth/session'
 import { canAccessAnalytics } from '@/lib/auth/rbac'
 import { buildDateRange, buildPrevRange, formatCurrency, calculateGrowth } from '@/lib/analytics/calculations'
 import { getMetrics } from '@/lib/analytics/queries'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import { createClient } from '@/lib/supabase/server'
 import type { BudgetVsActual } from '@/lib/supabase/custom-types'
 
 import DateRangePicker    from '@/components/analytics/DateRangePicker'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import MetricCard         from '@/components/analytics/MetricCard'
 import AnalyticsSubNav    from '@/components/analytics/AnalyticsSubNav'
 import AnalyticsRefresher from '@/components/analytics/AnalyticsRefresher'
@@ -47,12 +49,22 @@ export default async function FinancialAnalyticsPage({ params, searchParams }: P
 
   const supabase = await createClient()
 
-  const [metrics, budgetResult] = await Promise.all([
+  const [metricsRes, budgetResult] = await Promise.all([
     getMetrics(range.from, range.to, prev.from, prev.to, branchId),
     branchId
       ? supabase.rpc('rpc_budget_vs_actual', { p_branch_id: branchId, p_month: rangeMonth, p_year: rangeYear })
       : Promise.resolve({ data: null, error: null }),
   ])
+
+  if (!metricsRes.ok) {
+    captureAnalyticsError(metricsRes.error)
+    return (
+      <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
+        <AnalyticsErrorState functionName={metricsRes.error.function} />
+      </div>
+    )
+  }
+  const metrics = metricsRes.data
 
   const budgetRow = (budgetResult.data as BudgetVsActual[] | null)?.[0] ?? null
   const hasBudget = budgetRow !== null

@@ -11,11 +11,13 @@ import {
   getSecondaryMetrics,
   getLaborCostMetrics,
 } from '@/lib/analytics/queries'
+import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
 import { BH_TIMEZONE } from '@/lib/analytics/calculations'
 import { createServiceClient } from '@/lib/supabase/server'
 import { HIDDEN_BRANCHES, isHiddenBranch } from '@/constants/contact'
 
 import OwnerDashboardClient from '@/components/dashboard/owner/OwnerDashboardClient'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 
 export const dynamic = 'force-dynamic'
 
@@ -125,17 +127,17 @@ export default async function OwnerDashboardPage({ params }: Props) {
     .eq('is_active', true)
 
   const [
-    dashboard,
-    metricsToday,
-    metricsWeek,
-    metricsMonth,
-    opsToday,
-    opsMonth,
-    branchSummariesToday,
-    branchSummariesMonth,
-    orderSources,
+    dashboardRes,
+    metricsTodayRes,
+    metricsWeekRes,
+    metricsMonthRes,
+    opsTodayRes,
+    opsMonthRes,
+    branchSummariesTodayRes,
+    branchSummariesMonthRes,
+    orderSourcesRes,
     secondaryMonth,
-    labor,
+    laborRes,
     foodCost,
     branchesRaw,
   ] = await Promise.all([
@@ -153,6 +155,35 @@ export default async function OwnerDashboardPage({ params }: Props) {
     fetchFoodCostThisMonth(branchId ?? null),
     branchesPromise,
   ])
+
+  const failure = firstAnalyticsFailure([
+    dashboardRes, metricsTodayRes, metricsWeekRes, metricsMonthRes,
+    opsTodayRes, opsMonthRes,
+    branchSummariesTodayRes, branchSummariesMonthRes,
+    orderSourcesRes, laborRes,
+  ])
+  if (failure
+       || !dashboardRes.ok || !metricsTodayRes.ok || !metricsWeekRes.ok || !metricsMonthRes.ok
+       || !opsTodayRes.ok || !opsMonthRes.ok
+       || !branchSummariesTodayRes.ok || !branchSummariesMonthRes.ok
+       || !orderSourcesRes.ok || !laborRes.ok) {
+    return (
+      <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-5">
+        <AnalyticsErrorState functionName={failure?.function} />
+      </div>
+    )
+  }
+
+  const dashboard            = dashboardRes.data
+  const metricsToday         = metricsTodayRes.data
+  const metricsWeek          = metricsWeekRes.data
+  const metricsMonth         = metricsMonthRes.data
+  const opsToday             = opsTodayRes.data
+  const opsMonth             = opsMonthRes.data
+  const branchSummariesToday = branchSummariesTodayRes.data
+  const branchSummariesMonth = branchSummariesMonthRes.data
+  const orderSources         = orderSourcesRes.data
+  const labor                = laborRes.data
 
   const branches = (branchesRaw.data ?? [])
     .filter((b) => !isHiddenBranch(b.id))
