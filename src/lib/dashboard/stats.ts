@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { BH_TIMEZONE } from '@/lib/analytics/calculations'
+import { analyticsOk, analyticsErr, type AnalyticsResult } from '@/lib/analytics/types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ const EXCLUDED_CSV      = '(cancelled,payment_failed,returned)'
 
 // ── Main data fetch ───────────────────────────────────────────────────────────
 
-export async function getDashboardData(branchId?: string | null): Promise<DashboardData> {
+export async function getDashboardData(branchId?: string | null): Promise<AnalyticsResult<DashboardData>> {
   const sb         = createServiceClient()
   const todayStart = bhDayStart(0)
   const yestStart  = bhDayStart(1)
@@ -134,9 +135,8 @@ export async function getDashboardData(branchId?: string | null): Promise<Dashbo
     { data: itemRows,  error: itemsErr },
   ] = await Promise.all([todayQ, yestQ, itemsQ])
 
-  if (todayErr) console.error('[dashboard:getDashboardData:today] DB error', todayErr)
-  if (yestErr)  console.error('[dashboard:getDashboardData:yesterday] DB error', yestErr)
-  if (itemsErr) console.error('[dashboard:getDashboardData:items] DB error', itemsErr)
+  const firstError = todayErr ?? yestErr ?? itemsErr
+  if (firstError) return analyticsErr('getDashboardData', firstError)
 
   // ── Compute ──────────────────────────────────────────────────────────────────
 
@@ -218,9 +218,9 @@ export async function getDashboardData(branchId?: string | null): Promise<Dashbo
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 15)
 
-  return {
+  return analyticsOk({
     todayRevenue, yesterdayRevenue, totalOrdersToday,
     completedToday, avgPrepMins,
     activeOrders, hourlyPoints, topItems, recentActivity,
-  }
+  })
 }
