@@ -1,6 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { BH_TIMEZONE } from './calculations'
 import { HIDDEN_BRANCHES } from '@/constants/contact'
+import { analyticsOk, analyticsErr, type AnalyticsResult } from './types'
+
+// AUD-V3-008: on error callers receive { ok: false, error: AnalyticsError }.
+// Previous behaviour swallowed errors and returned []/0s/null — removed.
 
 // ── Enterprise analytics return types ────────────────────────────────────────
 
@@ -176,10 +180,12 @@ export async function getMetrics(
   prevFrom:  Date,
   prevTo:    Date,
   branchId?: string,
-): Promise<MetricsData> {
+): Promise<AnalyticsResult<MetricsData>> {
   const sb = createServiceClient()
 
-  async function periodMetrics(pFrom: Date, pTo: Date) {
+  type PeriodMetrics = { totalRevenue: number; orderCount: number; avgOrderValue: number; uniqueCustomers: number }
+
+  async function periodMetrics(pFrom: Date, pTo: Date): Promise<AnalyticsResult<PeriodMetrics>> {
     let q = sb
       .from('orders')
       .select('total_bhd, customer_phone')
@@ -194,32 +200,34 @@ export async function getMetrics(
     }
 
     const { data, error } = await q
-    if (error) console.error('[analytics:getMetrics:periodMetrics] DB error', error)
-    if (error || !data) return { totalRevenue: 0, orderCount: 0, avgOrderValue: 0, uniqueCustomers: 0 }
+    if (error || !data) return analyticsErr('getMetrics', error)
 
     const totalRevenue  = data.reduce((s, r) => s + (r.total_bhd ?? 0), 0)
     const orderCount    = data.length
     const avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0
     const uniqueCustomers = new Set(data.map((r) => r.customer_phone).filter(Boolean)).size
 
-    return { totalRevenue, orderCount, avgOrderValue, uniqueCustomers }
+    return analyticsOk({ totalRevenue, orderCount, avgOrderValue, uniqueCustomers })
   }
 
-  const [curr, prev] = await Promise.all([
+  const [currRes, prevRes] = await Promise.all([
     periodMetrics(from, to),
     periodMetrics(prevFrom, prevTo),
   ])
 
-  return {
-    totalRevenue:        curr.totalRevenue,
-    orderCount:          curr.orderCount,
-    avgOrderValue:       curr.avgOrderValue,
-    uniqueCustomers:     curr.uniqueCustomers,
-    prevTotalRevenue:    prev.totalRevenue,
-    prevOrderCount:      prev.orderCount,
-    prevAvgOrderValue:   prev.avgOrderValue,
-    prevUniqueCustomers: prev.uniqueCustomers,
-  }
+  if (!currRes.ok) return currRes
+  if (!prevRes.ok) return prevRes
+
+  return analyticsOk({
+    totalRevenue:        currRes.data.totalRevenue,
+    orderCount:          currRes.data.orderCount,
+    avgOrderValue:       currRes.data.avgOrderValue,
+    uniqueCustomers:     currRes.data.uniqueCustomers,
+    prevTotalRevenue:    prevRes.data.totalRevenue,
+    prevOrderCount:      prevRes.data.orderCount,
+    prevAvgOrderValue:   prevRes.data.avgOrderValue,
+    prevUniqueCustomers: prevRes.data.uniqueCustomers,
+  })
 }
 
 // ── Daily sales (date-filtered — queries orders table directly for flexibility) ─
@@ -228,7 +236,7 @@ export async function getDailySales(
   from:      Date,
   to:        Date,
   branchId?: string,
-): Promise<DailySalesRow[]> {
+): Promise<AnalyticsResult<DailySalesRow[]>> {
   const sb = createServiceClient()
 
   let q = sb
@@ -245,8 +253,7 @@ export async function getDailySales(
   }
 
   const { data, error } = await q
-  if (error) console.error('[analytics:getDailySales] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getDailySales', error)
 
   // Group client-side into per-date-per-branch buckets
   const map = new Map<string, DailySalesRow>()
@@ -273,8 +280,10 @@ export async function getDailySales(
     }
   }
 
-  return Array.from(map.values()).sort((a, b) =>
-    a.order_date.localeCompare(b.order_date),
+  return analyticsOk(
+    Array.from(map.values()).sort((a, b) =>
+      a.order_date.localeCompare(b.order_date),
+    ),
   )
 }
 
@@ -285,7 +294,7 @@ export async function getTopItems(
   to:        Date,
   limit      = 10,
   branchId?: string,
-): Promise<TopItemRow[]> {
+): Promise<AnalyticsResult<TopItemRow[]>> {
   const sb = createServiceClient()
 
   // For date-filtered top items we query order_items + orders join
@@ -303,8 +312,7 @@ export async function getTopItems(
   }
 
   const { data, error } = await q
-  if (error) console.error('[analytics:getTopItems] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getTopItems', error)
 
   const map = new Map<string, TopItemRow>()
 
@@ -327,14 +335,16 @@ export async function getTopItems(
     }
   }
 
-  return Array.from(map.values())
-    .sort((a, b) => b.total_quantity - a.total_quantity)
-    .slice(0, limit)
+  return analyticsOk(
+    Array.from(map.values())
+      .sort((a, b) => b.total_quantity - a.total_quantity)
+      .slice(0, limit),
+  )
 }
 
 // ── Hourly distribution (from matview — all-time; queried by hour) ────────────
 
-export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: string): Promise<HourlyRow[]> {
+export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: string): Promise<AnalyticsResult<HourlyRow[]>> {
   const sb = createServiceClient()
 
   // If no date range provided fall back to the pre-aggregated view (all-time)
@@ -343,9 +353,8 @@ export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: s
       .from('hourly_order_distribution')
       .select('*')
       .order('hour_of_day', { ascending: true })
-    if (error) console.error('[analytics:getHourlyDistribution:matview] DB error', error)
-    if (error || !data) return []
-    return data as HourlyRow[]
+    if (error || !data) return analyticsErr('getHourlyDistribution', error)
+    return analyticsOk(data as HourlyRow[])
   }
 
   // Query orders directly so we can filter by date range (and optionally branch)
@@ -362,8 +371,7 @@ export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: s
   }
 
   const { data, error } = await q
-  if (error) console.error('[analytics:getHourlyDistribution:orders] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getHourlyDistribution', error)
 
   // Aggregate client-side by Bahrain hour (UTC+3)
   const buckets = new Map<number, { count: number; revenue: number }>()
@@ -375,15 +383,17 @@ export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: s
     buckets.set(hour, b)
   }
 
-  return Array.from({ length: 24 }, (_, h) => {
-    const b = buckets.get(h) ?? { count: 0, revenue: 0 }
-    return {
-      hour_of_day:         h,
-      order_count:         b.count,
-      total_revenue_bhd:   b.revenue,
-      avg_order_value_bhd: b.count > 0 ? b.revenue / b.count : 0,
-    }
-  })
+  return analyticsOk(
+    Array.from({ length: 24 }, (_, h) => {
+      const b = buckets.get(h) ?? { count: 0, revenue: 0 }
+      return {
+        hour_of_day:         h,
+        order_count:         b.count,
+        total_revenue_bhd:   b.revenue,
+        avg_order_value_bhd: b.count > 0 ? b.revenue / b.count : 0,
+      }
+    }),
+  )
 }
 
 // ── Branch comparison (summary per branch in the date range) ──────────────────
@@ -392,7 +402,7 @@ export async function getBranchSummaries(
   from:      Date,
   to:        Date,
   branchId?: string,
-): Promise<BranchSummary[]> {
+): Promise<AnalyticsResult<BranchSummary[]>> {
   const sb = createServiceClient()
   let q = sb
     .from('orders')
@@ -409,8 +419,7 @@ export async function getBranchSummaries(
 
   const { data, error } = await q
 
-  if (error) console.error('[analytics:getBranchSummaries] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getBranchSummaries', error)
 
   const map = new Map<string, BranchSummary>()
   for (const row of data) {
@@ -426,7 +435,7 @@ export async function getBranchSummaries(
       })
     }
   }
-  return Array.from(map.values())
+  return analyticsOk(Array.from(map.values()))
 }
 
 // ── Report data exports ───────────────────────────────────────────────────────
@@ -434,29 +443,31 @@ export async function getBranchSummaries(
 export async function getSalesReportData(
   from: Date,
   to:   Date,
-): Promise<SalesReportRow[]> {
-  const rows = await getDailySales(from, to)
-  return rows.map((r) => ({
+): Promise<AnalyticsResult<SalesReportRow[]>> {
+  const result = await getDailySales(from, to)
+  if (!result.ok) return result
+  return analyticsOk(result.data.map((r) => ({
     order_date:        r.order_date,
     branch_id:         r.branch_id,
     order_count:       r.order_count,
     total_revenue_bhd: r.total_revenue_bhd.toFixed(3),
     avg_order_bhd:     r.avg_order_value_bhd.toFixed(3),
-  }))
+  })))
 }
 
 export async function getMenuReportData(
   from: Date,
   to:   Date,
-): Promise<MenuReportRow[]> {
-  const rows = await getTopItems(from, to, 50)
-  return rows.map((r) => ({
+): Promise<AnalyticsResult<MenuReportRow[]>> {
+  const result = await getTopItems(from, to, 50)
+  if (!result.ok) return result
+  return analyticsOk(result.data.map((r) => ({
     name_en:           r.name_en,
     name_ar:           r.name_ar,
     total_quantity:    r.total_quantity,
     total_revenue_bhd: r.total_revenue_bhd.toFixed(3),
     order_count:       r.order_count,
-  }))
+  })))
 }
 
 // ── Customer segment summary ──────────────────────────────────────────────────
@@ -471,7 +482,7 @@ function classifySegment(orderCount: number): CustomerSegmentSummary['segment'] 
   return 'one_time'
 }
 
-export async function getCustomerSegmentSummary(branchId?: string): Promise<CustomerSegmentSummary[]> {
+export async function getCustomerSegmentSummary(branchId?: string): Promise<AnalyticsResult<CustomerSegmentSummary[]>> {
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -479,8 +490,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
       .from('customer_segments_view')
       .select('segment, total_spent_bhd, avg_order_value_bhd')
 
-    if (error) console.error('[analytics:getCustomerSegmentSummary:global] DB error', error)
-    if (error || !data) return []
+    if (error || !data) return analyticsErr('getCustomerSegmentSummary', error)
 
     const map = new Map<string, CustomerSegmentSummary>()
     for (const row of data) {
@@ -498,7 +508,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
         })
       }
     }
-    return Array.from(map.values())
+    return analyticsOk(Array.from(map.values()))
   }
 
   // Scoped: aggregate per-phone from orders within this branch
@@ -509,8 +519,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
     .not('customer_phone', 'is', null)
 
-  if (error) console.error('[analytics:getCustomerSegmentSummary:scoped] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getCustomerSegmentSummary', error)
 
   const perPhone = new Map<string, { count: number; total: number }>()
   for (const row of data) {
@@ -534,17 +543,17 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Cust
     segMap.set(seg, existing)
   }
 
-  return Array.from(segMap.entries()).map(([segment, agg]) => ({
+  return analyticsOk(Array.from(segMap.entries()).map(([segment, agg]) => ({
     segment,
     customer_count:  agg.count,
     total_revenue:   agg.total,
     avg_order_value: agg.aovN > 0 ? agg.aovSum / agg.aovN : 0,
-  }))
+  })))
 }
 
 // ── Top customers by lifetime value ──────────────────────────────────────────
 
-export async function getTopCustomers(limit = 10, branchId?: string): Promise<TopCustomer[]> {
+export async function getTopCustomers(limit = 10, branchId?: string): Promise<AnalyticsResult<TopCustomer[]>> {
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -554,9 +563,8 @@ export async function getTopCustomers(limit = 10, branchId?: string): Promise<To
       .order('total_spent_bhd', { ascending: false })
       .limit(limit)
 
-    if (error) console.error('[analytics:getTopCustomers:global] DB error', error)
-    if (error || !data) return []
-    return data as TopCustomer[]
+    if (error || !data) return analyticsErr('getTopCustomers', error)
+    return analyticsOk(data as TopCustomer[])
   }
 
   // Scoped: aggregate from orders within this branch
@@ -567,8 +575,7 @@ export async function getTopCustomers(limit = 10, branchId?: string): Promise<To
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
     .not('customer_phone', 'is', null)
 
-  if (error) console.error('[analytics:getTopCustomers:scoped] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getTopCustomers', error)
 
   type Agg = { phone: string; name: string | null; count: number; total: number; first: string; last: string }
   const perPhone = new Map<string, Agg>()
@@ -596,19 +603,21 @@ export async function getTopCustomers(limit = 10, branchId?: string): Promise<To
     }
   }
 
-  return Array.from(perPhone.values())
-    .sort((a, b) => b.total - a.total)
-    .slice(0, limit)
-    .map((a) => ({
-      customer_phone:      a.phone,
-      customer_name:       a.name,
-      order_count:         a.count,
-      total_spent_bhd:     a.total,
-      avg_order_value_bhd: a.count > 0 ? a.total / a.count : 0,
-      first_order_at:      a.first,
-      last_order_at:       a.last,
-      segment:             classifySegment(a.count),
-    }))
+  return analyticsOk(
+    Array.from(perPhone.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, limit)
+      .map((a) => ({
+        customer_phone:      a.phone,
+        customer_name:       a.name,
+        order_count:         a.count,
+        total_spent_bhd:     a.total,
+        avg_order_value_bhd: a.count > 0 ? a.total / a.count : 0,
+        first_order_at:      a.first,
+        last_order_at:       a.last,
+        segment:             classifySegment(a.count),
+      })),
+  )
 }
 
 // ── Menu item performance (from matview) ──────────────────────────────────────
@@ -621,7 +630,7 @@ export async function getMenuItemPerformance(
   branchId?: string,
   from?:     Date,
   to?:       Date,
-): Promise<MenuItemPerformanceRow[]> {
+): Promise<AnalyticsResult<MenuItemPerformanceRow[]>> {
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -631,9 +640,8 @@ export async function getMenuItemPerformance(
       .order('total_revenue', { ascending: false })
       .limit(limit)
 
-    if (error) console.error('[analytics:getMenuItemPerformance:global] DB error', error)
-    if (error || !data) return []
-    return data as MenuItemPerformanceRow[]
+    if (error || !data) return analyticsErr('getMenuItemPerformance', error)
+    return analyticsOk(data as MenuItemPerformanceRow[])
   }
 
   let q = sb
@@ -645,8 +653,7 @@ export async function getMenuItemPerformance(
   if (to)   q = q.lte('orders.created_at', toISO(to))
 
   const { data, error } = await q
-  if (error) console.error('[analytics:getMenuItemPerformance:scoped] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getMenuItemPerformance', error)
 
   const map = new Map<string, MenuItemPerformanceRow & { _priceSum: number; _priceN: number }>()
   for (const row of data) {
@@ -679,17 +686,19 @@ export async function getMenuItemPerformance(
     }
   }
 
-  return Array.from(map.values())
-    .map(({ _priceSum: _s, _priceN: _n, ...row }) => row)
-    .sort((a, b) => b.total_revenue - a.total_revenue)
-    .slice(0, limit)
+  return analyticsOk(
+    Array.from(map.values())
+      .map(({ _priceSum: _s, _priceN: _n, ...row }) => row)
+      .sort((a, b) => b.total_revenue - a.total_revenue)
+      .slice(0, limit),
+  )
 }
 
 // ── Coupon analytics (from view) ──────────────────────────────────────────────
 // Global path uses coupon_analytics_view. Scoped path joins coupons × orders
 // filtered to a single branch.
 
-export async function getCouponAnalytics(branchId?: string): Promise<CouponAnalyticsRow[]> {
+export async function getCouponAnalytics(branchId?: string): Promise<AnalyticsResult<CouponAnalyticsRow[]>> {
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -698,17 +707,15 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
       .select('*')
       .order('revenue_with_coupon', { ascending: false })
 
-    if (error) console.error('[analytics:getCouponAnalytics:global] DB error', error)
-    if (error || !data) return []
-    return data as CouponAnalyticsRow[]
+    if (error || !data) return analyticsErr('getCouponAnalytics', error)
+    return analyticsOk(data as CouponAnalyticsRow[])
   }
 
   // Scoped: fetch coupons, then aggregate matching orders within branch.
   const couponRes = await sb
     .from('coupons')
     .select('id, code, type, value, campaign_name, usage_count, usage_limit, is_active')
-  if (couponRes.error) console.error('[analytics:getCouponAnalytics:scoped:coupons] DB error', couponRes.error)
-  if (couponRes.error || !couponRes.data) return []
+  if (couponRes.error || !couponRes.data) return analyticsErr('getCouponAnalytics', couponRes.error)
   const coupons = couponRes.data as Array<Pick<CouponAnalyticsRow,
     'id' | 'code' | 'type' | 'value' | 'campaign_name' | 'usage_count' | 'usage_limit' | 'is_active'>>
 
@@ -718,8 +725,7 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
     .eq('branch_id', branchId)
     .not('coupon_id', 'is', null)
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
-  if (ordersErr) console.error('[analytics:getCouponAnalytics:scoped:orders] DB error', ordersErr)
-  if (ordersErr || !ordersData) return []
+  if (ordersErr || !ordersData) return analyticsErr('getCouponAnalytics', ordersErr)
 
   const perCoupon = new Map<string, { rev: number; disc: number; count: number }>()
   for (const row of ordersData) {
@@ -732,28 +738,30 @@ export async function getCouponAnalytics(branchId?: string): Promise<CouponAnaly
     perCoupon.set(id, agg)
   }
 
-  return coupons
-    .map((c) => {
-      const agg = perCoupon.get(c.id) ?? { rev: 0, disc: 0, count: 0 }
-      const net = agg.rev - agg.disc
-      const roi = agg.disc === 0 ? null : Math.round((net / agg.disc) * 1000) / 10
-      return {
-        ...c,
-        revenue_with_coupon:     agg.rev,
-        total_discount_given:    agg.disc,
-        order_count_from_coupon: agg.count,
-        net_revenue:             net,
-        roi_percent:             roi,
-      }
-    })
-    .sort((a, b) => b.revenue_with_coupon - a.revenue_with_coupon)
+  return analyticsOk(
+    coupons
+      .map((c) => {
+        const agg = perCoupon.get(c.id) ?? { rev: 0, disc: 0, count: 0 }
+        const net = agg.rev - agg.disc
+        const roi = agg.disc === 0 ? null : Math.round((net / agg.disc) * 1000) / 10
+        return {
+          ...c,
+          revenue_with_coupon:     agg.rev,
+          total_discount_given:    agg.disc,
+          order_count_from_coupon: agg.count,
+          net_revenue:             net,
+          roi_percent:             roi,
+        }
+      })
+      .sort((a, b) => b.revenue_with_coupon - a.revenue_with_coupon),
+  )
 }
 
 // ── Order source breakdown ────────────────────────────────────────────────────
 // Global path uses order_source_summary view. Scoped path re-aggregates orders
 // directly for a single branch.
 
-export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderSourceRow[]> {
+export async function getOrderSourceBreakdown(branchId?: string): Promise<AnalyticsResult<OrderSourceRow[]>> {
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -762,9 +770,8 @@ export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderS
       .select('*')
       .order('revenue', { ascending: false })
 
-    if (error) console.error('[analytics:getOrderSourceBreakdown:global] DB error', error)
-    if (error || !data) return []
-    return data as OrderSourceRow[]
+    if (error || !data) return analyticsErr('getOrderSourceBreakdown', error)
+    return analyticsOk(data as OrderSourceRow[])
   }
 
   const { data, error } = await sb
@@ -773,8 +780,7 @@ export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderS
     .eq('branch_id', branchId)
     .not('status', 'in', `(${excludedStatuses().join(',')})`)
 
-  if (error) console.error('[analytics:getOrderSourceBreakdown:scoped] DB error', error)
-  if (error || !data) return []
+  if (error || !data) return analyticsErr('getOrderSourceBreakdown', error)
 
   const map = new Map<string, OrderSourceRow>()
   for (const row of data) {
@@ -789,7 +795,7 @@ export async function getOrderSourceBreakdown(branchId?: string): Promise<OrderS
     }
   }
 
-  return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue)
+  return analyticsOk(Array.from(map.values()).sort((a, b) => b.revenue - a.revenue))
 }
 
 // ── Operational metrics (live from orders table) ──────────────────────────────
@@ -798,7 +804,7 @@ export async function getOperationalMetrics(
   from:      Date,
   to:        Date,
   branchId?: string,
-): Promise<OperationalMetricsData> {
+): Promise<AnalyticsResult<OperationalMetricsData>> {
   const sb = createServiceClient()
 
   let q = sb
@@ -813,10 +819,7 @@ export async function getOperationalMetrics(
   }
 
   const { data, error } = await q
-  if (error) console.error('[analytics:getOperationalMetrics] DB error', error)
-  if (error || !data) {
-    return { totalOrders: 0, cancelledOrders: 0, cancellationRate: 0, avgFulfillmentMinutes: 0, ordersWithFulfillmentData: 0 }
-  }
+  if (error || !data) return analyticsErr('getOperationalMetrics', error)
 
   const totalOrders     = data.length
   const cancelledOrders = data.filter((r) => r.status === 'cancelled' || r.status === 'payment_failed').length
@@ -831,7 +834,7 @@ export async function getOperationalMetrics(
     ? fulfillmentTimes.reduce((s, m) => s + m, 0) / fulfillmentTimes.length
     : 0
 
-  return { totalOrders, cancelledOrders, cancellationRate, avgFulfillmentMinutes, ordersWithFulfillmentData: fulfillmentTimes.length }
+  return analyticsOk({ totalOrders, cancelledOrders, cancellationRate, avgFulfillmentMinutes, ordersWithFulfillmentData: fulfillmentTimes.length })
 }
 
 // ── Cash Reconciliation Metrics (Handover discrepancies) ──────────────────────
@@ -840,7 +843,7 @@ export async function getCashReconciliationMetrics(
   from:      Date,
   to:        Date,
   branchId?: string,
-): Promise<CashReconciliationMetrics> {
+): Promise<AnalyticsResult<CashReconciliationMetrics>> {
   const sb = createServiceClient()
 
   let q = sb
@@ -856,23 +859,20 @@ export async function getCashReconciliationMetrics(
   }
 
   const { data, error } = await q
-  if (error) console.error('[analytics:getCashReconciliationMetrics] DB error', error)
-  if (error || !data) {
-    return { totalExpected: 0, totalActual: 0, totalDifference: 0, handoverCount: 0, pendingConfirmationCount: 0 }
-  }
+  if (error || !data) return analyticsErr('getCashReconciliationMetrics', error)
 
   const totalExpected = data.reduce((s, r) => s + Number(r.expected_amount), 0)
   const totalActual   = data.reduce((s, r) => s + Number(r.actual_amount),   0)
   const totalDifference = data.reduce((s, r) => s + Number(r.difference),    0)
   const pendingConfirmationCount = data.filter((r) => !r.manager_confirmed).length
 
-  return {
+  return analyticsOk({
     totalExpected,
     totalActual,
     totalDifference,
     handoverCount: data.length,
     pendingConfirmationCount,
-  }
+  })
 }
 
 // ── Secondary metrics (new vs. repeat customers, items sold) ──────────────────
@@ -954,7 +954,7 @@ export async function getLaborCostMetrics(
   from:      Date,
   to:        Date,
   branchId?: string,
-): Promise<LaborCostMetrics | null> {
+): Promise<AnalyticsResult<LaborCostMetrics | null>> {
   const sb = createServiceClient()
   const { data, error } = await sb.rpc('get_labor_cost_metrics', {
     p_from_date: toISO(from),
@@ -962,9 +962,9 @@ export async function getLaborCostMetrics(
     p_branch_id: branchId ?? undefined,
   })
 
-  if (error) console.error('[analytics:getLaborCostMetrics] DB error', error)
-  if (error || !data || data.length === 0) return null
-  return data[0] as LaborCostMetrics
+  if (error) return analyticsErr('getLaborCostMetrics', error)
+  if (!data || data.length === 0) return analyticsOk(null)
+  return analyticsOk(data[0] as LaborCostMetrics)
 }
 
 // ── Menu Engineering Matrix ───────────────────────────────────────────────────
@@ -973,7 +973,7 @@ export async function getMenuEngineeringMatrix(
   from:      Date,
   to:        Date,
   branchId?: string,
-): Promise<AnalyticsMenuEngineeringRow[]> {
+): Promise<AnalyticsResult<AnalyticsMenuEngineeringRow[]>> {
   const sb = createServiceClient()
   const { data, error } = await sb.rpc('get_menu_engineering_matrix', {
     p_from_date: toISO(from),
@@ -981,7 +981,6 @@ export async function getMenuEngineeringMatrix(
     p_branch_id: branchId ?? undefined,
   })
 
-  if (error) console.error('[analytics:getMenuEngineeringMatrix] DB error', error)
-  if (error || !data) return []
-  return data as AnalyticsMenuEngineeringRow[]
+  if (error || !data) return analyticsErr('getMenuEngineeringMatrix', error)
+  return analyticsOk(data as AnalyticsMenuEngineeringRow[])
 }
