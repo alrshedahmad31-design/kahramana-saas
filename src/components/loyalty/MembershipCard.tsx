@@ -103,11 +103,11 @@ export default function MembershipCard({ userId, name, tier, joinedAt }: Props) 
       className="relative w-full max-w-md sm:max-w-lg mx-auto overflow-hidden
                  rounded-2xl border border-brand-gold/40
                  aspect-[1.586/1]
-                 shadow-[0_14px_40px_rgba(0,0,0,0.55),inset_0_0_0_1px_rgba(232,184,109,0.08)]"
+                 shadow-[0_24px_56px_-16px_rgba(0,0,0,0.7),inset_0_0_0_1px_rgba(232,184,109,0.10)]"
       style={{
         backgroundImage: `
-          radial-gradient(ellipse at top right, rgba(232,184,109,0.22) 0%, rgba(232,184,109,0) 55%),
-          radial-gradient(ellipse at bottom left,  rgba(166,124,0,0.22) 0%, rgba(166,124,0,0) 60%),
+          radial-gradient(circle at 92% 6%, rgba(232,184,109,0.22) 0%, rgba(232,184,109,0) 45%),
+          radial-gradient(circle at 8% 96%, rgba(166,124,0,0.20) 0%, rgba(166,124,0,0) 50%),
           ${tokens.color.membership.cardGradient}
         `,
         backgroundColor: tokens.color.black,
@@ -116,7 +116,7 @@ export default function MembershipCard({ userId, name, tier, joinedAt }: Props) 
       {/* Baghdadi geometric pattern — very subtle */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage: `url("data:image/svg+xml,${PATTERN_SVG}")`,
           backgroundSize:  '84px 84px',
@@ -126,135 +126,156 @@ export default function MembershipCard({ userId, name, tier, joinedAt }: Props) 
       {/* Inner gold hairline frame */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-[6px] rounded-[14px] border border-brand-gold/15"
+        className="pointer-events-none absolute inset-[7px] rounded-[14px] border border-brand-gold/15"
       />
 
-      {/* Diagonal sheen */}
+      {/* Diagonal sheen — subtle reflection across the card face */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -inset-y-12 -inset-x-4 rotate-12 opacity-[0.06]"
+        className="pointer-events-none absolute -inset-y-16 -inset-x-4 rotate-[18deg] opacity-[0.05]"
         style={{
           background:
-            'linear-gradient(90deg, rgba(255,255,255,0) 30%, rgba(232,184,109,0.7) 50%, rgba(255,255,255,0) 70%)',
+            'linear-gradient(90deg, rgba(255,255,255,0) 30%, rgba(232,184,109,0.85) 50%, rgba(255,255,255,0) 70%)',
         }}
       />
 
-      {/* ── Top row: logo (start) · tier (end) ───────────────────── */}
-      <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4 sm:p-5">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Image
-            src="/assets/logo.svg"
-            alt="Kahramana Baghdad"
-            width={42}
-            height={100}
-            className="h-9 sm:h-11 w-auto drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]"
-          />
-          <div className="flex flex-col leading-tight min-w-0">
+      {/* Hairline gold divider — separates brand row from card body */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-[14%] top-[31%] h-px"
+        style={{
+          background:
+            'linear-gradient(90deg, rgba(232,184,109,0) 0%, rgba(232,184,109,0.4) 50%, rgba(232,184,109,0) 100%)',
+        }}
+      />
+
+      {/* Card content — three-row column layout (brand · number · footer) */}
+      <div className="absolute inset-0 flex flex-col p-5 sm:p-6">
+
+        {/* ── ROW 1: brand lockup (start) · tier stamp (end) ────────── */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+            <Image
+              src="/assets/brand/logoo.webp"
+              alt={isAr ? 'كهرمانة بغداد' : 'Kahramana Baghdad'}
+              width={64}
+              height={104}
+              priority
+              className="h-12 sm:h-14 w-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.65)]"
+            />
+            <div className="flex flex-col leading-[1.05] min-w-0">
+              <span
+                className={`text-base sm:text-lg font-black tracking-[0.16em] uppercase text-brand-gold
+                  ${isAr ? 'font-cairo' : 'font-editorial'}`}
+                style={{ textShadow: '0 1px 1px rgba(0,0,0,0.55)' }}
+              >
+                {isAr ? 'كهرمانة' : 'KAHRAMANA'}
+              </span>
+              <span
+                className={`mt-0.5 text-[10px] sm:text-[11px] tracking-[0.42em] uppercase text-brand-gold/65
+                  ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+              >
+                {isAr ? 'بغداد' : 'BAGHDAD'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
             <span
-              className={`text-[11px] sm:text-xs font-black tracking-[0.25em] uppercase text-brand-gold
-                ${isAr ? 'font-cairo' : 'font-editorial'}`}
+              className="font-satoshi text-[11px] sm:text-[12px] font-black tracking-[0.34em] uppercase"
+              style={{
+                color: tierColor.text,
+                textShadow: '0 1px 1px rgba(0,0,0,0.55)',
+              }}
             >
-              {isAr ? 'كهرمانة' : 'KAHRAMANA'}
+              {tierLabel}
             </span>
             <span
-              className={`text-[8px] sm:text-[10px] tracking-[0.3em] uppercase text-brand-gold/60
+              className={`text-[9px] sm:text-[10px] tracking-[0.32em] uppercase text-brand-gold/70
                 ${isAr ? 'font-almarai' : 'font-satoshi'}`}
             >
-              {isAr ? 'بغداد' : 'BAGHDAD'}
+              {t('premiumMember')}
             </span>
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <span
-            className="font-satoshi text-[10px] sm:text-xs font-black tracking-[0.3em] uppercase
-                       px-2.5 py-1 rounded-md border"
-            style={{
-              color:           tierColor.text,
-              borderColor:     tierColor.border,
-              backgroundColor: tierColor.bg,
-            }}
-          >
-            {tierLabel}
-          </span>
-          <span
-            className={`text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-brand-gold/70
-              ${isAr ? 'font-almarai' : 'font-satoshi'}`}
-          >
-            {t('premiumMember')}
-          </span>
-        </div>
-      </div>
-
-      {/* ── Bottom: name + meta · QR ─────────────────────────────── */}
-      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 flex items-end justify-between gap-3 sm:gap-4">
-        <div className="flex-1 min-w-0">
+        {/* ── ROW 2: member id — the embossed focal point ───────────── */}
+        <div className="flex-1 flex flex-col justify-center min-w-0">
           <p
-            className={`text-[9px] sm:text-[10px] uppercase tracking-[0.3em] text-brand-gold/60 mb-0.5
+            className={`text-[9px] sm:text-[10px] uppercase tracking-[0.42em] text-brand-gold/55 mb-2
               ${isAr ? 'font-almarai' : 'font-satoshi'}`}
           >
             {t('memberId')}
           </p>
           <p
             dir="ltr"
-            className="font-mono text-sm sm:text-base font-bold tabular-nums tracking-[0.18em]
-                       text-brand-text mb-2 sm:mb-3 truncate"
+            className="font-mono text-2xl sm:text-3xl font-bold tabular-nums tracking-[0.22em] text-brand-text truncate"
+            style={{
+              textShadow:
+                '0 1px 0 rgba(0,0,0,0.55), 0 2px 3px rgba(0,0,0,0.35), 0 0 18px rgba(232,184,109,0.20)',
+            }}
           >
             {memberId}
           </p>
-
-          <p
-            className={`text-base sm:text-lg font-black text-brand-gold leading-tight truncate
-              ${isAr ? 'font-cairo' : 'font-editorial'}`}
-            title={displayName}
-          >
-            {displayName}
-          </p>
-
-          <div className="mt-1.5 sm:mt-2 flex items-end gap-4 sm:gap-6">
-            <div className="min-w-0">
-              <p
-                className={`text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-brand-gold/60
-                  ${isAr ? 'font-almarai' : 'font-satoshi'}`}
-              >
-                {t('memberSince')}
-              </p>
-              <p
-                dir="ltr"
-                className={`text-[11px] sm:text-xs font-bold tabular-nums text-brand-text
-                  ${isAr ? 'font-almarai' : 'font-mono'}`}
-              >
-                {memberSince}
-              </p>
-            </div>
-            <div className="min-w-0">
-              <p
-                className={`text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-brand-gold/60
-                  ${isAr ? 'font-almarai' : 'font-satoshi'}`}
-              >
-                {t('validThru')}
-              </p>
-              <p
-                dir="ltr"
-                className="font-mono text-[11px] sm:text-xs font-bold tabular-nums text-brand-text"
-              >
-                {validThru}
-              </p>
-            </div>
-          </div>
         </div>
 
-        {/* QR — paper-white panel with gold hairline */}
-        <div
-          className="shrink-0 rounded-md p-1 sm:p-1.5 border border-brand-gold/30
-                     shadow-[0_2px_6px_rgba(0,0,0,0.4)]"
-          style={{ backgroundColor: tokens.color.qrPaper }}
-          aria-hidden="true"
-        >
-          <canvas
-            ref={qrRef}
-            className="block h-[56px] w-[56px] sm:h-[68px] sm:w-[68px]"
-          />
+        {/* ── ROW 3: name + dates (start) · QR (end) ────────────────── */}
+        <div className="flex items-end justify-between gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <p
+              className={`text-lg sm:text-xl font-black text-brand-gold leading-tight truncate
+                ${isAr ? 'font-cairo' : 'font-editorial'}`}
+              title={displayName}
+              style={{ textShadow: '0 1px 1px rgba(0,0,0,0.55)' }}
+            >
+              {displayName}
+            </p>
+
+            <div className="mt-2 flex items-end gap-5 sm:gap-7">
+              <div className="min-w-0">
+                <p
+                  className={`text-[8px] sm:text-[9px] uppercase tracking-[0.3em] text-brand-gold/55
+                    ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                >
+                  {t('memberSince')}
+                </p>
+                <p
+                  dir="ltr"
+                  className={`mt-0.5 text-[11px] sm:text-xs font-bold tabular-nums text-brand-text
+                    ${isAr ? 'font-almarai' : 'font-mono'}`}
+                >
+                  {memberSince}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p
+                  className={`text-[8px] sm:text-[9px] uppercase tracking-[0.3em] text-brand-gold/55
+                    ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                >
+                  {t('validThru')}
+                </p>
+                <p
+                  dir="ltr"
+                  className="mt-0.5 font-mono text-[11px] sm:text-xs font-bold tabular-nums text-brand-text"
+                >
+                  {validThru}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* QR — paper-white panel with gold hairline + soft drop */}
+          <div
+            className="shrink-0 rounded-md p-1 sm:p-1.5 border border-brand-gold/40
+                       shadow-[0_4px_10px_rgba(0,0,0,0.45)]"
+            style={{ backgroundColor: tokens.color.qrPaper }}
+            aria-hidden="true"
+          >
+            <canvas
+              ref={qrRef}
+              className="block h-[52px] w-[52px] sm:h-[64px] sm:w-[64px]"
+            />
+          </div>
         </div>
       </div>
     </div>
