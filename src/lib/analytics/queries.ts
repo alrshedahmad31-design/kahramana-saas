@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { BH_TIMEZONE } from './calculations'
 import { HIDDEN_BRANCHES } from '@/constants/contact'
 import { analyticsOk, analyticsErr, type AnalyticsResult } from './types'
@@ -181,7 +181,7 @@ export async function getMetrics(
   prevTo:    Date,
   branchId?: string,
 ): Promise<AnalyticsResult<MetricsData>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   type PeriodMetrics = { totalRevenue: number; orderCount: number; avgOrderValue: number; uniqueCustomers: number }
 
@@ -237,7 +237,7 @@ export async function getDailySales(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<DailySalesRow[]>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   let q = sb
     .from('orders')
@@ -295,7 +295,7 @@ export async function getTopItems(
   limit      = 10,
   branchId?: string,
 ): Promise<AnalyticsResult<TopItemRow[]>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   // For date-filtered top items we query order_items + orders join
   let q = sb
@@ -345,6 +345,7 @@ export async function getTopItems(
 // ── Hourly distribution (from matview — all-time; queried by hour) ────────────
 
 export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: string): Promise<AnalyticsResult<HourlyRow[]>> {
+  // AUD-V3-012: service-role kept — global path reads hourly_order_distribution matview (no authenticated grant).
   const sb = createServiceClient()
 
   // If no date range provided fall back to the pre-aggregated view (all-time)
@@ -403,7 +404,7 @@ export async function getBranchSummaries(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<BranchSummary[]>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
   let q = sb
     .from('orders')
     .select('branch_id, total_bhd')
@@ -483,6 +484,7 @@ function classifySegment(orderCount: number): CustomerSegmentSummary['segment'] 
 }
 
 export async function getCustomerSegmentSummary(branchId?: string): Promise<AnalyticsResult<CustomerSegmentSummary[]>> {
+  // AUD-V3-012: service-role kept — customer_segments_view selects from customer_lifetime_value matview (no authenticated grant).
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -554,6 +556,7 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Anal
 // ── Top customers by lifetime value ──────────────────────────────────────────
 
 export async function getTopCustomers(limit = 10, branchId?: string): Promise<AnalyticsResult<TopCustomer[]>> {
+  // AUD-V3-012: service-role kept — global path reads customer_segments_view → customer_lifetime_value matview (no authenticated grant).
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -631,6 +634,7 @@ export async function getMenuItemPerformance(
   from?:     Date,
   to?:       Date,
 ): Promise<AnalyticsResult<MenuItemPerformanceRow[]>> {
+  // AUD-V3-012: service-role kept — global path reads menu_item_performance matview (no authenticated grant).
   const sb = createServiceClient()
 
   if (!branchId) {
@@ -699,7 +703,7 @@ export async function getMenuItemPerformance(
 // filtered to a single branch.
 
 export async function getCouponAnalytics(branchId?: string): Promise<AnalyticsResult<CouponAnalyticsRow[]>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   if (!branchId) {
     const { data, error } = await sb
@@ -762,7 +766,7 @@ export async function getCouponAnalytics(branchId?: string): Promise<AnalyticsRe
 // directly for a single branch.
 
 export async function getOrderSourceBreakdown(branchId?: string): Promise<AnalyticsResult<OrderSourceRow[]>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   if (!branchId) {
     const { data, error } = await sb
@@ -805,7 +809,7 @@ export async function getOperationalMetrics(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<OperationalMetricsData>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   let q = sb
     .from('orders')
@@ -844,7 +848,7 @@ export async function getCashReconciliationMetrics(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<CashReconciliationMetrics>> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   let q = sb
     .from('cash_handovers')
@@ -882,7 +886,7 @@ export async function getSecondaryMetrics(
   to:        Date,
   branchId?: string,
 ): Promise<SecondaryMetricsData> {
-  const sb = createServiceClient()
+  const sb = await createClient()
 
   // Build two queries in parallel
   let periodQ = sb
@@ -943,6 +947,7 @@ export async function getSecondaryMetrics(
 // ── Refresh materialized views (called from server action) ────────────────────
 
 export async function refreshAnalyticsViews(): Promise<{ error: string | null }> {
+  // AUD-V3-012: service-role kept — RPC refresh_analytics_views has no authenticated EXECUTE grant.
   const sb = createServiceClient()
   const { error } = await sb.rpc('refresh_analytics_views')
   return { error: error?.message ?? null }
@@ -955,6 +960,7 @@ export async function getLaborCostMetrics(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<LaborCostMetrics | null>> {
+  // AUD-V3-012: service-role kept — RPC get_labor_cost_metrics has no authenticated EXECUTE grant.
   const sb = createServiceClient()
   const { data, error } = await sb.rpc('get_labor_cost_metrics', {
     p_from_date: toISO(from),
@@ -974,6 +980,7 @@ export async function getMenuEngineeringMatrix(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<AnalyticsMenuEngineeringRow[]>> {
+  // AUD-V3-012: service-role kept — RPC get_menu_engineering_matrix has no authenticated EXECUTE grant.
   const sb = createServiceClient()
   const { data, error } = await sb.rpc('get_menu_engineering_matrix', {
     p_from_date: toISO(from),
