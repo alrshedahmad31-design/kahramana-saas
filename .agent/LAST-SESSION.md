@@ -1,86 +1,140 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 110: Saved address + auth form hardening — Track A (migration 147 + checkout pre-fill / auto-save / profile edit) and Track B (auth H1–H6 + M3/M6). 4 own commits pushed, master at `57b7bbc`.
-> Date: 2026-05-14
-> Author: Claude Code (Opus 4.7)
+> Session 119: H-2 hydration close-out + dashboard operations audit + 3 launch-blocker fixes + Claude.ai bridge. 6 commits on master, tip at `595513d`.
+> Date: 2026-05-15
+> Author: Claude Code (Opus 4.7, 1M)
 
-## SESSION 110 — SUMMARY
+## SESSION 119 — SUMMARY
 
-Two independent tracks, run in strict order. Track A added saved-address infrastructure to customer_profiles and wired it through three surfaces (checkout pre-fill, post-order auto-save, account profile edit). Track B closed eight a11y / security gaps on the login & register flow. TSC clean after every step; production build verified at 562 pages.
+Three tracks: (1) hydration mismatch H-2 reopened from session 118 because the agreed fix target (`global-error.tsx`) was a no-go in code review until the user re-confirmed; landed as planned. (2) Two read-only audits — loyalty zero-points debug + full dashboard operations smoke — produced a prioritized launch-risk list. (3) Top-2 launch blockers fixed (with FIX #3 piggybacked because both #1 and #2 cleared TSC+build green). Closed with a Claude.ai ↔ Claude Code session-context bridge so future sessions inherit operator state without re-explanation.
 
-### Track A — Saved address + phone
+### Commits this session (in order)
 
-- **Migration 147** (`bf5d00e`) — Added `default_block / default_road / default_building / default_flat / default_area / default_lat / default_lng` to `customer_profiles` with column-level `GRANT UPDATE TO authenticated`, mirroring the migration 064 pattern for name/email/phone. Applied via `npx supabase db push --linked --include-all` and verified live (`information_schema.columns` probe).
-  - Deviation: dropped the `INSERT INTO public.schema_migrations` line from the spec — that table doesn't exist in this repo; the CLI tracks in `supabase_migrations.schema_migrations` internally and migrations 142–145 all follow the same no-INSERT convention.
+| Hash | Subject |
+|---|---|
+| `3b22737` | fix(i18n): global-error.tsx reads locale from cookie — fixes lang=en hydration mismatch (H-2) |
+| `e3483e4` | fix(driver): add arrived → delivered transition — unblocks loyalty + COD reconciliation |
+| `0a3ae27` | fix(driver): wire location push visibility + extend through arrival window |
+| `ceaafe8` | feat(ops): migration 150 — pg_cron daily stuck-order alert |
+| `d6a2c75` | chore(bridge): Claude.ai ↔ Claude Code context bridge |
+| `595513d` | chore(bridge): initialize Claude.ai context bridge — session 119 state |
 
-- **Types regen** (`6431ab1`) — Regenerated `src/lib/supabase/types.ts` (not `src/types/supabase.ts` as the spec said — that path doesn't exist). Stripped two known pollution artifacts per `feedback_supabase_gen_types_pollution.md`: line-1 "Initialising login role…" and the EOF `<claude-code-hint />` tag. The new types tightened RPC-param nullability and broke 7 unrelated call sites — fixed each with `?? ''` / `?? undefined` coercions: `checkout/actions.ts`, `dashboard/payments/actions.ts`, `dashboard/pos/actions.ts`, `dashboard/shifts/actions.ts` (×2), `webhooks/tap/route.ts`, `lib/loyalty/restore.ts`.
+`origin/master` at `595513d`. No sibling-agent commits landed during the session.
 
-- **Checkout pre-fill + auto-save + profile edit** (`84e0d9a`) — Three coordinated edits:
-  - `src/components/checkout/CheckoutForm.tsx` (actual path; spec was wrong): extended the existing customer-pre-fill useEffect to also populate block/road/building/flat and GPS coords from `customerProfile.default_*` when block is on file. Added a subtle `text-xs text-brand-muted` hint below the address grid (i18n key `checkout.address.prefilledHint`) so the customer knows to verify or edit before submitting. No auto-submit.
-  - `src/app/[locale]/checkout/actions.ts`: silent UPDATE to `customer_profiles` after `rpc_create_order` succeeds, gated on `order_type === 'delivery'` + authenticated session. Uses the cookie-bound anon client (not service role) so RLS + the column-level grant from 147 apply. Wrapped in try/catch; any failure logs to Sentry under `checkout.address_save_failed` and the order response is never blocked.
-  - New `src/app/[locale]/account/ProfileEditForm.tsx` + `src/app/[locale]/account/actions.ts` (`updateCustomerProfile` server action). Lets signed-in customers edit name, phone, and the saved default address from the account page. Phone validated server-side against `/^\+973[0-9]{8}$/`, name capped at 120. Inline `Saved ✓` feedback via `useTransition`, unique-violation surfaces as typed `phone_taken` error. Added `account.myInfo.*` i18n keys (AR + EN parity confirmed by gate 8).
-  - Note: the form has no `area` input field. `default_area` is read/saved alongside `default_block` (same value in this codebase's address shape) but not assigned to a dedicated UI input.
+### H-2 hydration fix (commit `3b22737`)
 
-### Track B — Auth form H1–H6 + M3/M6 (`57b7bbc`)
+`global-error.tsx` was hardcoded `<html lang="en">`. On any global-error fire for an Arabic visitor (the dominant user path) React emits server `lang="en"` while client expects `lang="ar"` — exactly the Sentry symptom. Fix: read `NEXT_LOCALE` cookie on client, default to `'ar'` on SSR. Preserved the `Sentry.captureException` `useEffect` (user spec dropped it but losing observability on global errors is a regression).
 
-All eight fixes in `src/app/[locale]/account/login/AccountLoginClient.tsx` + `actions.ts`:
+Trade-off accepted: English users hitting global-error now see SSR=`ar` / client=`en` — a residual mismatch on the error page itself. If Sentry shows that follow-up, defer the locale read to `useEffect` so SSR emits a stable neutral default.
 
-- **H1** — Server enforces `password.length ≥ 8` + at least one letter + one digit before `supabase.auth.signUp`; client mirrors with a 3-stage strength meter (weak/medium/strong) under the password input on the register tab. Server remains the security boundary; client meter is UX only.
-- **H2** — Real `<label htmlFor>` + `id` pairs on name/email/phone/password inputs. `aria-label` retained as belt-and-suspenders.
-- **H3** — Error and success messages wrapped in `role="alert" aria-live="polite" aria-atomic="true"`.
-- **H4** — `autocomplete` attributes: `email`, `tel`, `name`, `new-password` vs `current-password` (mode-aware).
-- **H5** — Inline client phone validation against `/^\+9[0-9]{11}$|^[0-9]{8}$/` (matches the server `normalizePhone` accepted range); shows red error below the phone field until valid, server still validates as the gate.
-- **H6** — Rate limit block now also gates on `NODE_ENV === 'production'` per `feedback_rate_limit_node_env_gate.md`. Comment cites the memory by name so the why survives a future audit.
-- **M3** — Tab toggle now resets every form field plus error/success state so a half-typed login doesn't leak into the register tab and vice versa.
-- **M6** — Server rejects `name.length > 120` with typed `name_too_long` error before signUp.
+### Loyalty audit (read-only)
 
-Added 9 new auth i18n keys (`passwordTooShort/Weak`, `passwordStrengthWeak/Medium/Strong`, `nameTooLong`, `phoneFormatInvalid`) to both `messages/ar.json` and `messages/en.json`. i18n gate 8 PASS (2,283 keys each side).
+`points_transactions` was empty across the entire DB; trigger `trg_award_loyalty_points` was healthy. Root cause: the 4 recent direct-channel orders for `+97336396699` had status `'new'` (2) or `'arrived'` (2) — none had transitioned to `'completed'`/`'delivered'`. The trigger fires `AFTER UPDATE OF status` into those terminal states only. Two intertwined gaps surfaced:
 
-## COMMITS THIS SESSION (in order)
+1. `arrived` is intermediate — driver was supposed to advance it to `delivered`.
+2. Driver app couldn't actually do that.
 
-| Hash | Subject | Author |
-|---|---|---|
-| `bf5d00e` | feat(db): migration 147 — default address columns on customer_profiles | me |
-| `6431ab1` | chore(types): regen supabase types after migration 147 | me |
-| `84e0d9a` | feat(account): saved address — checkout pre-fill + auto-save + profile edit (migration 147) | me |
-| `57b7bbc` | fix(auth): H1-H6 + M3/M6 — password strength, labels, aria-live, autocomplete, phone validation, rate limit NODE_ENV gate | me |
+→ Led directly into FIX #1.
 
-All pushed (`origin/master` at `57b7bbc`). No sibling-agent commits landed on master this session, though the cowork agent did edit `account/actions.ts` mid-session to inline the `CustomerProfileUpdate` type — I consolidated to a single declaration before committing.
+### Dashboard ops audit (10 probes + workflow checklist)
 
-## MIGRATIONS APPLIED TO PROD (session 110)
+| Surface | Verdict |
+|---|---|
+| Orders by status | 2 stuck >24h (`b29cf94c` @ 76h `accepted`/waiter; `fe01c38e` @ 28h `arrived`) |
+| Staff roles | All 5 roles covered, all rows active |
+| KDS | 9 pending items (operational, not bug) |
+| Inventory alerts | 158 unread `unmapped_item` (recipe-link gap, noise) |
+| Payments | 14 cash completed + 15 cash pending_cod (handover queue) |
+| Shifts | tables present (`shift_closings`, `shifts`, `cash_handovers`) |
+| `driver_locations` | 0 rows ever — wiring complete, just no real shifts yet |
+| Loyalty config | healthy, single row |
+| Reservations | 5 rows across 4 statuses, looks fine |
+| Menu | 175 items all `is_available=true` |
 
-- **147** — `default_block / default_road / default_building / default_flat / default_area / default_lat / default_lng` columns on `customer_profiles` + column-level `GRANT UPDATE TO authenticated`. Verified via `information_schema.columns` probe. CLI-tracked in `supabase_migrations.schema_migrations`; no `public.schema_migrations` INSERT (table doesn't exist here).
+Plus: no auto-audit trigger on `orders` (95% of state transitions unlogged); 9/31 dashboard pages don't import `requireDashboardSection` at page level (some have it in actions instead).
+
+Launch Risk **before fixes: 5/10**.
+
+### FIX #1 — driver `arrived → delivered` (commit `e3483e4`)
+
+Server action `driverBumpOrder` already supported `'arrived'` as input. The block was 100% client-side:
+- `driver/page.tsx` transit query stopped at `'out_for_delivery'`
+- `DriverDashboard.fetchOrders` filter `.in('status', ['ready','out_for_delivery'])`
+- `activeOrders` filter, `hasActiveOrder` (wake-lock) memo, offline-sync `as` cast
+- `DriverOrderCard.DriverActiveStatus` type union, `isOnRoad` gate on the Deliver button, `deriveSteps` step derivation, `finishDelivery` hardcoded current-status pass
+
+All widened to include `'arrived'`. Also added `audit_logs` insert + `revalidatePath` on every `driverBumpOrder` transition per task spec — this also chips away at the audit-coverage gap from the audit pass. Replaced the existing unsafe `as 'ready' | 'out_for_delivery'` assertion in the offline-sync loop with a runtime narrow that discards genuinely-unknown queued statuses.
+
+### FIX #2 — driver location push (commit `0a3ae27`)
+
+`DriverDashboard.tsx` already had `watchPosition` + 15s-throttled `postDriverLocation` calls. Empty `driver_locations` was operational — 32 `delivered` orders had been status-flipped via the dashboard, never going through the driver app under a real shift.
+
+Three real fixes:
+1. The fire-and-forget `postDriverLocation()` got a `.then/.catch` so silent server rejections (auth/status/branch mismatch) now log — key reason this was undiagnosable before.
+2. Client GPS gate widened to `'out_for_delivery' || 'arrived'` so the dispatch map stays live through the final-handoff window.
+3. Server `postDriverLocation` accepts both statuses (was rejecting `'arrived'` at line 235).
+
+### FIX #3 — stuck-order cleanup + abandonment alerts (commit `ceaafe8`)
+
+Step 1 — closed `b29cf94c` via SQL:
+```sql
+UPDATE orders SET status='cancelled',
+  notes = COALESCE(notes||E'\n','') || '[CANCELLED <ts>]: stuck-in-accepted-auto-closed-pre-launch (session 119)',
+  updated_at = NOW()
+WHERE id='b29cf94c-…' AND status='accepted';
+```
+Used `notes` (the project's existing cancel pattern) — there is no `cancellation_reason` column, contra the task spec.
+
+Step 2 — migration 150 (`supabase/migrations/150_stuck_order_alerts.sql`):
+- New table `operations_alerts` (id, alert_type, severity, message, ref_table, ref_id, branch_id, metadata jsonb, is_read, created_at, updated_at) + 3 indexes
+- RLS: branch_manager+ read (Owner/GM unscoped), branch_manager UPDATE on own branch; anon revoked entirely; authenticated SELECT/UPDATE only
+- `detect_stuck_orders()` — SECURITY DEFINER, scans non-terminal orders older than 24h, dedupes against alerts in the trailing 24h window, returns insert count
+- `pg_cron` extension enabled via SQL (worked first try despite earlier memory that managed-Supabase strips superuser — extension-create is the carve-out)
+- `cron.schedule('stuck-order-scan', '0 5 * * *', …)` = 08:00 Bahrain time
+
+Defensive `DO $$ ... EXCEPTION` wrapper around `CREATE EXTENSION` so the table + function still land if pg_cron were unavailable.
+
+First scan inserted 1 alert: `Order #FE01C38E stuck in arrived for 28h` (severity `warn`, branch `riffa`). `cron.job` shows `jobname='stuck-order-scan'` active.
+
+Launch Risk **after fixes: 8/10**.
+
+### Claude.ai ↔ Claude Code bridge (commits `d6a2c75`, `595513d`)
+
+Two-commit split per user direction:
+- Infrastructure: `.agent/sync-context.ps1` + a `## BRIDGE — Read at session start` hook in CLAUDE.md
+- Content: `.agent/CLAUDE-AI-CONTEXT.md` initialized with session 119 strategic state (operator pending actions, dev priorities, architecture decisions, known ceilings, migration state, session history)
+
+Script generates `.agent/CURRENT-SESSION.md` with live `git rev-parse HEAD` + timestamp wrapped around the strategic content. Verified working.
+
+Flagged: the `Master: ceaafe8` line inside `CLAUDE-AI-CONTEXT.md` is static (manual update marker) while the bridge header shows the live tip — they're expected to diverge over time. Not a bug.
+
+## MIGRATIONS APPLIED TO PROD (session 119)
+
+- `150_stuck_order_alerts.sql` — applied via `supabase db push --linked --include-all`. Verified post-apply with probe `fix3-verify-migration.sql` (table + function + pg_cron extension all present) and `fix3-verify-cron-detail.sql` (schedule `0 5 * * *` active, jobid=1).
 
 ## VERIFICATION
 
-- `npx tsc --noEmit` — **0 errors** after every commit.
-- `npx tsx scripts/check-i18n.ts` — gate 8 PASS, AR 2,283 / EN 2,283 keys.
-- `NEXT_BUILD_WORKERS=1 npm run build` after `rm -rf .next` — **562/562 pages**, 0 errors. (Required `NEXT_BUILD_WORKERS=1` per `feedback_windows_build_race.md`; required `rm -rf .next` per `feedback_turbopack_pollutes_production_build.md`.)
-- RTL spot-check on `src/app/[locale]/account/` + `src/components/loyalty/` — one pre-existing finding (`LoyaltyRedemptionWidget.tsx:99` `left-0.5`, introduced by `eee9f4b8` on 2026-05-07), unrelated to this session's edits.
+- `npx tsc --noEmit` after each commit — 0 errors.
+- `NEXT_BUILD_WORKERS=1 npm run build` after `3b22737`, `e3483e4`, and `0a3ae27` — 562/562 pages, 0 errors each time. (Required `NEXT_BUILD_WORKERS=1` per `feedback_windows_build_race.md`.)
+- Bridge commits are non-code (`.ps1` + `.md`) so no TSC/build re-run was needed.
+- `git diff --cached --stat` before every commit — only the intended files staged each time; the long-running sibling carry (`messages/*.json`, `CheckoutForm.tsx`, `cart.ts`, `LAST-SESSION.md`) stayed untouched.
 
-## WHAT'S NEXT (deferred / not done this session)
+## WHAT'S NEXT (session 120 candidates, in priority order)
 
-Per the spec's explicit deferred list:
-
-- **Multi-address book** (Option B) — needs a new `customer_addresses` table with FK to `customer_profiles`. Current session implemented single-default only (Option A).
-- **GPS pre-fill in profile page** — profile edit form has no map picker. Checkout still has the GPS button; only the profile surface is text-only.
-- **Birthday field + gift countdown** — separate migration needed; not scoped this session.
-- **Loyalty page UX** (tier journey, redemption widget) — Session 109 prompt already exists, not run this session.
-
-Worth flagging for session 111 start:
-
-- **Sentry tag noise risk** — `checkout.address_save_failed` is a new tag. If RLS isn't quite right (e.g., a customer with no `customer_profiles` row triggers the UPDATE), Sentry will collect noise. Watch the tag for a few days.
-- **`default_area` semantics** — In this form's shape, "block" and "area" are nearly synonymous in Bahrain addressing. The migration created both columns but the form uses only block. If a future session adds a separate Area input, the round-trip will need a clearer split (currently both default_block and default_area get the same delivery_area value on auto-save).
-- **Audit doc decay caution** — Same note from session 107 still applies: any open item from older audit docs needs re-verification against current code before being treated as a work queue.
+1. **`operations_alerts` UI** — add an unread-alert banner to `src/app/[locale]/dashboard/page.tsx`. Branch-scoped via RLS already. Owner/GM see all; branch_manager + cashier see own branch. Should also surface critical-severity rows in red. ~1–2 hr.
+2. **AUD-V3-012 close-out** — write the follow-up migration sketched in session 117's notes: grant `authenticated` SELECT on the 3 reporting matviews + tighten + grant EXECUTE on the 2 reporting RPCs. Then drop the 6 `AUD-V3-012` reason comments and swap those callers to `createClient()`. `refresh_analytics_views` stays service-role indefinitely. ~2 hr.
+3. **Inventory `unmapped_item` noise** — either suppress alerts when no recipe is configured (operational state, not bug) or batch-link recipes for the 175 menu items. 158 unread alerts are drowning out real low-stock signals.
+4. **Order-status audit trigger** — single migration: `AFTER UPDATE OF status ON orders` → write to `audit_logs`. Closes the 95%-unlogged gap from the audit. ~30 min.
+5. **Smoke-test driver flow end-to-end on a real device** before Ahmed promotes the soft-launch. Specifically: place an order through the website, accept in dashboard, advance through KDS to ready, login as a driver on phone, pick up → out_for_delivery (watch `driver_locations` populate in real-time), mark arrived, mark delivered. Verify `points_transactions` row materializes and a `'stuck_order'` alert does NOT fire (since the order will hit terminal status well under 24h).
 
 ## CARRY FILES (not staged this session)
 
-Pre-existing dirty tree at session start, untouched by me:
-- `src/app/[locale]/contact/page.tsx`
-- `src/app/[locale]/layout.tsx`
-- `src/app/[locale]/menu/[slug]/page.tsx`
-- `src/app/[locale]/menu/item/[slug]/page.tsx`
-- `src/middleware.ts`
-- `.agent/probe-fatteh-items.sql`, `.agent/probe-stray-categories.sql`, `.agent/probe-147.sql` (my probe — leftover)
-- `.claude/worktrees/`
+Pre-existing dirty tree carried from session 110+:
+- `messages/ar.json`, `messages/en.json`
+- `src/components/checkout/CheckoutForm.tsx`
+- `src/lib/cart.ts`
 
-If session 111 starts on master without dealing with these, expect the same `git status` noise.
+Plus this session's `.agent/audit-*.sql` and `.agent/fix3-*.sql` probe files. None are intended for commit — they are debugging artifacts. `git status` noise next session is expected.
+
+## NOTES FOR PHASE-STATE BACK-ANNOTATION
+
+`.agent/phase-state.json` `last_updated` is still frozen at session 101. Sessions 102–119 have landed without back-annotation. The new bridge (`.agent/CLAUDE-AI-CONTEXT.md`) supersedes phase-state.json as the strategic snapshot — recommend retiring phase-state.json or re-purposing it to "phase 0 launch milestone tracker" only.
