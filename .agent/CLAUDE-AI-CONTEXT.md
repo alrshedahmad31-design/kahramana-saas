@@ -8,13 +8,17 @@ Phase: pre_launch_operational
 Next milestone: Soft-launch (cash-only)
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
-1. DNS — CNAME kahramanat.com → Vercel (B-1)
-2. Supabase Free → Pro + migrate to Singapore region (B-2)
-3. Turnstile keys → Vercel env vars (B-3)
-4. Realtime: enable order_item_station_status in Supabase Publications (H-1)
-5. Disable "Allow new signups" in Supabase Auth (H-3)
-6. SENTRY_AUTH_TOKEN rotation
-7. TAP keys (blocked — merchant approval pending)
+
+COMPLETED 2026-05-15:
+- Supabase new signups disabled
+- order_item_station_status added to Realtime (8→9 tables)
+- Turnstile keys live (NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY)
+- SENTRY_AUTH_TOKEN rotated (deployment 6F9Nps8SG)
+
+STILL PENDING:
+- Supabase Free → Pro + Singapore migration
+- DNS kahramanat.com → Vercel (pre-launch only)
+- TAP keys (blocked — merchant approval)
 
 ## ACTIVE DEV PRIORITIES (in order)
 1. operations_alerts UI — banner in dashboard/page.tsx for managers
