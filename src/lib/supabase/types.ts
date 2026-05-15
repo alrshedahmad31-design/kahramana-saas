@@ -2231,6 +2231,48 @@ export type Database = {
           },
         ]
       }
+      operations_alerts: {
+        Row: {
+          alert_type: string
+          branch_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json
+          ref_id: string | null
+          ref_table: string | null
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json
+          ref_id?: string | null
+          ref_table?: string | null
+          severity: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          branch_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json
+          ref_id?: string | null
+          ref_table?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_item_station_status: {
         Row: {
           branch_id: string

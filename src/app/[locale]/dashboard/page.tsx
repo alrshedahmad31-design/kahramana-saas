@@ -16,9 +16,11 @@ import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import InventoryWidgetsSection from '@/components/inventory/InventoryWidgetsSection'
 import InventoryWidgetsSkeleton from '@/components/inventory/InventoryWidgetsSkeleton'
 import OnboardingAlerts        from '@/components/dashboard/OnboardingAlerts'
+import OperationsAlertsBanner  from '@/components/dashboard/OperationsAlertsBanner'
 import { getTranslations } from 'next-intl/server'
 import { createClient }        from '@/lib/supabase/server'
 import { isHiddenBranch }    from '@/constants/contact'
+import type { OperationsAlertRow } from '@/lib/supabase/custom-types'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,10 +65,33 @@ export default async function DashboardHomePage({ params }: Props) {
   
   const branches = (branchesRaw ?? []).filter(b => !isHiddenBranch(b.id))
 
+  const canSeeOperationsAlerts =
+    user.role === 'owner' || user.role === 'general_manager' || user.role === 'branch_manager'
+
+  let operationsAlerts: OperationsAlertRow[] = []
+  if (canSeeOperationsAlerts) {
+    try {
+      const { data: alertsData } = await supabase
+        .from('operations_alerts')
+        .select('*')
+        .eq('is_read', false)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      operationsAlerts = alertsData ?? []
+    } catch {
+      operationsAlerts = []
+    }
+  }
+
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-5">
       {/* Auto-refresh every 10 s — re-runs this server component */}
       <AnalyticsRefresher />
+
+      {/* ── Operations Alerts (stuck orders, ops signals) — managers only ─── */}
+      {canSeeOperationsAlerts && operationsAlerts.length > 0 && (
+        <OperationsAlertsBanner alerts={operationsAlerts} locale={locale} />
+      )}
 
       {/* ── Onboarding Checks ─────────────────────────────────────────────────── */}
       <OnboardingAlerts branches={branches ?? []} locale={locale} />

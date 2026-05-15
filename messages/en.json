@@ -2946,5 +2946,12 @@
       "descPuzzle": "Low Popularity but High Profit. Promote these items more or rename them.",
       "descDog": "Low Popularity & Low Profit. Consider removing from menu or reinventing."
     }
+  },
+  "operationsAlerts": {
+    "title": "Operations Alerts",
+    "dismiss": "Done",
+    "viewOrder": "View Order",
+    "hoursAgo": "{hours, plural, =0 {Just now} one {# hour ago} other {# hours ago}}",
+    "andMore": "+{count} more"
   }
 }

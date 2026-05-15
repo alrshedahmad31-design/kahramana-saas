@@ -67,6 +67,8 @@ export type ReportAuditLogRow     = Tables<'report_audit_log'>;
 export type CashHandoverRow       = Tables<'cash_handovers'>;
 export type WaitlistEntryRow      = Tables<'waitlist_entries'>;
 export type ReservationRow        = Omit<Tables<'reservations'>, 'seating_type'> & { seating_type?: SeatingType | null };
+export type OperationsAlertRow    = Tables<'operations_alerts'>;
+export type OperationsAlertSeverity = 'info' | 'warn' | 'critical';
 
 // `staff_basic` already includes the extended employment columns, so the legacy
 // StaffExtendedRow alias points at the same row type.
