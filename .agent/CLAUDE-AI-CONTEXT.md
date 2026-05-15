@@ -1,6 +1,6 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-15
-# Master: ceaafe8
+# Updated: 2026-05-16
+# Master: 780feb7
 
 ## CURRENT STATUS
 Launch Risk: 8/10
@@ -21,11 +21,19 @@ STILL PENDING:
 - TAP keys (blocked — merchant approval)
 
 ## ACTIVE DEV PRIORITIES (in order)
-1. operations_alerts UI — banner in dashboard/page.tsx for managers
-2. AUD-V3-012 remaining 7 matviews/RPCs → grant authenticated (migration needed)
-3. Birthday field + loyalty gift countdown
-4. Recipe linking → suppress 158 unmapped_item alert noise
-5. L1 — recovery cookie session binding (low risk, deferred)
+
+COMPLETED 2026-05-16:
+✅ Priority #1 — operations_alerts banner (780feb7)
+   - OperationsAlertsBanner component (severity styles, dismiss, +N more)
+   - markAlertRead server action (role-gated, RLS-scoped)
+   - Dashboard page fetches for owner/GM/BM only
+   - i18n AR/EN with ICU plural
+
+UPDATED DEV PRIORITIES:
+1. AUD-V3-012 — 7 matviews/RPCs → grant authenticated (migration 151)
+2. Birthday field + loyalty gift countdown
+3. Recipe linking → suppress 158 unmapped_item alerts
+4. L1 — recovery cookie (low risk, deferred)
 
 ## ARCHITECTURE DECISIONS (do not reverse)
 - CSS: ps/pe/ms/me ONLY — never pl/pr/ml/mr/left/right
