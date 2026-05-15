@@ -10,6 +10,12 @@ export default async function CinematicHero() {
 
   return (
     <>
+      {/* React 19 hoists this <link> to <head>. Next.js does not auto-emit a
+          preload for the hero image because it carries `unoptimized` (the
+          framework only auto-preloads optimized priority images, and the
+          earlier-rendered logo wins the single emitted preload slot).
+          Manual preload removes the ~550 ms resourceLoadDelay before the
+          browser discovers /assets/hero/hero-poster.webp. */}
       <link
         rel="preload"
         as="image"
