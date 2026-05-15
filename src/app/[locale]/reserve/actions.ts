@@ -60,8 +60,8 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 
   try {
     const headersList = await headers()
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim()
-            ?? headersList.get('x-real-ip')
+    const ip = headersList.get('x-real-ip')
+            ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
             ?? undefined
 
     const body = new URLSearchParams({ secret, response: token })
@@ -83,8 +83,8 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 async function getClientIp(): Promise<string> {
   const list = await headers()
   return (
-    list.get('x-forwarded-for')?.split(',')[0].trim()
-    ?? list.get('x-real-ip')
+    list.get('x-real-ip')
+    ?? list.get('x-forwarded-for')?.split(',')[0].trim()
     ?? '127.0.0.1'
   )
 }

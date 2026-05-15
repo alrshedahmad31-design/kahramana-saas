@@ -43,8 +43,11 @@ async function checkRateLimit(key: 'login' | 'register'): Promise<boolean> {
     limiter: Ratelimit.slidingWindow(RATE_LIMITS[key], '15 m'),
   })
   const headersList = await headers()
-  const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim()
-          ?? headersList.get('x-real-ip')
+  // Prefer edge-set x-real-ip (not client-controllable) over x-forwarded-for
+  // (request-echoed and spoofable) so credential-stuffing IPs can't bypass
+  // the per-IP budget by setting their own XFF header.
+  const ip = headersList.get('x-real-ip')
+          ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
           ?? '127.0.0.1'
   const { success } = await ratelimit.limit(`auth:${key}:${ip}`)
   return success
