@@ -125,6 +125,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const t       = useTranslations('checkout')
   const router  = useRouter()
   const idempotencyKeyRef = useRef(crypto.randomUUID())
+  const formRef = useRef<HTMLFormElement>(null)
 
   const items     = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clearCart)
@@ -336,6 +337,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
+      setSubmitError(t('errors.fixFieldsAbove'))
+      requestAnimationFrame(() => {
+        const first = formRef.current?.querySelector<HTMLElement>('[data-checkout-error]')
+        first?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
       return null
     }
 
@@ -362,13 +368,15 @@ export default function CheckoutForm({ customerProfile }: Props) {
         source:              'direct',
         whatsapp_sent_at:    null,
       },
-      items: items.map((item) => ({
-        menu_item_slug:   item.itemId,
-        selected_size:    item.selectedSize    ?? null,
-        selected_variant: item.selectedVariant ?? null,
-        quantity:         item.quantity,
-        notes:            item.notes ?? null,
-      })),
+      items: items
+        .filter((item) => typeof item.itemId === 'string' && item.itemId.length > 0)
+        .map((item) => ({
+          menu_item_slug:   item.itemId,
+          selected_size:    item.selectedSize    ?? null,
+          selected_variant: item.selectedVariant ?? null,
+          quantity:         item.quantity,
+          notes:            item.notes ?? null,
+        })),
       clientSubtotalBhd: subtotal,
       paymentMode,
       idempotency_key: idempotencyKeyRef.current,
@@ -388,15 +396,30 @@ export default function CheckoutForm({ customerProfile }: Props) {
     if (result.error || !result.orderId) {
       if (result.fieldErrors) {
         const serverErrors: typeof errors = {}
+        const unmapped: string[] = []
         for (const [field, message] of Object.entries(result.fieldErrors)) {
           const localized = localizeCheckoutError(message)
           if (field === 'order.customer_name') serverErrors.customerName = localized
-          if (field === 'order.customer_phone') serverErrors.customerPhone = localized
-          if (field === 'order.delivery_building') serverErrors.deliveryBuilding = localized
-          if (field === 'order.delivery_street') serverErrors.deliveryStreet = localized
-          if (field === 'order.delivery_area') serverErrors.deliveryArea = localized
+          else if (field === 'order.customer_phone') serverErrors.customerPhone = localized
+          else if (field === 'order.delivery_building') serverErrors.deliveryBuilding = localized
+          else if (field === 'order.delivery_street') serverErrors.deliveryStreet = localized
+          else if (field === 'order.delivery_area') serverErrors.deliveryArea = localized
+          else unmapped.push(`${field}: ${localized}`)
         }
         setErrors(serverErrors)
+        if (Object.keys(serverErrors).length > 0) {
+          setSubmitError(t('errors.fixFieldsAbove'))
+          requestAnimationFrame(() => {
+            const first = formRef.current?.querySelector<HTMLElement>('[data-checkout-error]')
+            first?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          })
+        } else if (unmapped.length > 0) {
+          console.error('[checkout] server validation failed:', JSON.stringify(result.fieldErrors))
+          setSubmitError(t('errors.generic', { message: unmapped.join(' | ') }))
+        } else {
+          console.error('[checkout] server returned empty fieldErrors. result =', JSON.stringify(result))
+          setSubmitError(result.error ?? t('errors.orderCreationFailed'))
+        }
         setLoading(false)
         return null
       }
@@ -515,6 +538,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleWASubmit}
       dir={isAr ? 'rtl' : 'ltr'}
       className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-36"
@@ -577,7 +601,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
           ))}
         </div>
         {errors.branchId && (
-          <p className="mt-3 text-xs text-brand-error font-almarai flex items-center gap-1">
+          <p data-checkout-error className="mt-3 text-xs text-brand-error font-almarai flex items-center gap-1">
             <Icon name="warning" size={14} className="shrink-0" /> {errors.branchId}
           </p>
         )}
@@ -656,7 +680,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                          ${errors.customerName ? 'border-brand-error' : 'border-brand-border'}`}
             />
             {errors.customerName && (
-              <p className="text-[11px] text-brand-error font-almarai">{errors.customerName}</p>
+              <p data-checkout-error className="text-[11px] text-brand-error font-almarai">{errors.customerName}</p>
             )}
           </div>
 
@@ -683,7 +707,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
                          ${errors.customerPhone ? 'border-brand-error' : 'border-brand-border'}`}
             />
             {errors.customerPhone ? (
-              <p className="text-[11px] text-brand-error font-almarai">{errors.customerPhone}</p>
+              <p data-checkout-error className="text-[11px] text-brand-error font-almarai">{errors.customerPhone}</p>
             ) : (
               <p className={`text-[10px] text-brand-muted/60 ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
                 {t('phoneHint')}
@@ -878,12 +902,12 @@ export default function CheckoutForm({ customerProfile }: Props) {
         )}
 
         {errors.address && (
-          <p className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-2 bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
+          <p data-checkout-error className="mt-4 text-xs text-brand-error font-almarai flex items-center gap-2 bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
             <Icon name="warning" size={18} className="shrink-0" /> {errors.address}
           </p>
         )}
         {(errors.deliveryArea || errors.deliveryBuilding || errors.deliveryStreet) && (
-          <div className="mt-4 text-xs text-brand-error font-almarai bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
+          <div data-checkout-error className="mt-4 text-xs text-brand-error font-almarai bg-brand-error/5 p-3 rounded-lg border border-brand-error/20">
             {[errors.deliveryArea, errors.deliveryBuilding, errors.deliveryStreet].filter(Boolean).join(t('listSeparator'))}
           </div>
         )}

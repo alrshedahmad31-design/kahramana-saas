@@ -720,7 +720,8 @@
       "gpsUnsupported": "المتصفح لا يدعم تحديد الموقع",
       "gpsDenied": "تعذّر الوصول للموقع، تأكد من الصلاحيات",
       "orderCreationFailed": "فشل إنشاء الطلب",
-      "generic": "حدث خطأ: {message}"
+      "generic": "حدث خطأ: {message}",
+      "fixFieldsAbove": "يرجى تصحيح الحقول المطلوبة أعلاه قبل إرسال الطلب"
     },
     "loyalty": {
       "heading": "نقاط المكافآت",
@@ -754,6 +755,7 @@
       "preparing": "يُحضَّر",
       "ready": "جاهز",
       "out_for_delivery": "في الطريق",
+      "arrived": "وصل السائق",
       "delivered": "تم التوصيل",
       "completed": "مكتمل",
       "cancelled": "ملغي",

@@ -720,7 +720,8 @@
       "gpsUnsupported": "Geolocation not supported",
       "gpsDenied": "Location access denied",
       "orderCreationFailed": "Order creation failed",
-      "generic": "Error: {message}"
+      "generic": "Error: {message}",
+      "fixFieldsAbove": "Please fix the required fields above before sending your order"
     },
     "loyalty": {
       "heading": "Loyalty Points",
@@ -754,6 +755,7 @@
       "preparing": "Preparing",
       "ready": "Ready",
       "out_for_delivery": "Out for Delivery",
+      "arrived": "Driver Arrived",
       "delivered": "Delivered",
       "completed": "Completed",
       "cancelled": "Cancelled",

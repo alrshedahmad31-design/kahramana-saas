@@ -170,6 +170,20 @@ export const useCartStore = create<CartState & CartActions>()(
       ),
       // Don't persist isOpen — drawer should start closed on page load
       partialize: (state) => ({ items: state.items, branchId: state.branchId }),
+      // Strip corrupt rows (missing itemId from pre-slug-capture menu versions)
+      // so checkout never gets blocked by a stale localStorage entry.
+      merge: (persisted, current) => {
+        const incoming = (persisted as Partial<CartState> | undefined)?.items ?? []
+        const safeItems = Array.isArray(incoming)
+          ? incoming.filter((i): i is CartItem =>
+              !!i && typeof i.itemId === 'string' && i.itemId.length > 0)
+          : []
+        return {
+          ...current,
+          ...(persisted as Partial<CartState>),
+          items: safeItems,
+        }
+      },
     },
   ),
 )
