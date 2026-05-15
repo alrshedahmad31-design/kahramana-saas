@@ -14,6 +14,7 @@ interface Props {
     default_building: string | null
     default_flat:     string | null
     default_area:     string | null
+    birthday:         string | null
   }
 }
 
@@ -29,19 +30,22 @@ export default function ProfileEditForm({ initial }: Props) {
   const [building,        setBuilding]        = useState(initial.default_building ?? '')
   const [flat,            setFlat]            = useState(initial.default_flat     ?? '')
   const [area,            setArea]            = useState(initial.default_area     ?? '')
+  const [birthday,        setBirthday]        = useState(initial.birthday         ?? '')
   const [savedAt,         setSavedAt]         = useState<number | null>(null)
   const [errorMsg,        setErrorMsg]        = useState<string | null>(null)
-  const [errorField,      setErrorField]      = useState<'name' | 'phone' | 'address' | null>(null)
+  const [errorField,      setErrorField]      = useState<'name' | 'phone' | 'address' | 'birthday' | null>(null)
   const [pending, startTransition] = useTransition()
 
   function localizeError(code: string): string {
     switch (code) {
-      case 'name_too_long':     return t('errors.nameTooLong')
-      case 'phone_invalid':     return t('errors.phoneInvalid')
-      case 'phone_taken':       return t('errors.phoneTaken')
-      case 'not_authenticated': return t('errors.notAuthenticated')
-      case 'update_failed':     return t('errors.updateFailed')
-      default:                  return t('errors.updateFailed')
+      case 'name_too_long':         return t('errors.nameTooLong')
+      case 'phone_invalid':         return t('errors.phoneInvalid')
+      case 'phone_taken':           return t('errors.phoneTaken')
+      case 'birthday_invalid':      return t('errors.birthdayInvalid')
+      case 'birthday_out_of_range': return t('errors.birthdayOutOfRange')
+      case 'not_authenticated':     return t('errors.notAuthenticated')
+      case 'update_failed':         return t('errors.updateFailed')
+      default:                      return t('errors.updateFailed')
     }
   }
 
@@ -60,6 +64,7 @@ export default function ProfileEditForm({ initial }: Props) {
         default_building: building,
         default_flat:     flat,
         default_area:     area,
+        birthday:         birthday,
       })
       if (res.success) {
         setSavedAt(Date.now())
@@ -112,6 +117,27 @@ export default function ProfileEditForm({ initial }: Props) {
           placeholder="+97336XXXXXX"
           className={`${inputCls} ${errorField === 'phone' ? 'border-brand-error' : 'border-brand-border'}`}
         />
+      </div>
+
+      {/* Birthday — optional, unlocks birthday-gift countdown card */}
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="profile-birthday" className={`text-xs font-bold text-brand-muted ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+          {t('birthday')}
+        </label>
+        <input
+          id="profile-birthday"
+          type="date"
+          dir="ltr"
+          value={birthday}
+          onChange={(e) => setBirthday(e.target.value)}
+          autoComplete="bday"
+          max={new Date().toISOString().slice(0, 10)}
+          min="1900-01-01"
+          className={`${inputCls} ${errorField === 'birthday' ? 'border-brand-error' : 'border-brand-border'}`}
+        />
+        <p className={`text-[10px] text-brand-muted/60 ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
+          {t('birthdayHint')}
+        </p>
       </div>
 
       {/* Default delivery address */}

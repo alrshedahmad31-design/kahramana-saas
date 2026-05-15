@@ -7,14 +7,16 @@ import { createClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import type { TablesUpdate } from '@/lib/supabase/custom-types'
 
-type FieldKey = 'name' | 'phone' | 'address'
+type FieldKey = 'name' | 'phone' | 'address' | 'birthday'
 type CustomerProfileUpdate = Pick<
   TablesUpdate<'customer_profiles'>,
-  'name' | 'phone' | 'default_block' | 'default_road' | 'default_building' | 'default_flat' | 'default_area'
+  'name' | 'phone' | 'default_block' | 'default_road' | 'default_building' | 'default_flat' | 'default_area' | 'birthday'
 >
 export type UpdateProfileResult =
   | { success: true }
   | { success: false; error: string; field?: FieldKey }
+
+const todayISO = (): string => new Date().toISOString().slice(0, 10)
 
 const profileSchema = z.object({
   name:             z.string().max(120, 'name_too_long').optional(),
@@ -24,6 +26,17 @@ const profileSchema = z.object({
   default_building: z.string().max(60).optional(),
   default_flat:     z.string().max(60).optional(),
   default_area:     z.string().max(60).optional(),
+  // Accept '' (clear), or YYYY-MM-DD between 1900-01-01 and today.
+  birthday:         z.string()
+                     .refine(
+                       (v) => v === '' || /^\d{4}-\d{2}-\d{2}$/.test(v),
+                       'birthday_invalid',
+                     )
+                     .refine(
+                       (v) => v === '' || (v >= '1900-01-01' && v <= todayISO()),
+                       'birthday_out_of_range',
+                     )
+                     .optional(),
 })
 
 function normalizePhone(raw: string): string {
@@ -43,6 +56,7 @@ export async function updateCustomerProfile(input: {
   default_building?: string
   default_flat?: string
   default_area?: string
+  birthday?: string
 }): Promise<UpdateProfileResult> {
   const session = await getCustomerSession()
   if (!session) return { success: false, error: 'not_authenticated' }
@@ -56,10 +70,15 @@ export async function updateCustomerProfile(input: {
   if (!parsed.success) {
     const issue = parsed.error.issues[0]
     const field = issue.path[0]
+    const mappedField: FieldKey =
+        field === 'name'     ? 'name'
+      : field === 'phone'    ? 'phone'
+      : field === 'birthday' ? 'birthday'
+      :                        'address'
     return {
       success: false,
       error: issue.message,
-      field: field === 'name' ? 'name' : field === 'phone' ? 'phone' : 'address',
+      field: mappedField,
     }
   }
 
@@ -72,6 +91,7 @@ export async function updateCustomerProfile(input: {
   if (data.default_building !== undefined) update.default_building = data.default_building.trim() || null
   if (data.default_flat     !== undefined) update.default_flat     = data.default_flat.trim()     || null
   if (data.default_area     !== undefined) update.default_area     = data.default_area.trim()     || null
+  if (data.birthday         !== undefined) update.birthday         = data.birthday === '' ? null : data.birthday
 
   if (Object.keys(update).length === 0) {
     return { success: true }

@@ -6,6 +6,7 @@ import PointsHistory from '@/components/loyalty/PointsHistory'
 import MembershipCard from '@/components/loyalty/MembershipCard'
 import TierJourney from '@/components/loyalty/TierJourney'
 import TierBenefitsCards from '@/components/loyalty/TierBenefitsCards'
+import BirthdayGiftCard from '@/components/loyalty/BirthdayGiftCard'
 import ProfileEditForm from './ProfileEditForm'
 import {
   formatPoints,
@@ -269,6 +270,9 @@ export default async function AccountPage({ params }: Props) {
         {/* ── S5 — Tier benefits cards ─────────────────────────────────── */}
         <TierBenefitsCards currentTier={customer.loyalty_tier} />
 
+        {/* ── S5b — Birthday gift countdown ────────────────────────────── */}
+        <BirthdayGiftCard birthday={customer.birthday} />
+
         {/* ── S6 — My Info ─────────────────────────────────────────────── */}
         <ProfileEditForm
           initial={{
@@ -279,6 +283,7 @@ export default async function AccountPage({ params }: Props) {
             default_building: customer.default_building,
             default_flat:     customer.default_flat,
             default_area:     customer.default_area,
+            birthday:         customer.birthday,
           }}
         />
 

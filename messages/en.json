@@ -1404,6 +1404,8 @@
       "heading": "My Info",
       "name": "Name",
       "phone": "Phone",
+      "birthday": "Birthday (optional)",
+      "birthdayHint": "We send you a points gift on your birthday",
       "block": "Block",
       "road": "Road",
       "building": "Building",
@@ -1416,9 +1418,20 @@
         "nameTooLong": "Name is too long (120 characters max)",
         "phoneInvalid": "Enter a valid Bahrain number (+97336XXXXXX)",
         "phoneTaken": "This phone number is already in use",
+        "birthdayInvalid": "Enter a valid date (YYYY-MM-DD)",
+        "birthdayOutOfRange": "Birthday must be between 1900 and today",
         "notAuthenticated": "Please sign in again",
         "updateFailed": "Could not save changes — please try again"
       }
+    },
+    "birthdayGift": {
+      "title": "Your Birthday Gift",
+      "ariaLabel": "Birthday gift countdown",
+      "daysUntil": "{count, plural, one {day to go} other {days to go}}",
+      "giftLandsOn": "Your gift activates on {date}",
+      "happyBirthday": "Happy birthday — your gift is live today!",
+      "promptTitle": "Birthday Gift",
+      "promptBody": "Add your birthday in My Info to unlock a yearly bonus gift."
     }
   },
   "payment": {

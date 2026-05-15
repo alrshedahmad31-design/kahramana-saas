@@ -743,6 +743,7 @@ export type Database = {
       }
       customer_profiles: {
         Row: {
+          birthday: string | null
           default_area: string | null
           default_block: string | null
           default_building: string | null
@@ -762,6 +763,7 @@ export type Database = {
           total_spent_bhd: number
         }
         Insert: {
+          birthday?: string | null
           default_area?: string | null
           default_block?: string | null
           default_building?: string | null
@@ -781,6 +783,7 @@ export type Database = {
           total_spent_bhd?: number
         }
         Update: {
+          birthday?: string | null
           default_area?: string | null
           default_block?: string | null
           default_building?: string | null
