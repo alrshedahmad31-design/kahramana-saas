@@ -181,14 +181,19 @@ export default function DriverDashboard({
     return () => { void supabase.removeChannel(channel) }
   }, [supabase, branchId, fetchOrders, fetchCompleted])
 
-  // GPS — only tracks while driver has an active out_for_delivery order
+  // GPS — track while the driver has an active delivery in transit OR at the
+  // customer. Pre-119 this gate only matched 'out_for_delivery', which cut off
+  // location sharing the moment markDriverArrived flipped status — leaving the
+  // delivery dashboard map blank during the final-handoff window.
   useEffect(() => {
     if (!isOnline || !('geolocation' in navigator)) {
       setGpsStatus('idle')
       return
     }
 
-    const activeOrder = orders.find((o) => o.status === 'out_for_delivery')
+    const activeOrder = orders.find(
+      (o) => o.status === 'out_for_delivery' || o.status === 'arrived',
+    )
     if (!activeOrder) {
       setGpsStatus('idle')
       return
@@ -209,12 +214,22 @@ export default function DriverDashboard({
 
         if (now - lastGpsUpdateRef.current >= 15_000) {
           lastGpsUpdateRef.current = now
+          // Log failures so we can see when the push silently rejects (auth,
+          // status mismatch, branch mismatch). Was previously fire-and-forget
+          // with no visibility — a key reason the empty driver_locations table
+          // went undiagnosed.
           postDriverLocation({
             driver_id:  driverId,
             order_id:   activeOrder.id,
             lat:        latitude,
             lng:        longitude,
             accuracy_m: pos.coords.accuracy ?? null,
+          }).then((res) => {
+            if (!res.success) {
+              console.warn('[driver-gps] postDriverLocation rejected:', res.error)
+            }
+          }).catch((err: unknown) => {
+            console.warn('[driver-gps] postDriverLocation threw:', err)
           })
         }
       },

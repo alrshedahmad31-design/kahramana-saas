@@ -256,7 +256,10 @@ export async function postDriverLocation(
   if (order.order_type !== 'delivery') {
     return { success: false, error: 'Order is not a delivery order' }
   }
-  if (order.status !== 'out_for_delivery') {
+  // Accept both 'out_for_delivery' (en route) and 'arrived' (at customer). The
+  // delivery dashboard map keeps showing the driver dot until status flips to
+  // 'delivered'.
+  if (order.status !== 'out_for_delivery' && order.status !== 'arrived') {
     return { success: false, error: 'Order is not in transit' }
   }
   if (order.assigned_driver_id !== user.id) {
