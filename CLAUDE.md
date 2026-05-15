@@ -16,6 +16,10 @@ This project uses a shared agent system. Read in this order:
 
 ## SESSION START (Claude Code)
 
+## BRIDGE — Read at session start
+Run: pwsh .agent/sync-context.ps1
+Then read: .agent/CURRENT-SESSION.md
+
 Every session starts with this exact output format:
 
 ```
