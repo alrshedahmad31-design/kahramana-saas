@@ -345,8 +345,8 @@ export async function getTopItems(
 // ── Hourly distribution (from matview — all-time; queried by hour) ────────────
 
 export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: string): Promise<AnalyticsResult<HourlyRow[]>> {
-  // AUD-V3-012: service-role kept — global path reads hourly_order_distribution matview (no authenticated grant).
-  const sb = createServiceClient()
+  // AUD-V3-012 (migration 151): authenticated has SELECT on hourly_order_distribution matview.
+  const sb = await createClient()
 
   // If no date range provided fall back to the pre-aggregated view (all-time)
   if (!from || !to) {
@@ -484,8 +484,9 @@ function classifySegment(orderCount: number): CustomerSegmentSummary['segment'] 
 }
 
 export async function getCustomerSegmentSummary(branchId?: string): Promise<AnalyticsResult<CustomerSegmentSummary[]>> {
-  // AUD-V3-012: service-role kept — customer_segments_view selects from customer_lifetime_value matview (no authenticated grant).
-  const sb = createServiceClient()
+  // AUD-V3-012 (migration 151): authenticated has SELECT on customer_lifetime_value matview
+  // → customer_segments_view (security_invoker=on) resolves successfully.
+  const sb = await createClient()
 
   if (!branchId) {
     const { data, error } = await sb
@@ -556,8 +557,9 @@ export async function getCustomerSegmentSummary(branchId?: string): Promise<Anal
 // ── Top customers by lifetime value ──────────────────────────────────────────
 
 export async function getTopCustomers(limit = 10, branchId?: string): Promise<AnalyticsResult<TopCustomer[]>> {
-  // AUD-V3-012: service-role kept — global path reads customer_segments_view → customer_lifetime_value matview (no authenticated grant).
-  const sb = createServiceClient()
+  // AUD-V3-012 (migration 151): authenticated has SELECT on customer_lifetime_value matview
+  // → customer_segments_view (security_invoker=on) resolves successfully.
+  const sb = await createClient()
 
   if (!branchId) {
     const { data, error } = await sb
@@ -634,8 +636,8 @@ export async function getMenuItemPerformance(
   from?:     Date,
   to?:       Date,
 ): Promise<AnalyticsResult<MenuItemPerformanceRow[]>> {
-  // AUD-V3-012: service-role kept — global path reads menu_item_performance matview (no authenticated grant).
-  const sb = createServiceClient()
+  // AUD-V3-012 (migration 151): authenticated has SELECT on menu_item_performance matview.
+  const sb = await createClient()
 
   if (!branchId) {
     const { data, error } = await sb
@@ -960,8 +962,9 @@ export async function getLaborCostMetrics(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<LaborCostMetrics | null>> {
-  // AUD-V3-012: service-role kept — RPC get_labor_cost_metrics has no authenticated EXECUTE grant.
-  const sb = createServiceClient()
+  // AUD-V3-012 (migration 151): authenticated has EXECUTE on get_labor_cost_metrics.
+  // Branch scope enforced by p_branch_id arg (caller-trust, session 96 pattern).
+  const sb = await createClient()
   const { data, error } = await sb.rpc('get_labor_cost_metrics', {
     p_from_date: toISO(from),
     p_to_date:   toISO(to),
@@ -980,8 +983,9 @@ export async function getMenuEngineeringMatrix(
   to:        Date,
   branchId?: string,
 ): Promise<AnalyticsResult<AnalyticsMenuEngineeringRow[]>> {
-  // AUD-V3-012: service-role kept — RPC get_menu_engineering_matrix has no authenticated EXECUTE grant.
-  const sb = createServiceClient()
+  // AUD-V3-012 (migration 151): authenticated has EXECUTE on get_menu_engineering_matrix.
+  // Branch scope enforced by p_branch_id arg (caller-trust, session 96 pattern).
+  const sb = await createClient()
   const { data, error } = await sb.rpc('get_menu_engineering_matrix', {
     p_from_date: toISO(from),
     p_to_date:   toISO(to),
