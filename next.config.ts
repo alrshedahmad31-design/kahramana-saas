@@ -56,6 +56,93 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
+      // Authenticated / per-user routes: never cache the response (browser OR CDN).
+      // The wildcard rule below would otherwise apply public, s-maxage=86400 to every
+      // /dashboard, /account, /driver, /waiter, /api/* response — including 307
+      // redirects to /login, which would let the CDN serve a stale "go log in"
+      // hop to a freshly-authenticated user. Headers() entries are first-match,
+      // so these MUST appear before the wildcard.
+      //
+      // /login — staff login page. Must be private so CDN never caches a
+      // credential form or a stale "already authenticated" redirect.
+      // Closes the regression introduced by the a6682c8 revert.
+      {
+        source: '/:locale(ar|en)/login',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/login',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/:locale(ar|en)/dashboard/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/dashboard/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/:locale(ar|en)/account/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/account/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/:locale(ar|en)/driver/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/driver/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/:locale(ar|en)/waiter/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/waiter/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/api/:path*',
+        headers: [
+          ...securityHeaders,
+          { key: 'Cache-Control', value: 'private, no-cache, no-store, max-age=0, must-revalidate' },
+        ],
+      },
       {
         // All other routes: security headers + daily revalidation for HTML.
         // Exclusions: _next/static (immutable above), driver (no-store in
