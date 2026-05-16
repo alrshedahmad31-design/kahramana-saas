@@ -39,7 +39,7 @@ export async function driverBumpOrder(
   }
   // Audit fix #1: driver-only (expanded to Manager+ for supervision).
   if (!isDriver(user.role) && !isManagerPlus(user.role)) {
-    console.error(`[driver-actions] Auth failure: user ${user.id} with role ${user.role} tried to bump order ${orderId}`)
+    console.error(`[driver-actions] Auth failure: non-driver/non-manager tried to bump order ${orderId}`)
     return { success: false, error: 'Unauthorized: Driver access only' }
   }
 
@@ -173,7 +173,7 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
   const user = await getSession()
   // Audit fix #1: driver-only (expanded to Manager+ for supervision).
   if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
-    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to mark arrived for ${orderId}`)
+    console.error(`[driver-actions] Auth failure: ${user ? 'session present' : 'no session'} tried to mark arrived for ${orderId}`)
     return { success: false, error: 'Unauthorized: Driver or Manager access required' }
   }
 
@@ -198,7 +198,7 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
   }
   // Only the assigned driver may mark arrival (Managers bypass).
   if (order.assigned_driver_id !== user.id && !isManagerPlus(user.role)) {
-    console.error(`[driver-actions] Ownership failure: user ${user.id} tried to mark arrived for order ${orderId} assigned to ${order.assigned_driver_id}`)
+    console.error(`[driver-actions] Ownership failure: caller is not the assigned driver for order ${orderId}`)
     return { success: false, error: 'Unauthorized: Order is assigned to another driver' }
   }
 
@@ -231,7 +231,7 @@ export async function postDriverLocation(
 ): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
-    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to post location`)
+    console.error(`[driver-actions] Auth failure: ${user ? 'session present' : 'no session'} tried to post location`)
     return { success: false, error: 'Unauthorized: Driver role required for tracking' }
   }
 
@@ -289,7 +289,7 @@ export async function postDriverLocation(
 export async function toggleDriverAvailability(): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
-    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to toggle availability`)
+    console.error(`[driver-actions] Auth failure: ${user ? 'session present' : 'no session'} tried to toggle availability`)
     return { success: false, error: 'Unauthorized: Driver role required' }
   }
 
@@ -362,7 +362,7 @@ export async function submitCashHandover(
 ): Promise<DriverActionResult & { totalExpected?: number }> {
   const user = await getSession()
   if (!user || user.role !== 'driver') {
-    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to submit handover`)
+    console.error(`[driver-actions] Auth failure: ${user ? 'session present' : 'no session'} tried to submit handover`)
     return { success: false, error: 'Unauthorized: Driver role required' }
   }
 
@@ -474,7 +474,7 @@ export async function submitDriverIssue(
 ): Promise<DriverActionResult> {
   const user = await getSession()
   if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
-    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to submit issue for ${orderId}`)
+    console.error(`[driver-actions] Auth failure: ${user ? 'session present' : 'no session'} tried to submit issue for ${orderId}`)
     return { success: false, error: 'Unauthorized: Driver or Manager access required' }
   }
 
@@ -501,7 +501,7 @@ export async function submitDriverIssue(
   const isOwnedByDriver = order.assigned_driver_id === user.id
   const isClaimable     = order.status === 'ready'
   if (!isOwnedByDriver && !isClaimable && !isManagerPlus(user.role)) {
-    console.error(`[driver-actions] Auth failure: user ${user.id} tried to submit issue for ${orderId} (not owned, not claimable)`)
+    console.error(`[driver-actions] Auth failure: caller tried to submit issue for ${orderId} (not owned, not claimable)`)
     return { success: false, error: 'Unauthorized: You do not have permission for this order' }
   }
 
@@ -528,7 +528,7 @@ export async function reportDeliveryFailure(
   const user = await getSession()
   // Audit fix #1: driver-only (expanded to Manager+ for supervision).
   if (!user || (!isDriver(user.role) && !isManagerPlus(user.role))) {
-    console.error(`[driver-actions] Auth failure: ${user ? `user ${user.id} role ${user.role}` : 'no session'} tried to report failure for ${orderId}`)
+    console.error(`[driver-actions] Auth failure: ${user ? 'session present' : 'no session'} tried to report failure for ${orderId}`)
     return { success: false, error: 'Unauthorized: Driver or Manager access required' }
   }
 
@@ -608,7 +608,7 @@ export async function uploadDeliveryProof(
   if (!user) return { success: false, error: 'Login Required' }
 
   if (!isDriver(user.role) && !isManagerPlus(user.role)) {
-    console.error(`[driver-actions] Auth failure: user ${user.id} with role ${user.role} tried to upload proof for order ${orderId}`)
+    console.error(`[driver-actions] Auth failure: non-driver/non-manager tried to upload proof for order ${orderId}`)
     return { success: false, error: 'Unauthorized: Driver or Manager access only' }
   }
 
@@ -625,7 +625,7 @@ export async function uploadDeliveryProof(
   
   const isManager = isManagerPlus(user.role)
   if (order.assigned_driver_id !== user.id && !isManager) {
-    console.error(`[driver-actions] Ownership failure: user ${user.id} tried to upload proof for order ${orderId} assigned to ${order.assigned_driver_id}`)
+    console.error(`[driver-actions] Ownership failure: caller is not the assigned driver for order ${orderId} proof upload`)
     return { success: false, error: 'Unauthorized: Order not assigned to you' }
   }
 
