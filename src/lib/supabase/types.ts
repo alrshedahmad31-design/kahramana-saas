@@ -83,6 +83,38 @@ export type Database = {
           },
         ]
       }
+      birthday_point_credits: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          points_credited: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          points_credited: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          points_credited?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "birthday_point_credits_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           created_at: string
@@ -2009,6 +2041,7 @@ export type Database = {
       }
       loyalty_config: {
         Row: {
+          birthday_bonus_points: number
           branch_id: string | null
           id: string
           is_active: boolean
@@ -2023,6 +2056,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          birthday_bonus_points?: number
           branch_id?: string | null
           id?: string
           is_active?: boolean
@@ -2037,6 +2071,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          birthday_bonus_points?: number
           branch_id?: string | null
           id?: string
           is_active?: boolean
@@ -4571,6 +4606,7 @@ export type Database = {
       }
       cancel_expired_pending_payment_orders: { Args: never; Returns: undefined }
       cleanup_driver_locations: { Args: never; Returns: undefined }
+      credit_birthday_points: { Args: never; Returns: number }
       detect_stuck_orders: { Args: never; Returns: number }
       fn_check_price_spike: {
         Args: {
