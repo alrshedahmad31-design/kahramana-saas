@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Toaster } from 'sonner'
 import { routing } from '@/i18n/routing'
 import { tokens } from '@/lib/design-tokens'
 import { SITE_URL } from '@/constants/contact'
@@ -265,6 +266,16 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
           <CartDrawer />
           <CookieBanner />
           <MobileBottomNav />
+          {/* Sonner mounts a portal — placed inside NextIntlClientProvider so
+              call sites can format toast strings with translations. RTL UI gets
+              bottom-center per spec; LTR keeps the sonner default. theme='dark'
+              matches the brand-black surface. */}
+          <Toaster
+            position={isRTL ? 'bottom-center' : 'bottom-right'}
+            dir={isRTL ? 'rtl' : 'ltr'}
+            theme="dark"
+            richColors
+          />
         </NextIntlClientProvider>
 
         {/* GA4 + Clarity moved into <Analytics> — gated on cookie consent */}
