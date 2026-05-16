@@ -28,7 +28,7 @@ export function LoyaltyRedemptionWidget({
       <div className="flex items-center gap-3 rounded-xl border border-brand-border bg-brand-surface-2 p-4 opacity-60">
         <Icon name="sparkle" size={20} className="flex-shrink-0 text-brand-gold" />
         <p className="text-sm text-brand-muted">
-          {t('checkout.loyalty.needMore', { count: needed })}
+          {t('loyalty.needMore', { count: needed })}
         </p>
       </div>
     )
@@ -65,7 +65,7 @@ export function LoyaltyRedemptionWidget({
 
           <div className="min-w-0">
             <p className="text-sm font-semibold text-brand-text">
-              {t('checkout.loyalty.balance', {
+              {t('loyalty.balance', {
                 count: pointsBalance.toLocaleString(locale === 'ar' ? 'ar-BH' : 'en-BH'),
               })}
             </p>
@@ -75,7 +75,7 @@ export function LoyaltyRedemptionWidget({
                 isActive ? 'text-brand-gold' : 'text-brand-muted',
               ].join(' ')}
             >
-              {t('checkout.loyalty.equivalent', { amount: formatPrice(creditBhd, locale) })}
+              {t('loyalty.equivalent', { amount: formatPrice(creditBhd, locale) })}
             </p>
           </div>
         </div>
@@ -85,7 +85,7 @@ export function LoyaltyRedemptionWidget({
           type="button"
           role="switch"
           aria-checked={isActive}
-          aria-label={t('checkout.loyalty.toggle')}
+          aria-label={t('loyalty.toggle')}
           onClick={() => onToggle(!isActive)}
           dir="ltr"
           className={[
@@ -108,7 +108,7 @@ export function LoyaltyRedemptionWidget({
       {isActive && (
         <div className="border-t border-brand-gold/20 px-4 py-3">
           <p className="text-xs font-medium text-brand-gold">
-            {t('checkout.loyalty.saving', { amount: formatPrice(creditBhd, locale) })}
+            {t('loyalty.saving', { amount: formatPrice(creditBhd, locale) })}
           </p>
         </div>
       )}
