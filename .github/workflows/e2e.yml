@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
   auth-e2e:
     name: Auth E2E (@supabase/ssr regression)
