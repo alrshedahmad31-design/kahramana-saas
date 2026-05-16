@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import MenuBrowser from '@/components/pos/MenuBrowser'
 import VariantPicker from '@/components/pos/VariantPicker'
 import ModifierPicker from '@/components/pos/ModifierPicker'
+import QRScannerModal from '@/components/waiter/QRScannerModal'
 import styles from '@/components/pos/POSClient.module.css'
 import type {
   CartLine,
@@ -13,7 +14,10 @@ import type {
   POSCategory,
   POSItem,
 } from '@/components/pos/types'
-import { createWaiterOrder } from '@/app/[locale]/waiter/actions'
+import { createWaiterOrder, type MemberLookupRow } from '@/app/[locale]/waiter/actions'
+import { ENABLE_QR_LOYALTY_SCAN } from '@/lib/feature-flags'
+import { TIER_COLORS } from '@/lib/design-tokens'
+import { formatPoints } from '@/lib/loyalty/calculations'
 
 interface Props {
   categories:  POSCategory[]
@@ -50,6 +54,8 @@ export default function WaiterOrderClient({
   const [warning, setWarning] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [isPending, startTransition] = useTransition()
+  const [qrScanOpen, setQrScanOpen] = useState(false)
+  const [scannedMember, setScannedMember] = useState<MemberLookupRow | null>(null)
 
   useEffect(() => {
     setIsOnline(navigator.onLine)
@@ -254,6 +260,48 @@ export default function WaiterOrderClient({
                   {isAr ? 'صالة' : 'Dine-in'}
                 </span>
               </div>
+              {ENABLE_QR_LOYALTY_SCAN && (
+                <button
+                  type="button"
+                  onClick={() => setQrScanOpen(true)}
+                  className={`mt-3 inline-flex items-center justify-center gap-2 w-full min-h-[44px] px-3 text-sm font-bold text-brand-gold bg-brand-gold/5 border border-brand-gold/30 rounded-lg hover:bg-brand-gold/10 transition-colors ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+                >
+                  <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 7h4v4H7zM13 7h4v4h-4zM7 13h4v4H7zM13 13h2M15 13v2M17 13v4M13 17h2" />
+                  </svg>
+                  {t('qrScanner.openButton')}
+                </button>
+              )}
+              {scannedMember && (
+                <div className="mt-3 flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-brand-surface-2 border border-brand-border">
+                  <div className="min-w-0">
+                    <p className={`text-xs text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+                      {t('qrScanner.welcome', { name: scannedMember.name?.trim() || (isAr ? 'عضو' : 'Member') })}
+                    </p>
+                    <p className="text-[11px] text-brand-gold tabular-nums mt-0.5" dir="ltr">
+                      {formatPoints(scannedMember.points_balance)} · {t('qrScanner.points')}
+                    </p>
+                  </div>
+                  <span
+                    className="shrink-0 text-[10px] font-black tracking-[0.18em] uppercase px-2 py-1 rounded border"
+                    style={{
+                      color:           TIER_COLORS[scannedMember.tier].text,
+                      borderColor:     TIER_COLORS[scannedMember.tier].border,
+                      backgroundColor: TIER_COLORS[scannedMember.tier].bg,
+                    }}
+                  >
+                    {scannedMember.tier}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setScannedMember(null)}
+                    aria-label={t('qrScanner.clear')}
+                    className="shrink-0 min-h-[36px] min-w-[36px] text-brand-muted hover:text-brand-text"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Body — cart lines + order notes */}
@@ -421,6 +469,14 @@ export default function WaiterOrderClient({
             addItem(item, size, variant, adjustedUnit, modifiers)
             setPendingModifierItem(null)
           }}
+        />
+      )}
+
+      {ENABLE_QR_LOYALTY_SCAN && (
+        <QRScannerModal
+          open={qrScanOpen}
+          onClose={() => setQrScanOpen(false)}
+          onResolved={(member) => setScannedMember(member)}
         />
       )}
     </div>

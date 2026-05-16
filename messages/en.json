@@ -2713,6 +2713,26 @@
       "preparing": "Preparing",
       "ready": "Ready",
       "served": "Served"
+    },
+    "qrScanner": {
+      "openButton": "Scan Member Card",
+      "title": "Scan Member Card",
+      "aimAtCode": "Point the camera at the QR code on the member's card",
+      "lookingUp": "Looking up member…",
+      "welcome": "Welcome, {name} 👋",
+      "points": "points",
+      "tryAgain": "Try again",
+      "close": "Close",
+      "clear": "Clear",
+      "done": "Done",
+      "error": {
+        "invalid_format": "Invalid code",
+        "not_found": "Member not found",
+        "ambiguous": "Multiple matches — please enter membership ID manually",
+        "rate_limited": "Too many attempts — try again in a minute",
+        "unauthorized": "Not authorized",
+        "lookup_failed": "Lookup failed — please retry"
+      }
     }
   },
   "qrOrder": {
