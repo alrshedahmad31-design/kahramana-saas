@@ -734,7 +734,8 @@
       "gpsDenied": "Location access denied",
       "orderCreationFailed": "Order creation failed",
       "generic": "Error: {message}",
-      "fixFieldsAbove": "Please fix the required fields above before sending your order"
+      "fixFieldsAbove": "Please fix the required fields above before sending your order",
+      "pointsOverCap": "Points discount cannot exceed 50% of order subtotal"
     },
     "loyalty": {
       "heading": "Loyalty Points",

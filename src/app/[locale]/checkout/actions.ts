@@ -666,9 +666,11 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
         return { orderId: '', finalTotal: 0, error: `Minimum redemption is ${cfg.minRedemptionPoints} points` }
       }
 
-      // Enforce server-configured redemption cap before hitting the RPC
+      // Enforce server-configured redemption cap before hitting the RPC.
+      // Client maps the `points_over_cap` code to a localized string —
+      // raw English used to leak through the catch path in CheckoutForm.
       if (pointsDiscount > subtotal * cfg.maxRedemptionRatio) {
-        return { orderId: '', finalTotal: 0, error: `Points discount cannot exceed ${Math.round(cfg.maxRedemptionRatio * 100)}% of order subtotal` }
+        return { orderId: '', finalTotal: 0, error: 'points_over_cap' }
       }
 
       const customer = customerSession ?? await getCustomerSession()
@@ -739,7 +741,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
         return { orderId: '', finalTotal: 0, error: 'Insufficient points balance' }
       }
       if (rpcError.message.includes('POINTS_OVER_CAP')) {
-        return { orderId: '', finalTotal: 0, error: 'Points discount cannot exceed 50% of order subtotal' }
+        return { orderId: '', finalTotal: 0, error: 'points_over_cap' }
       }
       if (rpcError.message.includes('PRICE_MISMATCH')) {
         return { orderId: '', finalTotal: 0, error: 'Item prices have changed, please refresh and try again' }

@@ -296,6 +296,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       road_required: t('errors.roadRequired'),
       block_required: t('errors.blockRequired'),
       notes_too_long: t('errors.notesTooLong'),
+      points_over_cap: t('errors.pointsOverCap'),
     }
     return labels[message] ?? message
   }
@@ -419,7 +420,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
           setSubmitError(t('errors.generic', { message: unmapped.join(' | ') }))
         } else {
           console.error('[checkout] server returned empty fieldErrors. result =', JSON.stringify(result))
-          setSubmitError(result.error ?? t('errors.orderCreationFailed'))
+          setSubmitError(result.error ? localizeCheckoutError(result.error) : t('errors.orderCreationFailed'))
         }
         setLoading(false)
         return null
@@ -427,7 +428,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
       if (result.stock_warnings && result.stock_warnings.length > 0) {
         setStockWarnings(result.stock_warnings.map(w => w.name_ar))
       }
-      throw new Error(result.error ?? t('errors.orderCreationFailed'))
+      // Pass server-emitted error codes (e.g. `points_over_cap`) through the
+      // i18n mapper before the throw — otherwise the catch in handleWASubmit/
+      // handlePaymentSubmit ends up rendering a raw English string via the
+      // `errors.generic` template.
+      throw new Error(result.error ? localizeCheckoutError(result.error) : t('errors.orderCreationFailed'))
     }
 
     if (result.stock_warnings && result.stock_warnings.length > 0) {
