@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       app_config: {
@@ -2406,6 +2381,7 @@ export type Database = {
           delivery_area: string | null
           delivery_building: string | null
           delivery_city: string | null
+          delivery_flat: string | null
           delivery_instructions: string | null
           delivery_lat: number | null
           delivery_lng: number | null
@@ -2459,6 +2435,7 @@ export type Database = {
           delivery_area?: string | null
           delivery_building?: string | null
           delivery_city?: string | null
+          delivery_flat?: string | null
           delivery_instructions?: string | null
           delivery_lat?: number | null
           delivery_lng?: number | null
@@ -2512,6 +2489,7 @@ export type Database = {
           delivery_area?: string | null
           delivery_building?: string | null
           delivery_city?: string | null
+          delivery_flat?: string | null
           delivery_instructions?: string | null
           delivery_lat?: number | null
           delivery_lng?: number | null
@@ -4590,6 +4568,7 @@ export type Database = {
       }
       cancel_expired_pending_payment_orders: { Args: never; Returns: undefined }
       cleanup_driver_locations: { Args: never; Returns: undefined }
+      detect_stuck_orders: { Args: never; Returns: number }
       fn_check_price_spike: {
         Args: {
           p_branch_id: string
@@ -5178,9 +5157,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       abc_class: ["A", "B", "C"],
