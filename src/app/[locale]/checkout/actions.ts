@@ -10,7 +10,7 @@ import { pointsToCredit } from '@/lib/loyalty/calculations'
 import { getLoyaltyConfig } from '@/lib/loyalty/config'
 import { calculateDiscount } from '@/lib/coupons/calculations'
 import { createOrderAccessToken } from '@/lib/auth/order-access'
-import type { CouponUsageInsert, CouponRow } from '@/lib/supabase/custom-types'
+import type { CouponRow } from '@/lib/supabase/custom-types'
 import { resolveBestPromotion } from '@/lib/promotions/server'
 import { buildOrderTrackingUrl, buildPricedCheckoutWhatsAppLinks } from '@/lib/whatsapp'
 import { sendOrderConfirmation } from '@/lib/email/send'
@@ -731,16 +731,10 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     const paymentResult = await createInitialPayment(supabase, orderId, finalTotal, paymentMode, expiresAt)
     if (paymentResult.error) return { orderId: '', finalTotal: 0, error: paymentResult.error }
 
-    // ── Coupon usage record (increment already committed inside the RPC) ──────
-    if (resolvedCouponId && customerSession) {
-      const usage: CouponUsageInsert = {
-        coupon_id:           resolvedCouponId,
-        customer_id:         customerSession.id,
-        order_id:            orderId,
-        discount_amount_bhd: serverCouponDiscount,
-      }
-      await supabase.from('coupon_usages').insert(usage)
-    }
+    // Coupon usage audit row is now inserted inside rpc_create_order under
+    // the FOR UPDATE lock on the coupons row (migration 155 — VULN-004).
+    // Doing it here in JS allowed multi-tab checkouts to bypass
+    // per_customer_limit = 1.
 
     const accessToken = createOrderAccessToken(orderId)
     const links = buildCheckoutLinks(
