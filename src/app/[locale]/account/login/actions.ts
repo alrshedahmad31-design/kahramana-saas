@@ -13,8 +13,42 @@ type AuthError =
   | 'password_too_short'
   | 'password_too_weak'
   | 'name_too_long'
+  | 'captcha'
 
 type AuthResult = { success: true } | { success: false; error: AuthError }
+
+// VULN-020: Turnstile verification for registerAction. Same soft-launch
+// pattern as forgotPasswordAction / contactAction / reserveAction — when
+// TURNSTILE_SECRET_KEY is unset (dev / preview / pre-rollout production)
+// we fall through; the moment the secret lands the gate is mandatory.
+const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v1/siteverify'
+
+async function verifyTurnstile(token: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY
+  if (!secret) return true
+  if (!token) return false
+
+  try {
+    const headersList = await headers()
+    const ip = headersList.get('x-real-ip')
+            ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
+            ?? undefined
+
+    const body = new URLSearchParams({ secret, response: token })
+    if (ip) body.set('remoteip', ip)
+
+    const res = await fetch(TURNSTILE_VERIFY_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    })
+    if (!res.ok) return false
+    const data = (await res.json()) as { success?: boolean }
+    return data.success === true
+  } catch {
+    return false
+  }
+}
 
 // Per-action limits: login is tighter (credential-stuffing surface);
 // register gets more headroom because real users may mistype phone/email
@@ -77,7 +111,11 @@ export async function registerAction(
   password: string,
   phone: string,
   name: string,
+  turnstileToken?: string,
 ): Promise<AuthResult> {
+  const captchaOk = await verifyTurnstile(turnstileToken ?? '')
+  if (!captchaOk) return { success: false, error: 'captcha' }
+
   const allowed = await checkRateLimit('register')
   if (!allowed) return { success: false, error: 'rate_limited' }
 

@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import CinematicButton from '@/components/ui/CinematicButton'
 import { loginAction, registerAction } from './actions'
 
 type Mode = 'login' | 'register'
 
 const PHONE_PATTERN = /^\+9[0-9]{11}$|^[0-9]{8}$/
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 type PasswordStrength = 'weak' | 'medium' | 'strong'
 
@@ -36,6 +38,8 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
   const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileInstance | null>(null)
 
   // M3 — clear form on mode toggle so a half-typed login doesn't leak into
   // the register tab (or vice versa).
@@ -86,10 +90,17 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
         window.location.href = isAr ? '/account' : '/en/account'
 
       } else {
-        const result = await registerAction(email, password, phone, name)
+        if (TURNSTILE_SITE_KEY && !turnstileToken) {
+          setError(tAuth('captchaRequired'))
+          return
+        }
+        const result = await registerAction(email, password, phone, name, turnstileToken)
         if (!result.success) {
+          turnstileRef.current?.reset()
+          setTurnstileToken('')
           setError(
             result.error === 'rate_limited'      ? tAuth('rateLimited') :
+            result.error === 'captcha'           ? tAuth('captchaRequired') :
             result.error === 'invalid_phone'     ? tAuth('invalidPhone') :
             result.error === 'email_exists'      ? tAuth('emailExists') :
             result.error === 'password_too_short'? tAuth('passwordTooShort') :
@@ -262,6 +273,22 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
               </div>
             )}
           </div>
+
+          {mode === 'register' && TURNSTILE_SITE_KEY && (
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => {
+                  setTurnstileToken(token)
+                  if (error === tAuth('captchaRequired')) setError(null)
+                }}
+                onError={() => setTurnstileToken('')}
+                onExpire={() => setTurnstileToken('')}
+                options={{ theme: 'dark', language: isAr ? 'ar' : 'en' }}
+              />
+            </div>
+          )}
 
           <div role="alert" aria-live="polite" aria-atomic="true">
             {error && (
