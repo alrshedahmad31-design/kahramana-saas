@@ -185,9 +185,18 @@ export async function POST(request: Request) {
   const supabase   = await createServiceClient()
   const gatewayId  = body.id
   const eventType  = body.object ?? ''
-  const status = eventType === 'charge'
-    ? tapStatusToPaymentStatus(body.status)
-    : null
+
+  // VULN-019: Tap sends non-charge events (refund, dispute, settlement, etc.)
+  // through the same endpoint. Previously they fell through to the RPC with
+  // status='pending' (the `?? 'pending'` below), which could update payment
+  // rows on events that have nothing to say about payment intent state.
+  // Acknowledge with 202 and ignore — Tap considers any 2xx a successful
+  // delivery and won't retry.
+  if (eventType !== 'charge') {
+    return NextResponse.json({ received: true }, { status: 202 })
+  }
+
+  const status = tapStatusToPaymentStatus(body.status)
 
   // `reference` may be a string ('order-id') or an object ({order, transaction}).
   // Extract the order field consistently and validate UUID shape. Empty/invalid
