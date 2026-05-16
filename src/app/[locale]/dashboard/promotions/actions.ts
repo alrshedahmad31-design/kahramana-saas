@@ -62,6 +62,15 @@ export async function upsertPromotion(input: PromotionInput): Promise<PromotionM
   }
   const data = parsed.data
 
+  // On the edit path, verify the caller is allowed to act on the EXISTING row
+  // before trusting any branch_id from the input — otherwise a branch-scoped
+  // role could hijack another branch's promotion by submitting its UUID with
+  // their own branch_id. Same gate already used by togglePromotion/deletePromotion.
+  if (data.id) {
+    const scopeError = await assertPromotionBranchScope(user, data.id)
+    if (scopeError) return scopeError
+  }
+
   // branch_manager / marketing can only create/edit promotions for their own
   // branch (and never global promotions).
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
