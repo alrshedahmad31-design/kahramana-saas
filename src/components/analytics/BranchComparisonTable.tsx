@@ -11,7 +11,6 @@ interface Props {
 const BRANCH_NAMES: Record<string, { ar: string; en: string }> = {
   riffa:   { ar: 'الرفاع',  en: 'Riffa'   },
   qallali: { ar: 'قلالي',   en: 'Qallali' },
-  badi:    { ar: 'البديع',  en: "Al-Badi'" },
 }
 
 export default function BranchComparisonTable({ data, currency, locale }: Props) {

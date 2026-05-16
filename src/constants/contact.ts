@@ -10,12 +10,12 @@
  *     to allow updates without a redeploy.
  */
 
-export type BranchId = 'riffa' | 'qallali' | 'badi'
+export type BranchId = 'riffa' | 'qallali'
 /**
  * Branch IDs that should be hidden from the platform.
  * These branches are still in the database for historical data but should not be shown in UI.
  */
-export const HIDDEN_BRANCHES: BranchId[] = ['badi']
+export const HIDDEN_BRANCHES: BranchId[] = []
 
 /** Type-safe check for hidden branches. Accepts any string (e.g. DB row id). */
 export function isHiddenBranch(id: string | null | undefined): boolean {
@@ -116,32 +116,6 @@ export const BRANCHES: Record<BranchId, Branch> = {
     delivery: true,
     dineIn: true,
     status: 'active',
-  },
-
-  badi: {
-    id: 'badi',
-    nameAr: 'فرع البديع',
-    nameEn: 'Al-Badi\' Branch',
-    addressAr: 'قريباً',
-    addressEn: 'Coming Soon',
-    cityAr: 'البديع',
-    cityEn: 'Al-Badi\'',
-    phone: '',
-    whatsapp: '',
-    waLink: '',
-    mapsUrl: null,
-    embedSrc: null,
-    latitude: null,
-    longitude: null,
-    hours: {
-      ar: 'قريباً',
-      en: 'Coming Soon',
-      opens: '00:00',
-      closes: '00:00',
-    },
-    delivery: false,
-    dineIn: false,
-    status: 'planned',
   },
 } as const
 

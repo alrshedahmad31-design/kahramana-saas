@@ -18,7 +18,6 @@ interface Props {
 const BRANCH_IMAGES: Record<string, string> = {
   riffa: '/assets/branches/riffa-hajiyat-branch.webp',
   qallali: '/assets/branches/muharraq-galali-branch.webp',
-  badi: '/assets/branches/riffa-hajiyat-branch.webp', // fallback
 }
 
 export default function BranchHero({ branchName, description, branchId, isAr }: Props) {

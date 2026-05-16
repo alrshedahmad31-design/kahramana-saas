@@ -52,23 +52,6 @@ export const BRANCH_EXTENDED_DATA: Record<BranchId, BranchMetadata> = {
       deliveryEn: 'Based on operations',
     },
   },
-  badi: {
-    id: 'badi',
-    descriptionAr: 'فرع البديع قيد التخطيط، وسيتم تفعيله في المنصة عند اكتمال الجاهزية التشغيلية وافتتاح الفرع رسميًا.',
-    descriptionEn: 'The Al-Badi\' Branch is currently planned and will be activated on the platform once operational readiness and official opening are confirmed.',
-    imageUrl: '/images/branches/badi_coming_soon.webp',
-    features: [
-      { ar: 'مساحة عصرية', en: 'Modern Space' },
-      { ar: 'قسم مشاوي', en: 'Grills Section' },
-      { ar: 'موقع استراتيجي', en: 'Prime Location' },
-    ],
-    services: {
-      directOrder: false,
-      pickup: false,
-      delivery: 'غير متاح',
-      deliveryEn: 'Not available',
-    },
-  },
 }
 
 export function getBranchMetadata(id: BranchId): BranchMetadata {

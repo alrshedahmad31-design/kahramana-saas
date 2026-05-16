@@ -33,7 +33,7 @@ export default function BranchesSection({ isRTL }: { isRTL: boolean }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Riffa */}
-          <BranchCard 
+          <BranchCard
             title={isRTL ? 'الرفاع — الحجيات' : 'Riffa — Al-Hijiyat'}
             isRTL={isRTL}
             delay={0.1}
@@ -43,13 +43,6 @@ export default function BranchesSection({ isRTL }: { isRTL: boolean }) {
             title={isRTL ? 'قلالي' : 'Qallali'}
             isRTL={isRTL}
             delay={0.2}
-          />
-          {/* Budaiya */}
-          <BranchCard 
-            title={isRTL ? 'البديع (قريباً)' : 'Budaiya (Soon)'}
-            isRTL={isRTL}
-            isSoon
-            delay={0.3}
           />
         </div>
 

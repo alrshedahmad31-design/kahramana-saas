@@ -39,25 +39,6 @@ export const BRANCHES = [
     googleMaps: CONTACT_BRANCHES.qallali.mapsUrl,
     status: 'active' as const,
   },
-  {
-    id: 'badi',
-    name_ar: CONTACT_BRANCHES.badi.nameAr,
-    name_en: 'Badi Branch',
-    area_ar: 'البديع',
-    area_en: 'Al-Badi',
-    city_ar: CONTACT_BRANCHES.badi.cityAr,
-    city_en: 'Al-Badi',
-    phone: null,
-    whatsapp: null,
-    opens: null,
-    closes: null,
-    opens_display_ar: null,
-    closes_display_ar: null,
-    opens_display_en: null,
-    closes_display_en: null,
-    googleMaps: null,
-    status: 'coming_soon' as const,
-  },
 ].filter((branch) => !isHiddenBranch(branch.id))
 
 export type Branch = typeof BRANCHES[number]
