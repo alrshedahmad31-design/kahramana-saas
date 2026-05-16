@@ -1,0 +1,26 @@
+-- ============================================================
+-- Kahramana Baghdad
+-- Migration: 159_grant_update_birthday.sql
+--
+-- Bugfix: customer self-service account page reported
+--   "تعذر حفظ التغييرات — حاول مرة أخرى" / "update_failed"
+-- whenever the user touched the birthday field, even though RLS policy
+-- `customer_update_own_profile` permits the write and the DATE column
+-- and CHECK constraint accept the value.
+--
+-- Root cause: migration 064 hardened customer_profiles by REVOKE-ing
+-- broad UPDATE from authenticated, then granting UPDATE column-by-column
+-- (name, email, phone, addresses). Migration 152 introduced the
+-- `birthday` column but never extended that column-level grant, so an
+-- authenticated client UPDATE that touches birthday is silently
+-- permission-denied by Postgres before RLS even gets a vote.
+--
+-- This migration grants UPDATE on JUST the birthday column to
+-- authenticated, matching the established column-level pattern from
+-- migration 147 (default-address columns).
+--
+-- Rollback:
+--   REVOKE UPDATE (birthday) ON public.customer_profiles FROM authenticated;
+-- ============================================================
+
+GRANT UPDATE (birthday) ON public.customer_profiles TO authenticated;
