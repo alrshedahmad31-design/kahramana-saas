@@ -1,7 +1,7 @@
 # ANTIGRAVITY.md — Kahramana Baghdad
 > Antigravity-specific rules. Read only inside Antigravity sessions.
 > Read AGENTS.md first for shared cross-tool rules.
-> Last updated: 2026-05-16 (split out of GEMINI.md to stop Gemini Code Assist from loading workflow primitives it cannot execute)
+> Last updated: 2026-05-16 (slimmed mandatory-read list so the workspace doesn't stall Antigravity on cold start)
 
 ---
 
@@ -20,19 +20,25 @@ Available workflows (under `.agents/workflows/`):
 
 ## PROJECT CONTEXT FILES (Antigravity skill loader)
 
-Before any work, load these skills based on context:
+**Every session — MINIMAL set only:**
+1. `AGENTS.md` — shared cross-tool rules (~150 lines, kept lean)
+2. `.agent/phase-state.json` — current phase + deliverables + blockers
+3. `.agent/CURRENT-SESSION.md` — bridge context: what just happened, what's next
 
-**Every session (mandatory):**
-1. `.agents/skills/kahramana-context.md` — architecture + business rules
-2. `.agents/skills/phase-gate.md` — gate enforcement protocol
-3. `.agent/PLAN.md` — full 9-phase plan
-4. `.agent/RULES.md` — shared rules
-5. `.agent/phase-state.json` — live state
+That's it for session start. Total ~900 lines / ~75 KB — small enough to load instantly.
 
-**Phase-specific (load when relevant):**
-- Phase 0 active → `.agents/skills/phase-0-discovery.md`
-- Phase 1 init → `.agents/skills/project-setup.md`
-- Any UI work → `.agents/skills/design-system.md` ← mandatory before any component
+**Load on demand (NOT at session start) — only when actually relevant:**
+- `.agent/PLAN.md` — full 9-phase plan (1000+ lines, mostly historical). Read only when starting a phase or auditing scope.
+- `.agent/RULES.md` — shared rules. Read only when a rule is being authored or contested.
+- `.agents/skills/kahramana-context.md` — architecture deep-dive. Read when architecture is the actual topic.
+- `.agents/skills/phase-gate.md` — gate enforcement protocol. Read inside `/complete-phase` only.
+- `.agents/skills/design-system.md` — design tokens deep-dive. Read before UI work, not before every session.
+- `.agents/skills/phase-0-discovery.md` / `project-setup.md` — phase-specific scaffolds.
+
+**Never auto-load:**
+- `.agents/skills/impeccable/**` — frontend design reference subtree, loaded only when the impeccable skill is explicitly invoked.
+- `messages/*.json`, `src/data/menu.json` — translation + menu data; grep on demand.
+- `supabase/migrations/` — 153 historical SQL files; grep on demand.
 
 ---
 

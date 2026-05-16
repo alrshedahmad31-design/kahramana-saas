@@ -1,0 +1,93 @@
+# .aiexclude — files Antigravity / Gemini Code Assist must NOT index.
+# Google's AI products honor this file (separate from .gitignore).
+# Goal: keep the cold-start context for this workspace small enough that
+# the agent can actually engage instead of stalling on indexing.
+
+# ── Build / dependency artefacts ─────────────────────────────────────────────
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+
+# ── Claude Code parallel worktrees ───────────────────────────────────────────
+# Each is a near-full clone of this repo + its own GEMINI.md / AGENTS.md tree.
+# Indexing them blows context with zero signal.
+.claude/worktrees/
+.claude/settings.local.json
+
+# ── Heavy reference content the agent never needs at session start ───────────
+# The impeccable skill subtree is ~50 design-system reference markdown files
+# (~800 KB). Antigravity loads it only when the user explicitly invokes the
+# impeccable skill, so keep it out of the default index.
+.agents/skills/impeccable/
+
+# ── Large static data that doesn't inform code edits ─────────────────────────
+messages/ar.json
+messages/en.json
+src/data/menu.json
+
+# ── Historical SQL migrations ────────────────────────────────────────────────
+# 153 files. Reading them all at session start serves no purpose; the agent
+# can grep them on demand when actually authoring or auditing a migration.
+supabase/migrations/
+
+# ── Binary / media assets ────────────────────────────────────────────────────
+public/assets/
+public/images/
+docs/qa/
+*.mp4
+*.webm
+*.mov
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+*.svg
+
+# ── Ephemeral agent scratch / outputs ────────────────────────────────────────
+.agent/reports/
+.agent/probe-*
+.agent/audit-p*
+.agent/verify-*
+.agent/fix*-*.sql
+.agent/lh-*.json
+.agent/lighthouse-*.json
+.agent/anon-execute-*.json
+.agent/perf-baseline.csv
+.agent/fn-bodies.json
+.agent/cowork-*.patch
+scratch/
+
+# ── Test artefacts ───────────────────────────────────────────────────────────
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+playwright/.auth/
+
+# ── Impeccable runtime state ─────────────────────────────────────────────────
+.impeccable/live/server.json
+.impeccable/live/sessions/
+
+# ── Editor / OS junk ─────────────────────────────────────────────────────────
+.idea/
+.vscode/settings.json
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── Logs and lock files ──────────────────────────────────────────────────────
+*.log
+dev-server*.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ── Type generation output ───────────────────────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts
