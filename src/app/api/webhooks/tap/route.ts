@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
@@ -46,8 +47,19 @@ const tapWebhookSchema = z.object({
     last_four: z.string().max(8).optional(),
   }).passthrough().optional(),
   object:     z.string().max(40).optional(),
+  // VULN-014: Tap echoes the event creation timestamp (Unix seconds) here.
+  // We use it for the replay-window check below; optional so the route
+  // still accepts the legacy shape if Tap drops the field in a future release.
+  created:    z.number().int().optional(),
   hashstring: z.string().min(1).max(200),
 }).passthrough()
+
+// VULN-014: maximum permissible drift between body.created and now. Anything
+// older than this is treated as a replay attempt — even if HMAC verifies and
+// IP allowlist passes, a one-hour-old payload has no legitimate reason to
+// arrive at our endpoint. We log to Sentry but do not write to webhook_errors
+// or process the RPC.
+const WEBHOOK_MAX_AGE_SECONDS = 3600
 
 // ── Rate limiter (KAH-2026-05-02) ────────────────────────────────────────────
 // 60 requests / minute per IP. Lazy singleton so the Redis client is built
@@ -179,6 +191,25 @@ export async function POST(request: Request) {
   // PAYMENT_WEBHOOK_SECRET is unset and normalizes the object-form `amount`.
   if (!verifyWebhookSignature(body as Record<string, unknown>, body.hashstring)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // ── Replay-window guard (VULN-014) ──────────────────────────────────────────
+  // Even with a valid HMAC, refuse any webhook whose Tap-stamped creation time
+  // drifts more than one hour from the current clock. This shuts the door on
+  // a stolen-then-replayed signed payload — the attacker would need to find a
+  // signed event AND deliver it within the same hour as the original, which
+  // is far less viable than indefinite replay. Skipped when Tap omits the
+  // `created` field (older event shapes); HMAC + IP allowlist still apply.
+  if (typeof body.created === 'number') {
+    const nowSec = Date.now() / 1000
+    const drift  = Math.abs(nowSec - body.created)
+    if (drift > WEBHOOK_MAX_AGE_SECONDS) {
+      Sentry.captureMessage('tap_webhook_expired', {
+        level: 'warning',
+        extra: { gateway_id: body.id, drift_seconds: drift, created: body.created },
+      })
+      return NextResponse.json({ error: 'webhook_expired' }, { status: 400 })
+    }
   }
 
   // ── DB write path (only reached for signed, well-shaped payloads) ───────────
