@@ -75,11 +75,11 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               transition={{ delay: 0.8, duration: 0.8 }}
               className="absolute -bottom-8 -end-8 bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-3xl hidden md:block"
             >
-              <p className="text-brand-gold text-xs font-bold tracking-[0.3em] uppercase mb-1">
+              <p dir={isRTL ? 'rtl' : 'ltr'} className="text-brand-gold text-xs font-bold tracking-[0.3em] uppercase mb-1">
                 {t('signature')}
               </p>
               <div className="w-12 h-px bg-brand-gold/30 mb-3" />
-              <p className="text-white/40 text-[10px] tracking-widest uppercase">
+              <p dir={isRTL ? 'rtl' : 'ltr'} className="text-white/40 text-[10px] tracking-widest uppercase">
                 {t('heritageLabel')}
               </p>
             </motion.div>
@@ -137,10 +137,10 @@ export default function FounderSection({ isRTL }: { isRTL: boolean }) {
               <div className="flex flex-col border-t border-white/10 pt-8 relative z-10">
                 <div className="flex flex-col items-start gap-4">
                   <div className="flex flex-col">
-                    <span className="text-lg md:text-xl font-bold text-brand-gold mb-1">
+                    <span dir={isRTL ? 'rtl' : 'ltr'} className="text-lg md:text-xl font-bold text-brand-gold mb-1">
                       {t('signature')}
                     </span>
-                    <span className="text-sm text-brand-muted uppercase tracking-widest">
+                    <span dir={isRTL ? 'rtl' : 'ltr'} className="text-sm text-brand-muted uppercase tracking-widest">
                       {t('role')}
                     </span>
                   </div>
