@@ -225,11 +225,16 @@ export async function confirmBenefitPayment(
   if (!auth.ok) return { error: auth.error }
 
   const supabase = await createServiceClient()
+  // Method pin: tap_card / tap_knet rows are also 'pending' before
+  // initiateTapPayment flips them to 'processing'. Without the method check
+  // a customer could self-park a Tap order into awaiting_manual_review and
+  // confuse the staff settlement queue.
   const { error } = await supabase
     .from('payments')
     .update({ status: 'awaiting_manual_review' })
     .eq('id', paymentId)
     .eq('status', 'pending')
+    .eq('method', 'benefit_qr')
   return { error: error?.message }
 }
 
