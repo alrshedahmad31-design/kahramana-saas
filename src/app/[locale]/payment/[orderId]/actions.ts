@@ -112,6 +112,14 @@ export async function initializePayment(
       return { paymentId: existing.id, error: 'already_completed' }
     }
 
+    // VULN-001: an existing online payment row (tap_card / tap_knet /
+    // benefit_qr) must not be flippable to 'cash'. Allowing that would let a
+    // customer convert a Tap-pending order into a COD-confirmed one without
+    // ever paying. Online → cash transitions are forbidden post-creation.
+    if (method === 'cash' && existing.method && existing.method !== 'cash') {
+      return { paymentId: existing.id, error: 'method_locked' }
+    }
+
     const nextStatus = method === 'cash' ? 'pending_cod' : 'pending'
     const { error: updateError } = await supabase
       .from('payments')
@@ -119,13 +127,6 @@ export async function initializePayment(
       .eq('id', existing.id)
 
     if (updateError) return { paymentId: '', error: updateError.message }
-
-    if (method === 'cash') {
-      await supabase
-        .from('orders')
-        .update({ status: 'confirmed', expires_at: null })
-        .eq('id', orderId)
-    }
 
     const qrBase64 = method === 'benefit_qr'
       ? await generateStaticQR(orderId, amountBHD)
