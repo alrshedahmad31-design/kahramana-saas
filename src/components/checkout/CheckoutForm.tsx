@@ -30,7 +30,7 @@ import CinematicButton from '@/components/ui/CinematicButton'
 import { Icon } from '@/components/ui/Icon'
 import CouponInput from '@/components/checkout/CouponInput'
 import { LoyaltyRedemptionWidget } from '@/components/loyalty/LoyaltyRedemptionWidget'
-import { MIN_REDEMPTION, pointsToCredit } from '@/lib/loyalty/calculations'
+import { MIN_REDEMPTION, maxRedeemablePoints, pointsToCredit } from '@/lib/loyalty/calculations'
 import { createOrderWithPoints } from '@/app/[locale]/checkout/actions'
 import { createClient } from '@/lib/supabase/client'
 import { gtag } from '@/lib/gtag'
@@ -156,9 +156,13 @@ export default function CheckoutForm({ customerProfile }: Props) {
   const [addressPrefilled, setAddressPrefilled] = useState(false)
 
   // ── Points state ──────────────────────────────────────────────────────────
+  // Cap redemption at min(user_points_value, subtotal * 50%) so the UI never
+  // promises a saving that the server-side `points_over_cap` check would reject.
   const [usePoints, setUsePoints] = useState(false)
-  const availablePoints = customerProfile?.points_balance ?? 0
-  const pointsDiscount = usePoints ? pointsToCredit(customerProfile?.points_balance ?? 0) : 0
+  const availablePoints     = customerProfile?.points_balance ?? 0
+  const cappedPointsToRedeem = maxRedeemablePoints(availablePoints, subtotal)
+  const pointsCapped        = cappedPointsToRedeem < availablePoints
+  const pointsDiscount      = usePoints ? pointsToCredit(cappedPointsToRedeem) : 0
 
   useEffect(() => {
     if (!customerProfile) return
@@ -384,7 +388,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
       idempotency_key: idempotencyKeyRef.current,
       confirmLowStock,
       locale: locale as 'ar' | 'en',
-      pointsToRedeem: usePoints ? availablePoints : 0,
+      pointsToRedeem: usePoints ? cappedPointsToRedeem : 0,
       coupon: appliedCoupon ? { couponId: appliedCoupon.id } : undefined,
     })
 
@@ -1091,14 +1095,19 @@ export default function CheckoutForm({ customerProfile }: Props) {
         </div>
       </SectionCard>
 
-      {/* Points Redemption (only if available) */}
-      {customerProfile && customerProfile.points_balance >= MIN_REDEMPTION && (
+      {/* Points Redemption (only if available and the 50%-of-subtotal cap
+          still leaves enough redeemable points to meet MIN_REDEMPTION) */}
+      {customerProfile &&
+        customerProfile.points_balance >= MIN_REDEMPTION &&
+        cappedPointsToRedeem >= MIN_REDEMPTION && (
         <section aria-labelledby="loyalty-heading">
           <h2 id="loyalty-heading" className="mb-3 text-sm font-semibold text-brand-text-muted">
             {t('loyalty.heading')}
           </h2>
           <LoyaltyRedemptionWidget
             pointsBalance={customerProfile.points_balance}
+            appliedCreditBhd={pointsToCredit(cappedPointsToRedeem)}
+            capped={pointsCapped}
             isActive={usePoints}
             onToggle={setUsePoints}
             locale={locale}

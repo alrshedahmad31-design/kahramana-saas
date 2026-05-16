@@ -6,6 +6,10 @@ import { Icon } from '@/components/ui/Icon'
 
 interface LoyaltyRedemptionWidgetProps {
   pointsBalance: number
+  /** BHD credit that will actually be applied — already capped at 50% of subtotal */
+  appliedCreditBhd: number
+  /** True when the applied credit was reduced from the full balance value */
+  capped: boolean
   isActive: boolean
   onToggle: (active: boolean) => void
   locale: string
@@ -14,12 +18,15 @@ interface LoyaltyRedemptionWidgetProps {
 
 export function LoyaltyRedemptionWidget({
   pointsBalance,
+  appliedCreditBhd,
+  capped,
   isActive,
   onToggle,
   locale,
   t,
 }: LoyaltyRedemptionWidgetProps) {
-  const creditBhd = pointsToCredit(pointsBalance)
+  const fullCreditBhd = pointsToCredit(pointsBalance)
+  const displayCreditBhd = isActive ? appliedCreditBhd : fullCreditBhd
   const canRedeem  = pointsBalance >= MIN_REDEMPTION
 
   if (!canRedeem) {
@@ -75,7 +82,7 @@ export function LoyaltyRedemptionWidget({
                 isActive ? 'text-brand-gold' : 'text-brand-muted',
               ].join(' ')}
             >
-              {t('loyalty.equivalent', { amount: formatPrice(creditBhd, locale) })}
+              {t('loyalty.equivalent', { amount: formatPrice(displayCreditBhd, locale) })}
             </p>
           </div>
         </div>
@@ -108,8 +115,13 @@ export function LoyaltyRedemptionWidget({
       {isActive && (
         <div className="border-t border-brand-gold/20 px-4 py-3">
           <p className="text-xs font-medium text-brand-gold">
-            {t('loyalty.saving', { amount: formatPrice(creditBhd, locale) })}
+            {t('loyalty.saving', { amount: formatPrice(appliedCreditBhd, locale) })}
           </p>
+          {capped && (
+            <p className="mt-1 text-[11px] text-brand-muted">
+              {t('loyalty.cappedNote')}
+            </p>
+          )}
         </div>
       )}
     </div>

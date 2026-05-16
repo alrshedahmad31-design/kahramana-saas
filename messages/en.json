@@ -745,7 +745,8 @@
       "toggle": "Toggle loyalty points",
       "needMore": "You need {count} more points to redeem",
       "signinPrompt": "Sign in to earn loyalty points on every order",
-      "signinCta": "Sign In / Register"
+      "signinCta": "Sign In / Register",
+      "cappedNote": "Maximum allowed discount applied (50% of order subtotal)"
     }
   },
   "order": {
