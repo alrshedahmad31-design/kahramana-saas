@@ -28,6 +28,10 @@ interface Props {
   onAction?:     (id: string, status: DriverActiveStatus, metadata?: { tipBhd?: number, actualCollected?: number }) => Promise<string | null>
   onArrive?:     (id: string) => Promise<string | null>
   driverLocation?: { lat: number, lng: number } | null
+  /** True when this is a freshly-arrived ready order the driver hasn't seen yet. */
+  isUnacknowledged?: boolean
+  /** Fired when the driver taps the card — clears the pulse/repeating alert. */
+  onAcknowledge?:    (id: string) => void
 }
 
 // ── Urgency config ─────────────────────────────────────────────────────────────
@@ -130,6 +134,7 @@ function formatTime(iso: string): string {
 
 export default function DriverOrderCard({
   order, isRTL, branchMapsUrl, variant = 'active', onAction, onArrive, driverLocation,
+  isUnacknowledged = false, onAcknowledge,
 }: Props) {
   const [elapsed,       setElapsed]       = useState(() => formatElapsed(order.created_at))
   const [busy,          setBusy]          = useState(false)
@@ -370,10 +375,13 @@ export default function DriverOrderCard({
 
   return (
     <>
-      <div className={`
+      <div
+        onPointerDown={isUnacknowledged && onAcknowledge ? () => onAcknowledge(order.id) : undefined}
+        className={`
         flex flex-col rounded-2xl border-2 bg-brand-surface overflow-hidden
         transition-all duration-300
         ${isCompleted ? 'border-brand-border opacity-70' : uc.cardBorder}
+        ${isUnacknowledged ? 'ring-2 ring-brand-gold ring-offset-2 ring-offset-brand-black animate-pulse' : ''}
       `}>
 
         {/* ── Urgency banner ────────────────────────────────────────────────── */}

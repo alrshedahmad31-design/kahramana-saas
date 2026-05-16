@@ -58,6 +58,34 @@ export default function DriverDashboard({
   useEffect(() => { isOnlineRef.current = isOnline }, [isOnline])
   // Track known ready-order IDs to detect new pickups
   const prevReadyIdsRef = useRef(new Set(initialOrders.filter(o => o.status === 'ready').map(o => o.id)))
+  // Newly-arrived ready orders the driver has not yet tapped — drives both
+  // the repeating audio alert and the pulsing gold ring on the card.
+  const [unacknowledgedIds, setUnacknowledgedIds] = useState<Set<string>>(new Set())
+
+  const acknowledgeOrder = useCallback((id: string) => {
+    setUnacknowledgedIds(prev => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }, [])
+
+  // Fire an in-page browser Notification (independent of Web Push from the
+  // service worker). Respects permission state; silently no-ops otherwise.
+  const fireBrowserNotification = useCallback((count: number) => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    if (Notification.permission !== 'granted') return
+    try {
+      const title = isAr ? '🛵 طلب توصيل جديد جاهز' : '🛵 New delivery ready'
+      const body  = count > 1
+        ? (isAr ? `${count} طلبات تنتظر الاستلام` : `${count} orders waiting for pickup`)
+        : (isAr ? 'طلب جاهز للاستلام من الفرع'     : 'An order is ready for pickup')
+      new Notification(title, { body, tag: 'driver-new-ready', renotify: true } as NotificationOptions)
+    } catch {
+      // older browsers without Notification constructor → silent
+    }
+  }, [isAr])
   const [clock,              setClock]              = useState(formatClock)
   const [showHandover,       setShowHandover]       = useState(false)
   const [reminderDismissed,  setReminderDismissed]  = useState(false)
@@ -107,19 +135,49 @@ export default function DriverDashboard({
     const { data } = await q
     if (!data) return
 
-    // Alert when new 'ready' orders appear and driver is online + not muted
-    if (isOnlineRef.current && !mutedRef.current) {
-      const newReady = data.filter(
-        (o) => o.status === 'ready' && !prevReadyIdsRef.current.has(o.id),
-      )
-      if (newReady.length > 0) playBell('ready')
+    // Alert when new 'ready' orders appear and driver is online.
+    // Sound respects mute; visual pulse + browser notification do not.
+    const newReady = isOnlineRef.current
+      ? data.filter((o) => o.status === 'ready' && !prevReadyIdsRef.current.has(o.id))
+      : []
+    if (newReady.length > 0) {
+      if (!mutedRef.current) playBell('ready')
+      fireBrowserNotification(newReady.length)
+      setUnacknowledgedIds(prev => {
+        const next = new Set(prev)
+        for (const o of newReady) next.add(o.id)
+        return next
+      })
     }
-    prevReadyIdsRef.current = new Set(
-      data.filter((o) => o.status === 'ready').map((o) => o.id),
-    )
+    // Drop any acknowledged IDs that are no longer in the ready list (driver
+    // picked them up, kitchen reverted them, etc.) so the alert state stays in
+    // sync with reality.
+    const currentReady = new Set(data.filter(o => o.status === 'ready').map(o => o.id))
+    setUnacknowledgedIds(prev => {
+      let changed = false
+      const next = new Set<string>()
+      for (const id of prev) {
+        if (currentReady.has(id)) next.add(id)
+        else changed = true
+      }
+      return changed ? next : prev
+    })
+    prevReadyIdsRef.current = currentReady
 
     setOrders(data as DriverOrder[])
-  }, [supabase, branchId, mutedRef])
+  }, [supabase, branchId, mutedRef, fireBrowserNotification])
+
+  // Repeating alert: every 8s while there is at least one unacknowledged
+  // ready order, replay the bell. Stops automatically when the driver taps
+  // the order or it leaves the ready list.
+  useEffect(() => {
+    if (unacknowledgedIds.size === 0) return
+    const id = setInterval(() => {
+      if (!isOnlineRef.current || mutedRef.current) return
+      playBell('ready')
+    }, 8_000)
+    return () => clearInterval(id)
+  }, [unacknowledgedIds, mutedRef])
 
   const fetchCompleted = useCallback(async () => {
     if (!driverId) return
@@ -566,6 +624,8 @@ export default function DriverDashboard({
                     branchMapsUrl={branchMapsUrl}
                     onAction={handleAction}
                     driverLocation={userLocation}
+                    isUnacknowledged={unacknowledgedIds.has(order.id)}
+                    onAcknowledge={acknowledgeOrder}
                   />
                 ))}
               </div>
