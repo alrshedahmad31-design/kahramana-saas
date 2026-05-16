@@ -233,7 +233,14 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000, // 1 year
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    // VULN-009: dangerouslyAllowSVG on its own served SVGs inline-renderable
+    // by the browser, so a malicious SVG (any of the remotePatterns hosts
+    // could be served a compromised file) could execute scripts in the same
+    // origin as the site. Pin a per-image CSP that blocks scripts and forces
+    // a sandboxed download disposition.
     dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'none'; style-src 'unsafe-inline'; sandbox",
   },
 
   // Emit production sourcemaps so the Sentry build plugin can upload them
