@@ -162,19 +162,56 @@ export async function initializePayment(
 
 // Completes a cash payment — DB trigger advances order to 'accepted'.
 // SECURITY: Cash confirmation must happen at the cashier (staff), never by the
-// customer browsing the page. Restrict to staff only.
+// customer browsing the page. Restricted to cash-handling roles AND scoped to
+// the order's branch — a cashier at branch A cannot settle a COD order taken
+// at branch B.
+const CASH_SETTLE_ROLES: ReadonlyArray<NonNullable<Awaited<ReturnType<typeof getSession>>>['role']> = [
+  'owner',
+  'general_manager',
+  'branch_manager',
+  'cashier',
+  'waiter',
+]
+
 export async function completeCashPayment(
   paymentId: string,
 ): Promise<{ error?: string }> {
   const staff = await getSession()
-  if (!staff?.role) return { error: 'Unauthorized' }
+  if (!staff?.role || !CASH_SETTLE_ROLES.includes(staff.role)) {
+    return { error: 'Unauthorized' }
+  }
 
   const supabase = await createServiceClient()
+
+  // Branch scope: re-fetch the order's branch via the payment row and assert
+  // the staff member belongs to that branch. Owner / general_manager are
+  // global (no branch_id) and bypass this check.
+  const { data: paymentRow } = await supabase
+    .from('payments')
+    .select('id, order_id, orders!inner(branch_id)')
+    .eq('id', paymentId)
+    .maybeSingle()
+
+  if (!paymentRow) return { error: 'Payment not found' }
+
+  const orderBranchId =
+    (paymentRow as { orders: { branch_id: string | null } | null }).orders?.branch_id ?? null
+
+  const isGlobalRole = staff.role === 'owner' || staff.role === 'general_manager'
+  if (!isGlobalRole) {
+    if (!staff.branch_id || staff.branch_id !== orderBranchId) {
+      return { error: 'Forbidden' }
+    }
+  }
+
+  // CAS: only flip a genuine pending_cod row. 'pending' is the pre-init state
+  // for online methods (tap_card / tap_knet / benefit_qr) and must never be
+  // settled as cash.
   const { error } = await supabase
     .from('payments')
     .update({ status: 'completed' })
     .eq('id', paymentId)
-    .eq('status', 'pending')
+    .eq('status', 'pending_cod')
   return { error: error?.message }
 }
 
