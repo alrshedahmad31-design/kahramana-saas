@@ -6,6 +6,7 @@ import { useState, useRef, useCallback } from 'react'
 import ImportPreview from './ImportPreview'
 import { importInventoryExcel } from '@/app/[locale]/dashboard/inventory/import/actions'
 import type { ImportActionResult } from '@/app/[locale]/dashboard/inventory/import/actions'
+import { toast } from '@/lib/toast'
 
 interface Props {
   locale: string
@@ -58,11 +59,11 @@ export default function ImportDropzone({ locale }: Props) {
 
   const acceptFile = useCallback((f: File) => {
     if (!f.name.endsWith('.xlsx')) {
-      alert(locale === 'ar' ? 'يجب أن يكون الملف بصيغة .xlsx فقط' : 'Only .xlsx files are accepted')
+      toast.error(locale === 'ar' ? 'يجب أن يكون الملف بصيغة .xlsx فقط' : 'Only .xlsx files are accepted')
       return
     }
     if (f.size > 10 * 1024 * 1024) {
-      alert(locale === 'ar' ? 'حجم الملف يتجاوز الحد المسموح (10 MB)' : 'File size exceeds 10 MB limit')
+      toast.error(locale === 'ar' ? 'حجم الملف يتجاوز الحد المسموح (10 MB)' : 'File size exceeds 10 MB limit')
       return
     }
     setFile(f)
@@ -96,7 +97,7 @@ export default function ImportDropzone({ locale }: Props) {
       setPhase('analyzed')
     } catch {
       setPhase('selected')
-      alert(isAr ? 'حدث خطأ أثناء التحليل' : 'An error occurred during analysis')
+      toast.error(isAr ? 'حدث خطأ أثناء التحليل' : 'An error occurred during analysis')
     }
   }
 
@@ -117,7 +118,7 @@ export default function ImportDropzone({ locale }: Props) {
       }
     } catch {
       setPhase('analyzed')
-      alert(isAr ? 'حدث خطأ أثناء الاستيراد' : 'An error occurred during import')
+      toast.error(isAr ? 'حدث خطأ أثناء الاستيراد' : 'An error occurred during import')
     }
   }
 
@@ -148,7 +149,7 @@ export default function ImportDropzone({ locale }: Props) {
       a.remove()
       URL.revokeObjectURL(url)
     } catch {
-      alert(isAr ? 'فشل تصدير البيانات' : 'Export failed')
+      toast.error(isAr ? 'فشل تصدير البيانات' : 'Export failed')
     } finally {
       setExportLoading(false)
     }

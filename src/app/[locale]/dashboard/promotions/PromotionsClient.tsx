@@ -16,6 +16,7 @@ import {
   type PromotionType,
 } from '@/lib/promotions/types'
 import PromotionForm from './PromotionForm'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 interface BranchOption {
   id:     string
@@ -51,6 +52,7 @@ export default function PromotionsClient({
   const [creating, setCreating] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<PromotionRow | null>(null)
   const [, startTransition] = useTransition()
 
   const visible = useMemo(() => {
@@ -120,10 +122,13 @@ export default function PromotionsClient({
   }
 
   function handleDelete(p: PromotionRow) {
-    const msg = isAr
-      ? `حذف عرض "${p.name_ar}"؟ لا يمكن التراجع.`
-      : `Delete promotion "${p.name_en}"? This cannot be undone.`
-    if (!confirm(msg)) return
+    setPendingDelete(p)
+  }
+
+  function confirmDelete() {
+    const p = pendingDelete
+    if (!p) return
+    setPendingDelete(null)
     setBusyId(p.id)
     startTransition(async () => {
       const result = await deletePromotion(p.id)
@@ -281,6 +286,20 @@ export default function PromotionsClient({
           onSubmit={handleSubmit}
         />
       )}
+
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        message={
+          pendingDelete
+            ? isAr
+              ? `حذف عرض "${pendingDelete.name_ar}"؟ لا يمكن التراجع.`
+              : `Delete promotion "${pendingDelete.name_en}"? This cannot be undone.`
+            : ''
+        }
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   )
 }

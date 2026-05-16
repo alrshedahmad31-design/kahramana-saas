@@ -6,6 +6,7 @@ import { UserPlus, ExternalLink, Clock, Truck } from 'lucide-react'
 import { DV, DV_STATUS, DRIVER_STATUS }         from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver }           from '@/lib/delivery/types'
 import PromptDialog from '@/components/ui/PromptDialog'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import { Icon } from '@/components/ui/Icon'
 
 // ── Column config ─────────────────────────────────────────────────────────────
@@ -105,6 +106,7 @@ function KanbanCard({
   const elapsed  = useElapsed(order.created_at)
   const tOrder   = useTranslations('order')
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [unassignOpen, setUnassignOpen] = useState(false)
 
   const urgency: Urgency = order.status === 'delivered' || order.status === 'completed'
     ? 'normal'
@@ -360,7 +362,7 @@ function KanbanCard({
               <button
                 type="button"
                 title={isAr ? 'إلغاء التعيين' : 'Unassign Driver'}
-                onClick={(e) => { e.stopPropagation(); if (confirm(isAr ? 'إلغاء تعيين السائق؟' : 'Unassign driver?')) onUnassign() }}
+                onClick={(e) => { e.stopPropagation(); setUnassignOpen(true) }}
                 style={{
                   padding:      '6px',
                   background:   'transparent',
@@ -440,6 +442,17 @@ function KanbanCard({
           onCancel(reason)
         }}
         onCancel={() => setCancelOpen(false)}
+      />
+
+      <ConfirmModal
+        isOpen={unassignOpen}
+        message={isAr ? 'إلغاء تعيين السائق؟' : 'Unassign driver?'}
+        variant="danger"
+        onConfirm={() => {
+          setUnassignOpen(false)
+          onUnassign()
+        }}
+        onCancel={() => setUnassignOpen(false)}
       />
     </div>
   )

@@ -10,6 +10,7 @@ import { formatPriceFils } from '@/lib/format'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import { X, Trash2, Minus, Plus, ShoppingBag, MapPin, ArrowLeft, ArrowRight } from 'lucide-react'
 import { Icon } from '@/components/ui/Icon'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 // Tailwind class shared by the two primary cart CTAs (إضافة المزيد + متابعة الطلب).
 // Both render as solid-gold pills with dark text — a true equal-weight pair.
@@ -38,6 +39,7 @@ export default function CartBottomSheet() {
 
   const [mounted, setMounted] = useState(false)
   const [removedItem, setRemovedItem] = useState<CartItem | null>(null)
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => { setMounted(true) }, [])
@@ -79,7 +81,7 @@ export default function CartBottomSheet() {
   }
 
   function handleClearCart() {
-    if (window.confirm(t('confirmClear'))) clearCart()
+    setClearConfirmOpen(true)
   }
 
   if (!mounted) return null
@@ -303,6 +305,17 @@ export default function CartBottomSheet() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={clearConfirmOpen}
+        message={t('confirmClear')}
+        variant="danger"
+        onConfirm={() => {
+          setClearConfirmOpen(false)
+          clearCart()
+        }}
+        onCancel={() => setClearConfirmOpen(false)}
+      />
     </>
   )
 }

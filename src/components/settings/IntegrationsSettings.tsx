@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useLocale } from 'next-intl'
 import { Icon, type IconName } from '@/components/ui/Icon'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 type IntStatus = 'connected' | 'coming_soon'
 
@@ -70,13 +72,15 @@ export default function IntegrationsSettings() {
   const connected  = INTEGRATIONS.filter(i => i.status === 'connected')
   const comingSoon = INTEGRATIONS.filter(i => i.status === 'coming_soon')
 
+  const [pendingDisconnect, setPendingDisconnect] = useState<string | null>(null)
+
   function handleDisconnect(label: string) {
-    const msg = isAr
-      ? `هل أنت متأكد من قطع الاتصال بـ ${label}؟`
-      : `Are you sure you want to disconnect ${label}?`
-    if (window.confirm(msg)) {
-      // Disconnect logic goes here when integrations are implemented
-    }
+    setPendingDisconnect(label)
+  }
+
+  function confirmDisconnect() {
+    // Disconnect logic goes here when integrations are implemented
+    setPendingDisconnect(null)
   }
 
   return (
@@ -118,6 +122,20 @@ export default function IntegrationsSettings() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={pendingDisconnect !== null}
+        message={
+          pendingDisconnect
+            ? isAr
+              ? `هل أنت متأكد من قطع الاتصال بـ ${pendingDisconnect}؟`
+              : `Are you sure you want to disconnect ${pendingDisconnect}?`
+            : ''
+        }
+        variant="danger"
+        onConfirm={confirmDisconnect}
+        onCancel={() => setPendingDisconnect(null)}
+      />
     </div>
   )
 }

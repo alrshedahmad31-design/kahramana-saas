@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useCartStore } from '@/lib/cart'
 import { getMenuItemBySlug } from '@/lib/menu'
 import { toast } from '@/lib/toast'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 // Only the order_items fields we read — keeps the prop surface free from any
 // Supabase Row type churn (NUMERIC string ↔ number, etc.) and lets the server
@@ -31,13 +33,9 @@ export default function ReorderButton({ items, isRTL }: Props) {
   const addItem    = useCartStore((s) => s.addItem)
   const openCart   = useCartStore((s) => s.openCart)
 
-  const handleClick = () => {
-    // Confirm cart replacement before clobbering an existing in-progress cart.
-    if (cartItems.length > 0) {
-      const ok = window.confirm(t('reorderConfirm'))
-      if (!ok) return
-    }
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
+  const performReorder = () => {
     // Resolve every line against the current menu BEFORE mutating the cart so
     // a partial failure leaves the existing cart untouched.
     type Resolved = { menuItem: ReturnType<typeof getMenuItemBySlug>; src: ReorderItem }
@@ -85,20 +83,40 @@ export default function ReorderButton({ items, isRTL }: Props) {
     openCart()
   }
 
+  const handleClick = () => {
+    if (cartItems.length > 0) {
+      setConfirmOpen(true)
+      return
+    }
+    performReorder()
+  }
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      aria-label={t('reorder')}
-      className={`flex items-center justify-center gap-2 w-full
-                  bg-brand-surface-2 border border-brand-gold/40 text-brand-gold
-                  font-satoshi font-bold text-base
-                  py-4 rounded-lg mb-3
-                  hover:bg-brand-gold/10 active:bg-brand-gold/20
-                  transition-colors duration-150
-                  ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
-    >
-      {t('reorder')}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-label={t('reorder')}
+        className={`flex items-center justify-center gap-2 w-full
+                    bg-brand-surface-2 border border-brand-gold/40 text-brand-gold
+                    font-satoshi font-bold text-base
+                    py-4 rounded-lg mb-3
+                    hover:bg-brand-gold/10 active:bg-brand-gold/20
+                    transition-colors duration-150
+                    ${isRTL ? 'font-almarai' : 'font-satoshi'}`}
+      >
+        {t('reorder')}
+      </button>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        message={t('reorderConfirm')}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          performReorder()
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   )
 }

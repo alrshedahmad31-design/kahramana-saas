@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import { toast } from '@/lib/toast'
 
 interface Props {
@@ -25,6 +26,8 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy]       = useState(false)
   const [openIds, setOpenIds] = useState<Set<string>>(new Set())
+  const [groupToDelete, setGroupToDelete] = useState<MenuOptionGroupRow | null>(null)
+  const [optionToDelete, setOptionToDelete] = useState<string | null>(null)
 
   // Ref always holds the latest groups state — avoids stale-closure bugs in
   // onBlur handlers that capture the group value at render time.
@@ -89,8 +92,14 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
     }
   }
 
-  async function removeGroup(g: MenuOptionGroupRow) {
-    if (!confirm(isAr ? `حذف "${g.name_ar}"؟` : `Delete "${g.name_en}"?`)) return
+  function removeGroup(g: MenuOptionGroupRow) {
+    setGroupToDelete(g)
+  }
+
+  async function confirmRemoveGroup() {
+    const g = groupToDelete
+    if (!g) return
+    setGroupToDelete(null)
     setBusy(true)
     const res = await deleteMenuOptionGroup(g.id, menuItemSlug)
     setBusy(false)
@@ -142,10 +151,16 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
     }
   }
 
-  async function removeOption(optionId: string) {
-    if (!confirm(isAr ? 'حذف هذا الخيار؟' : 'Delete this option?')) return
+  function removeOption(optionId: string) {
+    setOptionToDelete(optionId)
+  }
+
+  async function confirmRemoveOption() {
+    const id = optionToDelete
+    if (!id) return
+    setOptionToDelete(null)
     setBusy(true)
-    const res = await deleteMenuOption(optionId)
+    const res = await deleteMenuOption(id)
     setBusy(false)
     if (res.success) {
       await reload()
@@ -346,6 +361,28 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
           </div>
         )
       })}
+
+      <ConfirmModal
+        isOpen={groupToDelete !== null}
+        message={
+          groupToDelete
+            ? isAr
+              ? `حذف "${groupToDelete.name_ar}"؟`
+              : `Delete "${groupToDelete.name_en}"?`
+            : ''
+        }
+        variant="danger"
+        onConfirm={() => void confirmRemoveGroup()}
+        onCancel={() => setGroupToDelete(null)}
+      />
+
+      <ConfirmModal
+        isOpen={optionToDelete !== null}
+        message={isAr ? 'حذف هذا الخيار؟' : 'Delete this option?'}
+        variant="danger"
+        onConfirm={() => void confirmRemoveOption()}
+        onCancel={() => setOptionToDelete(null)}
+      />
     </div>
   )
 }
