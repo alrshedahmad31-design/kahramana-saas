@@ -829,6 +829,7 @@ export type Database = {
           joined_at: string
           last_order_at: string | null
           loyalty_tier: Database["public"]["Enums"]["loyalty_tier"]
+          membership_id: string | null
           name: string | null
           phone: string
           points_balance: number
@@ -849,6 +850,7 @@ export type Database = {
           joined_at?: string
           last_order_at?: string | null
           loyalty_tier?: Database["public"]["Enums"]["loyalty_tier"]
+          membership_id?: string | null
           name?: string | null
           phone: string
           points_balance?: number
@@ -869,6 +871,7 @@ export type Database = {
           joined_at?: string
           last_order_at?: string | null
           loyalty_tier?: Database["public"]["Enums"]["loyalty_tier"]
+          membership_id?: string | null
           name?: string | null
           phone?: string
           points_balance?: number
