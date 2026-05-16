@@ -38,19 +38,18 @@ const BRANCH_RATINGS: Partial<Record<string, { ratingValue: string; reviewCount:
   qallali: { ratingValue: '4.4', reviewCount: '121',  bestRating: '5', worstRating: '1' },
 }
 
-// Per-branch amenityFeature lists for Schema.org LocationFeatureSpecification.
-// Surfaces Gulf-relevant differentiators (family rooms, jalsa floor seating,
-// outdoor seating) in branch-level rich results. Add Qallali entries here
-// when its amenities are confirmed.
-const BRANCH_AMENITIES: Partial<Record<string, Array<{ '@type': 'LocationFeatureSpecification'; name: string; value: boolean }>>> = {
+const BRAND_RATING = { ratingValue: '4.6', reviewCount: '1662', bestRating: '5', worstRating: '1' }
+
+// Per-branch amenities — emitted as schema.org LocationFeatureSpecification entries.
+// Confirmed via on-site verification + GBP attributes. Per-branch (not blanket) so
+// each location only advertises what it actually offers.
+const BRANCH_AMENITIES: Partial<Record<string, Array<{ ar: string; en: string }>>> = {
   riffa: [
-    { '@type': 'LocationFeatureSpecification', name: 'Private Family Rooms', value: true },
-    { '@type': 'LocationFeatureSpecification', name: 'Floor Seating (Jalsa)', value: true },
-    { '@type': 'LocationFeatureSpecification', name: 'Outdoor Seating',      value: true },
+    { ar: 'جلسات عائلية خاصة', en: 'Private family rooms' },
+    { ar: 'جلسات أرضية (جلسة)', en: 'Floor seating (Jalsa)' },
+    { ar: 'جلسات خارجية',       en: 'Outdoor seating' },
   ],
 }
-
-const BRAND_RATING = { ratingValue: '4.6', reviewCount: '1662', bestRating: '5', worstRating: '1' }
 
 // Schema.org requires "25:00" format when closing time crosses midnight.
 function schemaClosesTime(time: string): string {
@@ -97,6 +96,7 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
     priceRange: 'BHD 1-5',
     currenciesAccepted: 'BHD',
     paymentAccepted: ['Cash', 'Credit Card', 'BENEFIT Pay'],
+    acceptsReservations: true,
     address: {
       '@type': 'PostalAddress',
       streetAddress:    localized(locale, branch.addressAr, branch.addressEn),
@@ -129,22 +129,21 @@ export function buildBranchLocalBusiness(branch: Branch, locale: Locale) {
     }
   }
 
+  const amenities = BRANCH_AMENITIES[branch.id]
+  if (amenities) {
+    base.amenityFeature = amenities.map((a) => ({
+      '@type': 'LocationFeatureSpecification',
+      name: localized(locale, a.ar, a.en),
+      value: true,
+    }))
+  }
+
   const extData = BRANCH_EXTENDED_DATA[branch.id]
   if (extData) {
     base.description = localized(locale, extData.descriptionAr, extData.descriptionEn)
     if (extData.imageUrl) {
       base.image = `${SITE}${extData.imageUrl}`
     }
-  }
-
-  const amenities = BRANCH_AMENITIES[branch.id]
-  if (amenities && amenities.length > 0) {
-    base.amenityFeature = amenities
-  }
-
-  // Reservations: Riffa accepts dine-in reservations; Qallali walk-in only.
-  if (branch.id === 'riffa') {
-    base.acceptsReservations = true
   }
 
   // Strip undefined values so the JSON-LD output is clean
