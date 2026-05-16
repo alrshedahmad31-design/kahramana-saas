@@ -7,7 +7,7 @@ import MenuItemImage from '@/components/menu/menu-item-image'
 import StickyAddToCart from '@/components/menu/sticky-add-to-cart'
 import { ItemSelectionProvider, useItemSelection } from '@/components/menu/item-selection-provider'
 import ItemPriceSelector from '@/components/menu/item-price-selector'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { Home, ChevronRight, ChevronLeft } from 'lucide-react'
 import { gtag } from '@/lib/gtag'
 

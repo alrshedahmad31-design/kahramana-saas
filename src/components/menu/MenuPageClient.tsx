@@ -16,7 +16,7 @@ import FeaturedCarousel from './FeaturedCarousel'
 import TopOrderHighlights from './TopOrderHighlights'
 import MenuSection from './MenuSection'
 import { EmptyState } from './EmptyState'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { ChevronUp } from 'lucide-react'
 
 interface MenuPageClientProps {

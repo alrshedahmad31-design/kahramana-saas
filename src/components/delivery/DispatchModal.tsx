@@ -1,7 +1,7 @@
 'use client'
 
 import { useState }          from 'react'
-import { motion }            from 'framer-motion'
+import { motion }            from 'motion/react'
 import { X, Check, MapPin }  from 'lucide-react'
 import { assignDriverToOrder } from '@/app/[locale]/dashboard/delivery/actions'
 import { DV, DV_STATUS, DRIVER_STATUS } from '@/lib/delivery/tokens'

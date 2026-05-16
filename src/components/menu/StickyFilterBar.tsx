@@ -4,7 +4,7 @@ import { Search } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import type { CategoryWithItems } from '@/lib/menu'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 
 interface StickyFilterBarProps {
   categories: CategoryWithItems[]

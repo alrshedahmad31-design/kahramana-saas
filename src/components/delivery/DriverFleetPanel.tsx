@@ -2,7 +2,7 @@
 
 import { Phone, MapPin, PackageCheck } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import Image from 'next/image'
 import { DV, DRIVER_STATUS } from '@/lib/delivery/tokens'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'

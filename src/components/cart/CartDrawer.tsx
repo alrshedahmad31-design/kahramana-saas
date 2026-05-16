@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from 'next-intl'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { useRouter } from '@/i18n/navigation'
 import { useCartStore, selectTotalItems, selectCartTotalFils, selectLineTotalFils, SIZE_LABELS, type CartItem } from '@/lib/cart'
 import { formatPriceFils } from '@/lib/format'

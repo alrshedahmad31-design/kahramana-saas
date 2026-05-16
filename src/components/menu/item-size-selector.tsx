@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { SIZE_LABELS, type CartItem } from '@/lib/cart'
 import type { MenuSizeMap } from '@/lib/menu'
 import { formatPrice } from '@/lib/format'

@@ -9,7 +9,7 @@ import { resolveMenuItemPrice } from '@/lib/menu'
 import { ItemSelectionContext } from '@/components/menu/item-selection-provider'
 import ItemSizeSelector from '@/components/menu/item-size-selector'
 import ItemVariantSelector from '@/components/menu/item-variant-selector'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { gtag } from '@/lib/gtag'
 import { bhdToFils, formatPrice } from '@/lib/format'
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { Link } from '@/i18n/navigation'
 import Image from 'next/image'
 import type { NormalizedMenuItem } from '@/lib/menu'

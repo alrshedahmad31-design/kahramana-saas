@@ -254,7 +254,7 @@ const nextConfig: NextConfig = {
     // Next.js 15 + SWC picks up package.json browserslist automatically,
     // stripping legacy polyfills (Array.at, flat, Object.fromEntries, etc.)
     // without needing browsersListForSwc flag.
-    optimizePackageImports: ['gsap', 'framer-motion', 'date-fns', 'lucide-react'],
+    optimizePackageImports: ['gsap', 'motion', 'date-fns', 'lucide-react'],
   },
 }
 

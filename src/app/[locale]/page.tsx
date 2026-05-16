@@ -80,7 +80,7 @@ export default async function HomePage() {
         {/* A. Cinematic Opening -- no dynamic() so SSR image is never inside Suspense */}
         <HeroWrapper />
 
-        {/* B. Feature Artifacts -- lazy + ssr:false, framer-motion out of critical bundle */}
+        {/* B. Feature Artifacts -- lazy + ssr:false, motion out of critical bundle */}
         <FeatureArtifactsWrapper />
 
         {/* C-F. Below-fold content stays server-rendered; animation JS removed from this path */}

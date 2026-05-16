@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useTranslations, useLocale } from 'next-intl'
 import type { KDSStation } from '@/lib/supabase/custom-types'
 import { STATION_CONFIG } from '@/constants/kds'

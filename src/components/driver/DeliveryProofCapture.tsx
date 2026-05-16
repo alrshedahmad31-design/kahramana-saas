@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import NextImage from 'next/image'
 import { useTranslations } from 'next-intl'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { tokens } from '@/lib/design-tokens'
 import { toast } from '@/lib/toast'
 import { uploadDeliveryProof } from '@/app/[locale]/driver/actions'

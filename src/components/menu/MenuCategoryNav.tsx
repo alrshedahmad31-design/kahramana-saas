@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion'
+import { motion, AnimatePresence, LayoutGroup } from 'motion/react'
 import { Search } from 'lucide-react'
 import type { MenuMainCategory } from '@/constants/menu-categories'
 import { Icon } from '@/components/ui/Icon'

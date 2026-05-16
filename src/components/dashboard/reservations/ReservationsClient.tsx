@@ -25,7 +25,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { format, isToday, parseISO, addMinutes, isAfter, isBefore } from 'date-fns'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { toast } from '@/lib/toast'
 import {
   type Reservation,

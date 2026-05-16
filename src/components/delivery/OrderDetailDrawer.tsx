@@ -3,7 +3,7 @@ import { SIZE_LABELS } from '@/lib/cart'
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslations }                from 'next-intl'
-import { motion, AnimatePresence }        from 'framer-motion'
+import { motion, AnimatePresence }        from 'motion/react'
 import { X, Phone, MapPin, Bike, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { createClient }                   from '@/lib/supabase/client'
 import { cancelDeliveryOrder, confirmDelivery } from '@/app/[locale]/dashboard/delivery/actions'
