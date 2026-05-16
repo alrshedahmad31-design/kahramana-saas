@@ -158,8 +158,10 @@ function formatOrderTimestamp(isAr: boolean): { date: string; time: string } {
     timeZone: tz,
   }).format(now)
   // Time uses the locale's preferred 12-hour form so the suffix lands
-  // naturally: 'ص'/'م' in Arabic, 'AM'/'PM' in English.
-  const timeLocale = isAr ? 'ar-BH' : 'en-BH'
+  // naturally: 'ص'/'م' in Arabic, 'AM'/'PM' in English. `-u-nu-latn` forces
+  // Latin digits in Arabic (operators read the numbers regardless of
+  // language).
+  const timeLocale = isAr ? 'ar-BH-u-nu-latn' : 'en-BH-u-nu-latn'
   const time = new Intl.DateTimeFormat(timeLocale, {
     hour: '2-digit',
     minute: '2-digit',
@@ -288,7 +290,7 @@ export function formatRestaurantPricedCheckoutMessage(
     )
   }
   if (mapsUrl) {
-    lines.push(`📍 ${mapsUrl}`)
+    lines.push(mapsUrl)
   }
   if (deliveryNote) {
     lines.push(`${isAr ? 'ملاحظات التوصيل' : 'Delivery Note'}: ${deliveryNote}`)
@@ -300,7 +302,7 @@ export function formatRestaurantPricedCheckoutMessage(
       ? '_التوفر والأسعار النهائية تُؤكَّد من قِبَل المطعم_'
       : '_Availability and final pricing are subject to restaurant confirmation_',
     isAr ? 'شكراً لاختياركم *كهرمانة بغداد*' : 'Thank you for choosing *Kahramana Baghdad*',
-    isAr ? '_سفير المذاق البغدادي في البحرين_ ✨' : "_Bahrain's Ambassador of Baghdadi Flavour_ ✨",
+    isAr ? '_سفير المذاق البغدادي في البحرين_' : "_Bahrain's Ambassador of Baghdadi Flavour_",
   )
 
   return lines.join('\n')
