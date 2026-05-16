@@ -1,5 +1,6 @@
 # GEMINI.md — Kahramana Baghdad
 > Gemini Code Assist context. Inherits from AGENTS.md.
+> **Antigravity sessions:** also read ANTIGRAVITY.md for workflow + agent-manager rules.
 > Last updated: 2026-05-16 (rewritten to match Gemini Code Assist capabilities; Antigravity-only workflow rules moved to ANTIGRAVITY.md)
 
 ---
