@@ -58,6 +58,7 @@ const orderSchema = z.object({
   delivery_building:   z.string().max(120).nullable(),
   delivery_street:     z.string().max(120).nullable(),
   delivery_area:       z.string().max(120).nullable(),
+  delivery_flat:       z.string().max(50).nullable(),
   delivery_lat:        z.number().nullable(),
   delivery_lng:        z.number().nullable(),
   source:              z.string().max(50),
@@ -131,6 +132,7 @@ interface OrderBase {
   delivery_building:   string | null
   delivery_street:     string | null
   delivery_area:       string | null
+  delivery_flat:       string | null
   delivery_lat:        number | null
   delivery_lng:        number | null
   source:              string
@@ -235,7 +237,7 @@ function buildCheckoutLinks(
       deliveryBlock:    orderData.delivery_area,
       deliveryRoad:     orderData.delivery_street,
       deliveryBuilding: orderData.delivery_building,
-      deliveryFlat:     null,
+      deliveryFlat:     orderData.delivery_flat,
       deliveryLat:      orderData.delivery_lat,
       deliveryLng:      orderData.delivery_lng,
     },
@@ -704,6 +706,27 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
     if (!orderId) return { orderId: '', finalTotal: 0, error: 'Order creation failed' }
 
+    // ── Persist delivery_flat ─────────────────────────────────────────────────
+    // rpc_create_order (134) predates the delivery_flat column (154) and does
+    // not expose p_delivery_flat. Write it via a focused UPDATE so KDS, driver,
+    // and the restaurant WhatsApp template all see the same structured value.
+    // Best-effort: a failure here must not abort the order.
+    if (
+      resolvedOrderData.order_type === 'delivery' &&
+      resolvedOrderData.delivery_flat
+    ) {
+      const { error: flatErr } = await supabase
+        .from('orders')
+        .update({ delivery_flat: resolvedOrderData.delivery_flat })
+        .eq('id', orderId)
+      if (flatErr) {
+        Sentry.captureException(new Error(flatErr.message), {
+          tags: { stage: 'checkout.delivery_flat_save_failed', code: flatErr.code ?? 'unknown' },
+          extra: { orderId },
+        })
+      }
+    }
+
     // ── Payment record ────────────────────────────────────────────────────────
     const paymentResult = await createInitialPayment(supabase, orderId, finalTotal, paymentMode, expiresAt)
     if (paymentResult.error) return { orderId: '', finalTotal: 0, error: paymentResult.error }
@@ -765,7 +788,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
               default_block:    resolvedOrderData.delivery_area     ?? null,
               default_road:     resolvedOrderData.delivery_street   ?? null,
               default_building: resolvedOrderData.delivery_building ?? null,
-              default_flat:     null,
+              default_flat:     resolvedOrderData.delivery_flat     ?? null,
               default_area:     resolvedOrderData.delivery_area     ?? null,
               default_lat:      resolvedOrderData.delivery_lat      ?? null,
               default_lng:      resolvedOrderData.delivery_lng      ?? null,

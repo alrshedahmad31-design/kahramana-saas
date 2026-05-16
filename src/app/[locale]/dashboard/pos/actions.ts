@@ -386,6 +386,15 @@ export async function createManualOrder(
     }
   }
 
+  // ── Persist delivery_flat (migration 154; not exposed via rpc_create_order) ──
+  const flat = addr?.flat?.trim()
+  if (data.orderType === 'delivery' && flat) {
+    await supabase
+      .from('orders')
+      .update({ delivery_flat: flat })
+      .eq('id', orderId)
+  }
+
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/orders`)
   revalidatePath(`/${locale}/dashboard/pos`)

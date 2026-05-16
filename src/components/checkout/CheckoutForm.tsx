@@ -363,6 +363,7 @@ export default function CheckoutForm({ customerProfile }: Props) {
         delivery_building:   !isPickup ? manualAddr.building.trim() || null : null,
         delivery_street:     !isPickup ? manualAddr.road.trim() || null : null,
         delivery_area:       !isPickup ? manualAddr.block.trim() || null : null,
+        delivery_flat:       !isPickup ? manualAddr.flat.trim() || null : null,
         delivery_lat:        !isPickup ? gpsCoords?.lat ?? null : null,
         delivery_lng:        !isPickup ? gpsCoords?.lng ?? null : null,
         source:              'direct',
