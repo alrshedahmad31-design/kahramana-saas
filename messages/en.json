@@ -378,6 +378,19 @@
       "description": "Share the essential details and we will open a structured WhatsApp message so the Kahramana team can review your request and prepare a suitable quote.",
       "notice": "Submission is through WhatsApp only in this phase. No online payment is collected through this form.",
       "submit": "Send Catering Request",
+      "submitting": "Sending…",
+      "submitAnother": "Send Another Inquiry",
+      "successTitle": "Request Received",
+      "successSubtitle": "We have saved your details and opened WhatsApp so you can follow up with the branch.",
+      "whatsappConfirm": "Continue on WhatsApp",
+      "popupBlocked": "WhatsApp could not open automatically. Please open it manually.",
+      "turnstileRequired": "Please complete the verification before submitting.",
+      "errors": {
+        "generic": "Could not submit your request. Please try again.",
+        "rateLimit": "Too many attempts. Please try again later.",
+        "captcha": "Verification failed. Please try again.",
+        "invalidInput": "Please review the fields and try again."
+      },
       "fields": {
         "name": {
           "label": "Name",
