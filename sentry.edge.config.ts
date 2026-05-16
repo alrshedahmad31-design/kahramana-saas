@@ -10,7 +10,7 @@ Sentry.init({
 
   // Sanitized release name — short SHA only, consistent with server/client init.
   release: process.env.VERCEL_GIT_COMMIT_REF
-    ? `kahramana-${process.env.VERCEL_GIT_COMMIT_REF}-${(process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7)}`
+    ? `kahramana-${process.env.VERCEL_GIT_COMMIT_REF.replace(/\//g, '-')}-${(process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7)}`
     : undefined,
 
   // 10% trace sampling — aligned with server + client; full sampling burns Sentry quota.

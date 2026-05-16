@@ -10,7 +10,7 @@ const withNextIntl = createNextIntlPlugin()
 // Code-side only: do NOT set SENTRY_RELEASE as a Vercel env var.
 const sentryRelease =
   process.env.VERCEL_GIT_COMMIT_REF && process.env.VERCEL_GIT_COMMIT_SHA
-    ? `kahramana-${process.env.VERCEL_GIT_COMMIT_REF}-${process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)}`
+    ? `kahramana-${process.env.VERCEL_GIT_COMMIT_REF.replace(/\//g, '-')}-${process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)}`
     : undefined;
 
 // CSP is injected per-request with a nonce in src/middleware.ts
