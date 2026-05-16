@@ -1,6 +1,6 @@
 'use server'
 
-import bcrypt                          from 'bcrypt'
+import bcryptjs                        from 'bcryptjs'
 import { createHash, randomUUID }      from 'crypto'
 import { createServiceClient }         from '@/lib/supabase/server'
 import { cookies, headers }            from 'next/headers'
@@ -31,7 +31,7 @@ const EMPTY_ROSTER_DUMMY_HASH =
   '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
 
 async function hashPin(pin: string): Promise<string> {
-  return bcrypt.hash(pin, BCRYPT_COST)
+  return bcryptjs.hash(pin, BCRYPT_COST)
 }
 
 function isBcryptHash(hash: string): boolean {
@@ -50,7 +50,7 @@ async function comparePinAndMaybeUpgrade(
   if (!storedHash) return false
 
   if (isBcryptHash(storedHash)) {
-    return bcrypt.compare(pin, storedHash)
+    return bcryptjs.compare(pin, storedHash)
   }
 
   // Legacy SHA-256 row → verify with constant-equality, then upgrade in place.
@@ -212,7 +212,7 @@ export async function verifyPin(pin: string): Promise<ClockResult> {
   // return in microseconds and become trivially distinguishable from the
   // non-empty path.
   if (rows.length === 0) {
-    await bcrypt.compare(pin, EMPTY_ROSTER_DUMMY_HASH)
+    await bcryptjs.compare(pin, EMPTY_ROSTER_DUMMY_HASH)
   }
 
   if (!matched) return { success: false, error: 'PIN not found' }

@@ -1,6 +1,6 @@
 'use server'
 
-import bcrypt from 'bcrypt'
+import bcryptjs from 'bcryptjs'
 import { z } from 'zod'
 
 import { revalidatePath }      from 'next/cache'
@@ -101,7 +101,7 @@ export async function updateStaffProfile(input: UpdateProfileInput): Promise<Act
   if (input.emergency_contact_name  !== undefined) updates.emergency_contact_name  = input.emergency_contact_name || null
   if (input.emergency_contact_phone !== undefined) updates.emergency_contact_phone = input.emergency_contact_phone || null
   if (input.address                 !== undefined) updates.address                 = input.address || null
-  if (input.clock_pin               !== undefined) updates.clock_pin_hash           = input.clock_pin ? await bcrypt.hash(input.clock_pin, 10) : null
+  if (input.clock_pin               !== undefined) updates.clock_pin_hash           = input.clock_pin ? await bcryptjs.hash(input.clock_pin, 10) : null
   if (input.staff_notes             !== undefined) updates.staff_notes             = input.staff_notes || null
 
   // CAS: pin to the row state we just permission-checked. A concurrent role

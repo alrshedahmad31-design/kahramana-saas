@@ -1,6 +1,6 @@
 'use server'
 
-import bcrypt from 'bcrypt'
+import bcryptjs from 'bcryptjs'
 
 import { revalidatePath } from 'next/cache'
 import { Ratelimit }      from '@upstash/ratelimit'
@@ -303,7 +303,7 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
   if (input.hourly_rate != null)     profile.hourly_rate             = input.hourly_rate
   if (input.emergency_contact_name)  profile.emergency_contact_name  = input.emergency_contact_name
   if (input.emergency_contact_phone) profile.emergency_contact_phone = input.emergency_contact_phone
-  if (input.clock_pin)               profile.clock_pin_hash          = await bcrypt.hash(input.clock_pin, 10)
+  if (input.clock_pin)               profile.clock_pin_hash          = await bcryptjs.hash(input.clock_pin, 10)
   if (input.staff_notes)             profile.staff_notes             = input.staff_notes
 
   if (Object.keys(profile).length > 0) {
