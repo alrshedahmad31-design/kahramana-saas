@@ -744,6 +744,10 @@
     "totalLabel": "Total",
     "notesLabel": "Notes",
     "contactBranchWhatsapp": "Contact Branch via WhatsApp",
+    "reorder": "Reorder",
+    "reorderConfirm": "This will replace your current cart. Continue?",
+    "reorderMissingItems": "Some items are no longer available",
+    "reorderAllMissing": "None of these items are available anymore",
     "cancelReasonTitle": "Cancellation reason",
     "returnReasonTitle": "Return reason",
     "status": {

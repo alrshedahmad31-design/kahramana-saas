@@ -744,6 +744,10 @@
     "totalLabel": "الإجمالي",
     "notesLabel": "ملاحظات",
     "contactBranchWhatsapp": "تواصل مع الفرع عبر واتساب",
+    "reorder": "اطلب مجدداً",
+    "reorderConfirm": "سيتم استبدال سلة التسوق الحالية. هل تريد المتابعة؟",
+    "reorderMissingItems": "بعض الأصناف لم تعد متوفرة",
+    "reorderAllMissing": "لم يعد أي من الأصناف متوفراً",
     "cancelReasonTitle": "سبب الإلغاء",
     "returnReasonTitle": "سبب الإرجاع",
     "status": {

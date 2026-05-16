@@ -12,6 +12,7 @@ import type { OrderWithItems } from '@/lib/supabase/custom-types'
 import { formatPrice } from '@/lib/format'
 import { BRANCHES } from '@/constants/contact'
 import OrderTrackingStatus from '@/components/orders/OrderTrackingStatus'
+import ReorderButton from '@/components/orders/ReorderButton'
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
@@ -241,6 +242,23 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
             </div>
           )}
         </div>
+
+        {/* ── Reorder ───────────────────────────────────────────────── */}
+        {order?.order_items && order.order_items.length > 0 && (
+          <ReorderButton
+            isRTL={isAr}
+            items={order.order_items.map((oi) => ({
+              menu_item_slug:   oi.menu_item_slug,
+              name_ar:          oi.name_ar,
+              name_en:          oi.name_en,
+              quantity:         oi.quantity,
+              selected_size:    oi.selected_size,
+              selected_variant: oi.selected_variant,
+              notes:            oi.notes,
+              unit_price_bhd:   oi.unit_price_bhd,
+            }))}
+          />
+        )}
 
         {/* ── WhatsApp CTA ──────────────────────────────────────────── */}
         {branch && (
