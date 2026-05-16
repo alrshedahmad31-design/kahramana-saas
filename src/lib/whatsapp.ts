@@ -72,6 +72,19 @@ export interface PricedCheckoutMessageOptions {
   trackingUrl?: string
   subtotalBhd: number
   totalBhd: number
+  // Restaurant template fields — all optional, plumbed from existing order data
+  // at the call site (no new data sources, just exposing what's already known).
+  source?: string | null
+  paymentMethod?: string | null
+  deliveryFeeBhd?: number | null
+  discountBhd?: number | null
+  customerNote?: string | null
+  deliveryBlock?: string | null
+  deliveryRoad?: string | null
+  deliveryBuilding?: string | null
+  deliveryFlat?: string | null
+  deliveryLat?: number | null
+  deliveryLng?: number | null
 }
 
 function formatPricedItemLines(
@@ -116,31 +129,176 @@ export function formatCustomerPricedCheckoutMessage(
   ].join('\n')
 }
 
+// ── Restaurant new-order notification template (approved AR/EN format) ──────
+
+const RESTAURANT_DIVIDER = '━━━━━━━━━━━━━━━━━━━━━━━'
+
+function formatBhdNumber(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+    useGrouping: false,
+  }).format(amount)
+}
+
+function bhdAmount(amount: number, isAr: boolean): string {
+  const n = formatBhdNumber(amount)
+  return isAr ? `${n} د.ب` : `BHD ${n}`
+}
+
+function formatOrderTimestamp(): { date: string; time: string } {
+  const tz = 'Asia/Bahrain'
+  const now = new Date()
+  const date = new Intl.DateTimeFormat('en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: tz,
+  }).format(now)
+  const time = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: tz,
+  }).format(now)
+  return { date, time }
+}
+
+const SOURCE_LABELS: Record<string, { ar: string; en: string }> = {
+  direct:   { ar: 'الموقع',     en: 'Website'  },
+  website:  { ar: 'الموقع',     en: 'Website'  },
+  whatsapp: { ar: 'واتساب',     en: 'WhatsApp' },
+  pos:      { ar: 'نقطة البيع', en: 'POS'      },
+  manual:   { ar: 'إدخال يدوي', en: 'Manual'   },
+  waiter:   { ar: 'النادل',     en: 'Waiter'   },
+  qr:       { ar: 'باركود',     en: 'QR Code'  },
+  staff:    { ar: 'موظف',       en: 'Staff'    },
+}
+
+function localizedSource(source: string | null | undefined, isAr: boolean): string {
+  if (!source) return isAr ? 'الموقع' : 'Website'
+  const known = SOURCE_LABELS[source]
+  return known ? (isAr ? known.ar : known.en) : source
+}
+
+function localizedPaymentMethod(method: string | null | undefined, isAr: boolean): string {
+  if (!method) return isAr ? 'نقدي' : 'Cash'
+  if (method === 'cod' || method === 'cash') return isAr ? 'نقد عند الاستلام' : 'Cash on Delivery'
+  if (method === 'online') return isAr ? 'دفع إلكتروني' : 'Online'
+  return method
+}
+
+function localizedOrderType(orderType: 'delivery' | 'pickup', isAr: boolean): string {
+  if (isAr) return orderType === 'delivery' ? 'توصيل' : 'استلام'
+  return orderType === 'delivery' ? 'Delivery' : 'Pickup'
+}
+
+function buildMapsUrl(lat: number | null | undefined, lng: number | null | undefined): string | null {
+  if (typeof lat !== 'number' || typeof lng !== 'number') return null
+  return `https://www.google.com/maps?q=${lat},${lng}`
+}
+
 export function formatRestaurantPricedCheckoutMessage(
   items: PricedWhatsAppItem[],
   options: PricedCheckoutMessageOptions,
 ): string {
   const isAr = options.locale === 'ar'
   const branch = BRANCHES[options.branchId]
-  return [
-    isAr ? 'طلب جديد' : 'New order',
-    DIVIDER,
-    `${isAr ? 'رقم الطلب' : 'Order ID'}: #${options.orderNumber}`,
-    `${isAr ? 'الفرع' : 'Branch'}: ${isAr ? branch.nameAr : branch.nameEn}`,
-    `${isAr ? 'نوع الطلب' : 'Order type'}: ${isAr ? (options.orderType === 'delivery' ? 'توصيل' : 'استلام') : options.orderType}`,
-    `${isAr ? 'الاسم' : 'Customer'}: ${options.customerName}`,
+  const branchName = isAr ? branch.nameAr : branch.nameEn
+  const { date, time } = formatOrderTimestamp()
+
+  const subtotal   = options.subtotalBhd
+  const grandTotal = options.totalBhd
+  const deliveryFee = options.deliveryFeeBhd ?? 0
+  // Caller may pass discount explicitly; otherwise derive from totals.
+  // (subtotal + deliveryFee - grandTotal) collapses to 0 when no discount applied.
+  const discount = options.discountBhd ?? Math.max(0, subtotal + deliveryFee - grandTotal)
+
+  const qtyLabel   = isAr ? 'الكمية'    : 'Qty'
+  const priceLabel = isAr ? 'السعر'     : 'Price'
+  const totalLabel = isAr ? 'المجموع'   : 'Total'
+  const noteLabel  = isAr ? 'ملاحظة'    : 'Note'
+
+  const itemLines = items.flatMap((item, idx) => {
+    const name = isAr ? item.nameAr : item.nameEn
+    const sizeLabel = item.selectedSize
+      ? ` (${isAr ? SIZE_LABELS[item.selectedSize]?.ar ?? item.selectedSize : SIZE_LABELS[item.selectedSize]?.en ?? item.selectedSize})`
+      : ''
+    const variantLabel = item.selectedVariant ? ` — ${item.selectedVariant}` : ''
+    const fullName = `${name}${sizeLabel}${variantLabel}`
+    const priceStr = bhdAmount(item.unitPriceBhd, isAr)
+    const totalStr = bhdAmount(item.lineTotalBhd, isAr)
+    const lines: string[] = [
+      `${idx + 1}. ${fullName}`,
+      `   ${qtyLabel}: ${item.quantity} | ${priceLabel}: ${priceStr} | ${totalLabel}: ${totalStr}`,
+    ]
+    const note = item.notes?.trim()
+    if (note) lines.push(`   ${noteLabel}: ${note}`)
+    return lines
+  })
+
+  const mapsUrl =
+    options.orderType === 'delivery'
+      ? buildMapsUrl(options.deliveryLat, options.deliveryLng)
+      : null
+  const deliveryNote = options.customerNote?.trim() || options.notes?.trim() || null
+
+  const hasStructuredAddress =
+    options.orderType === 'delivery' &&
+    Boolean(options.deliveryBlock || options.deliveryRoad || options.deliveryBuilding)
+
+  const lines: string[] = [
+    isAr ? '*طلب جديد — كهرمانة بغداد*' : '*New Order — Kahramana Baghdad*',
+    `${isAr ? 'رقم الطلب' : 'Order No'}: ${options.orderNumber}`,
+    `${isAr ? 'الحالة' : 'Status'}: ${isAr ? 'جديد' : 'New'}`,
+    `${isAr ? 'الفرع' : 'Branch'}: ${branchName}`,
+    `${isAr ? 'المصدر' : 'Source'}: ${localizedSource(options.source, isAr)}`,
+    `${isAr ? 'الوقت' : 'Time'}: ${date} — ${time}`,
+    RESTAURANT_DIVIDER,
+    isAr ? '*تفاصيل الطلب*' : '*Order Details*',
+    ...itemLines,
+    RESTAURANT_DIVIDER,
+    isAr ? '*الإجمالي*' : '*Order Summary*',
+    `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${bhdAmount(subtotal, isAr)}`,
+    `${isAr ? 'رسوم التوصيل' : 'Delivery Fee'}: ${bhdAmount(deliveryFee, isAr)}`,
+    `${isAr ? 'الخصم' : 'Discount'}: ${bhdAmount(discount, isAr)}`,
+    `${isAr ? 'الإجمالي النهائي' : 'Grand Total'}: ${bhdAmount(grandTotal, isAr)}`,
+    RESTAURANT_DIVIDER,
+    isAr ? '*بيانات العميل*' : '*Customer Details*',
+    `${isAr ? 'الاسم' : 'Name'}: ${options.customerName}`,
     `${isAr ? 'الهاتف' : 'Phone'}: ${options.customerPhone}`,
-    ...(options.address ? [`${isAr ? 'العنوان' : 'Address'}: ${options.address}`] : []),
-    '',
-    isAr ? 'الأصناف:' : 'Items:',
-    ...formatPricedItemLines(items, options.locale, true),
-    DIVIDER,
-    `${isAr ? 'المجموع الفرعي' : 'Subtotal'}: ${formatPrice(options.subtotalBhd, options.locale)}`,
-    `${isAr ? 'التوصيل' : 'Delivery'}: ${isAr ? 'مجاني' : 'Free'}`,
-    `${isAr ? 'الإجمالي' : 'Total'}: ${formatPrice(options.totalBhd, options.locale)}`,
-    ...(options.notes ? ['', `${isAr ? 'ملاحظات عامة' : 'General notes'}: ${options.notes}`] : []),
-    ...(options.trackingUrl ? ['', isAr ? 'رابط التتبع:' : 'Tracking URL:', options.trackingUrl] : []),
-  ].join('\n')
+    `${isAr ? 'نوع الطلب' : 'Order Type'}: ${localizedOrderType(options.orderType, isAr)}`,
+    `${isAr ? 'طريقة الدفع' : 'Payment Method'}: ${localizedPaymentMethod(options.paymentMethod, isAr)}`,
+  ]
+
+  if (hasStructuredAddress) {
+    const block    = options.deliveryBlock?.trim()    || '—'
+    const road     = options.deliveryRoad?.trim()     || '—'
+    const building = options.deliveryBuilding?.trim() || '—'
+    const flat     = options.deliveryFlat?.trim()     || '—'
+    lines.push(
+      isAr
+        ? `بلوك: ${block} | الطريق: ${road} | المبنى: ${building} | الشقة: ${flat}`
+        : `Block: ${block} | Road: ${road} | Building: ${building} | Flat: ${flat}`,
+    )
+  }
+  if (mapsUrl) {
+    lines.push(`📍 ${mapsUrl}`)
+  }
+  if (deliveryNote) {
+    lines.push(`${isAr ? 'ملاحظات التوصيل' : 'Delivery Note'}: ${deliveryNote}`)
+  }
+
+  lines.push(
+    RESTAURANT_DIVIDER,
+    isAr
+      ? '_التوفر والأسعار النهائية تُؤكَّد من قِبَل المطعم_'
+      : '_Availability and final pricing are subject to restaurant confirmation_',
+    isAr ? 'شكراً لاختياركم *كهرمانة بغداد*' : 'Thank you for choosing *Kahramana Baghdad*',
+    isAr ? '_سفير المذاق البغدادي في البحرين_ 🍽' : "_Bahrain's Ambassador of Baghdadi Flavour_ 🍽",
+  )
+
+  return lines.join('\n')
 }
 
 export function buildPricedCheckoutWhatsAppLinks(

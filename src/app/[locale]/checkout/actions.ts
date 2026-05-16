@@ -202,6 +202,7 @@ function buildCheckoutLinks(
   pricedItems: PricedItemBase[],
   subtotalBhd: number,
   totalBhd: number,
+  paymentMode: 'cod' | 'online',
 ) {
   return buildPricedCheckoutWhatsAppLinks(
     pricedItems.map((item) => ({
@@ -227,6 +228,16 @@ function buildCheckoutLinks(
       trackingUrl: buildOrderTrackingUrl(orderId, locale, accessToken),
       subtotalBhd,
       totalBhd,
+      source:           orderData.source,
+      paymentMethod:    paymentMode === 'cod' ? 'cash' : paymentMode,
+      deliveryFeeBhd:   0,
+      customerNote:     orderData.customer_notes,
+      deliveryBlock:    orderData.delivery_area,
+      deliveryRoad:     orderData.delivery_street,
+      deliveryBuilding: orderData.delivery_building,
+      deliveryFlat:     null,
+      deliveryLat:      orderData.delivery_lat,
+      deliveryLng:      orderData.delivery_lng,
     },
   )
 }
@@ -718,6 +729,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       repriced.items,
       subtotal,
       finalTotal,
+      paymentMode,
     )
 
     // Fire-and-forget order confirmation email (logged-in customers only)
