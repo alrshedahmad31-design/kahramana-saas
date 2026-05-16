@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { createClient } from '@/lib/supabase/server'
 import PointsHistory from '@/components/loyalty/PointsHistory'
+import OrderHistorySection from '@/components/orders/OrderHistorySection'
 import MembershipCard from '@/components/loyalty/MembershipCard'
 import TierJourney from '@/components/loyalty/TierJourney'
 import TierBenefitsCards from '@/components/loyalty/TierBenefitsCards'
@@ -286,6 +287,9 @@ export default async function AccountPage({ params }: Props) {
             birthday:         customer.birthday,
           }}
         />
+
+        {/* ── S6b — Order history (last 5 orders + reorder CTA) ────────── */}
+        <OrderHistorySection customerId={customer.id} locale={locale} />
 
         {/* ── S7 — Points history ──────────────────────────────────────── */}
         <section aria-labelledby="points-history-heading">

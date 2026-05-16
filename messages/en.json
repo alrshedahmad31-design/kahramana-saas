@@ -1405,6 +1405,11 @@
       "bonus": "Bonus",
       "expired": "Expired"
     },
+    "orderHistory": {
+      "title": "Your recent orders",
+      "empty": "No previous orders yet",
+      "viewAll": "View all"
+    },
     "myInfo": {
       "heading": "My Info",
       "name": "Name",
