@@ -252,7 +252,7 @@ export default function CartBottomSheet() {
 
                   <button
                     type="button"
-                    onClick={() => { closeCart(); router.push('/menu') }}
+                    onClick={closeCart}
                     className={CART_CTA_CLASS}
                   >
                     {isRTL ? (
