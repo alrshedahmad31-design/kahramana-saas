@@ -488,6 +488,10 @@ npm run dev
 | 88 | 2026-05-11 | Waitlist (099), SEC-08 fix, routes fix, i18n parity, QA gates, mobile UX, KDS (100–103) |
 | 89 | 2026-05-12 | Sentry + Better Stack + /api/health + Loyalty UI + Security audit + Driver fixes + Menu improvements |
 | 90–93 | 2026-05-13 | Schema Markup, Impeccable design, Logo fix, Service Mode POS, Reservations system, Owner Dashboard, Sidebar reorder, BL-003/BL-004, Test cleanup, Security audit, Build fixes, Header redesign |
+| 94–126 | 2026-05-13 → 2026-05-16 | Multi-session lane (sonner toasts, reorder/history, motion v12, birthday cron, ConfirmModal primitive, loyalty i18n fix, البديع branch cleanup, founder card BiDi, catering form hardening with Turnstile+Upstash+DB, migration 160) — see per-session sections in `.agent/LAST-SESSION.md` archive |
+| 127 | 2026-05-16 | KDS ghost-count root-cause (migration 161 + selector tightening), driver `customerNavUrl` DMS bug, working tree migrated to `kahramana-Saas-fresh\` after `.git` loss |
+| 128 | 2026-05-16 | Waiter QR member scanner scaffold (flag OFF), migration 162 `customer_profiles.membership_id` STORED column + RLS, inventory alert duplicate-key fix, checkout `points_over_cap` localization |
+| 129 | 2026-05-16 | Points redemption auto-cap UX (UI now mirrors server 50% cap), cart drawer "إضافة المزيد" stops navigating to /menu, driver dashboard repeating sound + browser Notification + pulsing card for unacknowledged ready orders, hardened `supabase/client.ts` env-var failure mode, `.env.local` copied into fresh tree |
 
 ---
 

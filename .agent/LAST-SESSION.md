@@ -1,4 +1,295 @@
 # LAST-SESSION.md — Kahramana Baghdad
+> Session 129: Points-cap UX + cart drawer + driver realtime notifications + supabase client hardening. Master `b2f0555` → `2079f2c`.
+> Date: 2026-05-16
+> Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 129 — SUMMARY
+
+Four commits on master, all pushed. No migrations. All gates clean on
+every commit: `npx tsc --noEmit`, `npx tsx scripts/check-i18n.ts` (where
+i18n keys changed), `NEXT_BUILD_WORKERS=1 npm run build`. One
+out-of-band local environment fix (env file copy) that surfaced from a
+checkout-page runtime error mid-session.
+
+Theme: small, scoped UX fixes the user reported one-at-a-time, plus a
+genuine audit task (driver notifications) that landed a real feature.
+The supabase client hardening was a side-effect of the runtime error
+investigation — the actual root cause was a missing `.env.local` in
+the fresh tree.
+
+## COMMITS (4 on master, all pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `0ae1d6d` | fix(checkout) | **Points redemption auto-cap.** Client used to redeem the full points balance value (`pointsToCredit(balance)`); server rejected with `points_over_cap` when that exceeded 50% of subtotal. UI promised a saving the server then refused. Wired `maxRedeemablePoints(balance, subtotal)` (already existed in `src/lib/loyalty/calculations.ts`) into `CheckoutForm.tsx`. New `cappedPointsToRedeem` + `pointsCapped` drive both the in-page line item AND the value sent to `createOrderWithPoints`. `LoyaltyRedemptionWidget` now takes `appliedCreditBhd` + `capped`; shows the actually-applied amount in the "saving" row plus a subtle bilingual note when capped. New i18n key `checkout.loyalty.cappedNote` (AR + EN). Widget gate also requires `cappedPointsToRedeem >= MIN_REDEMPTION` so tiny carts (sub-BHD 2) don't show a redemption that would fail the min-redemption check server-side. |
+| `efe68b1` | fix(supabase) | **Actionable error when `NEXT_PUBLIC_SUPABASE_*` env vars are missing.** `src/lib/supabase/client.ts` was using `process.env.NEXT_PUBLIC_SUPABASE_URL!` then immediately `url.includes('/rest/v1')` — when the var was undefined, the client crashed with `Cannot read properties of undefined (reading 'includes')`. Added an explicit presence check that throws a clear message pointing at `.env.example`. Triggered by a runtime error in `CheckoutForm.loadBranchSupport` on the user's local dev. Root cause was an out-of-band local-env issue (see Infra Notes), but the harder failure mode is worth keeping. |
+| `22f7071` | fix(cart) | "إضافة المزيد" (Add more) button in `CartDrawer.tsx` was navigating to `/menu` even when the user was already on a non-empty menu page. Changed `onClick={() => { closeCart(); router.push('/menu') }}` → `onClick={closeCart}` so the drawer just closes and the user stays on whatever page they were browsing. Intentionally left intact: empty-cart "browseMenu" still navigates to `/menu` (needs a way to find items from a non-menu page), and the checkout CTA still routes to `/checkout`. `useRouter` import kept — still used by both. |
+| `2079f2c` | feat(driver) | **Sound + visual notifications for new delivery orders.** Audit found existing scaffolding — Web Audio synth `playBell('ready')` from `src/lib/audio/bells.ts` (no audio files needed), `useAudioAlert` hook, realtime channel on `orders`, Web Push subscription via service worker. Gaps: one-shot sound (didn't repeat), no in-page Notification API alert, no visual cue on the new card. Added `unacknowledgedIds` Set in `DriverDashboard.tsx` — populated when `fetchOrders` detects a new ready row, drained when the driver taps the card. Drives (a) an 8s interval that replays the bell while the set is non-empty (respects mute + online state), (b) `fireBrowserNotification` using the existing `Notification.permission` grant from `usePushNotifications`, (c) a new `isUnacknowledged` prop on `DriverOrderCard` that adds `ring-2 ring-brand-gold ring-offset-2 ring-offset-brand-black animate-pulse` and an outer `onPointerDown` to call `onAcknowledge(order.id)`. No new dependencies. No audio files added. |
+
+## INFRA NOTES
+
+- **`.env.local` was missing in `kahramana-Saas-fresh\`.** Surfaced
+  when a runtime error on `/checkout` traced back to
+  `NEXT_PUBLIC_SUPABASE_URL` being undefined. The user's working
+  `.env.local` (with real Supabase creds) still lived at the old
+  `kahramana-Saas\.env.local` and wasn't carried into the fresh
+  clone because `.env*` is gitignored. Copied
+  `kahramana-Saas/.env.local` → `kahramana-Saas-fresh/.env.local`
+  with user approval. Memory `project_working_directory_moved.md`
+  appended with the "gitignored runtime files don't migrate via git"
+  lesson — checked once into memory so this doesn't bite again on
+  any future fresh-clone migration.
+- **No new env vars introduced** by any of the four commits.
+- **No migrations.** Local↔Remote still paired at 162.
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **Auto-cap rather than warn-then-block.** Could have shown the
+   full points value and warned "exceeds 50% cap — adjust manually."
+   Auto-cap is friendlier: the UI never promises a saving the
+   server will refuse. Server-side check is unchanged — it's still
+   the source of truth; the client just stops asking for too much.
+
+2. **Sub-2-BHD carts hide the redemption widget entirely.** If
+   `cappedPointsToRedeem < MIN_REDEMPTION` (200 points), the
+   server's min-redemption check would reject any attempt. Easier
+   to gate the widget than to show "you can't redeem here" copy.
+
+3. **`isUnacknowledged` clears on `onPointerDown`, not on any action
+   button.** Driver may want to look at the card details before
+   acting. Pointer-down on any part of the card is enough; doesn't
+   require pressing "Picked up."
+
+4. **Browser Notification reuses `usePushNotifications` permission
+   grant.** `Notification.permission` is shared across all
+   notification APIs in the browser. Web Push permission was
+   already requested via the existing gold banner in
+   `DriverPWAShell.tsx`. No second prompt; if push was granted,
+   in-page Notification works too.
+
+5. **Bell respects mute, browser Notification does not.** Mute is
+   for audio. Visual cue + browser notification stays on for
+   accessibility (driver in headphones-off mode still gets the
+   visual signal).
+
+6. **`supabase/client.ts` hardening kept even though root cause was
+   environmental.** The crash message `Cannot read properties of
+   undefined (reading 'includes')` is hostile — it points at the
+   wrong place. The new throw points operators directly at
+   `.env.example`. Cheap defensive change.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → clean (4 times, one per commit)
+- `npx tsx scripts/check-i18n.ts` → 2,393 = 2,393 (post-cappedNote)
+- `NEXT_BUILD_WORKERS=1 npm run build` → green (4 times)
+- Driver-fix commit: no manual e2e on the realtime path; logic is
+  pure with the existing realtime channel as the trigger source.
+
+## DEFERRED / OPERATOR-PENDING
+
+(unchanged from session 128 — recap)
+- `SESSION_BIND_SECRET` env var on Vercel prod + preview.
+- `SENTRY_AUTH_TOKEN` re-rotation.
+- Supabase Free → Pro + Singapore migration.
+- DNS kahramanat.com → Vercel (confirmed done in master notes;
+  no action this session).
+- TAP keys (merchant approval pending).
+- `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN` flip when staff accounts
+  go live — pre-flip checklist documented in `.env.example`.
+- Birthday gift cron + idempotency + `loyalty_config.birthday_bonus_points`.
+- Chef Excel recipe import (0/168 recipes mapped).
+- `SetPasswordClient.tsx` dead-code cleanup.
+
+## OPERATOR NOTE
+
+- If you migrate machines or re-clone the repo, copy
+  `.env.local` (and any other gitignored env files) by hand — they
+  don't ride along with `git clone` by design. The new throw in
+  `supabase/client.ts` will at least tell you which file to fix.
+
+---
+---
+---
+
+# Prior session 128 close-out preserved below ↓
+
+
+
+## SESSION 128 — SUMMARY
+
+Five commits on master, all pushed. One migration landed (162). All
+gates clean on every commit: `npx tsc --noEmit`,
+`npx tsx scripts/check-i18n.ts`, and `NEXT_BUILD_WORKERS=1 npm run build`.
+
+Theme: ship a flag-OFF Waiter QR scanner without leaking any UI changes
+until staff accounts go live, then immediately close the
+data-correctness gap (UUID-prefix collisions on the QR lookup) and
+extend RLS so the flag flip is one env-var change away from being safe.
+Tail-end of the session caught two unrelated UI regressions reported
+mid-session by the user, plus pushed back on a misdiagnosed driver-nav
+bug.
+
+## COMMITS (5 on master, all pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `3957abe` | feat(waiter) | **QR member scanner — feature-flagged OFF.** New `src/lib/feature-flags.ts` with `ENABLE_QR_LOYALTY_SCAN` (build-time, default `false`). New `lookupMemberByQR()` server action in `src/app/[locale]/waiter/actions.ts` — accepts `KAHRAMANA:KAH-XXXXXX` or `KAH-XXXXXX`, validates 6-hex, role-gated to WAITER_ROLES, 30/min/staff Upstash bucket (NODE_ENV=production gated per `feedback_rate_limit_node_env_gate`). New `src/components/waiter/QRScannerModal.tsx` — dynamic `html5-qrcode` import, rear camera, single-flight latch on first decode, RTL, tier badge via existing `TIER_COLORS` token. Wired into `WaiterOrderClient.tsx` (sidebar header button + resolved-member banner) only when flag enabled. `messages/{ar,en}.json` `waiter.qrScanner.*` keys, parity verified. `html5-qrcode` added to package.json. |
+| `c07cbfd` | docs(env) | `.env.example` documents `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=false` with the pre-flip checklist baked into the comment. |
+| `568a6a0` | feat(db) | **Migration 162** — `customer_profiles.membership_id` STORED generated column (`'KAH-' \|\| UPPER(SUBSTRING(id::text, 1, 6))`) + UNIQUE index `idx_customer_profiles_membership_id` + SELECT-only RLS policy `waiter_cashier_read_customer_profiles`. Closes the ~16M-combo collision risk that 6-hex prefix lookup carried. `lookupMemberByQR` switched from `.filter('id::text','ilike','xxxxxx%').limit(2)` to `.eq('membership_id', 'KAH-' + upper).maybeSingle()` over RLS-aware `createClient()` (no more service-role bypass). `MemberLookupResult` lost the `'ambiguous'` code (UNIQUE makes it unreachable). Types regenerated; `Initialising login role…` + `<claude-code-hint />` stripped per `feedback_supabase_gen_types_pollution`. |
+| `6babe48` | fix(inventory) | `InventoryAlertsListener` was using `Date.now()` as the React key on toast items. Two realtime `inventory_alerts` INSERTs landing in the same millisecond — or reconnect-replay re-firing buffered events — produced duplicate keys (`1778958646103` was the symptom in the report). Swapped to `crypto.randomUUID()`. DB row identity still on `item.id`; only the per-toast React key changed. |
+| `b2f0555` | fix(checkout) | The "Points discount cannot exceed 50% of order subtotal" string was emitted raw-English from two sites in `src/app/[locale]/checkout/actions.ts` (early subtotal-cap check + `POINTS_OVER_CAP` RPC sentinel branch). `CheckoutForm.localizeCheckoutError` only mapped zod field codes, so the top-level `result.error` leaked through `setSubmitError` at line 422 and the `throw new Error()` at line 430. Flipped the contract: server emits the stable code `'points_over_cap'`; client maps via `localizeCheckoutError` + new `checkout.errors.pointsOverCap` i18n key. Both surface points (line 422 + 430) now route `result.error` through the mapper, so any future server code is localized — not just this one. |
+
+## INFRA NOTES
+
+- **Supabase link re-established.** The fresh tree had no
+  `supabase/.temp/project-ref`; ran `npx supabase link --project-ref
+  wwmzuofstyzworukfxkt` (kahramana-prod). State now stored under
+  `supabase/.temp/` in the fresh tree.
+- **Migration 015 recovered locally.** `supabase/migrations/015_production_admin.sql`
+  was gitignored (`.gitignore:26`) so the fresh clone lacked it; the
+  Supabase CLI refused to push 162 because remote tracked 015 with no
+  local file. Copied `015_production_admin.sql` from the old
+  `kahramana-Saas\` tree to satisfy the check; file remains
+  uncommitted (still gitignored).
+- **Local↔Remote migrations paired at 162.**
+- **`html5-qrcode` added to dependencies** (1 package, 0 vulnerabilities).
+- **`.agent/LAST-SESSION.md` had pending uncommitted edits** from
+  session 127 close-out at the start of this session. Left in place
+  (not staged in any of the five session-128 commits) to avoid
+  overwriting the session-127 hand-off. This session's edits sit
+  inside the same file (you're reading them now).
+
+## OPERATOR PUSH-BACK (no work delivered, by design)
+
+User asked to add `delivery_lat`/`delivery_lng` to seven `.select()`
+calls in `src/app/[locale]/driver/actions.ts` to fix
+"`customerNavUrl` falls back to DMS URL." Investigation showed:
+
+  1. `src/app/[locale]/driver/page.tsx` `ORDER_SELECT` already
+     includes both columns (line 37).
+  2. Every `.select()` in `actions.ts` is **validation-only** —
+     `driverBumpOrder`, `markDriverArrived`, `postDriverLocation`,
+     `submitDriverIssue`, `reportDeliveryFailure`,
+     `uploadDeliveryProof`, `submitHandover`. The fetched `order` is
+     read for `order_type` / `status` / `branch_id` / `assigned_driver_id`
+     / etc., never returned to the UI.
+  3. `DriverOrderCard.tsx:251-253` (commit `20fdf58`, last session)
+     already prefers `order.delivery_lat`/`order.delivery_lng` over
+     `extractedUrl` from `delivery_address`.
+
+Plausible real causes raised in the reply:
+  a. `delivery_lat`/`delivery_lng` are NULL on the offending row
+     (creation flow didn't persist coords — manual POS / older
+     order / share-URL-only checkout). Worth a `SELECT id,
+     delivery_lat, delivery_lng, delivery_address FROM orders
+     WHERE id = '<bad order>'`.
+  b. Turbopack browser-cache / module-registry staleness — see
+     `feedback_turbopack_chrome_chunk_cache` and
+     `feedback_turbopack_module_registry_stale`. Ctrl+Shift+R or
+     drop `--turbopack` and run `npx next dev` once.
+
+User has not yet replied with the order ID for path (a), so no edit
+was made. **If the bug is still happening: please send the order ID
+or confirm the cache route.**
+
+## DEFERRED / OPERATOR-PENDING
+
+(unchanged from session 127 — recap for the hand-off)
+- `SESSION_BIND_SECRET` env var on Vercel prod + preview
+  (`openssl rand -hex 32`).
+- `SENTRY_AUTH_TOKEN` re-rotation (regressed; release tagging +
+  sourcemap upload 401 on `cef2850` build).
+- Supabase Free → Pro + Singapore migration.
+- DNS kahramanat.com → Vercel.
+- TAP keys (merchant approval pending).
+- **`NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN`** stays `false` until staff
+  accounts (waiter/cashier) are activated. When flipped:
+    1. Verify a real customer_profile has the expected
+       `membership_id` via Studio.
+    2. Re-test the QR scan flow end-to-end on a real device camera.
+    3. Confirm RLS policy `waiter_cashier_read_customer_profiles`
+       lets a staff session SELECT the row.
+- Birthday gift cron + idempotency + `loyalty_config.birthday_bonus_points`.
+- Chef Excel recipe import (0/168 recipes mapped — pending since session 38).
+- `SetPasswordClient.tsx` dead-code cleanup (orphaned since session 101).
+
+## CANDIDATE NEXT LANES (none are launch blockers)
+
+- Diagnose the driver `customerNavUrl` complaint with a real
+  order ID once the user replies.
+- Apply the same `localizeCheckoutError` routing to the *other* raw
+  English server errors in `src/app/[locale]/checkout/actions.ts`
+  (Minimum redemption, Insufficient points balance, Coupon invalid,
+  PRICE_MISMATCH, AUTH_REQUIRED, Customer session required, Order
+  creation failed). Same pattern; cheap. Not in scope this session
+  because the bug report named only the 50% cap message.
+- Birthday gift cron follow-up.
+- Inventory page banner: "0/168 recipes mapped — chef Excel import pending".
+
+---
+---
+---
+
+# Prior session 127 close-out preserved below ↓
+
+
+## SESSION 127 — SUMMARY
+
+Three commits on master, all pushed. One migration landed (161). No
+regressions: tsc + `NEXT_BUILD_WORKERS=1 npm run build` clean on both
+the migration commit and the driver-fix commit.
+
+Mid-session discovery: the working copy at `kahramana-platform\kahramana-Saas\`
+had lost its `.git` directory (cause unknown — probably an accidental
+unzip-over-tree from one of the `.zip` files in the parent folder).
+User created a fresh clone at `kahramana-platform\kahramana-Saas-fresh\`
+and instructed all future work to happen there. Memory updated:
+`project_working_directory_moved.md`.
+
+## COMMITS (3 on master, all pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `2b45a6d` | fix(db) | **Migration 161** — `fn_sync_kds_on_order_terminal_status` + `trg_sync_kds_on_order_terminal_status` (AFTER UPDATE OF status ON orders). When `orders.status` transitions INTO `('delivered','completed','cancelled')`, force every non-completed `order_item_station_status` row for that order to `'completed'`. Re-fire guard via `OLD.status NOT IN (terminal)`. `bumped_at` deliberately not touched so `get_station_daily_count` doesn't show cancellations as kitchen completions. One-shot backfill UPDATE included for already-terminal orders with stale item rows. Applied to remote DB; trigger live (`pg_trigger.tgenabled='O'`), backfill query post-apply returns 0 ghost rows. |
+| `dabfb87` | fix(kds) | Selector count query in `src/app/[locale]/dashboard/kds/page.tsx` now embeds `orders!inner(status)` and filters `orders.status IN ('accepted','preparing','ready')` — same window the inner station board renders. Defense in depth so selector chip counts and station-board content always match, even if a future code path bypasses the new trigger. |
+| `20fdf58` | fix(driver) | `customerNavUrl` priority flip in `src/components/driver/DriverOrderCard.tsx`. Old order ran the share-URL branch first and either matched a strict decimal regex OR returned `extractedUrl` verbatim — so a customer-pasted DMS-formatted Maps URL (e.g. `?q=N 26°08'02.1" E 50°34'59.0"`) beat the clean decimal lat/lng in the DB. New order: DB `delivery_lat`/`delivery_lng` win when present (with `Number()` coercion for PostgREST's NUMERIC-as-string + `Number.isFinite` to drop NaN), then share-URL fallback, then structured-address search. Regex unchanged. |
+
+---
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **Why migration 161 was the right shape.** The KDS ghost-count audit showed a structural mismatch: selector counted `order_item_station_status` items, board rendered `orders`. Two possible fixes — sync items→order or order→items. We already had the items→order direction (`bump_station_order` stamps `orders.ready_at`); order→items was the unwired edge. Adding the trigger closes the loop without changing query semantics on either surface.
+
+2. **`bumped_at` left NULL on auto-completed rows.** A KDS bump and an order-cancellation force-complete are semantically different events. `get_station_daily_count` gates on `bumped_at` to compute "kitchen completions today" — sweeping cancelled-order item rows into that count would inflate the daily ops metric. The trigger updates `updated_at` (audit) but not `bumped_at` (KPI).
+
+3. **Selector query change is defense-in-depth, not the fix.** The trigger already prevents the ghost-count condition going forward + backfill cleared the existing rows. The `orders!inner(status)` join exists so that selector and board always render the same set even if a future code path bypasses the trigger (e.g. a `delete from order_item_station_status` cleanup with no order transition).
+
+4. **DriverOrderCard priority flip vs in-place share-URL fix.** Considered "if regex doesn't match, fall through" inside the share-URL branch. Cleaner is full priority flip: DB decimal coords are always more reliable than embedded address URLs (which are customer-typed). Share-URL still survives as the fallback for orders where checkout-GPS wasn't tapped.
+
+5. **Working tree migrated to `kahramana-Saas-fresh\`.** When `.git` was found missing in `kahramana-Saas\`, did NOT `git init` blindly — that would have manufactured a fresh repo with no history and broken any subsequent push. Stopped, surfaced evidence, and waited for user direction. User confirmed a fresh clone was made; hash-diffed today-modified files (with `Test-Path -LiteralPath` to dodge the `[locale]` glob trap that initially produced 31 false-positive "new" files) → only the expected 2 files drifted. Copied + validated + committed in fresh.
+
+---
+
+## VERIFICATION
+
+- `npx supabase db push --linked --include-all` → 161 applied
+- `pg_trigger` query → `trg_sync_kds_on_order_terminal_status` on `orders`, enabled
+- Ghost-row probe (terminal orders × non-completed items) → 0 rows post-backfill
+- `npx tsc --noEmit` → clean (twice: post-migration, post-driver-fix)
+- `NEXT_BUILD_WORKERS=1 npm run build` → green (twice)
+- `npm ci` in fresh clone → 918 packages, 0 vulnerabilities
+
+## OPEN / NEXT
+
+- The old `kahramana-platform\kahramana-Saas\` tree is now stale and orphaned (no `.git`). User may want to delete it after confirming nothing else lives in there. Memory note exists so future sessions cd into `-fresh`.
+- KDS selector should now show real counts (6/3/1 → 0/0/0 unless there's actual active work). User to verify in production.
+- Driver nav: customer with `delivery_lat=26.133906, delivery_lng=50.583056` → URL is `https://www.google.com/maps?q=26.133906,50.583056`. Pasted DMS URLs are no longer fatal.
+
+---
+
+# === PREVIOUS SESSION (126) ===
+
 > Session 126: branded confirm modal + loyalty i18n bug + البديع cleanup + founder card copy + BiDi fix + catering form hardening. Master `0675f78` → `2ef822c`.
 > Date: 2026-05-16
 > Author: Claude Code (Opus 4.7, 1M context)
@@ -106,8 +397,8 @@ and a full catering-form security hardening that lifted the form from
 
 ## SESSION HISTORY (last 5)
 
-- Session 122: AUD-V3-008 closed — analytics error swallow → AnalyticsResult<T>
 - Session 123: H-2 hydration fix — global-error.tsx reads locale from cookie
 - Session 124: Launch audit + 3 fixes (driver delivered, location push, stuck orders)
 - Session 125: Birthday cron + reorder/history + sonner + grant bugfix + motion v12
 - Session 126: ConfirmModal + loyalty i18n fix + البديع cleanup + founder copy + BiDi + catering hardening
+- Session 127: KDS ghost-count root-cause (migration 161 + selector tightening) + driver nav DMS bug + working tree moved to kahramana-Saas-fresh
