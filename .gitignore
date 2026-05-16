@@ -59,6 +59,17 @@ next-env.d.ts
 .env*
 !.env*.example
 .agent/reports/
+# Ephemeral probe/audit/verify scratch under .agent/ (tracked: *.md, phase-state.json)
+.agent/probe-*
+.agent/audit-p*
+.agent/verify-*
+.agent/fix*-*.sql
+.agent/lh-*.json
+.agent/lighthouse-*.json
+.agent/anon-execute-*.json
+.agent/perf-baseline.csv
+.agent/fn-bodies.json
+.agent/cowork-*.patch
 scratch/
 
 # Playwright
