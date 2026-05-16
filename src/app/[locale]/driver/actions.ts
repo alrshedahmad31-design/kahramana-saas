@@ -499,6 +499,8 @@ export async function submitCashHandover(
     return { success: false, error: updateErr.message }
   }
 
+  const delta = normalizedActual - totalExpected
+
   await service.from('audit_logs').insert({
     action: 'INSERT',
     table_name: 'cash_handovers',
@@ -510,9 +512,35 @@ export async function submitCashHandover(
       order_ids: orderIds,
       expected:  totalExpected,
       actual:    normalizedActual,
-      diff:      normalizedActual - totalExpected
+      diff:      delta
     }
   })
+
+  // VULN-012: large cash shortfalls are a fraud / cash-loss signal. Flag any
+  // handover where the driver delivered more than 5 BHD short of expected so
+  // operations sees it on the alerts surface; the handover itself is still
+  // recorded (operator decides whether to write it off, demand replacement,
+  // or escalate).
+  if (delta < -5) {
+    const { error: alertError } = await service.from('audit_logs').insert({
+      action:     'INSERT',
+      table_name: 'cash_handovers',
+      record_id:  handover.id,
+      user_id:    user.id,
+      actor_role: user.role as Database['public']['Enums']['staff_role'],
+      branch_id:  branchId,
+      changes: {
+        alert_type: 'cash_shortfall',
+        delta,
+        driver_id:  user.id,
+        expected:   totalExpected,
+        actual:     normalizedActual,
+      },
+    })
+    if (alertError) {
+      console.error('[driver-actions] cash_shortfall alert insert failed', handover.id, alertError)
+    }
+  }
 
   return { success: true, totalExpected }
 }
