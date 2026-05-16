@@ -59,11 +59,21 @@ export default async function KDSPage({ params, searchParams }: Props) {
 
 
   if (!activeStation) {
-    // FIX 9: per-station active-item counts (pending + preparing) for the selector.
+    // Per-station active-item counts for the selector chips.
+    // Two filters must agree with the inner station board (below):
+    //   • item-level: order_item_station_status.status IN (pending, preparing)
+    //   • order-level: orders.status IN (accepted, preparing, ready)
+    // Without the order-level join, items whose parent order is terminal
+    // (cancelled / delivered) but somehow still 'pending' would inflate
+    // chip counts and route the operator into an empty station view.
+    // Migration 161 adds a DB trigger that prevents the latter going
+    // forward; this embed is defense in depth so selector and board
+    // never disagree even if the trigger misses an edge case.
     let countsQuery = supabase
       .from('order_item_station_status')
-      .select('station')
+      .select('station, orders!inner(status)')
       .in('status', ['pending', 'preparing'])
+      .in('orders.status', ['accepted', 'preparing', 'ready'])
 
     if (!isGlobalKitchenViewer) {
       countsQuery = countsQuery.eq('branch_id', user.branch_id!)
