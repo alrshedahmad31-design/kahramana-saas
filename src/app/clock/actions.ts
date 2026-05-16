@@ -64,7 +64,7 @@ async function comparePinAndMaybeUpgrade(
 
 // ── Rate limiting (Upstash Redis — works across Vercel serverless instances) ──
 //
-// Two buckets:
+// Three buckets:
 //   - IP+device bucket (5 attempts / 60s) on the verify path — defends against
 //     drive-by PIN guessing. Spoofable `x-forwarded-for` was the original
 //     source; we now prefer `x-real-ip` / `cf-connecting-ip` (set by the
@@ -74,8 +74,59 @@ async function comparePinAndMaybeUpgrade(
 //   - Per-staff bucket (10 attempts / 1h) on `assertStaffPin` — even if an
 //     attacker rotates IPs, they can't burn more than 10 attempts on any
 //     specific staff_id per hour.
+//   - VULN-015 per-staff failure counter (5 failures / 15 min, resets on
+//     success) on `verifyPin`. The two existing buckets meter every attempt,
+//     including legitimate ones; this one only counts *failed* attempts and
+//     is cleared after a successful PIN match, so an active employee whose
+//     teammate fat-fingered the keypad five times isn't locked out for an
+//     hour.
 let ratelimit:      Ratelimit | null = null
 let staffRatelimit: Ratelimit | null = null
+
+// VULN-015 failure-counter constants.
+const PIN_FAILURE_LIMIT  = 5
+const PIN_FAILURE_TTL_S  = 15 * 60
+const PIN_FAILURE_PREFIX = 'pin'
+
+function getRedisOrNull(): Redis | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  return Redis.fromEnv()
+}
+
+// Read-only check — does NOT increment. Used as the pre-attempt gate so we
+// don't penalize a caller for the very attempt we're locking them out of.
+async function isStaffPinLocked(staffId: string): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production') return false
+  const redis = getRedisOrNull()
+  if (!redis) return false
+  const key = `${PIN_FAILURE_PREFIX}:${staffId}`
+  const count = await redis.get<number>(key)
+  return typeof count === 'number' && count >= PIN_FAILURE_LIMIT
+}
+
+async function recordStaffPinFailure(staffId: string): Promise<void> {
+  if (process.env.NODE_ENV !== 'production') return
+  const redis = getRedisOrNull()
+  if (!redis) return
+  const key = `${PIN_FAILURE_PREFIX}:${staffId}`
+  // INCR then EXPIRE — atomic enough for a counter that loses one bucket per
+  // sliding 15-min window. We don't care about EXPIRE racing INCR because the
+  // counter will be reset on success and the worst case is a counter that
+  // stays in Redis for an extra few hundred ms with TTL.
+  const count = await redis.incr(key)
+  if (count === 1) {
+    await redis.expire(key, PIN_FAILURE_TTL_S)
+  }
+}
+
+async function resetStaffPinFailures(staffId: string): Promise<void> {
+  if (process.env.NODE_ENV !== 'production') return
+  const redis = getRedisOrNull()
+  if (!redis) return
+  await redis.del(`${PIN_FAILURE_PREFIX}:${staffId}`)
+}
 
 function getRatelimit(): Ratelimit | null {
   if (ratelimit) return ratelimit
@@ -155,6 +206,15 @@ async function assertStaffPin(staffId: string, pin: string): Promise<boolean> {
   // UUID guard: prevents the per-staff bucket key from being filled with junk.
   if (!/^[0-9a-f-]{36}$/i.test(staffId)) return false
 
+  // VULN-015: hard lockout once a staff_id has accumulated 5 wrong PINs in
+  // the last 15 minutes. Checked BEFORE the metered hourly bucket so a
+  // locked-out caller still consumes a failure (keeps the window from
+  // sliding back into "allowed" while the brute-forcer keeps poking).
+  if (await isStaffPinLocked(staffId)) {
+    await recordStaffPinFailure(staffId)
+    return false
+  }
+
   // Per-staff bucket: even an attacker rotating IPs cannot exceed 10 attempts
   // per hour against any single staff_id.
   const { allowed } = await checkStaffRateLimit(staffId)
@@ -168,9 +228,18 @@ async function assertStaffPin(staffId: string, pin: string): Promise<boolean> {
     .eq('is_active', true)
     .maybeSingle()
 
-  if (!data) return false
+  if (!data) {
+    await recordStaffPinFailure(staffId)
+    return false
+  }
   const row = data as { id: string; clock_pin_hash: string | null; is_active: boolean }
-  return comparePinAndMaybeUpgrade(pin, row.clock_pin_hash, row.id)
+  const ok = await comparePinAndMaybeUpgrade(pin, row.clock_pin_hash, row.id)
+  if (ok) {
+    await resetStaffPinFailures(staffId)
+  } else {
+    await recordStaffPinFailure(staffId)
+  }
+  return ok
 }
 
 // ── verifyPin ─────────────────────────────────────────────────────────────────
@@ -216,6 +285,19 @@ export async function verifyPin(pin: string): Promise<ClockResult> {
   }
 
   if (!matched) return { success: false, error: 'PIN not found' }
+
+  // VULN-015: post-match staff-scoped failure counter. We can only check it
+  // once we know which staff_id this PIN belongs to (the verify endpoint
+  // takes only the PIN, not a staff_id). If this specific staff is currently
+  // locked out, refuse the match — even if they typed the right code — and
+  // increment to keep the window alive. The legitimate user is asked to wait
+  // 15 minutes; that's the explicit anti-brute-force trade-off.
+  if (await isStaffPinLocked(matched.id)) {
+    await recordStaffPinFailure(matched.id)
+    return { success: false, error: 'Too many attempts. Try again shortly.' }
+  }
+  // Clear any in-flight failure window — the legitimate user just succeeded.
+  await resetStaffPinFailures(matched.id)
 
   const { data: openEntry } = await service
     .from('time_entries')

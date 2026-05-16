@@ -13,6 +13,7 @@ import {
   requireDashboardSection,
 } from '@/lib/auth/dashboard-guards'
 import type { EmploymentType, StaffBasicRow, TablesUpdate } from '@/lib/supabase/custom-types'
+import { isTrivialPin, PIN_TRIVIAL_ERROR } from '@/lib/staff/pin-validation'
 
 // Single error string for both "target not found" and "permission denied".
 // Returning differentiable messages turned this action into an oracle for
@@ -84,6 +85,13 @@ export async function updateStaffProfile(input: UpdateProfileInput): Promise<Act
 
   if (input.clock_pin && !/^\d{4}$/.test(input.clock_pin)) {
     return { success: false, error: 'PIN must be exactly 4 digits' }
+  }
+
+  // VULN-015: reject trivial PINs at change time too — otherwise an attacker
+  // who guessed an initial PIN could "rotate" to another trivial code and
+  // keep the dictionary surface alive.
+  if (input.clock_pin && isTrivialPin(input.clock_pin)) {
+    return { success: false, error: PIN_TRIVIAL_ERROR }
   }
 
   if (input.hourly_rate !== undefined && input.hourly_rate !== null) {

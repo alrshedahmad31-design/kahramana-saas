@@ -15,6 +15,7 @@ import {
 import { canManageStaff, canDeactivateStaff } from '@/lib/auth/rbac'
 import { toSafeError } from '@/lib/utils/safe-error'
 import type { StaffRole, StaffBasicRow, EmploymentType, TablesUpdate, Json } from '@/lib/supabase/custom-types'
+import { isTrivialPin, PIN_TRIVIAL_ERROR } from '@/lib/staff/pin-validation'
 
 // Unified denial string for resendStaffInvitation — same shape as
 // VULN-AUTH-01 in staff/[id]/actions.ts. Prevents staff-ID enumeration via
@@ -264,6 +265,13 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
 
   if (input.clock_pin && !/^\d{4}$/.test(input.clock_pin)) {
     return { success: false, error: 'PIN must be exactly 4 digits' }
+  }
+
+  // VULN-015: reject trivial PIN sequences (1234, 0000, repeats, etc.) at
+  // registration time. The 4-digit clock PIN has weak entropy by design; the
+  // least we can do is keep staff from picking the most-guessable codes.
+  if (input.clock_pin && isTrivialPin(input.clock_pin)) {
+    return { success: false, error: PIN_TRIVIAL_ERROR }
   }
 
   const service = await createServiceClient()
