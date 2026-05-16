@@ -3,6 +3,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { canAccessKDS, canUpdateOrderStatus } from '@/lib/auth/rbac'
+import { toSafeError } from '@/lib/utils/safe-error'
 import type { OrderStatus, KDSStation, KDSItemStatus, KDSOrder } from '@/lib/supabase/custom-types'
 
 // Migration 089's UNIQUE(item_id) made order_items → order_item_station_status
@@ -76,7 +77,7 @@ export async function advanceOrderStatus(
     .select('id')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   return { success: true }
 }
 
@@ -148,7 +149,7 @@ export async function updateItemStatus(
 
   if (error) {
     console.error('[KDS Action] update_order_item_station_status error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: toSafeError(error) };
   }
   return { success: true }
 }
@@ -191,7 +192,7 @@ export async function bumpStationOrder(
 
   if (error) {
     console.error('[KDS Action] bump_station_order error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: toSafeError(error) };
   }
   return { success: true }
 }
@@ -226,7 +227,7 @@ export async function recallStationOrder(
     p_station:  station,
   })
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   return { success: true }
 }
 
@@ -249,7 +250,7 @@ export async function getStationDailyCount(
     p_branch_id: branchId,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: toSafeError(error) }
   return { count: data ?? 0 }
 }
 
@@ -286,7 +287,7 @@ export async function fetchStationOrders(
   if (!isGlobal) query = query.eq('branch_id', caller.branch_id!)
 
   const { data, error } = await query
-  if (error) return { error: error.message }
+  if (error) return { error: toSafeError(error) }
 
   const orders = (data ?? []).map((order) => {
     const stationItems = (order.order_items ?? [])

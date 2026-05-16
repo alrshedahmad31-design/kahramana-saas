@@ -7,6 +7,7 @@ import KDSStationBoard from '@/components/kds/KDSStationBoard'
 import type { KDSOrder, KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
 import { ALL_STATIONS } from '@/lib/kds/constants'
 import { HIDDEN_BRANCHES } from '@/constants/contact'
+import { toSafeError } from '@/lib/utils/safe-error'
 
 // Migration 089 added UNIQUE(item_id) to order_item_station_status, which
 // PostgREST detects as a 1:1 relationship and returns as a single object
@@ -124,7 +125,7 @@ export default async function KDSPage({ params, searchParams }: Props) {
           station={activeStation}
           branchId={branchId}
           locale={locale}
-          loadError={error.message}
+          loadError={toSafeError(error)}
           initialNow={initialNow}
         />
       </div>

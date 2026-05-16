@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
+import { toSafeError } from '@/lib/utils/safe-error'
 
 // Untyped service client for tables added by migration but not yet in the
 // regenerated `Database` type (082_menu_modifiers). Drop this helper when
@@ -132,7 +133,7 @@ export async function toggleMenuItemAvailability(
 
   if (error) {
     console.error('[menu] toggleMenuItemAvailability failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
 
   await supabase.from('audit_logs').insert({
@@ -191,7 +192,7 @@ export async function syncMenuItemsWithDatabase(): Promise<{
 
   if (error) {
     console.error('[menu] sync failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
 
   bustMenuCaches()
@@ -224,7 +225,7 @@ export async function exportMenuItems(): Promise<{
 
   if (error) {
     console.error('[menu] exportMenuItems failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
 
   return {
@@ -297,7 +298,7 @@ export async function createMenuItem(
 
   if (error) {
     console.error('[menu] createMenuItem failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
 
   await supabase.from('audit_logs').insert({
@@ -361,7 +362,7 @@ export async function updateMenuItem(
 
   if (error) {
     console.error('[menu] updateMenuItem failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
 
   await supabase.from('audit_logs').insert({
@@ -457,7 +458,7 @@ export async function listMenuOptionGroups(slug: string): Promise<{
       .order('sort_order', { ascending: true })
     if (error) {
       console.error('[menu] listMenuOptionGroups options failed:', error)
-      return { success: false, error: error.message }
+      return { success: false, error: toSafeError(error) }
     }
     opts = (data ?? []) as MenuOptionRow[]
   }
@@ -510,7 +511,7 @@ export async function upsertMenuOptionGroup(input: unknown): Promise<{
   const { data, error } = await query
   if (error) {
     console.error('[menu] upsertMenuOptionGroup failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
 
   bustMenuCaches(payload.menu_item_slug)
@@ -539,7 +540,7 @@ export async function deleteMenuOptionGroup(groupId: string, slug: string): Prom
   const { error } = await supabase.from('menu_option_groups').delete().eq('id', groupId)
   if (error) {
     console.error('[menu] deleteMenuOptionGroup failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
   bustMenuCaches(slug)
   return { success: true }
@@ -583,7 +584,7 @@ export async function upsertMenuOption(input: unknown): Promise<{
   const { data, error } = await query
   if (error) {
     console.error('[menu] upsertMenuOption failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
   bustMenuCaches()
   return { success: true, id: (data as { id?: string } | null)?.id }
@@ -611,7 +612,7 @@ export async function deleteMenuOption(optionId: string): Promise<{
   const { error } = await supabase.from('menu_options').delete().eq('id', optionId)
   if (error) {
     console.error('[menu] deleteMenuOption failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
   bustMenuCaches()
   return { success: true }
@@ -711,7 +712,7 @@ export async function deleteMenuItem(
   const { error } = await supabase.from('menu_items').delete().eq('id', slug)
   if (error) {
     console.error('[menu] deleteMenuItem failed:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: toSafeError(error) }
   }
 
   await supabase.from('audit_logs').insert({

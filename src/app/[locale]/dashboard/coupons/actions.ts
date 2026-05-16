@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canManageCoupons } from '@/lib/auth/rbac'
+import { toSafeError } from '@/lib/utils/safe-error'
 import type { CouponInsert } from '@/lib/supabase/custom-types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AuthUser } from '@/lib/auth/session'
@@ -204,7 +205,7 @@ export async function createCoupon(data: CouponFormData): Promise<ActionResult> 
     .select('id')
     .single()
 
-  if (error || !created) return { success: false, error: error?.message ?? 'Failed to create coupon' }
+  if (error || !created) return { success: false, error: toSafeError(error ?? 'Failed to create coupon') }
 
   await supabase.from('audit_logs').insert({
     table_name: 'coupons',
@@ -280,7 +281,7 @@ export async function updateCoupon(
     .select('id')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   if (!updated) return { success: false, error: 'Coupon not found' }
 
   await supabase.from('audit_logs').insert({
@@ -318,7 +319,7 @@ export async function toggleCouponActive(
     .select('id')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   if (!updated) return { success: false, error: 'Coupon not found' }
 
   await supabase.from('audit_logs').insert({
@@ -359,7 +360,7 @@ export async function toggleCouponPause(
     .select('id')
     .single()
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   if (!updated) return { success: false, error: 'Coupon not found' }
 
   await supabase.from('audit_logs').insert({

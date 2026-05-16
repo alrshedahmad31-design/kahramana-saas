@@ -811,7 +811,6 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       customerWhatsAppLink:   links.customerLink,
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unexpected error'
-    return { orderId: '', finalTotal: 0, error: message }
+    return { orderId: '', finalTotal: 0, error: toSafeError(err) }
   }
 }

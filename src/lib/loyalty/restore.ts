@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server'
+import { toSafeError } from '@/lib/utils/safe-error'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 
 // VULN-103: shared helper for the loyalty-restore path called from the order
@@ -33,7 +34,7 @@ export async function restoreLoyaltyForReversedOrder(
   })
 
   if (error) {
-    return { ok: false, error: error.message }
+    return { ok: false, error: toSafeError(error) }
   }
 
   const result = data as {

@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
+import { toSafeError } from '@/lib/utils/safe-error'
 import type { Database, DriverLocationInsert } from '@/lib/supabase/custom-types'
 import { revalidatePath } from 'next/cache'
 
@@ -145,7 +146,7 @@ export async function driverBumpOrder(
 
   const { data: updatedRows, error } = await query.select('id')
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
 
   if (!updatedRows || updatedRows.length === 0) {
     return {
@@ -226,7 +227,7 @@ export async function markDriverArrived(orderId: string): Promise<DriverActionRe
     .eq('id', orderId)
     .select('id')
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
 
   if (!updatedRows || updatedRows.length === 0) {
     return {
@@ -302,7 +303,7 @@ export async function postDriverLocation(
       }
     )
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   return { success: true }
 }
 
@@ -330,7 +331,7 @@ export async function toggleDriverAvailability(): Promise<DriverActionResult> {
     .update({ availability_status: next })
     .eq('id', user.id)
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
 
   const service = await createServiceClient()
   const now     = new Date().toISOString()
@@ -536,7 +537,7 @@ export async function submitDriverIssue(
       notes:     notes?.trim() ?? null,
     })
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   return { success: true }
 }
 

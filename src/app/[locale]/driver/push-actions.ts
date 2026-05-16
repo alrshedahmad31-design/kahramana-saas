@@ -2,6 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import webpush from 'web-push'
+import { toSafeError } from '@/lib/utils/safe-error'
 
 // ── VAPID setup ────────────────────────────────────────────────────────────────
 // Generate once with: npx web-push generate-vapid-keys
@@ -74,7 +75,7 @@ export async function savePushSubscription(
       { onConflict: 'driver_id,endpoint' },
     )
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   return { success: true }
 }
 
