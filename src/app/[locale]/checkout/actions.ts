@@ -1,6 +1,9 @@
 'use server'
 
 import { z } from 'zod'
+import { headers } from 'next/headers'
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import * as Sentry from '@sentry/nextjs'
 import { fetchCheckoutPriceMap, resolveOrderItemPrice } from '@/lib/checkout-pricing.server'
@@ -16,6 +19,46 @@ import { buildOrderTrackingUrl, buildPricedCheckoutWhatsAppLinks } from '@/lib/w
 import { sendOrderConfirmation } from '@/lib/email/send'
 import { geocodeBahrainAddress } from '@/lib/utils/geocode'
 import { toSafeError } from '@/lib/utils/safe-error'
+
+// VULN-017: submitOrder rate limit. Keyed on normalised phone when present
+// (a logged-in customer can't bypass with fresh IPs) and on the request IP
+// otherwise (anonymous floods). 10 calls / 60 s is well above realistic
+// checkout cadence but kills script-driven order spam. Dev (NODE_ENV !=
+// production) bypasses to keep the local checkout loop snappy and avoid
+// 127.0.0.1 shared-bucket lockouts.
+const CHECKOUT_RATE_LIMIT       = 10
+const CHECKOUT_RATE_WINDOW      = '60 s'
+let checkoutRatelimit: Ratelimit | null = null
+function getCheckoutRatelimit(): Ratelimit | null {
+  if (checkoutRatelimit) return checkoutRatelimit
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null
+  }
+  checkoutRatelimit = new Ratelimit({
+    redis:   Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(CHECKOUT_RATE_LIMIT, CHECKOUT_RATE_WINDOW),
+    prefix:  'submit_order',
+  })
+  return checkoutRatelimit
+}
+
+async function getCheckoutClientIp(): Promise<string> {
+  const h = await headers()
+  return (
+    h.get('x-real-ip')?.trim()
+    ?? h.get('cf-connecting-ip')?.trim()
+    ?? h.get('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? 'noip'
+  )
+}
+
+async function checkCheckoutRateLimit(key: string): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production') return true
+  const rl = getCheckoutRatelimit()
+  if (!rl) return true
+  const { success } = await rl.limit(key)
+  return success
+}
 
 function normalizePhone(raw: string): string {
   const s = raw.replace(/[\s\-().]/g, '')
@@ -451,6 +494,16 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
   const normalizedPayload: CheckoutPayload = payload.order.customer_phone
     ? { ...payload, order: { ...payload.order, customer_phone: normalizePhone(payload.order.customer_phone) } }
     : payload
+
+  // VULN-017: rate-limit at the entry of the action, before any DB work.
+  // Phone-keyed when available so a flooder can't dodge by rotating IPs;
+  // falls back to the source IP for anonymous/POS-side traffic.
+  const phoneKey = normalizedPayload.order.customer_phone ?? null
+  const ipKey    = await getCheckoutClientIp()
+  const rateKey  = phoneKey ?? ipKey
+  if (!(await checkCheckoutRateLimit(rateKey))) {
+    return { orderId: '', finalTotal: 0, error: 'too_many_requests' }
+  }
 
   const parsed = checkoutSchema.safeParse(normalizedPayload)
   if (!parsed.success) {
