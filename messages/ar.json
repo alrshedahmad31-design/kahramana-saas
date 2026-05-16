@@ -1488,6 +1488,10 @@
       "box": "صندوق",
       "batch": "دفعة"
     },
+    "recipesBanner": {
+      "title": "تم ربط {mapped}/{total} وصفة — استيراد قائمة الشيف معلّق",
+      "dismiss": "إخفاء"
+    },
     "alerts": {
       "title": "تنبيهات المخزون",
       "severity": {

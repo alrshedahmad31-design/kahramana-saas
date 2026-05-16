@@ -9,6 +9,7 @@ import type {
   InventoryAlertRow,
 } from '@/lib/supabase/custom-types'
 import LowStockWidget from '@/components/inventory/LowStockWidget'
+import RecipesBannerClient from '@/components/inventory/RecipesBannerClient'
 import { HIDDEN_BRANCHES } from '@/constants/contact'
 
 interface PageProps {
@@ -17,6 +18,7 @@ interface PageProps {
 }
 
 const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager'] as const
+const RECIPES_BANNER_ROLES = ['owner', 'general_manager', 'branch_manager'] as const
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-IQ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -60,6 +62,9 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
   if (!roleAllowed) redirect(`${prefix}/dashboard`)
 
   const isGlobal = user.role === 'owner' || user.role === 'general_manager'
+  const showRecipesBanner = RECIPES_BANNER_ROLES.includes(
+    user.role as typeof RECIPES_BANNER_ROLES[number],
+  )
 
   const supabase = await createClient()
 
@@ -76,6 +81,8 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
     alertsResult,
     stockResult,
     wasteResult,
+    recipesCountResult,
+    menuItemsCountResult,
   ] = await Promise.all([
     activeBranchId
       ? supabase.rpc('rpc_low_stock_alerts', { p_branch_id: activeBranchId }).limit(10)
@@ -107,6 +114,12 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
       .from('waste_log')
       .select('id')
       .is('approved_by', null),
+    showRecipesBanner
+      ? supabase.from('recipes').select('id', { count: 'exact', head: true })
+      : Promise.resolve({ count: null, error: null }),
+    showRecipesBanner
+      ? supabase.from('menu_items').select('id', { count: 'exact', head: true })
+      : Promise.resolve({ count: null, error: null }),
   ])
 
   const lowStockItems = (lowStockResult.data ?? []) as LowStockAlert[]
@@ -114,6 +127,9 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
   const alerts = (alertsResult.data ?? []) as InventoryAlertRow[]
   const stockRows = (stockResult.data ?? []) as Array<{ on_hand: number; ingredient: { cost_per_unit: number } | null }>
   const pendingWasteCount = (wasteResult.data ?? []).length
+  const recipesCount = recipesCountResult?.count ?? 0
+  const menuItemsCount = menuItemsCountResult?.count ?? 0
+  const showBanner = showRecipesBanner && recipesCount === 0 && menuItemsCount > 0
 
   // Calculate total stock value
   const totalStockValue = stockRows.reduce((sum, row) => {
@@ -126,6 +142,14 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
 
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-6">
+      {showBanner && (
+        <RecipesBannerClient
+          mapped={recipesCount}
+          total={menuItemsCount}
+          locale={locale}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>

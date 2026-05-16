@@ -1488,6 +1488,10 @@
       "box": "box",
       "batch": "batch"
     },
+    "recipesBanner": {
+      "title": "{mapped}/{total} recipes mapped — chef Excel import pending",
+      "dismiss": "Dismiss"
+    },
     "alerts": {
       "title": "Inventory Alerts",
       "severity": {
