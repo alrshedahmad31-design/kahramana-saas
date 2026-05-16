@@ -60,7 +60,7 @@ export async function driverBumpOrder(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, status, branch_id, order_type, assigned_driver_id, arrived_at')
+    .select('id, status, branch_id, order_type, assigned_driver_id, arrived_at, total_bhd')
     .eq('id', orderId)
     .single()
 
@@ -116,13 +116,23 @@ export async function driverBumpOrder(
     orderUpdate.assigned_driver_id = user.id
     orderUpdate.picked_up_at       = now
   }
+  // VULN-011: cap a driver-recorded tip at the lower of (2 BHD, 25 % of the
+  // order total). The previous 50 BHD ceiling left a $130-equivalent surface
+  // for skimming via a fat-fingered or coerced "tip". 2 BHD ≈ a generous
+  // tip on the highest-value orders; for small orders the 25 % cap kicks in
+  // so a 4 BHD delivery can't carry a 2 BHD "tip".
+  let tipRecorded: number | null = null
   if (currentStatus === 'out_for_delivery') {
     orderUpdate.delivered_at = now
     if (tipBhd !== undefined && tipBhd !== null && tipBhd > 0) {
-      if (!Number.isFinite(tipBhd) || tipBhd > 50) {
-        return { success: false, error: 'Tip exceeds maximum (50 BD) or is invalid' }
+      if (!Number.isFinite(tipBhd) || tipBhd < 0) {
+        return { success: false, error: 'Tip must be a non-negative finite number' }
       }
-      orderUpdate.tip_bhd = Math.round(tipBhd * 1000) / 1000
+      const orderTotal = Number(order.total_bhd ?? 0)
+      const tipCap = Math.min(2, orderTotal * 0.25)
+      const cappedTip = Math.min(tipBhd, tipCap)
+      tipRecorded = Math.round(cappedTip * 1000) / 1000
+      orderUpdate.tip_bhd = tipRecorded
     }
     // Audit fix #5: validate actualCollected via shared helper.
     if (actualCollected !== undefined && actualCollected !== null) {
@@ -172,6 +182,25 @@ export async function driverBumpOrder(
   })
   if (auditError) {
     console.error('[driver-actions] audit_logs insert failed for bump', orderId, auditError)
+  }
+
+  // VULN-011: dedicated tip audit row. Tips are a money-movement event and
+  // need a discoverable trail separate from the generic status-bump row above
+  // so reconciliation can answer "who recorded which tip" without scanning
+  // the orders table column.
+  if (tipRecorded !== null && tipRecorded > 0) {
+    const { error: tipAuditError } = await service.from('audit_logs').insert({
+      action:     'UPDATE',
+      table_name: 'orders',
+      record_id:  orderId,
+      user_id:    user.id,
+      actor_role: user.role as Database['public']['Enums']['staff_role'],
+      branch_id:  order.branch_id,
+      changes:    { event: 'tip_recorded', tip_bhd: tipRecorded, driver_id: user.id },
+    })
+    if (tipAuditError) {
+      console.error('[driver-actions] tip audit_logs insert failed', orderId, tipAuditError)
+    }
   }
 
   // The driver dashboard pulls fresh data on a 15 s interval and on realtime
