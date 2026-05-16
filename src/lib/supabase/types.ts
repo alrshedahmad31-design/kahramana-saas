@@ -262,6 +262,69 @@ export type Database = {
           },
         ]
       }
+      catering_inquiries: {
+        Row: {
+          area: string
+          budget: string | null
+          created_at: string
+          event_date: string
+          event_time: string | null
+          guest_count: number
+          id: string
+          name: string
+          notes: string
+          occasion_type: string
+          phone: string
+          preferred_branch: string | null
+          service_type: string
+        }
+        Insert: {
+          area: string
+          budget?: string | null
+          created_at?: string
+          event_date: string
+          event_time?: string | null
+          guest_count: number
+          id?: string
+          name: string
+          notes: string
+          occasion_type: string
+          phone: string
+          preferred_branch?: string | null
+          service_type: string
+        }
+        Update: {
+          area?: string
+          budget?: string | null
+          created_at?: string
+          event_date?: string
+          event_time?: string | null
+          guest_count?: number
+          id?: string
+          name?: string
+          notes?: string
+          occasion_type?: string
+          phone?: string
+          preferred_branch?: string | null
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catering_inquiries_preferred_branch_fkey"
+            columns: ["preferred_branch"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catering_inquiries_preferred_branch_fkey"
+            columns: ["preferred_branch"]
+            isOneToOne: false
+            referencedRelation: "v_inventory_valuation"
+            referencedColumns: ["branch_id"]
+          },
+        ]
+      }
       catering_orders: {
         Row: {
           branch_id: string
