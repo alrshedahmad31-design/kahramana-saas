@@ -146,19 +146,24 @@ function bhdAmount(amount: number, isAr: boolean): string {
   return isAr ? `${n} د.ب` : `BHD ${n}`
 }
 
-function formatOrderTimestamp(): { date: string; time: string } {
+function formatOrderTimestamp(isAr: boolean): { date: string; time: string } {
   const tz = 'Asia/Bahrain'
   const now = new Date()
+  // Date stays en-GB in both locales so the digits are Latin and parsable
+  // by operators at a glance.
   const date = new Intl.DateTimeFormat('en-GB', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     timeZone: tz,
   }).format(now)
-  const time = new Intl.DateTimeFormat('en-GB', {
+  // Time uses the locale's preferred 12-hour form so the suffix lands
+  // naturally: 'ص'/'م' in Arabic, 'AM'/'PM' in English.
+  const timeLocale = isAr ? 'ar-BH' : 'en-BH'
+  const time = new Intl.DateTimeFormat(timeLocale, {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hour12: true,
     timeZone: tz,
   }).format(now)
   return { date, time }
@@ -205,7 +210,7 @@ export function formatRestaurantPricedCheckoutMessage(
   const isAr = options.locale === 'ar'
   const branch = BRANCHES[options.branchId]
   const branchName = isAr ? branch.nameAr : branch.nameEn
-  const { date, time } = formatOrderTimestamp()
+  const { date, time } = formatOrderTimestamp(isAr)
 
   const subtotal   = options.subtotalBhd
   const grandTotal = options.totalBhd
@@ -295,7 +300,7 @@ export function formatRestaurantPricedCheckoutMessage(
       ? '_التوفر والأسعار النهائية تُؤكَّد من قِبَل المطعم_'
       : '_Availability and final pricing are subject to restaurant confirmation_',
     isAr ? 'شكراً لاختياركم *كهرمانة بغداد*' : 'Thank you for choosing *Kahramana Baghdad*',
-    isAr ? '_سفير المذاق البغدادي في البحرين_ 🍽' : "_Bahrain's Ambassador of Baghdadi Flavour_ 🍽",
+    isAr ? '_سفير المذاق البغدادي في البحرين_ ✨' : "_Bahrain's Ambassador of Baghdadi Flavour_ ✨",
   )
 
   return lines.join('\n')
