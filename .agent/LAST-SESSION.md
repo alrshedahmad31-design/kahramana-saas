@@ -1,121 +1,113 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 124: Audit remediation sweep — 6 HIGH + 6 MEDIUM closed. Master `f948cc1` → `cdb6b3b`.
+> Session 126: branded confirm modal + loyalty i18n bug + البديع cleanup + founder card copy + BiDi fix + catering form hardening. Master `0675f78` → `2ef822c`.
 > Date: 2026-05-16
 > Author: Claude Code (Opus 4.7, 1M context)
 
-## SESSION 124 — SUMMARY
+## SESSION 126 — SUMMARY
 
-Pure audit-remediation session. Twelve focused fixes, twelve commits, all pushed.
-One new migration (155). No regressions: tsc + `next build` (`NEXT_BUILD_WORKERS=1`)
-clean after every commit. Local DB and code both updated; types regenerated.
+UI + content + security session. Eight commits, all pushed. One
+migration landed (160). No regressions: tsc + `next build`
+(`NEXT_BUILD_WORKERS=1`) clean after every commit; i18n parity gate
+green throughout (final 2,375 = 2,375).
 
-Session 123 left a 6 HIGH / 16 MEDIUM / 21 LOW / 14 INFO queue. This session
-closed all 6 HIGH and 6 of the MEDIUMs.
-
----
-
-## COMMITS (12 on master, all pushed)
-
-### HIGH-severity payment-flow cluster
-
-| Hash | VULN | Summary |
-|------|------|---------|
-| `58ac2ee` | VULN-001 | `initializePayment` rejects online→cash flips on an existing payment row; removed the customer-side `orders.status='confirmed'` side-effect (COD confirmation now lives only in `completeCashPayment`) |
-| `1e7f46b` | VULN-002 | `completeCashPayment` role allowlist (`owner / general_manager / branch_manager / cashier / waiter`) + branch-scope assertion for non-global roles + CAS pin on `status='pending_cod'` (not `pending`) |
-| `232ae22` | VULN-003 | `confirmBenefitPayment` CAS now pins `method='benefit_qr'` — Tap payments can no longer be self-parked into `awaiting_manual_review` |
-
-### HIGH — coupon race + abandoned dep
-
-| Hash | VULN | Summary |
-|------|------|---------|
-| `18ed4ec` | VULN-004 | **Migration 155** — snapshot `per_customer_limit INTEGER` column on `coupon_usages`, partial UNIQUE INDEX `idx_coupon_usages_one_per_customer ON (coupon_id, customer_id) WHERE per_customer_limit = 1`, **`coupon_usages` INSERT moved inside `rpc_create_order`** under the existing `FOR UPDATE` lock on coupons (PG row locks live until txn commit, so the audit insert is in the same atomic window as the `usage_count` increment). Types regenerated; trailing `<claude-code-hint />` stripped. Same RPC signature — no caller breakage |
-| `bb75e0d` | VULN-004 | Removed the post-RPC `coupon_usages` insert from `checkout/actions.ts` + unused `CouponUsageInsert` import |
-| `7ac2459` | VULN-006 | `lucide-react: ^1.11.0 → ^0.460.0`. Resolved 1.11.0 → 0.460.0 in lockfile. tsc clean across all 67 import sites — no icon renames needed for icons this codebase actually uses |
-
-### MEDIUM-severity sweep
-
-| Hash | VULN | Summary |
-|------|------|---------|
-| `3649f7e` | VULN-007 | `postDriverLocation` zod-parses payload to `{order_id, lat, lng, accuracy_m}`; explicit column upsert; no `...payload` spread. `driver_id` continues to come from session |
-| `fcb03c8` | VULN-008 | `permissions: contents: read` added to all three workflows (`audit.yml`, `e2e.yml`, `playwright.yml`) |
-| `50f3b02` | VULN-009 | `next.config.ts` images: `contentSecurityPolicy: "default-src 'none'; style-src 'unsafe-inline'; sandbox"` + `contentDispositionType: 'attachment'` paired with the existing `dangerouslyAllowSVG: true` |
-| `e749795` | VULN-019 | Tap webhook bails 202 the moment `eventType !== 'charge'` — after IP/rate-limit/shape/signature gates, before any DB write. Non-charge events (refund, dispute, settlement) no longer fall through to `process_tap_webhook` with `p_status='pending'` |
-| `7815a25` | VULN-020 | `registerAction` gated by Turnstile (same soft-launch helper as `forgotPasswordAction` — bypasses when `TURNSTILE_SECRET_KEY` unset). New `'captcha'` `AuthError` variant. `AccountLoginClient.tsx` renders the widget in register mode only when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set; widget reset on any failure; existing `captchaRequired` translation key reused |
-| `cdb6b3b` | VULN-021 | `toSafeError()` sweep across ~28 sites in 8 files (`dashboard/menu/actions.ts` 11, `dashboard/kds/actions.ts` 6, `dashboard/kds/page.tsx` 1, `dashboard/coupons/actions.ts` 4 Supabase paths only, `driver/actions.ts` 5, `driver/push-actions.ts` 1, `lib/loyalty/restore.ts` 1, `checkout/actions.ts` outermost catch). Sentry/`captureAnalyticsError` sites intentionally untouched |
+The session went broad: a UI primitive (ConfirmModal), a runtime crash
+fix on /checkout, a branch-data cleanup spanning 8 files + 2 i18n
+strings, two consecutive content/styling fixes on the founder card,
+and a full catering-form security hardening that lifted the form from
+"wa.me handoff only" to a server-side flow with Turnstile + rate limit
++ DB persistence + branded success state.
 
 ---
 
-## JUDGMENT CALLS WORTH FLAGGING
+## COMMITS (8 on master, all pushed)
 
-1. **VULN-002 — owner / general_manager bypass branch scope.** Task said `staff.branch_id === order.branch_id` literally, but those two roles carry `branch_id = null` by design. Added `isGlobalRole` bypass; otherwise the allowlist would lock owners out of cash settlement. Flag if you want strict equality regardless.
-2. **VULN-004 — snapshot column over generated column.** PG `GENERATED ... STORED` can't reference another table, so a literal `WHERE per_customer_limit = 1` predicate needed a column on the indexed table. Added regular `INTEGER NOT NULL DEFAULT 1` populated by the RPC at insert time. No existing duplicates blocked index creation (`probe_dupes.sql` returned 0 rows pre-create).
-3. **VULN-007 — heading/speed dropped from zod schema.** Task allowlist mentioned `heading` and `speed`; the `driver_locations` schema has neither (only `lat`, `lng`, `accuracy_m`), and the only client caller in `DriverDashboard.tsx` doesn't send them. Including them would be dead allowlist entries; if you want them captured as columns, that's a separate migration.
-4. **VULN-020 — client form touched.** Adding the server gate without rendering a widget would break registration the moment `TURNSTILE_SECRET_KEY` is set in prod. Inserted the widget with the exact JSX shape used by `ForgotPasswordForm`; the surrounding form CSS/layout is untouched. Flag if you'd prefer this split.
-5. **VULN-021 — coupon domain-error returns preserved.** Two `err.message` returns in `coupons/actions.ts` come from `assertCouponWithinLimits` throwing curated `COUPON_VALUE_EXCEEDS_LIMIT` / `COUPON_REQUIRES_CAP` / `COUPON_REQUIRES_USAGE_LIMIT` codes — intentional UX strings, not raw Supabase. Left as-is. `dashboard/alerts/actions.ts` similarly untouched (only message ref is inside a Sentry-sibling `captureAnalyticsError`; user-facing return is already a generic `'update_failed'`).
+| Hash | Type | Summary |
+|------|------|---------|
+| `4dd4a19` | feat | **ConfirmModal** primitive (`src/components/ui/ConfirmModal.tsx`) — branded, motion-animated, RTL-aware, `default` / `danger` variants, uses existing brand tokens + Almarai/Editorial fonts. Six callers wired: ReorderButton (cart replace), CartDrawer (clear cart), IntegrationsSettings (disconnect), PromotionsClient (delete promotion), DeliveryKanban (unassign driver), ModifiersEditor (delete option group + delete option). Every `window.confirm` in the codebase is gone (false positive remaining: `VariantPicker.confirm()` is a local function). `alert()` calls in `ImportDropzone.tsx` swapped to `toast.error()` since they're notifications, not confirmations. |
+| `ad608f6` | fix | Runtime crash on /checkout. `CheckoutForm.tsx` passes `useTranslations('checkout')` into `LoyaltyRedemptionWidget`, but the widget called `t('checkout.loyalty.X')` → resolved as `checkout.checkout.loyalty.X` and threw MISSING_MESSAGE. Stripped the redundant prefix on 5 keys (needMore, balance, equivalent, toggle, saving). |
+| `a2b2009` | fix | Removed every reference to the "البديع" / badi restaurant branch — 8 files: `BranchId` union narrowed to `'riffa' \| 'qallali'`, `HIDDEN_BRANCHES` left as empty typed array (~30 callers reference it), badi entries removed from `contact.ts BRANCHES`, `BRANCH_EXTENDED_DATA`, `lib/constants/branches.ts`, `BRANCH_IMAGES`, the Story `BranchesSection` Soon-card, analytics name map, and AR/EN SEO title/description. `Budaiya` in pos/OrderBuilder.tsx delivery-address picker is **NOT a branch** — kept. Applied migrations 010/013 left untouched; manual DB cleanup steps provided to operator. |
+| `b537d60` | fix | Founder role copy. `story.founder.heritageLabel`: AR `"تراث عراقي"` → `"المؤسس \| مالك المطعم"`, EN `"Iraqi Heritage"` → `"Founder \| Restaurant Owner"`. Single-key change in both locale files. |
+| `7c6c332` | fix | BiDi rendering for founder role text. The new `heritageLabel` value contains an ASCII pipe `\|` (neutral character) between two Arabic phrases — in LTR-leaning contexts (commit viewers, English browser tabs, ambiguous parent direction) the Unicode BiDi algorithm flips visual order around the pipe. Verified the file bytes were correct via hex-dump; fix is at the rendering layer. Added `dir={isRTL ? 'rtl' : 'ltr'}` to four nodes in `FounderSection.tsx`: both `signature` occurrences (float badge + quote block), `heritageLabel`, and `role`. Conditional because the component renders for both locales on /about. |
+| `48d9285` | feat | **Migration 160** — `catering_inquiries` table for first-party catering-lead capture. Columns mirror `CateringInquiryValues` (name, phone, occasion_type, event_date DATE, event_time TIME nullable, guest_count INT 1-1000, area, service_type, preferred_branch TEXT FK→branches.id, budget nullable, notes, created_at). RLS enabled with **zero anon/authenticated policies** — only service_role writes (matching `contact_messages` / `reservations`). Explicit `REVOKE ALL ... FROM anon`/`authenticated` + `GRANT ... TO service_role` per the default-grants memory. Indexes on `created_at DESC` and partial on `preferred_branch`. Applied to remote; types regenerated and Windows pollution markers stripped per memory. |
+| `e5908b4` | feat | `src/app/[locale]/catering/actions.ts` — server action mirroring `reserve/actions.ts`. Honeypot, Turnstile verify (soft-fallback when secret unset), Zod schema (guest_count coerce to int 1-1000, event_date Date.parse() check, phone 8-30, notes 1-2000), Upstash rate limit 3/IP/hour production-only, createServiceClient INSERT, returns `{ inquiryId, waLink }`. WhatsApp message title gets `#<last-8>` appended so staff can correlate WA messages with DB rows. |
+| `2ef822c` | fix | `inquiry-form.tsx` rewrite: state machine `idle → submitting → success`, branded success card (mirrors ReserveForm — gold check circle, short-id, "Continue on WhatsApp" CTA, "Submit another" reset), sonner toasts for rate_limit/captcha/invalid_input/generic, Turnstile widget + honeypot, `window.open` return-value check → "popup blocked" toast for iOS Safari. GA events now fire **after** persistence. 11 new i18n keys per locale under `catering.form`. |
+
+---
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **ConfirmModal API — declarative, not imperative.** Built `<ConfirmModal isOpen onConfirm onCancel />` (mirrors existing `PromptDialog`) rather than a global imperative `confirm(opts).then(...)`. Each caller manages its own state. Consistent with project pattern; no new abstraction.
+
+2. **`window.alert()` calls in `ImportDropzone.tsx` swapped to `toast.error()`, not ConfirmModal.** Task spec said "replace all window.confirm() / window.alert() with the modal pattern" — but alerts are single-action notifications, not confirmations, and the project just adopted sonner (commit 5087b2b). Toast is the established notification pattern; confirmation modal would be overkill for "Only .xlsx files are accepted".
+
+3. **`HIDDEN_BRANCHES` infrastructure kept even though now empty.** Referenced in ~30 files (analytics filters, KDS, payments, owner dashboard). Tearing it out would be a 30-file refactor for no functional benefit beyond cosmetics. Emptied the array (`BranchId[] = []`); existing `length > 0` guards everywhere skip the filter step correctly. Documented in commit message.
+
+4. **`Budaiya` in `pos/OrderBuilder.tsx:231` was NOT removed.** That's a customer **delivery address area** in Northern Governorate (real Bahraini city), not a restaurant branch. Different concept; deliberately different spelling (`Budaiya` vs `Al-Badi'`). User confirmed by saying "remove all references to البديع **branch**" — emphasis on branch.
+
+5. **BiDi fix used conditional `dir`, not hardcoded RTL.** `FounderSection` renders for both locales on `/about`. Hardcoding `dir="rtl"` would have broken the English page. Used `dir={isRTL ? 'rtl' : 'ltr'}` so English stays LTR.
+
+6. **`guest_count` coerced to number on the client, not just the server.** First attempt used `z.coerce.number()` and sent the raw string from the form. tsc rejected it because `z.input<typeof submitSchema>` reports `number` (not `string`) as the input type for coerced numbers under our Zod version. Fixed with `Number(values.guestCount)` on the client; `NaN` from non-numeric input is caught server-side by `.int().positive()`.
+
+7. **Catering form's `occasion_type` and `service_type` stored as localized strings, not enum keys.** Form's `<option value={t(...)}>` predates this session; values sent are the translated label (`"وليمة عائلية"` / `"Family Feast"`). DB stores `TEXT`. Not normalized; deliberately not refactored since the spec was "mirror reserve pattern" not "redesign the form". Worth a follow-up if dashboard filtering by occasion type is needed.
+
+8. **Turnstile rendering — same `process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY` guard as reserve form.** No widget shown if env var absent (local dev without Turnstile keys); server-side `TURNSTILE_SECRET_KEY` check soft-passes the same way reserve does. Soft-launch fallback is intentional.
+
+9. **Audit-only response on reservation/inquiry form architecture (no commit).** Spent significant analysis time before commit 48d9285 explaining that the "أخبرنا عن مناسبتك" form is the **catering** form, not the reservation form — they're architecturally different. The reserve form already has full server-side stack (commit history); the catering form was deliberately wa.me-only per the existing `notice` i18n string. User then approved the upgrade, which the three catering commits delivered.
+
+10. **Turnstile HMR error diagnosed as Turbopack module-registry bug, not code change.** A `ChevronDown` import in `menu-hero.tsx` threw `module factory is not available` in dev. Code was correct; the fix was Ctrl+Shift+R or dropping `--turbopack` (per existing turbopack memory). No commit.
+
+---
+
+## OUTSTANDING OPERATOR ACTIONS
+
+1. **Manual DB cleanup of `badi` branch row.** Migration 010 + 013 seeded a `badi` row into `branches`; applied migrations are immutable. Provided SQL for the user to run in Supabase SQL Editor:
+   ```sql
+   -- Inspect:
+   SELECT id, name_ar, name_en, is_active FROM branches WHERE id = 'badi';
+   -- Check FKs:
+   SELECT 'orders' AS t, COUNT(*) FROM orders WHERE branch_id = 'badi'
+   UNION ALL SELECT 'staff_profiles', COUNT(*) FROM staff_profiles WHERE branch_id = 'badi'
+   UNION ALL SELECT 'reservations', COUNT(*) FROM reservations WHERE branch_id = 'badi'
+   UNION ALL SELECT 'payments', COUNT(*) FROM payments WHERE branch_id = 'badi';
+   -- If no FKs: DELETE FROM branches WHERE id = 'badi';
+   -- If FKs:    UPDATE branches SET is_active = false WHERE id = 'badi';
+   ```
+   User has not yet reported results.
+
+2. **No new env vars needed.** The catering action reuses `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, and `UPSTASH_REDIS_REST_URL/TOKEN` which are already set in Vercel for the reserve form. Same Upstash key namespace (separate Redis prefix: `catering:` vs `reserve:`).
+
+3. **SENTRY_AUTH_TOKEN re-rotation still pending** (carried from session 120). Not touched this session.
+
+4. **SESSION_BIND_SECRET still pending** (carried from session 120). Not touched this session.
+
+---
+
+## DEFERRED / FOLLOW-UPS
+
+- **Catering audit findings #6 + #8 not addressed.** #6 (no email fallback) and #8 (HTML5 validation balloon doesn't follow next-intl locale) are deferred. The high-priority findings (#1, #2, #3, #4, #5, #7) all shipped.
+
+- **Catering `occasion_type` / `service_type` normalization.** Currently stored as the user's locale-rendered string. If dashboard filtering by occasion type is needed, normalize to enum keys (`familyFeast`, `majlis`, etc.) at the action layer.
+
+- **Catering dashboard page not built.** Migration 160 + service-role action are in; no `/dashboard/catering` route or component yet. Reads exist only via direct Supabase Studio access for now.
+
+- **`HIDDEN_BRANCHES` cleanup follow-up** (purely cosmetic): now-empty `length > 0` guards across ~30 files could be removed in a separate sweep. Not a priority.
+
+- **B-rated audit findings #6 / #8** as above.
 
 ---
 
 ## MIGRATION STATE
 
-- Local = Remote = **155 migrations applied**
-- Session 124 added: 155 (`coupon_usages` snapshot column + partial unique index + new `rpc_create_order` body)
-- Applied via `npx supabase db query -f` then `migration repair --status applied 155 --linked` to sync CLI tracking (precedent: `feedback_migration_repair_workflow.md`)
-- Post-apply probe confirmed column exists, unique index exists, rewritten RPC contains the VULN-004 marker
-- `supabase gen types` re-run; trailing `<claude-code-hint />` tag stripped per Windows pollution memory
+- Local = Remote = **160 migrations applied**
+- Session 126 added: **160** (catering_inquiries)
+- No migration repairs needed
 
 ---
 
-## REMEDIATION QUEUE — POST-SESSION-124
+## SESSION HISTORY (last 5)
 
-**Closed this session:** 6/6 HIGH, 6/16 MEDIUM (VULN-007, -008, -009, -019, -020, -021).
-
-**Still open from session 123 audit (re-verify before treating as work — `feedback_audit_doc_decay.md`):**
-- VULN-005 — Tap webhook HMAC consistency check on top-level vs nested `amount.currency`
-- VULN-010 — `staff-photos` storage bucket `public=true`
-- VULN-013 — no partial unique index on `(assigned_driver_id) WHERE status IN ('out_for_delivery','arrived')` — driver double-dispatch possible
-- VULN-015 — clock-in 4-digit PIN with 10/hr/staff budget enables time-card fraud
-- ~10 more MEDIUMs from the audit's "Remediation Priority" section
-- 21 LOW + 14 INFO
-
-**Two attack chains from session 123 audit:**
-- ~~CHAIN-001: VULN-001 alone = free-order primitive.~~ **Closed by `58ac2ee`.**
-- CHAIN-002: VULN-001 fixed, but the 72h reusable order-access token (bound to `orderId` only, not customer phone) remains. With VULN-001 closed, the cross-customer payment-takeover path is broken; the token-binding hardening is now a defense-in-depth opportunity, not a critical path.
-
----
-
-## DEFERRED / NOT TOUCHED
-
-- Remaining audit findings (10 MED + 21 LOW + 14 INFO + token-TTL hardening)
-- Birthday gift cron + idempotency + `loyalty_config.birthday_bonus_points`
-- Chef Excel recipe import (0/168 mapped; banner from session 123 still surfaces this)
-- `.env.test` reuses production Supabase service-role key (PCI 6.4 separation-of-duties concern — operator-side, needs a staging Supabase project)
-- TAP keys, Supabase Free → Pro, DNS cutover, `SENTRY_AUTH_TOKEN` re-rotation, `SESSION_BIND_SECRET` — operator-side
-
----
-
-## SESSION-RELEVANT MEMORIES (existing — no new ones added)
-
-Session 124 didn't surface any new cross-session learnings worth memorizing — the
-work was direct application of patterns already memorized:
-- `feedback_postrpc_update_pattern.md` — informed the VULN-004 decision to fold
-  `coupon_usages` INSERT into the RPC (in this case more than a focused UPDATE was
-  warranted: the whole CAS + locking semantic depended on co-location)
-- `feedback_supabase_gen_types_pollution.md` — `<claude-code-hint />` stripped from
-  regenerated types as expected
-- `feedback_migration_repair_workflow.md` — followed `db query -f` + `migration
-  repair --status applied N` precisely
-- `feedback_autostash_pattern.md` — `git pull --rebase --autostash` used before
-  every push
-
----
-
-## NEXT SESSION POINTERS
-
-1. **Run `tsc --noEmit` + the gate-7 grep suite at session start** to confirm
-   nothing in `.agent/CURRENT-SESSION.md` carries over uncommitted.
-2. Triage remaining MEDIUM queue (VULN-005, -010, -013, -015 first — they're the
-   ones the original audit flagged closest to payment/auth surfaces).
-3. Token-TTL hardening for `/payment/[orderId]` access token (CHAIN-002 follow-up).
-4. Chef Excel recipe import is still the recipes blocker.
-5. Re-verify each audit finding against current code before treating it as a
-   work queue (`feedback_audit_doc_decay.md`).
+- Session 122: AUD-V3-008 closed — analytics error swallow → AnalyticsResult<T>
+- Session 123: H-2 hydration fix — global-error.tsx reads locale from cookie
+- Session 124: Launch audit + 3 fixes (driver delivered, location push, stuck orders)
+- Session 125: Birthday cron + reorder/history + sonner + grant bugfix + motion v12
+- Session 126: ConfirmModal + loyalty i18n fix + البديع cleanup + founder copy + BiDi + catering hardening
