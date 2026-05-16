@@ -1,9 +1,21 @@
 'use server'
 
+import { z } from 'zod'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import type { Database, DriverLocationInsert } from '@/lib/supabase/custom-types'
 import { revalidatePath } from 'next/cache'
+
+// VULN-007: explicit allowlist for driver location pings. The previous shape
+// spread the whole client payload into the upsert, letting a malicious driver
+// client overwrite columns like driver_id, id, or created_at. Only the
+// geolocation fields below are accepted; everything else is dropped.
+const DriverLocationPingSchema = z.object({
+  order_id:   z.string().uuid(),
+  lat:        z.number().finite().gte(-90).lte(90),
+  lng:        z.number().finite().gte(-180).lte(180),
+  accuracy_m: z.number().finite().nonnegative().nullable().optional(),
+})
 
 // Audit fix #1: driver mutations are driver-only. Managers monitor and
 // dispatch from the delivery dashboard; they do not bump/arrive/fail orders
@@ -235,17 +247,22 @@ export async function postDriverLocation(
     return { success: false, error: 'Unauthorized: Driver role required for tracking' }
   }
 
+  // VULN-007: zod-parse the client payload before touching the DB. Anything
+  // outside the allowlist (driver_id, id, created_at, foreign columns) is
+  // dropped. driver_id is set from the session below — never trusted from
+  // the client.
+  const parsed = DriverLocationPingSchema.safeParse(payload)
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid location payload' }
+  }
+  const { order_id: orderId, lat, lng, accuracy_m } = parsed.data
+
+  const supabase = await createServiceClient()
+
   // Audit fix #2: verify the order this location belongs to is actually
   // assigned to this driver, in 'out_for_delivery' state, and within the
   // driver's branch. Without this, a malicious client could write spurious
   // pings against any order_id and pollute the live driver-tracking map.
-  const orderId = (payload as { order_id?: string | null }).order_id
-  if (!orderId) {
-    return { success: false, error: 'Order id required' }
-  }
-
-  const supabase = await createServiceClient()
-
   const { data: order, error: orderErr } = await supabase
     .from('orders')
     .select('id, status, branch_id, order_type, assigned_driver_id')
@@ -273,9 +290,12 @@ export async function postDriverLocation(
     .from('driver_locations')
     .upsert(
       [{
-        ...payload,
-        driver_id: user.id,
-        updated_at: new Date().toISOString()
+        driver_id:  user.id,
+        order_id:   orderId,
+        lat,
+        lng,
+        accuracy_m: accuracy_m ?? null,
+        updated_at: new Date().toISOString(),
       }],
       {
         onConflict: 'driver_id,order_id'
