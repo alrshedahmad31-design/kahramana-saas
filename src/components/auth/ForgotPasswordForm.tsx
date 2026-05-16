@@ -33,8 +33,7 @@ export default function ForgotPasswordForm() {
     }
 
     setLoading(true)
-    const redirectTo = `${window.location.origin}/auth/callback?type=recovery`
-    const result = await forgotPasswordAction(email, redirectTo, turnstileToken)
+    const result = await forgotPasswordAction(email, turnstileToken)
     setLoading(false)
 
     if (!result.success) {

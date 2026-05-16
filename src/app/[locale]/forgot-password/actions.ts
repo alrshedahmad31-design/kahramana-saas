@@ -66,7 +66,6 @@ async function checkRateLimit(): Promise<boolean> {
 
 export async function forgotPasswordAction(
   email: string,
-  redirectTo: string,
   turnstileToken?: string,
 ): Promise<ForgotResult> {
   const trimmed = email.trim().toLowerCase()
@@ -79,6 +78,11 @@ export async function forgotPasswordAction(
 
   const allowed = await checkRateLimit()
   if (!allowed) return { success: false, error: 'rate_limited' }
+
+  // VULN-A04 defense-in-depth: pin redirectTo to the server-known site URL so a
+  // host-header attacker can't smuggle a redirect target into the reset email
+  // even if Supabase's allowlist regresses to permissive.
+  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=recovery`
 
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(trimmed, { redirectTo })
