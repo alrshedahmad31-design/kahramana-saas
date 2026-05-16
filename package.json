@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "audit:ci": "npm audit --omit=dev --audit-level=high",
     "deploy:preview": "vercel",
     "deploy:prod": "vercel --prod",
     "db:migrate:prod": "npx supabase db push --linked",
