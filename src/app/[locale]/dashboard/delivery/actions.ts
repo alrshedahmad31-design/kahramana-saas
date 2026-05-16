@@ -5,6 +5,7 @@ import { getSession } from '@/lib/auth/session'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import { sendPushToDriver } from '@/app/[locale]/driver/push-actions'
+import { toSafeError } from '@/lib/utils/safe-error'
 
 const MANAGER_ROLES = new Set(['owner', 'general_manager', 'branch_manager'])
 const GLOBAL_ADMIN_ROLES = new Set(['owner', 'general_manager'])
@@ -234,9 +235,13 @@ export async function confirmDelivery(orderId: string): Promise<DispatchActionRe
     return { success: false, error: 'Order is not out for delivery' }
   }
 
-  // Compare-and-swap: only flip to 'delivered' if the row's status hasn't
-  // changed between our read above and this write. Prevents racing against a
-  // concurrent cancel / reassignment that flipped the status out from under us.
+  // VULN-022: compare-and-swap on the previously-observed status. Without
+  // this, a manager click could race against a driver-bump / cancel / reassign
+  // that already flipped the row out of out_for_delivery|arrived — the UPDATE
+  // would then either stomp a delivered-elsewhere order or surface as an
+  // opaque DB error. Pin to the exact status we just read; on miss, return a
+  // structured conflict so the UI can re-render and retry instead of falling
+  // through to a generic 500-style toast.
   const now = new Date().toISOString()
   const { data: updated, error } = await supabase
     .from('orders')
@@ -245,9 +250,9 @@ export async function confirmDelivery(orderId: string): Promise<DispatchActionRe
     .eq('status', order.status)
     .select('id')
 
-  if (error) return { success: false, error: error.message }
+  if (error) return { success: false, error: toSafeError(error) }
   if (!updated || updated.length === 0) {
-    return { success: false, error: 'Order status changed — please refresh and retry' }
+    return { success: false, error: 'order_status_conflict' }
   }
 
   await supabase.from('audit_logs').insert({
@@ -255,7 +260,11 @@ export async function confirmDelivery(orderId: string): Promise<DispatchActionRe
     action:     'UPDATE',
     user_id:    caller.id,
     record_id:  orderId,
-    changes:    { operation: 'confirm_delivery', new_status: 'delivered' },
+    changes:    {
+      operation:       'confirm_delivery',
+      previous_status: order.status,
+      new_status:      'delivered',
+    },
     branch_id:  order.branch_id,
     actor_role: caller.role,
   })
