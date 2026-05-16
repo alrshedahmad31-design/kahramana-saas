@@ -235,9 +235,28 @@ export default function DriverOrderCard({
     return parts.join(', ')
   })()
 
-  // Priority: shared Maps URL → DB lat/lng → structured address search
+  // Priority: DB decimal lat/lng → shared Maps URL → structured address search.
+  //
+  // DB lat/lng wins over any URL embedded in delivery_address. The share-URL
+  // path used to be first, which made customer-pasted Maps URLs in DMS format
+  // (e.g. "?q=N 26°08'02.1\" E 50°34'59.0\"") beat the clean decimal coords
+  // already stored in delivery_lat / delivery_lng — opening Google Maps with
+  // an unparseable query.
+  //
+  // Number() guards: delivery_lat/lng are NUMERIC columns; PostgREST returns
+  // them as JS strings. Coerce explicitly and gate on Number.isFinite so
+  // template interpolation always produces a clean decimal string.
   const customerNavUrl = useMemo(() => {
-    // 1. Shared Google Maps URL present in delivery_address
+    // 1. Explicit decimal coordinates from DB (customer shared browser GPS at checkout)
+    if (order.delivery_lat != null && order.delivery_lng != null) {
+      const lat = Number(order.delivery_lat)
+      const lng = Number(order.delivery_lng)
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return `https://www.google.com/maps?q=${lat},${lng}`
+      }
+    }
+
+    // 2. Shared Google Maps URL present in delivery_address
     if (extractedUrl) {
       // Extract coordinates from standard Maps URLs (?q=, @viewport, destination=, place/)
       // Require ≥4 decimal places to avoid matching non-coordinate numbers in the path
@@ -251,11 +270,6 @@ export default function DriverOrderCard({
       // goo.gl / maps.app.goo.gl short links — open as-is; device follows redirect
       // to the customer's exact saved location (no server call needed)
       return extractedUrl
-    }
-
-    // 2. Explicit coordinates from DB (customer shared browser GPS at checkout)
-    if (order.delivery_lat != null && order.delivery_lng != null) {
-      return `https://www.google.com/maps?q=${order.delivery_lat},${order.delivery_lng}`
     }
 
     // 3. Structured address → text search (only real structured fields, never raw notes)
