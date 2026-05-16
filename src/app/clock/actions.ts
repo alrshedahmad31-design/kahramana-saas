@@ -24,6 +24,12 @@ export type ClockResult =
 
 const BCRYPT_COST = 10
 
+// Known-valid bcrypt hash of an unguessable string. Used ONLY as a no-op
+// timing equalizer in verifyPin when the active-staff roster is empty, so the
+// "no staff" path doesn't return in microseconds. Result is discarded.
+const EMPTY_ROSTER_DUMMY_HASH =
+  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
+
 async function hashPin(pin: string): Promise<string> {
   return bcrypt.hash(pin, BCRYPT_COST)
 }
@@ -191,12 +197,22 @@ export async function verifyPin(pin: string): Promise<ClockResult> {
   type Row = { id: string; name: string; role: StaffRole; branch_id: string | null; clock_pin_hash: string | null }
   const rows = data as Row[]
 
+  // VULN-A06: constant-time across the roster. Always evaluate every row so
+  // the wall-clock of a successful PIN doesn't leak position-in-roster (or
+  // roster size). First match wins; later matches don't overwrite.
   let matched: Row | null = null
   for (const row of rows) {
-    if (await comparePinAndMaybeUpgrade(pin, row.clock_pin_hash, row.id)) {
+    const isMatch = await comparePinAndMaybeUpgrade(pin, row.clock_pin_hash, row.id)
+    if (isMatch && matched === null) {
       matched = row
-      break
     }
+  }
+
+  // Empty-roster floor: burn one bcrypt compare so "no active staff" doesn't
+  // return in microseconds and become trivially distinguishable from the
+  // non-empty path.
+  if (rows.length === 0) {
+    await bcrypt.compare(pin, EMPTY_ROSTER_DUMMY_HASH)
   }
 
   if (!matched) return { success: false, error: 'PIN not found' }
