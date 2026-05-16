@@ -375,10 +375,12 @@ export async function resendStaffInvitation(staffId: string): Promise<ActionResu
   if (staffError || !staff) return { success: false, error: INVITE_DENIED }
 
   const target = staff as Pick<StaffBasicRow, 'id' | 'role' | 'branch_id'>
-  if (!canManageStaff(caller, target)) {
-    return { success: false, error: INVITE_DENIED }
-  }
 
+  // VULN-A05: per-target rate-limit runs BEFORE the permission branch so the
+  // wall-clock response for "valid target / cool-down active" matches the
+  // response for "valid target / cool-down inactive" — closing the prior
+  // latency channel that distinguished real staff IDs from unknown ones for
+  // an unauthorized caller.
   // Per-TARGET cool-down — at most one invite every 5 minutes per staff ID,
   // regardless of which (authorized) manager triggered it. Stops the
   // phishing-pretext email-bomb against a specific target.
@@ -390,6 +392,10 @@ export async function resendStaffInvitation(staffId: string): Promise<ActionResu
         return { success: false, error: 'An invitation was just sent. Please wait before resending.' }
       }
     }
+  }
+
+  if (!canManageStaff(caller, target)) {
+    return { success: false, error: INVITE_DENIED }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
