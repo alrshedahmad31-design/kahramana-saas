@@ -98,7 +98,11 @@ export default function PointsHistory({ transactions }: Props) {
               return (
                 <tr key={tx.id} className="border-b border-brand-border last:border-0 hover:bg-brand-surface-2 transition-colors">
                   <td className="px-4 py-3 font-satoshi text-xs text-brand-muted tabular-nums">
-                    {new Date(tx.created_at).toLocaleDateString(isAr ? 'ar-BH' : 'en-BH', {
+                    {/* `-u-nu-latn` keeps the date readable in Arabic with Latin digits
+                        (same recipe as whatsapp.ts / MembershipCard). Switching the EN
+                        tag to `en-GB` matches the Bahrain DD MMM YYYY ordering without
+                        importing a new locale. */}
+                    {new Date(tx.created_at).toLocaleDateString(isAr ? 'ar-BH-u-nu-latn' : 'en-GB', {
                       day: 'numeric', month: 'short', year: 'numeric',
                     })}
                   </td>

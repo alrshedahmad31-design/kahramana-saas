@@ -27,8 +27,13 @@ const STATUS_INDEX: Partial<Record<OrderStatus, number>> = {
   completed:        5,
 }
 
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleString('en-BH', {
+// Latin digits in both locales. `ar-BH-u-nu-latn` keeps month abbreviations
+// localised to Arabic while forcing Latin numerals; `en-GB` is the Bahrain
+// DD MMM ordering with Latin numerals natively. Mirrors the recipe used in
+// whatsapp.ts and MembershipCard.
+function formatTime(iso: string, isRTL: boolean): string {
+  const tag = isRTL ? 'ar-BH-u-nu-latn' : 'en-GB'
+  return new Date(iso).toLocaleString(tag, {
     month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
@@ -45,8 +50,8 @@ export default function OrderTimeline({ status, createdAt, updatedAt, isRTL }: P
         const isCurrent = i === currentIndex && !isCancelled
         const isLast    = i === FLOW.length - 1
 
-        const timestamp = i === 0 ? formatTime(createdAt)
-          : isCurrent   ? formatTime(updatedAt)
+        const timestamp = i === 0 ? formatTime(createdAt, isRTL)
+          : isCurrent   ? formatTime(updatedAt, isRTL)
           : null
 
         return (
@@ -103,7 +108,7 @@ export default function OrderTimeline({ status, createdAt, updatedAt, isRTL }: P
               {isRTL ? (status === 'payment_failed' ? 'فشل الدفع' : 'تم الإلغاء') : (status === 'payment_failed' ? 'Payment failed' : 'Cancelled')}
             </p>
             <p className="font-satoshi text-xs text-brand-muted tabular-nums mt-0.5">
-              {formatTime(updatedAt)}
+              {formatTime(updatedAt, isRTL)}
             </p>
           </div>
         </div>
