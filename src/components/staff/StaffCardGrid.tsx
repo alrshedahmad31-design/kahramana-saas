@@ -132,7 +132,7 @@ export default function StaffCardGrid({
                   <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center
                     shrink-0 font-cairo font-black text-xl overflow-hidden ${badge.bg} ${badge.text}`}>
                     {member.profile_photo_url ? (
-                      <Image src={member.profile_photo_url} alt={member.name} fill sizes="56px" className="object-cover" />
+                      <Image src={member.profile_photo_url} alt={member.name} fill sizes="56px" className="object-cover" unoptimized />
                     ) : (
                       initials(member.name)
                     )}

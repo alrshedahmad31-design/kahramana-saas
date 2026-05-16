@@ -10,6 +10,7 @@ import StaffTimesheetTab          from '@/components/staff/StaffTimesheetTab'
 import StaffLeaveTab              from '@/components/staff/StaffLeaveTab'
 import DriverPerformanceCard, { type DriverPerformanceStats } from '@/components/staff/DriverPerformanceCard'
 import type { StaffExtendedRow } from '@/lib/supabase/custom-types'
+import { resolveStaffPhotoSignedUrl } from '@/lib/storage/staff-photos'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,11 @@ export default async function StaffProfilePage({ params }: Props) {
 
   if (!staffData) notFound()
 
-  const staff: StaffExtendedRow = staffData
+  // VULN-010: staff-photos bucket is private; resolve to a short-lived
+  // signed URL before passing to client components.
+  const staff: StaffExtendedRow = staffData.profile_photo_url
+    ? { ...staffData, profile_photo_url: await resolveStaffPhotoSignedUrl(staffData.profile_photo_url) }
+    : staffData
 
   // Page-level permission gate — do not rely on RLS or middleware alone.
   // canViewStaff allows: self, owner/general_manager, branch_manager of same branch.

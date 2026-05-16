@@ -6,6 +6,7 @@ import { createStaffFull } from '@/app/[locale]/dashboard/staff/actions'
 import type { CreateStaffFullResult } from '@/app/[locale]/dashboard/staff/actions'
 import { createClient }    from '@/lib/supabase/client'
 import { Icon } from '@/components/ui/Icon'
+import { createStaffPhotoSignedUrlClient } from '@/lib/storage/staff-photos-client'
 
 interface Props {
   locale:        string
@@ -84,6 +85,10 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
   const [error,         setError]         = useState<string | null>(null)
   const [loading,       setLoading]       = useState(false)
   const [uploadPending, setUploadPending] = useState(false)
+  // VULN-010: profile_photo_url stores the storage PATH; the bucket is now
+  // private so we render the preview from a short-lived signed URL kept in
+  // local state and not persisted.
+  const [photoPreview,  setPhotoPreview]  = useState<string | null>(null)
   const [submitted,     setSubmitted]     = useState<Extract<CreateStaffFullResult, { success: true }> | null>(null)
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
@@ -110,11 +115,11 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
 
       if (uploadError) throw uploadError
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('staff-photos')
-        .getPublicUrl(filePath)
-
-      set('profile_photo_url', publicUrl)
+      // VULN-010: store the storage path (not a public URL — the bucket is
+      // private). Render the preview from a freshly issued signed URL.
+      set('profile_photo_url', filePath)
+      const signedUrl = await createStaffPhotoSignedUrlClient(supabase, filePath)
+      setPhotoPreview(signedUrl)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -388,8 +393,8 @@ export default function StaffFormWizard({ locale, callerRole: _callerRole, onClo
                              flex items-center justify-center overflow-hidden relative group cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  {data.profile_photo_url ? (
-                    <Image src={data.profile_photo_url} alt="Profile" fill sizes="96px" className="object-cover" />
+                  {photoPreview ? (
+                    <Image src={photoPreview} alt="Profile" fill sizes="96px" className="object-cover" unoptimized />
                   ) : (
                     <PhotoIcon className="w-8 h-8 text-brand-muted group-hover:text-brand-gold transition-colors" />
                   )}

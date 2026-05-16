@@ -5,6 +5,7 @@ import { canAccessStaffPage, canManageStaff } from '@/lib/auth/rbac'
 import { createClient }    from '@/lib/supabase/server'
 import type { StaffExtendedRow } from '@/lib/supabase/custom-types'
 import StaffViewManager    from '@/components/staff/StaffViewManager'
+import { resolveStaffPhotoSignedUrl } from '@/lib/storage/staff-photos'
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -28,7 +29,18 @@ export default async function StaffPage({ params }: Props) {
     .select('*')
     .order('created_at', { ascending: false })
 
-  const rows: StaffExtendedRow[] = staff ?? []
+  // VULN-010: staff-photos is now a private bucket. Resolve each row's photo
+  // to a short-lived signed URL on the server so client components never
+  // depend on getPublicUrl. extractStaffPhotoPath handles legacy rows that
+  // still hold full public URLs written before the bucket was made private.
+  const rawRows: StaffExtendedRow[] = staff ?? []
+  const rows: StaffExtendedRow[] = await Promise.all(
+    rawRows.map(async (row) => {
+      if (!row.profile_photo_url) return row
+      const signed = await resolveStaffPhotoSignedUrl(row.profile_photo_url)
+      return { ...row, profile_photo_url: signed }
+    }),
+  )
 
   const manageable = new Set(
     rows.filter((s) => canManageStaff(user, s)).map((s) => s.id),
