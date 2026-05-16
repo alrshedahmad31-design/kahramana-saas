@@ -12,7 +12,7 @@ interface AlertPayload {
 }
 
 interface ToastItem extends AlertPayload {
-  key: number
+  key: string
 }
 
 function severityIcon(s: AlertSeverity): IconName {
@@ -33,7 +33,7 @@ function dismissDelay(s: AlertSeverity) {
   return 5_000
 }
 
-function AlertToast({ item, onDismiss }: { item: ToastItem; onDismiss: (key: number) => void }) {
+function AlertToast({ item, onDismiss }: { item: ToastItem; onDismiss: (key: string) => void }) {
   useEffect(() => {
     const t = setTimeout(() => onDismiss(item.key), dismissDelay(item.severity))
     return () => clearTimeout(t)
@@ -59,7 +59,7 @@ function AlertToast({ item, onDismiss }: { item: ToastItem; onDismiss: (key: num
 export default function InventoryAlertsListener() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
-  const dismiss = useCallback((key: number) => {
+  const dismiss = useCallback((key: string) => {
     setToasts(prev => prev.filter(t => t.key !== key))
   }, [])
 
@@ -74,7 +74,10 @@ export default function InventoryAlertsListener() {
         { event: 'INSERT', schema: 'public', table: 'inventory_alerts' },
         (payload) => {
           const row = payload.new as AlertPayload
-          const key = Date.now()
+          // Per-toast UUID instead of Date.now() — two realtime INSERTs that
+          // land in the same millisecond (and reconnect replays) were
+          // producing duplicate React keys.
+          const key = crypto.randomUUID()
 
           setToasts(prev => [...prev, { id: row.id, severity: row.severity, message: row.message, key }])
 
