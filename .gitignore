@@ -86,3 +86,6 @@ scratch/
 .impeccable/live/server.json
 .impeccable/live/sessions/
 .claude/settings.local.json
+
+# Claude Code parallel worktrees — ephemeral sibling sessions, never index
+.claude/worktrees/

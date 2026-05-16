@@ -1,74 +1,98 @@
 # GEMINI.md — Kahramana Baghdad
-> Antigravity-specific rules. These override AGENTS.md for Antigravity sessions only.
-> Last updated: 2026-04-27
+> Gemini Code Assist context. Inherits from AGENTS.md.
+> Last updated: 2026-05-16 (rewritten to match Gemini Code Assist capabilities; Antigravity-only workflow rules moved to ANTIGRAVITY.md)
 
 ---
 
-## MANDATORY SESSION START
+## READ FIRST
 
-Every session MUST begin by running the `/start-session` workflow.
-Do not skip this. Do not assume state from memory.
+1. `AGENTS.md` — shared cross-tool rules (RTL, TypeScript strict, next-intl, RLS, design tokens)
+2. `.agent/phase-state.json` — current phase, completed/pending deliverables, blockers
+3. `.agent/CURRENT-SESSION.md` — bridge context: what just happened, what's next, operator actions pending
 
-Available workflows:
-- `/start-session` — Load context and report current state
-- `/start-phase [N]` — Formally begin a new phase
-- `/complete-phase` — Run phase gate before closing a phase
-- `/end-session` — **أجرِه قبل إغلاق Antigravity** — يحدّث phase-state.json + LAST-SESSION.md
+That's the full required reading. Do not curl external gists. Do not load the 50+ files under `.agents/skills/` — those are Antigravity skill markdown, not Gemini primitives.
 
 ---
 
-## PROJECT CONTEXT FILES
+## SESSION START — WHAT TO REPORT
 
-Before any work, load these skills based on context:
-
-**Every session (mandatory):**
-1. `.agents/skills/kahramana-context.md` — architecture + business rules
-2. `.agents/skills/phase-gate.md` — gate enforcement protocol
-3. `.agent/PLAN.md` — full 9-phase plan
-4. `.agent/RULES.md` — shared rules
-5. `.agent/phase-state.json` — live state
-
-**Phase-specific (load when relevant):**
-- Phase 0 active → `.agents/skills/phase-0-discovery.md`
-- Phase 1 init → `.agents/skills/project-setup.md`
-- Any UI work → `.agents/skills/design-system.md` ← mandatory before any component
-
----
-
-## ANTIGRAVITY-SPECIFIC BEHAVIOR
-
-### Agent Manager
-- Use the Project Lead agent to orchestrate sessions
-- Delegate UI work to Frontend Engineer agent
-- Delegate DB/API work to Backend Engineer agent
-- QA Auditor agent runs `/complete-phase` workflow
-
-### Browser Verification
-When a phase produces visible UI, use Antigravity's browser to:
-1. Load the local dev server
-2. Take a screenshot
-3. Verify RTL layout renders correctly (Arabic text right-aligned, nav flows right)
-4. Verify no visual regression from previous phase
-
-### Artifact Output
-After completing a significant feature, produce an Artifact (screenshot + summary) so the human can review without diving into code.
-
----
-
-## CRITICAL RULES (Antigravity enforcement)
+When the user opens a session, output this and then stop:
 
 ```
-NEVER:
-- Start work without reading phase-state.json
-- Mark phase done without running /complete-phase workflow
-- Use pl-* pr-* ml-* mr-* in any className
-- Hardcode Arabic or English strings in components
-- Create a table without RLS
+KAHRAMANA — SESSION START [today's date]
+Current Phase: [N] — [name] (from phase-state.json)
+Status: [pending / in-progress / locked / done]
 
-ALWAYS:
-- Report current phase status at session start
-- Update phase-state.json after completing deliverables
-- Ask before adding any library not in the tech stack
-- Route orders to branch-specific WhatsApp numbers
-- Use next-intl for ALL user-facing text
+Completed: [list or "none"]
+Pending:   [list]
+Blockers:  [list or "none"]
+
+Next action: [most recent unfinished item from CURRENT-SESSION.md "ACTIVE DEV PRIORITIES"]
 ```
+
+Then wait for the human to confirm direction before writing code.
+
+---
+
+## ABSOLUTE RULES (mirror of AGENTS.md — do not violate)
+
+- **RTL CSS**: use `ps-/pe-/ms-/me-/start-/end-`. Never `pl-/pr-/ml-/mr-/left-/right-`.
+- **TypeScript strict**: no `any`, no `as unknown`. Build fails on `no-explicit-any`.
+- **Bilingual**: all user-facing text through `next-intl`. No hardcoded AR/EN strings.
+- **Phone numbers**: only from `src/constants/contact.ts`. Never hardcode `97317*` or `wa.me/*`.
+- **Colors**: only via `src/lib/design-tokens.ts`. No raw hex in components.
+- **Currency**: BHD is forbidden in UI strings (Kahramana is Bahrain-market — display per i18n).
+- **Database**: every new table needs `ENABLE ROW LEVEL SECURITY` in the same migration.
+- **DB writes**: via Supabase RPC only — atomic, never two-step JS patterns.
+- **Master branch only**: no worktrees unless explicitly requested.
+
+---
+
+## PHASE COMPLETION (terminal checks)
+
+Before marking a phase done, all of these must return zero violations:
+
+```bash
+npx tsc --noEmit
+
+grep -rn "\bpl-\|\bpr-\|\bml-\|\bmr-\|padding-left\|padding-right\|margin-left\|margin-right" \
+  app/ components/ lib/ --include="*.tsx" --include="*.ts" --include="*.css"
+
+grep -rn 'Inter\|Poppins\|Nunito\|Montserrat\|Raleway\|Roboto' \
+  app/ components/ --include="*.tsx" --include="*.ts"
+
+grep -rn 'purple\|violet\|indigo\|yellow-[0-9]\|amber-[0-9]' \
+  app/ components/ --include="*.tsx"
+
+grep -rn 'BHD' app/ components/ --include="*.tsx"
+
+grep -rn "97317\|wa\.me/" src/ app/ components/ --include="*.tsx" --include="*.ts" \
+  | grep -v "src/constants/contact.ts" | grep -v "src/lib/whatsapp.ts"
+
+grep -rn "#[0-9a-fA-F]\{6\}" app/ components/ --include="*.tsx" --include="*.ts"
+
+npx tsx scripts/check-i18n.ts
+
+npm run build
+```
+
+Exempt files for the raw-hex grep:
+- `src/lib/design-tokens.ts` — global brand tokens
+- `src/lib/delivery/tokens.ts` — delivery surface + Google Maps style tokens
+
+---
+
+## WHAT NOT TO DO
+
+- Do **not** run `/start-session` as a slash command — Gemini Code Assist does not resolve it. Just produce the session-start report from this file directly.
+- Do **not** load files under `.claude/worktrees/`. They are Claude Code sibling sessions, listed in `.geminiignore`. Each one is a near-full repo clone.
+- Do **not** load `.agents/skills/*` unless the user explicitly names a skill — they are Antigravity-format markdown.
+- Do **not** start Phase N+1 before Phase N is verified done in `phase-state.json`.
+- Do **not** touch Phase 8 (AI) — locked, needs 6 months of production data.
+- Do **not** scaffold customer login/signup — Phase 1 is Guest Only.
+
+---
+
+## LANGUAGE
+
+Reply in English by default even when Ahmed writes in Arabic. Switch to Arabic only when he explicitly asks.

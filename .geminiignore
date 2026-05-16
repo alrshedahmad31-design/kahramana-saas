@@ -1,0 +1,55 @@
+# Files Gemini Code Assist must NOT index.
+# Same spirit as .gitignore but enforced by the IDE indexer.
+
+# Build / dependency artefacts
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+
+# Claude Code sibling worktrees — each contains a near-full clone of the repo
+# and its own GEMINI.md / AGENTS.md / .agents/ tree. Indexing them blows the
+# context budget and produces no usable signal.
+.claude/worktrees/
+
+# Claude-specific runtime state
+.claude/settings.local.json
+
+# Ephemeral agent scratch
+.agent/reports/
+.agent/probe-*
+.agent/audit-p*
+.agent/verify-*
+.agent/fix*-*.sql
+.agent/lh-*.json
+.agent/lighthouse-*.json
+.agent/anon-execute-*.json
+.agent/perf-baseline.csv
+.agent/fn-bodies.json
+.agent/cowork-*.patch
+scratch/
+
+# Test artefacts
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Impeccable runtime state
+.impeccable/live/server.json
+.impeccable/live/sessions/
+
+# Editor / OS junk
+.idea/
+.vscode/settings.json
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+dev-server*.log
