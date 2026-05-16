@@ -554,6 +554,7 @@ export type Database = {
           discount_amount_bhd: number
           id: string
           order_id: string
+          per_customer_limit: number
           used_at: string
         }
         Insert: {
@@ -562,6 +563,7 @@ export type Database = {
           discount_amount_bhd: number
           id?: string
           order_id: string
+          per_customer_limit?: number
           used_at?: string
         }
         Update: {
@@ -570,6 +572,7 @@ export type Database = {
           discount_amount_bhd?: number
           id?: string
           order_id?: string
+          per_customer_limit?: number
           used_at?: string
         }
         Relationships: [
