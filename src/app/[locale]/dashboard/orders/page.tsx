@@ -25,6 +25,14 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
 
   // Non-global users are locked to their own branch — enforced here and repeated in OrdersClient
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
+
+  // Fail-closed: a scoped role with NULL branch_id would fall through to the
+  // unfiltered query below and expose every branch's orders. Mirrors the
+  // dashboard home guard.
+  if (!isGlobalAdmin && !user.branch_id) {
+    redirect(`${prefix}/dashboard`)
+  }
+
   const userBranchId  = isGlobalAdmin ? null : (user.branch_id ?? null)
 
   // Default filter matches client defaults: today, all statuses, page 1
