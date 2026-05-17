@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Icon } from '@/components/ui/Icon'
 
@@ -8,11 +9,12 @@ interface Props {
   mapped: number
   total: number
   locale: string
+  importHref: string
 }
 
 const STORAGE_KEY = 'kahramana.inventory.recipesBanner.dismissed'
 
-export default function RecipesBannerClient({ mapped, total, locale }: Props) {
+export default function RecipesBannerClient({ mapped, total, locale, importHref }: Props) {
   const t = useTranslations('inventory.recipesBanner')
   const isAr = locale === 'ar'
   const [mounted, setMounted] = useState(false)
@@ -56,6 +58,12 @@ export default function RecipesBannerClient({ mapped, total, locale }: Props) {
       >
         {t('title', { mapped, total })}
       </p>
+      <Link
+        href={importHref}
+        className="shrink-0 inline-flex items-center rounded-lg bg-brand-gold px-3 py-1.5 text-xs font-bold text-brand-black hover:brightness-110 transition-all"
+      >
+        {t('cta')}
+      </Link>
       <button
         type="button"
         onClick={handleDismiss}

@@ -1513,7 +1513,8 @@
       "batch": "batch"
     },
     "recipesBanner": {
-      "title": "{mapped}/{total} recipes mapped — chef Excel import pending",
+      "title": "{mapped}/{total} recipes mapped — import chef Excel to enable inventory deduction",
+      "cta": "Import Excel",
       "dismiss": "Dismiss"
     },
     "alerts": {

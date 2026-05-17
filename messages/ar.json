@@ -1513,7 +1513,8 @@
       "batch": "دفعة"
     },
     "recipesBanner": {
-      "title": "تم ربط {mapped}/{total} وصفة — استيراد قائمة الشيف معلّق",
+      "title": "تم ربط {mapped}/{total} وصفة — استورد ملف الشيف لتفعيل خصم المخزون",
+      "cta": "استيراد ملف Excel",
       "dismiss": "إخفاء"
     },
     "alerts": {

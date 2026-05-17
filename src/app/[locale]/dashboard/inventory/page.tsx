@@ -18,7 +18,7 @@ interface PageProps {
 }
 
 const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager'] as const
-const RECIPES_BANNER_ROLES = ['owner', 'general_manager', 'branch_manager'] as const
+const RECIPES_BANNER_ROLES = ['owner', 'general_manager', 'inventory_manager'] as const
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-IQ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -115,8 +115,8 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
       .select('id')
       .is('approved_by', null),
     showRecipesBanner
-      ? supabase.from('recipes').select('id', { count: 'exact', head: true })
-      : Promise.resolve({ count: null, error: null }),
+      ? supabase.from('recipes').select('menu_item_slug')
+      : Promise.resolve({ data: [] as Array<{ menu_item_slug: string }>, error: null }),
     showRecipesBanner
       ? supabase.from('menu_items').select('id', { count: 'exact', head: true })
       : Promise.resolve({ count: null, error: null }),
@@ -127,9 +127,10 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
   const alerts = (alertsResult.data ?? []) as InventoryAlertRow[]
   const stockRows = (stockResult.data ?? []) as Array<{ on_hand: number; ingredient: { cost_per_unit: number } | null }>
   const pendingWasteCount = (wasteResult.data ?? []).length
-  const recipesCount = recipesCountResult?.count ?? 0
+  const recipeSlugRows = (recipesCountResult as { data?: Array<{ menu_item_slug: string }> | null })?.data ?? []
+  const recipesCount = new Set(recipeSlugRows.map((r) => r.menu_item_slug)).size
   const menuItemsCount = menuItemsCountResult?.count ?? 0
-  const showBanner = showRecipesBanner && recipesCount === 0 && menuItemsCount > 0
+  const showBanner = showRecipesBanner && menuItemsCount > 0 && recipesCount < menuItemsCount
 
   // Calculate total stock value
   const totalStockValue = stockRows.reduce((sum, row) => {
@@ -147,6 +148,7 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
           mapped={recipesCount}
           total={menuItemsCount}
           locale={locale}
+          importHref={`${prefix}/dashboard/inventory/recipes/import`}
         />
       )}
 
