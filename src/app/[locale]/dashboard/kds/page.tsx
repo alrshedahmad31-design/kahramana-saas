@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
-import { getSession } from '@/lib/auth/session'
-import { canAccessKDS } from '@/lib/auth/rbac'
-import { createServiceClient } from '@/lib/supabase/server'
+import {
+  requireDashboardSection,
+  isDashboardGuardError,
+} from '@/lib/auth/dashboard-guards'
+import { createClient } from '@/lib/supabase/server'
 import { KDSStationSelector } from '@/components/kds/KDSStationSelector'
 import KDSStationBoard from '@/components/kds/KDSStationBoard'
 import type { KDSOrder, KDSStation, KDSItemStatus } from '@/lib/supabase/custom-types'
@@ -43,9 +45,14 @@ export default async function KDSPage({ params, searchParams }: Props) {
     ? (rawStation as KDSStation)
     : undefined
 
-  const user = await getSession()
-  if (!user) redirect(`/${locale}/login`)
-  if (!canAccessKDS(user)) redirect(`/${locale}/dashboard`)
+  // P1-16: unified RBAC surface — same gate as other dashboard sections.
+  let user
+  try {
+    user = await requireDashboardSection('kds')
+  } catch (e) {
+    if (isDashboardGuardError(e)) redirect(`/${locale}/dashboard`)
+    throw e
+  }
 
   const isGlobalKitchenViewer = user.role === 'owner' || user.role === 'general_manager'
 
@@ -54,7 +61,9 @@ export default async function KDSPage({ params, searchParams }: Props) {
     redirect(`/${locale}/dashboard`)
   }
 
-  const supabase = await createServiceClient()
+  // P1-17: anon client — RLS on kds tables is branch-scoped; manual .eq()
+  // below is kept as defense-in-depth.
+  const supabase = await createClient()
 
 
   if (!activeStation) {

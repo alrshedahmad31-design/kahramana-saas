@@ -244,10 +244,16 @@ export async function getStationDailyCount(
 
   if (!canAccessKDS(caller)) return { error: 'Unauthorized' }
 
+  // P1-18: clamp branchId to caller.branch_id for non-global roles to prevent
+  // attacker-controlled branch lookup from a kitchen-scoped role.
+  const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
+  const effectiveBranchId = isGlobal ? branchId : (caller.branch_id ?? null)
+  if (!effectiveBranchId) return { error: 'Staff not assigned to a branch' }
+
   const userClient = await createClient()
   const { data, error } = await userClient.rpc('get_station_daily_count', {
     p_station:   station,
-    p_branch_id: branchId,
+    p_branch_id: effectiveBranchId,
   })
 
   if (error) return { error: toSafeError(error) }
