@@ -1,6 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
 import { createClient } from '@/lib/supabase/server'
 
 type ForgotResult =
@@ -11,9 +12,13 @@ const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v1/sit
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  // Soft-launch: when the secret is unset, fall through. Becomes mandatory
-  // the moment TURNSTILE_SECRET_KEY lands in env. Matches contact/reserve.
-  if (!secret) return true
+  // Production fails closed when the secret isn't configured — password-reset
+  // is an obvious abuse target and must never silently bypass Turnstile.
+  // Dev/preview fall through. Matches contact/reserve post-T1 pattern.
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') return false
+    return true
+  }
   if (!token) return false
 
   try {
@@ -39,29 +44,36 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 }
 
 async function checkRateLimit(): Promise<boolean> {
-  // Production-only — in dev every request shares 127.0.0.1 and a 3/15m budget
-  // burns inside a minute of normal QA. Matches the gate in contact/reserve.
-  if (
-    process.env.NODE_ENV !== 'production'
-    || !process.env.UPSTASH_REDIS_REST_URL
-    || !process.env.UPSTASH_REDIS_REST_TOKEN
-  ) {
+  // Dev/preview share 127.0.0.1 and burn the 3/15m budget in a minute of QA.
+  // Production fails closed when Upstash isn't configured — password-reset is
+  // an obvious abuse target and must never silently lose rate limiting during
+  // an env-var rotation. Matches contact/reserve post-T1 pattern.
+  if (process.env.NODE_ENV !== 'production') {
     return true
   }
-  const [{ Ratelimit }, { Redis }] = await Promise.all([
-    import('@upstash/ratelimit'),
-    import('@upstash/redis'),
-  ])
-  const ratelimit = new Ratelimit({
-    redis:   Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(3, '15 m'),
-  })
-  const headersList = await headers()
-  const ip = headersList.get('x-real-ip')
-          ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
-          ?? '127.0.0.1'
-  const { success } = await ratelimit.limit(`auth:forgot:${ip}`)
-  return success
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    Sentry.captureMessage('forgot_password.rate_limit_unconfigured', { level: 'warning' })
+    return false
+  }
+  try {
+    const [{ Ratelimit }, { Redis }] = await Promise.all([
+      import('@upstash/ratelimit'),
+      import('@upstash/redis'),
+    ])
+    const ratelimit = new Ratelimit({
+      redis:   Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(3, '15 m'),
+    })
+    const headersList = await headers()
+    const ip = headersList.get('x-real-ip')
+            ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
+            ?? '127.0.0.1'
+    const { success } = await ratelimit.limit(`auth:forgot:${ip}`)
+    return success
+  } catch (err) {
+    Sentry.captureException(err, { tags: { stage: 'forgot_password.rate_limit' } })
+    return false
+  }
 }
 
 export async function forgotPasswordAction(

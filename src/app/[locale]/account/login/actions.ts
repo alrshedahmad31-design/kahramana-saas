@@ -19,15 +19,18 @@ type AuthError =
 
 type AuthResult = { success: true } | { success: false; error: AuthError }
 
-// VULN-020: Turnstile verification for registerAction. Same soft-launch
-// pattern as forgotPasswordAction / contactAction / reserveAction — when
-// TURNSTILE_SECRET_KEY is unset (dev / preview / pre-rollout production)
-// we fall through; the moment the secret lands the gate is mandatory.
+// Turnstile verification for login + register. Production fails closed
+// when TURNSTILE_SECRET_KEY isn't configured — credential-stuffing surface
+// must never silently bypass. Dev/preview fall through so local testing
+// stays unblocked. Matches contact/reserve post-T1 pattern.
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v1/siteverify'
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  if (!secret) return true
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') return false
+    return true
+  }
   if (!token) return false
 
   try {
@@ -62,31 +65,39 @@ const RATE_LIMITS: Record<'login' | 'register', number> = {
 
 // rate limiting disabled in dev/preview — per feedback_rate_limit_node_env_gate.md
 // Dev/preview share 127.0.0.1, so the shared budget collapses and blocks the
-// next contributor on the same network.
+// next contributor on the same network. Production fails closed when Upstash
+// isn't configured — credential-stuffing protection must never silently drop
+// during an env-var rotation. Matches staff /login + contact/reserve pattern.
 async function checkRateLimit(key: 'login' | 'register'): Promise<boolean> {
   if (process.env.NODE_ENV !== 'production') {
     return true
   }
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return true
+    Sentry.captureMessage(`account_${key}.rate_limit_unconfigured`, { level: 'warning' })
+    return false
   }
-  const [{ Ratelimit }, { Redis }] = await Promise.all([
-    import('@upstash/ratelimit'),
-    import('@upstash/redis'),
-  ])
-  const ratelimit = new Ratelimit({
-    redis:   Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(RATE_LIMITS[key], '15 m'),
-  })
-  const headersList = await headers()
-  // Prefer edge-set x-real-ip (not client-controllable) over x-forwarded-for
-  // (request-echoed and spoofable) so credential-stuffing IPs can't bypass
-  // the per-IP budget by setting their own XFF header.
-  const ip = headersList.get('x-real-ip')
-          ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
-          ?? '127.0.0.1'
-  const { success } = await ratelimit.limit(`auth:${key}:${ip}`)
-  return success
+  try {
+    const [{ Ratelimit }, { Redis }] = await Promise.all([
+      import('@upstash/ratelimit'),
+      import('@upstash/redis'),
+    ])
+    const ratelimit = new Ratelimit({
+      redis:   Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(RATE_LIMITS[key], '15 m'),
+    })
+    const headersList = await headers()
+    // Prefer edge-set x-real-ip (not client-controllable) over x-forwarded-for
+    // (request-echoed and spoofable) so credential-stuffing IPs can't bypass
+    // the per-IP budget by setting their own XFF header.
+    const ip = headersList.get('x-real-ip')
+            ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
+            ?? '127.0.0.1'
+    const { success } = await ratelimit.limit(`auth:${key}:${ip}`)
+    return success
+  } catch (err) {
+    Sentry.captureException(err, { tags: { stage: `account_${key}.rate_limit` } })
+    return false
+  }
 }
 
 // T2-9: second rate-limit dimension keyed on the email address. The IP gate
@@ -96,7 +107,10 @@ async function checkRateLimit(key: 'login' | 'register'): Promise<boolean> {
 // in Redis. Production-only for the same dev/preview reason as the IP gate.
 async function checkEmailRateLimit(email: string): Promise<boolean> {
   if (process.env.NODE_ENV !== 'production') return true
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return true
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    Sentry.captureMessage('account_login.email_rate_limit_unconfigured', { level: 'warning' })
+    return false
+  }
   try {
     const [{ Ratelimit }, { Redis }] = await Promise.all([
       import('@upstash/ratelimit'),
