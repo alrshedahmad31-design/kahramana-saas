@@ -39,15 +39,28 @@ export default async function RecipesPage({ params }: PageProps) {
   const rawSlugs = recipeSlugsResult.data ?? []
   const recipeSlugsSet = new Set(rawSlugs.map((r: { menu_item_slug: string }) => r.menu_item_slug))
 
+  const canImport = ['owner', 'general_manager', 'inventory_manager'].includes(user.role ?? '')
+
   return (
     <div dir={isAr ? 'rtl' : 'ltr'} className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-cairo text-2xl font-black text-brand-text">
-          {isAr ? 'وصفات الأطباق' : 'Dish Recipes'}
-        </h1>
-        <p className="font-satoshi text-sm text-brand-muted mt-1">
-          {dishes.length} {isAr ? 'طبق' : 'dishes'}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-cairo text-2xl font-black text-brand-text">
+            {isAr ? 'وصفات الأطباق' : 'Dish Recipes'}
+          </h1>
+          <p className="font-satoshi text-sm text-brand-muted mt-1">
+            {dishes.length} {isAr ? 'طبق' : 'dishes'} — {recipeSlugsSet.size} {isAr ? 'مرتبط بوصفة' : 'with a recipe'}
+          </p>
+        </div>
+        {canImport && (
+          <Link
+            href={`${prefix}/dashboard/inventory/recipes/import`}
+            className="self-start rounded-lg px-4 py-2.5 bg-brand-gold text-brand-black
+              font-cairo text-sm font-semibold hover:brightness-110 transition-all"
+          >
+            {isAr ? 'استيراد من Excel' : 'Import from Excel'}
+          </Link>
+        )}
       </div>
 
       {dishes.length === 0 ? (
