@@ -2491,7 +2491,19 @@
       "approved": "Approved",
       "flagged": "Needs Audit",
       "pending": "Pending Review",
-      "no_shifts_found": "No shifts found"
+      "no_shifts_found": "No shifts found",
+      "errors": {
+        "forbidden": "Forbidden",
+        "noRole": "No role assigned",
+        "invalidInput": "Invalid input",
+        "invalidShiftId": "Invalid shift id",
+        "branchScope": "Forbidden: branch scope violation",
+        "approveOwnerOnly": "Only owner or general manager can approve shifts",
+        "shiftNotFound": "Shift not found",
+        "alreadyHandled": "Shift is already {status} — cannot approve",
+        "conflict": "Shift status changed — refresh and retry",
+        "dbError": "An unexpected error occurred. Please try again."
+      }
     },
     "onboarding": {
       "title": "Complete System Setup",

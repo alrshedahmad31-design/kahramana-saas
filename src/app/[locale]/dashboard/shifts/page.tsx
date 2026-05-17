@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import CloseShiftDialog from '@/components/dashboard/shifts/CloseShiftDialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -62,7 +63,6 @@ export default async function ShiftsPage({
   // For global users, use the selected branch from URL or the staff branch
   const activeBranchId = isGlobal ? (selectedBranchId || branchId) : branchId
 
-  const { getActiveBranches } = await import('@/lib/branches/queries')
   const branches = await getActiveBranches()
 
   let query = supabase.from('shift_closings').select(`

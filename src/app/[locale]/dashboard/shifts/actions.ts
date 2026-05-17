@@ -1,9 +1,11 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { startOfDay, endOfDay } from 'date-fns'
+import { getTranslations } from 'next-intl/server'
 import {
   requireDashboardSection,
   isGlobalDashboardAdmin,
@@ -70,11 +72,13 @@ function round3(n: number): number {
 }
 
 export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResult> {
+  const t = await getTranslations('dashboard.shifts.errors')
+
   let user
   try {
     user = await requireDashboardSection('shifts')
   } catch (e) {
-    return { success: false, code: 'forbidden', error: isDashboardGuardError(e) ? e.message : 'Forbidden' }
+    return { success: false, code: 'forbidden', error: isDashboardGuardError(e) ? e.message : t('forbidden') }
   }
 
   const parsed = closeShiftSchema.safeParse(data)
@@ -83,18 +87,18 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
     return {
       success: false,
       code: 'invalid_input',
-      error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid input',
+      error: first ? `${first.path.join('.')}: ${first.message}` : t('invalidInput'),
     }
   }
   const v = parsed.data
 
   // Fail-closed for null user.branch_id on non-global staff (VULN-RBAC-01 shape).
   if (!isGlobalDashboardAdmin(user) && (!user.branch_id || user.branch_id !== v.branch_id)) {
-    return { success: false, code: 'branch_scope', error: 'Forbidden: branch scope violation' }
+    return { success: false, code: 'branch_scope', error: t('branchScope') }
   }
   // Guard-asserted but TS-narrowed: requireDashboardSection rejects null roles.
   if (!user.role) {
-    return { success: false, code: 'forbidden', error: 'No role assigned' }
+    return { success: false, code: 'forbidden', error: t('noRole') }
   }
 
   const actual   = round3(v.actual_cash_bhd)
@@ -120,13 +124,16 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
   })
 
   if (rpcErr) {
-    console.error('[shifts] rpc_close_shift failed:', rpcErr)
-    return { success: false, code: 'db_error', error: 'An unexpected error occurred.' }
+    Sentry.captureException(rpcErr, { tags: { area: 'shifts', action: 'closeShift' } })
+    return { success: false, code: 'db_error', error: t('dbError') }
   }
 
   const result = rpcData as { success: boolean; code?: string } | null
   if (!result?.success) {
-    return { success: false, code: 'db_error', error: result?.code ?? 'unknown' }
+    Sentry.captureException(new Error(`rpc_close_shift non-success: ${result?.code ?? 'unknown'}`), {
+      tags: { area: 'shifts', action: 'closeShift' },
+    })
+    return { success: false, code: 'db_error', error: t('dbError') }
   }
 
   revalidatePath('/dashboard/shifts')
@@ -134,68 +141,66 @@ export async function closeShift(data: CloseShiftInput): Promise<ShiftActionResu
   return { success: true }
 }
 
+type ApproveShiftRpc =
+  | { ok: true;  status: 'approved' }
+  | { ok: false; code: string }
+
+function isApproveRpc(v: unknown): v is ApproveShiftRpc {
+  return typeof v === 'object' && v !== null && 'ok' in v
+}
+
 export async function approveShift(shiftId: string): Promise<ShiftActionResult> {
+  const t = await getTranslations('dashboard.shifts.errors')
+
   let user
   try {
     user = await requireDashboardSection('shifts')
   } catch (e) {
-    return { success: false, code: 'forbidden', error: isDashboardGuardError(e) ? e.message : 'Forbidden' }
+    return { success: false, code: 'forbidden', error: isDashboardGuardError(e) ? e.message : t('forbidden') }
   }
 
   if (!isGlobalDashboardAdmin(user)) {
-    return { success: false, code: 'forbidden', error: 'Only owner/general_manager can approve shifts' }
+    return { success: false, code: 'forbidden', error: t('approveOwnerOnly') }
   }
 
   const idParsed = z.string().uuid().safeParse(shiftId)
   if (!idParsed.success) {
-    return { success: false, code: 'invalid_input', error: 'Invalid shift id' }
+    return { success: false, code: 'invalid_input', error: t('invalidShiftId') }
   }
 
+  // Atomic: rpc_approve_shift (migration 169) re-checks role under
+  // SECURITY DEFINER, runs the status CAS (pending → approved), stamps
+  // approved_by from auth.uid() and approved_at server-side, and writes
+  // audit_logs in the same transaction.
   const supabase = await createClient()
-
-  // VULN-RBAC-04: status-CAS — refuse to re-approve an already-approved shift.
-  // Pin the update to status='pending' and verify a row was updated, so a
-  // double-click or concurrent approval can't overwrite approved_by/approved_at.
-  const { data: current, error: fetchErr } = await supabase
-    .from('shift_closings')
-    .select('status')
-    .eq('id', idParsed.data)
-    .maybeSingle()
-
-  if (fetchErr) {
-    console.error('[shifts] approveShift fetch failed:', fetchErr)
-    return { success: false, code: 'db_error', error: fetchErr.message }
-  }
-  if (!current) {
-    return { success: false, code: 'invalid_input', error: 'Shift not found' }
-  }
-  if (current.status !== 'pending') {
-    return {
-      success: false,
-      code: 'invalid_input',
-      error: `Shift is already ${current.status} — cannot approve`,
-    }
-  }
-
-  const { data: updatedRows, error } = await supabase.from('shift_closings')
-    .update({
-      status:      'approved',
-      approved_by: user.id,
-      approved_at: new Date().toISOString(),
-    })
-    .eq('id', idParsed.data)
-    .eq('status', 'pending')
-    .select('id')
+  const { data: rpcRaw, error } = await supabase.rpc('rpc_approve_shift', {
+    p_shift_id: idParsed.data,
+  })
 
   if (error) {
-    console.error('[shifts] approveShift update failed:', error)
-    return { success: false, code: 'db_error', error: error.message }
+    Sentry.captureException(error, { tags: { area: 'shifts', action: 'approveShift' } })
+    return { success: false, code: 'db_error', error: t('dbError') }
   }
-  if (!updatedRows || updatedRows.length === 0) {
-    return {
-      success: false,
-      code: 'invalid_input',
-      error: 'Shift status changed — refresh and retry',
+
+  const rpc = isApproveRpc(rpcRaw) ? rpcRaw : null
+  if (!rpc) {
+    Sentry.captureException(new Error('rpc_approve_shift unexpected payload'), {
+      tags: { area: 'shifts', action: 'approveShift' },
+      extra: { payload: rpcRaw },
+    })
+    return { success: false, code: 'db_error', error: t('dbError') }
+  }
+  if (!rpc.ok) {
+    switch (rpc.code) {
+      case 'forbidden_role':       return { success: false, code: 'forbidden',     error: t('approveOwnerOnly') }
+      case 'not_found':            return { success: false, code: 'invalid_input', error: t('shiftNotFound') }
+      case 'forbidden_transition': return { success: false, code: 'invalid_input', error: t('alreadyHandled', { status: 'approved/rejected' }) }
+      case 'conflict':             return { success: false, code: 'invalid_input', error: t('conflict') }
+      default:
+        Sentry.captureException(new Error(`rpc_approve_shift unknown code: ${rpc.code}`), {
+          tags: { area: 'shifts', action: 'approveShift' },
+        })
+        return { success: false, code: 'db_error', error: t('dbError') }
     }
   }
 
