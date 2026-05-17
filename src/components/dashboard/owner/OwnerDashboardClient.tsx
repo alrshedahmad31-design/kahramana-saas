@@ -393,10 +393,11 @@ export default function OwnerDashboardClient({
         <SectionHeader title={t('blocks.financial')} />
 
         <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] border-separate border-spacing-0">
             <thead className="border-b border-brand-border">
               <tr className="font-cairo text-xs text-brand-muted uppercase tracking-wider">
-                <th className="text-start ps-4 pe-3 py-3 font-black">{t('fin.period')}</th>
+                <th className="text-start ps-4 pe-3 py-3 font-black sticky start-0 bg-brand-surface z-10">{t('fin.period')}</th>
                 <th className="text-end pe-3 py-3 font-black">{t('fin.revenue')}</th>
                 <th className="text-end pe-3 py-3 font-black">{t('fin.orders')}</th>
                 <th className="text-end pe-3 py-3 font-black">{t('fin.aov')}</th>
@@ -410,21 +411,22 @@ export default function OwnerDashboardClient({
                 { label: t('fin.month'),  m: metricsMonth,  g: monthRevGrowth },
               ].map((row, idx, arr) => (
                 <tr key={row.label} className={idx < arr.length - 1 ? 'border-b border-brand-border' : ''}>
-                  <td className="ps-4 pe-3 py-3 text-brand-text font-bold">{row.label}</td>
-                  <td className="pe-3 py-3 text-end text-brand-gold tabular-nums">
+                  <td className="ps-4 pe-3 py-3 text-brand-text font-bold sticky start-0 bg-brand-surface z-10">{row.label}</td>
+                  <td className="pe-3 py-3 text-end text-brand-gold tabular-nums whitespace-nowrap">
                     {fmtBhd(row.m.totalRevenue)} <span className="text-xs text-brand-muted">{currency}</span>
                   </td>
                   <td className="pe-3 py-3 text-end text-brand-text tabular-nums">{row.m.orderCount}</td>
-                  <td className="pe-3 py-3 text-end text-brand-text tabular-nums">
+                  <td className="pe-3 py-3 text-end text-brand-text tabular-nums whitespace-nowrap">
                     {fmtBhd(row.m.avgOrderValue)}
                   </td>
-                  <td className={`pe-4 py-3 text-end tabular-nums ${growthColor(row.g)}`}>
+                  <td className={`pe-4 py-3 text-end tabular-nums whitespace-nowrap ${growthColor(row.g)}`}>
                     {growthArrow(row.g)} {fmtPct(row.g)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

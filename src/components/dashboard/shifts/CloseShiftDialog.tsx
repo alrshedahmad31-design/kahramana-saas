@@ -126,13 +126,13 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="shift_type" className="text-right">{t.shift_type}</Label>
-              <Select 
-                value={formData.shift_type} 
+            <div className="flex flex-col gap-2 sm:grid sm:grid-cols-4 sm:items-center sm:gap-4">
+              <Label htmlFor="shift_type" className="text-start sm:text-right">{t.shift_type}</Label>
+              <Select
+                value={formData.shift_type}
                 onValueChange={(v) => setFormData({...formData, shift_type: v as 'morning' | 'evening' | 'night'})}
               >
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="min-h-[44px] sm:col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

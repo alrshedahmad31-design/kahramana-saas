@@ -212,7 +212,100 @@ export default function ReservationsClient({
         </div>
       </div>
 
-      <div className="bg-brand-surface border border-brand-border rounded-2xl overflow-hidden mx-1">
+      {/* Mobile card list (<sm) */}
+      <div className="flex flex-col gap-3 mx-1 sm:hidden">
+        <AnimatePresence mode="popLayout">
+          {filtered.map((res) => (
+            <motion.button
+              layout
+              key={res.id}
+              type="button"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={() => setSelectedRes(res)}
+              className="flex flex-col gap-3 text-start min-h-[44px] rounded-2xl border border-brand-border bg-brand-surface p-4 active:bg-brand-surface-2 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-cairo text-base font-bold text-brand-text">{res.guest_name}</span>
+                    {res.source === 'website' && <span className="text-[9px] bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded font-bold uppercase border border-blue-500/20">Web</span>}
+                    {res.party_size >= 6 && <span className="text-[9px] bg-brand-gold/10 text-brand-gold px-1.5 py-0.5 rounded font-bold uppercase border border-brand-gold/20">Group</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-brand-muted mt-0.5">
+                    <Phone size={10} />
+                    <span className="font-satoshi" dir="ltr">{res.phone}</span>
+                  </div>
+                </div>
+                <StatusPill status={res.status} locale={locale} />
+              </div>
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-1.5 text-brand-text">
+                  <Clock size={12} className="text-brand-muted" />
+                  <span className="font-satoshi font-bold">{format(parseISO(res.reserved_for), 'HH:mm')}</span>
+                  <span className="text-brand-muted">·</span>
+                  <span className="text-brand-muted font-satoshi">{format(parseISO(res.reserved_for), 'MMM dd')}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1 text-brand-text">
+                    <Users size={12} className="text-brand-muted" />
+                    <span className="font-satoshi font-bold">{res.party_size}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-brand-muted">
+                    <TableIcon size={12} />
+                    <span className="font-satoshi">{res.table_id ? `#${res.table_id.slice(0, 4)}` : t('table.unassigned')}</span>
+                  </span>
+                </div>
+              </div>
+              {(res.status === 'pending' || res.status === 'confirmed' || (res.status !== 'cancelled' && res.status !== 'completed')) && (
+                <div className="flex items-center gap-2 pt-2 border-t border-brand-border" onClick={(e) => e.stopPropagation()}>
+                  {res.status === 'pending' && (
+                    <button
+                      onClick={() => handleStatusUpdate(res.id, 'confirmed')}
+                      disabled={loading === res.id}
+                      className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold active:bg-emerald-500 active:text-brand-black transition-colors"
+                    >
+                      <CheckCircle2 size={14} />
+                      {t('statuses.confirmed')}
+                    </button>
+                  )}
+                  {res.status === 'confirmed' && (
+                    <button
+                      onClick={() => handleStatusUpdate(res.id, 'seated')}
+                      disabled={loading === res.id}
+                      className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold active:bg-amber-500 active:text-brand-black transition-colors"
+                    >
+                      <UserCheck size={14} />
+                      {t('statuses.seated')}
+                    </button>
+                  )}
+                  {res.status !== 'cancelled' && res.status !== 'completed' && (
+                    <button
+                      onClick={() => handleStatusUpdate(res.id, 'cancelled')}
+                      disabled={loading === res.id}
+                      className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-brand-error/10 text-brand-error border border-brand-error/20"
+                      aria-label={t('drawer.cancel')}
+                    >
+                      <XCircle size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </motion.button>
+          ))}
+        </AnimatePresence>
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-brand-surface border border-brand-border rounded-2xl">
+            <div className="w-16 h-16 rounded-full bg-brand-surface-2 flex items-center justify-center mb-4 border border-brand-border"><Calendar size={32} className="text-brand-muted" /></div>
+            <h3 className="font-cairo text-lg font-bold text-brand-text mb-1">{t('table.noResults')}</h3>
+            <p className="text-brand-muted text-sm max-w-xs">{t('table.noResultsDesc')}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table (sm+) */}
+      <div className="hidden sm:block bg-brand-surface border border-brand-border rounded-2xl overflow-hidden mx-1">
         <div className="overflow-x-auto">
           <table className="w-full text-start border-collapse">
             <thead>
