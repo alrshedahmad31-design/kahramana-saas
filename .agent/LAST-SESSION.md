@@ -144,7 +144,7 @@ sending (template + wa.me + i18n).
   there's a customer birthday matching today's Bahrain date.
 - /dashboard/catering page — **shipped this session (1d67b4a)**. Empty
   state will show until the public form starts collecting leads in prod.
-- ~15 `as any` sites (AUD-V3-007/011) — P4 follow-up still open.
+- ~~~15 `as any` sites (AUD-V3-007/011)~~ — **CLOSED**. AUD-V3-011 shipped in `f921e66` (all `as any` casts removed); AUD-V3-007 shipped in `0f95f5a` (next-intl v3→v4 bump). `src/` is clean: `grep -rn "as any" src/` returns zero matches.
 - Extend `localizeCheckoutError` to the remaining raw-English errors NOT
   in the named seven — `waiter/actions.ts:222` is the named follow-up
   (staff surface, different return shape).
@@ -252,7 +252,7 @@ recorded as done.
   UI deferred).
 - `/dashboard/catering` route (migration 160 + server action shipped;
   no UI).
-- **P4 follow-up: ~15 `as any` sites** (AUD-V3-007/011).
+- ~~**P4 follow-up: ~15 `as any` sites** (AUD-V3-007/011)~~ — **CLOSED** (`f921e66` + `0f95f5a`). `src/` confirmed clean.
 - F-01 consent check (Chrome incognito → confirm GA/Clarity blocked
   pre-consent).
 - Extend `localizeCheckoutError` to remaining raw-English errors.
@@ -399,7 +399,7 @@ source-of-truth all along). Three operator actions cleared mid-session
 - WhatsApp/email birthday notification surface (cron + DB done; UI deferred).
 - `/dashboard/catering` route (migration 160 + server action shipped; no UI).
 - `SetPasswordClient.tsx` dead-code cleanup.
-- ~15 `as any` sites (AUD-V3-007/011).
+- ~~~15 `as any` sites (AUD-V3-007/011)~~ — **CLOSED** (`f921e66` + `0f95f5a`).
 - F-01 consent check (Chrome incognito → confirm GA/Clarity blocked pre-consent).
 - Extend `localizeCheckoutError` to remaining raw-English errors.
 - ~~Chef Excel recipe import (0/168 recipes mapped)~~ — **import

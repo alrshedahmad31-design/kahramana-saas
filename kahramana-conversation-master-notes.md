@@ -451,7 +451,7 @@ All closed and applied to remote DB:
 - Sentry sourcemap warnings (~50 chunks) — Next.js internal chunks, no impact on site.
 - F-08: Route structure in Sentry transaction — low risk, deferred.
 - Sentry release tagging 401 since `cef2850` — token regression, fix is operator-side rotation.
-- AUD-V3-007, AUD-V3-011 (~15 `as any` cleanup sites) — deferred.
+- ~~AUD-V3-007, AUD-V3-011 (~15 `as any` cleanup sites)~~ — **CLOSED**: AUD-V3-011 in `f921e66` (all `as any` casts removed), AUD-V3-007 in `0f95f5a` (next-intl v3→v4 bump). `src/` confirmed clean (zero `as any` matches).
 - KAH-2026-05-05 / -07 — deferred.
 
 ---
