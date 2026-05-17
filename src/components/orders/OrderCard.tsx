@@ -177,7 +177,7 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
           <button
             type="button"
             onClick={() => onViewDetails(order.id)}
-            className="flex items-center gap-1 min-h-[36px] px-2.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold/40 transition-colors duration-150 font-satoshi text-sm"
+            className="flex items-center gap-1 min-h-[44px] min-w-[44px] px-3 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-gold hover:border-brand-gold/40 transition-colors duration-150 font-satoshi text-sm"
           >
             <EyeIcon />
             <span className={isRTL ? 'font-almarai' : ''}>{isRTL ? 'عرض' : 'View'}</span>
@@ -185,7 +185,7 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
           {order.customer_phone && (
             <a
               href={`tel:${order.customer_phone}`}
-              className="flex items-center gap-1 min-h-[36px] px-2.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-success hover:border-brand-success/30 transition-colors duration-150 font-satoshi text-sm"
+              className="flex items-center gap-1 min-h-[44px] min-w-[44px] px-3 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-success hover:border-brand-success/30 transition-colors duration-150 font-satoshi text-sm"
               aria-label={isRTL ? 'اتصال' : 'Call'}
             >
               <PhoneIcon />
@@ -195,7 +195,7 @@ export default function OrderCard({ order, isRTL, onViewDetails }: Props) {
           <button
             type="button"
             onClick={() => window.print()}
-            className="flex items-center gap-1 min-h-[36px] px-2.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-text hover:border-brand-border transition-colors duration-150 font-satoshi text-sm"
+            className="flex items-center gap-1 min-h-[44px] min-w-[44px] px-3 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-muted hover:text-brand-text hover:border-brand-border transition-colors duration-150 font-satoshi text-sm"
             aria-label={isRTL ? 'طباعة' : 'Print'}
           >
             <PrintIcon />

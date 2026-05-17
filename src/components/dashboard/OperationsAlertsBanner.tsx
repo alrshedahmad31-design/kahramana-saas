@@ -113,7 +113,7 @@ export default function OperationsAlertsBanner({ alerts, locale }: Props) {
                 {href && (
                   <Link
                     href={href}
-                    className="inline-flex items-center gap-1 rounded-lg bg-brand-surface/60 px-3 py-1.5 text-xs font-bold text-brand-gold hover:bg-brand-gold hover:text-brand-black transition-colors"
+                    className="inline-flex items-center justify-center gap-1 rounded-lg bg-brand-surface/60 min-h-[44px] min-w-[44px] px-3 py-2 text-xs font-bold text-brand-gold hover:bg-brand-gold hover:text-brand-black transition-colors"
                   >
                     {t('viewOrder')}
                     <Icon name={isAr ? 'arrow-left' : 'arrow-right'} size={12} />
@@ -123,7 +123,7 @@ export default function OperationsAlertsBanner({ alerts, locale }: Props) {
                   type="button"
                   onClick={() => handleDismiss(alert.id)}
                   disabled={isPending}
-                  className="inline-flex items-center gap-1 rounded-lg border border-brand-border bg-brand-surface px-3 py-1.5 text-xs font-bold text-brand-text hover:bg-brand-border/40 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center justify-center gap-1 rounded-lg border border-brand-border bg-brand-surface min-h-[44px] min-w-[44px] px-3 py-2 text-xs font-bold text-brand-text hover:bg-brand-border/40 disabled:opacity-50 transition-colors"
                   aria-label={t('dismiss')}
                 >
                   <Icon name="check" size={12} />
