@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import { getSession } from '@/lib/auth/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { buildCustomerContactLink } from '@/lib/whatsapp'
@@ -74,15 +75,29 @@ function isFresh(createdAt: string): boolean {
 }
 
 export default async function CateringInquiriesList({ locale }: Props) {
+  const t = await getTranslations('dashboard.catering')
+  const isAr = locale === 'ar'
+
+  // Defense-in-depth (P0-10): the parent page guard already restricts the
+  // route, but this component talks to the service-role client and bypasses
+  // RLS. Re-verify the caller's role here so a refactor that drops the page
+  // guard can't silently expose inquiries (with phone + budget) to other
+  // staff roles.
+  const session = await getSession()
+  if (session?.role !== 'owner' && session?.role !== 'general_manager') {
+    return (
+      <div className="bg-brand-error/10 border border-brand-error/30 rounded-xl p-4 text-sm text-brand-error">
+        {t('loadError')}
+      </div>
+    )
+  }
+
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('catering_inquiries')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(200)
-
-  const t = await getTranslations('dashboard.catering')
-  const isAr = locale === 'ar'
 
   if (error) {
     return (
