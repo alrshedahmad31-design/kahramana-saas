@@ -6,6 +6,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import ReportsClient from './ReportsClient'
 import type { DishCogsRow } from '@/lib/supabase/custom-types'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
+import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 
 interface Props {
   params:       Promise<{ locale: string }>
@@ -21,7 +23,11 @@ interface InventorySummary {
   topCostDrivers:       DishCogsRow[]
 }
 
-async function fetchInventorySummary(branchId: string | null): Promise<InventorySummary> {
+type InventorySummaryResult =
+  | { ok: true;  data: InventorySummary }
+  | { ok: false; error: string }
+
+async function fetchInventorySummary(branchId: string | null): Promise<InventorySummaryResult> {
   const supabase = await createServiceClient()
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Bahrain',
@@ -66,6 +72,24 @@ async function fetchInventorySummary(branchId: string | null): Promise<Inventory
     foodCostQuery, wasteQuery, revenueQuery, cogsQuery,
   ])
 
+  // P1-23: surface any query error to the UI + Sentry instead of zeroing out.
+  const failures: Array<{ label: string; err: { code?: string; message?: string } }> = []
+  if (foodCostRes.error) failures.push({ label: 'food_cost',   err: foodCostRes.error })
+  if (wasteRes.error)    failures.push({ label: 'waste',       err: wasteRes.error })
+  if (revenueRes.error)  failures.push({ label: 'revenue',     err: revenueRes.error })
+  if (cogsRes.error)     failures.push({ label: 'cogs',        err: cogsRes.error })
+  if (failures.length > 0) {
+    for (const f of failures) {
+      captureAnalyticsError({
+        code:      f.err.code ?? 'UNKNOWN',
+        message:   f.err.message ?? 'Unknown error',
+        function:  `reports.fetchInventorySummary.${f.label}`,
+        timestamp: new Date().toISOString(),
+      })
+    }
+    return { ok: false, error: failures[0]!.label }
+  }
+
   const foodCostBhd = (foodCostRes.data ?? []).reduce(
     (s: number, r: { unit_cost: number | null; quantity: number }) => s + (r.unit_cost ?? 0) * r.quantity,
     0,
@@ -78,10 +102,13 @@ async function fetchInventorySummary(branchId: string | null): Promise<Inventory
     (s: number, r: { total_bhd: number }) => s + r.total_bhd,
     0,
   )
-  
+
   const topCostDrivers = (cogsRes.data ?? []) as DishCogsRow[]
 
-  return { thisMonthFoodCostBhd: foodCostBhd, thisMonthRevenueBhd: revenueBhd, thisMonthWasteBhd: wasteBhd, topCostDrivers }
+  return {
+    ok:   true,
+    data: { thisMonthFoodCostBhd: foodCostBhd, thisMonthRevenueBhd: revenueBhd, thisMonthWasteBhd: wasteBhd, topCostDrivers },
+  }
 }
 
 function marginColor(pct: number | null) {
@@ -105,7 +132,22 @@ export default async function ReportsPage({ params, searchParams }: Props) {
 
   const isGlobal   = user.role === 'owner' || user.role === 'general_manager'
   const branchId   = isGlobal ? null : (user.branch_id ?? null)
-  const inventory  = await fetchInventorySummary(branchId)
+  const inventoryResult = await fetchInventorySummary(branchId)
+
+  if (!inventoryResult.ok) {
+    return (
+      <div className="flex flex-col gap-6">
+        <AnalyticsErrorState functionName={`reports.fetchInventorySummary.${inventoryResult.error}`} />
+        <ReportsClient
+          locale={locale}
+          initialRange={sp.range ?? '30d'}
+          initialFrom={sp.from}
+          initialTo={sp.to}
+        />
+      </div>
+    )
+  }
+  const inventory = inventoryResult.data
   const foodCostPct = inventory.thisMonthRevenueBhd > 0
     ? (inventory.thisMonthFoodCostBhd / inventory.thisMonthRevenueBhd) * 100
     : null

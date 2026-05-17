@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceClient } from '@/lib/supabase/server'
 import {
   assertBranchScope,
@@ -188,7 +189,10 @@ export async function createReservation(input: CreateReservationInput): Promise<
     p_seating_type:     d.seating_type ?? undefined,
   })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    Sentry.captureException(error, { tags: { action: 'createReservation' } })
+    throw new Error(error.message)
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/reservations`)
@@ -243,6 +247,7 @@ export async function updateReservationStatus(
   if (parsedStatus.data === 'cancelled') patch.cancelled_at = now
   if (parsedStatus.data === 'completed') patch.completed_at = now
 
+  // RPC-PENDING: direct .update() until rpc_update_reservation_status lands.
   // CAS on status: two managers viewing the same `pending` reservation can
   // both pass the transition matrix check above (read). Without this predicate
   // the last writer wins (e.g. A→confirmed, B→cancelled both succeed). The
@@ -255,7 +260,10 @@ export async function updateReservationStatus(
     .select('id')
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    Sentry.captureException(error, { tags: { action: 'updateReservationStatus' } })
+    throw new Error(error.message)
+  }
   if (!updated) throw new Error('Reservation status changed concurrently; refresh and try again')
 
   const locale = await getLocale()

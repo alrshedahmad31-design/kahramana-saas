@@ -18,6 +18,7 @@ import {
   getCashReconciliationMetrics,
 } from '@/lib/analytics/queries'
 import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
+import { z } from 'zod'
 import {
   buildPrevRange, formatCurrency, calculateGrowth,
 } from '@/lib/analytics/calculations'
@@ -136,6 +137,17 @@ export async function getReportHistory(limit = 25): Promise<ReportHistoryRow[]> 
   return (data ?? []) as ReportHistoryRow[]
 }
 
+// P1-24: validate reportType before writing to audit log so attacker-supplied
+// strings cannot pollute the trail.
+const REPORT_TYPE_VALUES = [
+  'sales_summary',
+  'menu_performance',
+  'customer_clv',
+  'coupon_performance',
+  'operational_summary',
+] as const
+const reportTypeSchema = z.enum(REPORT_TYPE_VALUES)
+
 export async function logExportFormat(
   reportType: string,
   format:     'csv' | 'excel' | 'pdf',
@@ -145,10 +157,16 @@ export async function logExportFormat(
     throw new Error('Unauthorized — Owner or General Manager access required')
   }
 
+  const parsed = reportTypeSchema.safeParse(reportType)
+  if (!parsed.success) {
+    throw new Error('Invalid report type')
+  }
+  const validatedType = parsed.data
+
   const sb = createServiceClient()
   await sb.from('report_audit_log').insert({
-    report_name:   `${reportType} — ${format.toUpperCase()} export`,
-    report_type:   reportType,
+    report_name:   `${validatedType} — ${format.toUpperCase()} export`,
+    report_type:   validatedType,
     generated_by:  user.id,
     export_format: format,
     filters:       null,

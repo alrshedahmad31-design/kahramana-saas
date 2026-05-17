@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceClient } from '@/lib/supabase/server'
 import {
   assertBranchScope,
@@ -78,7 +79,10 @@ export async function addToWaitlist(data: AddWaitlistInput): Promise<void> {
     notes:       parsed.data.notes?.length ? parsed.data.notes : null,
   })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    Sentry.captureException(error, { tags: { action: 'addToWaitlist' } })
+    throw new Error(error.message)
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/waitlist`)
@@ -123,15 +127,20 @@ export async function updateStatus(id: string, status: WaitlistStatus): Promise<
     seated_at:   parsedStatus.data === 'seated' ? now : undefined,
   }
 
+  // P1-26 CAS predicate on status — mirrors reservations updateStatus pattern.
   const { data: updated, error } = await supabase
     .from('waitlist_entries')
     .update(patch)
     .eq('id', parsedId.data)
+    .eq('status', currentStatus)
     .select('id')
     .single()
 
-  if (error) throw new Error(error.message)
-  if (!updated) throw new Error('Waitlist entry not found')
+  if (error) {
+    Sentry.captureException(error, { tags: { action: 'updateWaitlistStatus' } })
+    throw new Error(error.message)
+  }
+  if (!updated) throw new Error('Waitlist status changed concurrently; refresh and try again')
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/waitlist`)
