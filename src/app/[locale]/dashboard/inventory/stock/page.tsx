@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getActiveBranches } from '@/lib/branches/queries'
 import type { InventoryValuationRow } from '@/lib/supabase/custom-types'
 
 interface PageProps {
@@ -25,7 +26,6 @@ export default async function StockPage({ params }: PageProps) {
   const t = await getTranslations('inventory.valuation')
   const supabase = await createClient()
 
-  const { getActiveBranches } = await import('@/lib/branches/queries')
   const [valuationResult, branches] = await Promise.all([
     supabase.from('v_inventory_valuation').select('*').order('branch_id'),
     getActiveBranches(),

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
+import { getActiveBranches } from '@/lib/branches/queries'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import TransferPageClient from './TransferPageClient'
@@ -72,7 +73,6 @@ export default async function TransfersPage({ params, searchParams }: PageProps)
 
   const { data: transfers, count } = await query
 
-  const { getActiveBranches } = await import('@/lib/branches/queries')
   // Fetch branches and stock for the transfer form
   const [branches, { data: stock }] = await Promise.all([
     getActiveBranches(),

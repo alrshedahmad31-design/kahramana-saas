@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
+import { getActiveBranches } from '@/lib/branches/queries'
 import { redirect } from 'next/navigation'
 import WasteForm from '@/components/inventory/WasteForm'
 import { createWasteLog } from '../actions'
@@ -21,7 +22,6 @@ export default async function WasteNewPage({ params }: PageProps) {
 
   const supabase = await createClient()
 
-  const { getActiveBranches } = await import('@/lib/branches/queries')
   const [branches, { data: ingredients }] = await Promise.all([
     getActiveBranches(),
     supabase
