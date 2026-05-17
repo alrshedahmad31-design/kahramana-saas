@@ -43,14 +43,21 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (!UUID_RE.test(id)) notFound()
 
-  // Fetch order using service role (bypasses RLS — guest orders are unauthed)
+  // Fetch order using service role (bypasses RLS — guest orders are unauthed).
+  // T1-5: explicit allowlist on both `orders` and `order_items` so this
+  // guest-readable surface never serves staff-only fields (driver_notes,
+  // actual_collected, cash_handed_over, handed_over_at, delivery_proof_url,
+  // customer_signature, etc). Whitelist matches exactly what
+  // OrderTrackingStatus + ReorderButton + the page body render.
   let order: OrderWithItems | null = null
   let branchEstimatedMinutes: number | null = null
   try {
     const supabase = await createServiceClient()
     const { data, error } = await supabase
       .from('orders')
-      .select('*, order_items(*)')
+      .select(
+        'id, status, order_type, branch_id, customer_name, customer_phone, total_bhd, notes, created_at, updated_at, delivery_lat, delivery_lng, order_items(id, menu_item_slug, name_ar, name_en, quantity, selected_size, selected_variant, notes, unit_price_bhd, item_total_bhd)'
+      )
       .eq('id', id)
       .single()
 
