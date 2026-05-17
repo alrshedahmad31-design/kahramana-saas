@@ -1,6 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import {
@@ -88,9 +89,13 @@ export type CreateCateringInquiryResult =
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  // Soft-launch: when no secret is configured (local dev), accept based
-  // on the honeypot alone. Same fallback as reserve/contact actions.
-  if (!secret) return true
+  // Production fails closed when the secret isn't configured. Dev/preview
+  // fall through to honeypot-only so local testing isn't blocked. Same
+  // pattern as contact/reserve.
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') return false
+    return true
+  }
   if (!token)  return false
 
   try {
@@ -146,24 +151,30 @@ export async function createCateringInquiry(
   const data = parsed.data
 
   // 4. Rate limit: 3 submissions / IP / hour — matches reserve action.
-  //    Production-only; dev traffic all comes from 127.0.0.1 and would
-  //    exhaust the budget across testers within minutes.
-  if (
-    process.env.NODE_ENV === 'production'
-    && process.env.UPSTASH_REDIS_REST_URL
-    && process.env.UPSTASH_REDIS_REST_TOKEN
-  ) {
-    const [{ Ratelimit }, { Redis }] = await Promise.all([
-      import('@upstash/ratelimit'),
-      import('@upstash/redis'),
-    ])
-    const ratelimit = new Ratelimit({
-      redis:   Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(3, '1 h'),
-    })
-    const ip = await getClientIp()
-    const { success: allowed } = await ratelimit.limit(`catering:${ip}`)
-    if (!allowed) return { success: false, error: 'rate_limit' }
+  //    Production fails closed when Upstash is missing or the call
+  //    throws — no silent bypass. Dev/preview share 127.0.0.1 so the
+  //    gate stays skipped there.
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      Sentry.captureMessage('catering.rate_limit_unconfigured', { level: 'warning' })
+      return { success: false, error: 'rate_limit' }
+    }
+    try {
+      const [{ Ratelimit }, { Redis }] = await Promise.all([
+        import('@upstash/ratelimit'),
+        import('@upstash/redis'),
+      ])
+      const ratelimit = new Ratelimit({
+        redis:   Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(3, '1 h'),
+      })
+      const ip = await getClientIp()
+      const { success: allowed } = await ratelimit.limit(`catering:${ip}`)
+      if (!allowed) return { success: false, error: 'rate_limit' }
+    } catch (err) {
+      Sentry.captureException(err, { tags: { stage: 'catering.rate_limit' } })
+      return { success: false, error: 'rate_limit' }
+    }
   }
 
   // 5. Persist. service_role bypasses RLS — the table has no policies

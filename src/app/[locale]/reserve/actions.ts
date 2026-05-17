@@ -1,6 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import {
@@ -53,9 +54,13 @@ function isBranchId(value: string): value is BranchId {
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  // Soft-launch: if no secret is configured (e.g. local dev), fall back to
-  // honeypot only. Same pattern as src/app/[locale]/contact/actions.ts.
-  if (!secret) return true
+  // Production fails closed when the secret isn't configured. Dev/preview
+  // fall back to honeypot-only so local testing isn't blocked before the
+  // env var lands. Same pattern as contact/actions.ts.
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') return false
+    return true
+  }
   if (!token)  return false
 
   try {
@@ -133,26 +138,30 @@ export async function createPublicReservation(
 
   // 3. Rate limit: 3 submissions / IP / hour (stricter than contact's 5/h
   //    because reservation writes hit the DB and produce SLA on staff side).
-  //    Production-only — in dev every request comes from 127.0.0.1 (no
-  //    x-forwarded-for) so the 3/h budget stacks across all local testers
-  //    and gets exhausted within minutes of churn. Upstash is a shared
-  //    remote Redis, so the counter persists across server restarts too.
-  if (
-    process.env.NODE_ENV === 'production'
-    && process.env.UPSTASH_REDIS_REST_URL
-    && process.env.UPSTASH_REDIS_REST_TOKEN
-  ) {
-    const [{ Ratelimit }, { Redis }] = await Promise.all([
-      import('@upstash/ratelimit'),
-      import('@upstash/redis'),
-    ])
-    const ratelimit = new Ratelimit({
-      redis:   Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(3, '1 h'),
-    })
-    const ip = await getClientIp()
-    const { success: allowed } = await ratelimit.limit(`reserve:${ip}`)
-    if (!allowed) return { success: false, error: 'rate_limit' }
+  //    Production fails closed when Upstash isn't configured or the call
+  //    throws — no silent bypass. Dev/preview share 127.0.0.1 so the gate
+  //    stays skipped there.
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      Sentry.captureMessage('reserve.rate_limit_unconfigured', { level: 'warning' })
+      return { success: false, error: 'rate_limit' }
+    }
+    try {
+      const [{ Ratelimit }, { Redis }] = await Promise.all([
+        import('@upstash/ratelimit'),
+        import('@upstash/redis'),
+      ])
+      const ratelimit = new Ratelimit({
+        redis:   Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(3, '1 h'),
+      })
+      const ip = await getClientIp()
+      const { success: allowed } = await ratelimit.limit(`reserve:${ip}`)
+      if (!allowed) return { success: false, error: 'rate_limit' }
+    } catch (err) {
+      Sentry.captureException(err, { tags: { stage: 'reserve.rate_limit' } })
+      return { success: false, error: 'rate_limit' }
+    }
   }
 
   // 4. RPC call — service-role bypasses the auth gate inside the function.

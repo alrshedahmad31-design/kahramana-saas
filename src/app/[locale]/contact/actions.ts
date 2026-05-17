@@ -1,6 +1,7 @@
 'use server'
 
 import { headers }                  from 'next/headers'
+import * as Sentry                  from '@sentry/nextjs'
 import { createServiceClient }      from '@/lib/supabase/server'
 import { sendContactNotification }  from '@/lib/email/send'
 import { z }                        from 'zod'
@@ -19,10 +20,13 @@ const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v1/sit
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  // Soft-launch: if the secret isn't configured, fall back to honeypot only.
-  // This prevents the form from being permanently broken until env vars are
-  // set in Vercel. Turnstile becomes mandatory the moment the secret lands.
-  if (!secret) return true
+  // Production fails-closed when the secret isn't configured — no silent
+  // bypass. Dev/preview fall back to honeypot-only so local testing stays
+  // unblocked before the env var is wired.
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') return false
+    return true
+  }
   if (!token) return false
 
   try {
@@ -63,31 +67,37 @@ export async function submitContactMessage(payload: {
   const result = schema.safeParse(payload)
   if (!result.success) return { success: false, error: 'server_error' }
 
-  // Sliding-window rate limit: 5 submits / IP / hour. Production-only —
-  // in dev every request shares 127.0.0.1 (no x-forwarded-for) and the
-  // Upstash counter persists across restarts, so a normal testing
-  // session burns the budget and the next "first" submit returns
-  // rate_limit. Same gate as reserve/actions.ts.
-  if (
-    process.env.NODE_ENV === 'production'
-    && process.env.UPSTASH_REDIS_REST_URL
-    && process.env.UPSTASH_REDIS_REST_TOKEN
-  ) {
-    const [{ Ratelimit }, { Redis }] = await Promise.all([
-      import('@upstash/ratelimit'),
-      import('@upstash/redis'),
-    ])
-    const ratelimit = new Ratelimit({
-      redis:   Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(5, '1 h'),
-    })
-    const headersList = await headers()
-    const ip = headersList.get('x-real-ip')
-            ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
-            ?? '127.0.0.1'
+  // Sliding-window rate limit: 5 submits / IP / hour. Production fails
+  // closed when Upstash isn't configured or the call throws — we never
+  // want a forgotten env var or a transient Redis outage to silently
+  // disable abuse protection. Dev/preview share 127.0.0.1 (no x-forwarded-for)
+  // and the Upstash counter persists across restarts, so the gate stays
+  // skipped there. Same pattern as reserve/actions.ts.
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      Sentry.captureMessage('contact.rate_limit_unconfigured', { level: 'warning' })
+      return { success: false, error: 'rate_limit' }
+    }
+    try {
+      const [{ Ratelimit }, { Redis }] = await Promise.all([
+        import('@upstash/ratelimit'),
+        import('@upstash/redis'),
+      ])
+      const ratelimit = new Ratelimit({
+        redis:   Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(5, '1 h'),
+      })
+      const headersList = await headers()
+      const ip = headersList.get('x-real-ip')
+              ?? headersList.get('x-forwarded-for')?.split(',')[0].trim()
+              ?? '127.0.0.1'
 
-    const { success: allowed } = await ratelimit.limit(`contact:${ip}`)
-    if (!allowed) return { success: false, error: 'rate_limit' }
+      const { success: allowed } = await ratelimit.limit(`contact:${ip}`)
+      if (!allowed) return { success: false, error: 'rate_limit' }
+    } catch (err) {
+      Sentry.captureException(err, { tags: { stage: 'contact.rate_limit' } })
+      return { success: false, error: 'rate_limit' }
+    }
   }
 
   const service = await createServiceClient()
