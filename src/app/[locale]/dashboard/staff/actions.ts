@@ -1,5 +1,6 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import bcryptjs from 'bcryptjs'
 
 import { revalidatePath } from 'next/cache'
@@ -132,6 +133,12 @@ export async function createStaff(input: CreateStaffInput): Promise<ActionResult
 
   const staffId: string = authData.user.id
 
+  // RPC-PENDING: createStaff is the auth + DB pair — auth.admin.createUser
+  // must commit before staff_basic INSERT can reference its uid, so the
+  // current two-step is intentional. Full RPC needs a SECURITY DEFINER
+  // function that wraps both via supabase.auth.admin (not yet exposed to
+  // postgres). Audit row + auth rollback on DB failure stay JS-side until
+  // that lands. Tracked as follow-up of P1-J.
   const { error: insertError } = await service.from('staff_basic').insert({
     id:        staffId,
     name:      input.name.trim(),
@@ -193,6 +200,10 @@ export async function updateStaff(input: UpdateStaffInput): Promise<ActionResult
   }
 
   const service = await createServiceClient()
+  // RPC-PENDING: updateStaff direct service-role write. Full migration to
+  // an rpc_update_staff RPC is tracked as follow-up of P1-J — the CAS-pinned
+  // update + the audit_logs INSERT below should commit atomically in a
+  // SECURITY DEFINER body. For now: JS-level CAS + best-effort audit.
   // CAS: pin to the row state we just permission-checked. A concurrent role
   // or branch reassignment will flip these columns and the update returns no
   // rows — we bail with a retryable error rather than silently overwriting.
@@ -291,6 +302,10 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
 
   const staffId: string = authData.user.id
 
+  // RPC-PENDING: createStaffFull is the auth + DB + profile triple (see
+  // createStaff for the auth-first rationale). Full RPC requires
+  // supabase.auth.admin from a SECURITY DEFINER body — not yet exposed.
+  // Tracked as follow-up of P1-J.
   const { error: insertError } = await service.from('staff_basic').insert({
     id: staffId, name: input.name.trim(), role: input.role,
     branch_id: input.branch_id, is_active: true,
@@ -315,7 +330,24 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
   if (input.staff_notes)             profile.staff_notes             = input.staff_notes
 
   if (Object.keys(profile).length > 0) {
-    await service.from('staff_basic').update(profile).eq('id', staffId)
+    // RPC-PENDING: this profile UPDATE rides immediately after the staff
+    // INSERT above and has no audit row of its own. Tracked as follow-up
+    // of P1-J — folding both writes into rpc_create_staff_full will produce
+    // a single audit row covering the full record. For now: surface failure
+    // via Sentry + an explicit audit row so a silent profile drop is visible.
+    const { error: profileError } = await service.from('staff_basic').update(profile).eq('id', staffId)
+    if (profileError) {
+      Sentry.captureException(profileError, {
+        tags:  { area: 'staff', action: 'createStaffFull.profileUpdate' },
+        extra: { staffId, profileKeys: Object.keys(profile) },
+      })
+    } else {
+      await service.from('audit_logs').insert(
+        auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'UPDATE', staffId, {
+          profile_fields: Object.keys(profile),
+        }),
+      )
+    }
   }
 
   await service.from('audit_logs').insert(
@@ -457,6 +489,9 @@ export async function toggleStaffActive(
   }
 
   const service = await createServiceClient()
+  // RPC-PENDING: setStaffActive direct service-role write. Folding the
+  // CAS-pinned flip + the audit row below into rpc_set_staff_active is
+  // tracked as follow-up of P1-J. For now: JS-level CAS + audit_logs.
   // CAS: refuse to flip if another request already changed is_active in the
   // moment between our read (permission check) and write.
   const { data: updated, error } = await service

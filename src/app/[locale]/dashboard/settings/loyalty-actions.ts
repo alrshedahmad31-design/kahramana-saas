@@ -1,5 +1,6 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { revalidateTag } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
@@ -94,18 +95,25 @@ export async function updateLoyaltyConfig(
 
   const previous = existing as Record<string, unknown> | null
   const existingId = (previous?.id as string | undefined) ?? null
+  // RPC-PENDING: loyalty_config write + audit pair. Folding both into a
+  // SECURITY DEFINER rpc_update_loyalty_config (atomic + branch-aware)
+  // is tracked as follow-up of P1-J. For now: JS-side write + audit with
+  // explicit error capture.
   const result = existingId
     ? await supabase.from('loyalty_config').update(row).eq('id', existingId)
     : await supabase.from('loyalty_config').insert({ ...row, branch_id: null })
 
   if (result.error) {
-    console.error('[loyalty/config] update failed:', result.error)
+    Sentry.captureException(result.error, {
+      tags:  { area: 'settings', action: 'updateLoyaltyConfig' },
+      extra: { mode: existingId ? 'update' : 'insert' },
+    })
     return { success: false, error: result.error.message }
   }
 
   // Audit trail — service-role client bypasses RLS but audit_logs has a CHECK
   // on action; user_id captures the caller from the section guard above.
-  await supabase.from('audit_logs').insert({
+  const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'loyalty_config',
     action:     existingId ? 'UPDATE' : 'INSERT',
     user_id:    caller.id,
@@ -128,6 +136,15 @@ export async function updateLoyaltyConfig(
     branch_id:  caller.branch_id,
     actor_role: caller.role,
   })
+
+  if (auditError) {
+    // Loyalty config already committed — audit failure is non-fatal but
+    // visible to ops via Sentry so the trail can be backfilled.
+    Sentry.captureException(auditError, {
+      tags:  { area: 'settings', action: 'updateLoyaltyConfig.audit' },
+      extra: { mode: existingId ? 'UPDATE' : 'INSERT', existingId },
+    })
+  }
 
   // Invalidate the unstable_cache wrapping getLoyaltyConfig.
   revalidateTag('loyalty-config')
