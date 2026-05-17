@@ -14,6 +14,11 @@ import { BRANCHES } from '@/constants/contact'
 import OrderTrackingStatus from '@/components/orders/OrderTrackingStatus'
 import ReorderButton from '@/components/orders/ReorderButton'
 
+// Per-user order data — must never be statically rendered or cached at the
+// route level. Pinned explicitly so a future refactor that hoists the session
+// call into a layout can't downgrade this page to ISR.
+export const dynamic = 'force-dynamic'
+
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 type Props = {

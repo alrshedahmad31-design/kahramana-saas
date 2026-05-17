@@ -21,6 +21,11 @@ import {
 import { TIER_COLORS } from '@/lib/design-tokens'
 import type { PointsTransactionRow } from '@/lib/supabase/custom-types'
 
+// Per-user account dashboard — never statically rendered or cached. Pinned so
+// a future refactor that hoists the session call into a layout can't downgrade
+// this page to ISR.
+export const dynamic = 'force-dynamic'
+
 interface Props {
   params: Promise<{ locale: string }>
 }

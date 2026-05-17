@@ -9,6 +9,11 @@ import { appendOrderAccessToken, verifyOrderAccessToken } from '@/lib/auth/order
 import PaymentHandler from './PaymentHandler'
 import type { PaymentMethod } from '@/lib/supabase/custom-types'
 
+// Per-user payment surface — never statically rendered or cached. Pinned so a
+// future refactor that hoists the session call into a layout can't downgrade
+// this page to ISR.
+export const dynamic = 'force-dynamic'
+
 interface Props {
   params: Promise<{ locale: string; orderId: string }>
   searchParams?: Promise<{ t?: string }>

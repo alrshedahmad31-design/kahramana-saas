@@ -3,6 +3,11 @@ import { getTranslations, getLocale } from 'next-intl/server'
 import CheckoutForm from '@/components/checkout/CheckoutForm'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 
+// Per-user checkout surface — never statically rendered or cached. Pinned so
+// a future refactor that hoists the session call into a layout can't downgrade
+// this page to ISR.
+export const dynamic = 'force-dynamic'
+
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata(): Promise<Metadata> {
