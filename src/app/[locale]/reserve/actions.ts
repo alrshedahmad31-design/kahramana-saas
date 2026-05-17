@@ -12,11 +12,12 @@ import {
 } from '@/constants/contact'
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v1/siteverify'
+const PHONE_RE = /^[\d +\-()+]{7,30}$/
 
 const createPublicSchema = z.object({
   branch_id:        z.string().min(1).max(50),
   guest_name:       z.string().trim().min(1).max(120),
-  phone:            z.string().trim().min(7).max(30),
+  phone:            z.string().trim().min(7).max(30).regex(PHONE_RE),
   party_size:       z.number().int().min(1).max(20),
   reserved_for:     z.string().datetime(),
   duration_minutes: z.number().int().min(30).max(300).default(90),
@@ -101,6 +102,33 @@ export async function publicFindAvailableTables(
   if (!parsed.success) return []
 
   if (!isBranchId(parsed.data.branch_id) || isHiddenBranch(parsed.data.branch_id)) return []
+
+  // T2-3: rate-limit before the RPC call so a flood can't burn DB cycles
+  // probing seat-availability across every minute/branch combination.
+  // 30 lookups / IP / minute is well above any legitimate UI churn.
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      Sentry.captureMessage('reserve.find_available.rate_limit_unconfigured', { level: 'warning' })
+      return []
+    }
+    try {
+      const [{ Ratelimit }, { Redis }] = await Promise.all([
+        import('@upstash/ratelimit'),
+        import('@upstash/redis'),
+      ])
+      const ratelimit = new Ratelimit({
+        redis:   Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(30, '1 m'),
+        prefix:  'reserve_find',
+      })
+      const ip = await getClientIp()
+      const { success: allowed } = await ratelimit.limit(`reserve_find:${ip}`)
+      if (!allowed) return []
+    } catch (err) {
+      Sentry.captureException(err, { tags: { stage: 'reserve.find_available.rate_limit' } })
+      return []
+    }
+  }
 
   const supabase = createServiceClient()
   const { data, error } = await supabase.rpc('rpc_find_available_tables', {

@@ -41,9 +41,11 @@ const serviceTypesSchema = z.object(
   ) as Record<(typeof CATERING_SERVICE_TYPES)[number], z.ZodString>,
 )
 
+const PHONE_RE = /^[\d +\-()+]{7,30}$/
+
 const submitSchema = z.object({
   name:             z.string().trim().min(1).max(200),
-  phone:            z.string().trim().min(8).max(30),
+  phone:            z.string().trim().min(8).max(30).regex(PHONE_RE),
   occasion_type:    occasionTypeEnum,
   event_date:       z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
                       message: 'invalid_event_date',
