@@ -287,26 +287,6 @@ function buildCheckoutLinks(
   )
 }
 
-async function createInitialPayment(
-  supabase: TypedSupabase,
-  orderId: string,
-  amountBhd: number,
-  paymentMode: 'cod' | 'online',
-  expiresAt: string | null,
-): Promise<{ error?: string }> {
-  const { error } = await supabase
-    .from('payments')
-    .insert({
-      order_id:    orderId,
-      amount_bhd:  amountBhd,
-      method:      paymentMode === 'cod' ? 'cash' : null,
-      status:      paymentMode === 'cod' ? 'pending_cod' : 'pending',
-      expires_at:  expiresAt,
-    })
-
-  return { error: error?.message }
-}
-
 async function findExistingOrderByIdempotencyKey(
   supabase: TypedSupabase,
   idempotencyKey: string,
@@ -694,8 +674,12 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       })),
     )
 
-    // Idempotency guard + coupon lock/increment + loyalty deduction +
-    // order insert + order_items insert — all in one DB transaction.
+    // ARCH-004: single atomic call covering idempotency guard, coupon
+    // lock/increment + per-customer usage row, loyalty deduction + points
+    // transaction, promotion lock/increment, order + order_items insert,
+    // delivery_flat persistence, and the initial payments row. Either
+    // everything commits or everything rolls back — no orphan orders
+    // without a payment row, no orphan payments without an order.
     const { data: orderId, error: rpcError } = await supabase.rpc('rpc_create_order', {
       p_idempotency_key:        idempotency_key,
       p_customer_name:          resolvedOrderData.customer_name ?? '',
@@ -720,6 +704,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       p_delivery_building:      resolvedOrderData.delivery_building ?? undefined,
       p_delivery_street:        resolvedOrderData.delivery_street   ?? undefined,
       p_delivery_area:          resolvedOrderData.delivery_area     ?? undefined,
+      p_delivery_flat:          resolvedOrderData.delivery_flat     ?? undefined,
       p_delivery_lat:           resolvedOrderData.delivery_lat      ?? undefined,
       p_delivery_lng:           resolvedOrderData.delivery_lng      ?? undefined,
       p_source:                 resolvedOrderData.source,
@@ -730,6 +715,8 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
       p_customer_id:            customerSession?.id ?? undefined,
       p_promotion_id:           promo?.promotion_id ?? undefined,
       p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
+      p_payment_mode:           paymentMode === 'cod' ? 'cod' : 'online',
+      p_payment_expires_at:     expiresAt ?? undefined,
     })
 
     if (rpcError) {
@@ -760,35 +747,11 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
     if (!orderId) return { orderId: '', finalTotal: 0, error: 'order_creation_failed' }
 
-    // ── Persist delivery_flat ─────────────────────────────────────────────────
-    // rpc_create_order (134) predates the delivery_flat column (154) and does
-    // not expose p_delivery_flat. Write it via a focused UPDATE so KDS, driver,
-    // and the restaurant WhatsApp template all see the same structured value.
-    // Best-effort: a failure here must not abort the order.
-    if (
-      resolvedOrderData.order_type === 'delivery' &&
-      resolvedOrderData.delivery_flat
-    ) {
-      const { error: flatErr } = await supabase
-        .from('orders')
-        .update({ delivery_flat: resolvedOrderData.delivery_flat })
-        .eq('id', orderId)
-      if (flatErr) {
-        Sentry.captureException(new Error(flatErr.message), {
-          tags: { stage: 'checkout.delivery_flat_save_failed', code: flatErr.code ?? 'unknown' },
-          extra: { orderId },
-        })
-      }
-    }
-
-    // ── Payment record ────────────────────────────────────────────────────────
-    const paymentResult = await createInitialPayment(supabase, orderId, finalTotal, paymentMode, expiresAt)
-    if (paymentResult.error) return { orderId: '', finalTotal: 0, error: paymentResult.error }
-
-    // Coupon usage audit row is now inserted inside rpc_create_order under
-    // the FOR UPDATE lock on the coupons row (migration 155 — VULN-004).
-    // Doing it here in JS allowed multi-tab checkouts to bypass
-    // per_customer_limit = 1.
+    // delivery_flat, payment row, coupon usage audit row, and points
+    // transaction now all land inside rpc_create_order (migrations 155
+    // + 163, ARCH-004). The serial JS UPDATE/INSERT calls that used to
+    // live here let an order commit without its payment row when the
+    // post-RPC insert raced or failed.
 
     const accessToken = createOrderAccessToken(orderId)
     const links = buildCheckoutLinks(
