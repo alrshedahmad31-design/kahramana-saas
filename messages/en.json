@@ -2757,6 +2757,9 @@
     "orderSent": "Order sent to kitchen",
     "errorEmpty": "Add at least one item",
     "errorGeneric": "Failed to send order",
+    "errors": {
+      "orderCreationFailed": "Could not create the order. Please retry; if it keeps failing, ask a manager."
+    },
     "offline": "Offline",
     "offlineHint": "Retry when connection returns",
     "submitDisabledOffline": "Internet connection required to send order",

@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
-import { getLocale } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
@@ -219,7 +219,12 @@ export async function createWaiterOrder(
   })
 
   if (rpcError || !orderId) {
-    return { error: rpcError?.message ?? 'Order creation failed' }
+    // Preserve the Postgres detail (sentinel codes, constraint names) in
+    // server logs for Sentry / ops; the waiter only needs a localized,
+    // generic surface message.
+    console.error('[waiter] rpc_create_order failed', rpcError)
+    const tErr = await getTranslations('waiter.errors')
+    return { error: tErr('orderCreationFailed') }
   }
 
   const { error: paymentError } = await supabase.from('payments').insert({
