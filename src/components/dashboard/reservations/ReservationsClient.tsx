@@ -51,7 +51,7 @@ function StatusPill({ status, locale: _locale }: { status: Reservation['status']
   const styles = {
     pending:   'bg-brand-gold/10 text-brand-gold border-brand-gold/20',
     confirmed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    seated:    'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    seated:    'bg-brand-gold-light/10 text-brand-gold-light border-brand-gold-light/20',
     completed: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     no_show:   'bg-brand-muted/10 text-brand-muted border-brand-border',
     cancelled: 'bg-brand-error/10 text-brand-error border-brand-error/20',
@@ -363,7 +363,7 @@ export default function ReservationsClient({
                     <td className="px-6 py-5 text-end" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         {res.status === 'pending' && <button onClick={() => handleStatusUpdate(res.id, 'confirmed')} disabled={loading === res.id} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-brand-black transition-all border border-emerald-500/20"><CheckCircle2 size={16} /></button>}
-                        {res.status === 'confirmed' && <button onClick={() => handleStatusUpdate(res.id, 'seated')} disabled={loading === res.id} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-brand-black transition-all border border-amber-500/20"><UserCheck size={16} /></button>}
+                        {res.status === 'confirmed' && <button onClick={() => handleStatusUpdate(res.id, 'seated')} disabled={loading === res.id} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg bg-brand-gold-light/10 text-brand-gold-light hover:bg-brand-gold-light hover:text-brand-black transition-all border border-brand-gold-light/20"><UserCheck size={16} /></button>}
                         {res.status !== 'cancelled' && res.status !== 'completed' && <button onClick={() => handleStatusUpdate(res.id, 'cancelled')} disabled={loading === res.id} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg bg-brand-error/10 text-brand-error hover:bg-brand-error hover:text-brand-black transition-all border border-brand-error/20"><XCircle size={16} /></button>}
                         <button onClick={() => setSelectedRes(res)} className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg bg-brand-surface-2 text-brand-muted hover:text-brand-gold transition-all border border-brand-border"><MoreVertical size={16} /></button>
                       </div>
@@ -435,7 +435,7 @@ function DetailDrawer({ res, onClose, locale, onStatusChange, loading }: { res: 
         </div>
         <div className="p-6 bg-brand-surface-2 border-t border-brand-border grid grid-cols-2 gap-3">
           {res.status === 'pending' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'confirmed')} className="col-span-2 bg-brand-gold text-brand-black font-bold py-3 rounded-xl flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin" /> : <CheckCircle2 size={18} />}{t('drawer.confirm')}</button>}
-          {res.status === 'confirmed' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'seated')} className="col-span-2 bg-amber-500 text-brand-black font-bold py-3 rounded-xl flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin" /> : <UserCheck size={18} />}{t('drawer.seat')}</button>}
+          {res.status === 'confirmed' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'seated')} className="col-span-2 bg-brand-gold-light text-brand-black font-bold py-3 rounded-xl flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin" /> : <UserCheck size={18} />}{t('drawer.seat')}</button>}
           {res.status !== 'cancelled' && res.status !== 'completed' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'no_show')} className="bg-brand-black text-brand-muted border border-brand-border font-bold py-3 rounded-xl">{t('drawer.noShow')}</button>}
           {res.status !== 'cancelled' && res.status !== 'completed' && <button disabled={loading} onClick={() => onStatusChange(res.id, 'cancelled')} className="bg-brand-black text-brand-muted border border-brand-border font-bold py-3 rounded-xl">{t('drawer.cancel')}</button>}
         </div>
