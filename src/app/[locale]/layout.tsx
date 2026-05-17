@@ -233,12 +233,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
       className={fontVariables}
     >
       <head>
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
-        )}
-        {process.env.NEXT_PUBLIC_CLARITY_ID && (
-          <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
-        )}
+        {/* GA4 + Clarity preconnects moved into <Analytics> — gating
+            preconnect on cookie consent prevents pre-consent DNS/TLS
+            handshakes to third parties (F-01). */}
         {/* hreflang is handled by metadata.alternates.languages below —
             duplicate <link> tags here were causing canonical/hreflang conflicts */}
         <script

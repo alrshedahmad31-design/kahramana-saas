@@ -42,6 +42,7 @@ export function Analytics({ nonce }: Props) {
     <>
       {gaId && (
         <>
+          <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
             strategy="afterInteractive"
@@ -52,9 +53,12 @@ export function Analytics({ nonce }: Props) {
         </>
       )}
       {clarityId && (
-        <Script id="clarity-init" nonce={nonce} strategy="afterInteractive">
-          {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];if(y&&y.parentNode){y.parentNode.insertBefore(t,y);}else{(l.head||l.body||l.documentElement).appendChild(t);}})(window,document,"clarity","script","${clarityId}");`}
-        </Script>
+        <>
+          <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
+          <Script id="clarity-init" nonce={nonce} strategy="afterInteractive">
+            {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];if(y&&y.parentNode){y.parentNode.insertBefore(t,y);}else{(l.head||l.body||l.documentElement).appendChild(t);}})(window,document,"clarity","script","${clarityId}");`}
+          </Script>
+        </>
       )}
     </>
   )
