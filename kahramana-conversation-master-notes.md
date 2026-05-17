@@ -673,21 +673,27 @@ npm run dev
 
 ---
 
-## 13. Immediate Next Steps (refreshed Session 129)
+## 13. Immediate Next Steps (refreshed Session 136 + post-close-out follow-ups)
 
 ### Ahmed (Restaurant Owner)
 1. ✅ DNS: kahramanat.com → Vercel (confirmed)
 2. ✅ Cloudflare Turnstile env vars in Vercel (live 2026-05-15)
 3. ✅ Supabase new signups disabled (2026-05-15)
 4. ✅ `order_item_station_status` added to Realtime publication
-5. **Set `SESSION_BIND_SECRET`** in Vercel Production + Preview — `openssl rand -hex 32`. Without this, `/auth/callback` recovery throws at runtime.
-6. **Re-rotate `SENTRY_AUTH_TOKEN`** — current token returns 401 on release tagging + sourcemap upload since `cef2850`. Build itself succeeds; only observability is degraded.
-7. Upgrade Supabase Free → Pro + migrate to Singapore region.
-8. Send 13 staff emails → run staff seed (migration 090).
-9. **Send chef recipe Excel** for inventory import. Recipes table is empty (0/168 mapped); alert flood now suppressed (migration 153) but inventory deduction is no-op for live orders until this lands. Pending since session 38.
-10. Provide Tap payment merchant keys (`TAP_SECRET_KEY`, `NEXT_PUBLIC_TAP_PUBLIC_KEY`, `PAYMENT_WEBHOOK_SECRET`).
-11. After staff (waiter/cashier) accounts activate: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true` per pre-flip checklist in `.env.example` + end-to-end QR scan re-test on a real device camera.
-12. Verify F-01: Open Chrome Incognito (no extensions) → DevTools Network → Hard reload → confirm GA/Clarity don't fire before cookie consent.
+5. ✅ `SESSION_BIND_SECRET` set in Vercel (confirmed by drop from session 135 pending list)
+6. ✅ `SENTRY_AUTH_TOKEN` re-rotated (confirmed by drop from session 135 pending list)
+7. ✅ `CRON_SECRET` set in Vercel (operator-side, session 133)
+8. ✅ البديع branch row deleted from `branches` table via Supabase SQL Editor (post-session-136)
+9. ✅ `CONTACT_NOTIFY_EMAIL` = `asaadaljobory@gmail.com` set in Vercel (added 2026-05-14)
+10. ✅ Vercel redeploy of `3a78f76` confirmed Ready — 1m 56s build; ARCH-004 final + migration 164 now live
+11. **Upgrade Supabase Free → Pro + migrate to Singapore region.** 🔴
+12. **Send 13 staff emails** → run staff seed (migration 090). 🔴 After staff lands ⏳: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true` per pre-flip checklist in `.env.example` + end-to-end QR scan re-test on a real device camera.
+13. **Resend domain verification** for kahramanat.com. 🔴 Until this lands, `sendBirthdayBonus` returns SendResult failure per row (cron loop survives via per-row Sentry catch).
+14. **VAPID keys** for driver push notifications. 🟡
+15. **Send chef recipe Excel** for inventory import. 🟡 Recipes table is empty (0/168 mapped); alert flood suppressed (migration 153) and operator banner live (`d5da803` + `5916ac2`); inventory deduction is no-op for live orders until this lands. Pending since session 38.
+16. Provide Tap payment merchant keys (`TAP_SECRET_KEY`, `NEXT_PUBLIC_TAP_PUBLIC_KEY`, `PAYMENT_WEBHOOK_SECRET`). ⏳ Then wire Refund Modal — `refundPayment` action currently flips DB state only; does NOT call Tap to push money back to customer's card.
+17. ~12 dish photos (shoot list in commit `da5b199`). 🟡
+18. Verify F-01: Open Chrome Incognito (no extensions) → DevTools Network → Hard reload → confirm GA/Clarity don't fire before cookie consent. (Verification step, not a config change.)
 
 ### Agent (Next Session — candidate lanes, none are launch blockers)
 1. **Birthday gift cron** — cron job + idempotency table + `loyalty_config.birthday_bonus_points` + WhatsApp/email notification surface. Schema groundwork landed sessions 125 + 128 + 158.

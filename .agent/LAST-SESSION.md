@@ -122,25 +122,45 @@ order. The orders↔payments relation is now total across all 5 surfaces.
 
 ## DEFERRED / OPERATOR-PENDING
 
-(updated for session 136)
+(updated for session 136 + post-close-out operator follow-ups)
 
 **Dev work**: all carry-forwards have landed. Pending list is
 **empty** of dev tasks that are not operator-blocked or externally
 locked. The project is production-ready for soft-launch (cash-only).
 
+**Cleared post-session-136 (operator-side, no commits):**
+
+- ✅ البديع branch row deleted from `branches` table via Supabase
+  SQL Editor. The code-level filter was already in place since
+  session 126 (`a2b2009` removed all هذا الفرع references); the DB
+  row was the last residue. Operator action only — no commit needed.
+- ✅ CONTACT_NOTIFY_EMAIL set to `asaadaljobory@gmail.com` on
+  Vercel (added 2026-05-14). Contact form submissions now hit a
+  live inbox.
+- ✅ Vercel redeploy of master `3a78f76` confirmed Ready (1m 56s
+  build). The session-136 migration 164 + ARCH-004 final POS
+  refactor are now live.
+
 **Operator pending:**
 
+Infra 🔴
 - Supabase Free → Pro + Singapore migration.
-- 13 staff emails pending from owner → run staff seed (migration 090).
 - Resend domain verification for kahramanat.com.
+
+Infra 🟡
 - VAPID keys for driver push notifications.
-- CONTACT_NOTIFY_EMAIL (optional).
+
+Accounts 🔴
+- 13 staff emails pending from owner → run staff seed (migration 090).
 - After staff accounts: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true`.
-- TAP keys (merchant approval pending) → once arrived, wire Refund
-  Modal (refundPayment currently flips DB state only).
+
+Payments (merchant-approval blocked) ⏳
+- TAP keys → once arrived, wire Refund Modal (refundPayment currently
+  flips DB state only).
 - Sprint 6B WhatsApp Business API (Meta verification).
 - Sprint 6C Benefit Pay API (CBB approval).
-- البديع branch row DB cleanup (SQL ready, run in Supabase Studio).
+
+Assets (operator) 🟡
 - ~12 missing dish photos (shoot list in commit `da5b199`).
 
 **External-contract-locked** (not actionable):

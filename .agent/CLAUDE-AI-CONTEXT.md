@@ -1,5 +1,5 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-17 (session 136 close-out)
+# Updated: 2026-05-17 (session 136 close-out + operator follow-ups)
 # Master: 3a78f76
 
 ## CURRENT STATUS
@@ -11,29 +11,37 @@ Next milestone: Soft-launch (cash-only)
 
 All remaining work is operator-side. No dev lanes outstanding.
 
-Infra
+CLOSED post-session-136 (operator-side, no commits):
+- ✅ البديع branch row deleted from `branches` table (Supabase SQL Editor).
+- ✅ CONTACT_NOTIFY_EMAIL set to asaadaljobory@gmail.com (Vercel env,
+  added 2026-05-14).
+- ✅ Vercel redeploy of `3a78f76` confirmed Ready (1m 56s build).
+
+STILL PENDING:
+
+Infra 🔴
 - Supabase Free → Pro + Singapore migration.
 - Resend domain verification for kahramanat.com.
+
+Infra 🟡
 - VAPID keys for driver push notifications.
-- CONTACT_NOTIFY_EMAIL (optional).
 
-Accounts
+Accounts 🔴
 - 13 staff emails pending from owner → run staff seed (migration 090).
-  After staff lands: flip NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true.
+  After staff lands ⏳: flip NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true.
 
-Payments (merchant-approval blocked)
-- TAP keys (blocked — merchant approval) → once arrived, wire Refund
-  Modal (refundPayment currently flips DB state only, does NOT call
-  Tap to push money back).
+Payments (merchant-approval blocked) ⏳
+- TAP keys (merchant approval) → once arrived, wire Refund Modal
+  (refundPayment currently flips DB state only, does NOT call Tap
+  to push money back).
 - Sprint 6B WhatsApp Business API (Meta verification).
 - Sprint 6C Benefit Pay API (CBB approval).
 
-External-contract-locked
+External-contract-locked ⏳
 - Phase 7B Deliverect / POS aggregator integration.
 - Phase 8 AI assistant + demand forecasting (needs 6 months data).
 
-Data / assets (operator)
-- البديع branch row DB cleanup (SQL ready, run in Supabase Studio).
+Assets (operator) 🟡
 - ~12 missing dish photos (concrete shoot list in commit `da5b199`).
 
 ## ACTIVE DEV PRIORITIES
