@@ -686,10 +686,10 @@ npm run dev
 8. ✅ البديع branch row deleted from `branches` table via Supabase SQL Editor (post-session-136)
 9. ✅ `CONTACT_NOTIFY_EMAIL` = `asaadaljobory@gmail.com` set in Vercel (added 2026-05-14)
 10. ✅ Vercel redeploy of `3a78f76` confirmed Ready — 1m 56s build; ARCH-004 final + migration 164 now live
-11. **Upgrade Supabase Free → Pro + migrate to Singapore region.** 🔴
-12. **Send 13 staff emails** → run staff seed (migration 090). 🔴 After staff lands ⏳: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true` per pre-flip checklist in `.env.example` + end-to-end QR scan re-test on a real device camera.
-13. **Resend domain verification** for kahramanat.com. 🔴 Until this lands, `sendBirthdayBonus` returns SendResult failure per row (cron loop survives via per-row Sentry catch).
-14. **VAPID keys** for driver push notifications. 🟡
+11. ✅ VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY + VAPID_SUBJECT added to Vercel (Production + Preview) and redeploy triggered. Driver push notifications (Web Push API) now configured end-to-end.
+12. **Upgrade Supabase Free → Pro + migrate to Singapore region.** 🔴
+13. **Send 13 staff emails** → run staff seed (migration 090). 🔴 After staff lands ⏳: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true` per pre-flip checklist in `.env.example` + end-to-end QR scan re-test on a real device camera.
+14. **Resend domain verification** for kahramanat.com. 🔴 Until this lands, `sendBirthdayBonus` returns SendResult failure per row (cron loop survives via per-row Sentry catch).
 15. **Send chef recipe Excel** for inventory import. 🟡 Recipes table is empty (0/168 mapped); alert flood suppressed (migration 153) and operator banner live (`d5da803` + `5916ac2`); inventory deduction is no-op for live orders until this lands. Pending since session 38.
 16. Provide Tap payment merchant keys (`TAP_SECRET_KEY`, `NEXT_PUBLIC_TAP_PUBLIC_KEY`, `PAYMENT_WEBHOOK_SECRET`). ⏳ Then wire Refund Modal — `refundPayment` action currently flips DB state only; does NOT call Tap to push money back to customer's card.
 17. ~12 dish photos (shoot list in commit `da5b199`). 🟡

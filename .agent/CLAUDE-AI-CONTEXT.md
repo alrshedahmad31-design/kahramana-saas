@@ -16,15 +16,15 @@ CLOSED post-session-136 (operator-side, no commits):
 - ✅ CONTACT_NOTIFY_EMAIL set to asaadaljobory@gmail.com (Vercel env,
   added 2026-05-14).
 - ✅ Vercel redeploy of `3a78f76` confirmed Ready (1m 56s build).
+- ✅ VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY + VAPID_SUBJECT added to
+  Vercel (Production + Preview) and redeploy triggered. Driver push
+  notifications are now configured end-to-end.
 
 STILL PENDING:
 
 Infra 🔴
 - Supabase Free → Pro + Singapore migration.
 - Resend domain verification for kahramanat.com.
-
-Infra 🟡
-- VAPID keys for driver push notifications.
 
 Accounts 🔴
 - 13 staff emails pending from owner → run staff seed (migration 090).

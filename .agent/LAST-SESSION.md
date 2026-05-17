@@ -140,15 +140,17 @@ locked. The project is production-ready for soft-launch (cash-only).
 - ✅ Vercel redeploy of master `3a78f76` confirmed Ready (1m 56s
   build). The session-136 migration 164 + ARCH-004 final POS
   refactor are now live.
+- ✅ VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY + VAPID_SUBJECT added to
+  Vercel (Production + Preview) and redeploy triggered. Driver push
+  notifications (Web Push API) are now configured end-to-end —
+  /api/driver/* push routes will resolve at runtime instead of
+  503-ing on missing env vars.
 
 **Operator pending:**
 
 Infra 🔴
 - Supabase Free → Pro + Singapore migration.
 - Resend domain verification for kahramanat.com.
-
-Infra 🟡
-- VAPID keys for driver push notifications.
 
 Accounts 🔴
 - 13 staff emails pending from owner → run staff seed (migration 090).
