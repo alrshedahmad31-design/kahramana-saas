@@ -1,7 +1,194 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 133: Stale-reference cleanup (AUD-V3-007/011 closed in docs) + dead-code refactor (HIDDEN_BRANCHES guards). Master `d24e5e3` → `57ac6a9`.
+> Session 134: ARCH-004 atomic checkout RPC (migration 163) + catering form fallback CTA & noValidate. Master `e9b1ec6` → `22ee548`.
 > Date: 2026-05-17
 > Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 134 — SUMMARY
+
+Three commits on master, all pushed. One migration (163). i18n parity
+2,433 → 2,436. Gates clean on every commit: `npx tsc --noEmit` exit 0;
+`npx tsx scripts/check-i18n.ts` PASS; `NEXT_BUILD_WORKERS=1 npm run
+build` clean (566/566 pages).
+
+Theme: close the two oldest phase-6-blocker items on the deferred list
+— ARCH-004 atomic checkout RPC and catering audit findings #6 + #8.
+
+ARCH-004 was the meaningful piece. Customer checkout had two writes
+running in serial JS *after* `rpc_create_order` returned: an UPDATE
+of `orders.delivery_flat` (migration 154 added the column after the
+RPC was written) and an INSERT into `payments` (createInitialPayment).
+If the payment INSERT failed for any reason — UNIQUE-constraint race,
+DB hiccup mid-flight, process kill — the order row was already
+committed but no payment row existed. A retry with the same
+idempotency_key would hit the early-return path in the RPC and
+*never* create the payment row, leaving an orphaned order that the
+webhook reconciler could not settle and that did not show in cashier
+reconciliation.
+
+Migration 163 folds both writes into the RPC. Three opt-in params
+(`p_delivery_flat`, `p_payment_mode`, `p_payment_expires_at`) with
+NULL defaults so the four legacy callers (`table/`, `waiter/`,
+`dashboard/pos/`, `dashboard/pos/service/`) keep their existing JS
+payment-row inserts unchanged. The legacy 28-arg overload was
+explicitly DROPped so the new 31-arg version is the sole resident
+definition — same pattern as migration 135. Return type stays `uuid`
+for source-compat with all `{ data: orderId }` destructures.
+
+Catering findings were a 30-minute follow-up. Finding #6: added a
+"Copy WhatsApp link" button to the success card alongside "Continue
+on WhatsApp" so customers whose popup was blocked (iOS Safari is the
+common culprit) can paste the prefilled wa.me link into WhatsApp
+manually instead of resubmitting. Finding #8: added `noValidate` to
+the form so the browser's native validation balloons (whose text
+follows OS/browser language and ignores next-intl) no longer leak
+English popups on Arabic pages. Server-side Zod already returns
+localized error toasts via sonner — same UX, one round-trip.
+
+## COMMITS (3 on master, all pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `be15f22` | feat(db) | **Migration 163 — atomic rpc_create_order extends to delivery_flat + payment row.** Folds the delivery_flat persistence (`orders.delivery_flat`, column added 154) and the initial `payments` row INSERT into the same transaction as the order/order_items/loyalty/coupon writes. Three opt-in params added: `p_delivery_flat TEXT DEFAULT NULL`, `p_payment_mode TEXT DEFAULT NULL` (NULL = skip payment insert / legacy callers; `'cod'` → method=cash, status=pending_cod; `'online'` → method=NULL, status=pending — gateway fills in via Tap webhook), `p_payment_expires_at TIMESTAMPTZ DEFAULT NULL`. Legacy 28-arg overload DROPped so the 31-arg version is sole resident (same pattern as 135). Return type stays `uuid` for source-compat. Idempotency early-return still at the top — duplicate requests can't double-insert payments. All other behaviour (PRICE_MISMATCH guard, COUPON_INVALID branches, FOR-UPDATE coupon lock, points deduction, status-by-payment_method CASE, coupon_usages audit row from 155) copied verbatim. REVOKE/GRANT re-stated for the new signature. Migration paired (local = remote = 163). `npx supabase gen types typescript` regenerated; stripped `<claude-code-hint />` pollution marker from EOF. |
+| `80f737e` | refactor(checkout) | **Replace serial JS steps with atomic rpc_create_order.** Drops the post-RPC `UPDATE orders SET delivery_flat` (best-effort, with Sentry capture) and the `createInitialPayment` helper from `src/app/[locale]/checkout/actions.ts`. Both writes now happen inside the RPC. Forwards `p_delivery_flat`, `p_payment_mode: paymentMode === 'cod' ? 'cod' : 'online'`, and `p_payment_expires_at: expiresAt ?? undefined` into the call. localizeCheckoutError sentinels (PRICE_MISMATCH, AUTH_REQUIRED, COUPON_INVALID, INSUFFICIENT_POINTS, POINTS_OVER_CAP) and idempotency_key short-circuit preserved. Net: 14 insertions / 51 deletions on one file. Address auto-save to `customer_profiles` and order confirmation email still happen in JS (auth-bound RLS + fire-and-forget email — neither belongs in the DB transaction). |
+| `22ee548` | fix | **Catering form #6 WhatsApp fallback CTA + #8 noValidate locale fix.** #6: added "Copy WhatsApp link" button to success card between the "Continue on WhatsApp" anchor and "Send another inquiry". Uses `navigator.clipboard.writeText(submit.waLink)` with `toast.success` confirmation and `toast.error` fallback for browsers that deny clipboard permission. #8: `noValidate` on `<form>` suppresses the browser's native validation balloons; server-side Zod via sonner toast retains localized errors. Three new i18n keys × 2 locales: `catering.form.{copyLink, copyLinkSuccess, copyLinkFailed}`. Parity 2,433 → 2,436. |
+
+## INFRA NOTES
+
+- **One migration added (163).** Paired live on `kahramana-prod`
+  (project `wwmzuofstyzworukfxkt`) via `supabase db push --linked
+  --include-all`. Migration count now 163 (plus the two
+  `2026050519...` / `2026050812...` timestamp entries).
+- **`src/lib/supabase/types.ts` regenerated** from
+  `kahramana-prod`. New params reflected: `p_delivery_flat`,
+  `p_payment_mode`, `p_payment_expires_at` on `rpc_create_order`.
+  Stripped trailing `<claude-code-hint v="1" ... />` plugin pollution
+  marker at line 5357 (causes TS1005 parse error).
+- **No env vars touched.** No new deps. Bundle output unchanged at
+  page level — refactor is pure write-path consolidation.
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **Keep `RETURNS uuid`, don't switch to JSONB.** Task brief mentioned
+   a structured return (`{ order_id, order_number,
+   loyalty_points_deducted, coupon_applied, payment_record_id }`) but
+   also "Keep backward compatible return shape so existing callers
+   don't break." Four call sites destructure `{ data: orderId } =
+   await supabase.rpc(...)` and treat orderId as a UUID string —
+   changing to a record would silently break them all. Resolved the
+   tension by keeping `RETURNS uuid` (backward compat wins) and
+   noting in the migration prologue that the conceptual contract is
+   the same: order_id is returned, order_number = last-8 of order_id,
+   loyalty_points_deducted = `p_points_to_redeem` (input), coupon_
+   applied = `p_coupon_id IS NOT NULL` (input), and payment_record_id
+   exists iff `p_payment_mode IS NOT NULL`.
+
+2. **Opt-in `p_payment_mode = NULL` default for legacy callers.**
+   `table/`, `waiter/`, `dashboard/pos/`, `dashboard/pos/service/` all
+   insert their own `payments` row in JS after the RPC (POS uses
+   `rpc_pos_finalize_order` for atomic payment+audit; table+waiter
+   insert cash rows). Forcing them onto the new inline path would
+   require touching their payment flow which is out of scope. Defaulting
+   `p_payment_mode = NULL` skips the inline INSERT and leaves their
+   behavior unchanged — only checkout opts in.
+
+3. **DROP the legacy 28-arg overload before CREATE OR REPLACE.** PG
+   `CREATE OR REPLACE FUNCTION` only matches *identical* signatures
+   — without the explicit DROP, the 28-arg version (migration 155 body)
+   would coexist with the new 31-arg version as overloads, and any
+   28-arg call would be ambiguous or silently hit the legacy body that
+   lacks the inline payment insert. Same pattern migration 135 used to
+   kill the 25-arg overload.
+
+4. **Address auto-save + email send stay in JS.** The customer_profiles
+   default-address update uses the cookie-bound anon client so RLS
+   applies (service_role would bypass column-level grants); the order
+   confirmation email is fire-and-forget. Neither belongs inside the
+   DB transaction. Best-effort comment retained in checkout/actions.ts.
+
+5. **Catering #8: `noValidate` over `setCustomValidity()`.** Task brief
+   explicitly offered both options and recommended `noValidate` as
+   "1 line". Server-side Zod already returns `invalid_input` with a
+   localized toast — the trade-off is one round-trip vs. two languages
+   of error popups, and round-trip wins on locale correctness.
+
+6. **Catering #6: clipboard fallback inside try/catch, not feature
+   detection.** `navigator.clipboard` is gated to secure contexts
+   (HTTPS only); production is HTTPS so it resolves, but a customer
+   inside a cross-origin iframe or with permissions denied still
+   needs a path. The try/catch on `writeText()` covers both branches
+   with a localized error toast — simpler than detecting Permissions
+   API status upfront.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → exit 0 (clean) after both commits.
+- `npx tsx scripts/check-i18n.ts` → PASS, parity 2,436 / 2,436.
+- `NEXT_BUILD_WORKERS=1 npm run build` → green; 566/566 pages
+  generated; only warning is the pre-existing `[@sentry/nextjs]
+  DEPRECATION WARNING: unstable_sentryWebpackPluginOptions`.
+- `supabase migration list --linked` → 163 paired (Local = Remote = 163).
+- No runtime smoke-test of the new RPC path (no staging DB; Tap keys
+  pending). The atomicity claim is provable by inspection: every
+  formerly-serial write now lives inside the `BEGIN ... END;` block.
+
+## DEFERRED / OPERATOR-PENDING
+
+(updated for session 134)
+- Supabase Free → Pro + Singapore migration.
+- TAP keys (merchant approval pending).
+- Staff accounts — 13 staff emails pending from owner.
+- Resend domain verification for kahramanat.com — still pending.
+- VAPID keys for driver push notifications.
+- CONTACT_NOTIFY_EMAIL (optional).
+- After staff accounts: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true`.
+- Extend `localizeCheckoutError` to `waiter/actions.ts:222` (staff
+  surface, different return shape).
+- Catering `occasion_type` / `service_type` normalization.
+- Sprint 6B WhatsApp Business API (Meta verification).
+- Sprint 6C Benefit Pay API (CBB approval).
+- Inventory page banner: "0/168 recipes mapped — chef Excel import
+  pending" (operator visibility).
+- Chef Excel recipe import — root-cause fix for 168/168 unmapped.
+- Migration 015 gitignore issue (copied by hand into fresh tree).
+- Migration 131 cowork diff verification.
+- البديع branch row DB cleanup (SQL provided session 126).
+- ~11 missing dish photos.
+- Once Tap keys arrive: Refund Modal (refundPayment currently flips
+  DB state only; does NOT call Tap to push money back).
+- ~~ARCH-004 atomic checkout RPC~~ — **DONE this session (`be15f22` +
+  `80f737e`, migration 163).**
+- ~~Catering audit findings #6 + #8~~ — **DONE this session
+  (`22ee548`).**
+
+## OPERATOR NOTES
+
+- **Checkout write path is now fully atomic.** Customer-facing
+  `createOrderWithPoints` makes a single RPC call covering order,
+  order_items, loyalty deduction, points transaction, coupon
+  lock+increment+usage row, promotion increment, delivery_flat, AND
+  the initial payments row. Either everything commits or everything
+  rolls back. The webhook reconciler and cashier reconciliation can
+  now trust that `orders` JOIN `payments` is total over the customer
+  checkout flow.
+
+- **Legacy callers unchanged.** `table/`, `waiter/`, `dashboard/pos/`,
+  `dashboard/pos/service/` still call `rpc_create_order` without the
+  new `p_payment_*` params and still insert their own `payments` row
+  in JS. Any future atomicity work on those surfaces should set
+  `p_payment_mode = 'cod'` and drop the JS insert — but be aware POS
+  also uses `rpc_pos_finalize_order` for the audit row, so the move
+  is not a pure copy of the checkout pattern.
+
+- **Catering form popup-block path is now covered.** Customer can
+  copy the wa.me link from the success card if the auto-open is
+  blocked or the new tab gets closed. Inquiry is still saved to DB
+  either way — the gap was only the customer's UX path to WhatsApp.
+
+---
+---
+---
+
+# Prior session 133 close-out preserved below ↓
 
 ## SESSION 133 — SUMMARY
 

@@ -1,12 +1,12 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KAHRAMANA — BRIDGE CONTEXT
-Generated: 2026-05-17 (session 133 close-out)
-Master: 57ac6a9
+Generated: 2026-05-17 (session 134 close-out)
+Master: 22ee548
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-17 (session 133 close-out)
-# Master: 57ac6a9
+# Updated: 2026-05-17 (session 134 close-out)
+# Master: 22ee548
 
 ## CURRENT STATUS
 Launch Risk: 8/10
@@ -43,34 +43,34 @@ STILL PENDING:
 
 ## ACTIVE DEV PRIORITIES (in order)
 
-COMPLETED 2026-05-17 (session 133 — cleanup-only):
-✅ Docs cleanup (f6e403e)
-   - AUD-V3-007/011 stale references marked CLOSED with commit hashes
-     in .agent/LAST-SESSION.md + kahramana-conversation-master-notes.md
-   - Investigation confirmed src/ already has zero `as any` casts
-     (shipped earlier: f921e66 + 0f95f5a)
+COMPLETED 2026-05-17 (session 134):
+✅ ARCH-004 atomic checkout RPC — migration 163 (be15f22 + 80f737e)
+   - rpc_create_order now folds delivery_flat + initial payments row
+     INSERT into the same transaction as order/items/loyalty/coupon
+   - Three opt-in params (p_delivery_flat, p_payment_mode,
+     p_payment_expires_at) with NULL defaults
+   - Legacy 28-arg overload DROPped; new 31-arg version sole resident
+   - Return type stays uuid for source-compat with 4 callers
+   - Legacy callers (table, waiter, POS, POS service) unchanged — they
+     pass NULL p_payment_mode and keep JS payments INSERT
+   - Migration paired (Local = Remote = 163)
+   - tsc clean; i18n 2,436 / 2,436; next build clean (566/566 pages)
 
-✅ HIDDEN_BRANCHES dead-guard removal (57ac6a9)
-   - 30 unreachable `HIDDEN_BRANCHES.length > 0` branches removed
-     across 15 files (analytics queries, dashboard stats, reports
-     validator, owner/payments/delivery/kds/orders/reports pages,
-     inventory page + widgets + catering + food-cost, OrdersClient,
-     OrderStatsBar)
-   - Net −123 / +18 LOC
-   - const HIDDEN_BRANCHES + isHiddenBranch() + BRANCH_LIST.filter
-     retained as no-ops (in case a branch is hidden again)
-   - tsc clean; next build clean (566/566 pages)
+✅ Catering audit findings #6 + #8 (22ee548)
+   - #6: "Copy WhatsApp link" button on success card as popup-block
+     fallback; uses navigator.clipboard.writeText with toast feedback
+   - #8: noValidate on form so browser native validation balloons
+     no longer leak non-localized text; server-side Zod via sonner
+   - 3 new i18n keys × 2 locales (copyLink + copyLinkSuccess +
+     copyLinkFailed)
 
 DEFERRED (separate sessions, none are launch blockers):
 - Resend domain verification verify smoke-test (send a birthday email
   to a test profile once Resend lights up)
 - Extend localizeCheckoutError to waiter/actions.ts:222 (staff
   surface, different return shape)
-- Catering audit findings #6 (no email fallback) + #8 (HTML5
-  validation balloon doesn't follow next-intl locale)
 - Catering occasion_type / service_type normalization (currently
   stored as locale-rendered string)
-- ARCH-004 atomic checkout RPC
 - Sprint 6B WhatsApp Business API (Meta verification)
 - Sprint 6C Benefit Pay API (CBB approval)
 - Inventory page banner: "0/168 recipes mapped — chef Excel import
@@ -82,6 +82,8 @@ DEFERRED (separate sessions, none are launch blockers):
 - Migration 131 cowork diff verification
 - Once Tap keys arrive: Refund Modal (refundPayment currently flips
   DB state only; does NOT call Tap to push money back)
+- Apply ARCH-004 pattern to table/waiter/POS payment row inserts (POS
+  also uses rpc_pos_finalize_order — not a pure copy of checkout)
 
 ## ARCHITECTURE DECISIONS (do not reverse)
 - CSS: ps/pe/ms/me ONLY — never pl/pr/ml/mr/left/right
@@ -105,20 +107,22 @@ DEFERRED (separate sessions, none are launch blockers):
   is suppressed (dedup), but inventory deduction is no-op for live orders
 
 ## MIGRATION STATE
-- Local = Remote = 162 migrations applied (paired)
+- Local = Remote = 163 migrations applied (paired)
 - Session 130 added: none (operator + dev cleanup only)
 - Session 131 added: none (dead-code cleanup)
 - Session 132 added: none (P4-2 + F-01 + catering page + birthday cron)
 - Session 133 added: none (docs + refactor only)
+- Session 134 added: 163 (rpc_create_order atomic payment + delivery_flat)
 
 ## SESSION HISTORY (last 5)
-- Session 129: Points cap UX + cart drawer fix + driver UX + supabase client hardening
 - Session 130: P2/P3/B-001 sweep (recipes import, banner, Riffa hours, birthday card, QR scan flag)
 - Session 131: P4-1 dead-code cleanup (ForgotPasswordClient.tsx removed, 144 LOC)
 - Session 132: P4-2 (checkout i18n) + F-01 (consent gating) + /dashboard/catering
   + birthday notification (cron route + email + wa.me); +5 commits
 - Session 133: Stale-reference cleanup (AUD-V3-007/011 docs) +
   HIDDEN_BRANCHES dead-guard removal (15 files, −123/+18 LOC); +2 commits
+- Session 134: ARCH-004 atomic checkout RPC (migration 163) + catering
+  form #6 popup-block fallback + #8 noValidate locale fix; +3 commits
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
