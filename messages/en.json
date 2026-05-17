@@ -2954,7 +2954,19 @@
     "fourPlus": "4+",
     "refreshError": "Could not refresh the waitlist",
     "addError": "Could not add the guest. Check the details and try again.",
-    "actionError": "Could not update the status. Try again."
+    "actionError": "Could not update the status. Try again.",
+    "errors": {
+      "invalidInput": "Invalid waitlist entry",
+      "unauthorized": "Unauthorized",
+      "forbiddenRole": "Your role cannot manage the waitlist",
+      "forbiddenBranch": "This entry belongs to another branch",
+      "notFound": "Waitlist entry not found",
+      "forbiddenTransition": "That status change is not allowed",
+      "conflict": "Status changed by another request — refresh and try again",
+      "invalidBranch": "Invalid branch",
+      "addFailed": "Could not add the guest — please try again",
+      "updateFailed": "Could not update the entry — please try again"
+    }
   },
   "reservations": {
     "title": "Reservations",
