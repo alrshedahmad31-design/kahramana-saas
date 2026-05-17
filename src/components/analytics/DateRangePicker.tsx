@@ -39,7 +39,7 @@ export default function DateRangePicker({ currentRange, locale }: Props) {
             key={r.label}
             type="button"
             onClick={() => setRange(r.label)}
-            className={`px-3 py-1.5 rounded-md text-xs font-satoshi font-medium transition-colors duration-150 min-h-[32px]
+            className={`px-3 py-2 rounded-md text-sm font-satoshi font-medium transition-colors duration-150 min-h-[44px] min-w-[44px]
               ${active
                 ? 'bg-brand-gold text-brand-black'
                 : 'text-brand-muted hover:text-brand-text hover:bg-brand-surface'

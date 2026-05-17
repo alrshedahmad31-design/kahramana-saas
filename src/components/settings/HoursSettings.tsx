@@ -156,7 +156,7 @@ export default function HoursSettings() {
 
       {/* Day grid */}
       <div className="flex flex-col gap-2">
-        <div className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-0 items-center
+        <div className={`hidden sm:grid grid-cols-[1fr_auto_auto_auto] gap-x-3 gap-y-0 items-center
           text-[10px] font-black uppercase tracking-widest text-brand-muted/60 px-4 mb-1 ${font}`}>
           <span>{isAr ? 'اليوم' : 'Day'}</span>
           <span className="text-center w-20">{isAr ? 'فتح' : 'Opens'}</span>
@@ -167,34 +167,66 @@ export default function HoursSettings() {
         {hours.map(day => (
           <div
             key={day.dayIndex}
-            className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center px-4 py-3 rounded-xl border transition-colors
+            className={`flex flex-col gap-3 px-4 py-3 rounded-xl border transition-colors
+              sm:grid sm:grid-cols-[1fr_auto_auto_auto] sm:gap-x-3 sm:gap-y-0 sm:items-center
               ${day.isClosed
                 ? 'bg-brand-surface border-brand-border opacity-60'
                 : 'bg-brand-surface-2 border-brand-border'}`}
           >
-            <span className={`text-sm font-bold text-brand-text ${font}`}>
-              {days[day.dayIndex]}
-            </span>
-            <input
-              type="time"
-              value={day.openTime}
-              disabled={day.isClosed}
-              onChange={e => updateDay(day.dayIndex, { openTime: e.target.value })}
-              className={`w-20 px-2 py-1.5 rounded-lg bg-brand-surface border border-brand-border
-                text-brand-text text-xs outline-none font-satoshi
-                focus:border-brand-gold/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
-            />
-            <input
-              type="time"
-              value={day.closeTime}
-              disabled={day.isClosed}
-              onChange={e => updateDay(day.dayIndex, { closeTime: e.target.value })}
-              className={`w-20 px-2 py-1.5 rounded-lg bg-brand-surface border border-brand-border
-                text-brand-text text-xs outline-none font-satoshi
-                focus:border-brand-gold/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
-            />
-            {/* Closed toggle */}
-            <div className="flex items-center justify-center w-16">
+            <div className="flex items-center justify-between sm:contents">
+              <span className={`text-base sm:text-sm font-bold text-brand-text ${font}`}>
+                {days[day.dayIndex]}
+              </span>
+              {/* Mobile-only closed toggle inline with day name */}
+              <div className="flex items-center gap-2 sm:hidden">
+                <span className={`text-xs text-brand-muted ${font}`}>
+                  {isAr ? 'مغلق' : 'Closed'}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={day.isClosed}
+                  onClick={() => updateDay(day.dayIndex, { isClosed: !day.isClosed })}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200
+                    ${day.isClosed ? 'bg-brand-error' : 'bg-brand-border'}`}
+                >
+                  <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-brand-text shadow transition-all duration-200
+                    ${day.isClosed ? 'start-[22px]' : 'start-0.5'}`} />
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:contents">
+              <label className="flex flex-col gap-1 sm:contents">
+                <span className={`sm:hidden text-[10px] font-bold uppercase tracking-wider text-brand-muted ${font}`}>
+                  {isAr ? 'فتح' : 'Opens'}
+                </span>
+                <input
+                  type="time"
+                  value={day.openTime}
+                  disabled={day.isClosed}
+                  onChange={e => updateDay(day.dayIndex, { openTime: e.target.value })}
+                  className={`min-h-[44px] w-full sm:w-20 px-3 sm:px-2 py-2 sm:py-1.5 rounded-lg bg-brand-surface border border-brand-border
+                    text-brand-text text-base sm:text-xs outline-none font-satoshi
+                    focus:border-brand-gold/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
+                />
+              </label>
+              <label className="flex flex-col gap-1 sm:contents">
+                <span className={`sm:hidden text-[10px] font-bold uppercase tracking-wider text-brand-muted ${font}`}>
+                  {isAr ? 'إغلاق' : 'Closes'}
+                </span>
+                <input
+                  type="time"
+                  value={day.closeTime}
+                  disabled={day.isClosed}
+                  onChange={e => updateDay(day.dayIndex, { closeTime: e.target.value })}
+                  className={`min-h-[44px] w-full sm:w-20 px-3 sm:px-2 py-2 sm:py-1.5 rounded-lg bg-brand-surface border border-brand-border
+                    text-brand-text text-base sm:text-xs outline-none font-satoshi
+                    focus:border-brand-gold/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed`}
+                />
+              </label>
+            </div>
+            {/* Desktop-only closed toggle in its own column */}
+            <div className="hidden sm:flex items-center justify-center w-16">
               <button
                 type="button"
                 role="switch"

@@ -444,10 +444,10 @@ export default function CreateCouponWizard({ coupon, branches, onClose, onSaved 
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-brand-border bg-brand-surface-2/50 flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-t border-brand-border bg-brand-surface-2/50 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
           <button
             onClick={step === 'type' ? onClose : prev}
-            className={`px-6 py-2.5 rounded-xl border border-brand-border text-sm font-bold text-brand-muted hover:text-brand-text transition-colors ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+            className={`min-h-[44px] px-6 py-3 rounded-xl border border-brand-border text-sm font-bold text-brand-muted hover:text-brand-text transition-colors ${isAr ? 'font-almarai' : 'font-satoshi'}`}
           >
             {step === 'type'
               ? (isAr ? 'إلغاء' : 'Cancel')
@@ -457,7 +457,7 @@ export default function CreateCouponWizard({ coupon, branches, onClose, onSaved 
           <button
             onClick={step === 'review' ? handleSave : next}
             disabled={loading || (step === 'details' && (!form.code || !form.campaign_name))}
-            className={`px-8 py-2.5 rounded-xl bg-brand-gold text-brand-black text-sm font-black uppercase tracking-widest hover:bg-brand-gold-light transition-all disabled:opacity-50 ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+            className={`min-h-[44px] px-8 py-3 rounded-xl bg-brand-gold text-brand-black text-sm font-black uppercase tracking-widest hover:bg-brand-gold-light transition-all disabled:opacity-50 ${isAr ? 'font-almarai' : 'font-satoshi'}`}
           >
             {loading
               ? (isAr ? 'جاري المعالجة...' : 'Processing...')

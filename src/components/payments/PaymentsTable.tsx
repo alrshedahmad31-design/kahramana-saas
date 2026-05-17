@@ -172,7 +172,7 @@ export default function PaymentsTable({ payments, totalCount, page, pageSize, lo
             {page > 1 && (
               <Link
                 href={`?page=${page - 1}`}
-                className="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-surface text-xs font-satoshi text-brand-text hover:border-brand-gold/50 transition-colors"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-4 py-2 rounded-lg border border-brand-border bg-brand-surface text-sm font-satoshi text-brand-text hover:border-brand-gold/50 transition-colors"
               >
                 {isAr ? 'السابق' : 'Previous'}
               </Link>
@@ -180,7 +180,7 @@ export default function PaymentsTable({ payments, totalCount, page, pageSize, lo
             {page < totalPages && (
               <Link
                 href={`?page=${page + 1}`}
-                className="px-3 py-1.5 rounded-lg border border-brand-border bg-brand-surface text-xs font-satoshi text-brand-text hover:border-brand-gold/50 transition-colors"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-4 py-2 rounded-lg border border-brand-border bg-brand-surface text-sm font-satoshi text-brand-text hover:border-brand-gold/50 transition-colors"
               >
                 {isAr ? 'التالي' : 'Next'}
               </Link>

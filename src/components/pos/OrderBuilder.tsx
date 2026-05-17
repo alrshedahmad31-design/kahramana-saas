@@ -67,7 +67,7 @@ export default function OrderBuilder(props: Props) {
             <select
               value={props.branchId}
               onChange={(e) => props.onBranchChange(e.target.value)}
-              className="w-full min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text focus:outline-none focus:border-brand-gold/40"
+              className="w-full min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text focus:outline-none focus:border-brand-gold/40"
             >
               {props.branches.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -109,7 +109,7 @@ export default function OrderBuilder(props: Props) {
               value={props.customerName}
               onChange={(e) => props.onCustomerNameChange(e.target.value)}
               placeholder={t('customerName')}
-              className="w-full min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
+              className="w-full min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
             />
             <input
               type="tel"
@@ -117,7 +117,7 @@ export default function OrderBuilder(props: Props) {
               onChange={(e) => props.onCustomerPhoneChange(e.target.value)}
               placeholder={t('customerPhone')}
               dir="ltr"
-              className="w-full min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted tabular-nums focus:outline-none focus:border-brand-gold/40"
+              className="w-full min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text placeholder:text-brand-muted tabular-nums focus:outline-none focus:border-brand-gold/40"
             />
           </div>
         </Field>
@@ -204,7 +204,7 @@ export default function OrderBuilder(props: Props) {
               <select
                 value={props.city}
                 onChange={(e) => props.onCityChange(e.target.value)}
-                className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text focus:outline-none focus:border-brand-gold/40 w-full"
+                className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text focus:outline-none focus:border-brand-gold/40 w-full"
               >
                 <option value="">{isAr ? 'اختر المنطقة' : 'Select Area'}</option>
                 {/* ── المنامة وضواحيها ── */}
@@ -307,28 +307,28 @@ export default function OrderBuilder(props: Props) {
                   value={props.block}
                   onChange={(e) => props.onBlockChange(e.target.value)}
                   placeholder={t('block')}
-                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
+                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
                 />
                 <input
                   type="text"
                   value={props.road}
                   onChange={(e) => props.onRoadChange(e.target.value)}
                   placeholder={t('road')}
-                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
+                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
                 />
                 <input
                   type="text"
                   value={props.building}
                   onChange={(e) => props.onBuildingChange(e.target.value)}
                   placeholder={t('building')}
-                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
+                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
                 />
                 <input
                   type="text"
                   value={props.flat}
                   onChange={(e) => props.onFlatChange(e.target.value)}
                   placeholder={t('flat')}
-                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
+                  className="min-h-[44px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 font-satoshi text-base text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40"
                 />
               </div>
             </div>
@@ -342,7 +342,7 @@ export default function OrderBuilder(props: Props) {
             onChange={(e) => props.onNotesChange(e.target.value)}
             placeholder={t('notesPlaceholder')}
             rows={2}
-            className="w-full rounded-lg bg-brand-surface-2 border border-brand-border px-3 py-2 font-satoshi text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 resize-none"
+            className="w-full min-h-[80px] rounded-lg bg-brand-surface-2 border border-brand-border px-3 py-2 font-satoshi text-base text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 resize-none"
           />
         </Field>
 

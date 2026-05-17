@@ -342,13 +342,13 @@ export default function PromotionForm({
         <div className="shrink-0 border-t border-brand-border px-4 py-3 flex items-center justify-end gap-2">
           <button
             type="button" onClick={onCancel}
-            className={`min-h-[40px] px-4 rounded-md border border-brand-border text-brand-muted hover:text-brand-text text-sm font-bold ${isAr ? 'font-almarai' : 'font-satoshi'}`}
+            className={`min-h-[44px] px-4 rounded-md border border-brand-border text-brand-muted hover:text-brand-text text-sm font-bold ${isAr ? 'font-almarai' : 'font-satoshi'}`}
           >
             {isAr ? 'إلغاء' : 'Cancel'}
           </button>
           <button
             type="button" onClick={submit} disabled={isPending}
-            className={`min-h-[40px] px-5 rounded-md bg-brand-gold text-brand-black font-black text-sm flex items-center gap-2 disabled:opacity-50 ${isAr ? 'font-cairo' : 'font-satoshi'}`}
+            className={`min-h-[44px] px-5 rounded-md bg-brand-gold text-brand-black font-black text-sm flex items-center gap-2 disabled:opacity-50 ${isAr ? 'font-cairo' : 'font-satoshi'}`}
           >
             {isPending && <Loader2 size={14} className="animate-spin" />}
             {isAr ? 'حفظ' : 'Save'}
@@ -373,7 +373,7 @@ function Field({
 }
 
 function inputCls(isAr: boolean): string {
-  return `w-full bg-brand-black/40 border border-brand-border rounded-md px-3 py-2 text-sm text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 ${isAr ? 'font-almarai' : 'font-satoshi'}`
+  return `w-full min-h-[44px] bg-brand-black/40 border border-brand-border rounded-md px-3 py-2 text-base text-brand-text placeholder:text-brand-muted focus:outline-none focus:border-brand-gold/40 ${isAr ? 'font-almarai' : 'font-satoshi'}`
 }
 
 function asString(v: unknown): string {

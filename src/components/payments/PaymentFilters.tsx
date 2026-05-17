@@ -52,7 +52,7 @@ export default function PaymentFilters({ isAr, isGlobalAdmin: _isGlobalAdmin }: 
   )
 
   const selectCls =
-    'h-9 rounded-xl border border-brand-border bg-brand-surface px-3 font-satoshi text-sm text-brand-text appearance-none focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold/50 transition-colors'
+    'min-h-[44px] rounded-xl border border-brand-border bg-brand-surface px-3 font-satoshi text-base text-brand-text appearance-none focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold/50 transition-colors'
 
   return (
     <div className="flex flex-wrap gap-3 items-center">

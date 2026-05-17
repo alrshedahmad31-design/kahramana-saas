@@ -177,7 +177,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
               <button
                 key={label}
                 onClick={() => { setFrom(daysAgo(days)); setTo(todayStr()) }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-brand-border text-brand-muted hover:border-brand-gold/40 hover:text-brand-gold transition-colors font-satoshi"
+                className="min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg text-sm font-medium border border-brand-border text-brand-muted hover:border-brand-gold/40 hover:text-brand-gold transition-colors font-satoshi"
               >
                 {label}
               </button>
@@ -189,14 +189,14 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
+              className="flex-1 min-h-[44px] px-3 py-2 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-base font-satoshi focus:outline-none focus:border-brand-gold/50"
             />
             <span className="text-brand-muted font-satoshi text-xs">→</span>
             <input
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
+              className="flex-1 min-h-[44px] px-3 py-2 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-base font-satoshi focus:outline-none focus:border-brand-gold/50"
             />
           </div>
 
@@ -204,7 +204,7 @@ export default function ReportsClient({ locale, initialFrom, initialTo, initialR
             <select
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
-              className="px-3 py-1.5 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-sm font-satoshi focus:outline-none focus:border-brand-gold/50"
+              className="min-h-[44px] px-3 py-2 rounded-lg bg-brand-surface-2 border border-brand-border text-brand-text text-base font-satoshi focus:outline-none focus:border-brand-gold/50"
             >
               <option value="">{t('reports.allBranches')}</option>
               {branches.map((b) => (
