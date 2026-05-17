@@ -4800,6 +4800,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_approve_shift: { Args: { p_shift_id: string }; Returns: Json }
       rpc_auto_generate_pos: { Args: never; Returns: undefined }
       rpc_budget_trend: {
         Args: { p_branch_id: string; p_year: number }
