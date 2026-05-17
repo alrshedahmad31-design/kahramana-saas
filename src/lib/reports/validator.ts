@@ -1,5 +1,4 @@
 import { createServiceClient } from '@/lib/supabase/server'
-import { HIDDEN_BRANCHES } from '@/constants/contact'
 
 export type ValidationLevel = 'error' | 'warning' | 'info'
 
@@ -47,8 +46,6 @@ export async function validateSalesData(
 
   if (filters.branchId) {
     q = q.eq('branch_id', filters.branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const { data, error } = await q

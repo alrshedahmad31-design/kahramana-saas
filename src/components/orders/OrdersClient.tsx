@@ -15,7 +15,7 @@ import OrderDetailsModal from '@/components/orders/OrderDetailsModal'
 import KanbanOrderCard from '@/components/orders/KanbanOrderCard'
 import type { OrderCardData } from '@/components/orders/OrderCard'
 import type { OrderStatus, StaffRole } from '@/lib/supabase/custom-types'
-import { BRANCHES, HIDDEN_BRANCHES } from '@/constants/contact'
+import { BRANCHES } from '@/constants/contact'
 import { escapeSearch } from '@/lib/utils/postgrest'
 
 const PAGE_SIZE = 20
@@ -171,8 +171,6 @@ export default function OrdersClient({
     if (statuses)      q = q.in('status', statuses)
     if (activeBranch) {
       q = q.eq('branch_id', activeBranch)
-    } else if (HIDDEN_BRANCHES.length > 0) {
-      q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
     }
     const safeSearch = escapeSearch(search.trim())
     if (safeSearch) q = q.or(`customer_name.ilike.%${safeSearch}%,customer_phone.ilike.%${safeSearch}%,id.ilike.%${safeSearch}%`)
@@ -183,8 +181,6 @@ export default function OrdersClient({
     if (statuses)      tq = tq.in('status', statuses)
     if (activeBranch) {
       tq = tq.eq('branch_id', activeBranch)
-    } else if (HIDDEN_BRANCHES.length > 0) {
-      tq = tq.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
     }
     if (safeSearch) tq = tq.or(`customer_name.ilike.%${safeSearch}%,customer_phone.ilike.%${safeSearch}%`)
     if (range?.from)   tq = tq.gte('created_at', range.from)

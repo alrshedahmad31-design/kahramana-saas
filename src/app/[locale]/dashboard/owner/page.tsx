@@ -14,7 +14,7 @@ import {
 import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
 import { BH_TIMEZONE } from '@/lib/analytics/calculations'
 import { createServiceClient } from '@/lib/supabase/server'
-import { HIDDEN_BRANCHES, isHiddenBranch } from '@/constants/contact'
+import { isHiddenBranch } from '@/constants/contact'
 
 import OwnerDashboardClient from '@/components/dashboard/owner/OwnerDashboardClient'
 import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
@@ -55,8 +55,6 @@ async function fetchFoodCostThisMonth(
     .gte('performed_at', monthStartIso)
   if (branchId) {
     foodCostQuery = foodCostQuery.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    foodCostQuery = foodCostQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   let revenueQuery = supabase
@@ -66,8 +64,6 @@ async function fetchFoodCostThisMonth(
     .gte('created_at', monthStartIso)
   if (branchId) {
     revenueQuery = revenueQuery.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    revenueQuery = revenueQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const [foodCostRes, revenueRes] = await Promise.all([foodCostQuery, revenueQuery])

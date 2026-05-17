@@ -1,6 +1,5 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { BH_TIMEZONE } from './calculations'
-import { HIDDEN_BRANCHES } from '@/constants/contact'
 import { analyticsOk, analyticsErr, type AnalyticsResult } from './types'
 
 // AUD-V3-008: on error callers receive { ok: false, error: AnalyticsError }.
@@ -195,8 +194,6 @@ export async function getMetrics(
 
     if (branchId) {
       q = q.eq('branch_id', branchId)
-    } else if (HIDDEN_BRANCHES.length > 0) {
-      q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
     }
 
     const { data, error } = await q
@@ -248,8 +245,6 @@ export async function getDailySales(
     .order('created_at', { ascending: true })
   if (branchId) {
     q = q.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const { data, error } = await q
@@ -307,8 +302,6 @@ export async function getTopItems(
 
   if (branchId) {
     q = q.eq('orders.branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    q = q.not('orders.branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const { data, error } = await q
@@ -367,8 +360,6 @@ export async function getHourlyDistribution(from?: Date, to?: Date, branchId?: s
     .lte('created_at', toISO(to))
   if (branchId) {
     q = q.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const { data, error } = await q
@@ -414,8 +405,6 @@ export async function getBranchSummaries(
 
   if (branchId) {
     q = q.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const { data, error } = await q
@@ -820,8 +809,6 @@ export async function getOperationalMetrics(
     .lte('created_at', toISO(to))
   if (branchId) {
     q = q.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const { data, error } = await q
@@ -860,8 +847,6 @@ export async function getCashReconciliationMetrics(
 
   if (branchId) {
     q = q.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    q = q.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const { data, error } = await q
@@ -900,8 +885,6 @@ export async function getSecondaryMetrics(
     .not('customer_phone', 'is', null)
   if (branchId) {
     periodQ = periodQ.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    periodQ = periodQ.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   let prevQ = sb
@@ -912,8 +895,6 @@ export async function getSecondaryMetrics(
     .not('customer_phone', 'is', null)
   if (branchId) {
     prevQ = prevQ.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    prevQ = prevQ.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   let itemsQ = sb
@@ -924,8 +905,6 @@ export async function getSecondaryMetrics(
     .lte('orders.created_at', toISO(to))
   if (branchId) {
     itemsQ = itemsQ.eq('orders.branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    itemsQ = itemsQ.not('orders.branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const [periodRes, prevRes, itemsRes] = await Promise.all([periodQ, prevQ, itemsQ])

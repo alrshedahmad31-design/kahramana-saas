@@ -4,7 +4,6 @@ import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { createClient } from '@/lib/supabase/server'
 import OrdersClient from '@/components/orders/OrdersClient'
 import type { OrderCardData } from '@/components/orders/OrderCard'
-import { HIDDEN_BRANCHES } from '@/constants/contact'
 
 const PAGE_SIZE = 20
 
@@ -50,9 +49,6 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
   if (userBranchId) {
     ordersQuery = ordersQuery.eq('branch_id', userBranchId)
     totalsQuery = totalsQuery.eq('branch_id', userBranchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    ordersQuery = ordersQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
-    totalsQuery = totalsQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const [ordersResult, totalsResult] = await Promise.all([ordersQuery, totalsQuery])

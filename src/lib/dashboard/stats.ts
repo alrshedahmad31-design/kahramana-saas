@@ -75,8 +75,6 @@ function hourLabel(h: number): string {
 
 import type { OrderStatus } from '@/lib/supabase/custom-types'
 
-import { HIDDEN_BRANCHES } from '@/constants/contact'
-
 const ACTIVE_STATUSES   = ['new', 'under_review', 'accepted', 'preparing', 'ready', 'out_for_delivery']
 const DONE_STATUSES: OrderStatus[] = ['delivered', 'completed']
 const EXCLUDED_CSV      = '(cancelled,payment_failed,returned)'
@@ -98,8 +96,6 @@ export async function getDashboardData(branchId?: string | null): Promise<Analyt
 
   if (branchId) {
     todayQ = todayQ.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    todayQ = todayQ.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   // Yesterday completed — for revenue trend
@@ -112,8 +108,6 @@ export async function getDashboardData(branchId?: string | null): Promise<Analyt
 
   if (branchId) {
     yestQ = yestQ.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    yestQ = yestQ.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   // Top items today (order_items joined to orders)
@@ -125,8 +119,6 @@ export async function getDashboardData(branchId?: string | null): Promise<Analyt
 
   if (branchId) {
     itemsQ = itemsQ.eq('orders.branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    itemsQ = itemsQ.not('orders.branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const [

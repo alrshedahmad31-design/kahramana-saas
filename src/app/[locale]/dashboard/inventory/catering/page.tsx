@@ -4,7 +4,6 @@ import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getActiveBranches }   from '@/lib/branches/queries'
-import { HIDDEN_BRANCHES }    from '@/constants/contact'
 import type { CateringOrderRow, CateringOrderStatus } from '@/lib/supabase/custom-types'
 import CateringStatusStepper from '@/components/inventory/catering/CateringStatusStepper'
 import CateringCalendar from '@/components/inventory/catering/CateringCalendar'
@@ -53,14 +52,9 @@ export default async function CateringPage({ params, searchParams }: PageProps) 
           .eq('branch_id', activeBranchId)
           .order('event_date', { ascending: true })
       : isGlobal
-      ? (HIDDEN_BRANCHES.length > 0
-          ? supabase.from('catering_orders')
-              .select('*')
-              .not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
-              .order('event_date', { ascending: true })
-          : supabase.from('catering_orders')
-              .select('*')
-              .order('event_date', { ascending: true }))
+      ? supabase.from('catering_orders')
+          .select('*')
+          .order('event_date', { ascending: true })
       : Promise.resolve({ data: [], error: null })
   )
 

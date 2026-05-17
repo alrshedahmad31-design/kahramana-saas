@@ -10,7 +10,6 @@ import type {
 } from '@/lib/supabase/custom-types'
 import LowStockWidget from '@/components/inventory/LowStockWidget'
 import RecipesBannerClient from '@/components/inventory/RecipesBannerClient'
-import { HIDDEN_BRANCHES } from '@/constants/contact'
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -90,20 +89,12 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
     activeBranchId
       ? supabase.rpc('rpc_expiry_report', { p_branch_id: activeBranchId, p_days_ahead: 7 })
       : Promise.resolve({ data: [] as ExpiryReportRow[], error: null }),
-    (HIDDEN_BRANCHES.length > 0
-      ? supabase
-          .from('inventory_alerts')
-          .select('*')
-          .eq('is_read', false)
-          .not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
-          .order('created_at', { ascending: false })
-          .limit(10)
-      : supabase
-          .from('inventory_alerts')
-          .select('*')
-          .eq('is_read', false)
-          .order('created_at', { ascending: false })
-          .limit(10)),
+    supabase
+      .from('inventory_alerts')
+      .select('*')
+      .eq('is_read', false)
+      .order('created_at', { ascending: false })
+      .limit(10),
     activeBranchId
       ? supabase
           .from('inventory_stock')

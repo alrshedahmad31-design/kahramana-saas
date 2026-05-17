@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
-import { HIDDEN_BRANCHES } from '@/constants/contact'
 import ReportHeader from '@/components/inventory/reports/ReportHeader'
 import StatCard from '@/components/inventory/reports/StatCard'
 import EmptyReport from '@/components/inventory/reports/EmptyReport'
@@ -45,9 +44,7 @@ export default async function FoodCostPage({ params, searchParams }: PageProps) 
     .lte('created_at', dateTo + 'T23:59:59')
 
   const [{ data: orderData }, { data: soldItems }, { data: cogsByDish }] = await Promise.all([
-    HIDDEN_BRANCHES.length > 0
-      ? ordersQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
-      : ordersQuery,
+    ordersQuery,
     supabase
       .from('order_items')
       .select('menu_item_slug, quantity')

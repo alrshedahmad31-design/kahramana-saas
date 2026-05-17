@@ -4,7 +4,6 @@ import { createClient }         from '@/lib/supabase/server'
 import type { DeliveryOrder, Driver } from '@/lib/delivery/types'
 import DeliveryPageClient       from '@/components/delivery/DeliveryPageClient'
 import DeliveryTimesTable, { type DeliveryTimeRow } from '@/components/delivery/DeliveryTimesTable'
-import { HIDDEN_BRANCHES }    from '@/constants/contact'
 
 interface Props {
   params: Promise<{ locale: string }>
@@ -51,8 +50,6 @@ export default async function DeliveryPage({ params }: Props) {
 
   if (branchScope) {
     activeOrdersQuery = activeOrdersQuery.eq('branch_id', branchScope)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    activeOrdersQuery = activeOrdersQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
   const { data: ordersRaw } = await activeOrdersQuery
 
@@ -68,8 +65,6 @@ export default async function DeliveryPage({ params }: Props) {
 
   if (branchScope) {
     completedQuery = completedQuery.eq('branch_id', branchScope)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    completedQuery = completedQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
   const { data: completedRaw } = await completedQuery
 
@@ -82,8 +77,6 @@ export default async function DeliveryPage({ params }: Props) {
 
   if (branchScope) {
     driversQuery = driversQuery.eq('branch_id', branchScope)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    driversQuery = driversQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
   const { data: driversRaw } = await driversQuery
 

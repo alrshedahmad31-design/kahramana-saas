@@ -3,7 +3,6 @@ import Link         from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { canAccessReports } from '@/lib/auth/rbac'
 import { createServiceClient } from '@/lib/supabase/server'
-import { HIDDEN_BRANCHES } from '@/constants/contact'
 import { getTranslations } from 'next-intl/server'
 import ReportsClient from './ReportsClient'
 import type { DishCogsRow } from '@/lib/supabase/custom-types'
@@ -37,8 +36,6 @@ async function fetchInventorySummary(branchId: string | null): Promise<Inventory
     .gte('performed_at', monthStartIso)
   if (branchId) {
     foodCostQuery = foodCostQuery.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    foodCostQuery = foodCostQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   let wasteQuery = supabase
@@ -48,8 +45,6 @@ async function fetchInventorySummary(branchId: string | null): Promise<Inventory
     .gte('reported_at', monthStartIso)
   if (branchId) {
     wasteQuery = wasteQuery.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    wasteQuery = wasteQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   let revenueQuery = supabase
@@ -59,8 +54,6 @@ async function fetchInventorySummary(branchId: string | null): Promise<Inventory
     .gte('created_at', monthStartIso)
   if (branchId) {
     revenueQuery = revenueQuery.eq('branch_id', branchId)
-  } else if (HIDDEN_BRANCHES.length > 0) {
-    revenueQuery = revenueQuery.not('branch_id', 'in', `(${HIDDEN_BRANCHES.join(',')})`)
   }
 
   const cogsQuery = supabase
