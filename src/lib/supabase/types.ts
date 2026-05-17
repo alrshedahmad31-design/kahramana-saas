@@ -4833,9 +4833,27 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_cancel_order: {
+        Args: {
+          p_order_id: string
+          p_target_status: Database["public"]["Enums"]["order_status"]
+          p_reason: string
+        }
+        Returns: Json
+      }
       rpc_create_customer_profile: {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined
+      }
+      rpc_create_leave_request: {
+        Args: {
+          p_leave_type: string
+          p_start_date: string
+          p_end_date: string
+          p_days_count: number
+          p_reason?: string
+        }
+        Returns: Json
       }
       rpc_create_order: {
         Args: {
@@ -5063,6 +5081,22 @@ export type Database = {
         Returns: undefined
       }
       rpc_update_abc_classification: { Args: never; Returns: undefined }
+      rpc_update_order_status: {
+        Args: {
+          p_order_id: string
+          p_new_status: Database["public"]["Enums"]["order_status"]
+          p_expected_status: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: Json
+      }
+      rpc_update_reservation_status: {
+        Args: {
+          p_reservation_id: string
+          p_new_status: string
+          p_expected_status: string
+        }
+        Returns: Json
+      }
       rpc_update_staff: {
         Args: {
           p_branch_id: string

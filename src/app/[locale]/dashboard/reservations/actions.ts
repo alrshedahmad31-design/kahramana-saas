@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import { z } from 'zod'
 import * as Sentry from '@sentry/nextjs'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import {
   assertBranchScope,
   getDashboardGuardErrorMessage,
@@ -216,6 +216,9 @@ export async function updateReservationStatus(
     throw new Error(getDashboardGuardErrorMessage(error))
   }
 
+  // Service-role read for the snapshot — RLS is branch-scoped and the JS
+  // gate above already verified access. The RPC then re-asserts role +
+  // branch + transition matrix + CAS + audit row atomically.
   const supabase = createServiceClient()
   const { data: row, error: fetchError } = await supabase
     .from('reservations')
@@ -234,37 +237,33 @@ export async function updateReservationStatus(
     }
   }
 
-  const now = new Date().toISOString()
-  const patch: {
-    status:        ReservationStatus
-    confirmed_at?: string
-    seated_at?:    string
-    cancelled_at?: string
-    completed_at?: string
-  } = { status: parsedStatus.data }
-  if (parsedStatus.data === 'confirmed') patch.confirmed_at = now
-  if (parsedStatus.data === 'seated')    patch.seated_at    = now
-  if (parsedStatus.data === 'cancelled') patch.cancelled_at = now
-  if (parsedStatus.data === 'completed') patch.completed_at = now
+  // Atomic transition via rpc_update_reservation_status (migration 166).
+  const authClient = await createClient()
+  const { data: rpcRaw, error: rpcError } = await authClient.rpc('rpc_update_reservation_status', {
+    p_reservation_id:  parsedId.data,
+    p_new_status:      parsedStatus.data,
+    p_expected_status: currentStatus,
+  })
 
-  // RPC-PENDING: direct .update() until rpc_update_reservation_status lands.
-  // CAS on status: two managers viewing the same `pending` reservation can
-  // both pass the transition matrix check above (read). Without this predicate
-  // the last writer wins (e.g. A→confirmed, B→cancelled both succeed). The
-  // `currentStatus` we fetched at line 215 is the snapshot we're pinning to.
-  const { data: updated, error } = await supabase
-    .from('reservations')
-    .update(patch)
-    .eq('id', parsedId.data)
-    .eq('status', currentStatus)
-    .select('id')
-    .single()
-
-  if (error) {
-    Sentry.captureException(error, { tags: { action: 'updateReservationStatus' } })
-    throw new Error(error.message)
+  if (rpcError) {
+    Sentry.captureException(rpcError, { tags: { action: 'updateReservationStatus' } })
+    throw new Error(rpcError.message)
   }
-  if (!updated) throw new Error('Reservation status changed concurrently; refresh and try again')
+  const rpc = (rpcRaw ?? null) as { ok?: boolean; code?: string } | null
+  if (!rpc) throw new Error('Reservation update returned an unexpected payload')
+  if (!rpc.ok) {
+    if (rpc.code === 'conflict') {
+      throw new Error('Reservation status changed concurrently; refresh and try again')
+    }
+    if (rpc.code === 'forbidden_transition') {
+      throw new Error(`Invalid reservation transition: ${currentStatus} → ${parsedStatus.data}`)
+    }
+    if (rpc.code === 'forbidden_branch' || rpc.code === 'forbidden_role') {
+      throw new Error('Forbidden')
+    }
+    if (rpc.code === 'not_found') throw new Error('Reservation not found')
+    throw new Error(`Reservation update failed: ${rpc.code ?? 'unknown'}`)
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/reservations`)

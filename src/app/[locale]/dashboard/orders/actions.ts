@@ -10,7 +10,7 @@ import {
 import { canUpdateOrderStatus } from '@/lib/auth/rbac'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
-import type { OrderRow, OrderItemRow, PaymentStatus } from '@/lib/supabase/custom-types'
+import type { OrderRow, OrderItemRow } from '@/lib/supabase/custom-types'
 import type { OrderStatus } from '@/lib/supabase/custom-types'
 import { sendOrderStatusUpdate } from '@/lib/email/send'
 import { BRANCHES, type BranchId } from '@/constants/contact'
@@ -84,23 +84,12 @@ export type UpdateOrderStatusResult =
   | { success: true; status: OrderStatus }
   | { success: false; code: OrderActionErrorCode; error: string }
 
-// `completed` is the only "money captured" state in the payment_status enum
-// (012_payments_schema.sql). `processing` is in-flight, `pending*` is awaiting,
-// `failed`/`refunded` are already terminal.
-const PAID_PAYMENT_STATUSES: PaymentStatus[] = ['completed']
+type RpcUpdateOrderStatusResult =
+  | { ok: true;  status: OrderStatus }
+  | { ok: false; code: OrderActionErrorCode }
 
-async function hasCapturedPayment(
-  supabase: Awaited<ReturnType<typeof createServiceClient>>,
-  orderId: string,
-): Promise<{ paid: boolean; error?: string }> {
-  const { data, error } = await supabase
-    .from('payments')
-    .select('id, status')
-    .eq('order_id', orderId)
-    .in('status', PAID_PAYMENT_STATUSES)
-    .limit(1)
-  if (error) return { paid: false, error: toSafeError(error) }
-  return { paid: (data ?? []).length > 0 }
+function isOrderRpcResult(value: unknown): value is RpcUpdateOrderStatusResult {
+  return typeof value === 'object' && value !== null && 'ok' in value
 }
 
 export async function updateOrderStatus(
@@ -118,6 +107,9 @@ export async function updateOrderStatus(
     return { success: false, code: 'invalid_input', error: 'Invalid order id' }
   }
 
+  // Service-role read for the pre-RPC snapshot (customer_name/phone for the
+  // email step) and the customer_profiles lookup — RLS would block these
+  // for branch-bound callers.
   const supabase = await createServiceClient()
   const { data: order, error: fetchError } = await supabase
     .from('orders')
@@ -129,59 +121,41 @@ export async function updateOrderStatus(
     return { success: false, code: 'not_found', error: fetchError?.message ?? 'Order not found' }
   }
 
+  // Belt-and-braces: rbac.ts canUpdateOrderStatus catches the obvious
+  // forbidden transitions before we hit the DB. The RPC re-asserts every
+  // guard under SECURITY DEFINER so the source of truth lives in one place.
   if (!canUpdateOrderStatus(caller, order, nextStatus)) {
     return { success: false, code: 'forbidden_transition', error: 'Unauthorized status transition' }
   }
 
-  // Refund-aware terminal transitions: paid orders cannot silently flip to
-  // cancelled/returned without manager-driven refund handling.
-  if (nextStatus === 'cancelled' || nextStatus === 'returned') {
-    const paidCheck = await hasCapturedPayment(supabase, orderId)
-    if (paidCheck.error) {
-      return { success: false, code: 'db_error', error: paidCheck.error }
-    }
-    if (paidCheck.paid) {
-      return {
-        success: false,
-        code: 'refund_required',
-        error: 'Order has captured payment — refund must be processed before status change',
-      }
-    }
-  }
-
-  // RPC-PENDING: no rpc_update_order_status yet — write via service-role
-  // client with explicit audit_logs INSERT below. Track in ARCH followups.
-  // Optimistic concurrency: scope by current status AND verify a row was
-  // actually updated. .select('id') returns the affected rows; length 0 means
-  // a concurrent change beat us.
-  const { data: updated, error: updateError } = await supabase
-    .from('orders')
-    .update({ status: nextStatus })
-    .eq('id', orderId)
-    .eq('status', order.status)
-    .select('id')
-
-  if (updateError) return { success: false, code: 'db_error', error: toSafeError(updateError) }
-  if (!updated || updated.length === 0) {
-    return {
-      success: false,
-      code: 'conflict',
-      error: 'Order status changed by another request — refresh and retry',
-    }
-  }
-
-  // RPC-PENDING: explicit audit trail until rpc_update_order_status lands.
-  const { error: auditError } = await supabase.from('audit_logs').insert({
-    table_name: 'orders',
-    action:     'UPDATE',
-    user_id:    caller.id,
-    record_id:  orderId,
-    changes:    { status: nextStatus, prev_status: order.status },
-    branch_id:  order.branch_id,
-    actor_role: caller.role,
+  // Atomic transition: rpc_update_order_status (migration 165) checks role,
+  // branch, transition matrix, captured-payment refund block, and CAS, then
+  // writes the audit_logs row in the same transaction.
+  const authClient = await createClient()
+  const { data: rpcRaw, error: rpcError } = await authClient.rpc('rpc_update_order_status', {
+    p_order_id:        orderId,
+    p_new_status:      nextStatus,
+    p_expected_status: order.status,
   })
-  if (auditError) {
-    console.error('[orders] audit_logs insert failed for status update', orderId, auditError)
+  if (rpcError) {
+    return { success: false, code: 'db_error', error: toSafeError(rpcError) }
+  }
+  const rpc = isOrderRpcResult(rpcRaw) ? rpcRaw : null
+  if (!rpc) {
+    return { success: false, code: 'db_error', error: 'Order status update returned an unexpected payload' }
+  }
+  if (!rpc.ok) {
+    const code = rpc.code
+    const errMessageMap: Record<OrderActionErrorCode, string> = {
+      unauthorized:         'Unauthorized',
+      invalid_input:        'Invalid input',
+      not_found:            'Order not found',
+      forbidden_transition: 'Unauthorized status transition',
+      conflict:             'Order status changed by another request — refresh and retry',
+      refund_required:      'Order has captured payment — refund must be processed before status change',
+      db_error:             'Database error',
+    }
+    return { success: false, code, error: errMessageMap[code] ?? 'Status update rejected' }
   }
 
   // VULN-103: cancelled/returned orders restore redeemed loyalty points.
@@ -259,6 +233,9 @@ export async function updateOrderWithReason(
   }
   const v = parsed.data
 
+  // Service-role read for the order existence + transition check below; the
+  // RPC re-checks all of role / branch / transition / refund / CAS under
+  // SECURITY DEFINER and writes the audit row atomically.
   const supabase = await createServiceClient()
   const { data: order, error: fetchError } = await supabase
     .from('orders')
@@ -279,63 +256,31 @@ export async function updateOrderWithReason(
     return { success: false, code: 'forbidden_transition', error: 'Unauthorized status transition' }
   }
 
-  // Refund-aware: paid orders block cancel/return until payments are reconciled.
-  const paidCheck = await hasCapturedPayment(supabase, v.orderId)
-  if (paidCheck.error) {
-    return { success: false, code: 'db_error', error: paidCheck.error }
-  }
-  if (paidCheck.paid) {
-    return {
-      success: false,
-      code: 'refund_required',
-      error: 'Order has captured payment — refund must be processed before cancellation/return',
-    }
-  }
-
-  const timestamp = new Date().toISOString()
-  const tag = v.targetStatus.toUpperCase()
-  const updatedNotes = order.notes
-    ? `${order.notes}\n[${tag} ${timestamp}]: ${v.reason}`
-    : `[${tag} ${timestamp}]: ${v.reason}`
-
-  // RPC-PENDING: no rpc_cancel_order yet — write via service-role client
-  // with explicit audit_logs INSERT below. Track in ARCH followups.
-  // Optimistic concurrency: pin to current status and verify a row was updated.
-  const { data: updated, error: updateError } = await supabase
-    .from('orders')
-    .update({
-      status:     v.targetStatus,
-      notes:      updatedNotes,
-      updated_at: timestamp,
-    })
-    .eq('id', v.orderId)
-    .eq('status', order.status)
-    .select('id')
-
-  if (updateError) return { success: false, code: 'db_error', error: toSafeError(updateError) }
-  if (!updated || updated.length === 0) {
-    return {
-      success: false,
-      code: 'conflict',
-      error: 'Order status changed by another request — refresh and retry',
-    }
-  }
-
-  // RPC-PENDING: audit row written directly until rpc_cancel_order lands.
-  // High-risk action — surface failure instead of swallowing.
-  const { error: auditError } = await supabase.from('audit_logs').insert({
-    table_name: 'orders',
-    action:     'UPDATE',
-    user_id:    caller.id,
-    record_id:  v.orderId,
-    changes:    { status: v.targetStatus, reason: v.reason, prev_status: order.status },
-    branch_id:  order.branch_id,
-    actor_role: caller.role,
+  const authClient = await createClient()
+  const { data: rpcRaw, error: rpcError } = await authClient.rpc('rpc_cancel_order', {
+    p_order_id:      v.orderId,
+    p_target_status: v.targetStatus,
+    p_reason:        v.reason,
   })
-  if (auditError) {
-    // Order is already mutated — log durable warning but still report success
-    // so the UI doesn't double-submit. Operations should monitor this log.
-    console.error('[orders] audit_logs insert failed for cancel/return', v.orderId, auditError)
+  if (rpcError) {
+    return { success: false, code: 'db_error', error: toSafeError(rpcError) }
+  }
+  const rpc = isOrderRpcResult(rpcRaw) ? rpcRaw : null
+  if (!rpc) {
+    return { success: false, code: 'db_error', error: 'Order cancel returned an unexpected payload' }
+  }
+  if (!rpc.ok) {
+    const code = rpc.code
+    const errMessageMap: Record<OrderActionErrorCode, string> = {
+      unauthorized:         'Unauthorized',
+      invalid_input:        'Invalid input',
+      not_found:            'Order not found',
+      forbidden_transition: 'Unauthorized status transition',
+      conflict:             'Order status changed by another request — refresh and retry',
+      refund_required:      'Order has captured payment — refund must be processed before cancellation/return',
+      db_error:             'Database error',
+    }
+    return { success: false, code, error: errMessageMap[code] ?? 'Cancel/return rejected' }
   }
 
   // VULN-103: restore redeemed loyalty points for the cancelled/returned order.

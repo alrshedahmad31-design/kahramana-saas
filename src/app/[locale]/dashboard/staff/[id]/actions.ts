@@ -4,7 +4,7 @@ import bcryptjs from 'bcryptjs'
 import { z } from 'zod'
 
 import { revalidatePath }      from 'next/cache'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getSession }          from '@/lib/auth/session'
 import { canManageStaff }      from '@/lib/auth/rbac'
 import {
@@ -178,20 +178,25 @@ export async function createLeaveRequest(input: LeaveRequestInput): Promise<Acti
     return { success: false, error: `Leave duration cannot exceed ${LEAVE_MAX_DURATION} days` }
   }
 
-  // RPC-PENDING: no rpc_create_leave_request yet — service client write
-  // gated by the explicit verifiedStaffId guard above (P1-32).
-  const service = await createServiceClient()
-  const { error } = await service.from('leave_requests').insert({
-    staff_id:   verifiedStaffId,
-    leave_type: input.leave_type,
-    start_date: input.start_date,
-    end_date:   input.end_date,
-    days_count: days,
-    reason:     input.reason ?? null,
-    status:     'pending',
+  // Atomic insert via rpc_create_leave_request (migration 167). The RPC
+  // forces staff_id = auth.uid() server-side and writes the audit_logs
+  // row in the same transaction. verifiedStaffId from the JS check above
+  // matches what the RPC will record.
+  const authClient = await createClient()
+  const { data: rpcRaw, error: rpcError } = await authClient.rpc('rpc_create_leave_request', {
+    p_leave_type: input.leave_type,
+    p_start_date: input.start_date,
+    p_end_date:   input.end_date,
+    p_days_count: days,
+    p_reason:     input.reason ?? undefined,
   })
 
-  if (error) return { success: false, error: error.message }
+  if (rpcError) return { success: false, error: rpcError.message }
+  const rpc = (rpcRaw ?? null) as { ok?: boolean; code?: string } | null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: `Leave request rejected: ${rpc?.code ?? 'unknown'}` }
+  }
+
   revalidateProfile(verifiedStaffId)
   return { success: true }
 }
