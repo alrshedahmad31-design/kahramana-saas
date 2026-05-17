@@ -1354,7 +1354,11 @@
     "pointValue": "1 pt = 0.005 BD",
     "expiryNote": "Points expire after 12 months of inactivity",
     "progressToNextTier": "Progress to {tier}",
-    "benefits": "Your Benefits"
+    "benefits": "Your Benefits",
+    "errors": {
+      "goldMustExceedSilver": "Gold tier threshold must be greater than Silver",
+      "platinumMustExceedGold": "Platinum tier threshold must be greater than Gold"
+    }
   },
   "account": {
     "title": "My Account",
@@ -2556,6 +2560,14 @@
     "sync_error": "Sync failed. Please try again.",
     "menu_empty_title": "Menu is Empty",
     "menu_empty_description": "No items in the database yet. Sync from JSON or add items manually.",
+    "analytics_missing_title": "Notice: Analytics Config Missing",
+    "analytics_missing_description": "Performance tracking (GA4/Clarity) is disabled. Please add the IDs in Vercel settings.",
+    "export_json": "Export JSON",
+    "export_success": "Menu exported",
+    "export_error": "Export failed",
+    "slug_taken": "This identifier is already in use — change the English name",
+    "file_too_large": "File is larger than 2 megabytes",
+    "file_format_unsupported": "Format not allowed (WebP / JPEG / PNG only)",
     "catering": {
       "title": "Catering Inquiries",
       "subtitle": "Public catering form submissions — most recent first.",
@@ -2669,6 +2681,10 @@
       }
     }
 
+  },
+  "paymentsPage": {
+    "title": "Payments",
+    "emptyBranch": "No transactions for this branch"
   },
   "pos": {
     "title": "Point of Sale",

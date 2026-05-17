@@ -80,14 +80,10 @@ export default async function MenuDashboardPage({
           </div>
           <div className="flex-1">
             <h4 className="text-sm font-bold text-brand-gold">
-              {locale === 'ar'
-                ? 'تنبيه: إعدادات التحليلات مفقودة'
-                : 'Notice: Analytics Config Missing'}
+              {t('analytics_missing_title')}
             </h4>
             <p className="text-xs text-muted-foreground">
-              {locale === 'ar'
-                ? 'تتبع الأداء (GA4/Clarity) غير مفعّل. يرجى تزويد معرّفات الربط في إعدادات Vercel.'
-                : 'Performance tracking (GA4/Clarity) is disabled. Please add the IDs in Vercel settings.'}
+              {t('analytics_missing_description')}
             </p>
           </div>
         </div>
@@ -112,9 +108,9 @@ export default async function MenuDashboardPage({
           )}
           {isPrivileged && (
             <ExportMenuButton
-              label={locale === 'ar' ? 'تصدير JSON' : 'Export JSON'}
-              successMsg={locale === 'ar' ? 'تم تصدير القائمة' : 'Menu exported'}
-              errorMsg={locale === 'ar' ? 'فشل التصدير' : 'Export failed'}
+              label={t('export_json')}
+              successMsg={t('export_success')}
+              errorMsg={t('export_error')}
             />
           )}
           <MenuItemDialog mode="add" translations={clientT} locale={locale} />

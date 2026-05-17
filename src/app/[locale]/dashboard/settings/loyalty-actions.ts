@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { revalidateTag } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import {
   getDashboardGuardErrorMessage,
@@ -50,11 +51,12 @@ export async function updateLoyaltyConfig(
   }
 
   // Tier thresholds must be strictly increasing for the UI tiering to make sense.
+  const t = await getTranslations('loyalty.errors')
   if (parsed.data.tierSilverThreshold >= parsed.data.tierGoldThreshold) {
-    return { success: false, error: 'حد الذهبي يجب أن يكون أكبر من الفضي' }
+    return { success: false, error: t('goldMustExceedSilver') }
   }
   if (parsed.data.tierGoldThreshold >= parsed.data.tierPlatinumThreshold) {
-    return { success: false, error: 'حد البلاتيني يجب أن يكون أكبر من الذهبي' }
+    return { success: false, error: t('platinumMustExceedGold') }
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL

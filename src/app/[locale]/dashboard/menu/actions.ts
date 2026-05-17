@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
 import { toSafeError } from '@/lib/utils/safe-error'
@@ -285,7 +286,8 @@ export async function createMenuItem(
     return { success: false, error: lookupError.message }
   }
   if (existing) {
-    return { success: false, error: 'هذا المعرف مستخدم، عدّل الاسم الإنجليزي' }
+    const t = await getTranslations('dashboard')
+    return { success: false, error: t('slug_taken') }
   }
 
   const menuSupabase = untypedServiceClient()
@@ -647,10 +649,12 @@ export async function uploadMenuImage(
     return { success: false, error: 'Empty file' }
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return { success: false, error: 'الملف أكبر من 2 ميغابايت' }
+    const t = await getTranslations('dashboard')
+    return { success: false, error: t('file_too_large') }
   }
   if (!ALLOWED_MIME.has(file.type)) {
-    return { success: false, error: 'الصيغة غير مسموحة (WebP / JPEG / PNG فقط)' }
+    const t = await getTranslations('dashboard')
+    return { success: false, error: t('file_format_unsupported') }
   }
 
   const ext =

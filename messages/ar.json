@@ -1354,7 +1354,11 @@
     "pointValue": "1 نقطة = 0.005 د.ب",
     "expiryNote": "تنتهي صلاحية النقاط بعد 12 شهراً من عدم النشاط",
     "progressToNextTier": "التقدم نحو مستوى {tier}",
-    "benefits": "مزاياك"
+    "benefits": "مزاياك",
+    "errors": {
+      "goldMustExceedSilver": "حد الذهبي يجب أن يكون أكبر من الفضي",
+      "platinumMustExceedGold": "حد البلاتيني يجب أن يكون أكبر من الذهبي"
+    }
   },
   "account": {
     "title": "حسابي",
@@ -2556,6 +2560,14 @@
     "sync_error": "فشلت المزامنة. حاول مجدداً.",
     "menu_empty_title": "قائمة الطعام فارغة",
     "menu_empty_description": "لا توجد أصناف في قاعدة البيانات بعد. يمكنك المزامنة من الملف أو إضافة أصناف يدوياً.",
+    "analytics_missing_title": "تنبيه: إعدادات التحليلات مفقودة",
+    "analytics_missing_description": "تتبع الأداء (GA4/Clarity) غير مفعّل. يرجى تزويد معرّفات الربط في إعدادات Vercel.",
+    "export_json": "تصدير JSON",
+    "export_success": "تم تصدير القائمة",
+    "export_error": "فشل التصدير",
+    "slug_taken": "هذا المعرف مستخدم، عدّل الاسم الإنجليزي",
+    "file_too_large": "الملف أكبر من 2 ميغابايت",
+    "file_format_unsupported": "الصيغة غير مسموحة (WebP / JPEG / PNG فقط)",
     "catering": {
       "title": "طلبات التقديم الخارجي",
       "subtitle": "الطلبات الواردة من نموذج التقديم الخارجي العام — الأحدث أولاً.",
@@ -2669,6 +2681,10 @@
       }
     }
 
+  },
+  "paymentsPage": {
+    "title": "المدفوعات",
+    "emptyBranch": "لا توجد معاملات لهذا الفرع"
   },
   "pos": {
     "title": "نقطة البيع",
