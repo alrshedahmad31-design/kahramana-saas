@@ -2939,7 +2939,18 @@
     },
     "saved": "Saved",
     "errorRequired": "Required field",
-    "errorGeneric": "Failed to save"
+    "errorGeneric": "Failed to save",
+    "errors": {
+      "forbidden": "Forbidden",
+      "forbiddenRole": "Your role cannot manage promotions",
+      "globalForbidden": "Only owner or general manager can create global promotions",
+      "forbiddenBranch": "You can only manage promotions for your own branch",
+      "invalidInput": "Invalid promotion payload",
+      "invalidType": "Invalid promotion type",
+      "configError": "Configuration error — contact a manager",
+      "notFound": "Promotion not found",
+      "rpcFailed": "Could not save the promotion — please try again"
+    }
   },
   "tablesAdmin": {
     "title": "Tables",

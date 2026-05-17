@@ -2939,7 +2939,18 @@
     },
     "saved": "تم الحفظ",
     "errorRequired": "حقل مطلوب",
-    "errorGeneric": "تعذّر الحفظ"
+    "errorGeneric": "تعذّر الحفظ",
+    "errors": {
+      "forbidden": "غير مصرّح",
+      "forbiddenRole": "صلاحياتك لا تسمح بإدارة العروض",
+      "globalForbidden": "إنشاء العروض العامة مقصور على المالك أو المدير العام",
+      "forbiddenBranch": "يمكنك إدارة عروض فرعك فقط",
+      "invalidInput": "بيانات العرض غير صالحة",
+      "invalidType": "نوع العرض غير صالح",
+      "configError": "خطأ في الإعدادات — راجع المدير",
+      "notFound": "العرض غير موجود",
+      "rpcFailed": "تعذّر حفظ العرض — حاول مرة أخرى"
+    }
   },
   "tablesAdmin": {
     "title": "الطاولات",
