@@ -1,7 +1,153 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 132: P4-2 checkout error localization + F-01 GA4/Clarity consent gating + /dashboard/catering listing + birthday notification (cron route + email template + wa.me). Master `c4fe9a8` → `d24e5e3`.
+> Session 133: Stale-reference cleanup (AUD-V3-007/011 closed in docs) + dead-code refactor (HIDDEN_BRANCHES guards). Master `d24e5e3` → `57ac6a9`.
 > Date: 2026-05-17
 > Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 133 — SUMMARY
+
+Two commits on master. No migrations. No i18n changes. Gates clean
+on every commit: `npx tsc --noEmit` exit 0; `NEXT_BUILD_WORKERS=1 npm
+run build` clean (only pre-existing Sentry deprecation warning,
+unrelated).
+
+Theme: pure cleanup. Two carry-forwards from prior session notes,
+both turned out to be paper-only debt (AUD-V3-007/011) or shipped-
+infrastructure debt (HIDDEN_BRANCHES guards left over from the
+البديع cleanup in session 126).
+
+The first task — "remove ~15 remaining `as any` casts" — investigation
+showed `src/` was already clean. Both audit tickets had landed in
+earlier commits (`f921e66` AUD-V3-011, `0f95f5a` AUD-V3-007); only the
+hand-off notes still claimed they were open. Pivoted from refactor to
+doc cleanup so the next agent does not chase the same ghost.
+
+Operator-side: Ahmed set `CRON_SECRET` in Vercel (prod + preview) and
+triggered a redeploy. Birthday notification cron is now wired
+end-to-end; will fire next morning a customer birthday matches today's
+Asia/Bahrain date.
+
+## COMMITS (2 on master, both pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `f6e403e` | docs | **Mark AUD-V3-007/011 closed — stale `as any` references removed.** Investigation triggered by the task brief claiming "~15 `as any` sites remain". `grep -rn "as any" src/` returned zero matches; `git log` confirmed `f921e66` (AUD-V3-011 all `as any` casts removed) and `0f95f5a` (AUD-V3-007 next-intl v3→v4 bump). Updated three stale lines in `.agent/LAST-SESSION.md` (147, 255, 402) and one in `kahramana-conversation-master-notes.md` (454) with strike-through + commit hashes. `docs/audit/dashboard-audit-2026-05-13-v3.md:28` already showed CLOSED — the carry-forward notes simply never got trimmed. Net: 4 insertions / 4 deletions across 2 files. |
+| `57ac6a9` | refactor | **Remove dead HIDDEN_BRANCHES length > 0 guards (~30 sites, 15 files).** `HIDDEN_BRANCHES` was narrowed to `BranchId[] = []` in commit `a2b2009` (session 126, البديع branch cleanup). The 30 `HIDDEN_BRANCHES.length > 0` guards across analytics queries, KDS, payments, owner dashboard, delivery, reports, inventory widgets, etc. have been unreachable since then. Three patterns removed: `} else if (HIDDEN_BRANCHES.length > 0) { ... }` blocks (most common), `: HIDDEN_BRANCHES.length > 0 ? X : Y` ternaries (4 in InventoryWidgetsSection), and one `else if (isGlobalAdmin && HIDDEN_BRANCHES.length > 0)` block in `payments/page.tsx` (also dropped the orphaned `excludedOrderIds` accumulator). HIDDEN_BRANCHES const itself **stays** in `src/constants/contact.ts` as `BranchId[] = []`, along with `isHiddenBranch()` and the `BRANCH_LIST.filter` — type-safe no-ops kept in case a branch is hidden again. `OrdersClient.tsx` import collapsed `{ BRANCHES, HIDDEN_BRANCHES }` → `{ BRANCHES }`; `owner/page.tsx` import collapsed `{ HIDDEN_BRANCHES, isHiddenBranch }` → `{ isHiddenBranch }`. Net: 18 insertions / 123 deletions across 15 files. |
+
+## INFRA NOTES
+
+- **No env vars touched.** No migrations.
+- **No new deps.** No i18n changes.
+- **Build size:** unchanged at the page level (dead-branch removal is
+  TS-only; bundle output identical except for source-map shrinkage).
+- **CURRENT-SESSION.md** at session start was synced from the master
+  gist hook (sync-context.ps1) showing master `160bbdd` and stale
+  session 120 bridge content. Updated end-of-session to reflect 57ac6a9.
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **Refuse to fabricate work when the task premise was already
+   resolved.** The "~15 `as any` sites" brief was confidently wrong;
+   easier path was to start "removing" casts that no longer existed
+   and produce a no-op commit. Instead reported the finding (commit
+   hashes proving both tickets shipped) and asked the operator to
+   pick a real lane. Operator pivoted to docs cleanup + the
+   already-flagged HIDDEN_BRANCHES follow-up.
+
+2. **Keep `HIDDEN_BRANCHES` as `BranchId[] = []`, not delete the
+   const.** Brief was explicit ("do not delete the const itself — it
+   may be needed if branches expand in future"). The cost of keeping
+   it is one symbol export + the BRANCH_LIST.filter call returning the
+   full list (cheap). The cost of removing it would be a wider diff
+   (every import callsite) and re-introducing it later if a branch
+   ever needs hiding again would touch the same 15 files. Net: keep.
+
+3. **Strike-through, not delete, in archived notes.** When marking
+   the AUD-V3-007/011 lines closed in `LAST-SESSION.md` and
+   `kahramana-conversation-master-notes.md`, used `~~text~~ —
+   **CLOSED** (`hash`)` rather than removing the line entirely. The
+   strike-through documents that the item was real once and is now
+   resolved; future agents grepping for the ticket numbers still hit
+   the line and immediately see the closure pointer.
+
+4. **OrdersClient.tsx kept BRANCHES, dropped only HIDDEN_BRANCHES.**
+   The import was `{ BRANCHES, HIDDEN_BRANCHES }` — `BRANCHES` is
+   actively used for the branch-filter dropdown options. Narrowed the
+   import rather than ripping out the line.
+
+5. **`payments/page.tsx` `excludedOrderIds` removed entirely.** The
+   variable was declared at line 45, populated only inside the dead
+   `else if (isGlobalAdmin && HIDDEN_BRANCHES.length > 0)` block, and
+   gated downstream by `if (excludedOrderIds.length > 0)`. Once the
+   populating branch dies, the variable becomes write-never, so both
+   the declaration and the two `.length > 0` consumer lines were
+   dropped. Net cleaner than leaving a `let excludedOrderIds: string[] = []`
+   that nothing ever writes.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → exit 0 (clean) post-refactor commit.
+- `NEXT_BUILD_WORKERS=1 npm run build` → green; 566/566 pages; only
+  warning is the pre-existing `[@sentry/nextjs] DEPRECATION WARNING:
+  unstable_sentryWebpackPluginOptions` (unrelated, present before
+  this session).
+- `grep -rn "HIDDEN_BRANCHES.length" src/` → zero matches post-fix.
+- `grep -rn "HIDDEN_BRANCHES" src/` → 4 expected hits: declaration
+  in `contact.ts:18`, the `isHiddenBranch` helper, the `BRANCH_LIST`
+  filter, and the docstring in `branches/queries.ts:5`.
+- i18n parity script not run (no i18n touched).
+- No runtime verification — refactor is pure dead-branch deletion;
+  TS proves shape, build proves bundle.
+
+## DEFERRED / OPERATOR-PENDING
+
+(updated for session 133)
+- Supabase Free → Pro + Singapore migration.
+- TAP keys (merchant approval pending).
+- Staff accounts — 13 staff emails pending from owner.
+- ~~**`CRON_SECRET`** on Vercel~~ — **DONE 2026-05-17 by operator
+  (Production + Preview).** Redeploy triggered. Birthday cron now
+  fully wired; will fire next morning a customer birthday matches
+  today's Asia/Bahrain date. Resend domain verification remains the
+  one missing piece for actual email delivery.
+- Resend domain verification for kahramanat.com — still pending.
+- VAPID keys for driver push notifications.
+- CONTACT_NOTIFY_EMAIL (optional).
+- After staff accounts: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true`.
+- Extend `localizeCheckoutError` to `waiter/actions.ts:222` (staff
+  surface, different return shape).
+- Catering audit findings #6 (no email fallback) + #8 (HTML5
+  validation balloon doesn't follow next-intl locale).
+- Catering `occasion_type` / `service_type` normalization.
+- ARCH-004 atomic checkout RPC.
+- Sprint 6B WhatsApp Business API (Meta verification).
+- Sprint 6C Benefit Pay API (CBB approval).
+- Migration 015 gitignore issue (copied by hand into fresh tree).
+- Migration 131 cowork diff verification.
+- البديع branch row DB cleanup (SQL provided in session 126;
+  operator-side one-shot UPDATE).
+- ~11 missing dish photos.
+- ~~~15 `as any` sites (AUD-V3-007/011)~~ — **CLOSED prior**
+  (`f921e66` + `0f95f5a`); doc references corrected this session.
+- ~~HIDDEN_BRANCHES cleanup~~ — **DONE this session (57ac6a9).**
+
+## OPERATOR NOTES
+
+- **Birthday cron is now live end-to-end.** `CRON_SECRET` set, route
+  no longer 503s. Next blocker for actual sends is Resend domain
+  verification; until then `sendBirthdayBonus` will return a
+  SendResult with failure but the cron loop survives (per-row Sentry
+  catch).
+
+- **HIDDEN_BRANCHES const stays.** If a branch ever needs hiding,
+  add its `BranchId` to the array in `src/constants/contact.ts:18`
+  and re-introduce the `.length > 0` guard at the relevant query
+  site. Pattern is documented in `branches/queries.ts:5` comment.
+
+---
+---
+---
+
+# Prior session 132 close-out preserved below ↓
 
 ## SESSION 132 — SUMMARY
 
