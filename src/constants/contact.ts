@@ -79,10 +79,10 @@ export const BRANCHES: Record<BranchId, Branch> = {
     latitude: 26.1358149,
     longitude: 50.5748089,
     hours: {
-      ar: 'يومياً ٧:٠٠م – ١:٠٠ص',
-      en: 'Daily 7:00 PM – 1:00 AM',
+      ar: 'يومياً ٧:٠٠م – ٢:٠٠ص',
+      en: 'Daily 7:00 PM – 2:00 AM',
       opens: '19:00',
-      closes: '01:00',
+      closes: '02:00',
     },
     delivery: true,
     dineIn: true,

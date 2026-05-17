@@ -19,10 +19,10 @@
 | WhatsApp | +973 1713 1413 |
 | wa.me link | https://wa.me/97317131413 |
 | Google Maps | TODO — confirm with restaurant |
-| Hours (AR) | يومياً ٧:٠٠م – ١:٠٠ص |
-| Hours (EN) | Daily 7:00 PM – 1:00 AM |
+| Hours (AR) | يومياً ٧:٠٠م – ٢:٠٠ص |
+| Hours (EN) | Daily 7:00 PM – 2:00 AM |
 | Opens | 19:00 |
-| Closes | 01:00 |
+| Closes | 02:00 |
 | Delivery | Yes |
 | Dine-in | Yes |
 
