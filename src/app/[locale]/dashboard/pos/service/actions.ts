@@ -1,9 +1,10 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
-import { getLocale } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { fetchCheckoutPriceMap, resolveOrderItemPrice } from '@/lib/checkout-pricing.server'
@@ -81,20 +82,23 @@ function isBranchId(value: string): value is BranchId {
 export async function createServiceOrder(
   payload: ServiceOrderPayload,
 ): Promise<CreateServiceOrderResult> {
+  const t      = await getTranslations('pos.service.errors')
+  const tShare = await getTranslations('pos.errors')
+
   const caller = await getSession()
   if (!caller || !caller.role || !SERVICE_ROLES.includes(caller.role)) {
-    return { error: 'Unauthorized' }
+    return { error: t('unauthorized') }
   }
 
   const parsed = payloadSchema.safeParse(payload)
   if (!parsed.success) {
     const first = parsed.error.issues[0]
-    return { error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid payload' }
+    return { error: first ? `${first.path.join('.')}: ${first.message}` : t('invalidPayload') }
   }
   const data = parsed.data
 
   if (!isBranchId(data.branchId) || isHiddenBranch(data.branchId)) {
-    return { error: 'Invalid branch' }
+    return { error: t('invalidBranch') }
   }
 
   // Fail-closed branch scope for scoped roles. NULL branch_id is REJECTED
@@ -103,7 +107,7 @@ export async function createServiceOrder(
     caller.role === 'branch_manager' || caller.role === 'cashier'
   ) {
     if (!caller.branch_id || caller.branch_id !== data.branchId) {
-      return { error: 'Forbidden: branch scope violation' }
+      return { error: t('branchScopeViolation') }
     }
   }
 
@@ -121,14 +125,20 @@ export async function createServiceOrder(
       .from('menu_options')
       .select('id, price_modifier, is_available')
       .in('id', allOptionIds)
-    if (error) return { error: 'Failed to validate modifiers' }
+    if (error) {
+      Sentry.captureException(error, {
+        tags:  { area: 'pos.service', action: 'createServiceOrder.modifierValidate' },
+        extra: { branchId: data.branchId, optionCount: allOptionIds.length },
+      })
+      return { error: tShare('modifierValidationFailed') }
+    }
     type DbOpt = { id: string; price_modifier: number; is_available: boolean }
     for (const o of (dbOpts ?? []) as DbOpt[]) {
-      if (!o.is_available) return { error: 'Selected modifier is unavailable' }
+      if (!o.is_available) return { error: tShare('modifierUnavailable') }
       modifierPriceById.set(o.id, Number(o.price_modifier))
     }
     for (const id of allOptionIds) {
-      if (!modifierPriceById.has(id)) return { error: 'Unknown modifier' }
+      if (!modifierPriceById.has(id)) return { error: tShare('modifierUnknown') }
     }
   }
 
@@ -184,7 +194,7 @@ export async function createServiceOrder(
   const subtotal = Number(
     pricedItems.reduce((s, i) => s + i.item_total_bhd, 0).toFixed(3),
   )
-  if (subtotal < 0.001) return { error: 'Order subtotal is zero' }
+  if (subtotal < 0.001) return { error: t('subtotalZero') }
 
   const branch = BRANCHES[data.branchId]
   await supabase
@@ -247,9 +257,19 @@ export async function createServiceOrder(
   })
 
   if (rpcError || !orderId) {
-    return { error: rpcError?.message ?? 'Order creation failed' }
+    if (rpcError) {
+      Sentry.captureException(rpcError, {
+        tags:  { area: 'pos.service', action: 'createServiceOrder.rpc' },
+        extra: { branchId: data.branchId, subtotal, tableNumber: data.tableNumber, carNumber: data.carNumber },
+      })
+    }
+    return { error: t('creationFailed') }
   }
 
+  // Best-effort audit row. Order + payment commit atomically inside
+  // rpc_create_order — audit failure no longer strands money. Captured to
+  // Sentry so an operator can backfill the row if needed.
+  let auditWarning: string | undefined
   const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'orders',
     action:     'INSERT',
@@ -265,7 +285,11 @@ export async function createServiceOrder(
     },
   })
   if (auditError) {
-    console.error('[pos:service] audit_logs insert failed for order', orderId, auditError)
+    Sentry.captureException(auditError, {
+      tags:  { area: 'pos.service', action: 'createServiceOrder.audit' },
+      extra: { orderId, branchId: data.branchId },
+    })
+    auditWarning = t('auditFailed')
   }
 
   const locale = await getLocale()
@@ -273,5 +297,5 @@ export async function createServiceOrder(
   revalidatePath(`/${locale}/dashboard/orders`)
   revalidatePath(`/${locale}/dashboard/kds`)
 
-  return { orderId: orderId as string }
+  return { orderId: orderId as string, warning: auditWarning }
 }

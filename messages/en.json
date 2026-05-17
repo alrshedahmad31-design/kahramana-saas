@@ -2745,6 +2745,22 @@
     "errorNameRequired": "Customer name is required",
     "errorCartEmpty": "Add at least one item before creating an order",
     "errorAddressRequired": "Delivery address fields are required",
+    "errors": {
+      "unauthorized": "Unauthorized",
+      "invalidPayload": "Invalid order payload",
+      "invalidPhone": "Invalid phone number",
+      "invalidBranch": "Invalid branch",
+      "branchScopeViolation": "Forbidden: branch scope violation",
+      "deliveryAddressIncomplete": "Delivery address is incomplete",
+      "modifierValidationFailed": "Failed to validate modifiers",
+      "modifierUnavailable": "Selected modifier is unavailable",
+      "modifierUnknown": "Unknown modifier",
+      "subtotalZero": "Order subtotal is zero",
+      "configError": "Configuration error — contact a manager",
+      "creationFailed": "Order creation failed",
+      "auditFailed": "Order created but the audit record failed. Manager resolution required.",
+      "auditFailedWithCode": "Order created but the audit record failed ({code}). Manager resolution required."
+    },
     "service": {
       "title": "Service Mode",
       "exitServiceMode": "Exit Service Mode",
@@ -2753,7 +2769,17 @@
       "carNumber": "Car Number",
       "sendToKitchen": "Send to Kitchen",
       "noTableOrCar": "Please select a table number or enter a car number",
-      "openServiceMode": "Service Mode"
+      "openServiceMode": "Service Mode",
+      "errors": {
+        "unauthorized": "Unauthorized",
+        "invalidPayload": "Invalid service-mode payload",
+        "invalidBranch": "Invalid branch",
+        "branchScopeViolation": "Forbidden: branch scope violation",
+        "missingTableOrCar": "Please select a table number or enter a car number",
+        "subtotalZero": "Order subtotal is zero",
+        "creationFailed": "Order creation failed",
+        "auditFailed": "Order created but the audit record failed. Manager resolution required."
+      }
     }
   },
   "waiter": {

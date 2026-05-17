@@ -2745,6 +2745,22 @@
     "errorNameRequired": "اسم العميل مطلوب",
     "errorCartEmpty": "أضف صنفاً واحداً على الأقل قبل إنشاء الطلب",
     "errorAddressRequired": "حقول عنوان التوصيل مطلوبة",
+    "errors": {
+      "unauthorized": "غير مصرّح",
+      "invalidPayload": "بيانات الطلب غير صالحة",
+      "invalidPhone": "رقم الهاتف غير صالح",
+      "invalidBranch": "الفرع غير صالح",
+      "branchScopeViolation": "ممنوع: تجاوز نطاق الفرع",
+      "deliveryAddressIncomplete": "عنوان التوصيل غير مكتمل",
+      "modifierValidationFailed": "تعذّر التحقق من الإضافات",
+      "modifierUnavailable": "الإضافة المختارة غير متوفرة",
+      "modifierUnknown": "إضافة غير معروفة",
+      "subtotalZero": "إجمالي الطلب صفر",
+      "configError": "خطأ في الإعدادات — راجع المدير",
+      "creationFailed": "فشل إنشاء الطلب",
+      "auditFailed": "تم إنشاء الطلب لكن فشل تسجيل سجل التدقيق. يلزم تدخّل المدير.",
+      "auditFailedWithCode": "تم إنشاء الطلب لكن فشل تسجيل سجل التدقيق ({code}). يلزم تدخّل المدير."
+    },
     "service": {
       "title": "وضع الخدمة",
       "exitServiceMode": "خروج من وضع الخدمة",
@@ -2753,7 +2769,17 @@
       "carNumber": "رقم السيارة",
       "sendToKitchen": "أرسل للمطبخ",
       "noTableOrCar": "يرجى اختيار رقم الطاولة أو إدخال رقم السيارة",
-      "openServiceMode": "وضع الخدمة"
+      "openServiceMode": "وضع الخدمة",
+      "errors": {
+        "unauthorized": "غير مصرّح",
+        "invalidPayload": "بيانات الطلب غير صالحة",
+        "invalidBranch": "الفرع غير صالح",
+        "branchScopeViolation": "ممنوع: تجاوز نطاق الفرع",
+        "missingTableOrCar": "يرجى اختيار رقم الطاولة أو إدخال رقم السيارة",
+        "subtotalZero": "إجمالي الطلب صفر",
+        "creationFailed": "فشل إنشاء الطلب",
+        "auditFailed": "تم إنشاء الطلب لكن فشل تسجيل سجل التدقيق. يلزم تدخّل المدير."
+      }
     }
   },
   "waiter": {

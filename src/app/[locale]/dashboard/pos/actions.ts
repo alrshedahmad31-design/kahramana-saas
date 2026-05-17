@@ -1,9 +1,10 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
-import { getLocale } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
@@ -93,25 +94,27 @@ function isBranchId(value: string): value is BranchId {
 export async function createManualOrder(
   payload: ManualOrderPayload,
 ): Promise<CreateManualOrderResult> {
+  const t = await getTranslations('pos.errors')
+
   const caller = await getSession()
   if (!caller || !caller.role || !POS_ROLES.includes(caller.role)) {
-    return { error: 'Unauthorized' }
+    return { error: t('unauthorized') }
   }
 
   const parsed = payloadSchema.safeParse(payload)
   if (!parsed.success) {
     const first = parsed.error.issues[0]
-    return { error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid payload' }
+    return { error: first ? `${first.path.join('.')}: ${first.message}` : t('invalidPayload') }
   }
 
   const data = parsed.data
   const normalizedPhone = normalizePhone(data.customerPhone)
   if (!BAHRAIN_PHONE_RE.test(normalizedPhone.replace(/\s+/g, ''))) {
-    return { error: 'Invalid phone number' }
+    return { error: t('invalidPhone') }
   }
 
   if (!isBranchId(data.branchId) || isHiddenBranch(data.branchId)) {
-    return { error: 'Invalid branch' }
+    return { error: t('invalidBranch') }
   }
 
   // Branch managers and cashiers may only create orders for their own branch.
@@ -121,7 +124,7 @@ export async function createManualOrder(
     caller.role === 'branch_manager' || caller.role === 'cashier'
   ) {
     if (!caller.branch_id || caller.branch_id !== data.branchId) {
-      return { error: 'Forbidden: branch scope violation' }
+      return { error: t('branchScopeViolation') }
     }
   }
 
@@ -130,7 +133,7 @@ export async function createManualOrder(
     if (
       !addr || !addr.block?.trim() || !addr.road?.trim() || !addr.building?.trim()
     ) {
-      return { error: 'Delivery address is incomplete' }
+      return { error: t('deliveryAddressIncomplete') }
     }
   }
 
@@ -143,7 +146,7 @@ export async function createManualOrder(
   if (allOptionIds.length > 0) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!url || !key) return { error: 'Configuration error' }
+    if (!url || !key) return { error: t('configError') }
     const untyped = createSupabaseClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
@@ -152,20 +155,23 @@ export async function createManualOrder(
       .select('id, price_modifier, is_available')
       .in('id', allOptionIds)
     if (error) {
-      console.error('[pos] modifier validation failed:', error)
-      return { error: 'Failed to validate modifiers' }
+      Sentry.captureException(error, {
+        tags:  { area: 'pos', action: 'createManualOrder.modifierValidate' },
+        extra: { branchId: data.branchId, optionCount: allOptionIds.length },
+      })
+      return { error: t('modifierValidationFailed') }
     }
     type DbOpt = { id: string; price_modifier: number; is_available: boolean }
     for (const o of (dbOpts ?? []) as DbOpt[]) {
       if (!o.is_available) {
-        return { error: 'Selected modifier is unavailable' }
+        return { error: t('modifierUnavailable') }
       }
       modifierPriceById.set(o.id, Number(o.price_modifier))
     }
     // Reject any submitted option that doesn't exist (orphaned/deleted)
     for (const id of allOptionIds) {
       if (!modifierPriceById.has(id)) {
-        return { error: 'Unknown modifier' }
+        return { error: t('modifierUnknown') }
       }
     }
   }
@@ -231,7 +237,7 @@ export async function createManualOrder(
     pricedItems.reduce((s, i) => s + i.item_total_bhd, 0).toFixed(3),
   )
   if (subtotal < 0.001) {
-    return { error: 'Order subtotal is zero' }
+    return { error: t('subtotalZero') }
   }
 
   const supabase = await createServiceClient()
@@ -314,6 +320,14 @@ export async function createManualOrder(
   const paymentMode: 'cod' | 'tap_card' =
     data.paymentMethod === 'cash' ? 'cod' : 'tap_card'
 
+  // Migration 163 accepts delivery_lat / delivery_lng / delivery_flat as RPC
+  // params. Passing them inline makes order + coords + flat commit atomically
+  // and eliminates the post-RPC .update() calls that previously broke the
+  // ARCH-004 invariant (financial writes go through RPC only).
+  const pinnedLat = data.orderType === 'delivery' ? data.deliveryLat ?? undefined : undefined
+  const pinnedLng = data.orderType === 'delivery' ? data.deliveryLng ?? undefined : undefined
+  const flat      = data.orderType === 'delivery' ? addr?.flat?.trim() || undefined : undefined
+
   const { data: orderId, error: rpcError } = await supabase.rpc('rpc_create_order', {
     p_idempotency_key:        idempotencyKey,
     p_customer_name:          data.customerName.trim(),
@@ -328,6 +342,9 @@ export async function createManualOrder(
     p_delivery_building:      addr?.building?.trim() || undefined,
     p_delivery_street:        addr?.road?.trim() || undefined,
     p_delivery_area:          addr?.block?.trim() || undefined,
+    p_delivery_lat:           pinnedLat,
+    p_delivery_lng:           pinnedLng,
+    p_delivery_flat:          flat,
     p_source:                 'manual',
     p_coupon_discount_bhd:    0,
     p_points_to_redeem:       0,
@@ -341,7 +358,13 @@ export async function createManualOrder(
   })
 
   if (rpcError || !orderId) {
-    return { error: rpcError?.message ?? 'Order creation failed' }
+    if (rpcError) {
+      Sentry.captureException(rpcError, {
+        tags:  { area: 'pos', action: 'createManualOrder.rpc' },
+        extra: { branchId: data.branchId, paymentMode, subtotal },
+      })
+    }
+    return { error: t('creationFailed') }
   }
 
   // ── Audit trail (migration 164: rpc_pos_finalize_order audit-only) ────
@@ -368,37 +391,28 @@ export async function createManualOrder(
 
   let paymentWarning: string | undefined
   if (finalizeError) {
-    console.error('[pos] rpc_pos_finalize_order (audit) failed for order', orderId, finalizeError)
-    paymentWarning = `Order + payment created but audit failed. Manager resolution required.`
+    Sentry.captureException(finalizeError, {
+      tags:  { area: 'pos', action: 'createManualOrder.audit' },
+      extra: { orderId, branchId: data.branchId },
+    })
+    paymentWarning = t('auditFailed')
   } else {
     const result = finalizeData as { success: boolean; code?: string } | null
     if (!result?.success) {
-      console.error('[pos] rpc_pos_finalize_order (audit) returned non-success for order', orderId, result?.code)
-      paymentWarning = `Order + payment created but audit failed (${result?.code ?? 'unknown'}). Manager resolution required.`
+      const code = result?.code ?? 'unknown'
+      Sentry.captureException(new Error(`rpc_pos_finalize_order non-success: ${code}`), {
+        tags:  { area: 'pos', action: 'createManualOrder.audit' },
+        extra: { orderId, branchId: data.branchId, code },
+      })
+      paymentWarning = t('auditFailedWithCode', { code })
     }
   }
 
-  // ── Persist user-pinned coordinates OR fall back to Nominatim geocoding ──
-  if (data.orderType === 'delivery') {
-    if (data.deliveryLat != null && data.deliveryLng != null) {
-      // User pinned an exact location on the map — persist immediately, no API call needed
-      await supabase
-        .from('orders')
-        .update({ delivery_lat: data.deliveryLat, delivery_lng: data.deliveryLng })
-        .eq('id', orderId)
-    } else if (addr) {
-      // Fall back to Nominatim (fire-and-forget, best-effort)
-      geocodeBahrainAddress(orderId, addr).catch(() => {})
-    }
-  }
-
-  // ── Persist delivery_flat (migration 154; not exposed via rpc_create_order) ──
-  const flat = addr?.flat?.trim()
-  if (data.orderType === 'delivery' && flat) {
-    await supabase
-      .from('orders')
-      .update({ delivery_flat: flat })
-      .eq('id', orderId)
+  // ── Nominatim geocoder fallback (background, best-effort) ──
+  // Pinned coords were folded into the RPC above. We only kick off the
+  // geocode lookup when the cashier did NOT drop a map pin.
+  if (data.orderType === 'delivery' && (data.deliveryLat == null || data.deliveryLng == null) && addr) {
+    geocodeBahrainAddress(orderId, addr).catch(() => {})
   }
 
   const locale = await getLocale()
@@ -436,6 +450,11 @@ async function geocodeBahrainAddress(
 
   const { lat, lon } = results[0]
   const supabase = await createServiceClient()
+  // Non-financial geographic enrichment. Runs OUT-OF-BAND after the order
+  // RPC commits — pinning lat/lng inside rpc_create_order is the atomic
+  // path (see pinnedLat/pinnedLng above). This fallback only fires when the
+  // cashier did not drop a pin, and the Nominatim round-trip would block
+  // the response if held inside the RPC. Failures are silently swallowed.
   await supabase
     .from('orders')
     .update({ delivery_lat: parseFloat(lat), delivery_lng: parseFloat(lon) })
