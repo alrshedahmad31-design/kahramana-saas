@@ -240,7 +240,7 @@ export default function ModifiersEditor({ menuItemSlug, isAr = true }: Props) {
                 {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
 
-              <div className="grid flex-1 grid-cols-2 gap-2">
+              <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'الاسم (عربي)' : 'Name (AR)'}</Label>
                   <Input

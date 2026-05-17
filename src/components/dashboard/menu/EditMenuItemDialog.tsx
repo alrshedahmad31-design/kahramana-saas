@@ -151,7 +151,7 @@ export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
               id="category"
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value as MenuCategoryId })}
-              className="flex h-10 w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-sm text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
+              className="flex min-h-[44px] w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-base text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
             >
               {!MENU_CATEGORIES.some((c) => c.id === form.category) && (
                 <option value={form.category}>{form.category}</option>
@@ -169,7 +169,7 @@ export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
             <button
               type="button"
               onClick={() => setTab('ar')}
-              className={`min-h-[32px] rounded-md px-3 text-sm font-medium transition-colors font-almarai ${
+              className={`min-h-[44px] rounded-md px-3 text-sm font-medium transition-colors font-almarai ${
                 tab === 'ar'
                   ? 'bg-brand-gold text-brand-surface'
                   : 'text-brand-muted hover:text-brand-text'
@@ -180,7 +180,7 @@ export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
             <button
               type="button"
               onClick={() => setTab('en')}
-              className={`min-h-[32px] rounded-md px-3 text-sm font-medium transition-colors ${
+              className={`min-h-[44px] rounded-md px-3 text-sm font-medium transition-colors ${
                 tab === 'en'
                   ? 'bg-brand-gold text-brand-surface'
                   : 'text-brand-muted hover:text-brand-text'
@@ -266,7 +266,7 @@ export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
               id="station"
               value={stationKey}
               onChange={(e) => setForm({ ...form, station: e.target.value })}
-              className="flex h-10 w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-sm text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
+              className="flex min-h-[44px] w-full items-center rounded-md border border-brand-border bg-brand-surface-2 px-3 py-2 text-base text-brand-text shadow-sm focus:outline-none focus:border-brand-gold/40 focus:ring-1 focus:ring-brand-gold/40"
             >
               {ALL_STATIONS.map((s) => {
                 const cfg = getStationConfig(s)

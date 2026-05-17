@@ -123,7 +123,7 @@ export default async function OrderDetailPage({ params }: Props) {
       {/* Order info */}
       <section className="bg-brand-surface border border-brand-border rounded-xl p-5">
         <h2 className="font-satoshi font-semibold text-brand-text mb-4">{t('orderDetails')}</h2>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <div>
             <dt className="font-satoshi text-brand-muted">{t('customer')}</dt>
             <dd className="font-satoshi font-medium text-brand-text mt-0.5">
@@ -151,7 +151,7 @@ export default async function OrderDetailPage({ params }: Props) {
             </dd>
           </div>
           {(order.notes || order.customer_notes) && (
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <dt className="font-satoshi text-brand-muted">{t('notes')}</dt>
               <dd className="font-satoshi font-medium text-brand-text mt-0.5">
                 {order.customer_notes || order.notes}

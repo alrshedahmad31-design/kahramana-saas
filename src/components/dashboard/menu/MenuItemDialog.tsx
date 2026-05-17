@@ -124,7 +124,7 @@ export default function MenuItemDialog({ translations: t, locale }: Props) {
 
           <div className="grid gap-4 py-4">
             {/* Names */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name_ar">{t.name_ar}</Label>
                 <Input
@@ -149,7 +149,7 @@ export default function MenuItemDialog({ translations: t, locale }: Props) {
             </div>
 
             {/* Category + Price */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">{t.category_id}</Label>
                 <Select
@@ -221,7 +221,7 @@ export default function MenuItemDialog({ translations: t, locale }: Props) {
             </div>
 
             {/* Descriptions */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="description_ar">{t.description_ar}</Label>
                 <Textarea
