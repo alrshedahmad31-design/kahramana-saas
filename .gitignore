@@ -22,9 +22,6 @@ build/
 supabase/.branches
 supabase/.temp
 
-# Supabase migrations with credentials — never commit
-supabase/migrations/015_production_admin.sql
-
 # Vercel
 .vercel
 
