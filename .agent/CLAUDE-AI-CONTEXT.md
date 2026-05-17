@@ -1,6 +1,6 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-16 (session 120 close-out)
-# Master: 81eb296
+# Updated: 2026-05-17 (session 135 close-out)
+# Master: ca61e41
 
 ## CURRENT STATUS
 Launch Risk: 8/10
@@ -9,128 +9,148 @@ Next milestone: Soft-launch (cash-only)
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
-COMPLETED 2026-05-15:
-- Supabase new signups disabled
-- order_item_station_status added to Realtime (8→9 tables)
-- Turnstile keys live (NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY)
-- ~~SENTRY_AUTH_TOKEN rotated (deployment 6F9Nps8SG)~~ — REGRESSED, see below
+CLOSED since session 120 bridge:
+- SESSION_BIND_SECRET env var (assumed set in Vercel — dropped from
+  session 135's pending list; /auth/callback recovery flow live).
+- SENTRY_AUTH_TOKEN re-rotation (assumed done — dropped from session
+  135's pending list; sourcemaps tagging restored).
 
-STILL PENDING:
-- Supabase Free → Pro + Singapore migration
-- DNS kahramanat.com → Vercel (pre-launch only)
-- TAP keys (blocked — merchant approval)
+STILL PENDING (curated from session 135 close-out):
+- Supabase Free → Pro + Singapore migration.
+- DNS kahramanat.com → Vercel (pre-launch only).
+- TAP keys (blocked — merchant approval) → once arrived, wire Refund
+  Modal (refundPayment currently flips DB state only, does NOT call
+  Tap to push money back).
+- 13 staff emails pending from owner → after lands, flip
+  NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true.
+- Resend domain verification for kahramanat.com.
+- VAPID keys for driver push notifications.
+- CONTACT_NOTIFY_EMAIL (optional).
+- Sprint 6B WhatsApp Business API (Meta verification).
+- Sprint 6C Benefit Pay API (CBB approval).
+- البديع branch row DB cleanup (SQL provided session 126).
+- ~11 missing dish photos (concrete shoot list in commit `da5b199`).
 
-ADDED 2026-05-16 (session 120):
-- SESSION_BIND_SECRET env var (Vercel prod + preview).
-  Generate: `openssl rand -hex 32`
-  Without this, /auth/callback recovery flow throws at runtime
-  (L1 commit 81eb296 enforces it via getSecret()).
+## ACTIVE DEV PRIORITIES
 
-- SENTRY_AUTH_TOKEN re-rotation needed (REGRESSED from 2026-05-15).
-  Symptom: `cef2850` deploy logs (02:30) show Sentry CLI 401 "Invalid token"
-  on `releases new` and `sourcemaps upload` across Node/Edge/Client runtimes.
-  Build itself succeeded (562/562 pages); only release tagging + sourcemap
-  upload failed → prod stack traces will be minified until token is fixed.
-  Fix path:
-    1. New token at https://sentry.io/settings/account/api/auth-tokens/
-       Scopes: project:releases, org:read, project:read
-    2. Vercel → kahramana → env vars → SENTRY_AUTH_TOKEN (Production + Preview)
-    3. Redeploy (or wait for next push to trigger a fresh build)
-  Not a launch blocker — observability is degraded, not the deploy itself.
+CLOSED since session 120 (sessions 121-135 — full list, in commit order):
 
-## ACTIVE DEV PRIORITIES (in order)
+✅ Security audit remediation sweep (sessions 122-124)
+   - VULN-001/002/003/004/006/007/008/009/010/011/012/013/014/015/017/
+     018/019/020/021/022 + VULN-A03/A04/A05/A06/A07/A08/A10 + AUD-V3
+     residuals.
 
-COMPLETED 2026-05-16 (session 120 — full sweep):
-✅ operations_alerts banner (780feb7)
-   - OperationsAlertsBanner: severity styles, dismiss, +N more
-   - markAlertRead server action (role-gated, RLS-scoped)
-   - Owner/GM/BM only on dashboard home
-   - i18n AR/EN with ICU plural
+✅ Inventory banner + chef Excel import (P2-1/P2-2, session 128)
+   - `786f549` chef Excel import wires inventory deduction.
+   - `d5da803` + `5916ac2` 0-recipes-mapped banner.
 
-✅ AUD-V3-012 — analytics least-privilege CLOSED (af87d85, migration 151)
-   - GRANT SELECT on hourly_order_distribution / menu_item_performance /
-     customer_lifetime_value matviews to authenticated
-   - GRANT EXECUTE on get_labor_cost_metrics + get_menu_engineering_matrix
-   - 6 queries.ts callers swapped: createServiceClient() → createClient()
-   - refresh_analytics_views kept service-role (admin maintenance, intentional)
-   - 16/16 analytics queries now follow least-privilege
+✅ Birthday gift end-to-end (sessions 128-131)
+   - `34e2da2` BirthdayGiftCard reads bonus points from loyalty_config.
+   - `fbb4b21` account birthday save fix.
+   - `bd2fb5e` migration 158 — birthday cron + idempotency table.
+   - `29ac5f2` /api/cron/birthday-notify route + Vercel Cron config.
+   - `d24e5e3` Resend email + wa.me WhatsApp deep-link.
 
-✅ Birthday field + countdown (572704c, migration 152)
-   - birthday DATE column on customer_profiles
-   - BirthdayGiftCard: countdown mode + empty-state CTA
-   - Gift mechanic deferred (cron + idempotency table = follow-up)
+✅ Riffa branch isOpen() timezone + cross-midnight (BUG-001, sessions 124-125)
+   - `e7ab0cb` + `bfc18cd` riffa closing 01:00→02:00 across surfaces.
 
-✅ customerNavUrl Cowork carry (7bc0a37)
-   - goo.gl passthrough, PWA-native maps URL, freetext geocode guard,
-     coord regex tightened (≥4 decimals)
-   - Source: dirty diff in relaxed-sutherland-1e8f48 worktree (no commit
-     existed — applied via git apply, worktree later removed)
+✅ /dashboard/catering inquiry listing (session 130, P4-1)
+   - `1d67b4a` owner/GM-only listing page.
+   - `48d9285` migration 160 — catering_inquiries table.
+   - `e5908b4` + `2ef822c` server action + UX polish.
 
-✅ Recipe linking dedup (9b35f92, migration 153)
-   - 24h dedup gate added to fn_inventory_reserve unmapped_item INSERT
-   - 158 unread alerts bulk-marked read; 364 audit rows preserved
-   - Functional index on metadata->>'menu_item_slug' for fast dedup
-   - NOTE: recipes table is empty (0/168 menu items mapped) — chef Excel
-     import has been pending since session 38 (May 1). This is the
-     noise-suppression operational fix; root cause unaddressed.
+✅ Catering occasion/service enum normalization (session 135)
+   - `aa2bffa` form persists enum keys, dashboard re-translates;
+     legacy locale-string rows still render via typeguard fallback.
 
-✅ L1 recovery cookie HMAC binding (81eb296)
-   - signRecoveryCookie / verifyRecoveryCookie helper using
-     HMAC-SHA256 + timingSafeEqual (Node built-ins, no new deps)
-   - Cookie value: <user_id>.<base64url-hmac>
-   - /auth/callback signs cookie with freshly exchanged user_id
-   - /set-password rejects cross-user cookie with new error code
-     'recovery_user_mismatch' instead of silently rotating wrong account
-   - i18n key auth.setPassword.recoveryUserMismatch added (ar+en)
-   - REQUIRES SESSION_BIND_SECRET env var in Vercel (see operator section)
+✅ ARCH-004 atomic checkout RPC (session 134)
+   - `be15f22` migration 163 — rpc_create_order packs order + items
+     + loyalty + coupon in single transaction.
+   - `80f737e` checkout server action replaces serial JS steps.
 
-DEFERRED (separate sessions):
-- Birthday gift cron + idempotency + loyalty_config.birthday_bonus_points
-- WhatsApp/email birthday notification surface
-- Chef Excel recipe import — root-cause fix for 168/168 unmapped
-  (pending since session 38, blocks meaningful inventory deduction)
-- Inventory page banner: "0/168 recipes mapped — chef Excel import pending"
-  (operator visibility once dedup hides the alert flood)
-- SetPasswordClient.tsx dead-code cleanup (deferred since session 101 —
-  page mounts SetPasswordForm; SetPasswordClient is orphaned)
+✅ Cookie-consent gating on GA4 + Clarity (F-01, session 131)
+   - `92c6fba` analytics blocked until consent.
 
-UPDATED DEV PRIORITIES:
-All four named priorities for 2026-05-16 are done. Next lane TBD —
-candidates: birthday cron follow-up, inventory page banner, chef Excel
-import nudge, dead-code cleanup. None are blockers for soft-launch.
+✅ Checkout/waiter error localization (sessions 131, 135)
+   - `9a93fe1` 7 raw-English checkout errors → localizeCheckoutError.
+   - `f9bb840` waiter "Order creation failed" → waiter.errors.
+
+✅ Dead-code cleanup (sessions 130-131)
+   - `c4fe9a8` ForgotPasswordClient.tsx removed.
+   - `993ee3b` SetPasswordClient.tsx removed.
+   - `57ac6a9` HIDDEN_BRANCHES length guards removed (~30 files).
+
+✅ Driver notifications + KDS hygiene (session 129)
+   - `2079f2c` driver sound + visual on new delivery.
+   - `2b45a6d` migration 161 — auto-complete KDS items on terminal status.
+   - `dabfb87` selector counts active orders only.
+
+✅ Sundry UX fixes (sessions 125-127)
+   - `22f7071` cart "إضافة المزيد" closes drawer.
+   - `efe68b1` supabase env-var actionable error.
+   - `0ae1d6d` + `b2f0555` checkout points 50% cap UI+server alignment.
+   - `568a6a0` migration 162 — membership_id generated column.
+   - `3957abe` waiter QR member scanner (feature-flagged off).
+   - `20fdf58` driver customerNavUrl decimal coord guard.
+   - `a2b2009` all البديع branch references removed.
+
+✅ Repo hygiene (session 135)
+   - `27e1a98` migration 015 un-gitignored — password → runtime placeholder.
+   - `ca61e41` migration 131 backfill — real REVOKE PUBLIC EXECUTE DDL
+     replaces cowork 1-line placeholder; verified no-op against live.
+
+DEFERRED / NEXT-LANE CANDIDATES (from session 135 close-out):
+- Apply ARCH-004 atomic pattern to table/waiter/POS payment row
+  inserts (POS uses rpc_pos_finalize_order — not a pure copy of
+  checkout).
+- Phase 7B Deliverect / POS aggregator integration (external contract).
+- Phase 8 AI assistant + demand forecasting (needs 6 months data).
 
 ## ARCHITECTURE DECISIONS (do not reverse)
 - CSS: ps/pe/ms/me ONLY — never pl/pr/ml/mr/left/right
 - No dynamic imports on dashboard routes
-- All DB writes via RPC only (atomic)
+- All DB writes via RPC only (atomic — ARCH-004 pattern now applied
+  to checkout via rpc_create_order; remaining surfaces to follow)
 - AnalyticsResult<T> pattern for all analytics queries (AUD-V3-008)
 - createClient() (anon) for analytics reads where RLS covers it
 - createServiceClient() only for: matviews + RPCs without authenticated grant
 - x-real-ip before x-forwarded-for for rate limiting
 - No console.error swallowing — Sentry via captureAnalyticsError
+- Customer-facing + staff-facing error strings go through next-intl
+  (localizeCheckoutError for checkout; waiter.errors namespace for waiter)
+- Catering occasion_type / service_type persisted as enum keys, not
+  locale strings (single source of truth: CATERING_OCCASION_TYPES /
+  CATERING_SERVICE_TYPES in src/lib/whatsapp-catering-message.ts)
 - git add -p always — never stage sibling work
 - Work on master directly — no worktrees unless explicitly requested
 
 ## KNOWN CEILINGS (do not attempt to fix)
 - Lighthouse Score ~49 on mobile simulation = GSAP/Framer Motion floor
 - TBT ~1600ms on Slow 4G = animation cost, intentional brand decision
-- Recipes empty (0/168 mapped) until chef Excel lands — alert flood
-  is suppressed (dedup), but inventory deduction is no-op for live orders
 
 ## MIGRATION STATE
-- Local = Remote = 153 migrations applied
-- Session 120 added: 151 (analytics grants), 152 (customer birthday),
-  153 (unmapped_item dedup)
-- Migration 131: placeholder committed (cowork branch)
-- Migration repair: 125/129/130/139-144 applied
+- Local = Remote = 163 migrations applied (paired)
+- Sessions 121-135 added: 154 (security), 155 (VULN-004 coupon_usages
+  in-RPC), 156-157 (security), 158 (birthday cron + idempotency),
+  159 (security), 160 (catering_inquiries), 161 (auto-complete KDS),
+  162 (membership_id), 163 (ARCH-004 atomic rpc_create_order)
+- Migration 131: content backfilled session 135 — real REVOKE DDL
+  (was 1-line cowork placeholder). schema_migrations.statements still
+  carries old placeholder; backfill matters for fresh-clone parity only.
+- Migration 015: un-gitignored session 135, password → runtime
+  setting placeholder (current_setting('app.admin_password', true))
 
 ## SESSION HISTORY (last 5)
-- Session 116: AUD-V3-008 closed — 20 analytics error swallow sites → AnalyticsResult<T>
-- Session 117: AUD-V3-012 partial — 9/16 swapped to anon client
-- Session 118: H-2 hydration fix — global-error.tsx reads locale from cookie
-- Session 119: Launch audit + 3 fixes (driver delivered, location push, stuck orders)
-- Session 120: 4-priority sweep (operations_alerts banner + AUD-V3-012 close
-  + birthday + recipe dedup + L1 HMAC) + Cowork customerNavUrl carry; +3 migrations
+- Session 131: F-01 cookie consent + /dashboard/catering listing
+  + birthday email/WhatsApp notify + dead-code cleanup
+- Session 132: orders reorder button + sonner toasts + branded
+  confirmation modal + account birthday save fix + Latin digits fix
+- Session 133: catering form rate-limit + Turnstile + DB save UX
+- Session 134: ARCH-004 atomic checkout RPC (migration 163) +
+  catering form #6/#8 polish
+- Session 135: catering occasion/service enum normalization +
+  migration 015 un-gitignored + waiter error localized + migration
+  131 cowork DDL backfilled
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
