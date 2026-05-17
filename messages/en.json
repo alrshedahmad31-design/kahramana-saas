@@ -2286,6 +2286,7 @@
       "waiter": "Waiter App",
       "waitlist": "Waitlist",
       "reservations": "Reservations",
+      "catering": "Catering Leads",
       "promotions": "Promotions",
       "tables": "Tables & QR"
     },
@@ -2552,6 +2553,35 @@
     "sync_error": "Sync failed. Please try again.",
     "menu_empty_title": "Menu is Empty",
     "menu_empty_description": "No items in the database yet. Sync from JSON or add items manually.",
+    "catering": {
+      "title": "Catering Inquiries",
+      "subtitle": "Public catering form submissions — most recent first.",
+      "loadError": "Could not load catering inquiries. Please refresh.",
+      "whatsappCta": "Reply on WhatsApp",
+      "notesLabel": "Notes",
+      "badges": {
+        "new": "NEW"
+      },
+      "empty": {
+        "title": "No catering inquiries yet",
+        "description": "Submissions from the public catering form will appear here."
+      },
+      "table": {
+        "phone":       "Phone",
+        "occasion":    "Occasion",
+        "eventDate":   "Event Date",
+        "guests":      "Guests",
+        "area":        "Area / Address",
+        "serviceType": "Service Type",
+        "branch":      "Preferred Branch",
+        "budget":      "Budget",
+        "received":    "Received"
+      },
+      "values": {
+        "noBranch": "Any branch",
+        "noBudget": "—"
+      }
+    },
     "reservations": {
       "title": "Reservations Management",
       "subtitle": "Smart real-time restaurant reservation management",

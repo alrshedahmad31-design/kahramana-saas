@@ -38,6 +38,7 @@ export type DashboardSection =
   | 'reservations'
   | 'promotions'
   | 'tables'
+  | 'catering'
 
 const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   home:             null,  // unrestricted — dashboard overview for all staff
@@ -73,6 +74,7 @@ const SECTION_ROLES: Record<DashboardSection, StaffRole[] | null> = {
   reservations:           ['owner', 'general_manager', 'branch_manager', 'cashier', 'waiter'],
   promotions:             ['owner', 'general_manager', 'branch_manager', 'marketing'],
   tables:                 ['owner', 'general_manager', 'branch_manager', 'waiter'],
+  catering:               ['owner', 'general_manager'],
 }
 
 export function canAccessSection(

@@ -237,7 +237,7 @@ const GROUP_OF: Record<string, NavGroup> = {
   home: 'operations', owner: 'operations', orders: 'operations', pos: 'operations',
   kds: 'operations', tables: 'operations', waiter: 'operations', driver: 'operations',
   delivery: 'operations',
-  waitlist: 'customers', reservations: 'customers', coupons: 'customers', promotions: 'customers',
+  waitlist: 'customers', reservations: 'customers', catering: 'customers', coupons: 'customers', promotions: 'customers',
   payments: 'finance', shifts: 'finance', analytics: 'finance', reports: 'finance', audit: 'finance',
   staff: 'admin', menu: 'admin', schedule: 'admin', inventory: 'admin', settings: 'admin',
 }
@@ -257,6 +257,7 @@ const getNavItems = (prefix: string): NavItem[] => [
   // GROUP 2 — Customer Management
   { key: 'waitlist',  href: `${prefix}/dashboard/waitlist`,    icon: <StaffIcon />,     section: 'waitlist' },
   { key: 'reservations', href: `${prefix}/dashboard/reservations`, icon: <ReservationsIcon />, section: 'reservations' },
+  { key: 'catering',  href: `${prefix}/dashboard/catering`,   icon: <ReservationsIcon />, section: 'catering' },
   { key: 'coupons',   href: `${prefix}/dashboard/coupons`,    icon: <CouponsIcon />,   section: 'coupons' },
   { key: 'promotions', href: `${prefix}/dashboard/promotions`, icon: <CouponsIcon />,   section: 'promotions' },
 
@@ -319,6 +320,7 @@ export default function DashboardSidebar({ userName, userRole }: SidebarProps) {
     waiter:          t('waiter'),
     waitlist:        t('waitlist'),
     reservations:    t('reservations'),
+    catering:        t('catering'),
     tables:          t('tables'),
     driver:          t('driver'),
     delivery:        t('delivery'),
