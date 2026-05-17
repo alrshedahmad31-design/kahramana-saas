@@ -90,63 +90,112 @@ export default async function RecipesPage({ params }: PageProps) {
           </p>
         </div>
       ) : (
-        <div className="border border-brand-border rounded-xl overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-brand-surface-2">
-              <tr>
-                <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الطبق' : 'Dish'}</th>
-                <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'السعر' : 'Price'}</th>
-                <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'تكلفة BD' : 'Cost BD'}</th>
-                <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'هامش الربح' : 'Margin'}</th>
-                <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الوصفة' : 'Recipe'}</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {dishes.map((dish) => {
-                const hasRecipe = recipeSlugsSet.has(dish.slug)
-                return (
-                  <tr key={dish.slug} className="border-t border-brand-border hover:bg-brand-surface-2 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="font-satoshi text-sm font-medium text-brand-text">{dish.name_ar}</p>
-                      <p className="font-satoshi text-xs text-brand-muted">{dish.name_en}</p>
-                    </td>
-                    <td className="px-4 py-3 font-satoshi text-sm text-brand-muted">
-                      {dish.selling_price !== null ? `${Number(dish.selling_price).toFixed(3)} BD` : '—'}
-                    </td>
-                    <td className="px-4 py-3 font-satoshi text-sm text-brand-gold">
-                      {Number(dish.cost_bhd).toFixed(3)} BD
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium ${marginBadgeClass(dish.margin_pct)}`}>
-                        {dish.margin_pct !== null ? `${Number(dish.margin_pct).toFixed(1)}%` : '—'}
+        <>
+          {/* Mobile card list (<sm) */}
+          <div className="flex flex-col gap-3 sm:hidden">
+            {dishes.map((dish) => {
+              const hasRecipe = recipeSlugsSet.has(dish.slug)
+              return (
+                <Link
+                  key={dish.slug}
+                  href={`${prefix}/dashboard/inventory/recipes/${dish.slug}`}
+                  className="block rounded-xl border border-brand-border bg-brand-surface px-4 py-3 active:bg-brand-surface-2 transition-colors min-h-[44px]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-satoshi text-base font-medium text-brand-text truncate">{dish.name_ar}</p>
+                      <p className="font-satoshi text-xs text-brand-muted truncate">{dish.name_en}</p>
+                    </div>
+                    {hasRecipe ? (
+                      <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium bg-green-500/10 text-green-400">
+                        {isAr ? 'موجودة' : 'Defined'}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {hasRecipe ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium bg-green-500/10 text-green-400">
-                          {isAr ? 'موجودة' : 'Defined'}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium bg-red-500/10 text-red-400">
-                          {isAr ? 'لا وصفة' : 'No Recipe'}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`${prefix}/dashboard/inventory/recipes/${dish.slug}`}
-                        className="font-satoshi text-sm text-brand-gold hover:underline"
-                      >
-                        {isAr ? 'تعديل' : 'Edit'}
-                      </Link>
-                    </td>
+                    ) : (
+                      <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium bg-red-500/10 text-red-400">
+                        {isAr ? 'لا وصفة' : 'No Recipe'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                    <span className="font-satoshi text-brand-muted">
+                      {isAr ? 'السعر' : 'Price'}:{' '}
+                      <span className="text-brand-text">
+                        {dish.selling_price !== null ? `${Number(dish.selling_price).toFixed(3)} BD` : '—'}
+                      </span>
+                    </span>
+                    <span className="font-satoshi text-brand-gold">
+                      {Number(dish.cost_bhd).toFixed(3)} BD
+                    </span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium ${marginBadgeClass(dish.margin_pct)}`}>
+                      {dish.margin_pct !== null ? `${Number(dish.margin_pct).toFixed(1)}%` : '—'}
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Desktop table (sm+) */}
+          <div className="hidden sm:block border border-brand-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-brand-surface-2">
+                  <tr>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الطبق' : 'Dish'}</th>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'السعر' : 'Price'}</th>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'تكلفة BD' : 'Cost BD'}</th>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'هامش الربح' : 'Margin'}</th>
+                    <th className="px-4 py-3 text-start font-satoshi text-xs text-brand-muted uppercase tracking-wide">{isAr ? 'الوصفة' : 'Recipe'}</th>
+                    <th className="px-4 py-3" />
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {dishes.map((dish) => {
+                    const hasRecipe = recipeSlugsSet.has(dish.slug)
+                    return (
+                      <tr key={dish.slug} className="border-t border-brand-border hover:bg-brand-surface-2 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-satoshi text-sm font-medium text-brand-text">{dish.name_ar}</p>
+                          <p className="font-satoshi text-xs text-brand-muted">{dish.name_en}</p>
+                        </td>
+                        <td className="px-4 py-3 font-satoshi text-sm text-brand-muted whitespace-nowrap">
+                          {dish.selling_price !== null ? `${Number(dish.selling_price).toFixed(3)} BD` : '—'}
+                        </td>
+                        <td className="px-4 py-3 font-satoshi text-sm text-brand-gold whitespace-nowrap">
+                          {Number(dish.cost_bhd).toFixed(3)} BD
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium ${marginBadgeClass(dish.margin_pct)}`}>
+                            {dish.margin_pct !== null ? `${Number(dish.margin_pct).toFixed(1)}%` : '—'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {hasRecipe ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium bg-green-500/10 text-green-400">
+                              {isAr ? 'موجودة' : 'Defined'}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-satoshi font-medium bg-red-500/10 text-red-400">
+                              {isAr ? 'لا وصفة' : 'No Recipe'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link
+                            href={`${prefix}/dashboard/inventory/recipes/${dish.slug}`}
+                            className="font-satoshi text-sm text-brand-gold hover:underline"
+                          >
+                            {isAr ? 'تعديل' : 'Edit'}
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

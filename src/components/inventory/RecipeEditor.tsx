@@ -250,7 +250,8 @@ export default function RecipeEditor({
           </p>
         ) : (
           <div className="border border-brand-border rounded-xl overflow-hidden">
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px]">
               <thead className="bg-brand-surface-2">
                 <tr>
                   <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('ingredient')}</th>
@@ -323,6 +324,7 @@ export default function RecipeEditor({
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
@@ -346,7 +348,8 @@ export default function RecipeEditor({
 
           {prepRows.length > 0 && (
             <div className="border border-brand-border rounded-xl overflow-hidden">
-              <table className="w-full">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px]">
                 <thead className="bg-brand-surface-2">
                   <tr>
                     <th className={`px-3 py-2 text-start ${font} text-xs text-brand-muted uppercase tracking-wide`}>{t('prepItems')}</th>
@@ -414,6 +417,7 @@ export default function RecipeEditor({
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

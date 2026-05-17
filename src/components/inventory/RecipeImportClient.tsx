@@ -243,7 +243,8 @@ function ResultPanel({
               {isAr ? `أخطاء في الملف (${errors.length})` : `File errors (${errors.length})`}
             </h3>
             <div className="border border-red-500/30 rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[480px]">
                 <thead className="bg-red-500/5">
                   <tr>
                     <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted">{isAr ? 'الصف' : 'Row'}</th>
@@ -261,6 +262,7 @@ function ResultPanel({
                   ))}
                 </tbody>
               </table>
+              </div>
               {errors.length > 50 && (
                 <p className="px-3 py-2 bg-red-500/5 font-satoshi text-xs text-brand-muted">
                   {isAr ? `... و${errors.length - 50} خطأ آخر` : `... and ${errors.length - 50} more`}
@@ -359,7 +361,8 @@ function RowsTable({
 
   return (
     <div className={`border ${borderClass} rounded-lg overflow-hidden`}>
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[560px]">
         <thead className={headBgClass}>
           <tr>
             <th className="px-3 py-2 text-start font-satoshi text-xs text-brand-muted">{isAr ? 'الصف' : 'Row'}</th>
@@ -379,6 +382,7 @@ function RowsTable({
           ))}
         </tbody>
       </table>
+      </div>
       {rows.length > 50 && (
         <p className={`px-3 py-2 ${headBgClass} font-satoshi text-xs text-brand-muted`}>
           {isAr ? `... و${rows.length - 50} صف آخر` : `... and ${rows.length - 50} more`}
