@@ -4682,6 +4682,28 @@ export type Database = {
       }
     }
     Functions: {
+      _coupon_check_caps: {
+        Args: {
+          p_max_discount_bhd: number
+          p_role: Database["public"]["Enums"]["staff_role"]
+          p_type: string
+          p_usage_limit: number
+          p_value: number
+        }
+        Returns: string
+      }
+      _coupon_clamp_branches: {
+        Args: {
+          p_branch: string
+          p_role: Database["public"]["Enums"]["staff_role"]
+          p_submitted: string[]
+        }
+        Returns: string[]
+      }
+      _coupon_role_allowed: {
+        Args: { p_role: Database["public"]["Enums"]["staff_role"] }
+        Returns: boolean
+      }
       _order_status_role_allowed: {
         Args: {
           p_role: Database["public"]["Enums"]["staff_role"]
@@ -4882,6 +4904,7 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_create_coupon: { Args: { p_payload: Json }; Returns: Json }
       rpc_create_customer_profile: {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined
@@ -4985,6 +5008,7 @@ export type Database = {
           stock_value_bhd: number
         }[]
       }
+      rpc_delete_coupon: { Args: { p_id: string }; Returns: Json }
       rpc_escalate_waste_approvals: { Args: never; Returns: undefined }
       rpc_expiry_report: {
         Args: { p_branch_id: string; p_days_ahead?: number }
@@ -5122,6 +5146,10 @@ export type Database = {
         Returns: undefined
       }
       rpc_update_abc_classification: { Args: never; Returns: undefined }
+      rpc_update_coupon: {
+        Args: { p_id: string; p_payload: Json }
+        Returns: Json
+      }
       rpc_update_order_status: {
         Args: {
           p_expected_status: Database["public"]["Enums"]["order_status"]
