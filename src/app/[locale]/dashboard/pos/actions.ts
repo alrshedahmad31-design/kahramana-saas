@@ -306,6 +306,14 @@ export async function createManualOrder(
     })),
   )
 
+  // ARCH-004 final (migration 164): map POS payment method to
+  // rpc_create_order's p_payment_mode. 'cash' → 'cod' (method='cash',
+  // status='pending_cod'); 'card'/'tap' → 'tap_card' (method='tap_card',
+  // status='pending'). Payment row now commits in the same transaction
+  // as the order — no separate INSERT after.
+  const paymentMode: 'cod' | 'tap_card' =
+    data.paymentMethod === 'cash' ? 'cod' : 'tap_card'
+
   const { data: orderId, error: rpcError } = await supabase.rpc('rpc_create_order', {
     p_idempotency_key:        idempotencyKey,
     p_customer_name:          data.customerName.trim(),
@@ -329,33 +337,21 @@ export async function createManualOrder(
     p_status:                 'accepted',
     p_promotion_id:           promo?.promotion_id ?? undefined,
     p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
+    p_payment_mode:           paymentMode,
   })
 
   if (rpcError || !orderId) {
     return { error: rpcError?.message ?? 'Order creation failed' }
   }
 
-  // ── Atomic payments + audit (KAH-2026-05-06) ───────────────────────────
-  // rpc_pos_finalize_order does both inserts in one transaction so the
-  // payment row and the audit row either both land or both fail. The order
-  // itself is the financial source of truth and stays in rpc_create_order.
-  //
-  // ARCH-004-SKIP: rpc_create_order's p_payment_mode supports 'cod' (cash /
-  // pending_cod) and 'online' (NULL method until Tap webhook fills it in),
-  // but POS card/tap paths persist method='tap_card' with status='pending'
-  // — a shape neither p_payment_mode value can express. rpc_pos_finalize_order
-  // already bundles payment + audit atomically, so the residual ARCH-004
-  // gap here is only the narrow window between rpc_create_order commit and
-  // rpc_pos_finalize_order call (separate transactions). Closing that gap
-  // requires either a new p_payment_mode='tap_card' branch in migration 163
-  // or merging both RPCs — out of scope for this refactor.
-  const paymentMethodForRecord: 'cash' | 'tap_card' =
-    data.paymentMethod === 'cash' ? 'cash' : 'tap_card'
+  // ── Audit trail (migration 164: rpc_pos_finalize_order audit-only) ────
+  // The payment row is now written inside rpc_create_order via
+  // p_payment_mode, so this RPC has been stripped to a single audit_logs
+  // INSERT. Audit failure no longer strands money — orders + payments
+  // commit together; only the audit row may be missing, which Sentry
+  // catches via the warning below for operator backfill.
   const { data: finalizeData, error: finalizeError } = await supabase.rpc('rpc_pos_finalize_order', {
     p_order_id:        orderId,
-    p_amount_bhd:      subtotal,
-    p_method:          paymentMethodForRecord,
-    p_payment_status:  data.paymentMethod === 'cash' ? 'pending_cod' : 'pending',
     p_audit_changes:   {
       action:         'manual_order_created',
       order_id:       orderId,
@@ -372,13 +368,13 @@ export async function createManualOrder(
 
   let paymentWarning: string | undefined
   if (finalizeError) {
-    console.error('[pos] rpc_pos_finalize_order failed for order', orderId, finalizeError)
-    paymentWarning = `Order created but payment+audit failed. Manager resolution required.`
+    console.error('[pos] rpc_pos_finalize_order (audit) failed for order', orderId, finalizeError)
+    paymentWarning = `Order + payment created but audit failed. Manager resolution required.`
   } else {
     const result = finalizeData as { success: boolean; code?: string } | null
     if (!result?.success) {
-      console.error('[pos] rpc_pos_finalize_order returned non-success for order', orderId, result?.code)
-      paymentWarning = `Order created but payment+audit failed (${result?.code ?? 'unknown'}). Manager resolution required.`
+      console.error('[pos] rpc_pos_finalize_order (audit) returned non-success for order', orderId, result?.code)
+      paymentWarning = `Order + payment created but audit failed (${result?.code ?? 'unknown'}). Manager resolution required.`
     }
   }
 
