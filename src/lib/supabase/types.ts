@@ -4718,6 +4718,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      _promotion_role_allowed: {
+        Args: { p_role: Database["public"]["Enums"]["staff_role"] }
+        Returns: boolean
+      }
       _reservation_role_allowed: {
         Args: { p_role: Database["public"]["Enums"]["staff_role"] }
         Returns: boolean
@@ -4955,6 +4959,7 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_create_promotion: { Args: { p_payload: Json }; Returns: Json }
       rpc_create_purchase_order: {
         Args: {
           p_branch_id: string
@@ -5009,6 +5014,7 @@ export type Database = {
         }[]
       }
       rpc_delete_coupon: { Args: { p_id: string }; Returns: Json }
+      rpc_delete_promotion: { Args: { p_id: string }; Returns: Json }
       rpc_escalate_waste_approvals: { Args: never; Returns: undefined }
       rpc_expiry_report: {
         Args: { p_branch_id: string; p_days_ahead?: number }
@@ -5156,6 +5162,10 @@ export type Database = {
           p_new_status: Database["public"]["Enums"]["order_status"]
           p_order_id: string
         }
+        Returns: Json
+      }
+      rpc_update_promotion: {
+        Args: { p_id: string; p_payload: Json }
         Returns: Json
       }
       rpc_update_reservation_status: {
