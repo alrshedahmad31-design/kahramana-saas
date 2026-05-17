@@ -167,11 +167,9 @@ export async function GET(req: Request) {
         // Best-effort UPDATE — the send already succeeded; an UPDATE failure
         // here just means a duplicate is possible on next retry. Logged for
         // observability so an operator can spot it.
-        // Cast: notified_at is a fresh column (migration 172); types.ts has
-        // not been regenerated. The DB-side schema is the source of truth.
         const { error: stampErr } = await supabase
           .from('birthday_point_credits')
-          .update({ notified_at: new Date().toISOString() } as unknown as Record<string, never>)
+          .update({ notified_at: new Date().toISOString() })
           .eq('id', credit.id)
         if (stampErr) {
           Sentry.captureException(stampErr, {
