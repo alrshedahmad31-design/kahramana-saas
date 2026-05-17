@@ -22,5 +22,11 @@
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/birthday-notify",
+      "schedule": "0 6 * * *"
+    }
   ]
 }
