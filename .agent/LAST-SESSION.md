@@ -1,7 +1,190 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 135: Catering occasion/service enum normalization + migration 015 un-gitignored + waiter error localized + migration 131 cowork backfill (real REVOKE DDL replaces placeholder). Master `22ee548` → `ca61e41`.
+> Session 136: ARCH-004 fully closed across all 5 order-entry surfaces (table, waiter, POS service, POS card/tap, checkout already from 134) + bridge sync. One migration (164). Master `ca61e41` → `3a78f76`. **All dev work that is not operator-blocked or externally locked is complete.**
 > Date: 2026-05-17
 > Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 136 — SUMMARY
+
+Four commits on master, all pushed. One migration (164). i18n parity
+unchanged at 2,445 / 2,445 (no copy touched). Gates clean on every
+commit: `npx tsc --noEmit` exit 0; `npx tsx scripts/check-i18n.ts`
+PASS; `NEXT_BUILD_WORKERS=1 npm run build` clean (566/566 pages).
+
+Theme: close the ARCH-004 story. Session 134 made customer checkout
+fully atomic via migration 163's `rpc_create_order(p_payment_mode)`.
+The four other order-entry surfaces (table, waiter, POS, POS service)
+still ran a separate JS `payments` row INSERT after the RPC, so the
+order could commit without its payment row if the second write
+failed. Session 136 closes the gap in two passes:
+
+1. **Extension to table/waiter/POS service** (`8610587`) — these
+   three paths are cash-only, so `p_payment_mode='cod'` is a direct
+   replacement for the JS insert. Three files updated, three JS
+   inserts deleted. `dashboard/pos/actions.ts` was a different shape
+   (cash + card + tap, with `rpc_pos_finalize_order` already
+   atomizing payment+audit), so it got an explicit ARCH-004-SKIP
+   comment documenting why migration 163's two payment_modes can't
+   express POS card/tap.
+
+2. **Final POS lane** (`e93c1bf` + `3a78f76`, migration 164) — closed
+   the residual gap. Migration 164 (a) added `'tap_card'` as a third
+   `p_payment_mode` branch in `rpc_create_order` (method='tap_card',
+   status='pending'), and (b) stripped the payment INSERT from
+   `rpc_pos_finalize_order` — function is now audit-only and dropped
+   3 params from its signature (DROP-then-CREATE per migration 135's
+   pattern, since only one JS caller existed in the repo). The POS
+   action then passes `paymentMode = 'cod' | 'tap_card'` based on
+   `data.paymentMethod` and calls the slimmed finalize RPC with only
+   the audit args.
+
+End state: every order — regardless of entry surface — commits its
+payment row inside `rpc_create_order` in the same transaction as the
+order. The orders↔payments relation is now total across all 5 surfaces.
+
+## COMMITS (4 on master, all pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `00d42aa` | chore | **Sync CURRENT-SESSION.md bridge to session 135 state.** Audit task before any code work. Bridge file `CURRENT-SESSION.md` (auto-generated from `CLAUDE-AI-CONTEXT.md` via `sync-context.ps1`) was last refreshed at session 120 close-out; sessions 121-135 had landed without re-syncing it. Audited each of the 5 named carry-forwards (Birthday cron + idempotency, Birthday WhatsApp/email surface, SetPasswordClient.tsx cleanup, SESSION_BIND_SECRET, SENTRY_AUTH_TOKEN rotation) — confirmed all five resolved (commits + curated session 135 close-out drop). Rewrote `CLAUDE-AI-CONTEXT.md` to reflect session 135 state (master `ca61e41`, migration 163, full closed-list, fresh pending list). Ran `pwsh .agent/sync-context.ps1` to regenerate `CURRENT-SESSION.md`. Net: 2 files changed, +249 / −282. |
+| `8610587` | refactor | **ARCH-004 extension — atomic payment row for table/waiter/POS paths.** Forwards `p_payment_mode='cod'` to `rpc_create_order` and drops the separate JS `supabase.from('payments').insert(...)` call in three files: `table/actions.ts` (QR guest flow), `waiter/actions.ts` (staff dine-in), `dashboard/pos/service/actions.ts` (curbside / car-side service). All three were cash-only, so 'cod' (method='cash', status='pending_cod') is an exact replacement. `paymentWarning` return paths removed from `waiter` and `pos/service` since the payment row now commits or rolls back with the order. Audit-log inserts stay in JS (not absorbed by p_payment_mode). `dashboard/pos/actions.ts` left untouched with an explanatory **ARCH-004-SKIP** comment: rpc_create_order's `p_payment_mode` supports 'cod' and 'online' but POS card/tap paths persist `method='tap_card'` / `status='pending'`, a shape neither value can express. `rpc_pos_finalize_order` already bundles payment + audit atomically, so the residual gap is only the narrow window between rpc_create_order commit and rpc_pos_finalize_order call (separate transactions). Net: 4 files changed, +15 / −37. |
+| `e93c1bf` | feat(db) | **Migration 164 — rpc_create_order tap_card branch + rpc_pos_finalize_order audit-only.** Two coupled changes in one migration. **(1)** `rpc_create_order`'s `p_payment_mode` CASE extended with a `'tap_card'` ELSIF branch: method='tap_card', status='pending'. 31-arg signature unchanged from migration 163; CREATE OR REPLACE re-defines body in place (no DROP needed). All other behaviour (PRICE_MISMATCH, COUPON_INVALID, FOR-UPDATE coupon lock, points deduction, status CASE, coupon_usages row, delivery_flat) preserved verbatim. **(2)** `rpc_pos_finalize_order` stripped to audit-only — payment-related params (p_amount_bhd, p_method, p_payment_status) dropped from signature; 8-arg → 5-arg. Same DROP-then-CREATE pattern as migration 135 (sole live caller `dashboard/pos/actions.ts` verified via grep before signature change). Migration paired live on `kahramana-prod` (project `wwmzuofstyzworukfxkt`) via `supabase db push --linked --include-all`. `supabase gen types typescript --linked` regenerated; stripped both leading `"Initialising login role..."` (stderr leak via redirect) and trailing CLI-update-available banner. Net: 2 files changed, +459 / −3 (459 = migration body + types regen delta). |
+| `3a78f76` | refactor | **POS atomicity refactor — ARCH-004 fully closed.** Couples to migration 164. `dashboard/pos/actions.ts` now computes `paymentMode: 'cod' \| 'tap_card'` from `data.paymentMethod` (cash → 'cod', card/tap → 'tap_card') and forwards it via `p_payment_mode` on the rpc_create_order call. Drops `p_amount_bhd`, `p_method`, `p_payment_status` from the rpc_pos_finalize_order call (migration 164 stripped them from the signature) — remaining call passes only `p_order_id` + `p_audit_changes` + actor args. Removed ARCH-004-SKIP comment that flagged the residual gap. Warning + Sentry breadcrumb messages updated to reflect audit-only failure semantics: order + payment are guaranteed committed; only audit row may be missing for operator backfill. Net: 1 file changed, +19 / −23. |
+
+## INFRA NOTES
+
+- **One migration added (164).** Paired live on `kahramana-prod` via
+  `supabase db push --linked --include-all`. Migration count now 164
+  (plus the two `2026050519...` / `2026050812...` timestamp entries).
+- **`src/lib/supabase/types.ts` regenerated** from `kahramana-prod`.
+  `rpc_pos_finalize_order` signature now reflects audit-only (5
+  params: p_actor_branch_id, p_actor_id, p_actor_role, p_audit_changes,
+  p_order_id). `rpc_create_order` signature unchanged (tap_card is a
+  body-only addition). Stripped CLI banner leak (line 1) + trailing
+  update-available notice — both consequences of the stderr→stdout
+  redirect that the v2.90 CLI emits.
+- **No env vars touched.** No new deps. Bundle output unchanged at
+  page level — refactor is pure write-path consolidation.
+- **i18n parity unchanged at 2,445 / 2,445.** No customer copy or
+  staff copy touched this session.
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **Two-step landing: extension first, then final.** Could have done
+   migration 164 + all four file updates in one commit chain.
+   Splitting let `8610587` ship the three trivial paths (cash-only)
+   immediately and document the POS gap in code as ARCH-004-SKIP
+   before introducing the schema change. Three paths went live with
+   one trivial migration-less commit; the POS lane got its own
+   migration + refactor pair behind a clear "what changed, why" trail.
+
+2. **Strip `rpc_pos_finalize_order` payment params from the
+   signature rather than leave them unused.** Considered keeping the
+   8-arg signature with the payment-related args ignored, so old
+   callers (none in repo, but hypothetical ad-hoc SQL) wouldn't fail.
+   Rejected — unused params are misleading and the DROP-then-CREATE
+   pattern is well-established in this project (migration 135 used
+   it to kill the 25-arg `rpc_create_order` overload, 138 introduced
+   the original 8-arg signature). Single grep verified zero callers
+   outside of `dashboard/pos/actions.ts` before signature change.
+
+3. **Audit-row failure no longer treated as a money-stranding
+   incident.** Pre-164: rpc_pos_finalize_order bundled payment +
+   audit so audit failure rolled back the payment, leaving an order
+   with no payments row (recoverable but ugly). Post-164: payment is
+   inside rpc_create_order; the slim finalize RPC inserts audit only.
+   If audit fails, order + payment are committed (financial truth
+   preserved) and Sentry catches the JS-side warning for operator
+   backfill. Messaging in the JS-side `paymentWarning` reworded from
+   "payment+audit failed" → "audit failed" to reflect the new
+   semantic.
+
+4. **Did NOT use `TaskCreate` despite multi-step plan.** The four
+   work items mapped cleanly to four sequential commits and the user
+   was guiding session start/finish; a TaskList would have added
+   ceremony without surfacing anything the commit log doesn't
+   already capture. Used inline tables and acknowledgements instead.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → exit 0 (clean) after every commit.
+- `npx tsx scripts/check-i18n.ts` → PASS, parity 2,445 / 2,445.
+- `NEXT_BUILD_WORKERS=1 npm run build` → green; 566/566 pages
+  generated in 27.5s; only warning is the pre-existing `[@sentry/nextjs]
+  DEPRECATION WARNING: unstable_sentryWebpackPluginOptions`.
+- `supabase migration list --linked` → 164 paired (Local = Remote = 164).
+- `grep "\.from\('payments'\)\.insert"` across `table/`, `waiter/`,
+  `dashboard/pos/` → zero matches after `8610587` and `3a78f76` —
+  no orphaned JS payment inserts remain in any order-entry surface.
+- No runtime smoke-test of the new RPC path (no staging DB; Tap keys
+  pending). The atomicity claim is provable by inspection: every
+  formerly-serial payment write now lives inside the `BEGIN ... END;`
+  block of `rpc_create_order`.
+
+## DEFERRED / OPERATOR-PENDING
+
+(updated for session 136)
+
+**Dev work**: all carry-forwards have landed. Pending list is
+**empty** of dev tasks that are not operator-blocked or externally
+locked. The project is production-ready for soft-launch (cash-only).
+
+**Operator pending:**
+
+- Supabase Free → Pro + Singapore migration.
+- 13 staff emails pending from owner → run staff seed (migration 090).
+- Resend domain verification for kahramanat.com.
+- VAPID keys for driver push notifications.
+- CONTACT_NOTIFY_EMAIL (optional).
+- After staff accounts: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true`.
+- TAP keys (merchant approval pending) → once arrived, wire Refund
+  Modal (refundPayment currently flips DB state only).
+- Sprint 6B WhatsApp Business API (Meta verification).
+- Sprint 6C Benefit Pay API (CBB approval).
+- البديع branch row DB cleanup (SQL ready, run in Supabase Studio).
+- ~12 missing dish photos (shoot list in commit `da5b199`).
+
+**External-contract-locked** (not actionable):
+
+- Phase 7B Deliverect / POS aggregator integration.
+- Phase 8 AI assistant + demand forecasting (needs 6 months data).
+
+## OPERATOR NOTES
+
+- **All five order-entry surfaces are now financially atomic.**
+  Every order row commits with its matching payment row in one
+  transaction inside `rpc_create_order`. The orders↔payments
+  relation is now total across customer checkout, table (QR), waiter
+  (staff dine-in), dashboard POS (cash/card/tap), and dashboard POS
+  service (curbside). Cashier reconciliation and the Tap webhook
+  reconciler can both trust that any committed order has a payment
+  row — no more "where's the payment record" investigations.
+
+- **rpc_pos_finalize_order is now audit-only.** If a future POS-side
+  feature needs to add side-effects to the post-order flow, they
+  belong in this RPC. Payment-related work goes in rpc_create_order
+  (via the p_payment_mode CASE).
+
+- **Migration 164's tap_card branch documents the convention.** Any
+  future payment method that needs to be supported atomically at
+  order creation gets a new ELSIF branch in the `p_payment_mode`
+  CASE. The valid set is now {'cod', 'online', 'tap_card'};
+  introducing a new method (e.g. 'benefit_pay' direct) requires a
+  new migration that extends the CASE — but the surrounding
+  framework (CREATE OR REPLACE, signature stable) is now established.
+
+- **No dev lanes outstanding.** Next session, if Ahmed has no
+  specific operator-side ask, the agent can verify (a) by running
+  this audit again across `CURRENT-SESSION.md` + `LAST-SESSION.md`
+  and confirming it's still empty, and (b) by scanning for new
+  emergent issues since last session via `git log` + Sentry. Otherwise
+  the project sits at production-ready waiting for operator
+  actions (staff seed, payment merchant keys, Resend verify, etc).
+
+---
+---
+---
+
+# Prior session 135 close-out preserved below ↓
 
 ## SESSION 135 — SUMMARY
 

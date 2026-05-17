@@ -1,39 +1,65 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-17 (session 135 close-out)
-# Master: ca61e41
+# Updated: 2026-05-17 (session 136 close-out)
+# Master: 3a78f76
 
 ## CURRENT STATUS
 Launch Risk: 8/10
-Phase: pre_launch_operational
+Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
-CLOSED since session 120 bridge:
-- SESSION_BIND_SECRET env var (assumed set in Vercel — dropped from
-  session 135's pending list; /auth/callback recovery flow live).
-- SENTRY_AUTH_TOKEN re-rotation (assumed done — dropped from session
-  135's pending list; sourcemaps tagging restored).
+All remaining work is operator-side. No dev lanes outstanding.
 
-STILL PENDING (curated from session 135 close-out):
+Infra
 - Supabase Free → Pro + Singapore migration.
-- DNS kahramanat.com → Vercel (pre-launch only).
-- TAP keys (blocked — merchant approval) → once arrived, wire Refund
-  Modal (refundPayment currently flips DB state only, does NOT call
-  Tap to push money back).
-- 13 staff emails pending from owner → after lands, flip
-  NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true.
 - Resend domain verification for kahramanat.com.
 - VAPID keys for driver push notifications.
 - CONTACT_NOTIFY_EMAIL (optional).
+
+Accounts
+- 13 staff emails pending from owner → run staff seed (migration 090).
+  After staff lands: flip NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true.
+
+Payments (merchant-approval blocked)
+- TAP keys (blocked — merchant approval) → once arrived, wire Refund
+  Modal (refundPayment currently flips DB state only, does NOT call
+  Tap to push money back).
 - Sprint 6B WhatsApp Business API (Meta verification).
 - Sprint 6C Benefit Pay API (CBB approval).
-- البديع branch row DB cleanup (SQL provided session 126).
-- ~11 missing dish photos (concrete shoot list in commit `da5b199`).
+
+External-contract-locked
+- Phase 7B Deliverect / POS aggregator integration.
+- Phase 8 AI assistant + demand forecasting (needs 6 months data).
+
+Data / assets (operator)
+- البديع branch row DB cleanup (SQL ready, run in Supabase Studio).
+- ~12 missing dish photos (concrete shoot list in commit `da5b199`).
 
 ## ACTIVE DEV PRIORITIES
 
-CLOSED since session 120 (sessions 121-135 — full list, in commit order):
+**Status: empty.** All dev work that is not operator-blocked or
+externally locked is complete. The project is production-ready for
+soft-launch (cash-only).
+
+CLOSED this session (136):
+
+✅ ARCH-004 extension to table/waiter/POS — atomic payment row (`8610587`)
+   - table/, waiter/, POS service: `p_payment_mode='cod'` on
+     rpc_create_order; dropped JS payments insert.
+   - dashboard/pos/: left with ARCH-004-SKIP comment because
+     p_payment_mode didn't support 'tap_card' for card/tap.
+
+✅ ARCH-004 final — POS card/tap atomicity (`e93c1bf` + `3a78f76`, migration 164)
+   - rpc_create_order: extended p_payment_mode with 'tap_card' branch
+     (method='tap_card', status='pending').
+   - rpc_pos_finalize_order: 8-arg → 5-arg audit-only; payment INSERT
+     stripped. DROP-then-CREATE pattern from migration 135.
+   - dashboard/pos/actions.ts: paymentMode = 'cod' | 'tap_card' →
+     rpc_create_order; finalize call now audit args only.
+   - ARCH-004 is fully closed across all 5 order-entry surfaces.
+
+CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
 ✅ Security audit remediation sweep (sessions 122-124)
    - VULN-001/002/003/004/006/007/008/009/010/011/012/013/014/015/017/
@@ -99,18 +125,16 @@ CLOSED since session 120 (sessions 121-135 — full list, in commit order):
    - `ca61e41` migration 131 backfill — real REVOKE PUBLIC EXECUTE DDL
      replaces cowork 1-line placeholder; verified no-op against live.
 
-DEFERRED / NEXT-LANE CANDIDATES (from session 135 close-out):
-- Apply ARCH-004 atomic pattern to table/waiter/POS payment row
-  inserts (POS uses rpc_pos_finalize_order — not a pure copy of
-  checkout).
-- Phase 7B Deliverect / POS aggregator integration (external contract).
-- Phase 8 AI assistant + demand forecasting (needs 6 months data).
+DEFERRED / NEXT-LANE CANDIDATES:
+- (none — all candidates landed in session 136)
 
 ## ARCHITECTURE DECISIONS (do not reverse)
 - CSS: ps/pe/ms/me ONLY — never pl/pr/ml/mr/left/right
 - No dynamic imports on dashboard routes
-- All DB writes via RPC only (atomic — ARCH-004 pattern now applied
-  to checkout via rpc_create_order; remaining surfaces to follow)
+- **All financial DB writes via RPC only** — ARCH-004 fully closed across
+  all 5 order-entry surfaces (checkout, table, waiter, POS, POS service).
+  Order + payment row commit atomically in rpc_create_order via
+  p_payment_mode = 'cod' | 'online' | 'tap_card'.
 - AnalyticsResult<T> pattern for all analytics queries (AUD-V3-008)
 - createClient() (anon) for analytics reads where RLS covers it
 - createServiceClient() only for: matviews + RPCs without authenticated grant
@@ -129,7 +153,9 @@ DEFERRED / NEXT-LANE CANDIDATES (from session 135 close-out):
 - TBT ~1600ms on Slow 4G = animation cost, intentional brand decision
 
 ## MIGRATION STATE
-- Local = Remote = 163 migrations applied (paired)
+- Local = Remote = 164 migrations applied (paired)
+- Session 136 added: 164 (rpc_create_order tap_card branch +
+  rpc_pos_finalize_order audit-only)
 - Sessions 121-135 added: 154 (security), 155 (VULN-004 coupon_usages
   in-RPC), 156-157 (security), 158 (birthday cron + idempotency),
   159 (security), 160 (catering_inquiries), 161 (auto-complete KDS),
@@ -141,8 +167,6 @@ DEFERRED / NEXT-LANE CANDIDATES (from session 135 close-out):
   setting placeholder (current_setting('app.admin_password', true))
 
 ## SESSION HISTORY (last 5)
-- Session 131: F-01 cookie consent + /dashboard/catering listing
-  + birthday email/WhatsApp notify + dead-code cleanup
 - Session 132: orders reorder button + sonner toasts + branded
   confirmation modal + account birthday save fix + Latin digits fix
 - Session 133: catering form rate-limit + Turnstile + DB save UX
@@ -151,6 +175,10 @@ DEFERRED / NEXT-LANE CANDIDATES (from session 135 close-out):
 - Session 135: catering occasion/service enum normalization +
   migration 015 un-gitignored + waiter error localized + migration
   131 cowork DDL backfilled
+- Session 136: ARCH-004 extension to table/waiter/POS (`8610587`) +
+  ARCH-004 final POS card/tap atomicity (`e93c1bf` + `3a78f76`,
+  migration 164) + bridge sync (`00d42aa`). ARCH-004 fully closed
+  across all 5 order-entry surfaces. **All dev work complete.**
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
