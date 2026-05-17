@@ -3051,5 +3051,25 @@
     "viewOrder": "View Order",
     "hoursAgo": "{hours, plural, =0 {Just now} one {# hour ago} other {# hours ago}}",
     "andMore": "+{count} more"
+  },
+  "email": {
+    "birthday": {
+      "subject": "Happy Birthday from Kahramana Baghdad",
+      "heading": "Happy Birthday!",
+      "subheading": "Wishing you a wonderful day, {name}",
+      "pointsAwarded": "We've added {points} bonus points as our gift to you.",
+      "balance": "Your current balance: {balance} points",
+      "tier": "Loyalty tier: {tier}",
+      "tierNames": {
+        "bronze":   "Bronze",
+        "silver":   "Silver",
+        "gold":     "Gold",
+        "platinum": "Platinum"
+      },
+      "accountCta": "Visit My Account",
+      "whatsappCta": "Continue on WhatsApp",
+      "whatsappMessage": "Hello! I just received my Kahramana Baghdad birthday email — thank you so much!",
+      "footnote": "To stop receiving these messages, remove your birthday from your account settings."
+    }
   }
 }

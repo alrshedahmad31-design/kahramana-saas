@@ -7,6 +7,7 @@ import ResetPassword from '../../../emails/templates/ResetPassword'
 import OrderConfirmation, { type OrderItem } from '../../../emails/templates/OrderConfirmation'
 import OrderStatusUpdate from '../../../emails/templates/OrderStatusUpdate'
 import ContactNotification from '../../../emails/templates/ContactNotification'
+import BirthdayBonus, { type BirthdayCopy } from '../../../emails/templates/BirthdayBonus'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM = process.env.EMAIL_FROM ?? 'كهرمانة <noreply@kahramanat.com>'
@@ -106,6 +107,23 @@ export async function sendContactNotification(props: {
     to,
     `رسالة جديدة من ${props.name} — نموذج التواصل`,
     ContactNotification(props) as React.ReactElement,
+  )
+}
+
+export async function sendBirthdayBonus(
+  to: string,
+  subject: string,
+  props: {
+    ar:          BirthdayCopy
+    en:          BirthdayCopy
+    accountUrl:  string
+    whatsappUrl: string
+  },
+): Promise<SendResult> {
+  return send(
+    to,
+    subject,
+    BirthdayBonus(props) as React.ReactElement,
   )
 }
 
