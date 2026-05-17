@@ -26,6 +26,7 @@
 // `notified` + `failed` counts so an operator can see what landed.
 
 import { NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import { getTranslations } from 'next-intl/server'
 import * as Sentry from '@sentry/nextjs'
 import { createServiceClient } from '@/lib/supabase/server'
@@ -71,25 +72,37 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'cron_secret_unset' }, { status: 503 })
   }
 
+  // T2-4: constant-time compare to neutralize early-mismatch timing oracles.
+  // Same pattern as src/lib/payments/tap-client.ts:verifyWebhookSignature.
   const auth = req.headers.get('authorization') ?? ''
-  if (auth !== `Bearer ${expected}`) {
+  const expectedHeader = `Bearer ${expected}`
+  const expectedBuf = Buffer.from(expectedHeader)
+  const actualBuf   = Buffer.from(auth)
+  const lengthsMatch = expectedBuf.length === actualBuf.length
+  const valuesMatch  = lengthsMatch && timingSafeEqual(expectedBuf, actualBuf)
+  if (!valuesMatch) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
   const cutoff = new Date(Date.now() - LOOKBACK_MS).toISOString()
 
   const supabase = createServiceClient()
+  // T2-6: filter by `notified_at IS NULL` so a Vercel Cron retry (timeout,
+  // transient 5xx) never re-sends to a customer who already got the email
+  // in this window. The 2-hour `created_at` lookback still bounds the scan.
   const { data: credits, error } = await supabase
     .from('birthday_point_credits')
     .select('id, customer_id, year, points_credited, created_at')
     .gte('created_at', cutoff)
+    .is('notified_at', null)
     .order('created_at', { ascending: false })
 
   if (error) {
-    return NextResponse.json(
-      { error: 'select_failed', message: error.message },
-      { status: 500 },
-    )
+    // T2-5: never echo Postgres error text to the wire — log via Sentry
+    // and return a generic code so an attacker probing the route can't
+    // map DB internals.
+    Sentry.captureException(error, { tags: { stage: 'birthday_notify.select' } })
+    return NextResponse.json({ error: 'select_failed' }, { status: 500 })
   }
 
   const rows = credits ?? []
@@ -150,6 +163,22 @@ export async function GET(req: Request) {
       })
 
       if (result.success) {
+        // T2-6: mark this credit row as notified so cron retries skip it.
+        // Best-effort UPDATE — the send already succeeded; an UPDATE failure
+        // here just means a duplicate is possible on next retry. Logged for
+        // observability so an operator can spot it.
+        // Cast: notified_at is a fresh column (migration 172); types.ts has
+        // not been regenerated. The DB-side schema is the source of truth.
+        const { error: stampErr } = await supabase
+          .from('birthday_point_credits')
+          .update({ notified_at: new Date().toISOString() } as unknown as Record<string, never>)
+          .eq('id', credit.id)
+        if (stampErr) {
+          Sentry.captureException(stampErr, {
+            tags: { stage: 'birthday_notify.stamp' },
+            extra: { credit_id: credit.id },
+          })
+        }
         notified += 1
       } else {
         failed += 1
