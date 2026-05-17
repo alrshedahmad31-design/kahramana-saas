@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { requireDashboardSection, isDashboardGuardError } from '@/lib/auth/dashboard-guards'
 import { BRANCH_LIST } from '@/constants/contact'
 import PromotionsClient from './PromotionsClient'
@@ -23,13 +23,9 @@ export default async function PromotionsPage({ params }: PageProps) {
     redirect(`${prefix}/dashboard`)
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) redirect(`${prefix}/dashboard`)
-
-  const supabase = createSupabaseClient(url!, key!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  // P1-29: anon client — RLS on promotions (migration 086) already restricts
+  // branch_manager / marketing to their own branch + globals (USING clause).
+  const supabase = await createClient()
 
   const isGlobalAdmin = user.role === 'owner' || user.role === 'general_manager'
   let query = supabase
@@ -37,7 +33,7 @@ export default async function PromotionsPage({ params }: PageProps) {
     .select('id, branch_id, name_ar, name_en, type, config, starts_at, ends_at, is_active, max_uses, use_count, created_at')
     .order('created_at', { ascending: false })
 
-  // branch_manager / marketing see their own branch + globals.
+  // Defense-in-depth: explicit branch filter alongside RLS USING clause.
   if (!isGlobalAdmin && user.branch_id) {
     query = query.or(`branch_id.is.null,branch_id.eq.${user.branch_id}`)
   }

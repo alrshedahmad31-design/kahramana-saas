@@ -12,7 +12,7 @@ import {
   getSecondaryMetrics,
   getLaborCostMetrics, getMenuEngineeringMatrix,
 } from '@/lib/analytics/queries'
-import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
+import { firstAnalyticsFailure, captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import { AnalyticsErrorState } from '@/components/analytics/AnalyticsErrorState'
 import { getTranslations } from 'next-intl/server'
 import { generateInsights } from '@/lib/analytics/insights'
@@ -76,6 +76,15 @@ export default async function AnalyticsPage({ params, searchParams }: Props) {
   ])
   if (failure || !metricsRes.ok || !dailySalesRes.ok || !topItemsRes.ok
        || !hourlyRes.ok || !branchesRes.ok || !laborRes.ok || !menuMatrixRes.ok) {
+    // P1-28: explicit aggregate-failure capture alongside the UI fallback.
+    // firstAnalyticsFailure already reports per-result errors, but the
+    // aggregate "analytics page failed" event is what oncall needs first.
+    captureAnalyticsError({
+      code:      failure?.code ?? 'AGGREGATE_FAILURE',
+      message:   failure?.message ?? 'Analytics aggregate failure',
+      function:  failure?.function ?? 'analytics.page.aggregate',
+      timestamp: new Date().toISOString(),
+    })
     return (
       <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
         <AnalyticsErrorState functionName={failure?.function} />

@@ -148,7 +148,10 @@ function daysBetween(a: string, b: string): number {
 export async function createLeaveRequest(input: LeaveRequestInput): Promise<ActionResult> {
   const caller = await getSession()
   if (!caller) return { success: false, error: 'Unauthorized' }
+  // P1-32: server-side self-id verification — never trust input.staff_id alone.
+  // Staff can only create leave requests for themselves.
   if (caller.id !== input.staff_id) return { success: false, error: 'Unauthorized' }
+  const verifiedStaffId = caller.id
 
   const startParsed = dateOnlySchema.safeParse(input.start_date)
   const endParsed   = dateOnlySchema.safeParse(input.end_date)
@@ -175,9 +178,11 @@ export async function createLeaveRequest(input: LeaveRequestInput): Promise<Acti
     return { success: false, error: `Leave duration cannot exceed ${LEAVE_MAX_DURATION} days` }
   }
 
+  // RPC-PENDING: no rpc_create_leave_request yet — service client write
+  // gated by the explicit verifiedStaffId guard above (P1-32).
   const service = await createServiceClient()
   const { error } = await service.from('leave_requests').insert({
-    staff_id:   input.staff_id,
+    staff_id:   verifiedStaffId,
     leave_type: input.leave_type,
     start_date: input.start_date,
     end_date:   input.end_date,
@@ -187,16 +192,19 @@ export async function createLeaveRequest(input: LeaveRequestInput): Promise<Acti
   })
 
   if (error) return { success: false, error: error.message }
-  revalidateProfile(input.staff_id)
+  revalidateProfile(verifiedStaffId)
   return { success: true }
 }
 
 // ── approveTimeEntry ──────────────────────────────────────────────────────────
 
 export async function approveTimeEntry(entryId: string): Promise<ActionResult> {
-  const caller = await getSession()
-  if (!caller || !['owner','general_manager','branch_manager'].includes(caller.role ?? '')) {
-    return { success: false, error: 'Unauthorized' }
+  // P1-31: use the unified RBAC surface instead of an ad-hoc role array.
+  let caller
+  try {
+    caller = await requireDashboardSection('staff')
+  } catch (error) {
+    return { success: false, error: getDashboardGuardErrorMessage(error) }
   }
 
   const service = await createServiceClient()

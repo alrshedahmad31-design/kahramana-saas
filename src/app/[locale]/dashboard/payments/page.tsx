@@ -3,7 +3,9 @@ import { Suspense } from 'react'
 import { getSession } from '@/lib/auth/session'
 import { canAccessPayments } from '@/lib/auth/rbac'
 import { createClient } from '@/lib/supabase/server'
+import { getTranslations } from 'next-intl/server'
 import type { PaymentMethod, PaymentStatus } from '@/lib/supabase/custom-types'
+import type { Tables } from '@/lib/supabase/types'
 import PaymentStatsCards from '@/components/payments/PaymentStatsCards'
 import PaymentFilters from '@/components/payments/PaymentFilters'
 import PaymentsTable from '@/components/payments/PaymentsTable'
@@ -23,6 +25,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
   const sp         = await searchParams
   const isAr       = locale === 'ar'
   const prefix     = locale === 'en' ? '/en' : ''
+  const t          = await getTranslations('paymentsPage')
 
   const user = await getSession()
   if (!user) redirect(`/${locale}/login`)
@@ -52,11 +55,11 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
     // Short-circuit: branch with no orders → nothing to show
     if (scopedOrderIds.length === 0) {
       return (
-        <PageShell isAr={isAr} prefix={prefix} isGlobalAdmin={isGlobalAdmin}>
+        <PageShell isAr={isAr} prefix={prefix} isGlobalAdmin={isGlobalAdmin} title={t('title')}>
           <PaymentStatsCards total={0} revenue={0} successRate="0.0" failedCount={0} isAr={isAr} />
           <div className="rounded-2xl border border-brand-border bg-brand-surface p-12 text-center">
             <p className="font-satoshi text-brand-muted text-sm">
-              {isAr ? 'لا توجد معاملات لهذا الفرع' : 'No transactions for this branch'}
+              {t('emptyBranch')}
             </p>
           </div>
         </PageShell>
@@ -101,10 +104,26 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
       .order('created_at', { ascending: false })
       .limit(50)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cashHandovers = (handoversRaw ?? []).map((h: any) => ({
+    // P1-30: shape of the join is derived from generated Tables<'cash_handovers'>
+    // + the staff_basic alias. PostgREST returns the related row as an object
+    // when the FK relationship is 1:1 — keep both shapes via union for safety.
+    type HandoverWithDriver = Pick<
+      Tables<'cash_handovers'>,
+      'id' | 'driver_id' | 'expected_amount' | 'actual_amount' | 'difference'
+      | 'manager_confirmed' | 'order_ids' | 'created_at'
+    > & {
+      staff_basic: { name: string | null } | { name: string | null }[] | null
+    }
+
+    const pickStaff = (s: HandoverWithDriver['staff_basic']): string | null => {
+      if (!s) return null
+      if (Array.isArray(s)) return s[0]?.name ?? null
+      return s.name ?? null
+    }
+
+    cashHandovers = ((handoversRaw ?? []) as unknown as HandoverWithDriver[]).map((h) => ({
       id:                h.id,
-      driver_name:       h.staff_basic?.name ?? h.driver_id.slice(0, 8),
+      driver_name:       pickStaff(h.staff_basic) ?? h.driver_id.slice(0, 8),
       expected_amount:   Number(h.expected_amount),
       actual_amount:     Number(h.actual_amount),
       difference:        h.difference != null ? Number(h.difference) : null,
@@ -115,7 +134,7 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
   }
 
   return (
-    <PageShell isAr={isAr} prefix={prefix} isGlobalAdmin={isGlobalAdmin}>
+    <PageShell isAr={isAr} prefix={prefix} isGlobalAdmin={isGlobalAdmin} title={t('title')}>
       <PaymentStatsCards
         total={totalTx}
         revenue={revenue}
@@ -146,18 +165,20 @@ function PageShell({
   isAr,
   prefix: _prefix,
   isGlobalAdmin: _isGlobalAdmin,
+  title,
   children,
 }: {
   isAr: boolean
   prefix: string
   isGlobalAdmin: boolean
+  title: string
   children: React.ReactNode
 }) {
   return (
     <div className="p-6 max-w-7xl mx-auto flex flex-col gap-6" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="flex items-center justify-between">
         <h1 className={`text-2xl font-black text-brand-text ${isAr ? 'font-cairo' : 'font-editorial'}`}>
-          {isAr ? 'المدفوعات' : 'Payments'}
+          {title}
         </h1>
       </div>
       {children}
