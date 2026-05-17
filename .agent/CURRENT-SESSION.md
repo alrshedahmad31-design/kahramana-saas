@@ -39,7 +39,34 @@ STILL PENDING:
 - After staff accounts: flip NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true
 - Send chef recipe Excel for inventory import (pending since session 38)
 - البديع branch row DB cleanup (one-shot UPDATE SQL provided session 126)
-- ~11 missing dish photos
+- Missing dish photos — concrete shoot list (auditied session 135):
+  All 175 menu_items have an image_url set and every file resolves;
+  the gap is 12 items reusing another dish's photo. Photographer brief:
+    Strict mismatches (12):
+      1. pastry-sausage-cheese-labnah   — Cheese & Sausage & Labnah Pie
+      2. pastry-sausage-labnah          — Sausage & Labnah Pie
+      3. pastry-honey-labnah            — Honey & Labnah Pie
+      4. pastry-labnah-cheese           — Labnah & Cheese Pie
+      5. pastry-zaatar-cheese           — Zaatar & Cheese Pie
+      6. pastry-zaatar-labnah           — Zaatar & Labnah Pie
+      7. pastry-chicken-spinach         — Chicken & Spinach Pie
+      8. pastry-meat-spinach            — Meat & Spinach Pie
+      9. pastry-spring-pie              — Kahramana Spring Pie
+                                          (currently borrows vegetable-pizza.webp)
+      10. main-rotisserie-chicken       — Premium Rotisserie Chicken
+                                          (currently borrows charcoal-grilled-chicken.webp)
+      11. main-kharof                   — Whole Lamb (Feasts)
+                                          (currently borrows bahraini-lamb-quzi.webp)
+      12. shawarma-lebnani-meat         — Meat Shawarma (Lebanese Bread)
+                                          (currently borrows meat-chapati-shawarma.webp)
+    Borderline / nice-to-have (4):
+      - pastry-akkawi                   — Royal Akkawi Cheese Pie
+      - grills-chicken-grills           — Chicken Grill Plates
+      - shawarma-arabic-mix             — Arabi Mix Shawarma Plate
+      - hot-apps-dolma                  — Baghdadi Dolma (Appetizer-size)
+  Source-of-truth for image_url is the menu_items DB column. Upload
+  webp files to `public/assets/gallery/<slug>.webp` and update the
+  matching row via Studio (or migration) once shots are in.
 
 ## ACTIVE DEV PRIORITIES (in order)
 
