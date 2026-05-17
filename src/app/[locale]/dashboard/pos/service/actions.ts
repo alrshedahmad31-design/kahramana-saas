@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
-import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { fetchCheckoutPriceMap, resolveOrderItemPrice } from '@/lib/checkout-pricing.server'
 import {
@@ -16,12 +16,13 @@ import {
 import { resolveBestPromotion } from '@/lib/promotions/server'
 import type { StaffRole } from '@/lib/supabase/custom-types'
 
+// P1-19: aligned with SECTION_ROLES.pos (page gate) — waiter has its own
+// dedicated dashboard surface and does not use POS service mode.
 const SERVICE_ROLES: readonly StaffRole[] = [
   'owner',
   'general_manager',
   'branch_manager',
   'cashier',
-  'waiter',
 ] as const
 
 const modifierSchema = z.object({
@@ -99,19 +100,16 @@ export async function createServiceOrder(
   // Fail-closed branch scope for scoped roles. NULL branch_id is REJECTED
   // (not treated as wildcard) — see pos/actions.ts for the same pattern.
   if (
-    caller.role === 'branch_manager' || caller.role === 'cashier' || caller.role === 'waiter'
+    caller.role === 'branch_manager' || caller.role === 'cashier'
   ) {
     if (!caller.branch_id || caller.branch_id !== data.branchId) {
       return { error: 'Forbidden: branch scope violation' }
     }
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return { error: 'Configuration error' }
-  const supabase: SupabaseClient = createSupabaseClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  // P1-20: use the shared service-role wrapper instead of raw createClient
+  // (matches sibling pos/actions.ts).
+  const supabase = await createServiceClient()
 
   type ModifierSnapshot = z.infer<typeof modifierSchema>
   const allOptionIds = Array.from(new Set(
@@ -242,8 +240,8 @@ export async function createServiceOrder(
     p_source:                 'waiter',
     p_payment_method:         'cash',
     p_status:                 'accepted',
-    p_table_number:           data.tableNumber,
-    p_promotion_id:           promo?.promotion_id ?? null,
+    p_table_number:           data.tableNumber ?? undefined,
+    p_promotion_id:           promo?.promotion_id ?? undefined,
     p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
     p_payment_mode:           'cod',
   })

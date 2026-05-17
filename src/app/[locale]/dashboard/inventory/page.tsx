@@ -70,8 +70,13 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
   const { getActiveBranches } = await import('@/lib/branches/queries')
   const branches = await getActiveBranches()
 
-  // Determine active branch
-  const activeBranchId = branch ?? branches?.[0]?.id ?? null
+  // P1-21: clamp ?branch= for non-global roles — never trust caller-supplied
+  // branch identifiers when the role is branch-bound. Same pattern as
+  // /waiter/page.tsx:52.
+  const requestedBranch = branch ?? branches?.[0]?.id ?? null
+  const activeBranchId = isGlobal
+    ? requestedBranch
+    : (user.branch_id ?? null)
 
   // Parallel fetches
   const [

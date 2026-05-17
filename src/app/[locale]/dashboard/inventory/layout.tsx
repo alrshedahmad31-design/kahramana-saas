@@ -4,7 +4,12 @@ import { getActiveBranches }   from '@/lib/branches/queries'
 import { BranchProvider }  from '@/components/inventory/BranchContext'
 import InventoryBreadcrumb from '@/components/inventory/InventoryBreadcrumb'
 
-const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_manager'] as const
+// P1-22: 'kitchen' is whitelisted on the recipes/ingredients/waste sections
+// in SECTION_ROLES (rbac-ui.ts). Layout gate must allow them to reach those
+// pages — individual pages still enforce per-section role checks.
+const ALLOWED_ROLES = [
+  'owner', 'general_manager', 'branch_manager', 'inventory_manager', 'kitchen',
+] as const
 
 interface Props {
   children: React.ReactNode
