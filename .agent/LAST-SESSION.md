@@ -1,7 +1,108 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 130: P2 inventory recipes import + P3 birthday/QR + B-001/BUG-001 Riffa hours + operator actions (Sentry/SESSION_BIND_SECRET). Master `2f5c80d` → `e7ab0cb`.
+> Session 131: P4-1 dead-code cleanup — `ForgotPasswordClient.tsx` removed. Master `e7ab0cb` → `c4fe9a8`.
 > Date: 2026-05-17
 > Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 131 — SUMMARY
+
+One commit on master. No migrations. Gates clean: `npx tsc --noEmit`.
+No i18n touched (parity script not run — nothing to check).
+
+Theme: clear a single deferred item that's been carried since session
+101. The CLAUDE-AI-CONTEXT.md hand-off named `SetPasswordClient.tsx`
+as the orphaned file; investigation showed it had already been
+removed in an earlier pass (only docs still referenced it). The
+sibling `ForgotPasswordClient.tsx` was the actual orphan — page
+mounts `ForgotPasswordForm` from `@/components/auth/`, and grep
+across `src/` + `app/` found zero references to the `Client`
+variant. Deleted; 144 LOC gone.
+
+No operator actions cleared this session. The three from session 130
+(`SESSION_BIND_SECRET`, `SENTRY_AUTH_TOKEN` rotation, redeploy) stay
+recorded as done.
+
+## COMMITS (1 on master, not pushed by Claude — push at operator discretion)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `c4fe9a8` | chore | **P4-1 ForgotPasswordClient.tsx removed (144 LOC).** `src/app/[locale]/forgot-password/page.tsx` mounts `ForgotPasswordForm` from `@/components/auth/ForgotPasswordForm`. The sibling `ForgotPasswordClient.tsx` in the same route folder had zero references in source — verified via `grep -r ForgotPasswordClient src/ app/` returning only the file itself and `.agent/phase-state.json` (a stale note). `git rm` + `tsc --noEmit` clean. `SetPasswordClient.tsx` was named in the carry-forward note but Glob confirmed the file no longer exists — already cleaned in a prior pass. |
+
+## INFRA NOTES
+
+- **No new env vars introduced.**
+- **No migrations.** Local↔Remote still paired at 162.
+- **No new dependencies.**
+- **No i18n changes** — parity stays at 2,394 ↔ 2,394.
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **Verified the carry-forward note before deleting.** Memory and
+   docs both named `SetPasswordClient.tsx` as the orphan. Glob first
+   — file was already gone. Then grepped for the actual orphan
+   (`ForgotPasswordClient`) and confirmed `page.tsx` mounts a
+   *different* component (`ForgotPasswordForm`, from `components/auth/`).
+   Removing the wrong file based on stale docs would have been
+   silently destructive.
+
+2. **`git add` only the deletion.** `sync-context.ps1` had clobbered
+   `.agent/CURRENT-SESSION.md` at session start with stale
+   session-120 content from `CLAUDE-AI-CONTEXT.md`. Left that drift
+   unstaged in the cleanup commit per `git add -p` project rule —
+   sibling work doesn't ride along. Resolved separately in this
+   close-out commit.
+
+3. **No build run.** `tsc --noEmit` was sufficient gate for a pure
+   deletion of a file with no inbound references. Build would have
+   passed but added several minutes for no new signal.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → clean
+- `grep -r ForgotPasswordClient src/ app/` (via Grep tool) → only
+  the deleted file itself + stale `phase-state.json` reference
+
+## DEFERRED / OPERATOR-PENDING
+
+(updated for session 131)
+- Supabase Free → Pro + Singapore migration.
+- TAP keys (merchant approval pending).
+- **Staff accounts — 13 staff emails pending from owner** (blocks
+  waiter/cashier activation + the QR loyalty flag flip).
+- **Resend domain verification for kahramanat.com** (transactional
+  email delivery).
+- **VAPID keys for driver push notifications** (Web Push subscription
+  on `DriverPWAShell`).
+- **`CONTACT_NOTIFY_EMAIL`** (optional — contact-form forwarding
+  destination).
+- `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN` flip after staff accounts.
+- WhatsApp/email birthday notification surface (cron + DB done;
+  UI deferred).
+- `/dashboard/catering` route (migration 160 + server action shipped;
+  no UI).
+- **P4 follow-up: ~15 `as any` sites** (AUD-V3-007/011).
+- F-01 consent check (Chrome incognito → confirm GA/Clarity blocked
+  pre-consent).
+- Extend `localizeCheckoutError` to remaining raw-English errors.
+- `HIDDEN_BRANCHES` cleanup follow-up (~30 redundant `length > 0`
+  guards now that the array is empty).
+- ~~`SetPasswordClient.tsx` dead-code cleanup~~ — **DONE in an
+  earlier pass; carry-forward note was stale.**
+- ~~`ForgotPasswordClient.tsx` dead-code cleanup~~ — **DONE
+  2026-05-17 (P4-1, c4fe9a8).**
+- `git push` of `c4fe9a8` (and the prior session-130 commits
+  `786f549..e7ab0cb` if still local) is at operator discretion —
+  Claude did not push.
+
+## OPERATOR NOTES
+
+- The forgot-password flow continues to use
+  `@/components/auth/ForgotPasswordForm`. No user-visible change.
+
+---
+---
+---
+
+# Prior session 130 close-out preserved below ↓
 
 ## SESSION 130 — SUMMARY
 

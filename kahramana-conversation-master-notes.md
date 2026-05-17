@@ -1,7 +1,7 @@
 # Kahramana Baghdad — Conversation Master Notes
 
 **Generated:** 2026-05-13 (Session 93)
-**Last refresh:** 2026-05-17 (covers through Session 129, master `2f5c80d`)
+**Last refresh:** 2026-05-17 (covers through Session 131, master `c4fe9a8`)
 **Language:** Arabic-first
 **Purpose:** Consolidated Markdown record of this conversation: decisions, prompts, architecture notes, implementation guidance, risks, integrations, and next steps for the Kahramana Baghdad website/platform project.
 
@@ -637,6 +637,7 @@ npm run dev
 | 128 | 2026-05-16 | Waiter QR member scanner scaffold (flag OFF), migration 162 `customer_profiles.membership_id` STORED column + RLS, inventory alert duplicate-key fix, checkout `points_over_cap` localization |
 | 129 | 2026-05-16 | Points redemption auto-cap UX (UI now mirrors server 50% cap), cart drawer "إضافة المزيد" stops navigating to /menu, driver dashboard repeating sound + browser Notification + pulsing card for unacknowledged ready orders, hardened `supabase/client.ts` env-var failure mode, `.env.local` copied into fresh tree |
 | 130 | 2026-05-17 | P2-1 chef Excel recipes import (`/dashboard/inventory/recipes/import`, service-role insert + audit log), P2-2 mapped-recipes banner actionable (DISTINCT slug count, owner/GM/inventory_manager gate), B-001 Riffa closes 01:00→02:00 across all surfaces, P3-1 BirthdayGiftCard reads `loyalty_config.birthday_bonus_points` (migration 158 was already complete; UI wired via `getLoyaltyConfig` v1→v2 cache bump), P3-2 QR loyalty scan flag audit (off-path verified clean, activation comment added — flag stays OFF), BUG-001 Riffa opens 19:00→07:00 (operator source-of-truth BRANCH_CONTACTS.md had been correct all along; `isOpen()` logic verified sound). Operator cleared `SESSION_BIND_SECRET` + rotated `SENTRY_AUTH_TOKEN` + redeployed. Master `2f5c80d` → `e7ab0cb`. No migrations. |
+| 131 | 2026-05-17 | P4-1 dead-code cleanup — `src/app/[locale]/forgot-password/ForgotPasswordClient.tsx` removed (144 LOC). `page.tsx` mounts `ForgotPasswordForm` from `@/components/auth/`; the `Client` sibling had zero references in `src/` / `app/`. The carry-forward note named `SetPasswordClient.tsx` as the orphan — Glob confirmed that file was already removed in an earlier pass. Verified via grep before delete to avoid silently removing the wrong file. Master `e7ab0cb` → `c4fe9a8`. No migrations. No i18n changes. `tsc --noEmit` clean. |
 
 ---
 
