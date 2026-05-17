@@ -1220,7 +1220,20 @@
     "backLabel": "رجوع",
     "refreshLabel": "تحديث",
     "liveLabel": "متصل",
-    "offlineLabel": "منقطع"
+    "offlineLabel": "منقطع",
+    "errors": {
+      "unauthorized": "غير مصرّح",
+      "accessRestricted": "الوصول إلى شاشة المطبخ غير مسموح",
+      "cannotAdvance": "لا يمكن تقدّم الطلب من حالة {status}",
+      "orderNotFound": "الطلب غير موجود",
+      "stale": "تغيّرت حالة الطلب — حدّث الشاشة ثم أعد المحاولة",
+      "insufficientPermissions": "صلاحياتك لا تسمح بتغيير الحالة",
+      "deliveryDriverOnly": "طلبات التوصيل يجب أن يديرها السائق",
+      "wrongBranch": "الطلب يتبع فرعاً آخر",
+      "illegalTransition": "انتقال غير مسموح: {from} ← {to}",
+      "noBranch": "الموظف غير مرتبط بفرع",
+      "rpcFailed": "تعذّر تحديث الحالة — حاول مرة أخرى"
+    }
   },
   "driver": {
     "title": "توصيلاتي",

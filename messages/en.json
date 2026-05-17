@@ -1220,7 +1220,20 @@
     "backLabel": "Back",
     "refreshLabel": "Sync",
     "liveLabel": "LIVE",
-    "offlineLabel": "OFFLINE"
+    "offlineLabel": "OFFLINE",
+    "errors": {
+      "unauthorized": "Unauthorized",
+      "accessRestricted": "KDS access restricted",
+      "cannotAdvance": "Cannot advance from {status}",
+      "orderNotFound": "Order not found",
+      "stale": "Order status changed — refresh and try again",
+      "insufficientPermissions": "Insufficient permissions to change status",
+      "deliveryDriverOnly": "Delivery orders must be handled by a driver",
+      "wrongBranch": "Order belongs to a different branch",
+      "illegalTransition": "Illegal transition: {from} → {to}",
+      "noBranch": "Staff not assigned to a branch",
+      "rpcFailed": "Status update failed — please try again"
+    }
   },
   "driver": {
     "title": "My Deliveries",

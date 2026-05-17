@@ -1,9 +1,10 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
+import { getTranslations } from 'next-intl/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getDashboardGuardErrorMessage, requireDashboardSession } from '@/lib/auth/dashboard-guards'
 import { canAccessKDS, canUpdateOrderStatus } from '@/lib/auth/rbac'
-import { toSafeError } from '@/lib/utils/safe-error'
 import type { OrderStatus, KDSStation, KDSItemStatus, KDSOrder } from '@/lib/supabase/custom-types'
 
 // Migration 089's UNIQUE(item_id) made order_items → order_item_station_status
@@ -32,10 +33,20 @@ const ADVANCE: Partial<Record<OrderStatus, OrderStatus>> = {
   ready:     'completed',
 }
 
+type RpcOrderStatusResult =
+  | { ok: true;  status: OrderStatus }
+  | { ok: false; code: string }
+
+function isRpcOrderResult(value: unknown): value is RpcOrderStatusResult {
+  return typeof value === 'object' && value !== null && 'ok' in value
+}
+
 export async function advanceOrderStatus(
   orderId:       string,
   currentStatus: OrderStatus,
 ): Promise<AdvanceResult> {
+  const t = await getTranslations('kds.errors')
+
   let caller
   try {
     caller = await requireDashboardSession()
@@ -44,40 +55,76 @@ export async function advanceOrderStatus(
   }
 
   if (!canAccessKDS(caller)) {
-    return { success: false, error: 'Unauthorized: KDS access restricted' }
+    return { success: false, error: t('accessRestricted') }
   }
 
   const nextStatus = ADVANCE[currentStatus]
-  if (!nextStatus) return { success: false, error: `Cannot advance from ${currentStatus} status` }
+  if (!nextStatus) return { success: false, error: t('cannotAdvance', { status: currentStatus }) }
 
-  const supabase = await createServiceClient()
-  const { data: order, error: fetchError } = await supabase
+  // Service-role read for the pre-RPC snapshot — RLS would block kitchen/
+  // branch_manager from reading orders outside their station's status set.
+  const service = await createServiceClient()
+  const { data: order, error: fetchError } = await service
     .from('orders')
     .select('id, branch_id, status, order_type')
     .eq('id', orderId)
     .single()
 
-  if (fetchError || !order) return { success: false, error: 'Order not found' }
+  if (fetchError || !order) return { success: false, error: t('orderNotFound') }
   if (order.status !== currentStatus) {
-    return { success: false, error: 'Order status changed. Refresh and try again.' }
+    return { success: false, error: t('stale') }
   }
   if (!canUpdateOrderStatus(caller, order, nextStatus)) {
-    return { success: false, error: 'Unauthorized: Insufficient permissions to change status' }
+    return { success: false, error: t('insufficientPermissions') }
   }
 
   if (currentStatus === 'ready' && order.order_type === 'delivery') {
-    return { success: false, error: 'Delivery orders must be handled by a driver.' }
+    return { success: false, error: t('deliveryDriverOnly') }
   }
 
-  const { error } = await supabase
-    .from('orders')
-    .update({ status: nextStatus, updated_at: new Date().toISOString() })
-    .eq('id', orderId)
-    .eq('status', currentStatus)
-    .select('id')
-    .single()
+  // Atomic: rpc_update_order_status (migration 165) re-checks role / branch /
+  // transition / refund-block / optimistic-concurrency + writes audit_logs in
+  // the same transaction. JS guards above stay as pre-flight UX.
+  const authClient = await createClient()
+  const { data: rpcRaw, error: rpcError } = await authClient.rpc('rpc_update_order_status', {
+    p_order_id:        orderId,
+    p_new_status:      nextStatus,
+    p_expected_status: currentStatus,
+  })
 
-  if (error) return { success: false, error: toSafeError(error) }
+  if (rpcError) {
+    Sentry.captureException(rpcError, {
+      tags:  { area: 'kds', action: 'advanceOrderStatus' },
+      extra: { orderId, currentStatus, nextStatus },
+    })
+    return { success: false, error: t('rpcFailed') }
+  }
+
+  const rpc = isRpcOrderResult(rpcRaw) ? rpcRaw : null
+  if (!rpc) {
+    Sentry.captureException(new Error('rpc_update_order_status unexpected payload'), {
+      tags:  { area: 'kds', action: 'advanceOrderStatus' },
+      extra: { orderId, payload: rpcRaw },
+    })
+    return { success: false, error: t('rpcFailed') }
+  }
+  if (!rpc.ok) {
+    // Map RPC error codes to user-facing keys. Unknown codes fall back to
+    // the generic message — but we capture them so we can extend the map.
+    switch (rpc.code) {
+      case 'not_found':            return { success: false, error: t('orderNotFound') }
+      case 'forbidden_branch':     return { success: false, error: t('wrongBranch') }
+      case 'forbidden_transition': return { success: false, error: t('insufficientPermissions') }
+      case 'conflict':             return { success: false, error: t('stale') }
+      default:
+        Sentry.captureException(new Error(`rpc_update_order_status unknown code: ${rpc.code}`), {
+          tags:  { area: 'kds', action: 'advanceOrderStatus' },
+          extra: { orderId, rpcCode: rpc.code },
+        })
+        return { success: false, error: t('rpcFailed') }
+    }
+  }
+
   return { success: true }
 }
 
@@ -100,6 +147,8 @@ export async function updateItemStatus(
   status:         KDSItemStatus,
   expectedStatus?: KDSItemStatus,
 ): Promise<AdvanceResult> {
+  const t = await getTranslations('kds.errors')
+
   let caller
   try {
     caller = await requireDashboardSession()
@@ -108,14 +157,14 @@ export async function updateItemStatus(
   }
 
   if (!canAccessKDS(caller)) {
-    return { success: false, error: 'Unauthorized: KDS access restricted' }
+    return { success: false, error: t('accessRestricted') }
   }
 
   // Pre-flight transition validation: short-circuit obvious illegal jumps so
   // the user gets a clear error instead of a generic RPC failure. The RPC
   // re-validates against the actual stored status (defence in depth).
   if (expectedStatus && !isLegalItemTransition(expectedStatus, status)) {
-    return { success: false, error: `Illegal transition: ${expectedStatus} → ${status}` }
+    return { success: false, error: t('illegalTransition', { from: expectedStatus, to: status }) }
   }
 
   const service = await createServiceClient()
@@ -127,9 +176,9 @@ export async function updateItemStatus(
       .select('branch_id')
       .eq('id', orderId)
       .single()
-    if (fetchErr || !order) return { success: false, error: 'Order not found' }
+    if (fetchErr || !order) return { success: false, error: t('orderNotFound') }
     if (order.branch_id !== caller.branch_id) {
-      return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
+      return { success: false, error: t('wrongBranch') }
     }
   }
 
@@ -148,8 +197,11 @@ export async function updateItemStatus(
   })
 
   if (error) {
-    console.error('[KDS Action] update_order_item_station_status error:', error);
-    return { success: false, error: toSafeError(error) };
+    Sentry.captureException(error, {
+      tags:  { area: 'kds', action: 'updateItemStatus' },
+      extra: { orderId, itemId, station, status, expectedStatus },
+    })
+    return { success: false, error: t('rpcFailed') }
   }
   return { success: true }
 }
@@ -158,6 +210,8 @@ export async function bumpStationOrder(
   orderId: string,
   station: KDSStation,
 ): Promise<AdvanceResult> {
+  const t = await getTranslations('kds.errors')
+
   let caller
   try {
     caller = await requireDashboardSession()
@@ -165,25 +219,21 @@ export async function bumpStationOrder(
     return { success: false, error: getDashboardGuardErrorMessage(error) }
   }
 
-  if (!canAccessKDS(caller)) return { success: false, error: 'Unauthorized' }
+  if (!canAccessKDS(caller)) return { success: false, error: t('unauthorized') }
 
-  console.log(`[KDS Action] bumpStationOrder: fetching order branch_id for validation...`);
   const service = await createServiceClient()
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   if (!isGlobal) {
     const { data: order, error: fetchErr } = await service
       .from('orders').select('branch_id').eq('id', orderId).single()
     if (fetchErr || !order) {
-      console.error('[KDS Action] Order not found for validation:', fetchErr);
-      return { success: false, error: 'Order not found' }
+      return { success: false, error: t('orderNotFound') }
     }
     if (order.branch_id !== caller.branch_id) {
-      console.warn('[KDS Action] Branch mismatch:', { order: order.branch_id, caller: caller.branch_id });
-      return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
+      return { success: false, error: t('wrongBranch') }
     }
   }
 
-  console.log(`[KDS Action] Executing bump_station_order RPC for ${orderId} / ${station}...`);
   const userClient = await createClient()
   const { error } = await userClient.rpc('bump_station_order', {
     p_order_id: orderId,
@@ -191,8 +241,11 @@ export async function bumpStationOrder(
   })
 
   if (error) {
-    console.error('[KDS Action] bump_station_order error:', error);
-    return { success: false, error: toSafeError(error) };
+    Sentry.captureException(error, {
+      tags:  { area: 'kds', action: 'bumpStationOrder' },
+      extra: { orderId, station },
+    })
+    return { success: false, error: t('rpcFailed') }
   }
   return { success: true }
 }
@@ -201,6 +254,8 @@ export async function recallStationOrder(
   orderId: string,
   station: KDSStation,
 ): Promise<AdvanceResult> {
+  const t = await getTranslations('kds.errors')
+
   let caller
   try {
     caller = await requireDashboardSession()
@@ -208,16 +263,16 @@ export async function recallStationOrder(
     return { success: false, error: getDashboardGuardErrorMessage(error) }
   }
 
-  if (!canAccessKDS(caller)) return { success: false, error: 'Unauthorized' }
+  if (!canAccessKDS(caller)) return { success: false, error: t('unauthorized') }
 
   const service = await createServiceClient()
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   if (!isGlobal) {
     const { data: order, error: fetchErr } = await service
       .from('orders').select('branch_id').eq('id', orderId).single()
-    if (fetchErr || !order) return { success: false, error: 'Order not found' }
+    if (fetchErr || !order) return { success: false, error: t('orderNotFound') }
     if (order.branch_id !== caller.branch_id)
-      return { success: false, error: 'Unauthorized: Order belongs to a different branch' }
+      return { success: false, error: t('wrongBranch') }
   }
 
   // User-context client — see bumpStationOrder for rationale.
@@ -227,7 +282,13 @@ export async function recallStationOrder(
     p_station:  station,
   })
 
-  if (error) return { success: false, error: toSafeError(error) }
+  if (error) {
+    Sentry.captureException(error, {
+      tags:  { area: 'kds', action: 'recallStationOrder' },
+      extra: { orderId, station },
+    })
+    return { success: false, error: t('rpcFailed') }
+  }
   return { success: true }
 }
 
@@ -235,6 +296,8 @@ export async function getStationDailyCount(
   station: KDSStation,
   branchId: string,
 ): Promise<{ count: number } | { error: string }> {
+  const t = await getTranslations('kds.errors')
+
   let caller
   try {
     caller = await requireDashboardSession()
@@ -242,13 +305,13 @@ export async function getStationDailyCount(
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  if (!canAccessKDS(caller)) return { error: 'Unauthorized' }
+  if (!canAccessKDS(caller)) return { error: t('unauthorized') }
 
   // P1-18: clamp branchId to caller.branch_id for non-global roles to prevent
   // attacker-controlled branch lookup from a kitchen-scoped role.
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
   const effectiveBranchId = isGlobal ? branchId : (caller.branch_id ?? null)
-  if (!effectiveBranchId) return { error: 'Staff not assigned to a branch' }
+  if (!effectiveBranchId) return { error: t('noBranch') }
 
   const userClient = await createClient()
   const { data, error } = await userClient.rpc('get_station_daily_count', {
@@ -256,13 +319,21 @@ export async function getStationDailyCount(
     p_branch_id: effectiveBranchId,
   })
 
-  if (error) return { error: toSafeError(error) }
+  if (error) {
+    Sentry.captureException(error, {
+      tags:  { area: 'kds', action: 'getStationDailyCount' },
+      extra: { station, branchId: effectiveBranchId },
+    })
+    return { error: t('rpcFailed') }
+  }
   return { count: data ?? 0 }
 }
 
 export async function fetchStationOrders(
   station: KDSStation,
 ): Promise<{ active: KDSOrder[]; stalled: KDSOrder[] } | { error: string }> {
+  const t = await getTranslations('kds.errors')
+
   let caller
   try {
     caller = await requireDashboardSession()
@@ -270,10 +341,10 @@ export async function fetchStationOrders(
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  if (!canAccessKDS(caller)) return { error: 'Unauthorized' }
+  if (!canAccessKDS(caller)) return { error: t('unauthorized') }
 
   const isGlobal = caller.role === 'owner' || caller.role === 'general_manager'
-  if (!isGlobal && !caller.branch_id) return { error: 'Staff not assigned to a branch' }
+  if (!isGlobal && !caller.branch_id) return { error: t('noBranch') }
 
   const supabase = await createServiceClient()
 
@@ -293,7 +364,13 @@ export async function fetchStationOrders(
   if (!isGlobal) query = query.eq('branch_id', caller.branch_id!)
 
   const { data, error } = await query
-  if (error) return { error: toSafeError(error) }
+  if (error) {
+    Sentry.captureException(error, {
+      tags:  { area: 'kds', action: 'fetchStationOrders' },
+      extra: { station, scope: isGlobal ? 'global' : caller.branch_id },
+    })
+    return { error: t('rpcFailed') }
+  }
 
   const orders = (data ?? []).map((order) => {
     const stationItems = (order.order_items ?? [])
