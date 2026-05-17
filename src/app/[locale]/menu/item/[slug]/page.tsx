@@ -94,6 +94,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MenuItemPage({ params }: Props) {
   const { locale, slug } = await params
+  if (slug.length > 200) notFound()
   const baseItem = getMenuItemBySlug(slug)
   if (!baseItem) notFound()
 

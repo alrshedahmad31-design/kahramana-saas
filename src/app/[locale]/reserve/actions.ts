@@ -145,10 +145,11 @@ export async function publicFindAvailableTables(
 export async function createPublicReservation(
   input: CreatePublicReservationInput,
 ): Promise<CreatePublicReservationResult> {
-  // Honeypot: bots fill `website`; real users leave it blank.
+  // Honeypot: bots fill `website`; real users leave it blank. Return a
+  // fake success — bots that see "ok" stop retrying and never learn what
+  // the real submit response looks like. Mirror contact action.
   if (input.website && input.website.trim().length > 0) {
-    // Pretend success to confuse bots; nothing is written.
-    return { success: false, error: 'invalid_input' }
+    return { success: true, reservationId: '00000000-0000-0000-0000-000000000000', waLink: '' }
   }
 
   // 1. Turnstile (skipped if not configured)

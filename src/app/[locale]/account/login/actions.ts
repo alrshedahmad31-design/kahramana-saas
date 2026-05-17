@@ -1,7 +1,9 @@
 'use server'
 
 import { headers } from 'next/headers'
+import { createHash } from 'crypto'
 import * as Sentry from '@sentry/nextjs'
+import { z } from 'zod'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 type AuthError =
@@ -87,12 +89,63 @@ async function checkRateLimit(key: 'login' | 'register'): Promise<boolean> {
   return success
 }
 
-export async function loginAction(email: string, password: string): Promise<AuthResult> {
-  const allowed = await checkRateLimit('login')
-  if (!allowed) return { success: false, error: 'rate_limited' }
+// T2-9: second rate-limit dimension keyed on the email address. The IP gate
+// alone lets a botnet credential-stuff a single victim from many addresses
+// at one-attempt-each — well below the per-IP budget — but adds up to
+// thousands against the same account. Hashed so we don't store the email
+// in Redis. Production-only for the same dev/preview reason as the IP gate.
+async function checkEmailRateLimit(email: string): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production') return true
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return true
+  try {
+    const [{ Ratelimit }, { Redis }] = await Promise.all([
+      import('@upstash/ratelimit'),
+      import('@upstash/redis'),
+    ])
+    const ratelimit = new Ratelimit({
+      redis:   Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(10, '1 h'),
+      prefix:  'auth_login_email',
+    })
+    const hash = createHash('sha256').update(email.trim().toLowerCase()).digest('hex')
+    const { success } = await ratelimit.limit(`auth:login:email:${hash}`)
+    return success
+  } catch (err) {
+    Sentry.captureException(err, { tags: { stage: 'account_login.email_rate_limit' } })
+    return false
+  }
+}
+
+const loginSchema = z.object({
+  email:    z.string().trim().toLowerCase().email().max(254),
+  password: z.string().min(1).max(72),
+})
+
+export async function loginAction(
+  emailRaw: string,
+  passwordRaw: string,
+  turnstileToken?: string,
+): Promise<AuthResult> {
+  const parsed = loginSchema.safeParse({ email: emailRaw, password: passwordRaw })
+  if (!parsed.success) return { success: false, error: 'invalid_credentials' }
+
+  // T2-9: gate the credential check on Turnstile + IP + email rate-limits.
+  // Order matters: cheap checks first so an attacker can't burn the email
+  // budget by sending invalid Turnstile tokens.
+  const captchaOk = await verifyTurnstile(turnstileToken ?? '')
+  if (!captchaOk) return { success: false, error: 'captcha' }
+
+  const ipAllowed = await checkRateLimit('login')
+  if (!ipAllowed) return { success: false, error: 'rate_limited' }
+
+  const emailAllowed = await checkEmailRateLimit(parsed.data.email)
+  if (!emailAllowed) return { success: false, error: 'rate_limited' }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { error } = await supabase.auth.signInWithPassword({
+    email:    parsed.data.email,
+    password: parsed.data.password,
+  })
   if (error) return { success: false, error: 'invalid_credentials' }
   return { success: true }
 }

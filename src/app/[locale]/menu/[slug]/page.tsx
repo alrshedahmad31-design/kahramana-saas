@@ -78,6 +78,7 @@ async function mergeAvailability<T extends { slug: string; available: boolean }>
 
 export default async function MenuCategoryPage({ params }: Props) {
   const { locale, slug } = await params
+  if (slug.length > 200) notFound()
   const category = getMenuCategoryBySlug(slug)
 
   if (!category) {

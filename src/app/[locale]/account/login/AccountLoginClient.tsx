@@ -80,11 +80,22 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
 
     try {
       if (mode === 'login') {
-        const result = await loginAction(email, password)
+        // T2-9: login now carries the Turnstile token + a server-side
+        // email rate-limit. If a site key is configured the token is
+        // required before the request even leaves the browser.
+        if (TURNSTILE_SITE_KEY && !turnstileToken) {
+          setError(tAuth('captchaRequired'))
+          return
+        }
+        const result = await loginAction(email, password, turnstileToken)
         if (!result.success) {
-          setError(result.error === 'rate_limited'
-            ? tAuth('rateLimited')
-            : tAuth('invalidCredentials'))
+          turnstileRef.current?.reset()
+          setTurnstileToken('')
+          setError(
+            result.error === 'rate_limited' ? tAuth('rateLimited') :
+            result.error === 'captcha'      ? tAuth('captchaRequired') :
+                                              tAuth('invalidCredentials'),
+          )
           return
         }
         window.location.href = isAr ? '/account' : '/en/account'
@@ -274,7 +285,7 @@ export default function AccountLoginClient({ initialMode }: { initialMode?: Mode
             )}
           </div>
 
-          {mode === 'register' && TURNSTILE_SITE_KEY && (
+          {TURNSTILE_SITE_KEY && (
             <div className="flex justify-center">
               <Turnstile
                 ref={turnstileRef}

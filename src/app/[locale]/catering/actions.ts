@@ -138,9 +138,11 @@ function isBranchId(value: string): value is BranchId {
 export async function createCateringInquiry(
   input: CreateCateringInquiryInput,
 ): Promise<CreateCateringInquiryResult> {
-  // 1. Honeypot — bots fill `website`, real users leave it blank.
+  // 1. Honeypot — bots fill `website`, real users leave it blank. Return
+  //    fake success so bots stop retrying and never learn what a real
+  //    submit response looks like. Mirror contact action.
   if (input.website && input.website.trim().length > 0) {
-    return { success: false, error: 'invalid_input' }
+    return { success: true, inquiryId: '00000000-0000-0000-0000-000000000000', waLink: '' }
   }
 
   // 2. Turnstile (no-op in dev when the secret isn't set)
