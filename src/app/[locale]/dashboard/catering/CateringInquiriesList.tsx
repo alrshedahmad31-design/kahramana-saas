@@ -2,6 +2,12 @@ import { getTranslations } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { buildCustomerContactLink } from '@/lib/whatsapp'
+import {
+  CATERING_OCCASION_TYPES,
+  CATERING_SERVICE_TYPES,
+  type CateringOccasionType,
+  type CateringServiceType,
+} from '@/lib/whatsapp-catering-message'
 
 interface Props {
   locale: 'ar' | 'en'
@@ -12,6 +18,14 @@ const NEW_BADGE_WINDOW_MS = 24 * 60 * 60 * 1000
 function isBranchId(value: string | null): value is BranchId {
   if (!value) return false
   return value in BRANCHES
+}
+
+function isOccasionType(value: string | null): value is CateringOccasionType {
+  return !!value && (CATERING_OCCASION_TYPES as readonly string[]).includes(value)
+}
+
+function isServiceType(value: string | null): value is CateringServiceType {
+  return !!value && (CATERING_SERVICE_TYPES as readonly string[]).includes(value)
 }
 
 function formatDate(iso: string, locale: 'ar' | 'en'): string {
@@ -104,6 +118,17 @@ export default async function CateringInquiriesList({ locale }: Props) {
           : t('values.noBranch')
         const eventTime = formatTime(row.event_time, locale)
 
+        // occasion_type / service_type are persisted as enum keys (see
+        // src/lib/whatsapp-catering-message.ts). Translate via i18n;
+        // unknown values are legacy locale-rendered strings written by
+        // the form before the normalization fix — render those as-is.
+        const occasionDisplay = isOccasionType(row.occasion_type)
+          ? t(`occasionTypes.${row.occasion_type}`)
+          : row.occasion_type
+        const serviceDisplay = isServiceType(row.service_type)
+          ? t(`serviceTypes.${row.service_type}`)
+          : row.service_type
+
         const waMessage = isAr
           ? `السلام عليكم، بخصوص طلب التقديم الخارجي رقم #${shortRef(row.id)} — كهرمانة بغداد`
           : `Hello, regarding your catering inquiry #${shortRef(row.id)} — Kahramana Baghdad`
@@ -141,7 +166,7 @@ export default async function CateringInquiriesList({ locale }: Props) {
 
             <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3 text-sm">
               <Field label={t('table.phone')} value={row.phone} mono />
-              <Field label={t('table.occasion')} value={row.occasion_type} isAr={isAr} />
+              <Field label={t('table.occasion')} value={occasionDisplay} isAr={isAr} />
               <Field
                 label={t('table.eventDate')}
                 value={
@@ -156,7 +181,7 @@ export default async function CateringInquiriesList({ locale }: Props) {
                 value={new Intl.NumberFormat(locale === 'ar' ? 'ar-BH' : 'en-GB').format(row.guest_count)}
                 isAr={isAr}
               />
-              <Field label={t('table.serviceType')} value={row.service_type} isAr={isAr} />
+              <Field label={t('table.serviceType')} value={serviceDisplay} isAr={isAr} />
               <Field label={t('table.area')} value={row.area} isAr={isAr} />
               <Field label={t('table.branch')} value={branchName} isAr={isAr} />
               <Field

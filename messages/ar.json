@@ -2583,6 +2583,18 @@
       "values": {
         "noBranch": "أي فرع",
         "noBudget": "—"
+      },
+      "occasionTypes": {
+        "familyFeast": "وليمة عائلية",
+        "majlis": "مجلس أو عزيمة",
+        "corporateMeeting": "اجتماع عمل",
+        "privateOccasion": "مناسبة خاصة",
+        "other": "أخرى"
+      },
+      "serviceTypes": {
+        "pickup": "استلام من الفرع",
+        "delivery": "توصيل",
+        "coordination": "يحتاج تنسيق"
       }
     },
     "reservations": {

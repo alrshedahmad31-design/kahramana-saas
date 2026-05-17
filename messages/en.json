@@ -2583,6 +2583,18 @@
       "values": {
         "noBranch": "Any branch",
         "noBudget": "—"
+      },
+      "occasionTypes": {
+        "familyFeast": "Family feast",
+        "majlis": "Majlis or invitation",
+        "corporateMeeting": "Business meeting",
+        "privateOccasion": "Private occasion",
+        "other": "Other"
+      },
+      "serviceTypes": {
+        "pickup": "Pickup from branch",
+        "delivery": "Delivery",
+        "coordination": "Needs coordination"
       }
     },
     "reservations": {

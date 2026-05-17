@@ -9,6 +9,8 @@ import {
 } from '@/constants/contact'
 import {
   buildCateringWhatsappLink,
+  CATERING_OCCASION_TYPES,
+  CATERING_SERVICE_TYPES,
   type CateringInquiryValues,
   type CateringWhatsappCopy,
 } from '@/lib/whatsapp-catering-message'
@@ -21,17 +23,34 @@ const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v1/sit
 //   2. event_date / event_time are taken as-is (HTML5 date/time pickers
 //      already produce YYYY-MM-DD / HH:mm). event_time is optional at
 //      the DB level so we accept empty here and write NULL.
+const occasionTypeEnum = z.enum(CATERING_OCCASION_TYPES)
+const serviceTypeEnum  = z.enum(CATERING_SERVICE_TYPES)
+
+// z.object over the enum keys (vs z.record) so the inferred type is a
+// full Record<K, string> instead of Partial<Record<K, string>>. The form
+// always supplies every key; missing keys are a client bug, not user input.
+const occasionTypesSchema = z.object(
+  Object.fromEntries(
+    CATERING_OCCASION_TYPES.map((k) => [k, z.string().min(1)]),
+  ) as Record<(typeof CATERING_OCCASION_TYPES)[number], z.ZodString>,
+)
+const serviceTypesSchema = z.object(
+  Object.fromEntries(
+    CATERING_SERVICE_TYPES.map((k) => [k, z.string().min(1)]),
+  ) as Record<(typeof CATERING_SERVICE_TYPES)[number], z.ZodString>,
+)
+
 const submitSchema = z.object({
   name:             z.string().trim().min(1).max(200),
   phone:            z.string().trim().min(8).max(30),
-  occasion_type:    z.string().trim().min(1).max(80),
+  occasion_type:    occasionTypeEnum,
   event_date:       z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
                       message: 'invalid_event_date',
                     }),
   event_time:       z.string().trim().regex(/^\d{2}:\d{2}$/).optional().or(z.literal('')),
   guest_count:      z.coerce.number().int().positive().max(1000),
   area:             z.string().trim().min(1).max(300),
-  service_type:     z.string().trim().min(1).max(80),
+  service_type:     serviceTypeEnum,
   preferred_branch: z.string().optional(),
   budget:           z.string().trim().max(100).optional().or(z.literal('')),
   notes:            z.string().trim().min(1).max(2000),
@@ -56,6 +75,8 @@ const submitSchema = z.object({
                         notes:           z.string().min(1),
                         budget:          z.string().min(1),
                       }),
+                      occasionTypes: occasionTypesSchema,
+                      serviceTypes:  serviceTypesSchema,
                     }),
 })
 
@@ -186,7 +207,7 @@ export async function createCateringInquiry(
     guestCount:       String(data.guest_count),
     area:             data.area,
     preferredBranch:  preferredBranch ?? '',
-    serviceType:      (data.service_type as CateringInquiryValues['serviceType']) || '',
+    serviceType:      data.service_type,
     notes:            data.notes,
     budget:           data.budget ?? '',
   }

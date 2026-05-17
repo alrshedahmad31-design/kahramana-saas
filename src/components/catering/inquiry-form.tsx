@@ -7,7 +7,10 @@ import { Check, Loader2, MessageCircle } from 'lucide-react'
 import SectionHeader from '@/components/ui/SectionHeader'
 import { BRANCH_LIST, type BranchId } from '@/constants/contact'
 import {
+  CATERING_OCCASION_TYPES,
+  CATERING_SERVICE_TYPES,
   type CateringInquiryValues,
+  type CateringOccasionType,
   type CateringServiceType,
 } from '@/lib/whatsapp-catering-message'
 import { gtag } from '@/lib/gtag'
@@ -31,8 +34,8 @@ const initialValues: CateringInquiryValues = {
   budget: '',
 }
 
-const occasionOptions = ['familyFeast', 'majlis', 'corporateMeeting', 'privateOccasion', 'other'] as const
-const serviceOptions: CateringServiceType[] = ['pickup', 'delivery', 'coordination']
+const occasionOptions = CATERING_OCCASION_TYPES
+const serviceOptions  = CATERING_SERVICE_TYPES
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
@@ -56,7 +59,10 @@ export default function InquiryForm() {
 
   const activeBranches = useMemo(() => BRANCH_LIST.filter((branch) => branch.status === 'active'), [])
 
-  function updateField(field: keyof CateringInquiryValues, value: string) {
+  function updateField<K extends keyof CateringInquiryValues>(
+    field: K,
+    value: CateringInquiryValues[K],
+  ) {
     setValues((current) => ({ ...current, [field]: value }))
   }
 
@@ -105,7 +111,10 @@ export default function InquiryForm() {
     const payload = {
       name:             values.name,
       phone:            values.phone,
-      occasion_type:    values.occasionType,
+      // Cast to the enum union — empty-string (user submitted with the
+      // placeholder still selected) is caught by Zod on the server as
+      // 'invalid_input', same pattern as guest_count below.
+      occasion_type:    values.occasionType as CateringOccasionType,
       event_date:       values.eventDate,
       event_time:       values.eventTime || '',
       // Coerced to a number on the wire so the action's input type
@@ -114,7 +123,7 @@ export default function InquiryForm() {
       // check rejects with 'invalid_input'.
       guest_count:      Number(values.guestCount),
       area:             values.area,
-      service_type:     values.serviceType,
+      service_type:     values.serviceType as CateringServiceType,
       preferred_branch: values.preferredBranch || undefined,
       budget:           values.budget || '',
       notes:            values.notes,
@@ -136,6 +145,14 @@ export default function InquiryForm() {
           notes:           tWhatsapp('labels.notes'),
           budget:          tWhatsapp('labels.budget'),
         },
+        // Enum-key → localized label. The form persists the key, the action
+        // uses these to render a readable wa.me body in the customer's locale.
+        occasionTypes: Object.fromEntries(
+          occasionOptions.map((k) => [k, t(`occasionOptions.${k}`)]),
+        ) as Record<CateringOccasionType, string>,
+        serviceTypes: Object.fromEntries(
+          serviceOptions.map((k) => [k, t(`serviceOptions.${k}`)]),
+        ) as Record<CateringServiceType, string>,
       },
     }
 
@@ -311,13 +328,15 @@ export default function InquiryForm() {
               <select
                 required
                 value={values.occasionType}
-                onChange={(event) => updateField('occasionType', event.target.value)}
+                onChange={(event) =>
+                  updateField('occasionType', event.target.value as CateringOccasionType | '')
+                }
                 aria-label={t('fields.occasionType.label')}
                 className={inputClass(isAr)}
               >
                 <option value="">{t('fields.occasionType.placeholder')}</option>
                 {occasionOptions.map((option) => (
-                  <option key={option} value={t(`occasionOptions.${option}`)}>
+                  <option key={option} value={option}>
                     {t(`occasionOptions.${option}`)}
                   </option>
                 ))}
@@ -389,13 +408,15 @@ export default function InquiryForm() {
               <select
                 required
                 value={values.serviceType}
-                onChange={(event) => updateField('serviceType', event.target.value)}
+                onChange={(event) =>
+                  updateField('serviceType', event.target.value as CateringServiceType | '')
+                }
                 aria-label={t('fields.serviceType.label')}
                 className={inputClass(isAr)}
               >
                 <option value="">{t('fields.serviceType.placeholder')}</option>
                 {serviceOptions.map((option) => (
-                  <option key={option} value={t(`serviceOptions.${option}`)}>
+                  <option key={option} value={option}>
                     {t(`serviceOptions.${option}`)}
                   </option>
                 ))}
