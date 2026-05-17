@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { createClient } from '@/lib/supabase/server'
 import { getTranslations } from 'next-intl/server'
 import CloseShiftDialog from '@/components/dashboard/shifts/CloseShiftDialog'
@@ -38,18 +40,24 @@ export default async function ShiftsPage({
 }) {
   const { locale } = await params
   const { branch: selectedBranchId } = await searchParams
+  const prefix = locale === 'en' ? '/en' : ''
+  let user
+  try {
+    user = await requireDashboardSection('shifts')
+  } catch {
+    redirect(`${prefix}/dashboard`)
+  }
   const t = await getTranslations('dashboard')
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const userId = user?.id ?? ''
-  const { data: staff } = await supabase
-    .from('staff_basic')
-    .select('branch_id, role')
-    .eq('id', userId)
-    .single()
-  const branchId: string | null = staff?.branch_id ?? null
-  const isGlobal = ['owner', 'general_manager'].includes(staff?.role ?? '')
+  const branchId: string | null = user.branch_id ?? null
+  const isGlobal = user.role === 'owner' || user.role === 'general_manager'
+
+  // Fail-closed: a scoped role with NULL branch_id must never see all-branch
+  // shift closings (cash balances, discrepancies). Mirrors dashboard home.
+  if (!isGlobal && !branchId) {
+    redirect(`${prefix}/dashboard`)
+  }
 
   // For global users, use the selected branch from URL or the staff branch
   const activeBranchId = isGlobal ? (selectedBranchId || branchId) : branchId

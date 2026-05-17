@@ -1,4 +1,5 @@
-import { getSession } from '@/lib/auth/session'
+import { redirect } from 'next/navigation'
+import { requireDashboardSection } from '@/lib/auth/dashboard-guards'
 import { getMenuData } from '@/lib/menu.server'
 import { getTranslations } from 'next-intl/server'
 import { AlertCircle, ShoppingBag } from 'lucide-react'
@@ -18,9 +19,15 @@ export default async function MenuDashboardPage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
-  const [t, user, menuCategories] = await Promise.all([
+  const prefix = locale === 'en' ? '/en' : ''
+  let user
+  try {
+    user = await requireDashboardSection('menu')
+  } catch {
+    redirect(`${prefix}/dashboard`)
+  }
+  const [t, menuCategories] = await Promise.all([
     getTranslations('dashboard'),
-    getSession(),
     getMenuData(),
   ])
 
