@@ -78,16 +78,20 @@ export async function updateLoyaltyConfig(
     updated_at:              new Date().toISOString(),
   }
 
-  // Upsert the global active config row (branch_id IS NULL).
+  // Upsert the global active config row (branch_id IS NULL). We capture the
+  // pre-image first so the audit_logs row carries before/after — owners
+  // change point ratios and redemption caps here, and silent regressions
+  // (e.g. minRedemptionPoints drop) need to be traceable to a user (P0-9).
   const { data: existing } = await supabase
     .from('loyalty_config')
-    .select('id')
+    .select('*')
     .is('branch_id', null)
     .eq('is_active', true)
     .limit(1)
     .maybeSingle()
 
-  const existingId = (existing as { id?: string } | null)?.id
+  const previous = existing as Record<string, unknown> | null
+  const existingId = (previous?.id as string | undefined) ?? null
   const result = existingId
     ? await supabase.from('loyalty_config').update(row).eq('id', existingId)
     : await supabase.from('loyalty_config').insert({ ...row, branch_id: null })
@@ -96,6 +100,32 @@ export async function updateLoyaltyConfig(
     console.error('[loyalty/config] update failed:', result.error)
     return { success: false, error: result.error.message }
   }
+
+  // Audit trail — service-role client bypasses RLS but audit_logs has a CHECK
+  // on action; user_id captures the caller from the section guard above.
+  await supabase.from('audit_logs').insert({
+    table_name: 'loyalty_config',
+    action:     existingId ? 'UPDATE' : 'INSERT',
+    user_id:    caller.id,
+    record_id:  existingId,
+    changes: {
+      previous: previous
+        ? {
+            points_per_bhd:          previous.points_per_bhd,
+            max_redemption_ratio:    previous.max_redemption_ratio,
+            min_redemption_points:   previous.min_redemption_points,
+            point_value_bhd:         previous.point_value_bhd,
+            points_expiry_months:    previous.points_expiry_months,
+            tier_silver_threshold:   previous.tier_silver_threshold,
+            tier_gold_threshold:     previous.tier_gold_threshold,
+            tier_platinum_threshold: previous.tier_platinum_threshold,
+          }
+        : null,
+      next: row,
+    },
+    branch_id:  caller.branch_id,
+    actor_role: caller.role,
+  })
 
   // Invalidate the unstable_cache wrapping getLoyaltyConfig.
   revalidateTag('loyalty-config')

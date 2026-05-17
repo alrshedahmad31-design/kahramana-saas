@@ -24,10 +24,19 @@ export default async function StaffPage({ params }: Props) {
   const t = await getTranslations('dashboard.staff')
 
   const supabase = await createClient()
-  const { data: staff } = await supabase
+  let staffQuery = supabase
     .from('staff_basic')
     .select('*')
     .order('created_at', { ascending: false })
+
+  // Branch managers must only see staff in their own branch. canManageStaff
+  // already filters which rows are mutable, but the read query itself must
+  // not leak names / emails / roles from other branches (P0-8).
+  if (user.role === 'branch_manager' && user.branch_id) {
+    staffQuery = staffQuery.eq('branch_id', user.branch_id)
+  }
+
+  const { data: staff } = await staffQuery
 
   // VULN-010: staff-photos is now a private bucket. Resolve each row's photo
   // to a short-lived signed URL on the server so client components never
