@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { createClient } from '@/lib/supabase/client'
+import { staffLoginAction } from '@/app/[locale]/login/actions'
 import CinematicButton from '@/components/ui/CinematicButton'
 import Link from 'next/link'
 
@@ -34,16 +34,15 @@ export default function LoginForm() {
     setError(null)
     setLoading(true)
 
-    const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    })
-
-    if (authError) {
-      const isNetwork = authError.message?.toLowerCase().includes('fetch') ||
-                        authError.message?.toLowerCase().includes('network')
-      setError(isNetwork ? t('networkError') : t('loginError'))
+    // T1-4: auth runs through a server action so we can apply per-IP
+    // rate-limiting + Zod validation away from a direct-to-Supabase path.
+    const result = await staffLoginAction(email, password)
+    if (!result.success) {
+      setError(
+        result.error === 'rate_limited' ? t('rateLimited') :
+        result.error === 'network'      ? t('networkError') :
+                                           t('loginError'),
+      )
       setLoading(false)
       return
     }

@@ -1,8 +1,10 @@
 'use server'
 
 import { z } from 'zod'
+import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
+import * as Sentry from '@sentry/nextjs'
 import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
 import { fetchCheckoutPriceMap, resolveOrderItemPrice } from '@/lib/checkout-pricing.server'
 import { WAITER_PLACEHOLDER_PHONE } from '@/constants/contact'
@@ -61,6 +63,15 @@ function normalizePhone(raw: string): string {
   return s
 }
 
+async function getClientIp(): Promise<string> {
+  const h = await headers()
+  return (
+    h.get('x-real-ip')
+    ?? h.get('x-forwarded-for')?.split(',')[0].trim()
+    ?? '127.0.0.1'
+  )
+}
+
 export async function createQROrder(
   payload: QROrderPayload,
 ): Promise<CreateQROrderResult> {
@@ -70,6 +81,49 @@ export async function createQROrder(
     return { error: first ? `${first.path.join('.')}: ${first.message}` : 'Invalid payload' }
   }
   const data = parsed.data
+
+  // T1-3: rate-limit the QR-order path. Keyed on (ip, branchId, tableNumber)
+  // so a single device on a busy branch can't blast in 60 orders/min, but
+  // legitimate per-table traffic stays unbounded across the venue. Two
+  // windows (burst + sustained) catch both rapid abuse and slow-drip floods.
+  // Production fails closed when Upstash isn't configured or the call throws.
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      Sentry.captureMessage('table.createQROrder.rate_limit_unconfigured', { level: 'warning' })
+      return { error: 'Rate limit unavailable' }
+    }
+    try {
+      const [{ Ratelimit }, { Redis }] = await Promise.all([
+        import('@upstash/ratelimit'),
+        import('@upstash/redis'),
+      ])
+      const redis = Redis.fromEnv()
+      const ip    = await getClientIp()
+      const key   = `${ip}:${data.branchId}:${data.tableNumber}`
+
+      const burst = new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(5, '1 m'),
+        prefix:  'qr_order_burst',
+      })
+      const sustained = new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(30, '1 h'),
+        prefix:  'qr_order_sustained',
+      })
+
+      const [burstRes, sustainedRes] = await Promise.all([
+        burst.limit(key),
+        sustained.limit(key),
+      ])
+      if (!burstRes.success || !sustainedRes.success) {
+        return { error: 'Too many requests' }
+      }
+    } catch (err) {
+      Sentry.captureException(err, { tags: { stage: 'table.createQROrder.rate_limit' } })
+      return { error: 'Rate limit unavailable' }
+    }
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
