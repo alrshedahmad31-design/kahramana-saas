@@ -76,6 +76,20 @@ export default function InquiryForm() {
     }
   }
 
+  async function copyWaLink(waLink: string) {
+    // Fallback CTA on the success card. The clipboard API is gated to
+    // secure contexts — production is HTTPS so this resolves; the catch
+    // covers the rare case where the browser denies the permission
+    // (e.g. cross-origin iframe) so the customer can still tap the
+    // anchor above.
+    try {
+      await navigator.clipboard.writeText(waLink)
+      toast.success(t('copyLinkSuccess'))
+    } catch {
+      toast.error(t('copyLinkFailed'))
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (submit.kind === 'submitting' || isPending) return
@@ -204,6 +218,16 @@ export default function InquiryForm() {
 
           <button
             type="button"
+            onClick={() => copyWaLink(submit.waLink)}
+            className={`mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-brand-gold/40 bg-transparent px-6 text-sm font-bold text-brand-gold transition-colors hover:bg-brand-gold/10 ${
+              isAr ? 'font-cairo' : 'font-satoshi'
+            }`}
+          >
+            {t('copyLink')}
+          </button>
+
+          <button
+            type="button"
             onClick={resetForm}
             className={`mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-lg border border-brand-border bg-transparent px-6 text-sm font-bold text-brand-muted transition-colors hover:border-brand-gold/40 hover:text-brand-gold ${
               isAr ? 'font-almarai' : 'font-satoshi'
@@ -236,6 +260,12 @@ export default function InquiryForm() {
 
         <form
           onSubmit={handleSubmit}
+          // noValidate disables the browser's native validation balloons
+          // because their text follows the OS/browser language and ignores
+          // next-intl, leaking English popups on an Arabic page (and vice
+          // versa). The server action revalidates every field with Zod
+          // and surfaces localized errors via the sonner toast already.
+          noValidate
           className="rounded-2xl border border-brand-border bg-brand-surface p-5 sm:p-7"
           dir={isAr ? 'rtl' : 'ltr'}
         >

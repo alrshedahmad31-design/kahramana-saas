@@ -383,6 +383,9 @@
       "successTitle": "Request Received",
       "successSubtitle": "We have saved your details and opened WhatsApp so you can follow up with the branch.",
       "whatsappConfirm": "Continue on WhatsApp",
+      "copyLink": "Copy WhatsApp link",
+      "copyLinkSuccess": "Link copied. Paste it into WhatsApp.",
+      "copyLinkFailed": "Could not copy link. Please use the button above.",
       "popupBlocked": "WhatsApp could not open automatically. Please open it manually.",
       "turnstileRequired": "Please complete the verification before submitting.",
       "errors": {
