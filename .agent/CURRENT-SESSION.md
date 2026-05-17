@@ -1,15 +1,15 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KAHRAMANA — BRIDGE CONTEXT
-Generated: 2026-05-17 (session 131 close-out)
-Master: c4fe9a8
+Generated: 2026-05-17 (session 132 close-out)
+Master: d24e5e3
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-17 (session 131 close-out)
-# Master: c4fe9a8
+# Updated: 2026-05-17 (session 132 close-out)
+# Master: d24e5e3
 
 ## CURRENT STATUS
-Launch Risk: 7/10 (unchanged — operator actions cleared session 130)
+Launch Risk: 7/10 (unchanged — no launch-blocker changes)
 Phase: pre_launch_operational
 Next milestone: Soft-launch (cash-only)
 
@@ -31,30 +31,79 @@ STILL PENDING:
 - TAP keys (blocked — merchant approval)
 - Staff accounts — 13 staff emails pending from owner (blocks waiter/cashier
   activation + the QR loyalty flag flip)
-- Resend domain verification for kahramanat.com (transactional email)
+- Resend domain verification for kahramanat.com (transactional email +
+  birthday cron sends — without this Resend will reject FROM=noreply@kahramanat.com)
 - VAPID keys for driver push notifications (Web Push)
 - CONTACT_NOTIFY_EMAIL (optional — contact-form forwarding destination)
 - After staff accounts: flip NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true per
   pre-flip checklist in `.env.example`
 
+ADDED 2026-05-17 (session 132):
+- CRON_SECRET env var (Vercel Production + Preview).
+  Generate: `openssl rand -hex 32`
+  Required by /api/cron/birthday-notify. Without it the route 503s
+  every request, including the scheduled Vercel Cron, so birthday
+  emails never go out. pg_cron still credits points silently.
+
 ## ACTIVE DEV PRIORITIES (in order)
 
-COMPLETED 2026-05-17 (session 131 — single-lane sweep):
-✅ P4-1 — ForgotPasswordClient.tsx dead-code removed (c4fe9a8)
-   - `src/app/[locale]/forgot-password/page.tsx` mounts `ForgotPasswordForm`
-     from `@/components/auth/ForgotPasswordForm`. The sibling
-     `ForgotPasswordClient.tsx` had zero references in `src/` / `app/`.
-   - 144 LOC deleted, tsc clean, no i18n touched.
-   - SetPasswordClient.tsx was already removed in an earlier pass —
-     verified via Glob, only stale references in docs.
+COMPLETED 2026-05-17 (session 132 — five-commit sweep, all pushed):
+✅ P4-2 — Localize 7 raw-English checkout errors (9a93fe1)
+   - PRICE_MISMATCH, Insufficient points, Coupon invalid, AUTH_REQUIRED,
+     Customer session required, Minimum redemption, Order creation failed
+   - Server emits lowercase codes; CheckoutForm's localizeCheckoutError
+     maps to checkout.errors.* i18n keys (AR/EN parity).
+   - min_redemption:<n> code carries dynamic count via prefix-parse.
+   - fetchAndComputeCouponDiscount: 10 inner strings collapsed to
+     single 'coupon_invalid' code (customer-friendly).
 
-DEFERRED (separate sessions — none are launch blockers):
-- WhatsApp/email birthday notification surface (cron + DB done, UI surface deferred)
-- /dashboard/catering page (migration 160 + server action shipped; no UI)
+✅ F-01 — GA4 + Clarity preconnect leak gated behind cookie consent (92c6fba)
+   - <Analytics> already gated script injection on localStorage[cookie-consent].
+   - The leak: <link rel="preconnect"> in <head> rendered server-side for
+     every visitor regardless of consent → DNS + TLS to googletagmanager.com
+     and clarity.ms before user accepts.
+   - Fix: moved both preconnects into <Analytics>; now render only after
+     `consented === true`. First-time visitors get zero third-party
+     connections until they tap Accept.
+
+✅ /dashboard/catering — Catering inquiries listing (1d67b4a)
+   - Server component with Suspense, role-gated owner/general_manager only.
+   - Reads catering_inquiries via createServiceClient() (migration 160 RLS).
+   - Cards show: name, short ref, phone, occasion, event date+time, guests,
+     service type, area, preferred branch, budget, received timestamp.
+   - <24h "NEW" badge. Bilingual WhatsApp CTA to customer phone.
+   - Sidebar entry under customers group; rbac-ui.ts gains 'catering' section.
+   - i18n: dashboard.nav.catering + full dashboard.catering namespace.
+
+✅ Birthday notification scaffold (29ac5f2)
+   - vercel.json crons: { path: /api/cron/birthday-notify, schedule: '0 6 * * *' }
+   - /api/cron/birthday-notify/route.ts: Bearer CRON_SECRET auth, 2h
+     created_at lookback on birthday_point_credits. Placeholder response
+     reports row count.
+   - .env.example: CRON_SECRET block with generation instructions.
+
+✅ Birthday notification content (d24e5e3)
+   - emails/templates/BirthdayBonus.tsx: bilingual AR+EN body, two stacked
+     CTAs (Visit Account + Continue on WhatsApp).
+   - sendBirthdayBonus(to, subject, props) added to src/lib/email/send.ts.
+   - Route loop: fetch customer_profiles, build AR+EN copy via
+     getTranslations({ locale }), send email + embed wa.me deep-link
+     (Riffa default brand WhatsApp + bilingual pre-filled text).
+     Per-row try/catch → Sentry on failure → batch continues.
+   - email.birthday.* i18n namespace (2,419 → 2,433 keys parity).
+
+## DEFERRED (separate sessions — none are launch blockers):
 - ~15 `as any` sites (AUD-V3-007/011) — P4 follow-up
-- F-01 consent check — Chrome incognito, confirm GA/Clarity blocked pre-consent
-- Extend localizeCheckoutError to remaining raw-English errors
 - HIDDEN_BRANCHES cleanup follow-up (~30 redundant `length > 0` guards)
+- Extend localizeCheckoutError to remaining raw-English errors NOT in the
+  named seven (waiter/actions.ts:222 'Order creation failed' — staff
+  surface, different return shape, out of P4-2 scope)
+- Birthday notification: notified_at TIMESTAMPTZ column on
+  birthday_point_credits if duplicate-send becomes a real concern
+  (currently relies on 2h created_at window)
+- Catering form audit findings #6 (no email fallback) + #8 (HTML5 validation
+  balloon doesn't follow next-intl locale) — deferred from session 126
+- Catering occasion_type / service_type normalization (currently locale string)
 
 ## ARCHITECTURE DECISIONS (do not reverse)
 - CSS: ps/pe/ms/me ONLY — never pl/pr/ml/mr/left/right
@@ -67,6 +116,9 @@ DEFERRED (separate sessions — none are launch blockers):
 - No console.error swallowing — Sentry via captureAnalyticsError
 - git add -p always — never stage sibling work
 - Work on master directly — no worktrees unless explicitly requested
+- Customer-facing server actions emit lowercase i18n codes; never raw English.
+  Client localizeCheckoutError-style mapper resolves to t('errors.<key>').
+- Third-party preconnect for analytics/observability MUST be consent-gated.
 
 ## KNOWN CEILINGS (do not attempt to fix)
 - Lighthouse Score ~49 on mobile simulation = GSAP/Framer Motion floor
@@ -76,20 +128,20 @@ DEFERRED (separate sessions — none are launch blockers):
 
 ## MIGRATION STATE
 - Local = Remote = 162 migrations applied (no new migrations this session)
-- Session 131 added: 0 migrations.
+- Session 132 added: 0 migrations.
 
 ## SESSION HISTORY (last 5)
-- Session 119: Launch audit + 3 fixes (driver delivered, location push, stuck orders)
-- Session 120: 4-priority sweep (operations_alerts banner + AUD-V3-012 close
-  + birthday + recipe dedup + L1 HMAC) + Cowork customerNavUrl carry; +3 migrations
-- Session 129: Points auto-cap, cart drawer fix, driver notifications, supabase
-  client hardening, .env.local copied into fresh tree
+- Session 128: Waiter QR member scanner scaffold (flag OFF), migration 162
+- Session 129: Points auto-cap, cart drawer fix, driver notifications,
+  supabase client hardening, .env.local copied into fresh tree
 - Session 130: P2-1 chef Excel recipes import, P2-2 banner actionable,
-  B-001 + BUG-001 Riffa hours (closes 02:00, opens 07:00 — full fanout),
-  P3-1 birthday bonus wired to UI, P3-2 QR loyalty flag audited;
-  operator cleared SESSION_BIND_SECRET + SENTRY_AUTH_TOKEN
-- Session 131: P4-1 ForgotPasswordClient.tsx dead-code removed (144 LOC).
-  SetPasswordClient.tsx was already gone in an earlier pass.
+  B-001 + BUG-001 Riffa hours, P3-1 birthday bonus wired to UI,
+  P3-2 QR loyalty flag audited; operator cleared SESSION_BIND_SECRET +
+  SENTRY_AUTH_TOKEN
+- Session 131: P4-1 ForgotPasswordClient.tsx dead-code removed (144 LOC)
+- Session 132: P4-2 localize 7 checkout errors + F-01 preconnect leak +
+  /dashboard/catering listing + birthday notification (cron route +
+  email template + wa.me)
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1

@@ -1,7 +1,180 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 131: P4-1 dead-code cleanup — `ForgotPasswordClient.tsx` removed. Master `e7ab0cb` → `c4fe9a8`.
+> Session 132: P4-2 checkout error localization + F-01 GA4/Clarity consent gating + /dashboard/catering listing + birthday notification (cron route + email template + wa.me). Master `c4fe9a8` → `d24e5e3`.
 > Date: 2026-05-17
 > Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 132 — SUMMARY
+
+Five commits on master, all pushed. No migrations. All gates clean on
+every commit: `npx tsc --noEmit`, `npx tsx scripts/check-i18n.ts`,
+`NEXT_BUILD_WORKERS=1 npm run build`.
+
+Theme: clear the named launch-prep backlog. Two carry-forwards from
+session 131's audit (P4-2 raw English in checkout, F-01 consent
+gating), then two new dashboard/notification surfaces (catering
+listing + birthday email). One operator action added (CRON_SECRET);
+no operator actions cleared.
+
+The F-01 work surfaced a real violation that a pure UI audit would
+have missed — the script tags were already consent-gated, but two
+`<link rel="preconnect">` tags in <head> were still leaking
+DNS + TLS to googletagmanager.com and clarity.ms on every first
+paint regardless of consent.
+
+The birthday work split cleanly into two commits as specified — a
+scaffold (route + cron config + env var) followed by the actual
+sending (template + wa.me + i18n).
+
+## COMMITS (5 on master, all pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `9a93fe1` | fix(checkout) | **P4-2 — localize all 7 raw-English checkout errors.** Carry from session 128's `points_over_cap` work. Seven server-side strings in `src/app/[locale]/checkout/actions.ts` collapsed to stable lowercase codes consumed by `localizeCheckoutError` in `CheckoutForm.tsx`. Codes: `min_redemption:<n>` (carries dynamic count via prefix-parse, `{points}` interpolation in i18n), `insufficient_points`, `coupon_invalid`, `price_mismatch`, `auth_required`, `order_creation_failed`. `fetchAndComputeCouponDiscount` had 10 internal validation strings (paused / expired / branch / time window / per-customer limit / etc.) — all collapsed to `coupon_invalid` so the customer sees one localized message. 5 new i18n keys × 2 locales; parity 2,394 → 2,399. Sibling audit: `reserve/actions.ts` and `catering/actions.ts` already use code pattern (clean); `waiter/actions.ts:222` carries `'Order creation failed'` literal but is a staff surface with different return shape (out of scope, flagged for follow-up). |
+| `92c6fba` | fix(privacy) | **F-01 — gate GA4 + Clarity behind cookie consent.** Audit was verification-only by spec; violation found. `<Analytics>` was already properly consent-gated for script injection. The leak was two `<link rel="preconnect">` tags in `src/app/[locale]/layout.tsx:236-241` rendered server-side for every visitor regardless of consent. Preconnect performs DNS lookup + TLS handshake — that's a third-party network request before user accepts anything. Fix moved both preconnects into `<Analytics>` next to the Script tags they exist to warm up. Edge cases verified: returning consented user (useEffect on mount → preconnect + script inject immediately), never-accepted user (state stays false forever → no third-party connection), any non-`'accepted'` localStorage value (strict equality → blocks). |
+| `1d67b4a` | feat(catering) | **/dashboard/catering inquiry listing page.** Migration 160's `catering_inquiries` table had been writing leads since session 126 with only Supabase Studio reads. New server-component page at `src/app/[locale]/dashboard/catering/page.tsx` with `requireDashboardSection('catering')` (owner + general_manager only — catering leads carry personal info + budget, tight gate). Suspense wraps `CateringInquiriesList.tsx` which reads via `createServiceClient()` (RLS service-role-only, mirrors reservations pattern), orders by `created_at DESC`, limit 200. Cards show all 12 columns from the spec: name, short ref (last 8 hex, mono), phone, occasion, event date + optional time, guests (locale-aware), service type, area, preferred branch (resolved via BRANCHES → AR/EN name, "Any branch" fallback), budget ("—" fallback), notes, received timestamp. Fresh (<24h) gets a gold "NEW" pill. WhatsApp CTA via `buildCustomerContactLink` with bilingual greeting + short-ref. Sidebar entry under customers group reuses `<ReservationsIcon />`. New `catering` section in `rbac-ui.ts` (distinct from existing `inventory_catering`). 17 new i18n keys × 2 locales. |
+| `29ac5f2` | feat(cron) | **Birthday notification scaffold — /api/cron/birthday-notify + Vercel Cron config.** Auth via `Authorization: Bearer <CRON_SECRET>` (header Vercel injects on scheduled fires); without `CRON_SECRET` env var, route 503s every request including the scheduled cron — missing secret can never silently leak. Idempotency: 2h `created_at` lookback on `birthday_point_credits` — wide enough to catch today's pg_cron batch (05:00 UTC) when this route fires 1h later (06:00 UTC = 09:00 Asia/Bahrain), narrow enough that yesterday's rows fall outside. Documented caveat: manual mid-window curl within 2h of pg_cron WILL duplicate (intentional operator action; one-line `notified_at TIMESTAMPTZ` migration available if duplicate-send becomes real). `vercel.json` gains `crons` array. `.env.example` gains a new VERCEL CRON section with `CRON_SECRET` block + `openssl rand -hex 32` instructions. This commit's response is `{found, notified:0, cutoff}` — scaffold only. |
+| `d24e5e3` | feat(email) | **Birthday email template + WhatsApp deep-link notification.** New `emails/templates/BirthdayBonus.tsx`: bilingual single email, two stacked sections (RTL AR → divider → LTR EN), two CTA buttons (Visit Account + Continue on WhatsApp). PreviewProps included for `react-email` dev mode. `sendBirthdayBonus(to, subject, props)` added to `src/lib/email/send.ts` — same `send()` helper as every other transactional email, returns SendResult union, never throws. Route loop in `/api/cron/birthday-notify` replaces the scaffold's `notified:0` placeholder: per credit row fetch `customer_profiles` (name, email, points_balance, loyalty_tier) → skip silently if email null → build AR+EN copy via `getTranslations({ locale })` → `sendBirthdayBonus` → on failure log to Sentry with `stage: birthday_notify.send_failed` and increment `failed` (one bad row can't kill the batch). wa.me URL built once outside the loop: Riffa branch number (`customer_profiles` has no preferred_branch column) + bilingual pre-filled text URL-encoded. New top-level `email.birthday` i18n namespace: subject, heading, subheading {name}, pointsAwarded {points}, balance {balance}, tier {tier}, tierNames.{bronze\|silver\|gold\|platinum}, accountCta, whatsappCta, whatsappMessage, footnote. Parity 2,419 → 2,433. |
+
+## INFRA NOTES
+
+- **No new env vars used by checkout/F-01/catering**. Birthday notification
+  introduces `CRON_SECRET` (operator action added to bridge).
+- **No migrations.** Local↔Remote still paired at 162.
+- **No new dependencies.** Email template reuses existing
+  `@react-email/components` primitives and the four Kahramana* layout
+  components in `emails/components/`.
+- **Build size delta:** /api/cron/birthday-notify went from 420 B
+  (scaffold) → 2.19 kB (full loop). /[locale]/dashboard/catering at
+  2.19 kB / 245 kB first-load. Total pages 564 → 566.
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **`min_redemption:<n>` prefix encoding over an `errorParams` field on
+   `CheckoutResult`.** Adding a new param object to the result type
+   would have rippled through every consumer of `CheckoutResult.error`.
+   The prefix-and-parse pattern keeps `error: string` intact and
+   confines all parameter-extraction logic to a single branch inside
+   `localizeCheckoutError`. Only one parameterized error currently —
+   if more arrive, the convention is documented in the route comment.
+
+2. **All 10 coupon-validation strings collapse to `coupon_invalid`.**
+   Considered keeping `coupon_expired` / `coupon_paused` /
+   `coupon_below_minimum` distinct for actionability. The task brief
+   listed "Coupon invalid" as a single bucket; customer can see the
+   coupon UI for the precise reason. Specific codes can be split in a
+   follow-up if dashboard analytics needs them.
+
+3. **F-01: moved preconnects into `<Analytics>` rather than deleting
+   them.** Considered just removing both — the perf benefit is small
+   when the Script tag triggers DNS on its own. Kept them inside
+   `<Analytics>` so the gate is identical for both layers and the
+   original perf intent (warm DNS just before script load) is
+   preserved post-consent.
+
+4. **Catering dashboard: read-only listing, no realtime, no filter UI.**
+   Reservations page has Realtime + filter chips + status mutations;
+   reservation flow has live operational urgency (turn the table,
+   confirm seating). Catering leads land via the public form, get
+   processed via WhatsApp, and don't have a status lifecycle worth
+   tracking yet. A status workflow (replied / quoted / closed) can
+   land in a follow-up session when the operator decides what state
+   they want to track.
+
+5. **Birthday notification: bilingual single email, not locale-targeted.**
+   The simpler alternative (`customer_profiles.preferred_locale` column
+   + locale-specific send) needs a schema change and a backfill
+   heuristic. Bilingual body is zero-DDL and the existing customer
+   audience reads both anyway. AR block renders RTL, divider, EN block
+   renders LTR.
+
+6. **Birthday idempotency: 2h `created_at` window, not a `notified_at`
+   column.** A `notified_at TIMESTAMPTZ` column on
+   `birthday_point_credits` is the bulletproof solution. The 2h window
+   is the cheap solution. Picked cheap for soft-launch because: pg_cron
+   fires at 05:00 UTC, Vercel Cron fires at 06:00 UTC — 1h gap means
+   the window naturally bounds to today's batch. Documented in route
+   comments + commit body. Migration is one-line away if duplicate-send
+   ever happens.
+
+7. **Birthday WhatsApp: default to Riffa branch number.** Customer
+   profiles don't track a preferred branch. Riffa is the live default
+   per `BRANCHES`; both branches share the same wa.me hand-off pattern
+   used everywhere else.
+
+8. **Two-commit split for birthday work.** Task brief specified the
+   exact commit messages. Commit 1 (scaffold) is meaningful on its own
+   — operator can set CRON_SECRET and verify the auth + read path end
+   to end before any actual sends go out. Commit 2 (content) replaces
+   the placeholder.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → clean on every commit
+- `npx tsx scripts/check-i18n.ts` →
+    - Post-9a93fe1: 2,399 = 2,399
+    - Post-1d67b4a: 2,419 = 2,419
+    - Post-d24e5e3: 2,433 = 2,433
+- `NEXT_BUILD_WORKERS=1 npm run build` → green on every commit (564 →
+  566 pages, /api/cron/birthday-notify + /[locale]/dashboard/catering
+  registered)
+- **No runtime verification of birthday cron** — needs CRON_SECRET set
+  in Vercel and a real birthday matching today's Asia/Bahrain civil
+  date to fire. Operator can manually curl the route after setting
+  the secret to dry-run the path.
+- F-01 verified by reading the four edge cases in `<Analytics>`
+  through; not exercised in a real browser this session. Operator can
+  confirm in Chrome incognito Network tab.
+
+## DEFERRED / OPERATOR-PENDING
+
+(updated for session 132)
+- Supabase Free → Pro + Singapore migration.
+- TAP keys (merchant approval pending).
+- Staff accounts — 13 staff emails pending from owner.
+- **CRON_SECRET on Vercel** (new this session) — required for birthday
+  cron to fire. `openssl rand -hex 32`, then set Production + Preview.
+- Resend domain verification for kahramanat.com (already pending;
+  birthday cron + every other transactional email needs it).
+- VAPID keys for driver push notifications.
+- CONTACT_NOTIFY_EMAIL (optional).
+- After staff accounts: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true`.
+- WhatsApp/email birthday notification surface — **shipped this
+  session (29ac5f2 + d24e5e3)**. Surface is live; needs CRON_SECRET +
+  Resend verification to actually deliver. Will fire next morning
+  there's a customer birthday matching today's Bahrain date.
+- /dashboard/catering page — **shipped this session (1d67b4a)**. Empty
+  state will show until the public form starts collecting leads in prod.
+- ~15 `as any` sites (AUD-V3-007/011) — P4 follow-up still open.
+- Extend `localizeCheckoutError` to the remaining raw-English errors NOT
+  in the named seven — `waiter/actions.ts:222` is the named follow-up
+  (staff surface, different return shape).
+- Catering audit findings #6 (no email fallback) + #8 (HTML5 validation
+  balloon doesn't follow next-intl locale) — deferred since session 126.
+- Catering occasion_type / service_type normalization — currently
+  locale-rendered string.
+- HIDDEN_BRANCHES cleanup follow-up — purely cosmetic.
+
+## OPERATOR NOTES
+
+- **Set CRON_SECRET before the first birthday cron fire.** Without it
+  the route returns 503 to every request, including the scheduled
+  Vercel Cron at 06:00 UTC. pg_cron will still credit points
+  silently — only the notification leg is gated.
+
+- **/dashboard/catering is live for owner + GM only.** Cashiers /
+  branch managers / waiters won't see it in the sidebar (RBAC filter
+  hides it). Reads via service-role per migration 160's contract.
+
+- **F-01 fix is invisible to consented users.** Already-accepted
+  visitors get the preconnect + script bundle the moment `<Analytics>`
+  hydrates, same as before. First-time visitors get zero third-party
+  connections until they tap Accept.
+
+---
+---
+---
+
+# Prior session 131 close-out preserved below ↓
 
 ## SESSION 131 — SUMMARY
 
