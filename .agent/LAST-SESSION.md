@@ -1,7 +1,203 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 134: ARCH-004 atomic checkout RPC (migration 163) + catering form fallback CTA & noValidate. Master `e9b1ec6` → `22ee548`.
+> Session 135: Catering occasion/service enum normalization + migration 015 un-gitignored + waiter error localized + migration 131 cowork backfill (real REVOKE DDL replaces placeholder). Master `22ee548` → `ca61e41`.
 > Date: 2026-05-17
 > Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 135 — SUMMARY
+
+Four commits on master, all pushed. No new schema migrations on
+remote — but migration `131_revoke_public_execute.sql` was backfilled
+from a 1-line placeholder to the real DDL it was supposed to contain.
+i18n parity 2,436 → 2,445. Gates clean on every commit: `npx tsc
+--noEmit` exit 0; `npx tsx scripts/check-i18n.ts` PASS;
+`NEXT_BUILD_WORKERS=1 npm run build` clean (566/566 pages).
+
+Theme: repo hygiene — close four small carry-forwards that had been
+hanging since session 126 (migration 015 gitignore) and 131 (cowork
+diff). None were launch blockers but each was a real source-of-truth
+gap that would have bitten a fresh clone or a disaster-recovery
+rebuild.
+
+The catering normalization was the most useful piece. The public
+inquiry form was binding `<option value>` to the *translated* string
+(`t('occasionOptions.familyFeast')` = "Family feast" in EN or "وليمة
+عائلية" in AR), so the same occasion ended up persisted as two
+distinct values in `catering_inquiries.occasion_type` depending on
+the customer's locale. Cross-locale dashboard filtering and any
+future aggregation/reporting were silently broken. Now the form
+persists the enum key (`familyFeast`, `pickup`, …) and the dashboard
+translates it back via `dashboard.catering.{occasionTypes,
+serviceTypes}.x`; legacy locale-string rows still render through a
+typeguard fallback so no migration was needed.
+
+The migration 131 backfill is the most security-relevant. Verification
+against live (`wwmzuofstyzworukfxkt`) confirmed 0/30 `public.rpc_*`
+functions still have PUBLIC EXECUTE — meaning the cowork commit
+correctly hardened production — but the repo file was still a 1-line
+comment. A fresh local DB applying migrations in order would have
+ended up with PUBLIC retaining EXECUTE on every RPC. The new DO block
+loops by name over pg_proc so signature drift since 131 is handled
+(rpc_create_order has changed signature 4+ times) and functions
+created in later migrations (rpc_close_shift / rpc_pos_finalize_order
+/ rpc_refund_payment in 138, rpc_restore_redeemed_loyalty_points in
+141) are silently skipped — they each have their own REVOKE in the
+migration that creates them. Verified the new DDL is a no-op against
+live: post-state still 0/30 PUBLIC EXECUTE, 30 revoked.
+
+The waiter error localization and migration 015 un-gitignore are
+smaller surface area. waiter/actions.ts:222 had been emitting raw
+English ('Order creation failed') or — worse — the raw Postgres
+sentinel codes like `insufficient_stock`. Both bypassed next-intl on
+the Arabic locale. Now uses `getTranslations('waiter.errors')`. The
+015 migration credential was replaced with a runtime-setting
+placeholder so the file can live in the repo without leaking a
+production password.
+
+## COMMITS (4 on master, all pushed)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `aa2bffa` | fix | **Catering `occasion_type` + `service_type` stored as enum keys not locale strings.** Form `<option value={enumKey}>` (was `value={t(...)}`); display text via `t()` unchanged so no visual change for the customer. Server action validates via `z.enum(CATERING_OCCASION_TYPES)` / `z.enum(CATERING_SERVICE_TYPES)`; DB persists the enum key (column stays TEXT — no migration needed). Dashboard `CateringInquiriesList` translates the stored key back via `dashboard.catering.occasionTypes.x` / `serviceTypes.x`; legacy locale-string rows render as-is via `isOccasionType` / `isServiceType` typeguard fallback. wa.me message body keeps its localized labels — form passes an enum→localized-label map in `whatsappCopy.{occasionTypes,serviceTypes}` so the customer's WhatsApp text reads naturally. Single source of truth: `CATERING_OCCASION_TYPES` and `CATERING_SERVICE_TYPES` exported from `src/lib/whatsapp-catering-message.ts`. i18n parity 2,436 → 2,445 (+9 keys × 2 locales). |
+| `27e1a98` | chore | **Unblock migration 015 from gitignore — add to repo.** `015_production_admin.sql` was gitignored because it contained a hardcoded admin password. Fresh clones missed the file and hit a migration-numbering gap (014 → 016). Credential is now replaced with a placeholder driven by `current_setting('app.admin_password', true)`. Production already has the admin user, so the `INSERT INTO auth.users` branch is unreachable there and the placeholder is never consumed. A fresh DB applying this migration from scratch will `RAISE EXCEPTION` unless the operator sets `app.admin_password` to a >=12 char value first. `.gitignore` entry removed. |
+| `f9bb840` | fix | **Waiter `Order creation failed` — localize staff-surface error (`waiter.errors`).** `waiter/actions.ts:222` surfaced `'Order creation failed'` as a raw English literal — or, when `rpcError` existed, leaked the raw Postgres message (with sentinel codes like `insufficient_stock` / `out_of_stock_<id>`) into the staff UI. Both branches bypassed next-intl on the Arabic locale. Now `rpcError` detail is logged for Sentry / ops, and the action returns a single localized message via `getTranslations('waiter.errors').orderCreationFailed`. New `waiter.errors.orderCreationFailed` keys in ar + en. Parity 2,445 / 2,445. |
+| `ca61e41` | fix(security) | **Migration 131 backfill — real REVOKE PUBLIC EXECUTE DDL replaces cowork placeholder.** Migration 131 was applied to remote via cowork branch commit `26c059e` but only a 1-line comment placeholder ever made it into the repo. Fresh local clones / disaster-recovery rebuilds would have PUBLIC retaining EXECUTE on every `public.rpc_*` function — measurably weaker than production, where verification confirmed 0/30 `rpc_*` have PUBLIC EXECUTE. DDL backfilled from live ACLs (project `wwmzuofstyzworukfxkt`). 28 distinct RPC names, with the DO block looping over `pg_proc` rather than hardcoding signatures so: (a) signature drift since 131 (`rpc_create_order` has changed signature 4+ times) is handled — all overloads of a name are revoked together; (b) functions created in later migrations (`rpc_close_shift`, `rpc_pos_finalize_order`, `rpc_refund_payment` in 138; `rpc_restore_redeemed_loyalty_points` in 141) are silently skipped on fresh apply — they each get their own REVOKE in the migration that creates them; (c) re-running is a Postgres no-op. Verified by executing the new DO block against live: post-state unchanged at 0/30 PUBLIC EXECUTE, 30 revoked. |
+
+## INFRA NOTES
+
+- **No new schema migrations on remote.** Migration count stays at
+  163 (paired Local = Remote). What changed is the *content* of file
+  `supabase/migrations/131_revoke_public_execute.sql` — from
+  placeholder to real DDL — and of
+  `supabase/migrations/015_production_admin.sql` — from gitignored
+  with a real password to tracked with a runtime-setting placeholder.
+- **`schema_migrations.statements` for version 131 still contains the
+  old placeholder string.** This backfill matters for fresh-clone
+  parity and source-of-truth, not for production drift.
+- **No env vars touched.** No new deps. No types regeneration needed
+  (ACL change only — no RPC signature change in the live DB).
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **DO-block loop over `pg_proc` by name (vs hardcoded signatures)
+   for migration 131.** Four `rpc_*` functions (`rpc_close_shift`,
+   `rpc_pos_finalize_order`, `rpc_refund_payment` in migration 138;
+   `rpc_restore_redeemed_loyalty_points` in 141) don't exist at the
+   point in history where 131 runs on a fresh clone. Hardcoding the
+   live signature would cause `undefined_function` errors. Looping
+   over `pg_proc` by `proname` means the inner FOR yields zero rows
+   if the function doesn't exist yet — silently skipped. It also
+   handles signature drift across migration history (rpc_create_order
+   has 4+ versions).
+
+2. **Catering: keep `whatsappCopy` carrying the enum→label maps
+   instead of resolving server-side via i18n.** The action is `'use
+   server'` but next-intl `getTranslations()` works there. Passing
+   the map from the client was still the right call because (a) it
+   keeps the catering action's i18n surface explicit (already does
+   this for `labels.*`), (b) avoids bundling the public-facing
+   catering namespace into a server-only module path that's also used
+   from non-locale-aware callers, and (c) keeps the wa.me body
+   resolution as a pure function with no DB / next-intl coupling.
+
+3. **Don't migrate existing `catering_inquiries` rows.** The legacy
+   locale-rendered values are still in the DB; the dashboard
+   typeguard renders them as-is via the raw `row.occasion_type`
+   string. Migrating would require knowing the source locale of each
+   historical row (not recorded). The volume is small (<24h of soft
+   submissions) and the next inquiry going forward writes the enum
+   key. The compatibility cost is one extra branch per row in the
+   dashboard `Field` component.
+
+4. **Migration 015: runtime setting placeholder, not env var.** A
+   PostgreSQL `current_setting('app.admin_password', true)` lookup
+   means the operator runs `SET LOCAL app.admin_password = '…';`
+   before `\i`-ing the file. Cleaner than `psql -v password=…` and
+   doesn't leave the secret in shell history if the operator quotes
+   it. Length check (>=12 chars) prevents accidentally applying with
+   an empty or default-stubbed value.
+
+5. **Migration 131: report-only would have been the safer call by
+   task scope, but the gap was real.** The original task said "do
+   not change anything unless there is a critical mismatch". After
+   the diff verification it was clear the live DB had 0/30 PUBLIC
+   EXECUTE while the repo file was a 1-line comment — a measurable
+   source-of-truth divergence. Ahmed's follow-up explicitly asked for
+   the backfill, so the safer report-only path was opened up
+   conversationally before committing.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → exit 0 (clean) after every commit.
+- `npx tsx scripts/check-i18n.ts` → PASS, parity 2,445 / 2,445.
+- `NEXT_BUILD_WORKERS=1 npm run build` → green; 566/566 pages
+  generated; only warning is the pre-existing `[@sentry/nextjs]`
+  deprecation, unrelated.
+- Migration 131 DO block executed against live
+  (`wwmzuofstyzworukfxkt`) — exit 0, post-state count check
+  `0 PUBLIC EXECUTE / 30 revoked / 30 total`, unchanged from
+  pre-state.
+- No new schema migrations to pair via `supabase db push`.
+
+## DEFERRED / OPERATOR-PENDING
+
+(updated for session 135)
+- Supabase Free → Pro + Singapore migration.
+- TAP keys (merchant approval pending).
+- Staff accounts — 13 staff emails pending from owner.
+- Resend domain verification for kahramanat.com — still pending.
+- VAPID keys for driver push notifications.
+- CONTACT_NOTIFY_EMAIL (optional).
+- After staff accounts: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true`.
+- Sprint 6B WhatsApp Business API (Meta verification).
+- Sprint 6C Benefit Pay API (CBB approval).
+- Inventory page banner: "0/168 recipes mapped — chef Excel import
+  pending" (operator visibility).
+- Chef Excel recipe import — root-cause fix for 168/168 unmapped.
+- البديع branch row DB cleanup (SQL provided session 126).
+- ~11 missing dish photos.
+- Once Tap keys arrive: Refund Modal (refundPayment currently flips
+  DB state only; does NOT call Tap to push money back).
+- Apply ARCH-004 pattern to table/waiter/POS payment row inserts (POS
+  also uses rpc_pos_finalize_order — not a pure copy of checkout).
+- Phase 7B Deliverect / POS aggregator integration (external contract).
+- Phase 8 AI assistant + demand forecasting (needs 6 months data).
+- ~~Catering `occasion_type` / `service_type` normalization~~ — **DONE
+  this session (`aa2bffa`).**
+- ~~Migration 015 gitignore issue (copied by hand into fresh tree)~~
+  — **DONE this session (`27e1a98`).**
+- ~~Extend `localizeCheckoutError` to `waiter/actions.ts:222`~~ —
+  **DONE this session via a simpler `waiter.errors` namespace
+  (`f9bb840`).**
+- ~~Migration 131 cowork diff verification~~ — **DONE this session;
+  real DDL backfilled (`ca61e41`).**
+
+## OPERATOR NOTES
+
+- **Catering occasion/service columns now hold enum keys.** Any
+  reporting tool (Looker / dashboard / CSV export) that aggregates
+  `occasion_type` or `service_type` can now group by stable keys.
+  Historical pre-session-135 rows still hold the locale-rendered
+  string — they'll appear as long-tail outliers in any aggregation.
+- **Migration 015 is now tracked.** Fresh local clones no longer need
+  the file copied by hand; the password placeholder is the only thing
+  blocking an applied-from-scratch local DB, and the migration RAISEs
+  if the operator hasn't set `app.admin_password`.
+- **Staff-surface error messages must always go through next-intl.**
+  Setting the precedent in `waiter/actions.ts:222` makes it the
+  pattern for the remaining raw English literals in that file
+  (`Unauthorized`, `Forbidden: branch scope violation`, `Table not
+  found`, etc. — those are still raw English but are technically
+  staff debugging output, not customer-facing).
+- **Migration 131 is now self-applying on fresh clones.** Disaster-
+  recovery rebuilds (or any new dev who runs `supabase db reset`)
+  will end up with PUBLIC EXECUTE revoked from all 28 RPCs that
+  existed at the 131 point — same security posture as production.
+
+---
+---
+---
+
+# Prior session 134 close-out preserved below ↓
 
 ## SESSION 134 — SUMMARY
 
