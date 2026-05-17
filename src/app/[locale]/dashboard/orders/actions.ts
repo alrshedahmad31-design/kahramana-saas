@@ -16,6 +16,7 @@ import { sendOrderStatusUpdate } from '@/lib/email/send'
 import { BRANCHES, type BranchId } from '@/constants/contact'
 import { toSafeError } from '@/lib/utils/safe-error'
 import { restoreLoyaltyForReversedOrder } from '@/lib/loyalty/restore'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -148,6 +149,8 @@ export async function updateOrderStatus(
     }
   }
 
+  // RPC-PENDING: no rpc_update_order_status yet — write via service-role
+  // client with explicit audit_logs INSERT below. Track in ARCH followups.
   // Optimistic concurrency: scope by current status AND verify a row was
   // actually updated. .select('id') returns the affected rows; length 0 means
   // a concurrent change beat us.
@@ -165,6 +168,20 @@ export async function updateOrderStatus(
       code: 'conflict',
       error: 'Order status changed by another request — refresh and retry',
     }
+  }
+
+  // RPC-PENDING: explicit audit trail until rpc_update_order_status lands.
+  const { error: auditError } = await supabase.from('audit_logs').insert({
+    table_name: 'orders',
+    action:     'UPDATE',
+    user_id:    caller.id,
+    record_id:  orderId,
+    changes:    { status: nextStatus, prev_status: order.status },
+    branch_id:  order.branch_id,
+    actor_role: caller.role,
+  })
+  if (auditError) {
+    console.error('[orders] audit_logs insert failed for status update', orderId, auditError)
   }
 
   // VULN-103: cancelled/returned orders restore redeemed loyalty points.
@@ -195,7 +212,14 @@ export async function updateOrderStatus(
         orderId,
         status: nextStatus,
         branchName: BRANCHES[order.branch_id as BranchId]?.nameAr ?? 'كهرمانة',
-      }).catch(() => {})
+      }).catch((err: unknown) => {
+        captureAnalyticsError({
+          code:      'EMAIL_SEND_FAILED',
+          message:   err instanceof Error ? err.message : String(err),
+          function:  'email_send_failed',
+          timestamp: new Date().toISOString(),
+        })
+      })
     }
   }
 
@@ -274,6 +298,8 @@ export async function updateOrderWithReason(
     ? `${order.notes}\n[${tag} ${timestamp}]: ${v.reason}`
     : `[${tag} ${timestamp}]: ${v.reason}`
 
+  // RPC-PENDING: no rpc_cancel_order yet — write via service-role client
+  // with explicit audit_logs INSERT below. Track in ARCH followups.
   // Optimistic concurrency: pin to current status and verify a row was updated.
   const { data: updated, error: updateError } = await supabase
     .from('orders')
@@ -295,7 +321,8 @@ export async function updateOrderWithReason(
     }
   }
 
-  // Audit log: high-risk action, surface failure instead of swallowing.
+  // RPC-PENDING: audit row written directly until rpc_cancel_order lands.
+  // High-risk action — surface failure instead of swallowing.
   const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'orders',
     action:     'UPDATE',

@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import {
   requireDashboardSection,
   isDashboardGuardError,
@@ -39,7 +39,9 @@ export default async function OrderDetailPage({ params }: Props) {
   const tS = await getTranslations('order.status')
   const tC = await getTranslations('common')
 
-  const supabase = await createServiceClient()
+  // P1-14: anon client — RLS on orders is branch-scoped (defense-in-depth
+  // for the explicit branch check below).
+  const supabase = await createClient()
 
   // Order fetch — failures are real errors, missing rows are 404.
   const { data: orderData, error: orderError } = await supabase
