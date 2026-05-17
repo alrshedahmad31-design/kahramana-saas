@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { getSession } from '@/lib/auth/session'
@@ -37,7 +38,12 @@ export default async function PaymentPage({ params, searchParams }: Props) {
       .single()
 
     if (orderErr || !order || order.status === 'cancelled') {
-      console.warn('[Payment Page] Order not found or error:', orderErr)
+      if (orderErr) {
+        Sentry.captureException(orderErr, {
+          tags: { stage: 'payment_page.order_fetch' },
+          extra: { orderId },
+        })
+      }
       notFound()
     }
 
@@ -80,7 +86,10 @@ export default async function PaymentPage({ params, searchParams }: Props) {
       </div>
     )
   } catch (err) {
-    console.error('[Payment Page] Fatal Error:', err)
-    notFound() // Fallback to 404 if anything crashes
+    Sentry.captureException(err, {
+      tags: { stage: 'payment_page.fatal' },
+      extra: { orderId },
+    })
+    notFound()
   }
 }
