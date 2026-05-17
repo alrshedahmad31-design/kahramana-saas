@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -4682,6 +4683,36 @@ export type Database = {
       }
     }
     Functions: {
+      _order_status_role_allowed: {
+        Args: {
+          p_role: Database["public"]["Enums"]["staff_role"]
+          p_status: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: boolean
+      }
+      _order_status_transition_allowed: {
+        Args: {
+          p_next: Database["public"]["Enums"]["order_status"]
+          p_prev: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: boolean
+      }
+      _reservation_role_allowed: {
+        Args: { p_role: Database["public"]["Enums"]["staff_role"] }
+        Returns: boolean
+      }
+      _reservation_transition_allowed: {
+        Args: { p_next: string; p_prev: string }
+        Returns: boolean
+      }
+      _waitlist_role_allowed: {
+        Args: { p_role: Database["public"]["Enums"]["staff_role"] }
+        Returns: boolean
+      }
+      _waitlist_transition_allowed: {
+        Args: { p_next: string; p_prev: string }
+        Returns: boolean
+      }
       auth_user_branch_id: { Args: never; Returns: string }
       auth_user_role: {
         Args: never
@@ -4760,6 +4791,16 @@ export type Database = {
         Returns: undefined
       }
       refresh_analytics_views: { Args: never; Returns: undefined }
+      rpc_add_waitlist_entry: {
+        Args: {
+          p_branch_id: string
+          p_guest_name: string
+          p_notes?: string
+          p_party_size: number
+          p_phone: string
+        }
+        Returns: Json
+      }
       rpc_auto_generate_pos: { Args: never; Returns: undefined }
       rpc_budget_trend: {
         Args: { p_branch_id: string; p_year: number }
@@ -4799,6 +4840,14 @@ export type Database = {
           year: number
         }[]
       }
+      rpc_cancel_order: {
+        Args: {
+          p_order_id: string
+          p_reason: string
+          p_target_status: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: Json
+      }
       rpc_catering_calc_ingredients: {
         Args: { p_order_id: string }
         Returns: Json
@@ -4833,25 +4882,17 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_cancel_order: {
-        Args: {
-          p_order_id: string
-          p_target_status: Database["public"]["Enums"]["order_status"]
-          p_reason: string
-        }
-        Returns: Json
-      }
       rpc_create_customer_profile: {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined
       }
       rpc_create_leave_request: {
         Args: {
-          p_leave_type: string
-          p_start_date: string
-          p_end_date: string
           p_days_count: number
+          p_end_date: string
+          p_leave_type: string
           p_reason?: string
+          p_start_date: string
         }
         Returns: Json
       }
@@ -5083,17 +5124,17 @@ export type Database = {
       rpc_update_abc_classification: { Args: never; Returns: undefined }
       rpc_update_order_status: {
         Args: {
-          p_order_id: string
-          p_new_status: Database["public"]["Enums"]["order_status"]
           p_expected_status: Database["public"]["Enums"]["order_status"]
+          p_new_status: Database["public"]["Enums"]["order_status"]
+          p_order_id: string
         }
         Returns: Json
       }
       rpc_update_reservation_status: {
         Args: {
-          p_reservation_id: string
-          p_new_status: string
           p_expected_status: string
+          p_new_status: string
+          p_reservation_id: string
         }
         Returns: Json
       }
@@ -5105,6 +5146,14 @@ export type Database = {
           p_role: Database["public"]["Enums"]["staff_role"]
         }
         Returns: undefined
+      }
+      rpc_update_waitlist_status: {
+        Args: {
+          p_entry_id: string
+          p_expected_status: string
+          p_target_status: string
+        }
+        Returns: Json
       }
       update_order_item_station_status: {
         Args: {
@@ -5413,3 +5462,5 @@ export const Constants = {
     },
   },
 } as const
+A new version of Supabase CLI is available: v2.98.2 (currently installed v2.90.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
