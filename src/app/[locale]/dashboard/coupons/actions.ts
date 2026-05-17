@@ -116,6 +116,39 @@ function assertCouponWithinLimits(data: CouponLimitedFields): void {
   }
 }
 
+// P0 (second-audit): clamp applicable_branches for non-admin roles.
+// branch_manager + marketing can only scope coupons to their OWN branch —
+// any payload listing other branches OR null/empty (which means "global")
+// is rejected before the insert hits the DB. Owner / general_manager bypass
+// so they retain the global-coupon power required to run cross-branch promos.
+function clampBranchScope(
+  data: CouponFormData,
+  caller: AuthUser,
+): { ok: true; branches: string[] | null } | { ok: false; error: string } {
+  const isAdmin = caller.role === 'owner' || caller.role === 'general_manager'
+  if (isAdmin) {
+    return { ok: true, branches: data.applicable_branches ?? null }
+  }
+  if (caller.role !== 'branch_manager' && caller.role !== 'marketing') {
+    return { ok: true, branches: data.applicable_branches ?? null }
+  }
+  if (!caller.branch_id) {
+    return { ok: false, error: 'COUPON_BRANCH_REQUIRED' }
+  }
+  const submitted = data.applicable_branches ?? []
+  // Empty / null is treated as global → forbidden for these roles.
+  if (submitted.length === 0) {
+    return { ok: false, error: 'COUPON_BRANCH_SCOPE_REQUIRED' }
+  }
+  // Must contain exactly one entry that matches the caller's branch.
+  const onlyOwnBranch =
+    submitted.length === 1 && submitted[0] === caller.branch_id
+  if (!onlyOwnBranch) {
+    return { ok: false, error: 'COUPON_BRANCH_SCOPE_VIOLATION' }
+  }
+  return { ok: true, branches: [caller.branch_id] }
+}
+
 function revalidateCoupons(_locale: string) {
   revalidatePath('/dashboard/coupons')
   revalidatePath('/en/dashboard/coupons')
@@ -171,6 +204,9 @@ export async function createCoupon(data: CouponFormData): Promise<ActionResult> 
     }
   }
 
+  const scope = clampBranchScope(data, caller)
+  if (!scope.ok) return { success: false, error: scope.error }
+
   const supabase = await createClient()
 
   const insert: Omit<CouponInsert, 'id'> = {
@@ -191,7 +227,7 @@ export async function createCoupon(data: CouponFormData): Promise<ActionResult> 
     discount_type:         data.discount_type || data.type,
     max_discount_amount:   data.max_discount_amount || data.max_discount_bhd || null,
     min_order_value:       data.min_order_value || data.min_order_value_bhd || 0,
-    applicable_branches:   data.applicable_branches || null,
+    applicable_branches:   scope.branches,
     applicable_items:      data.applicable_items || null,
     applicable_categories: data.applicable_categories || null,
     customer_segment:      data.customer_segment || 'all',
@@ -248,6 +284,9 @@ export async function updateCoupon(
     }
   }
 
+  const branchClamp = clampBranchScope(data, caller)
+  if (!branchClamp.ok) return { success: false, error: branchClamp.error }
+
   const supabase = await createClient()
 
   const scope = await assertCouponScope(supabase, id, caller)
@@ -272,7 +311,7 @@ export async function updateCoupon(
       discount_type:         data.discount_type || data.type,
       max_discount_amount:   data.max_discount_amount || data.max_discount_bhd || null,
       min_order_value:       data.min_order_value || data.min_order_value_bhd || 0,
-      applicable_branches:   data.applicable_branches || null,
+      applicable_branches:   branchClamp.branches,
       applicable_items:      data.applicable_items || null,
       applicable_categories: data.applicable_categories || null,
       customer_segment:      data.customer_segment || 'all',
