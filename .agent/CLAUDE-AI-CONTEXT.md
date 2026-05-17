@@ -1,14 +1,16 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 142 close-out + notes refresh through 142)
-# Master: e53c17a
+# Updated: 2026-05-18 (session 144 close-out — T3 public-surface hygiene sweep)
+# Master: a572bdb
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: stricter than session-140 baseline — every public write surface
-fails closed under misconfiguration, Tap webhooks are dedup-locked, cron
-sends are idempotent, `/order/[id]` no longer leaks staff fields.
+Posture: session-144 raises floor again — customer-side login, register,
+password-reset, and set-password now all fail closed in production when
+Turnstile or Upstash env vars are missing. Per-user authenticated pages
+(/order/[id], /payment/[orderId], /account, /checkout) pinned to
+force-dynamic so a future layout-hoist refactor can't flip them to ISR.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -54,13 +56,42 @@ externally locked is complete. The project is production-ready for
 soft-launch (cash-only).
 
 Optional next-lane candidates (none queued; only fire on explicit ask):
-- Tier 3 hygiene — 19 P2 findings from the session-141 public-audit list.
-- Type regen drop — `birthday_point_credits.notified_at` cron cast was
-  left as `Record<string, never>` in session 142; a `chore(types)` regen
-  cleans it up (the c7e9b3a regen this session didn't cover it because
-  the MCP output was truncated).
+- **PUB-007 + PUB-009** (deferred from session 144 T3-B). Both documented
+  in `.agent/BACKLOG.md` under "Session 144 — Public-surface audit
+  deferred items". PUB-007 needs a Supabase migration to switch the
+  reserve RPC from substring sentinel matching to SQLSTATE codes;
+  PUB-009 is a ~15-line narrow row type for `/order/[id]` to replace the
+  `as unknown as OrderWithItems` cast. Pair them in the next hygiene lane.
 
-CLOSED in sessions 137–142 (newest first):
+CLOSED in sessions 137–144 (newest first):
+
+✅ Session 144 — Public-surface hygiene audit + T3 cleanup (6 commits, 94e01c0 → a572bdb)
+   - Generated `.agent/public-audit-2026-05-18.md` (15 findings: 0 P0,
+     6 P1, 9 P2). The session-142 T1/T2 sweep visibly raised the floor.
+   - T3-A1 (`94e01c0`): fail-closed Turnstile + rate limits on
+     `/account/login` + `/account/register` + `/forgot-password`
+     (PUB-003 + PUB-004 + PUB-014). Mirrors staff `/login` post-T1.
+   - T3-A2 (`4444c3d`): swap `console.warn`/`console.error` to
+     `Sentry.captureException` in `/payment/[orderId]/page.tsx`
+     (PUB-001).
+   - T3-A3 (`67f9f59`): pin `export const dynamic = 'force-dynamic'` on
+     `/order/[id]`, `/payment/[orderId]`, `/account`, `/checkout`
+     (PUB-013). Structural insurance against a future layout-hoist
+     refactor flipping these to ISR.
+   - T3-B (`a572bdb`): 7 P2 hygiene fixes + PUB-002 (P1, folded in
+     since it lives on the same surface as PUB-001). Shared
+     `PUBLIC_PHONE_RE` extracted to `src/lib/validation/phone.ts`,
+     `registerSchema` Zod object for registerAction, `.max(50)` on
+     contact branch_id, `q` searchParam clamp on `/menu`, `.max(72)` +
+     5/15m rate-limit on setPasswordAction, Sentry on checkout error
+     boundary, UUID guard on `/payment/[orderId]`.
+   - Also: pre-audit chores landed early-session — `bc0811c` (session
+     143 9-gate hygiene chore — amber → brand-gold + gate-5/6 regex
+     tightening); `c55f0c9` (drop `Record<string, never>` cast on
+     `notified_at` UPDATE in birthday-notify route, types.ts now covers
+     migration 172).
+   - Deferred to backlog: PUB-007 (RPC SQLSTATE migration), PUB-009
+     (narrow row type refactor). Both in `.agent/BACKLOG.md`.
 
 ✅ Session 142 — Security Tier 1 + Tier 2 hardening sweep (15 commits, fb3995f → e53c17a)
    - T1 (fail-open holes): Turnstile + Upstash now fail-closed in
@@ -213,9 +244,19 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   orders / reservations / leave_requests / waitlist / shifts /
   coupons / promotions / staff / settings into SECURITY DEFINER RPCs
   (migrations 165–171). Audit row + parent mutation share a transaction.
-- **Public write surfaces fail closed in production** (session 142, T1) —
-  Turnstile, Upstash, missing env vars all return rate_limit/error in
-  production; dev/preview keep honeypot-only fallback.
+- **Public write surfaces fail closed in production** (session 142, T1;
+  extended in session 144, T3-A1) — Turnstile, Upstash, missing env vars
+  all return rate_limit/error in production across contact, reserve,
+  catering, staff login, customer login, customer register, forgot-password,
+  set-password; dev/preview keep honeypot-only fallback.
+- **Per-user authenticated pages pin `force-dynamic`** (session 144, T3-A3) —
+  `/order/[id]`, `/payment/[orderId]`, `/account`, `/checkout`. Pure
+  insurance against a future layout-hoist refactor breaking the
+  implicit-dynamic guarantee and exposing user A's data via the shared
+  static cache.
+- **Shared public form validation** (session 144, T3-B) —
+  `src/lib/validation/phone.ts` exports `PUBLIC_PHONE_RE`. Contact,
+  reserve, catering all import from this; do not redeclare the regex.
 - AnalyticsResult<T> pattern for all analytics queries (AUD-V3-008)
 - createClient() (anon) for analytics reads where RLS covers it
 - createServiceClient() only for: matviews + RPCs without authenticated grant
@@ -266,8 +307,6 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last 5)
-- Session 138/139: rolled into session 140 close-out (no separate
-  close-out commits)
 - Session 140: second-pass dashboard audit clean — P0 coupon scope
   clamp + 9 P1 groups (KDS/POS/waitlist/shifts/coupons/promotions/
   reports/dynamic-imports/staff+settings) + migrations 168–171
@@ -282,6 +321,17 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   (migration 172), honeypot fake-success, slug cap, account login
   Turnstile + email RL, Tap webhook replay dedup (migration 173).
   Types regen + notes refresh.
+- Session 143: 9-gate hygiene chore — amber → brand-gold on 3 spots in
+  ReservationsClient.tsx; gate 5 BHD regex tightened to display-token
+  only; gate 6 exempt list adds birthday-notify cron. One commit
+  (`bc0811c`), no migrations, no runtime behaviour change.
+- Session 144: public-surface hygiene audit + T3 cleanup. Generated
+  `.agent/public-audit-2026-05-18.md` (15 findings, 0 P0, 6 P1, 9 P2).
+  Shipped 4 batches in 6 commits: T3-A1 fail-closed login surfaces;
+  T3-A2 Sentry on /payment page; T3-A3 force-dynamic pin on 4 auth
+  pages; T3-B 7 P2s + PUB-002 + shared phone regex. Two P2s deferred
+  to BACKLOG.md (PUB-007 needs migration, PUB-009 ~15-line refactor).
+  No migrations, all 9 gates green.
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
