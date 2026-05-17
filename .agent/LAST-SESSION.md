@@ -1,7 +1,158 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 129: Points-cap UX + cart drawer + driver realtime notifications + supabase client hardening. Master `b2f0555` → `2079f2c`.
-> Date: 2026-05-16
+> Session 130: P2 inventory recipes import + P3 birthday/QR + B-001/BUG-001 Riffa hours + operator actions (Sentry/SESSION_BIND_SECRET). Master `2f5c80d` → `e7ab0cb`.
+> Date: 2026-05-17
 > Author: Claude Code (Opus 4.7, 1M context)
+
+## SESSION 130 — SUMMARY
+
+Six commits on master. No migrations. All gates clean on every commit:
+`npx tsc --noEmit`, `npx tsx scripts/check-i18n.ts` (after each i18n
+touch), `NEXT_BUILD_WORKERS=1 npm run build`.
+
+Theme: clear the dev-side backlog around the soft-launch milestone and
+unblock two operator-side observability blockers. Operational hole
+called out in master notes (`fn_inventory_reserve` no-op since session
+38, recipes table empty) got two attacks: P2-1 ships the chef-facing
+Excel import; P2-2 makes the operator-visible "X/168 mapped" banner
+actionable. Loyalty surface caught up to migration 158 (birthday cron
+already scaffolded — P3-1 wires the bonus value into the customer UI);
+QR loyalty scanner audited and confirmed safe in flag-OFF state (P3-2).
+Riffa hours corrected twice in one session — B-001 closed 01:00 → 02:00
+at user request, then BUG-001 surfaced the latent opens 19:00 → 07:00
+mismatch via a real-world report at 10:55 AM Bahrain. The `isOpen()`
+logic was correct; the data was wrong (BRANCH_CONTACTS.md was the
+source-of-truth all along). Three operator actions cleared mid-session
+(SESSION_BIND_SECRET set + SENTRY_AUTH_TOKEN rotated + redeploy).
+
+## COMMITS (6 on master, not pushed by Claude — push at operator discretion)
+
+| Hash | Type | Summary |
+|------|------|---------|
+| `786f549` | feat(inventory) | **Chef Excel recipes import — wires inventory deduction (P2-1).** New `/dashboard/inventory/recipes/import` route, role-gated to `owner / general_manager / inventory_manager`. Single-sheet workbook shape: `menu_item_slug \| ingredient_id \| quantity_used \| unit`. Parser in `src/lib/inventory/recipe-import-parser.ts` (UUID-format check, per-row AR+EN errors). Server action in `src/app/[locale]/dashboard/inventory/recipes/import/actions.ts` — `analyze` pass validates against `menu_items_sync` + `ingredients` and detects both in-workbook duplicates and existing `(slug, ingredient_id)` pairs already in `recipes`; `import` pass inserts the survivors via service-role with an `audit_logs` entry tagged `source: 'chef_excel_import'`. Client UI in `src/components/inventory/RecipeImportClient.tsx` follows the existing inventory dashboard card/table tokens (`brand-surface`, `brand-border`, `brand-gold`, RTL via `isAr` ternaries). "Import from Excel" CTA added to `src/app/[locale]/dashboard/inventory/recipes/page.tsx` for the same three roles. The `unit` column is intentionally informational only — the recipes table doesn't store a unit; the source of truth is `ingredients.unit`. |
+| `d5da803` | feat(inventory) | **Mapped-recipes banner now actionable (P2-2).** `src/components/inventory/RecipesBannerClient.tsx` gained an `importHref` prop and a `<Link>` CTA pointing at the new P2-1 import page. `src/app/[locale]/dashboard/inventory/page.tsx`: role gate flipped from `owner / general_manager / branch_manager` → `owner / general_manager / inventory_manager`. Trigger condition tightened from `recipesCount === 0 && menuItemsCount > 0` → `menuItemsCount > 0 && recipesCount < menuItemsCount` so the banner now fires while a partial mapping is in progress. Mapped count switched from raw `recipes` row count to `DISTINCT menu_item_slug`. i18n: `recipesBanner.title` reworded; new `recipesBanner.cta` key. |
+| `bfc18cd` | fix(branches) | **Riffa closing time 01:00 → 02:00 across all surfaces (B-001).** Changed only in Riffa rows — Qallali kept at 01:00. Files: `src/constants/contact.ts` (`hours.ar` / `hours.en` / `closes`), `src/lib/constants/branches.ts` (`closes_display_ar` / `closes_display_en`), `messages/ar.json` + `messages/en.json` (FAQ hours answer, Riffa segment only), `public/llms.txt` (Riffa AR + EN line), `docs/branches.md` (Riffa table Hours AR/EN + Closes). Schema.org payload: no change needed — `schemaClosesTime()` already maps cross-midnight values to `26:00`. Intentionally not changed: `023_settings_schema.sql` (generic DB default), `HoursSettings.tsx` (generic UI placeholder), `sanity/schema/index.ts` (placeholder only), `BRANCH_CONTACTS.md` (already documented `2:00 AM`). |
+| `34e2da2` | feat(loyalty) | **BirthdayGiftCard reads bonus points from loyalty_config (P3-1).** Migration 158 had already shipped the column (`loyalty_config.birthday_bonus_points` default 50), the idempotency table (`birthday_point_credits` UNIQUE on `(customer_id, year)`, RLS service-role only), the RPC (`credit_birthday_points()` with idempotency-claim-first via `ON CONFLICT`, anchored to Asia/Bahrain civil date), and the `pg_cron` schedule (`0 5 * * *` UTC = 08:00 Bahrain). Items 2-4 of the brief were therefore no-ops. Item 5 wired the bonus value into the customer UI: `LoyaltyConfig` type + `DEFAULT_LOYALTY_CONFIG` fallback gain `birthdayBonusPoints`; `getLoyaltyConfig()` selects `birthday_bonus_points`; cache key bumped `v1 → v2` so older cached shapes don't satisfy the new field; account page fetches the config server-side and passes `bonusPoints` to `BirthdayGiftCard`; component renders the figure in all three states (countdown, today, prompt CTA) via locale-aware `Intl.NumberFormat`; i18n AR + EN updated with `{points}` placeholder, parity check stays at 2,394 ↔ 2,394. |
+| `256b35e` | docs(flags) | **QR Loyalty scan flag audit + activation comment (P3-2).** Audit-only pass on `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN`. Flag stays OFF until staff (waiter/cashier) accounts are activated. Off-path verified clean: scan button (`WaiterOrderClient:263`), modal mount (`WaiterOrderClient:475`), `scannedMember` state and the `lookupMemberByQR` server action are all dead branches in the off-state; `html5-qrcode` is dynamic-imported inside the modal effect so the bundle is unaffected when off. `lookupMemberByQR` remains exported but is defended by role check (`QR_LOOKUP_ROLES`), Upstash rate limit, regex, and migration 162's `waiter_cashier_read_customer_profiles` RLS policy. `supabase migration list --linked`: 162 applied on remote. One-line activation trigger comment added next to the flag definition. |
+| `e7ab0cb` | fix(branches) | **Riffa branch isOpen() — opens 19:00 → 07:00 (BUG-001).** Real-world report: Riffa shown as `مغلق حالياً` at 10:55 AM Bahrain. `src/lib/utils/time.ts` handled cross-midnight correctly via `Intl.DateTimeFormat` in Asia/Bahrain — verified all four required cases (10:55→OPEN, 01:30→OPEN, 02:30→CLOSED, 06:30→CLOSED). Root cause was stale data: `src/constants/contact.ts` had Riffa as a dinner-only branch (`opens: '19:00'`, hours.* "7:00 PM"). `BRANCH_CONTACTS.md` — the operator source-of-truth — has always shown Riffa as "Daily 7:00 AM - 2:00 AM"; the codebase was the outlier. B-001 had fixed the closing time but missed the opens field, so `isBranchOpen` kept returning false for the entire daytime window. Fan-out mirrored B-001's surface list: `src/constants/contact.ts` (opens 19:00 → 07:00, hours.ar `م` → `ص`, hours.en `PM` → `AM`), `src/lib/constants/branches.ts` (`opens_display_*`), `messages/ar.json` + `messages/en.json` (FAQ hours answer), `public/llms.txt` (Riffa hours line), `docs/branches.md` (table + Notes section). Schema.org `openingHoursSpecification` auto-rebuilds correctly because `schemas.ts` reads from `CONTACT_BRANCHES`. |
+
+## INFRA NOTES
+
+- **No new env vars introduced** by any of the six commits. Operator
+  did set `SESSION_BIND_SECRET` + rotated `SENTRY_AUTH_TOKEN` in Vercel
+  during the session, then triggered a redeploy.
+- **No migrations.** Local↔Remote still paired at 162. P3-1 consumed
+  the already-shipped migration 158 (birthday gift mechanic).
+- **Service-role insert path.** P2-1 uses `createServiceClient()` for
+  `recipes` writes; the broader inventory import already does the
+  same.
+- **No new dependencies.** P2-1 reuses `exceljs` (already in deps).
+- **Cache key bumped.** `getLoyaltyConfig`'s `unstable_cache` tag went
+  `loyalty-config-v1` → `loyalty-config-v2` to invalidate cached rows
+  lacking the new `birthdayBonusPoints` field.
+
+## KEY DECISIONS / JUDGMENT CALLS
+
+1. **Separate recipes-only import route instead of extending the
+   existing `/dashboard/inventory/import` flow.** Existing broader
+   importer expects a multi-sheet template keyed by `name_ar`. The
+   chef's pending sheet is recipes-only with raw `ingredient_id` UUIDs.
+   New focused route keeps the existing flow untouched.
+
+2. **`unit` column accepted but not stored.** Recipes table has no
+   `unit` column — `ingredients.unit` is authoritative. Column exists
+   for chef readability and a future warn-on-mismatch check.
+
+3. **In-workbook duplicates land in `skipped`, not `failed`.** First
+   occurrence wins; rest reported as skipped — more forgiving than
+   rejecting the whole import.
+
+4. **`DISTINCT menu_item_slug` for the X/Y banner count.** Matches the
+   human meaning of "X dishes have a recipe" — a dish with 5
+   ingredients no longer counts as 5 toward "X/168".
+
+5. **Banner role gate dropped `branch_manager`, added
+   `inventory_manager`.** Branch managers don't author menu↔ingredient
+   mappings.
+
+6. **B-001 deliberately did not touch the DB default or
+   `HoursSettings.tsx` placeholder.** Both are generic across all
+   branches; flipping them to `02:00` would silently change defaults
+   for any future branch row.
+
+7. **P3-1: items 2-4 of the brief were already shipped in migration
+   158.** Asked the user before reshaping rather than blindly creating
+   new migrations to rename `birthday_point_credits` →
+   `birthday_gift_log` or bump default 50 → 100. User confirmed
+   "only do item #5". Cache key bump (`v1 → v2`) was the only side
+   effect needed to surface the existing column in already-warm caches.
+
+8. **P3-2: refused to flip the flag.** The brief explicitly forbade it,
+   but the audit also confirmed there was no UI improvement to ship —
+   off-state is already clean. Limited the change to a single inline
+   activation-trigger comment so the next operator doesn't need to grep
+   `.env.example` to find the gate condition. No empty work, no scope
+   creep.
+
+9. **BUG-001: refused to silently flip operating hours.** First
+   confirmation from the user that Riffa is genuinely all-day
+   (7am–2am), then applied. `BRANCH_CONTACTS.md` retroactively
+   validated the choice — it had always said "Daily 7:00 AM - 2:00 AM".
+   The codebase data was wrong, not the brief.
+
+## VERIFICATION
+
+- `npx tsc --noEmit` → clean on every commit
+- `npx tsx scripts/check-i18n.ts` → 2,394 = 2,394 maintained
+- `NEXT_BUILD_WORKERS=1 npm run build` → builds green on every commit
+- **End-to-end of `fn_inventory_reserve` post-import is NOT verified
+  in-session.** Smoke-test plan documented for operator: import one
+  row, place an order on that slug, confirm an `inventory_movements`
+  row with `movement_type = 'reservation'` appears (and matching
+  `inventory_stock.reserved` increment) instead of an
+  `inventory_alerts` row with `alert_type = 'unmapped_item'`.
+- **Birthday cron** itself not verified in-session — needs a real
+  birthday date in production to fire. Schema + RPC + idempotency table
+  shipped in migration 158 are tested by their own constraints
+  (`UNIQUE (customer_id, year)`).
+
+## DEFERRED / OPERATOR-PENDING
+
+(updated for session 130)
+- Supabase Free → Pro + Singapore migration.
+- TAP keys (merchant approval pending).
+- Staff (waiter/cashier) accounts — external dependency.
+- `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN` flip after staff accounts.
+- WhatsApp/email birthday notification surface (cron + DB done; UI deferred).
+- `/dashboard/catering` route (migration 160 + server action shipped; no UI).
+- `SetPasswordClient.tsx` dead-code cleanup.
+- ~15 `as any` sites (AUD-V3-007/011).
+- F-01 consent check (Chrome incognito → confirm GA/Clarity blocked pre-consent).
+- Extend `localizeCheckoutError` to remaining raw-English errors.
+- ~~Chef Excel recipe import (0/168 recipes mapped)~~ — **import
+  surface now shipped (P2-1 + P2-2). Outstanding: chef hands over a
+  filled `.xlsx`, operator imports, operator runs the smoke test.**
+- ~~SESSION_BIND_SECRET~~ **DONE 2026-05-17.**
+- ~~SENTRY_AUTH_TOKEN re-rotation~~ **DONE 2026-05-17.**
+- `git push` of `786f549..e7ab0cb` is at operator discretion — Claude
+  did not push.
+
+## OPERATOR NOTES
+
+- The P2-1 import page is reachable at
+  `/dashboard/inventory/recipes/import` (linked from the recipes index
+  page and from the P2-2 banner on the inventory home).
+- The chef's `ingredient_id` column is the UUID from the `ingredients`
+  table — the page links to `/dashboard/inventory/ingredients` so the
+  chef can look IDs up.
+- Birthday bonus amount is tunable in `loyalty_config.birthday_bonus_points`
+  (default 50, CHECK 0..10000). The UI surfaces the live value in the
+  account page's `BirthdayGiftCard` in all three states.
+
+---
+---
+---
+
+# Prior session 129 close-out preserved below ↓
 
 ## SESSION 129 — SUMMARY
 

@@ -1,10 +1,13 @@
 # Kahramana Baghdad — Conversation Master Notes
 
 **Generated:** 2026-05-13 (Session 93)
+**Last refresh:** 2026-05-17 (covers through Session 129, master `2f5c80d`)
 **Language:** Arabic-first
 **Purpose:** Consolidated Markdown record of this conversation: decisions, prompts, architecture notes, implementation guidance, risks, integrations, and next steps for the Kahramana Baghdad website/platform project.
 
 > ملاحظة: هذا الملف ليس تفريغًا حرفيًا لكل كلمة في المحادثة، بل نسخة تنفيذية منظمة تجمع ما تم الاتفاق عليه وما تم توليده من برومبتات وقرارات تقنية وتشغيلية.
+
+> **Authoritative live state:** `.agent/CURRENT-SESSION.md` (operator + dev priorities) and `.agent/LAST-SESSION.md` (most recent session detail) are the single source of truth between refreshes. Treat this file as a consolidated narrative, not a real-time log.
 
 ---
 
@@ -39,7 +42,79 @@
 
 ---
 
-## 2. Latest Project Status (Session 93 — 2026-05-13)
+## 2a. Current State Snapshot (Session 129 — 2026-05-16)
+
+### Headline
+- **Phase:** `pre_launch_operational` — Launch Risk 8/10 — soft-launch (cash-only) is the next milestone.
+- **Numbered roadmap:** Phases 0-7 + 6b all done. Phase 7b (Deliverect/POS) and Phase 8 (AI) locked on external dependencies.
+- **Master commit:** `2f5c80d` (2026-05-16, session 129 close-out).
+- **Migrations:** Local = Remote = **162 applied**, paired in `supabase migration list --linked`.
+- **Production:** https://kahramanat.com — Vercel `sin1` region, Supabase production, Better Stack ✅ Up.
+- **Build:** 562/562 pages, 0 tsc errors, 0 ESLint warnings on every commit in sessions 116-129.
+
+### Sessions 94-129 — 2026-05-13 → 2026-05-16 (rollup)
+Multi-session lane covering hardening, content fixes, and small UX iterations. Per-session detail lives in `.agent/LAST-SESSION.md` (sessions 127-129 in full, 126 in the rolling archive). Highlights:
+
+- **Sonner toast adoption** (commit 5087b2b) replaced the older notification surface.
+- **ConfirmModal primitive** (4dd4a19) — every `window.confirm` replaced; 6 callers wired.
+- **Loyalty / checkout iteration** — birthday cron scaffolding, points-cap UX auto-cap (mirrors server 50% rule), `points_over_cap` localization wired through `localizeCheckoutError`.
+- **Motion v12** migration; **reorder + history** added to `/account`.
+- **البديع branch cleanup** (a2b2009) — 8 files; `BranchId` narrowed to `'riffa' | 'qallali'`; `HIDDEN_BRANCHES` kept as empty typed array to avoid 30-file refactor.
+- **Founder card** — copy + BiDi fix (b537d60 / 7c6c332).
+- **Catering form hardened** (migration 160 + 2 commits) — Turnstile, Upstash 3/IP/hr, Zod, server-side `catering_inquiries` table with service-role-only RLS.
+- **Waiter QR member scanner scaffolded flag-OFF** (3957abe) + migration 162 (`customer_profiles.membership_id` STORED generated column + UNIQUE + waiter/cashier SELECT RLS). Will activate when staff accounts go live.
+- **KDS ghost-count root-cause** — migration 161 trigger force-completes `order_item_station_status` rows when orders go to terminal status; defense-in-depth `orders!inner(status)` join on selector count query.
+- **Driver UX wins** — repeating bell + browser Notification + pulsing card for unacknowledged ready orders (commit 2079f2c); `customerNavUrl` now prefers DB `delivery_lat/lng` over share-URL DMS strings (20fdf58).
+- **Cart drawer** — "إضافة المزيد" no longer navigates to `/menu` when already browsing (22f7071).
+- **Supabase client hardening** (efe68b1) — actionable error if `NEXT_PUBLIC_SUPABASE_*` missing (was: `Cannot read properties of undefined`).
+- **VULN closures** in sessions 100-101 — VULN-104, VULN-RBAC-01/02/04/05, VULN-AUTH-01/02/04/06, VULN-CRY-01/03, VULN-INJ-01/02, VULN-SEC-01, VULN-1.07, KAH-2026-05-01→07. Migrations 134-138 land the schema half; full audit code lives in commit chain 853ccff → cbd34dc.
+- **L1 recovery cookie HMAC** (81eb296) — `signRecoveryCookie` / `verifyRecoveryCookie` using `crypto.timingSafeEqual`. Requires `SESSION_BIND_SECRET` env var in Vercel.
+
+### Working tree change (session 127)
+- Old `kahramana-platform\kahramana-Saas\` tree lost its `.git` directory (probably an accidental unzip-over-tree). User created a fresh clone at `kahramana-platform\kahramana-Saas-fresh\`. **All future work happens in the `-fresh` tree.**
+- `.env.local` had to be copied by hand (gitignored — doesn't ride along with `git clone`). Memory `project_working_directory_moved.md` documents the lesson.
+- Migration `015_production_admin.sql` was also gitignored — copied over from old tree to satisfy Supabase CLI's `--include-all` check before pushing 162.
+
+### Build Statistics (Session 129)
+| Metric | Value |
+|---|---:|
+| Pages | 562 static |
+| Build errors | 0 |
+| TSC errors | 0 |
+| ESLint warnings | 0 |
+| Migrations applied | 020–162 (paired) |
+| Master commit | `2f5c80d` |
+| Deployment | https://kahramanat.com |
+| Better Stack | ✅ Up |
+| Sentry release tagging | ⚠️ 401 since `cef2850` — token regression |
+
+### Operator Actions Pending (Ahmed)
+- ⏳ **`SESSION_BIND_SECRET`** env var on Vercel prod + preview (`openssl rand -hex 32`). Without it, `/auth/callback` recovery flow throws at runtime.
+- ⏳ **`SENTRY_AUTH_TOKEN`** re-rotation. Regressed from 2026-05-15. Symptom: Sentry CLI 401 on `releases new` + `sourcemaps upload`. Build succeeds; only release tagging + sourcemap upload fail → prod stack traces stay minified until fixed.
+- ⏳ **Supabase Free → Pro + Singapore migration.**
+- ⏳ **TAP keys** (merchant approval pending).
+- ⏳ **`NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN`** flip — waiting on staff (waiter/cashier) account activation. Pre-flip checklist in `.env.example`.
+- ⏳ **Chef Excel recipes import** — recipes table empty (0/168 menu items mapped); pending since session 38. Alert flood suppressed via 24h dedup gate (migration 153) but inventory deduction is no-op for live orders.
+- ⏳ **Birthday gift cron** + idempotency table + `loyalty_config.birthday_bonus_points`.
+- ⏳ **`SetPasswordClient.tsx`** dead-code cleanup (orphaned since session 101).
+
+### Recently Resolved (operator side)
+- ✅ Supabase new signups disabled (2026-05-15)
+- ✅ `order_item_station_status` added to Realtime publication (8→9 tables)
+- ✅ Turnstile keys live in Vercel (2026-05-15)
+- ✅ DNS kahramanat.com → Vercel
+- ✅ `.env.local` copied into fresh tree (session 129)
+
+### Known Ceilings (do not attempt to "fix")
+- Lighthouse ~49 on mobile = GSAP/Framer Motion floor — intentional brand decision.
+- TBT ~1600ms on Slow 4G = animation cost.
+- Recipes empty until chef Excel lands — suppressed but unaddressed.
+
+---
+
+## 2. Project Status Snapshot — Session 93 baseline (2026-05-13)
+
+> The remainder of this section is the **frozen Session 93 snapshot** kept for historical reference. For current state see §2a above.
 
 ### Completed Phases
 
@@ -256,6 +331,47 @@
 | 120 | RLS BL-004 high-severity (orders/order_items/inventory/supplier) | ✅ |
 | 121 | customers anon INSERT shape guard | ✅ |
 | 122 | BL-004 P2 — contact/allergens/restaurant_profile/unit_conversions | ✅ |
+| 123 | rpc_record_opening_balance (atomic movement + stock upsert) | ✅ |
+| 124 | rpc_create_purchase_order (atomic PO + items) | ✅ |
+| 125 | security_rpc_grants | ✅ |
+| 126 | rpc_update_staff | ✅ |
+| 127 | grant_audit | ✅ |
+| 128 | security_advisor_fixes | ✅ |
+| 129 | function_search_paths (lock search_path on SECURITY DEFINER fns) | ✅ |
+| 130 | customer_registration_trigger | ✅ |
+| 131 | revoke_public_execute (carry from cowork branch placeholder) | ✅ |
+| 132 | revoke_anon_kds_and_po_rpcs | ✅ |
+| 133 | strip_tap_payload_to_gateway_response (PII reduction) | ✅ |
+| 134 | rpc_create_order payment_method priority (VULN-104 — CASE inversion) | ✅ |
+| 135 | drop legacy rpc_create_order 25-arg overload | ✅ |
+| 136 | app_config table (VULN-SEC-01 Path B — runtime flags, staff-only RLS) | ✅ |
+| 137 | harden bump/recall_station_order text overloads (VULN-RBAC-05) | ✅ |
+| 138 | atomic audit events (rpc_refund_payment / rpc_close_shift / rpc_pos_finalize_order) | ✅ |
+| 139 | verify_tap_amount | ✅ |
+| 140 | refund_gateway_id | ✅ |
+| 141 | restore_loyalty_on_reversal | ✅ |
+| 142 | tap_amount_scale_guard | ✅ |
+| 143 | move samoon-meat to pastries category | ✅ |
+| 144 | seed egg sandwiches | ✅ |
+| 145 | fix customer_registration phone conflict | ✅ |
+| 147 | customer_profile default address | ✅ |
+| 148 | staff basic grants hardening | ✅ |
+| 149 | revoke anon execute on audit fns | ✅ |
+| 150 | stuck_order_alerts | ✅ |
+| 151 | grant SELECT/EXECUTE on analytics matviews + RPCs (AUD-V3-012 close) | ✅ |
+| 152 | customer_profiles.birthday DATE column | ✅ |
+| 153 | dedup_unmapped_item_alerts (24h gate on fn_inventory_reserve INSERT) | ✅ |
+| 154 | orders.delivery_flat | ✅ |
+| 155 | coupon_usages atomic inside rpc_create_order | ✅ |
+| 156 | staff_photos private bucket | ✅ |
+| 157 | unique active driver delivery | ✅ |
+| 158 | birthday_points cron | ✅ |
+| 159 | grant update on customer_profiles.birthday | ✅ |
+| 160 | catering_inquiries table + service-role-only RLS | ✅ |
+| 161 | sync_kds_on_order_terminal_status trigger (ghost-count fix) | ✅ |
+| 162 | customer_profiles.membership_id STORED + UNIQUE + waiter/cashier RLS | ✅ |
+
+> Migration 146 was skipped (gap, not a deletion). 015 lives only on disk (gitignored). 131 was originally a cowork-branch placeholder; the body was applied to remote by the parallel agent and the file later committed here.
 
 ---
 
@@ -310,12 +426,33 @@
 - BL-004 (open INSERT/SELECT policies) ✅ closed migrations 120–122
 - Sentry org_id removed from HTML baggage ✅
 
+### Session 100-101 Hardening Sweep (commit chain 853ccff → cbd34dc)
+All closed and applied to remote DB:
+
+- **VULN-104** — `rpc_create_order` CASE inversion so `payment_method='tap'` resolves to `pending_payment` even when `source='manual'`. Closes CHAIN-001 cash-skim where manual+tap orders skipped 30min `expires_at`. Migrations 134 + 135.
+- **VULN-RBAC-01/02/04/05** — role allowlists + branch checks on KDS bump/recall, text-overload sibling closed (was unreachable kds_station overload that had been hardened — text overload was the live JS path). Migration 137.
+- **VULN-AUTH-01/02/04/06** — auth hardening trio (commits c6c1b6a + cef-era follow-ups).
+- **VULN-CRY-01** — race-window short-circuit: 400 with audit when payment reference present but gateway_id binding absent (commit bef64f1).
+- **VULN-CRY-03** — closed in same chain.
+- **VULN-INJ-01/02** — input handling hardening.
+- **VULN-SEC-01 Path A** returned 42501 in CLI + Studio (Supabase managed strips superuser everywhere). **Path B** implemented via migration 136: `app_config` table with RLS-gated staff-only SELECT; only table owner + service_role write.
+- **VULN-1.07** — health endpoint hardening (commit 9331158).
+- **KAH-2026-05-12 null-branch bypass** — fixed on 3 service-role-reading dashboard pages (orders/[id], catering/[id], catering/packages/[id]) plus `shifts/actions.ts:91`.
+- **KAH-2026-05-06 / AUD-V3-014** — atomic refund/closeShift/POS-finalize RPCs (migration 138). `closeShift` previously had no audit at all.
+- **AUD-V3-008** — 20 analytics-error swallow sites swapped to `AnalyticsResult<T>` pattern (session 116).
+- **AUD-V3-012** — analytics least-privilege closed (migration 151 + 6 query.ts callers swapped to `createClient()`). 16/16 analytics queries now follow least-privilege.
+- **AUD-V3-016** — types regen done; all `as never` casts stripped (session 98).
+- **L1 recovery cookie HMAC binding** (commit 81eb296) — closes the cross-user recovery-cookie hijack window. Requires `SESSION_BIND_SECRET` env var.
+
 ### Pending Verification
-- F-01: Confirm GA/Clarity don't fire before cookie consent (test in Incognito)
+- F-01: Confirm GA/Clarity don't fire before cookie consent (test in Incognito).
 
 ### Known Accepted
-- Sentry sourcemap warnings (~50 chunks) — Next.js internal chunks, no impact on site
-- F-08: Route structure in Sentry transaction — low risk, deferred
+- Sentry sourcemap warnings (~50 chunks) — Next.js internal chunks, no impact on site.
+- F-08: Route structure in Sentry transaction — low risk, deferred.
+- Sentry release tagging 401 since `cef2850` — token regression, fix is operator-side rotation.
+- AUD-V3-007, AUD-V3-011 (~15 `as any` cleanup sites) — deferred.
+- KAH-2026-05-05 / -07 — deferred.
 
 ---
 
@@ -382,13 +519,20 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Set | |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ Set | Server only |
 | `NEXT_PUBLIC_SENTRY_DSN` | ✅ Set | |
-| `SENTRY_AUTH_TOKEN` | ✅ Set | Vercel production |
+| `SENTRY_AUTH_TOKEN` | ⚠️ Regressed | 401 since `cef2850` — re-rotate at https://sentry.io/settings/account/api/auth-tokens/ (scopes: project:releases, org:read, project:read), then set in Vercel Production + Preview |
 | `UPSTASH_REDIS_REST_URL` | ✅ Set | Rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | ✅ Set | Rate limiting |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | ⏳ Pending | Cloudflare Turnstile |
-| `TURNSTILE_SECRET_KEY` | ⏳ Pending | Cloudflare Turnstile |
-| `TAP_SECRET_KEY` | ⏳ Pending | Tap Payments |
-| `NEXT_PUBLIC_TAP_PUBLIC_KEY` | ⏳ Pending | Tap Payments |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | ✅ Set | Cloudflare Turnstile (live 2026-05-15) |
+| `TURNSTILE_SECRET_KEY` | ✅ Set | Cloudflare Turnstile (live 2026-05-15) |
+| `SESSION_BIND_SECRET` | ⏳ Pending | Required by `/auth/callback` HMAC binding (L1 commit 81eb296). Generate with `openssl rand -hex 32`, then set in Vercel Production + Preview |
+| `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN` | ⏳ `false` (intentional) | Waiter QR member scanner — flip to `true` only after waiter/cashier staff accounts are activated. Pre-flip checklist in `.env.example` |
+| `TAP_SECRET_KEY` | ⏳ Pending | Tap Payments (merchant approval) |
+| `NEXT_PUBLIC_TAP_PUBLIC_KEY` | ⏳ Pending | Tap Payments (merchant approval) |
+| `PAYMENT_WEBHOOK_SECRET` | ⏳ Pending | Tied to Tap merchant approval |
+| `NEXT_PUBLIC_GA_ID` | ✅ Set | `G-521712793` |
+| `NEXT_PUBLIC_CLARITY_ID` | ✅ Set | `vzlrozut31` |
+| `RESEND_API_KEY` | ✅ Set | |
+| `EMAIL_FROM` | ✅ Set | `noreply@kahramanat.com` |
 
 ---
 
@@ -492,6 +636,7 @@ npm run dev
 | 127 | 2026-05-16 | KDS ghost-count root-cause (migration 161 + selector tightening), driver `customerNavUrl` DMS bug, working tree migrated to `kahramana-Saas-fresh\` after `.git` loss |
 | 128 | 2026-05-16 | Waiter QR member scanner scaffold (flag OFF), migration 162 `customer_profiles.membership_id` STORED column + RLS, inventory alert duplicate-key fix, checkout `points_over_cap` localization |
 | 129 | 2026-05-16 | Points redemption auto-cap UX (UI now mirrors server 50% cap), cart drawer "إضافة المزيد" stops navigating to /menu, driver dashboard repeating sound + browser Notification + pulsing card for unacknowledged ready orders, hardened `supabase/client.ts` env-var failure mode, `.env.local` copied into fresh tree |
+| 130 | 2026-05-17 | P2-1 chef Excel recipes import (`/dashboard/inventory/recipes/import`, service-role insert + audit log), P2-2 mapped-recipes banner actionable (DISTINCT slug count, owner/GM/inventory_manager gate), B-001 Riffa closes 01:00→02:00 across all surfaces, P3-1 BirthdayGiftCard reads `loyalty_config.birthday_bonus_points` (migration 158 was already complete; UI wired via `getLoyaltyConfig` v1→v2 cache bump), P3-2 QR loyalty scan flag audit (off-path verified clean, activation comment added — flag stays OFF), BUG-001 Riffa opens 19:00→07:00 (operator source-of-truth BRANCH_CONTACTS.md had been correct all along; `isOpen()` logic verified sound). Operator cleared `SESSION_BIND_SECRET` + rotated `SENTRY_AUTH_TOKEN` + redeployed. Master `2f5c80d` → `e7ab0cb`. No migrations. |
 
 ---
 
@@ -521,21 +666,30 @@ npm run dev
 
 ---
 
-## 13. Immediate Next Steps
+## 13. Immediate Next Steps (refreshed Session 129)
 
 ### Ahmed (Restaurant Owner)
-1. ✅ DNS: kahramanat.com → Vercel (confirmed working)
-2. Add Cloudflare Turnstile env vars in Vercel: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`
-3. Send 13 staff emails → run staff seed (migration 090)
-4. Send chef recipe data (Excel) for inventory import
-5. Provide Tap payment merchant keys
-6. Verify F-01: Open Chrome Incognito (no extensions) → DevTools Network → Hard reload → confirm GA/Clarity don't fire before cookie consent
+1. ✅ DNS: kahramanat.com → Vercel (confirmed)
+2. ✅ Cloudflare Turnstile env vars in Vercel (live 2026-05-15)
+3. ✅ Supabase new signups disabled (2026-05-15)
+4. ✅ `order_item_station_status` added to Realtime publication
+5. **Set `SESSION_BIND_SECRET`** in Vercel Production + Preview — `openssl rand -hex 32`. Without this, `/auth/callback` recovery throws at runtime.
+6. **Re-rotate `SENTRY_AUTH_TOKEN`** — current token returns 401 on release tagging + sourcemap upload since `cef2850`. Build itself succeeds; only observability is degraded.
+7. Upgrade Supabase Free → Pro + migrate to Singapore region.
+8. Send 13 staff emails → run staff seed (migration 090).
+9. **Send chef recipe Excel** for inventory import. Recipes table is empty (0/168 mapped); alert flood now suppressed (migration 153) but inventory deduction is no-op for live orders until this lands. Pending since session 38.
+10. Provide Tap payment merchant keys (`TAP_SECRET_KEY`, `NEXT_PUBLIC_TAP_PUBLIC_KEY`, `PAYMENT_WEBHOOK_SECRET`).
+11. After staff (waiter/cashier) accounts activate: flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true` per pre-flip checklist in `.env.example` + end-to-end QR scan re-test on a real device camera.
+12. Verify F-01: Open Chrome Incognito (no extensions) → DevTools Network → Hard reload → confirm GA/Clarity don't fire before cookie consent.
 
-### Agent (Next Session)
-1. Verify Playwright CI green on `4547db6`
-2. Monitor Vercel build for Sentry sourcemap warnings improvement
-3. BL-004 remaining low-severity (system_settings audit done — safe, customers INSERT rate-limited)
-4. Once Turnstile env vars added: test contact form bot protection
-5. Once staff emails arrive: run migration 090 seeder
-6. Once Tap keys arrive: implement Refund Modal
-7. Once chef recipes arrive: test inventory deduction flow
+### Agent (Next Session — candidate lanes, none are launch blockers)
+1. **Birthday gift cron** — cron job + idempotency table + `loyalty_config.birthday_bonus_points` + WhatsApp/email notification surface. Schema groundwork landed sessions 125 + 128 + 158.
+2. **Inventory page banner** — "0/168 recipes mapped — chef Excel import pending" so operator can see why deductions are no-op.
+3. **Extend `localizeCheckoutError`** to the remaining raw-English server errors in `src/app/[locale]/checkout/actions.ts` (Minimum redemption, Insufficient points balance, Coupon invalid, PRICE_MISMATCH, AUTH_REQUIRED, Customer session required, Order creation failed). Same pattern as session 128 `points_over_cap` work.
+4. **`SetPasswordClient.tsx` dead-code cleanup** — orphaned since session 101 (page mounts `SetPasswordForm`; `SetPasswordClient` is unused).
+5. **`HIDDEN_BRANCHES` cleanup follow-up** — purely cosmetic; ~30 `length > 0` guards now redundant since البديع cleanup.
+6. **Catering audit findings #6 (no email fallback) + #8 (HTML5 validation balloon doesn't follow next-intl locale)** — deferred from session 126.
+7. **Catering `occasion_type` / `service_type` normalization** — currently stored as the user's locale-rendered string; normalize to enum keys if dashboard filtering is needed.
+8. **`/dashboard/catering`** route — migration 160 + server action are in; no UI yet. Reads only via Supabase Studio for now.
+9. Once Tap keys arrive: implement Refund Modal — `refundPayment` action currently flips DB state only; does NOT call Tap to push money back to customer's card.
+10. Once chef recipes arrive: test inventory deduction flow end-to-end.
