@@ -2505,6 +2505,24 @@
         "dbError": "An unexpected error occurred. Please try again."
       }
     },
+    "coupons": {
+      "errors": {
+        "unauthorized": "Unauthorized",
+        "forbiddenRole": "Your role cannot manage coupons",
+        "forbiddenBranch": "You can only edit coupons for your own branch",
+        "branchScopeRequired": "Pick a branch — your coupon must be scoped to your own branch",
+        "branchScopeViolation": "You can only create coupons for your own branch",
+        "branchRequired": "Your staff record has no branch — contact a manager",
+        "valueExceedsLimit": "Discount value exceeds the allowed limit",
+        "requiresCap": "Percentage coupons need a maximum discount cap",
+        "requiresUsageLimit": "Coupons need a usage limit",
+        "invalidInput": "Invalid coupon payload",
+        "invalidCode": "Coupon code is required",
+        "notFound": "Coupon not found",
+        "inUse": "Coupon has been used and cannot be deleted",
+        "rpcFailed": "Could not save the coupon — please try again"
+      }
+    },
     "onboarding": {
       "title": "Complete System Setup",
       "fix_now": "Fix Now",
