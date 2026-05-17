@@ -16,11 +16,27 @@ export default async function CouponsPage({ params }: Props) {
   if (!canManageCoupons(user)) redirect(locale === 'en' ? '/en/dashboard' : '/dashboard')
 
   const supabase = await createClient()
-  
+
   const { getActiveBranches } = await import('@/lib/branches/queries')
+
+  let couponsQuery = supabase
+    .from('coupons')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  // Branch managers must only see coupons scoped to their own branch
+  // (applicable_branches contains their branch_id) or that they own.
+  // Owner / GM / marketing keep cross-branch visibility for now (marketing
+  // write-scope is enforced separately in assertCouponScope).
+  if (user.role === 'branch_manager' && user.branch_id) {
+    couponsQuery = couponsQuery.or(
+      `applicable_branches.cs.{${user.branch_id}},created_by.eq.${user.id}`,
+    )
+  }
+
   const [couponsRes, branches] = await Promise.all([
-    supabase.from('coupons').select('*').order('created_at', { ascending: false }),
-    getActiveBranches()
+    couponsQuery,
+    getActiveBranches(),
   ])
 
   const coupons = (couponsRes.data ?? []) as CouponRow[]

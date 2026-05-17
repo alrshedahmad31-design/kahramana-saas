@@ -71,12 +71,21 @@ export default async function DashboardHomePage({ params }: Props) {
   let operationsAlerts: OperationsAlertRow[] = []
   if (canSeeOperationsAlerts) {
     try {
-      const { data: alertsData } = await supabase
+      let alertsQuery = supabase
         .from('operations_alerts')
         .select('*')
         .eq('is_read', false)
         .order('created_at', { ascending: false })
         .limit(5)
+
+      // Branch managers must only see alerts for their own branch — RLS
+      // covers most reads but operations_alerts is global-readable for
+      // managers, so the scope filter has to be applied here.
+      if (user.role === 'branch_manager' && user.branch_id) {
+        alertsQuery = alertsQuery.eq('branch_id', user.branch_id)
+      }
+
+      const { data: alertsData } = await alertsQuery
       operationsAlerts = alertsData ?? []
     } catch {
       operationsAlerts = []

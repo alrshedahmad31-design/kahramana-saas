@@ -58,14 +58,18 @@ function validateCouponPayload(data: CouponFormData): { ok: true } | { ok: false
 export type ActionResult = { success: true } | { success: false; error: string }
 
 // Branch-scope gate for coupon mutations on an existing row.
-// Branch managers may only touch coupons they created OR coupons whose
-// applicable_branches contains their branch. Owner / GM bypass.
+// Branch managers and marketing may only touch coupons they created OR
+// coupons whose applicable_branches contains their branch. Owner / GM bypass.
+// Marketing was previously unscoped — a marketing user could edit / pause /
+// flip is_active on any coupon in any branch (P0-7).
 async function assertCouponScope(
   supabase: SupabaseClient,
   couponId: string,
   caller:   AuthUser,
 ): Promise<ActionResult> {
-  if (caller.role !== 'branch_manager') return { success: true }
+  if (caller.role !== 'branch_manager' && caller.role !== 'marketing') {
+    return { success: true }
+  }
   const { data: existing, error } = await supabase
     .from('coupons')
     .select('applicable_branches, created_by')
