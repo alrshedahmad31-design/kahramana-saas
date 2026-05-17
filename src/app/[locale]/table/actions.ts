@@ -217,18 +217,12 @@ export async function createQROrder(
     p_table_number:           data.tableNumber,
     p_promotion_id:           promo?.promotion_id ?? null,
     p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
+    p_payment_mode:           'cod',
   })
 
   if (rpcError || !orderId) {
     return { error: rpcError?.message ?? 'Order creation failed' }
   }
-
-  await supabase.from('payments').insert({
-    order_id:   orderId as string,
-    amount_bhd: subtotal,
-    method:     'cash',
-    status:     'pending_cod',
-  })
 
   await supabase.from('audit_logs').insert({
     table_name: 'orders',

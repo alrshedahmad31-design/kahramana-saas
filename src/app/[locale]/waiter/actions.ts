@@ -216,6 +216,7 @@ export async function createWaiterOrder(
     p_table_number:           data.tableNumber,
     p_promotion_id:           promo?.promotion_id ?? null,
     p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
+    p_payment_mode:           'cod',
   })
 
   if (rpcError || !orderId) {
@@ -225,21 +226,6 @@ export async function createWaiterOrder(
     console.error('[waiter] rpc_create_order failed', rpcError)
     const tErr = await getTranslations('waiter.errors')
     return { error: tErr('orderCreationFailed') }
-  }
-
-  const { error: paymentError } = await supabase.from('payments').insert({
-    order_id:   orderId as string,
-    amount_bhd: subtotal,
-    method:     'cash',
-    status:     'pending_cod',
-  })
-
-  // Order is committed but payment row failed — surface as partial failure
-  // so the waiter/manager can resolve manually (reconciliation depends on payments).
-  let paymentWarning: string | undefined
-  if (paymentError) {
-    console.error('[waiter] payment insert failed for order', orderId, paymentError)
-    paymentWarning = `Order created but payment record failed: ${paymentError.message}. Manager resolution required.`
   }
 
   const { error: auditError } = await supabase.from('audit_logs').insert({
@@ -266,7 +252,7 @@ export async function createWaiterOrder(
   revalidatePath(`/${locale}/waiter/orders`)
   revalidatePath(`/${locale}/dashboard/kds`)
 
-  return { orderId: orderId as string, warning: paymentWarning }
+  return { orderId: orderId as string }
 }
 
 // ── QR member lookup (feature-flagged via NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN) ──

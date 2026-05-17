@@ -339,6 +339,16 @@ export async function createManualOrder(
   // rpc_pos_finalize_order does both inserts in one transaction so the
   // payment row and the audit row either both land or both fail. The order
   // itself is the financial source of truth and stays in rpc_create_order.
+  //
+  // ARCH-004-SKIP: rpc_create_order's p_payment_mode supports 'cod' (cash /
+  // pending_cod) and 'online' (NULL method until Tap webhook fills it in),
+  // but POS card/tap paths persist method='tap_card' with status='pending'
+  // — a shape neither p_payment_mode value can express. rpc_pos_finalize_order
+  // already bundles payment + audit atomically, so the residual ARCH-004
+  // gap here is only the narrow window between rpc_create_order commit and
+  // rpc_pos_finalize_order call (separate transactions). Closing that gap
+  // requires either a new p_payment_mode='tap_card' branch in migration 163
+  // or merging both RPCs — out of scope for this refactor.
   const paymentMethodForRecord: 'cash' | 'tap_card' =
     data.paymentMethod === 'cash' ? 'cash' : 'tap_card'
   const { data: finalizeData, error: finalizeError } = await supabase.rpc('rpc_pos_finalize_order', {

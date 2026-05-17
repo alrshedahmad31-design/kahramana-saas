@@ -245,23 +245,11 @@ export async function createServiceOrder(
     p_table_number:           data.tableNumber,
     p_promotion_id:           promo?.promotion_id ?? null,
     p_promotion_discount_bhd: promo?.discount_bhd ?? 0,
+    p_payment_mode:           'cod',
   })
 
   if (rpcError || !orderId) {
     return { error: rpcError?.message ?? 'Order creation failed' }
-  }
-
-  const { error: paymentError } = await supabase.from('payments').insert({
-    order_id:   orderId as string,
-    amount_bhd: subtotal,
-    method:     'cash',
-    status:     'pending_cod',
-  })
-
-  let paymentWarning: string | undefined
-  if (paymentError) {
-    console.error('[pos:service] payment insert failed for order', orderId, paymentError)
-    paymentWarning = `Order created but payment record failed: ${paymentError.message}. Manager resolution required.`
   }
 
   const { error: auditError } = await supabase.from('audit_logs').insert({
@@ -287,5 +275,5 @@ export async function createServiceOrder(
   revalidatePath(`/${locale}/dashboard/orders`)
   revalidatePath(`/${locale}/dashboard/kds`)
 
-  return { orderId: orderId as string, warning: paymentWarning }
+  return { orderId: orderId as string }
 }
