@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       app_config: {
@@ -4988,11 +5013,8 @@ export type Database = {
           p_actor_branch_id: string
           p_actor_id: string
           p_actor_role: string
-          p_amount_bhd: number
           p_audit_changes: Json
-          p_method: string
           p_order_id: string
-          p_payment_status: string
         }
         Returns: Json
       }
@@ -5265,6 +5287,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       abc_class: ["A", "B", "C"],
