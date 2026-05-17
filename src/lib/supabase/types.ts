@@ -4825,6 +4825,7 @@ export type Database = {
           p_delivery_area?: string
           p_delivery_building?: string
           p_delivery_city?: string
+          p_delivery_flat?: string
           p_delivery_lat?: number
           p_delivery_lng?: number
           p_delivery_street?: string
@@ -4834,7 +4835,9 @@ export type Database = {
           p_loyalty_discount_bhd?: number
           p_notes?: string
           p_order_type: string
+          p_payment_expires_at?: string
           p_payment_method?: string
+          p_payment_mode?: string
           p_points_to_redeem?: number
           p_promotion_discount_bhd?: number
           p_promotion_id?: string
