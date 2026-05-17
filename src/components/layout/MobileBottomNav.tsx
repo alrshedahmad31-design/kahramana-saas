@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { key: 'contact',  icon: Phone,           href: '/contact' },
 ] as const
 
-const EXCLUDED_PATHS = ['/dashboard', '/driver', '/waiter', '/table/', '/login', '/set-password', '/forgot-password', '/register']
+const EXCLUDED_PATHS = ['/dashboard', '/driver', '/waiter', '/kds', '/table/', '/login', '/set-password', '/forgot-password', '/register']
 
 export default function MobileBottomNav() {
   const pathname = usePathname() ?? '/'

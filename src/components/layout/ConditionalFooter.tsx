@@ -9,6 +9,7 @@ export default function ConditionalFooter({ children }: { children: ReactNode })
     pathname.includes('/dashboard') ||
     pathname.includes('/driver') ||
     pathname.includes('/waiter') ||
+    pathname.includes('/kds') ||
     pathname.includes('/table/')
   // Keep DOM shape identical between SSR and client to avoid a hydration
   // mismatch: usePathname() from next-intl can resolve differently during the

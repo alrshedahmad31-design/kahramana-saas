@@ -145,6 +145,7 @@ export default function Header() {
     pathname.includes('/dashboard') ||
     pathname.includes('/driver') ||
     pathname.includes('/waiter') ||
+    pathname.includes('/kds') ||
     pathname.includes('/table/')
   ) return null
 

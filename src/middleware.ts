@@ -17,6 +17,7 @@ const DRIVER_PATTERN       = /^(\/(ar|en))?\/driver(\/.*)?$/
 const WAITER_PATTERN       = /^(\/(ar|en))?\/waiter(\/.*)?$/
 const TABLE_PATTERN        = /^(\/(ar|en))?\/table(\/.*)?$/
 const POS_PATTERN          = /^(\/(ar|en))?\/pos(\/.*)?$/
+const KDS_PATTERN          = /^(\/(ar|en))?\/kds(\/.*)?$/
 const CHECKOUT_PATTERN     = /^(\/(ar|en))?\/checkout(\/.*)?$/
 const PAYMENT_PATTERN      = /^(\/(ar|en))?\/payment(\/.*)?$/
 const ORDER_PATTERN        = /^(\/(ar|en))?\/order(\/.*)?$/
@@ -201,6 +202,7 @@ export default async function middleware(request: NextRequest) {
     WAITER_PATTERN.test(pathname) ||
     TABLE_PATTERN.test(pathname) ||
     POS_PATTERN.test(pathname) ||
+    KDS_PATTERN.test(pathname) ||
     CHECKOUT_PATTERN.test(pathname) ||
     PAYMENT_PATTERN.test(pathname) ||
     ORDER_PATTERN.test(pathname)

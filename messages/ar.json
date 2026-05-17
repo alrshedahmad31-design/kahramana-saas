@@ -1163,6 +1163,17 @@
     "showLess": "عرض أقل",
     "selectStation": "اختر المحطة",
     "selectStationDescription": "اختر المحطة التي ترغب بمتابعة طلباتها",
+    "mobileSelector": {
+      "title": "محطات المطبخ",
+      "subtitle": "افتح محطتك لبدء تحضير الطلبات",
+      "activeCount": "{count, plural, zero {لا توجد طلبات نشطة} one {طلب نشط واحد} two {طلبان نشطان} few {# طلبات نشطة} many {# طلبًا نشطًا} other {# طلب نشط}}",
+      "idle": "لا توجد طلبات نشطة"
+    },
+    "singleStation": {
+      "back": "العودة للمحطات",
+      "noOrders": "لا توجد طلبات لهذه المحطة",
+      "activeCount": "{count, plural, zero {لا توجد طلبات نشطة} one {طلب نشط واحد} two {طلبان نشطان} few {# طلبات نشطة} many {# طلبًا نشطًا} other {# طلب نشط}}"
+    },
     "viewBoard": "عرض اللوحة",
     "activeOrders": "الطلبات النشطة",
     "noOrders": "لا توجد طلبات حالياً",

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import {
   requireDashboardSection,
   isDashboardGuardError,
@@ -100,8 +101,22 @@ export default async function KDSPage({ params, searchParams }: Props) {
       stationCounts[s] = (stationCounts[s] ?? 0) + 1
     }
 
+    const showMobileKDSLink = user.role === 'owner' || user.role === 'general_manager'
+    const mobilePrefix = locale === 'en' ? '/en' : ''
     return (
-      <div className="min-h-screen bg-brand-black">
+      <div className="min-h-screen bg-brand-black relative">
+        {showMobileKDSLink && (
+          <Link
+            href={`${mobilePrefix}/kds`}
+            className="absolute top-4 end-4 z-10 inline-flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border border-brand-gold/40 bg-brand-surface/60 text-brand-gold text-xs font-bold uppercase tracking-wider hover:bg-brand-gold hover:text-brand-black transition-colors"
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <rect x="5" y="2" width="14" height="20" rx="2.5" />
+              <line x1="12" y1="18" x2="12" y2="18.01" />
+            </svg>
+            {locale === 'ar' ? 'عرض الجوال' : 'Mobile KDS'}
+          </Link>
+        )}
         <KDSStationSelector stationCounts={stationCounts} />
       </div>
     )

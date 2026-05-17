@@ -1163,6 +1163,17 @@
     "showLess": "Show less",
     "selectStation": "Select Station",
     "selectStationDescription": "Choose the station you want to monitor",
+    "mobileSelector": {
+      "title": "Kitchen Stations",
+      "subtitle": "Open your station to start preparing orders",
+      "activeCount": "{count, plural, one {# active order} other {# active orders}}",
+      "idle": "No active orders"
+    },
+    "singleStation": {
+      "back": "Back to stations",
+      "noOrders": "No orders for this station",
+      "activeCount": "{count, plural, one {# active order} other {# active orders}}"
+    },
     "viewBoard": "View Board",
     "activeOrders": "Active Orders",
     "noOrders": "No orders at the moment",

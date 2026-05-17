@@ -258,7 +258,7 @@ export default function ReservationsClient({
                   </span>
                 </div>
               </div>
-              {(res.status === 'pending' || res.status === 'confirmed' || (res.status !== 'cancelled' && res.status !== 'completed')) && (
+              {res.status !== 'cancelled' && res.status !== 'completed' && (
                 <div className="flex items-center gap-2 pt-2 border-t border-brand-border" onClick={(e) => e.stopPropagation()}>
                   {res.status === 'pending' && (
                     <button
@@ -274,22 +274,20 @@ export default function ReservationsClient({
                     <button
                       onClick={() => handleStatusUpdate(res.id, 'seated')}
                       disabled={loading === res.id}
-                      className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold active:bg-amber-500 active:text-brand-black transition-colors"
+                      className="flex-1 min-h-[44px] inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-gold/10 text-brand-gold border border-brand-gold/20 text-xs font-bold active:bg-brand-gold active:text-brand-black transition-colors"
                     >
                       <UserCheck size={14} />
                       {t('statuses.seated')}
                     </button>
                   )}
-                  {res.status !== 'cancelled' && res.status !== 'completed' && (
-                    <button
-                      onClick={() => handleStatusUpdate(res.id, 'cancelled')}
-                      disabled={loading === res.id}
-                      className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-brand-error/10 text-brand-error border border-brand-error/20"
-                      aria-label={t('drawer.cancel')}
-                    >
-                      <XCircle size={14} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleStatusUpdate(res.id, 'cancelled')}
+                    disabled={loading === res.id}
+                    className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-brand-error/10 text-brand-error border border-brand-error/20"
+                    aria-label={t('drawer.cancel')}
+                  >
+                    <XCircle size={14} />
+                  </button>
                 </div>
               )}
             </motion.button>
