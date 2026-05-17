@@ -8,6 +8,7 @@ import MembershipCard from '@/components/loyalty/MembershipCard'
 import TierJourney from '@/components/loyalty/TierJourney'
 import TierBenefitsCards from '@/components/loyalty/TierBenefitsCards'
 import BirthdayGiftCard from '@/components/loyalty/BirthdayGiftCard'
+import { getLoyaltyConfig } from '@/lib/loyalty/config.server'
 import ProfileEditForm from './ProfileEditForm'
 import {
   formatPoints,
@@ -107,6 +108,8 @@ export default async function AccountPage({ params }: Props) {
   } catch {
     totalSavedBhd = 0
   }
+
+  const loyaltyConfig = await getLoyaltyConfig()
 
   const progress  = tierProgressToNext(customer.total_orders, customer.total_spent_bhd, customer.loyalty_tier)
   const nextTier  = getNextTier(customer.loyalty_tier)
@@ -272,7 +275,10 @@ export default async function AccountPage({ params }: Props) {
         <TierBenefitsCards currentTier={customer.loyalty_tier} />
 
         {/* ── S5b — Birthday gift countdown ────────────────────────────── */}
-        <BirthdayGiftCard birthday={customer.birthday} />
+        <BirthdayGiftCard
+          birthday={customer.birthday}
+          bonusPoints={loyaltyConfig.birthdayBonusPoints}
+        />
 
         {/* ── S6 — My Info ─────────────────────────────────────────────── */}
         <ProfileEditForm

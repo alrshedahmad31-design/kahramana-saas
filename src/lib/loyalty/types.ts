@@ -7,6 +7,7 @@ export interface LoyaltyConfig {
   tierSilverThreshold:    number
   tierGoldThreshold:      number
   tierPlatinumThreshold:  number
+  birthdayBonusPoints:    number
 }
 
 export const DEFAULT_LOYALTY_CONFIG: LoyaltyConfig = {
@@ -18,6 +19,7 @@ export const DEFAULT_LOYALTY_CONFIG: LoyaltyConfig = {
   tierSilverThreshold:   500,
   tierGoldThreshold:     1500,
   tierPlatinumThreshold: 5000,
+  birthdayBonusPoints:   50,
 }
 
 export function pointsToCredit(points: number, cfg: LoyaltyConfig): number {

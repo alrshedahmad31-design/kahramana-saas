@@ -7,6 +7,8 @@ interface Props {
   // Null/empty when the customer hasn't set a birthday — caller may
   // choose to render a CTA card via the alternate `prompt` mode.
   birthday: string | null
+  // Sourced from loyalty_config.birthday_bonus_points (see migration 158).
+  bonusPoints: number
 }
 
 interface Countdown {
@@ -47,10 +49,11 @@ function formatTargetDate(date: Date, locale: string): string {
   }).format(date)
 }
 
-export default function BirthdayGiftCard({ birthday }: Props) {
+export default function BirthdayGiftCard({ birthday, bonusPoints }: Props) {
   const t      = useTranslations('account.birthdayGift')
   const locale = useLocale()
   const isAr   = locale === 'ar'
+  const pointsLabel = new Intl.NumberFormat(locale === 'ar' ? 'ar-BH' : 'en-GB').format(bonusPoints)
 
   if (!birthday) {
     return (
@@ -59,7 +62,7 @@ export default function BirthdayGiftCard({ birthday }: Props) {
           {t('promptTitle')}
         </p>
         <p className={`text-sm text-brand-text ${isAr ? 'font-cairo text-end' : 'font-satoshi text-start'}`}>
-          {t('promptBody')}
+          {t('promptBody', { points: pointsLabel })}
         </p>
       </div>
     )
@@ -93,7 +96,9 @@ export default function BirthdayGiftCard({ birthday }: Props) {
       </div>
 
       <p className={`text-xs text-brand-muted ${isAr ? 'font-almarai text-end' : 'font-satoshi text-start'}`}>
-        {isToday ? t('happyBirthday') : t('giftLandsOn', { date: dateLabel })}
+        {isToday
+          ? t('happyBirthday', { points: pointsLabel })
+          : t('giftLandsOn',   { date: dateLabel, points: pointsLabel })}
       </p>
     </div>
   )

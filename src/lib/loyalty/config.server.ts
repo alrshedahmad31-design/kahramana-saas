@@ -16,6 +16,7 @@ interface DbRow {
   tier_silver_threshold:    number
   tier_gold_threshold:      number
   tier_platinum_threshold:  number
+  birthday_bonus_points:    number
 }
 
 async function fetchLoyaltyConfig(): Promise<LoyaltyConfig> {
@@ -32,7 +33,8 @@ async function fetchLoyaltyConfig(): Promise<LoyaltyConfig> {
     .select(
       'points_per_bhd, max_redemption_ratio, min_redemption_points, ' +
       'point_value_bhd, points_expiry_months, ' +
-      'tier_silver_threshold, tier_gold_threshold, tier_platinum_threshold',
+      'tier_silver_threshold, tier_gold_threshold, tier_platinum_threshold, ' +
+      'birthday_bonus_points',
     )
     .is('branch_id', null)
     .eq('is_active', true)
@@ -55,11 +57,12 @@ async function fetchLoyaltyConfig(): Promise<LoyaltyConfig> {
     tierSilverThreshold:   Number(row.tier_silver_threshold),
     tierGoldThreshold:     Number(row.tier_gold_threshold),
     tierPlatinumThreshold: Number(row.tier_platinum_threshold),
+    birthdayBonusPoints:   Number(row.birthday_bonus_points),
   }
 }
 
 export const getLoyaltyConfig = unstable_cache(
   fetchLoyaltyConfig,
-  ['loyalty-config-v1'],
+  ['loyalty-config-v2'],
   { revalidate: 60, tags: ['loyalty-config'] },
 )

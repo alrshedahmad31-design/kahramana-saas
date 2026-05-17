@@ -1453,10 +1453,10 @@
       "title": "Your Birthday Gift",
       "ariaLabel": "Birthday gift countdown",
       "daysUntil": "{count, plural, one {day to go} other {days to go}}",
-      "giftLandsOn": "Your gift activates on {date}",
-      "happyBirthday": "Happy birthday — your gift is live today!",
+      "giftLandsOn": "{points} bonus points land on {date}",
+      "happyBirthday": "Happy birthday — {points} bonus points are yours today!",
       "promptTitle": "Birthday Gift",
-      "promptBody": "Add your birthday in My Info to unlock a yearly bonus gift."
+      "promptBody": "Add your birthday in My Info to unlock {points} bonus points every year."
     }
   },
   "payment": {
