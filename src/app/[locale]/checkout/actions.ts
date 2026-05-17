@@ -439,37 +439,34 @@ async function fetchAndComputeCouponDiscount(
     .eq('is_active', true)
     .single()
 
-  if (error || !coupon) return { error: 'Coupon not found or inactive' }
+  // All coupon-validation failures collapse to the single `coupon_invalid`
+  // code so the customer sees one localized message. The specific reason
+  // (paused / expired / branch / time window / per-customer limit) is
+  // still distinguishable in Sentry via toSafeError contexts elsewhere
+  // and visible to the customer when they re-open the coupon picker.
+  if (error || !coupon) return { error: 'coupon_invalid' }
 
   const now = new Date()
-  if (coupon.paused) {
-    return { error: 'Coupon is paused' }
-  }
-  if (coupon.valid_from && new Date(coupon.valid_from) > now) {
-    return { error: 'Coupon is not active yet' }
-  }
-  if (coupon.valid_until && new Date(coupon.valid_until) < now) {
-    return { error: 'Coupon has expired' }
-  }
+  if (coupon.paused) return { error: 'coupon_invalid' }
+  if (coupon.valid_from && new Date(coupon.valid_from) > now) return { error: 'coupon_invalid' }
+  if (coupon.valid_until && new Date(coupon.valid_until) < now) return { error: 'coupon_invalid' }
   if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
-    return { error: 'Coupon usage limit reached' }
+    return { error: 'coupon_invalid' }
   }
-  if (subtotal < (coupon.min_order_value_bhd ?? 0)) {
-    return { error: 'Order total below coupon minimum' }
-  }
+  if (subtotal < (coupon.min_order_value_bhd ?? 0)) return { error: 'coupon_invalid' }
   if (coupon.applicable_branches?.length && !coupon.applicable_branches.includes(branchId)) {
-    return { error: 'Coupon is not valid for this branch' }
+    return { error: 'coupon_invalid' }
   }
   if (coupon.days_active?.length && !coupon.days_active.includes(now.getDay())) {
-    return { error: 'Coupon is not valid today' }
+    return { error: 'coupon_invalid' }
   }
 
   const currentTime = now.toTimeString().slice(0, 5)
   if (coupon.time_start && currentTime < coupon.time_start.slice(0, 5)) {
-    return { error: 'Coupon is not active at this time' }
+    return { error: 'coupon_invalid' }
   }
   if (coupon.time_end && currentTime > coupon.time_end.slice(0, 5)) {
-    return { error: 'Coupon is not active at this time' }
+    return { error: 'coupon_invalid' }
   }
 
   const { count: customerUsageCount, error: usageError } = await supabase
@@ -480,7 +477,7 @@ async function fetchAndComputeCouponDiscount(
 
   if (usageError) return { error: toSafeError(usageError) }
   if ((customerUsageCount ?? 0) >= coupon.per_customer_limit) {
-    return { error: 'Coupon customer limit reached' }
+    return { error: 'coupon_invalid' }
   }
 
   const discount = calculateDiscount(coupon, subtotal)
@@ -535,7 +532,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     }
 
     if (Math.abs(repriced.subtotal - clientSubtotalBhd) > 0.001) {
-      return { orderId: '', finalTotal: 0, error: 'PRICE_MISMATCH' }
+      return { orderId: '', finalTotal: 0, error: 'price_mismatch' }
     }
 
     // ── Blocking stock check before order insertion ───────────────────────────
@@ -599,7 +596,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     if (pointsToRedeem > 0 || coupon) {
       customerSession = await getCustomerSession()
       if (!customerSession) {
-        return { orderId: '', finalTotal: 0, error: 'Login required to use points or coupons' }
+        return { orderId: '', finalTotal: 0, error: 'auth_required' }
       }
     }
 
@@ -645,7 +642,7 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
     if (coupon) {
       if (!customerSession) {
-        return { orderId: '', finalTotal: 0, error: 'Login required to use coupons' }
+        return { orderId: '', finalTotal: 0, error: 'auth_required' }
       }
       const result = await fetchAndComputeCouponDiscount(
         supabase,
@@ -663,7 +660,9 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     if (pointsToRedeem > 0) {
       const cfg = await getLoyaltyConfig()
       if (pointsToRedeem < cfg.minRedemptionPoints) {
-        return { orderId: '', finalTotal: 0, error: `Minimum redemption is ${cfg.minRedemptionPoints} points` }
+        // Suffix carries the configurable min so the client mapper can
+        // interpolate {points} without round-tripping the config value.
+        return { orderId: '', finalTotal: 0, error: `min_redemption:${cfg.minRedemptionPoints}` }
       }
 
       // Enforce server-configured redemption cap before hitting the RPC.
@@ -675,10 +674,10 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
       const customer = customerSession ?? await getCustomerSession()
       if (!customer) {
-        return { orderId: '', finalTotal: 0, error: 'Customer session required to redeem points' }
+        return { orderId: '', finalTotal: 0, error: 'auth_required' }
       }
       if (pointsToRedeem > customer.points_balance) {
-        return { orderId: '', finalTotal: 0, error: 'Insufficient points balance' }
+        return { orderId: '', finalTotal: 0, error: 'insufficient_points' }
       }
     }
 
@@ -735,31 +734,31 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
 
     if (rpcError) {
       if (rpcError.message.includes('COUPON_INVALID')) {
-        return { orderId: '', finalTotal: 0, error: 'Coupon is no longer valid' }
+        return { orderId: '', finalTotal: 0, error: 'coupon_invalid' }
       }
       if (rpcError.message.includes('INSUFFICIENT_POINTS')) {
-        return { orderId: '', finalTotal: 0, error: 'Insufficient points balance' }
+        return { orderId: '', finalTotal: 0, error: 'insufficient_points' }
       }
       if (rpcError.message.includes('POINTS_OVER_CAP')) {
         return { orderId: '', finalTotal: 0, error: 'points_over_cap' }
       }
       if (rpcError.message.includes('PRICE_MISMATCH')) {
-        return { orderId: '', finalTotal: 0, error: 'Item prices have changed, please refresh and try again' }
+        return { orderId: '', finalTotal: 0, error: 'price_mismatch' }
       }
       if (rpcError.message.includes('AUTH_REQUIRED')) {
-        return { orderId: '', finalTotal: 0, error: 'Authentication required' }
+        return { orderId: '', finalTotal: 0, error: 'auth_required' }
       }
       if (rpcError.code === '23505') {
         const existing = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
         if (existing) return existing
       }
-      // Sentinel codes above (COUPON_INVALID, PRICE_MISMATCH, AUTH_REQUIRED)
-      // pass through with user-safe strings. Anything else collapses to a
-      // generic message to keep RPC internals out of the public response.
+      // Sentinel codes above pass through as lowercase i18n codes consumed
+      // by localizeCheckoutError in CheckoutForm. Anything else collapses
+      // to a generic message to keep RPC internals out of the public response.
       return { orderId: '', finalTotal: 0, error: toSafeError(rpcError) }
     }
 
-    if (!orderId) return { orderId: '', finalTotal: 0, error: 'Order creation failed' }
+    if (!orderId) return { orderId: '', finalTotal: 0, error: 'order_creation_failed' }
 
     // ── Persist delivery_flat ─────────────────────────────────────────────────
     // rpc_create_order (134) predates the delivery_flat column (154) and does

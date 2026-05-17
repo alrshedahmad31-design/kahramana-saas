@@ -292,6 +292,13 @@ export default function CheckoutForm({ customerProfile }: Props) {
   }
 
   function localizeCheckoutError(message: string): string {
+    // Parameterized code: `min_redemption:<n>` carries the configurable
+    // min-points value from getLoyaltyConfig() so the client doesn't need
+    // a round-trip to interpolate {points}.
+    if (message.startsWith('min_redemption:')) {
+      const points = Number(message.slice('min_redemption:'.length)) || 0
+      return t('errors.minRedemption', { points })
+    }
     const labels: Record<string, string> = {
       name_required: t('errors.nameRequired'),
       name_too_long: t('errors.nameTooLong'),
@@ -301,6 +308,11 @@ export default function CheckoutForm({ customerProfile }: Props) {
       block_required: t('errors.blockRequired'),
       notes_too_long: t('errors.notesTooLong'),
       points_over_cap: t('errors.pointsOverCap'),
+      insufficient_points: t('errors.insufficientPoints'),
+      coupon_invalid: t('errors.couponInvalid'),
+      price_mismatch: t('errors.priceMismatch'),
+      auth_required: t('errors.authRequired'),
+      order_creation_failed: t('errors.orderCreationFailed'),
     }
     return labels[message] ?? message
   }

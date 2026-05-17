@@ -735,7 +735,12 @@
       "orderCreationFailed": "Order creation failed",
       "generic": "Error: {message}",
       "fixFieldsAbove": "Please fix the required fields above before sending your order",
-      "pointsOverCap": "Points discount cannot exceed 50% of order subtotal"
+      "pointsOverCap": "Points discount cannot exceed 50% of order subtotal",
+      "minRedemption": "Minimum redemption is {points} points",
+      "insufficientPoints": "Insufficient points balance",
+      "couponInvalid": "Coupon is no longer valid",
+      "priceMismatch": "Item prices have changed, please refresh and try again",
+      "authRequired": "Login required to continue"
     },
     "loyalty": {
       "heading": "Loyalty Points",
