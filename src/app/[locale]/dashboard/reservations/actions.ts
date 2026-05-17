@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { getLocale } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
 import { z } from 'zod'
 import * as Sentry from '@sentry/nextjs'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
@@ -135,7 +135,11 @@ export async function getReservations(branchId: string): Promise<Reservation[]> 
     .gte('reserved_for', start.toISOString())
     .order('reserved_for', { ascending: true })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    Sentry.captureException(error, { tags: { action: 'getReservations' } })
+    const t = await getTranslations('reservations.errors')
+    throw new Error(t('listFailed'))
+  }
   return (data ?? []).map(normalize)
 }
 
@@ -158,7 +162,11 @@ export async function findAvailableTables(input: FindAvailableInput): Promise<Av
     p_reserved_for:     parsed.data.reserved_for,
     p_duration_minutes: parsed.data.duration_minutes,
   })
-  if (error) throw new Error(error.message)
+  if (error) {
+    Sentry.captureException(error, { tags: { action: 'findAvailableTables' } })
+    const t = await getTranslations('reservations.errors')
+    throw new Error(t('availabilityFailed'))
+  }
   return (data ?? []) as AvailableTable[]
 }
 
@@ -191,7 +199,8 @@ export async function createReservation(input: CreateReservationInput): Promise<
 
   if (error) {
     Sentry.captureException(error, { tags: { action: 'createReservation' } })
-    throw new Error(error.message)
+    const t = await getTranslations('reservations.errors')
+    throw new Error(t('createFailed'))
   }
 
   const locale = await getLocale()
@@ -247,7 +256,8 @@ export async function updateReservationStatus(
 
   if (rpcError) {
     Sentry.captureException(rpcError, { tags: { action: 'updateReservationStatus' } })
-    throw new Error(rpcError.message)
+    const t = await getTranslations('reservations.errors')
+    throw new Error(t('updateFailed'))
   }
   const rpc = (rpcRaw ?? null) as { ok?: boolean; code?: string } | null
   if (!rpc) throw new Error('Reservation update returned an unexpected payload')

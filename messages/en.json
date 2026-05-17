@@ -2178,7 +2178,13 @@
     "showLess": "Show less",
     "showAllRows": "Show all {count} rows",
     "noData": "No data for the selected period",
-    "periodLabel": "Period:"
+    "periodLabel": "Period:",
+    "errors": {
+      "unauthorized": "Unauthorized — Owner or General Manager access required",
+      "invalidType": "Invalid report type",
+      "unknownType": "Unknown report type",
+      "unknown": "Unknown error"
+    }
   },
   "staff": {
     "savedSuccess": "Saved successfully",
@@ -3073,7 +3079,13 @@
     "errorMissingFields": "Fill in the required fields.",
     "errorGeneric": "Something went wrong. Try again.",
     "refreshError": "Could not refresh reservations.",
-    "actionError": "Could not update the status. Try again."
+    "actionError": "Could not update the status. Try again.",
+    "errors": {
+      "listFailed": "Could not load reservations — please try again",
+      "availabilityFailed": "Could not check availability — please try again",
+      "createFailed": "Could not create the reservation — please try again",
+      "updateFailed": "Could not update the reservation — please try again"
+    }
   },
   "deliveryTimes": {
     "title": "Today's Delivery Times",

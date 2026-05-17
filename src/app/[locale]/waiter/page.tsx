@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { getSession } from '@/lib/auth/session'
 import { createServiceClient } from '@/lib/supabase/server'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import { BRANCH_LIST } from '@/constants/contact'
 import { getTranslations } from 'next-intl/server'
 
@@ -68,7 +69,12 @@ export default async function WaiterHomePage({ params, searchParams }: PageProps
     : { data: [] as unknown[], error: null }
 
   if ('error' in tablesResult && tablesResult.error) {
-    console.error('[waiter] restaurant_tables query failed:', tablesResult.error)
+    captureAnalyticsError({
+      code:      'WAITER_TABLES_QUERY_FAILED',
+      message:   tablesResult.error.message,
+      function:  'waiter_page.restaurant_tables',
+      timestamp: new Date().toISOString(),
+    })
   }
   const tables = (tablesResult.data ?? []) as TableRow[]
 
@@ -85,7 +91,12 @@ export default async function WaiterHomePage({ params, searchParams }: PageProps
     .returns<ActiveOrderRow[]>()
 
   if (ordersError) {
-    console.error('[waiter] active orders query failed:', ordersError)
+    captureAnalyticsError({
+      code:      'WAITER_ACTIVE_ORDERS_QUERY_FAILED',
+      message:   ordersError.message,
+      function:  'waiter_page.active_orders',
+      timestamp: new Date().toISOString(),
+    })
   }
 
   const ordersByTable = new Map<number, ActiveOrderRow[]>()

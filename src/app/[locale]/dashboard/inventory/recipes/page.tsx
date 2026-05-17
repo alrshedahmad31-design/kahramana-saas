@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import type { DishCogsRow } from '@/lib/supabase/custom-types'
 
 interface PageProps {
@@ -34,6 +35,25 @@ export default async function RecipesPage({ params }: PageProps) {
     supabase.from('v_dish_cogs').select('*').order('name_ar'),
     supabase.from('recipes').select('menu_item_slug'),
   ])
+
+  // Silent failures here would hide a dropped view / RLS regression behind
+  // an empty recipe list. Capture both, keep rendering empty state.
+  if (dishesResult.error) {
+    captureAnalyticsError({
+      code:      'RECIPES_DISH_COGS_QUERY_FAILED',
+      message:   dishesResult.error.message,
+      function:  'recipes_page.v_dish_cogs',
+      timestamp: new Date().toISOString(),
+    })
+  }
+  if (recipeSlugsResult.error) {
+    captureAnalyticsError({
+      code:      'RECIPES_SLUGS_QUERY_FAILED',
+      message:   recipeSlugsResult.error.message,
+      function:  'recipes_page.recipes',
+      timestamp: new Date().toISOString(),
+    })
+  }
 
   const dishes = (dishesResult.data ?? []) as DishCogsRow[]
   const rawSlugs = recipeSlugsResult.data ?? []

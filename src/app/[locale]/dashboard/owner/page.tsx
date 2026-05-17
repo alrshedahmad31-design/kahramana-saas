@@ -11,7 +11,7 @@ import {
   getSecondaryMetrics,
   getLaborCostMetrics,
 } from '@/lib/analytics/queries'
-import { firstAnalyticsFailure } from '@/lib/analytics/result-helpers'
+import { firstAnalyticsFailure, captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import { BH_TIMEZONE } from '@/lib/analytics/calculations'
 import { createServiceClient } from '@/lib/supabase/server'
 import { isHiddenBranch } from '@/constants/contact'
@@ -67,6 +67,25 @@ async function fetchFoodCostThisMonth(
   }
 
   const [foodCostRes, revenueRes] = await Promise.all([foodCostQuery, revenueQuery])
+
+  // Surface query failures to Sentry — silent failure here would let the
+  // food-cost KPI fall to 0 and look like a real revenue/cost spike.
+  if (foodCostRes.error) {
+    captureAnalyticsError({
+      code:      'FOOD_COST_QUERY_FAILED',
+      message:   foodCostRes.error.message,
+      function:  'fetchFoodCostThisMonth.foodCost',
+      timestamp: new Date().toISOString(),
+    })
+  }
+  if (revenueRes.error) {
+    captureAnalyticsError({
+      code:      'FOOD_COST_REVENUE_QUERY_FAILED',
+      message:   revenueRes.error.message,
+      function:  'fetchFoodCostThisMonth.revenue',
+      timestamp: new Date().toISOString(),
+    })
+  }
 
   const foodCostBhd = (foodCostRes.data ?? []).reduce(
     (s: number, r: { unit_cost: number | null; quantity: number }) =>

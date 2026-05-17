@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
+import { getActiveBranches } from '@/lib/branches/queries'
 import type {
   LowStockAlert,
   ExpiryReportRow,
@@ -67,7 +69,6 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
 
   const supabase = await createClient()
 
-  const { getActiveBranches } = await import('@/lib/branches/queries')
   const branches = await getActiveBranches()
 
   // P1-21: clamp ?branch= for non-global roles — never trust caller-supplied
@@ -117,6 +118,30 @@ export default async function InventoryOverviewPage({ params, searchParams }: Pa
       ? supabase.from('menu_items').select('id', { count: 'exact', head: true })
       : Promise.resolve({ count: null, error: null }),
   ])
+
+  // Silent failures here would render KPI cards with 0 stock / 0 alerts and
+  // look like "everything is clean" instead of "the query failed". Capture
+  // each error to Sentry but keep the page rendering — empty arrays already
+  // render a benign "no data" state.
+  const inventoryQueryResults: Array<[string, { error: { message: string } | null }]> = [
+    ['lowStock',         lowStockResult],
+    ['expiry',           expiryResult],
+    ['alerts',           alertsResult],
+    ['stock',            stockResult],
+    ['waste',            wasteResult],
+    ['recipesCount',     recipesCountResult as { error: { message: string } | null }],
+    ['menuItemsCount',   menuItemsCountResult as { error: { message: string } | null }],
+  ]
+  for (const [name, result] of inventoryQueryResults) {
+    if (result.error) {
+      captureAnalyticsError({
+        code:      `INVENTORY_${name.toUpperCase()}_QUERY_FAILED`,
+        message:   result.error.message,
+        function:  `inventory_page.${name}`,
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
 
   const lowStockItems = (lowStockResult.data ?? []) as LowStockAlert[]
   const expiryItems = (expiryResult.data ?? []) as ExpiryReportRow[]

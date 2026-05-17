@@ -85,9 +85,23 @@ export default async function DashboardHomePage({ params }: Props) {
         alertsQuery = alertsQuery.eq('branch_id', user.branch_id)
       }
 
-      const { data: alertsData } = await alertsQuery
+      const { data: alertsData, error: alertsError } = await alertsQuery
+      if (alertsError) {
+        captureAnalyticsError({
+          code:      'OPS_ALERTS_QUERY_FAILED',
+          message:   alertsError.message,
+          function:  'dashboard_home_operations_alerts',
+          timestamp: new Date().toISOString(),
+        })
+      }
       operationsAlerts = alertsData ?? []
-    } catch {
+    } catch (err) {
+      captureAnalyticsError({
+        code:      'OPS_ALERTS_QUERY_THREW',
+        message:   err instanceof Error ? err.message : String(err),
+        function:  'dashboard_home_operations_alerts',
+        timestamp: new Date().toISOString(),
+      })
       operationsAlerts = []
     }
   }

@@ -1,5 +1,7 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
+import { getTranslations }      from 'next-intl/server'
 import { getSession }           from '@/lib/auth/session'
 import { canAccessReports }     from '@/lib/auth/rbac'
 import { createServiceClient }  from '@/lib/supabase/server'
@@ -83,17 +85,32 @@ async function logReport(params: {
   validation_flags: ValidationResult['flags']
   export_format?:   string
 }): Promise<void> {
-  const sb = createServiceClient()
-  await sb.from('report_audit_log').insert({
-    report_name:      params.report_name,
-    report_type:      params.report_type,
-    generated_by:     params.generated_by,
-    filters:          params.filters as unknown as Json,
-    row_count:        params.row_count,
-    data_snapshot:    (params.data_snapshot ?? null) as Json,
-    validation_flags: params.validation_flags as unknown as Json,
-    export_format:    params.export_format ?? 'preview',
-  })
+  // Audit-log failure must never break the report — capture it to Sentry
+  // so an operator can replay the row, but swallow it from the caller.
+  try {
+    const sb = createServiceClient()
+    const { error } = await sb.from('report_audit_log').insert({
+      report_name:      params.report_name,
+      report_type:      params.report_type,
+      generated_by:     params.generated_by,
+      filters:          params.filters as unknown as Json,
+      row_count:        params.row_count,
+      data_snapshot:    (params.data_snapshot ?? null) as Json,
+      validation_flags: params.validation_flags as unknown as Json,
+      export_format:    params.export_format ?? 'preview',
+    })
+    if (error) {
+      Sentry.captureException(error, {
+        tags:  { area: 'reports', action: 'logReport' },
+        extra: { report_type: params.report_type, generated_by: params.generated_by },
+      })
+    }
+  } catch (err) {
+    Sentry.captureException(err, {
+      tags:  { area: 'reports', action: 'logReport' },
+      extra: { report_type: params.report_type, generated_by: params.generated_by },
+    })
+  }
 }
 
 function buildPeriodLabel(filters: ReportFiltersInput): string {
@@ -152,35 +169,54 @@ export async function logExportFormat(
   reportType: string,
   format:     'csv' | 'excel' | 'pdf',
 ): Promise<void> {
+  const t = await getTranslations('reports.errors')
+
   const user = await getSession()
   if (!user || !canAccessReports(user)) {
-    throw new Error('Unauthorized — Owner or General Manager access required')
+    throw new Error(t('unauthorized'))
   }
 
   const parsed = reportTypeSchema.safeParse(reportType)
   if (!parsed.success) {
-    throw new Error('Invalid report type')
+    throw new Error(t('invalidType'))
   }
   const validatedType = parsed.data
 
-  const sb = createServiceClient()
-  await sb.from('report_audit_log').insert({
-    report_name:   `${validatedType} — ${format.toUpperCase()} export`,
-    report_type:   validatedType,
-    generated_by:  user.id,
-    export_format: format,
-    filters:       null,
-    row_count:     null,
-  })
+  // Best-effort audit row. Failures captured to Sentry so the user's CSV
+  // download isn't blocked on report_audit_log availability.
+  try {
+    const sb = createServiceClient()
+    const { error } = await sb.from('report_audit_log').insert({
+      report_name:   `${validatedType} — ${format.toUpperCase()} export`,
+      report_type:   validatedType,
+      generated_by:  user.id,
+      export_format: format,
+      filters:       null,
+      row_count:     null,
+    })
+    if (error) {
+      Sentry.captureException(error, {
+        tags:  { area: 'reports', action: 'logExportFormat' },
+        extra: { report_type: validatedType, format, generated_by: user.id },
+      })
+    }
+  } catch (err) {
+    Sentry.captureException(err, {
+      tags:  { area: 'reports', action: 'logExportFormat' },
+      extra: { report_type: validatedType, format, generated_by: user.id },
+    })
+  }
 }
 
 export async function generateReport(
   type:    ReportType,
   filters: ReportFiltersInput,
 ): Promise<ActionResult<ReportResult>> {
+  const t = await getTranslations('reports.errors')
+
   const user = await getSession()
   if (!user || !canAccessReports(user)) {
-    return { ok: false, error: 'Unauthorized — Owner or General Manager access required' }
+    return { ok: false, error: t('unauthorized') }
   }
 
   try {
@@ -190,10 +226,14 @@ export async function generateReport(
       case 'customer_clv':        return buildCustomerCLV(user.id)
       case 'coupon_performance':  return buildCouponPerformance(user.id)
       case 'operational_summary': return buildOperationalSummary(filters, user.id)
-      default:                    return { ok: false, error: 'Unknown report type' }
+      default:                    return { ok: false, error: t('unknownType') }
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
+    Sentry.captureException(err, {
+      tags:  { area: 'reports', action: 'generateReport' },
+      extra: { reportType: type, filters },
+    })
+    const msg = err instanceof Error ? err.message : t('unknown')
     return { ok: false, error: msg }
   }
 }

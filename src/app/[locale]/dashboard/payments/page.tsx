@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { getSession } from '@/lib/auth/session'
 import { canAccessPayments } from '@/lib/auth/rbac'
 import { createClient } from '@/lib/supabase/server'
+import { captureAnalyticsError } from '@/lib/analytics/result-helpers'
 import { getTranslations } from 'next-intl/server'
 import type { PaymentMethod, PaymentStatus } from '@/lib/supabase/custom-types'
 import type { Tables } from '@/lib/supabase/types'
@@ -70,7 +71,15 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
   // Stats: all time, branch-scoped
   let statsQ = supabase.from('payments').select('status, amount_bhd')
   if (scopedOrderIds !== null) statsQ = statsQ.in('order_id', scopedOrderIds)
-  const { data: allPayments } = await statsQ
+  const { data: allPayments, error: statsError } = await statsQ
+  if (statsError) {
+    captureAnalyticsError({
+      code:      'PAYMENTS_STATS_QUERY_FAILED',
+      message:   statsError.message,
+      function:  'payments_page.stats',
+      timestamp: new Date().toISOString(),
+    })
+  }
 
   const totalTx   = allPayments?.length ?? 0
   const completed = allPayments?.filter((p) => p.status === 'completed') ?? []
@@ -93,7 +102,15 @@ export default async function PaymentsPage({ params, searchParams }: Props) {
   if (filterMethod)                  tableQ = tableQ.eq('method', filterMethod)
   if (filterStatus)                  tableQ = tableQ.eq('status', filterStatus)
 
-  const { data: payments, count } = await tableQ
+  const { data: payments, count, error: tableError } = await tableQ
+  if (tableError) {
+    captureAnalyticsError({
+      code:      'PAYMENTS_TABLE_QUERY_FAILED',
+      message:   tableError.message,
+      function:  'payments_page.table',
+      timestamp: new Date().toISOString(),
+    })
+  }
 
   // Cash handovers — owner/GM only
   let cashHandovers: CashHandoverItem[] = []

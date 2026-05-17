@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import * as Sentry from '@sentry/nextjs'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getDashboardGuardErrorMessage, requireDashboardRole } from '@/lib/auth/dashboard-guards'
 import { parseRecipeImportExcel, type RecipeRowError } from '@/lib/inventory/recipe-import-parser'
@@ -226,15 +227,21 @@ export async function importRecipesExcel(
 
     const { error: insError } = await db.from('recipes').insert(insertRows)
     if (insError) {
+      // Sanitise: capture the raw DB text to Sentry but never echo it back to
+      // the chef — Postgres constraint messages can leak column / index names.
+      Sentry.captureException(insError, {
+        tags:  { area: 'recipes_import', action: 'insertRecipes' },
+        extra: { rowCount: insertRows.length },
+      })
       return {
         ...blank(),
-        fatal_ar: `فشل إدراج الوصفات: ${insError.message}`,
-        fatal_en: `Recipe insert failed: ${insError.message}`,
+        fatal_ar: 'فشل إدراج الوصفات. حاول مرة أخرى أو راجع المدير.',
+        fatal_en: 'Recipe insert failed. Please retry or contact a manager.',
       }
     }
   }
 
-  await db.from('audit_logs').insert({
+  const { error: auditError } = await db.from('audit_logs').insert({
     table_name: 'recipes',
     record_id: session.id,
     action: 'INSERT',
@@ -248,6 +255,13 @@ export async function importRecipesExcel(
       failed: summary.failed,
     },
   })
+  if (auditError) {
+    // Audit-log failure must not block the import — it already committed.
+    Sentry.captureException(auditError, {
+      tags:  { area: 'recipes_import', action: 'audit' },
+      extra: { inserted: summary.inserted, skipped: summary.skipped, failed: summary.failed },
+    })
+  }
 
   revalidatePath('/dashboard/inventory/recipes')
   revalidatePath('/dashboard/inventory')

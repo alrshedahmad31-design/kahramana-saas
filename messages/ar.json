@@ -2178,7 +2178,13 @@
     "showLess": "عرض أقل",
     "showAllRows": "عرض كل {count} سجل",
     "noData": "لا توجد بيانات للفترة المحددة",
-    "periodLabel": "الفترة:"
+    "periodLabel": "الفترة:",
+    "errors": {
+      "unauthorized": "غير مصرّح — يلزم وصول المالك أو المدير العام",
+      "invalidType": "نوع التقرير غير صالح",
+      "unknownType": "نوع تقرير غير معروف",
+      "unknown": "خطأ غير معروف"
+    }
   },
   "staff": {
     "savedSuccess": "تم الحفظ بنجاح",
@@ -3073,7 +3079,13 @@
     "errorMissingFields": "أكمل الحقول المطلوبة.",
     "errorGeneric": "حدث خطأ. أعد المحاولة.",
     "refreshError": "تعذّر تحديث قائمة الحجوزات.",
-    "actionError": "تعذّر تحديث الحالة. أعد المحاولة."
+    "actionError": "تعذّر تحديث الحالة. أعد المحاولة.",
+    "errors": {
+      "listFailed": "تعذّر تحميل الحجوزات — حاول مرة أخرى",
+      "availabilityFailed": "تعذّر التحقق من التوفر — حاول مرة أخرى",
+      "createFailed": "تعذّر إنشاء الحجز — حاول مرة أخرى",
+      "updateFailed": "تعذّر تحديث الحجز — حاول مرة أخرى"
+    }
   },
   "deliveryTimes": {
     "title": "أوقات التوصيل اليوم",
