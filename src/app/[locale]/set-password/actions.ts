@@ -1,6 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import * as Sentry from '@sentry/nextjs'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -13,11 +14,41 @@ type SetPasswordResult =
   | { success: false; error:
         | 'no_session'
         | 'too_short'
+        | 'too_long'
+        | 'rate_limited'
         | 'reauth_required'
         | 'reauth_failed'
         | 'recovery_user_mismatch'
         | 'server_error'
     }
+
+// 5/15m sliding window per live-session user. Defense against credential-spray
+// on the currentPassword path — even when an attacker has a session cookie
+// they can't burn through password attempts. Production-only; dev/preview share
+// state and would wedge QA. Fails closed when Upstash isn't configured.
+async function checkSetPasswordRateLimit(userId: string): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production') return true
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    Sentry.captureMessage('set_password.rate_limit_unconfigured', { level: 'warning' })
+    return false
+  }
+  try {
+    const [{ Ratelimit }, { Redis }] = await Promise.all([
+      import('@upstash/ratelimit'),
+      import('@upstash/redis'),
+    ])
+    const ratelimit = new Ratelimit({
+      redis:   Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(5, '15 m'),
+      prefix:  'set_password',
+    })
+    const { success } = await ratelimit.limit(`set_password:${userId}`)
+    return success
+  } catch (err) {
+    Sentry.captureException(err, { tags: { stage: 'set_password.rate_limit' } })
+    return false
+  }
+}
 
 export async function setPasswordAction(
   newPassword: string,
@@ -26,10 +57,19 @@ export async function setPasswordAction(
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     return { success: false, error: 'too_short' }
   }
+  // Supabase passes the password to bcrypt which truncates to 72 bytes — cap
+  // explicitly so the UI gets a clear error instead of silently rotating a
+  // truncated value. Matches loginSchema in account/login/actions.ts.
+  if (newPassword.length > 72) {
+    return { success: false, error: 'too_long' }
+  }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) return { success: false, error: 'no_session' }
+
+  const allowed = await checkSetPasswordRateLimit(user.id)
+  if (!allowed) return { success: false, error: 'rate_limited' }
 
   // Recovery cookie is set by /auth/callback when type=recovery — it is the
   // single trusted signal that this session came from a reset link. Without

@@ -135,6 +135,16 @@ const loginSchema = z.object({
   password: z.string().min(1).max(72),
 })
 
+// Mirrors the manual checks in registerAction so input validation lives in one
+// place. Password strength (letters + digits) stays in the action body — it's
+// a refinement that maps to a specific error code the caller already handles.
+const registerSchema = z.object({
+  email:    z.string().trim().toLowerCase().email().max(254),
+  password: z.string().min(8).max(72),
+  name:     z.string().trim().min(1).max(120),
+  phone:    z.string().trim().min(7).max(30),
+})
+
 export async function loginAction(
   emailRaw: string,
   passwordRaw: string,
@@ -186,23 +196,32 @@ export async function registerAction(
   const allowed = await checkRateLimit('register')
   if (!allowed) return { success: false, error: 'rate_limited' }
 
-  // H1 — password strength gate. Client mirrors this for UX, but the server
-  // is the security boundary so we re-check every value here.
-  if (password.length < 8) {
-    return { success: false, error: 'password_too_short' }
+  // Shape gate via Zod — covers email format, password 8..72, name 1..120,
+  // phone 7..30. Specific failure codes (password_too_short / name_too_long)
+  // are derived from the parse error so the UI keeps its existing messaging.
+  const parsed = registerSchema.safeParse({ email, password, name, phone })
+  if (!parsed.success) {
+    const flat = parsed.error.flatten().fieldErrors
+    if (flat.password?.length) {
+      return { success: false, error: 'password_too_short' }
+    }
+    if (flat.name?.length) {
+      return { success: false, error: 'name_too_long' }
+    }
+    if (flat.phone?.length) {
+      return { success: false, error: 'invalid_phone' }
+    }
+    return { success: false, error: 'signup_error' }
   }
-  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+
+  // Strength gate — checks letter + digit. Lives outside Zod because it maps
+  // to its own error code (password_too_weak vs the generic password_too_short
+  // returned by the schema length check).
+  if (!/[A-Za-z]/.test(parsed.data.password) || !/[0-9]/.test(parsed.data.password)) {
     return { success: false, error: 'password_too_weak' }
   }
 
-  // M6 — name length cap. customer_profiles.name has no DB constraint but
-  // surfaces in WhatsApp messages and emails — clamp before the trigger row
-  // is materialized.
-  if (name.length > 120) {
-    return { success: false, error: 'name_too_long' }
-  }
-
-  const normalizedPhone = normalizePhone(phone)
+  const normalizedPhone = normalizePhone(parsed.data.phone)
   if (!/^\+973[0-9]{8}$/.test(normalizedPhone)) {
     return { success: false, error: 'invalid_phone' }
   }
@@ -216,13 +235,13 @@ export async function registerAction(
   // `customer_profiles_id_fkey` events. `flow` scopes the trigger so it does
   // NOT fire for staff users created via authAdmin.createUser.
   const { data: authData, error: signUpErr } = await supabase.auth.signUp({
-    email,
-    password,
+    email:    parsed.data.email,
+    password: parsed.data.password,
     options: {
       data: {
         flow:  'customer_register',
         phone: normalizedPhone,
-        name:  name.trim(),
+        name:  parsed.data.name,
       },
     },
   })
@@ -261,8 +280,8 @@ export async function registerAction(
   const profile = {
     id:    authData.user.id,
     phone: normalizedPhone,
-    name:  name.trim() || null,
-    email,
+    name:  parsed.data.name || null,
+    email: parsed.data.email,
   }
 
   const MAX_ATTEMPTS = 3

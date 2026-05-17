@@ -53,7 +53,10 @@ export async function generateMetadata(
 
 export default async function MenuPage({ params, searchParams }: Props) {
   const { locale } = await params
-  const { q } = await searchParams
+  const { q: rawQ } = await searchParams
+  // Clamp to 100 chars before passing to the client search box — pure UX
+  // guard, no DB query runs server-side.
+  const q = rawQ?.slice(0, 100)
   const localeKey = locale as 'ar' | 'en'
   const [categories, featuredSlugs] = await Promise.all([
     getMenuData(),

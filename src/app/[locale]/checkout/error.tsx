@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import * as Sentry from '@sentry/nextjs'
 import { Link } from '@/i18n/navigation'
 
 interface Props {
@@ -14,7 +15,10 @@ export default function CheckoutError({ error, reset }: Props) {
   const isAr = locale === 'ar'
 
   useEffect(() => {
-    console.error('[CheckoutError]', error)
+    Sentry.captureException(error, {
+      tags: { stage: 'checkout.error_boundary' },
+      extra: { digest: error.digest },
+    })
   }, [error])
 
   return (

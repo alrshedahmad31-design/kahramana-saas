@@ -31,7 +31,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PaymentPage({ params, searchParams }: Props) {
   const { locale, orderId } = await params
   const accessToken = (await searchParams)?.t ?? null
-  
+
+  // Reject anything that isn't a UUID before the Supabase round-trip — keeps
+  // unsanitized route params from flowing into appendOrderAccessToken or the
+  // PaymentHandler component on a future refactor. Same gate as /order/[id].
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!UUID_RE.test(orderId)) notFound()
+
   try {
     const supabase = await createServiceClient()
 

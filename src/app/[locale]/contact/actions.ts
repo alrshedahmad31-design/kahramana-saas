@@ -5,14 +5,13 @@ import * as Sentry                  from '@sentry/nextjs'
 import { createServiceClient }      from '@/lib/supabase/server'
 import { sendContactNotification }  from '@/lib/email/send'
 import { z }                        from 'zod'
-
-const PHONE_RE = /^[\d +\-()+]{7,30}$/
+import { PUBLIC_PHONE_RE }          from '@/lib/validation/phone'
 
 const schema = z.object({
   name:      z.string().min(2).max(100).refine((v) => !/[\r\n]/.test(v), 'invalid_input'),
   email:     z.string().email(),
-  phone:     z.string().max(20).regex(PHONE_RE).optional().or(z.literal('')),
-  branch_id: z.string().optional().or(z.literal('')),
+  phone:     z.string().max(20).regex(PUBLIC_PHONE_RE).optional().or(z.literal('')),
+  branch_id: z.string().max(50).optional().or(z.literal('')),
   message:   z.string().min(10).max(2000),
 })
 
