@@ -19,9 +19,9 @@
 | WhatsApp | +973 1713 1413 |
 | wa.me link | https://wa.me/97317131413 |
 | Google Maps | TODO — confirm with restaurant |
-| Hours (AR) | يومياً ٧:٠٠م – ٢:٠٠ص |
-| Hours (EN) | Daily 7:00 PM – 2:00 AM |
-| Opens | 19:00 |
+| Hours (AR) | يومياً ٧:٠٠ص – ٢:٠٠ص |
+| Hours (EN) | Daily 7:00 AM – 2:00 AM |
+| Opens | 07:00 |
 | Closes | 02:00 |
 | Delivery | Yes |
 | Dine-in | Yes |
@@ -77,6 +77,6 @@
 ## Notes
 
 - WhatsApp numbers confirmed via live site audit 2026-04-27 — need official sign-off from restaurant
-- Riffa opens at 7pm, Qallali opens at 12pm (noon) — different hours, must be handled per-branch
+- Riffa opens at 7am (all-day, 7am–2am next day), Qallali opens at 12pm (noon, 12pm–1am next day) — different hours, must be handled per-branch
 - Google Maps links: TBD — restaurant to provide or confirm via Google Business Profile
 - All phone numbers stored as env vars in Supabase — never hardcoded in source
