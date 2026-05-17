@@ -1,31 +1,17 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KAHRAMANA — BRIDGE CONTEXT
-Generated: 2026-05-17 (session 140 close-out)
-Master: c6893ae
+Generated: 2026-05-17 22:16
+Master: f2ecc88fa979c86c21aeb484586ca49a39730727
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-17 (session 140 close-out — second dashboard audit pass CLEAN)
-# Master: c6893ae
+# Updated: 2026-05-17 (session 136 close-out + operator follow-ups)
+# Master: 3a78f76
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-
-Second-pass dashboard audit (session 140 prompt):
-  • 1  P0 finding   — ✅ closed (coupon branch clamp, commit `93d5ce7`)
-  • 9  P1 groups    — ✅ all closed (A through J, commits `d3582de` → `c6893ae`)
-  • 4  new migrations 168/169/170/171 — applied + paired + audited
-
-All dashboard write paths now enforce branch scope + role + transition +
-audit at the DB level. Coupon + promotion branch-scope clamp is now
-DOUBLE-enforced: JS pre-flight UX + DB-level rejection via
-`_coupon_clamp_branches` (170) and equivalent guard in 171. The only
-remaining direct service-role writes are the staff CRUD pair
-(blocked on `supabase.auth.admin` not being callable from SECURITY
-DEFINER) and `loyalty_config` (low-risk, single-table) — both marked
-with `// RPC-PENDING` comments explaining the deferral.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -63,190 +49,150 @@ External-contract-locked ⏳
 
 Assets (operator) 🟡
 - ~12 missing dish photos (concrete shoot list in commit `da5b199`).
-- Chef recipe Excel (drives 0-recipes-mapped inventory banner).
 
 ## ACTIVE DEV PRIORITIES
 
 **Status: empty.** All dev work that is not operator-blocked or
-externally locked is complete. Both audit passes (session 137 and
-session 140 prompts) closed with 0 P0 + 0 P1 remaining.
+externally locked is complete. The project is production-ready for
+soft-launch (cash-only).
 
-CLOSED this session (140 — second dashboard audit pass):
+CLOSED this session (136):
 
-✅ P0 — coupon branch clamp (`93d5ce7`)
-   - branch_manager + marketing can no longer create global /
-     cross-branch coupons. Empty / null / mismatched
-     applicable_branches arrays rejected BEFORE the insert hits the
-     DB. owner / GM bypass.
+✅ ARCH-004 extension to table/waiter/POS — atomic payment row (`8610587`)
+   - table/, waiter/, POS service: `p_payment_mode='cod'` on
+     rpc_create_order; dropped JS payments insert.
+   - dashboard/pos/: left with ARCH-004-SKIP comment because
+     p_payment_mode didn't support 'tap_card' for card/tap.
 
-✅ P1-A — KDS advanceOrderStatus via RPC (`d3582de`)
-   - rpc_update_order_status (migration 165) closes the last direct
-     UPDATE on orders from a KDS surface. Raw English errors →
-     kds.errors.* (11 keys). console.error swallowing → Sentry.
+✅ ARCH-004 final — POS card/tap atomicity (`e93c1bf` + `3a78f76`, migration 164)
+   - rpc_create_order: extended p_payment_mode with 'tap_card' branch
+     (method='tap_card', status='pending').
+   - rpc_pos_finalize_order: 8-arg → 5-arg audit-only; payment INSERT
+     stripped. DROP-then-CREATE pattern from migration 135.
+   - dashboard/pos/actions.ts: paymentMode = 'cod' | 'tap_card' →
+     rpc_create_order; finalize call now audit args only.
+   - ARCH-004 is fully closed across all 5 order-entry surfaces.
 
-✅ P1-B — POS post-RPC writes folded in (`aa23514`)
-   - delivery_lat / delivery_lng / delivery_flat written via
-     rpc_create_order's p_delivery_* params (migration 163). The
-     Nominatim geocoder fallback stays out-of-band with an explicit
-     comment explaining why. pos.errors.* / pos.service.errors.*
-     namespaces added (24 keys).
+CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
-✅ Migration 168 (`7ed94fe`)
-   - rpc_add_waitlist_entry + rpc_update_waitlist_status with
-     role/branch/transition gates + CAS + audit in one transaction.
+✅ Security audit remediation sweep (sessions 122-124)
+   - VULN-001/002/003/004/006/007/008/009/010/011/012/013/014/015/017/
+     018/019/020/021/022 + VULN-A03/A04/A05/A06/A07/A08/A10 + AUD-V3
+     residuals.
 
-✅ P1-C — waitlist via RPC (`76307fd`)
-   - addToWaitlist + updateStatus wired to migration 168 RPCs.
-     Throw-based contract preserved; RPC error codes mapped to
-     waitlist.errors.* (10 keys).
+✅ Inventory banner + chef Excel import (P2-1/P2-2, session 128)
+   - `786f549` chef Excel import wires inventory deduction.
+   - `d5da803` + `5916ac2` 0-recipes-mapped banner.
 
-✅ Migration 169 (`44274e2`)
-   - rpc_approve_shift: owner/GM only, status CAS, approved_by
-     stamped from auth.uid() (forged payload can't misattribute),
-     audit row in the same transaction.
+✅ Birthday gift end-to-end (sessions 128-131)
+   - `34e2da2` BirthdayGiftCard reads bonus points from loyalty_config.
+   - `fbb4b21` account birthday save fix.
+   - `bd2fb5e` migration 158 — birthday cron + idempotency table.
+   - `29ac5f2` /api/cron/birthday-notify route + Vercel Cron config.
+   - `d24e5e3` Resend email + wa.me WhatsApp deep-link.
 
-✅ P1-D — shifts approveShift via RPC + static import (`70da885`)
-   - approveShift wired to migration 169. shifts/page.tsx:65 dynamic
-     import → static. dashboard.shifts.errors.* (10 keys).
+✅ Riffa branch isOpen() timezone + cross-midnight (BUG-001, sessions 124-125)
+   - `e7ab0cb` + `bfc18cd` riffa closing 01:00→02:00 across surfaces.
 
-✅ Migration 170 (`225e39b`)
-   - rpc_create_coupon + rpc_update_coupon + rpc_delete_coupon with
-     DB-LEVEL branch scope clamp via _coupon_clamp_branches helper.
-     Business caps (max % 30, max BHD 5, usage_limit > 0,
-     percentage cap required) re-enforced server-side.
-     rpc_delete_coupon short-circuits on coupon_usages > 0 with
-     typed code='in_use' (no Postgres FK violation leak).
+✅ /dashboard/catering inquiry listing (session 130, P4-1)
+   - `1d67b4a` owner/GM-only listing page.
+   - `48d9285` migration 160 — catering_inquiries table.
+   - `e5908b4` + `2ef822c` server action + UX polish.
 
-✅ P1-E — coupon writes via RPC + static import (`8ace248`)
-   - createCoupon + updateCoupon wired to migration 170. toggle
-     helpers kept on direct UPDATE (single boolean field, scope
-     already covered). coupons/page.tsx:20 dynamic import → static.
-     dashboard.coupons.errors.* (14 keys).
+✅ Catering occasion/service enum normalization (session 135)
+   - `aa2bffa` form persists enum keys, dashboard re-translates;
+     legacy locale-string rows still render via typeguard fallback.
 
-✅ Migration 171 (`bdd60ab`)
-   - rpc_create_promotion + rpc_update_promotion + rpc_delete_promotion.
-     Branch scope at DB level: non-globals cannot create global promos
-     (code='global_forbidden') or touch other branches' rows.
-     Update path re-checks scope against EXISTING row.
+✅ ARCH-004 atomic checkout RPC (session 134)
+   - `be15f22` migration 163 — rpc_create_order packs order + items
+     + loyalty + coupon in single transaction.
+   - `80f737e` checkout server action replaces serial JS steps.
 
-✅ P1-F — promotion writes via RPC + audit + localize (`03a8714`)
-   - upsertPromotion / togglePromotion / deletePromotion wired to
-     migration 171. The dropped getServiceClient() helper + JS-level
-     assertPromotionBranchScope moved entirely into the RPC body.
-     promotions.errors.* (9 keys).
+✅ Cookie-consent gating on GA4 + Clarity (F-01, session 131)
+   - `92c6fba` analytics blocked until consent.
 
-✅ P1-G/H — reports + 8 swallowed-error pages (`2a3f8d2`)
-   - reports/actions.ts: logReport + logExportFormat wrapped in
-     try/catch + Sentry; auth errors localized via reports.errors.*.
-   - 7 pages where query failures were silently dropped now route
-     through captureAnalyticsError: dashboard/page.tsx,
-     dashboard/owner/page.tsx, inventory/page.tsx,
-     inventory/recipes/page.tsx, payments/page.tsx, waiter/page.tsx
-     (2 spots), reservations/actions.ts (4 raw .message throws
-     sanitised), recipes/import/actions.ts (chef-facing Postgres
-     error leak sanitised).
+✅ Checkout/waiter error localization (sessions 131, 135)
+   - `9a93fe1` 7 raw-English checkout errors → localizeCheckoutError.
+   - `f9bb840` waiter "Order creation failed" → waiter.errors.
 
-✅ P1-I — eliminate remaining dynamic imports (`094fe35`)
-   - 3 inventory subroute page.tsx files (stock, transfers, waste/new)
-     converted to static imports of getActiveBranches.
-   - inventory/reports/actions.ts intentionally left with its
-     dynamic imports (lazy-loads ExcelJS export-only dep).
+✅ Dead-code cleanup (sessions 130-131)
+   - `c4fe9a8` ForgotPasswordClient.tsx removed.
+   - `993ee3b` SetPasswordClient.tsx removed.
+   - `57ac6a9` HIDDEN_BRANCHES length guards removed (~30 files).
 
-✅ P1-J — staff + loyalty RPC-PENDING markers + audit hygiene (`c6893ae`)
-   - 5 staff/actions.ts service-role writes get RPC-PENDING comments
-     explaining the auth.admin deferral.
-   - createStaffFull profile UPDATE (line 318) — previously NO error
-     check + NO audit — now Sentry-captured + audit_logs UPDATE row.
-   - loyalty-actions.ts: console.error swallowing replaced with
-     Sentry; audit_logs INSERT gets explicit error check + Sentry
-     so an audit failure no longer breaks the trail silently.
+✅ Driver notifications + KDS hygiene (session 129)
+   - `2079f2c` driver sound + visual on new delivery.
+   - `2b45a6d` migration 161 — auto-complete KDS items on terminal status.
+   - `dabfb87` selector counts active orders only.
+
+✅ Sundry UX fixes (sessions 125-127)
+   - `22f7071` cart "إضافة المزيد" closes drawer.
+   - `efe68b1` supabase env-var actionable error.
+   - `0ae1d6d` + `b2f0555` checkout points 50% cap UI+server alignment.
+   - `568a6a0` migration 162 — membership_id generated column.
+   - `3957abe` waiter QR member scanner (feature-flagged off).
+   - `20fdf58` driver customerNavUrl decimal coord guard.
+   - `a2b2009` all البديع branch references removed.
+
+✅ Repo hygiene (session 135)
+   - `27e1a98` migration 015 un-gitignored — password → runtime placeholder.
+   - `ca61e41` migration 131 backfill — real REVOKE PUBLIC EXECUTE DDL
+     replaces cowork 1-line placeholder; verified no-op against live.
 
 DEFERRED / NEXT-LANE CANDIDATES:
-- rpc_create_staff / rpc_create_staff_full — blocked on
-  supabase.auth.admin not callable from SECURITY DEFINER body.
-  Tracked via inline `// RPC-PENDING:` comments in staff/actions.ts.
-- rpc_update_staff / rpc_set_staff_active — could be standalone
-  but grouped with the auth-blocked work for a single migration.
-- rpc_update_loyalty_config — single-table write, deferred because
-  the section gate + JS audit pattern is already strong.
+- (none — all candidates landed in session 136)
 
 ## ARCHITECTURE DECISIONS (do not reverse)
 - CSS: ps/pe/ms/me ONLY — never pl/pr/ml/mr/left/right
-- No dynamic imports on dashboard ROUTES (page.tsx files). Server
-  actions may keep `await import()` for genuinely lazy/heavy deps
-  (e.g. ExcelJS in inventory/reports/actions.ts).
-- **All financial DB writes via RPC only** — ARCH-004 fully closed.
+- No dynamic imports on dashboard routes
+- **All financial DB writes via RPC only** — ARCH-004 fully closed across
+  all 5 order-entry surfaces (checkout, table, waiter, POS, POS service).
   Order + payment row commit atomically in rpc_create_order via
   p_payment_mode = 'cod' | 'online' | 'tap_card'.
-- **All dashboard mutations via RPC** — second-pass audit closed
-  the orders / reservations / leave (sess 139) and the waitlist /
-  shifts / coupons / promotions (sess 140) write paths. Only the
-  staff + loyalty pair remains JS-side, both with documented
-  RPC-PENDING markers and the auth.admin blocker spelled out.
-- **Branch-scope clamp on coupons + promotions enforced at DB level**
-  via `_coupon_clamp_branches` (170) and the equivalent inline
-  branch check in rpc_create_promotion / rpc_update_promotion (171).
-  JS-layer guards stay as pre-flight UX, not as enforcement.
-- AnalyticsResult<T> pattern for all analytics queries (AUD-V3-008).
-- createClient() (anon) for analytics reads where RLS covers it.
-- createServiceClient() only for: matviews + RPCs without
-  authenticated grant.
-- x-real-ip before x-forwarded-for for rate limiting.
+- AnalyticsResult<T> pattern for all analytics queries (AUD-V3-008)
+- createClient() (anon) for analytics reads where RLS covers it
+- createServiceClient() only for: matviews + RPCs without authenticated grant
+- x-real-ip before x-forwarded-for for rate limiting
 - No console.error swallowing — Sentry via captureAnalyticsError
-  (analytics surfaces) or Sentry.captureException tagged with
-  area + action (everything else).
-- Customer-facing + staff-facing error strings go through
-  next-intl. New namespaces this session: kds.errors, pos.errors,
-  pos.service.errors, waitlist.errors, dashboard.shifts.errors,
-  dashboard.coupons.errors, promotions.errors, reports.errors,
-  reservations.errors.
+- Customer-facing + staff-facing error strings go through next-intl
+  (localizeCheckoutError for checkout; waiter.errors namespace for waiter)
 - Catering occasion_type / service_type persisted as enum keys, not
-  locale strings.
-- git add -p always — never stage sibling work.
-- Work on master directly — no worktrees unless explicitly requested.
+  locale strings (single source of truth: CATERING_OCCASION_TYPES /
+  CATERING_SERVICE_TYPES in src/lib/whatsapp-catering-message.ts)
+- git add -p always — never stage sibling work
+- Work on master directly — no worktrees unless explicitly requested
 
 ## KNOWN CEILINGS (do not attempt to fix)
 - Lighthouse Score ~49 on mobile simulation = GSAP/Framer Motion floor
 - TBT ~1600ms on Slow 4G = animation cost, intentional brand decision
 
 ## MIGRATION STATE
-- Local = Remote = **171 migrations applied (paired)**
-- Session 140 added: 168 (rpc_waitlist), 169 (rpc_approve_shift),
-  170 (rpc_coupons), 171 (rpc_promotions)
-- All four applied via Supabase MCP, then version-paired via
-  `supabase migration repair --status reverted <timestamp> --linked
-  && --status applied <N> --linked`. Types regenerated after each
-  via `supabase gen types typescript --linked` (stderr separated
-  via `2>/tmp/sb.err` to avoid the "Initialising login role…"
-  banner corrupting types.ts line 1).
-- Sessions 121-139 added 154-167.
+- Local = Remote = 164 migrations applied (paired)
+- Session 136 added: 164 (rpc_create_order tap_card branch +
+  rpc_pos_finalize_order audit-only)
+- Sessions 121-135 added: 154 (security), 155 (VULN-004 coupon_usages
+  in-RPC), 156-157 (security), 158 (birthday cron + idempotency),
+  159 (security), 160 (catering_inquiries), 161 (auto-complete KDS),
+  162 (membership_id), 163 (ARCH-004 atomic rpc_create_order)
+- Migration 131: content backfilled session 135 — real REVOKE DDL
+  (was 1-line cowork placeholder). schema_migrations.statements still
+  carries old placeholder; backfill matters for fresh-clone parity only.
+- Migration 015: un-gitignored session 135, password → runtime
+  setting placeholder (current_setting('app.admin_password', true))
 
 ## SESSION HISTORY (last 5)
+- Session 132: orders reorder button + sonner toasts + branded
+  confirmation modal + account birthday save fix + Latin digits fix
+- Session 133: catering form rate-limit + Turnstile + DB save UX
+- Session 134: ARCH-004 atomic checkout RPC (migration 163) +
+  catering form #6/#8 polish
 - Session 135: catering occasion/service enum normalization +
   migration 015 un-gitignored + waiter error localized + migration
-  131 cowork DDL backfilled.
+  131 cowork DDL backfilled
 - Session 136: ARCH-004 extension to table/waiter/POS (`8610587`) +
   ARCH-004 final POS card/tap atomicity (`e93c1bf` + `3a78f76`,
-  migration 164). ARCH-004 fully closed across all 5 order-entry
-  surfaces.
-- Session 137: dashboard audit prompt — 11 P0 findings flagged.
-- Session 138: P0 sweep — 11 commits `444b042` → `24f99f3`.
-- Session 139: P1 sweep — 23 findings (6 commits) + RPC-PENDING
-  elimination via migrations 165/166/167 (4 commits) =
-  10 commits `4691f72` → `7671239`.
-- Session 140: **second dashboard audit pass** — 1 P0 + 9 P1
-  groups + 4 migrations = 14 commits `93d5ce7` → `c6893ae`,
-  pushed to origin. Second pass CLEAN.
-
-## GATES (session 140 close)
-
-```
-tsc --noEmit            clean
-i18n parity             AR 2,541 = EN 2,541
-next build              566 pages, 0 errors (NEXT_BUILD_WORKERS=1, 26.3s)
-supabase migration list Local = Remote, head = 171
-git push origin master  pushed (cc7147a..ca230e9)
-```
+  migration 164) + bridge sync (`00d42aa`). ARCH-004 fully closed
+  across all 5 order-entry surfaces. **All dev work complete.**
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
