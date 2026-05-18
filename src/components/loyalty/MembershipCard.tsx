@@ -156,7 +156,7 @@ export default function MembershipCard({ userId, name, tier, joinedAt }: Props) 
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
             <Image
-              src="/assets/brand/logoo.webp"
+              src="/assets/brand/logo.webp"
               alt={isAr ? 'كهرمانة بغداد' : 'Kahramana Baghdad'}
               width={64}
               height={104}
