@@ -19,14 +19,23 @@ interface CustomerSummary {
 }
 
 // ── Nav Links ─────────────────────────────────────────────────────────────────
+// Split into two groups around the centered logo. DOM order is constant; the
+// inline-start group renders on the right in RTL via document `dir`.
 
-const NAV_LINKS = [
+const GROUP_START = [
   { key: 'menu',     href: '/menu'     as const },
   { key: 'branches', href: '/branches' as const },
   { key: 'catering', href: '/catering' as const },
-  { key: 'about',    href: '/about'    as const },
-  { key: 'contact',  href: '/contact'  as const },
 ] as const
+
+const GROUP_END = [
+  { key: 'about',   href: '/about'   as const },
+  { key: 'contact', href: '/contact' as const },
+] as const
+
+const ALL_LINKS = [...GROUP_START, ...GROUP_END] as const
+
+type NavKey = (typeof ALL_LINKS)[number]['key']
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -49,6 +58,7 @@ export default function Header() {
 
   const isRTL        = locale === 'ar'
   const targetLocale = isRTL ? 'en' : 'ar'
+  const toggleLabel  = isRTL ? 'EN' : 'AR'
   const hasSupabaseEnv = Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   )
@@ -140,6 +150,12 @@ export default function Header() {
     ? customer.points_balance.toLocaleString(isRTL ? 'ar-BH' : 'en-BH')
     : ''
 
+  // Premium typography helpers — Arabic stays untracked & sentence case;
+  // English picks up tracking + uppercase for the fine-dining feel.
+  const linkTypography = isRTL
+    ? 'font-cairo font-medium'
+    : 'font-satoshi font-medium tracking-[0.08em] uppercase'
+
   // Hide header on staff app and QR table routes
   if (
     pathname.includes('/dashboard') ||
@@ -149,6 +165,27 @@ export default function Header() {
     pathname.includes('/table/')
   ) return null
 
+  function NavItem({ navKey, href }: { navKey: NavKey; href: (typeof ALL_LINKS)[number]['href'] }) {
+    const active = pathname === href
+    return (
+      <Link
+        href={href}
+        aria-current={active ? 'page' : undefined}
+        className={`
+          relative px-3 py-2 text-[13px] transition-colors duration-300
+          ${linkTypography}
+          ${active ? 'text-brand-gold' : 'text-brand-muted hover:text-brand-gold/80'}
+          after:content-[''] after:absolute after:bottom-1 after:inset-x-3 after:h-px after:bg-brand-gold
+          after:origin-center after:transition-transform after:duration-300
+          motion-reduce:after:transition-none
+          ${active ? 'after:scale-x-100' : 'after:scale-x-0'}
+        `}
+      >
+        {t(navKey)}
+      </Link>
+    )
+  }
+
   return (
     <div data-public-header className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none pt-4 sm:pt-6">
       <header
@@ -156,19 +193,30 @@ export default function Header() {
           relative flex items-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
           pointer-events-auto
           ${isScrolled
-            ? 'w-[92%] max-w-5xl rounded-full glass-surface h-14 px-2'
-            : 'w-full max-w-7xl h-16 px-4 sm:px-6'
+            ? 'w-[92%] max-w-6xl rounded-full glass-surface h-16 px-4 sm:px-6'
+            : 'w-full max-w-7xl h-16 sm:h-20 px-4 sm:px-8 lg:px-12'
           }
         `}
       >
-        <div className="flex items-center justify-between w-full gap-4">
-          
-          {/* Logo */}
+        {/* Desktop: 3-column grid keeps the logo perfectly centered regardless of group widths */}
+        <div className="hidden md:grid w-full grid-cols-[1fr_auto_1fr] items-center gap-6 lg:gap-10">
+
+          {/* groupStart — RTL: right side · LTR: left side */}
+          <nav
+            className="justify-self-start flex items-center gap-1 lg:gap-2"
+            aria-label={t('menu')}
+          >
+            {GROUP_START.map(({ key, href }) => (
+              <NavItem key={key} navKey={key} href={href} />
+            ))}
+          </nav>
+
+          {/* Center logo */}
           <Link
             href="/"
             onClick={closeMenu}
             aria-label={isRTL ? 'الرئيسية' : 'Home'}
-            className="shrink-0 flex items-center transition-transform hover:scale-105 active:scale-95"
+            className="justify-self-center shrink-0 flex items-center transition-transform hover:scale-105 active:scale-95"
           >
             <Image
               src="/assets/brand/logo-full.webp"
@@ -176,149 +224,156 @@ export default function Header() {
               width={526}
               height={335}
               priority
-              sizes="(max-width: 768px) 160px, 200px"
-              className={`transition-all duration-500 ${isScrolled ? 'h-10 w-auto' : 'h-14 w-auto'}`}
+              sizes="(max-width: 768px) 168px, 240px"
+              className={`transition-all duration-500 ${isScrolled ? 'h-12 w-auto' : 'h-14 lg:h-16 w-auto'}`}
             />
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1 lg:gap-4" aria-label={t('menu')}>
-            {NAV_LINKS.map(({ key, href }) => (
-              <Link
-                key={key}
-                href={href}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-bold transition-all duration-300
-                  ${isRTL ? 'font-cairo' : 'font-satoshi'}
-                  ${pathname === href
-                    ? 'text-brand-gold bg-brand-gold/10'
-                    : 'text-brand-muted hover:text-brand-text hover:bg-brand-text/5'
-                  }
-                `}
-              >
-                {t(key as 'menu' | 'branches' | 'catering' | 'about' | 'contact')}
-              </Link>
-            ))}
-          </nav>
+          {/* groupEnd — nav links + utilities + CTA, anchored to inline-end */}
+          <div className="justify-self-end flex items-center gap-3 lg:gap-5">
+            <nav className="flex items-center gap-1 lg:gap-2" aria-label={t('menu')}>
+              {GROUP_END.map(({ key, href }) => (
+                <NavItem key={key} navKey={key} href={href} />
+              ))}
+            </nav>
 
-          {/* Desktop actions */}
-          <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={handleLocaleSwitch}
-              aria-label={t('languageAlt')}
-              className="px-4 py-2 rounded-full text-sm font-bold text-brand-muted hover:text-brand-text hover:bg-brand-text/5 transition-all"
-            >
-              {t('language')}
-            </button>
-
-            {/* Account button — gated on auth state */}
-            {!authLoaded ? (
-              // Reserve space to avoid layout shift while session resolves
-              <div className="w-11 h-11" aria-hidden />
-            ) : !customer ? (
-              <Link
-                href="/account"
-                aria-label={tAccount('loginOrRegister')}
-                className={`px-4 py-2 rounded-full text-sm font-bold border border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10 transition-all ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+            {/* Utility cluster: language · account · cart */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLocaleSwitch}
+                aria-label={t('languageAlt')}
+                className="font-satoshi text-[12px] font-medium tracking-[0.12em] text-brand-muted hover:text-brand-gold/80 transition-colors duration-300 px-2 py-2"
               >
-                {tAccount('loginOrRegister')}
-              </Link>
-            ) : (
-              <div className="relative" ref={accountMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setAccountOpen((v) => !v)}
-                  aria-haspopup="menu"
-                  aria-expanded={accountOpen}
-                  aria-label={tAccount('title')}
-                  className="flex items-center gap-2 ps-2 pe-3 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-all"
+                {toggleLabel}
+              </button>
+
+              {/* Account — icon only in both states */}
+              {!authLoaded ? (
+                <div className="w-11 h-11" aria-hidden />
+              ) : !customer ? (
+                <Link
+                  href="/account"
+                  aria-label={tAccount('loginOrRegister')}
+                  className="flex items-center justify-center w-11 h-11 rounded-full border border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10 transition-colors duration-300"
                 >
                   <UserIcon />
-                  <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
-                    {formattedPoints}
-                  </span>
-                  <TierBadge
-                    tier={customer.loyalty_tier}
-                    size="sm"
-                    showLabel={false}
-                    locale={locale}
-                  />
-                </button>
-
-                {accountOpen && (
-                  <div
-                    role="menu"
-                    aria-orientation="vertical"
-                    className="absolute top-full mt-2 end-0 w-64 p-2 glass-surface rounded-2xl text-start shadow-lg"
+                </Link>
+              ) : (
+                <div className="relative" ref={accountMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setAccountOpen((v) => !v)}
+                    aria-haspopup="menu"
+                    aria-expanded={accountOpen}
+                    aria-label={tAccount('title')}
+                    className="flex items-center gap-2 ps-2 pe-3 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
                   >
-                    <div className="px-3 py-2 border-b border-brand-text/10">
-                      <p className={`text-xs text-brand-muted ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                        {tAccount('title')}
-                      </p>
-                      {customer.name && (
-                        <p className={`text-sm font-bold text-brand-text truncate ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
-                          {customer.name}
-                        </p>
-                      )}
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <TierBadge tier={customer.loyalty_tier} size="sm" locale={locale} />
-                        <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
-                          {formattedPoints} {tAccount('pointsShort')}
-                        </span>
-                      </div>
-                    </div>
-                    <Link
-                      href="/account"
-                      onClick={() => setAccountOpen(false)}
-                      role="menuitem"
-                      className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-brand-text/5 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
-                    >
-                      {tAccount('title')}
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      role="menuitem"
-                      className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-brand-text/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
-                    >
-                      {tAccount('signOut')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+                    <UserIcon />
+                    <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
+                      {formattedPoints}
+                    </span>
+                    <TierBadge
+                      tier={customer.loyalty_tier}
+                      size="sm"
+                      showLabel={false}
+                      locale={locale}
+                    />
+                  </button>
 
-            <button
-              onClick={openCart}
-              aria-label={t('cartAlt')}
-              className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-all"
-            >
-              <CartIcon />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] bg-brand-gold text-brand-black text-[10px] font-bold rounded-full flex items-center justify-center px-1 tabular-nums shadow-lg">
-                  {totalItems}
-                </span>
+                  {accountOpen && (
+                    <div
+                      role="menu"
+                      aria-orientation="vertical"
+                      className="absolute top-full mt-2 end-0 w-64 p-2 glass-surface rounded-2xl text-start shadow-lg"
+                    >
+                      <div className="px-3 py-2 border-b border-brand-text/10">
+                        <p className={`text-xs text-brand-muted ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                          {tAccount('title')}
+                        </p>
+                        {customer.name && (
+                          <p className={`text-sm font-bold text-brand-text truncate ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+                            {customer.name}
+                          </p>
+                        )}
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <TierBadge tier={customer.loyalty_tier} size="sm" locale={locale} />
+                          <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
+                            {formattedPoints} {tAccount('pointsShort')}
+                          </span>
+                        </div>
+                      </div>
+                      <Link
+                        href="/account"
+                        onClick={() => setAccountOpen(false)}
+                        role="menuitem"
+                        className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-brand-text/5 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      >
+                        {tAccount('title')}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        role="menuitem"
+                        className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-brand-text/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      >
+                        {tAccount('signOut')}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
-            </button>
+
+              <button
+                onClick={openCart}
+                aria-label={t('cartAlt')}
+                className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
+              >
+                <CartIcon />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] bg-brand-gold text-brand-black text-[10px] font-bold rounded-full flex items-center justify-center px-1 tabular-nums shadow-lg">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            </div>
 
             <CinematicButton
               href="/reserve"
               isRTL={isRTL}
               aria-label={t('reserveTable')}
-              className="px-5 py-2 text-sm font-bold rounded-full"
+              className={`px-6 py-2.5 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
             >
               {t('reserveTable')}
             </CinematicButton>
           </div>
+        </div>
 
-          {/* Mobile Actions */}
-          <div className="flex md:hidden items-center gap-2">
-            {/* Mobile account button — icon only, links to /account in both states */}
+        {/* Mobile: logo on inline-start, icons + hamburger on inline-end */}
+        <div className="flex md:hidden items-center justify-between w-full">
+          <Link
+            href="/"
+            onClick={closeMenu}
+            aria-label={isRTL ? 'الرئيسية' : 'Home'}
+            className="shrink-0 flex items-center"
+          >
+            <Image
+              src="/assets/brand/logo-full.webp"
+              alt={isRTL ? 'كهرمانة بغداد' : 'Kahramana Baghdad'}
+              width={526}
+              height={335}
+              priority
+              sizes="180px"
+              className="h-12 w-auto max-w-[170px]"
+            />
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {/* Account — icon only, links to /account in both states */}
             {authLoaded && (
               <Link
                 href="/account"
                 aria-label={customer ? tAccount('title') : tAccount('loginOrRegister')}
-                className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-all ${
+                className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-colors duration-300 ${
                   customer
                     ? 'border border-brand-text/10'
                     : 'border border-brand-gold/40 text-brand-gold'
@@ -351,17 +406,10 @@ export default function Header() {
               )}
             </button>
 
-            <Link
-              href="/reserve"
-              aria-label={t('reserveTable')}
-              className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-gold text-brand-black shadow-[0_0_12px_rgba(200,146,42,0.25)]"
-            >
-              <CalendarIcon />
-            </Link>
-
             <button
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? t('closeMenu') : t('openMenu')}
+              aria-expanded={isOpen}
               className="w-11 h-11 flex flex-col justify-center items-center gap-1.5"
             >
               <span
@@ -377,22 +425,22 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu Overlay */}
+        {/* Mobile menu overlay — refined typography, reserve CTA moves inside */}
         {isOpen && (
             <div className="absolute top-full inset-x-0 mt-4 mx-4 p-6 glass-surface rounded-[2rem] md:hidden pointer-events-auto">
-              <nav className="flex flex-col gap-4">
-                {NAV_LINKS.map(({ key, href }) => (
+              <nav className="flex flex-col gap-3">
+                {ALL_LINKS.map(({ key, href }) => (
                     <Link
                       key={key}
                       href={href}
                       onClick={closeMenu}
                       className={`
-                        text-lg font-bold py-2 border-b border-brand-text/5 last:border-0 text-start
-                        ${isRTL ? 'font-cairo' : 'font-satoshi'}
+                        text-base font-medium py-2 border-b border-brand-text/5 last:border-0 text-start
+                        ${linkTypography}
                         ${pathname === href ? 'text-brand-gold' : 'text-brand-text'}
                       `}
                     >
-                    {t(key as 'menu' | 'branches' | 'catering' | 'about' | 'contact')}
+                    {t(key)}
                     </Link>
                 ))}
 
@@ -401,7 +449,7 @@ export default function Header() {
                   <Link
                     href="/account"
                     onClick={closeMenu}
-                    className={`text-lg font-bold py-2 border-b border-brand-text/5 text-start text-brand-gold ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                    className={`text-base font-medium py-2 border-b border-brand-text/5 text-start text-brand-gold ${linkTypography}`}
                   >
                     {tAccount('loginOrRegister')}
                   </Link>
@@ -413,7 +461,7 @@ export default function Header() {
                       onClick={closeMenu}
                       className={`flex items-center justify-between gap-3 py-2 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
                     >
-                      <span className="text-lg font-bold text-brand-text">
+                      <span className="text-base font-bold text-brand-text">
                         {tAccount('title')}
                       </span>
                       <span className="flex items-center gap-2">
@@ -442,15 +490,15 @@ export default function Header() {
                   <button
                     onClick={handleLocaleSwitch}
                     aria-label={t('languageAlt')}
-                    className="text-brand-muted font-bold"
+                    className="font-satoshi text-sm font-medium tracking-[0.12em] text-brand-muted"
                   >
-                    {t('language')}
+                    {toggleLabel}
                   </button>
                   <CinematicButton
                     href="/reserve"
                     isRTL={isRTL}
                     aria-label={t('reserveTable')}
-                    className="px-6 py-3 rounded-full font-bold"
+                    className={`px-6 py-3 rounded-full font-semibold ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
                   >
                     {t('reserveTable')}
                   </CinematicButton>
@@ -483,18 +531,6 @@ function UserIcon() {
          strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
       <circle cx="12" cy="7" r="4" />
-    </svg>
-  )
-}
-
-function CalendarIcon() {
-  return (
-    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-         strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
   )
 }
