@@ -205,11 +205,13 @@ export default function Header() {
         <div className="hidden md:flex relative items-center w-full">
 
           {/* groupStart — RTL: right side · LTR: left side.
-              lg:min-w matches groupEnd's intrinsic width so the absolute
-              logo at left-1/2 sits between equal-width zones — optical
-              centering without locale-conditional translate offsets. */}
+              lg:min-w matches groupEnd's intrinsic width; justify-end
+              pushes the nav links flush with the inline-end edge of the
+              box (the edge closest to the logo). The min-w "empty space"
+              then sits on the FAR edge — equalizing the visible gap to
+              the logo on both sides of the bar. */}
           <nav
-            className="relative z-10 flex items-center gap-6 lg:min-w-[480px]"
+            className={`relative z-10 flex items-center justify-end gap-6 ${isRTL ? 'lg:min-w-[560px]' : 'lg:min-w-[500px]'}`}
             aria-label={t('menu')}
           >
             {GROUP_START.map(({ key, href }) => (
