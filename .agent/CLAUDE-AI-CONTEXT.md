@@ -1,19 +1,21 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 156 close-out — pre-launch checklist, no code)
-# Master: 5576d6b
+# Updated: 2026-05-18 (session 157 close-out — PLAN.md implementation features append, no code)
+# Master: da2fcfc
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-156 produced `.agent/PRE-LAUNCH-CHECKLIST.md` (1 commit
-`5576d6b`, no code). Canonical single source of truth for what blocks
-ship: 3 operator-side blockers (Supabase Pro+Singapore, Resend domain
-DNS verification, 13 staff emails → migration 090), dev backlog empty,
-TAP/WhatsApp/Benefit Pay explicitly deferred as n/a-for-cash-only,
-10 customer + 9 staff manual smoke journeys for day-before launch.
-Generated from CLAUDE-AI-CONTEXT.md + LAST-SESSION.md + git log of
-sessions 137–155 + phase-state.json. Posture: session-155 shipped a
+Posture: session-157 appended a new section to `.agent/PLAN.md` (1 commit
+`da2fcfc`, no code). 27 shipped feature groups documented as
+✅ SHIPPED with migration numbers + one-paragraph descriptions, grounded
+in code under `src/app/[locale]/**` + `src/components/**` + migrations
+001–183. Append-only — original PLAN.md (lines 1–1021) untouched. Pushed
+to origin/master (`a3916b9..da2fcfc`). No gates run (doc-only commit;
+all 9 gates remain green at HEAD per session 155). Prior posture from
+session-156 still stands: dev backlog empty, 3 operator blockers
+(Supabase Pro+Singapore, Resend DNS, 13 staff emails for migration 090),
+TAP/WhatsApp/Benefit Pay deferred n/a-for-cash-only. Posture: session-155 shipped a
 5-item open-lane sweep as 5 commits +
 1 close-out. (1) `d77283e` brand asset cleanup — renamed `logoo.webp`
 typo to `logo.webp` (added in `f646ab6`, never referenced), restored
@@ -94,7 +96,27 @@ Optional next-lane candidates (none queued; fire only on explicit ask):
 - (none — session 153's KDS station-routing carry was closed in
   session 155 with a premise correction; see session 155 entry below.)
 
-CLOSED in sessions 137–156 (newest first):
+CLOSED in sessions 137–157 (newest first):
+
+✅ Session 157 — PLAN.md implementation-features append (1 commit, da2fcfc — no code)
+   - `da2fcfc` `.agent/PLAN.md` — appended new section
+     "مميزات تم إضافتها عند التنفيذ | Features Added During
+     Implementation" (306 lines added, lines 1–1021 untouched).
+   - 27 feature groups documented as ✅ SHIPPED with migration
+     numbers + one-paragraph descriptions. Grounded in code under
+     `src/app/[locale]/**` + `src/components/**` + migrations
+     001–183. Covers: Initial schema, Contact form, KDS, Driver PWA,
+     Loyalty, Coupons/Promotions, Tap payments, Analytics/Reports,
+     Staff RBAC/Shifts, Restaurant settings, Inventory/COGS,
+     Catering inquiries, Cash flow, Tips, Atomic order RPC
+     (ARCH-004), POS surface, Dine-in/QR tables/waiter, Customer
+     accounts, Reservations, Waitlist, DB-first menu CMS,
+     Stuck-order alerts, Security hardening, Onboarding/activity
+     widgets, Public order tracking, Brand/asset hygiene, Mobile
+     navbar + a11y, Cookie consent, Bilingual error localization,
+     Pre-launch checklist.
+   - No gates run (doc-only commit). All 9 gates remain green at
+     HEAD per session 155 close-out. Pushed to origin/master.
 
 ✅ Session 156 — Pre-launch checklist (1 commit, 5576d6b — no code)
    - `5576d6b` `.agent/PRE-LAUNCH-CHECKLIST.md` — single source of
@@ -532,6 +554,8 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
 ## MIGRATION STATE
 - Local = Remote — migrations applied through 183 (paired).
+- Session 157 added: **none** — doc-only commit (PLAN.md
+  implementation-features append).
 - Session 156 added: **none** — doc-only commit (PRE-LAUNCH-CHECKLIST.md).
 - Session 155 added: 183 (`kds_unassigned_fallback` — replaces
   fn_kds_enqueue_item's `'packing'` fallback with `'unassigned'` so
@@ -581,6 +605,13 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last entries)
+- Session 157: PLAN.md implementation-features append (1 commit,
+  `da2fcfc`, no code). 306 lines added to `.agent/PLAN.md` —
+  new section "مميزات تم إضافتها عند التنفيذ | Features Added
+  During Implementation". 27 feature groups marked ✅ SHIPPED
+  with migration numbers + descriptions, grounded in code +
+  migrations 001–183. Append-only (lines 1–1021 untouched).
+  Pushed to origin/master.
 - Session 156: pre-launch checklist (1 commit, `5576d6b`, no code).
   Produced `.agent/PRE-LAUNCH-CHECKLIST.md` — canonical single source
   of truth for cash-only soft-launch. 3 operator-side blockers
