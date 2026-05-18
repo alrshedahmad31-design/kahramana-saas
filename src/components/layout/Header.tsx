@@ -26,10 +26,10 @@ const GROUP_START = [
   { key: 'menu',     href: '/menu'     as const },
   { key: 'branches', href: '/branches' as const },
   { key: 'catering', href: '/catering' as const },
+  { key: 'about',    href: '/about'    as const },
 ] as const
 
 const GROUP_END = [
-  { key: 'about',   href: '/about'   as const },
   { key: 'contact', href: '/contact' as const },
 ] as const
 
@@ -190,11 +190,11 @@ export default function Header() {
     <div data-public-header className="fixed top-0 inset-x-0 z-50 flex justify-center pointer-events-none pt-4 sm:pt-6">
       <header
         className={`
-          relative flex items-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+          relative flex items-center h-20 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
           pointer-events-auto
           ${isScrolled
-            ? 'w-[92%] max-w-6xl rounded-full glass-surface h-16 px-4 sm:px-6'
-            : 'w-full max-w-7xl h-16 sm:h-20 px-4 sm:px-8 lg:px-12'
+            ? 'w-[92%] max-w-6xl rounded-full glass-surface px-4 sm:px-6'
+            : 'w-full max-w-7xl px-4 sm:px-8 lg:px-12'
           }
         `}
       >
@@ -205,13 +205,12 @@ export default function Header() {
         <div className="hidden md:flex relative items-center w-full">
 
           {/* groupStart — RTL: right side · LTR: left side.
-              lg:min-w matches groupEnd's intrinsic width; justify-end
-              pushes the nav links flush with the inline-end edge of the
-              box (the edge closest to the logo). The min-w "empty space"
-              then sits on the FAR edge — equalizing the visible gap to
-              the logo on both sides of the bar. */}
+              4 nav links (menu/branches/catering/about) gives this side
+              roughly the same intrinsic width as groupEnd (1 link +
+              utilities + CTA), so the absolute logo at left-1/2 sits
+              naturally centered without min-w padding tricks. */}
           <nav
-            className={`relative z-10 flex items-center justify-end gap-6 ${isRTL ? 'lg:min-w-[560px]' : 'lg:min-w-[500px]'}`}
+            className="relative z-10 flex items-center gap-6"
             aria-label={t('menu')}
           >
             {GROUP_START.map(({ key, href }) => (
