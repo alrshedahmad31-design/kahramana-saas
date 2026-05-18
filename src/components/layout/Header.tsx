@@ -204,9 +204,12 @@ export default function Header() {
             are relative + z-10 so they layer above the absolute logo. */}
         <div className="hidden md:flex relative items-center w-full">
 
-          {/* groupStart — RTL: right side · LTR: left side */}
+          {/* groupStart — RTL: right side · LTR: left side.
+              lg:min-w matches groupEnd's intrinsic width so the absolute
+              logo at left-1/2 sits between equal-width zones — optical
+              centering without locale-conditional translate offsets. */}
           <nav
-            className="relative z-10 flex items-center gap-6"
+            className="relative z-10 flex items-center gap-6 lg:min-w-[480px]"
             aria-label={t('menu')}
           >
             {GROUP_START.map(({ key, href }) => (
@@ -338,12 +341,13 @@ export default function Header() {
               )}
             </button>
 
-            {/* Reserve CTA */}
+            {/* Reserve CTA — px-4 py-2 reads as a peer of the utilities
+                rather than dominating the bar. */}
             <CinematicButton
               href="/reserve"
               isRTL={isRTL}
               aria-label={t('reserveTable')}
-              className={`px-6 py-2.5 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
+              className={`px-4 py-2 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
             >
               {t('reserveTable')}
             </CinematicButton>
