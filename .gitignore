@@ -86,3 +86,6 @@ scratch/
 
 # Claude Code parallel worktrees — ephemeral sibling sessions, never index
 .claude/worktrees/
+
+# Local screenshot scratch (Claude Code visual checks, never index)
+.tmp-screenshots/
