@@ -181,7 +181,9 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
     return { error: getDashboardGuardErrorMessage(error) }
   }
 
-  const { error: updateErr } = await service
+  // AUD-V4-013: CAS predicate so a concurrent confirmation cannot silently
+  // overwrite. .select('id') returns the affected rows; empty = lost race.
+  const { data: updated, error: updateErr } = await service
     .from('cash_handovers')
     .update({
       manager_confirmed: true,
@@ -189,8 +191,11 @@ export async function confirmCashHandover(handoverId: string): Promise<{ success
       confirmed_at:      now
     })
     .eq('id', handoverId)
+    .eq('manager_confirmed', false)
+    .select('id')
 
   if (updateErr) return { error: updateErr.message }
+  if (!updated || updated.length === 0) return { error: 'Already confirmed' }
 
   await service.from('audit_logs').insert({
     action: 'UPDATE',

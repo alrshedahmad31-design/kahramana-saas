@@ -1,6 +1,7 @@
 'use server'
 
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import * as Sentry from '@sentry/nextjs'
+import { createServiceClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
@@ -21,9 +22,13 @@ export async function assignDriverToOrder(
     return { success: false, error: 'Unauthorized' }
   }
 
-  const supabase = await createClient()
+  // AUD-V4-016: read + write through the same service client. Caller authz
+  // is enforced above; using anon for the pre-checks would silently break
+  // if RLS on orders/staff_basic ever tightens.
+  const service = await createServiceClient()
+  const now     = new Date().toISOString()
 
-  const { data: order, error: orderErr } = await supabase
+  const { data: order, error: orderErr } = await service
     .from('orders')
     .select('id, status, branch_id, assigned_driver_id')
     .eq('id', orderId)
@@ -41,7 +46,7 @@ export async function assignDriverToOrder(
     return { success: false, error: 'Unauthorized' }
   }
 
-  const { data: driver, error: driverErr } = await supabase
+  const { data: driver, error: driverErr } = await service
     .from('staff_basic')
     .select('id, role, is_active, branch_id')
     .eq('id', driverId)
@@ -64,9 +69,6 @@ export async function assignDriverToOrder(
     return { success: false, error: 'Driver does not serve this branch' }
   }
 
-  const service = await createServiceClient()
-  const now     = new Date().toISOString()
-
   const { error: updateErr, data: updated } = await service
     .from('orders')
     .update({
@@ -88,7 +90,7 @@ export async function assignDriverToOrder(
     return { success: false, error: 'Order is no longer available for dispatch' }
   }
 
-  await service.from('audit_logs').insert({
+  const { error: auditError } = await service.from('audit_logs').insert({
     table_name: 'orders',
     action:     'UPDATE',
     user_id:    caller.id,
@@ -101,6 +103,9 @@ export async function assignDriverToOrder(
     branch_id:  order.branch_id,
     actor_role: caller.role,
   })
+  if (auditError) {
+    Sentry.captureException(auditError, { tags: { area: 'delivery', operation: 'dispatch' } })
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/orders`)
@@ -201,7 +206,7 @@ export async function cancelDeliveryOrder(orderId: string): Promise<DispatchActi
     return { success: false, error: 'Order status changed — refresh and retry' }
   }
 
-  await supabase.from('audit_logs').insert({
+  const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'orders',
     action:     'UPDATE',
     user_id:    caller.id,
@@ -210,6 +215,9 @@ export async function cancelDeliveryOrder(orderId: string): Promise<DispatchActi
     branch_id:  order.branch_id,
     actor_role: caller.role,
   })
+  if (auditError) {
+    Sentry.captureException(auditError, { tags: { area: 'delivery', operation: 'cancel' } })
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/delivery`)
@@ -255,7 +263,7 @@ export async function confirmDelivery(orderId: string): Promise<DispatchActionRe
     return { success: false, error: 'order_status_conflict' }
   }
 
-  await supabase.from('audit_logs').insert({
+  const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'orders',
     action:     'UPDATE',
     user_id:    caller.id,
@@ -268,6 +276,9 @@ export async function confirmDelivery(orderId: string): Promise<DispatchActionRe
     branch_id:  order.branch_id,
     actor_role: caller.role,
   })
+  if (auditError) {
+    Sentry.captureException(auditError, { tags: { area: 'delivery', operation: 'confirm_delivery' } })
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/delivery`)
@@ -332,7 +343,7 @@ export async function reassignDriver(orderId: string, driverId: string): Promise
     return { success: false, error: 'Order status changed — refresh and retry' }
   }
 
-  await supabase.from('audit_logs').insert({
+  const { error: auditError } = await supabase.from('audit_logs').insert({
     table_name: 'orders',
     action:     'UPDATE',
     user_id:    caller.id,
@@ -341,6 +352,9 @@ export async function reassignDriver(orderId: string, driverId: string): Promise
     branch_id:  order.branch_id,
     actor_role: caller.role,
   })
+  if (auditError) {
+    Sentry.captureException(auditError, { tags: { area: 'delivery', operation: 'reassign' } })
+  }
 
   const locale = await getLocale()
   revalidatePath(`/${locale}/dashboard/delivery`)
