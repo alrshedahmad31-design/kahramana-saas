@@ -38,6 +38,7 @@ interface Translations {
   fetch_summary_failed_toast: string
   shift_closed_success_toast: string
   close_shift_failed_toast: string
+  currency_symbol: string
 }
 
 interface Props {
@@ -149,7 +150,7 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
                   <Calculator className="h-4 w-4 text-brand-gold" />
                   <span className="text-[10px] font-bold tracking-widest text-brand-gold uppercase">{t.expected_cash}</span>
                 </div>
-                <span className="font-mono font-bold text-white text-lg">{summary.expectedCash.toFixed(3)} <span className="text-[10px] text-brand-gold opacity-60">BHD</span></span>
+                <span className="font-mono font-bold text-white text-lg">{summary.expectedCash.toFixed(3)} <span className="text-[10px] text-brand-gold opacity-60">{t.currency_symbol}</span></span>
               </CardContent>
             </Card>
 
@@ -166,7 +167,7 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, actual_cash: e.target.value})}
                   className={`text-base h-12 bg-brand-black/40 ${isDiscrepancy ? 'border-brand-error focus-visible:ring-brand-error text-brand-error' : 'border-brand-gold/30 focus-visible:ring-brand-gold text-white'}`}
                 />
-                <span className="absolute end-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-gold/40">BHD</span>
+                <span className="absolute end-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-gold/40">{t.currency_symbol}</span>
               </div>
             </div>
 
@@ -174,7 +175,7 @@ export default function CloseShiftDialog({ branchId, translations: t }: Props) {
               <div className="grid gap-2 p-3 rounded-lg border border-brand-error/20 bg-brand-error/5">
                 <div className="flex items-center gap-2 mb-1">
                   <ShieldAlert className="w-4 h-4 text-brand-error animate-pulse" />
-                  <span className="text-[10px] font-bold tracking-widest text-brand-error uppercase">{t.discrepancy}: {diff.toFixed(3)} BHD</span>
+                  <span className="text-[10px] font-bold tracking-widest text-brand-error uppercase">{t.discrepancy}: {diff.toFixed(3)} {t.currency_symbol}</span>
                 </div>
                 <Textarea 
                   placeholder={t.explain_discrepancy}

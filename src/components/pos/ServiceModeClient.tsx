@@ -558,6 +558,7 @@ function ServiceItemTile({
 }) {
   const price = resolveMenuItemPrice(item)
   const disabled = !item.available
+  const bhd = isAr ? 'د.ب' : 'BHD'
 
   return (
     <button
@@ -565,8 +566,8 @@ function ServiceItemTile({
       disabled={disabled}
       onClick={onAdd}
       aria-label={isAr
-        ? `إضافة ${item.nameAr} - ${price.toFixed(3)} د.ب`
-        : `Add ${item.nameEn} - ${price.toFixed(3)} BHD`}
+        ? `إضافة ${item.nameAr} - ${price.toFixed(3)} ${bhd}`
+        : `Add ${item.nameEn} - ${price.toFixed(3)} ${bhd}`}
       className={`flex flex-col items-stretch justify-between min-h-[56px] rounded-lg border bg-brand-surface-2 p-2.5 text-start transition-colors
         ${disabled
           ? 'border-brand-border opacity-50 cursor-not-allowed'

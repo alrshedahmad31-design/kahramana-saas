@@ -47,10 +47,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = isAr ? item.name.ar : item.name.en
   const description = (isAr ? item.description?.ar : item.description?.en) || name
   const category = isAr ? item.categoryName.ar : item.categoryName.en
+  const bhd = isAr ? 'دينار بحريني' : 'BHD'
   const priceText = item.fromPrice
-    ? isAr
-      ? `${item.hasMultiplePrices ? "من " : ""}${item.fromPrice.toFixed(3)} دينار بحريني`
-      : `${item.hasMultiplePrices ? "From " : ""}${item.fromPrice.toFixed(3)} BHD`
+    ? `${isAr ? (item.hasMultiplePrices ? "من " : "") : (item.hasMultiplePrices ? "From " : "")}${item.fromPrice.toFixed(3)} ${bhd}`
     : ""
 
   const title = isAr

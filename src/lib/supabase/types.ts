@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       app_config: {
@@ -4682,6 +4707,14 @@ export type Database = {
         Args: { p_role: Database["public"]["Enums"]["staff_role"] }
         Returns: boolean
       }
+      _menu_destructive_allowed: {
+        Args: { p_role: Database["public"]["Enums"]["staff_role"] }
+        Returns: boolean
+      }
+      _menu_toggle_allowed: {
+        Args: { p_role: Database["public"]["Enums"]["staff_role"] }
+        Returns: boolean
+      }
       _order_status_role_allowed: {
         Args: {
           p_role: Database["public"]["Enums"]["staff_role"]
@@ -4804,6 +4837,19 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_after_auth_create_staff: {
+        Args: {
+          p_branch_id: string
+          p_id: string
+          p_name: string
+          p_role: Database["public"]["Enums"]["staff_role"]
+        }
+        Returns: Json
+      }
+      rpc_after_auth_create_staff_full: {
+        Args: { p_id: string; p_payload: Json }
+        Returns: Json
+      }
       rpc_approve_shift: { Args: { p_shift_id: string }; Returns: Json }
       rpc_auto_generate_pos: { Args: never; Returns: undefined }
       rpc_budget_trend: {
@@ -4887,29 +4933,6 @@ export type Database = {
         Returns: Json
       }
       rpc_create_coupon: { Args: { p_payload: Json }; Returns: Json }
-      rpc_set_coupon_active: {
-        Args: { p_id: string; p_is_active: boolean }
-        Returns: Json
-      }
-      rpc_set_coupon_paused: {
-        Args: { p_id: string; p_is_paused: boolean }
-        Returns: Json
-      }
-      rpc_create_menu_item: { Args: { p_payload: Json }; Returns: Json }
-      rpc_delete_menu_item: { Args: { p_slug: string }; Returns: Json }
-      rpc_delete_menu_option: { Args: { p_id: string }; Returns: Json }
-      rpc_delete_menu_option_group: { Args: { p_id: string }; Returns: Json }
-      rpc_set_menu_item_available: {
-        Args: { p_slug: string; p_available: boolean }
-        Returns: Json
-      }
-      rpc_update_menu_item: {
-        Args: { p_slug: string; p_payload: Json }
-        Returns: Json
-      }
-      rpc_upsert_menu_items: { Args: { p_items: Json }; Returns: Json }
-      rpc_upsert_menu_option: { Args: { p_payload: Json }; Returns: Json }
-      rpc_upsert_menu_option_group: { Args: { p_payload: Json }; Returns: Json }
       rpc_create_customer_profile: {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined
@@ -4924,42 +4947,74 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_create_order: {
-        Args: {
-          p_branch_id: string
-          p_coupon_discount_bhd?: number
-          p_coupon_id?: string
-          p_customer_id?: string
-          p_customer_name: string
-          p_customer_notes?: string
-          p_customer_phone: string
-          p_delivery_address?: string
-          p_delivery_area?: string
-          p_delivery_building?: string
-          p_delivery_city?: string
-          p_delivery_flat?: string
-          p_delivery_lat?: number
-          p_delivery_lng?: number
-          p_delivery_street?: string
-          p_expires_at?: string
-          p_idempotency_key: string
-          p_items: Json
-          p_loyalty_discount_bhd?: number
-          p_notes?: string
-          p_order_type: string
-          p_payment_expires_at?: string
-          p_payment_method?: string
-          p_payment_mode?: string
-          p_points_to_redeem?: number
-          p_promotion_discount_bhd?: number
-          p_promotion_id?: string
-          p_source?: string
-          p_status?: string
-          p_table_number?: number
-          p_total_bhd: number
-        }
-        Returns: string
-      }
+      rpc_create_menu_item: { Args: { p_payload: Json }; Returns: Json }
+      rpc_create_order:
+        | {
+            Args: {
+              p_branch_id: string
+              p_coupon_discount_bhd?: number
+              p_coupon_id?: string
+              p_customer_id?: string
+              p_customer_name: string
+              p_customer_notes?: string
+              p_customer_phone: string
+              p_delivery_address?: string
+              p_delivery_area?: string
+              p_delivery_building?: string
+              p_delivery_city?: string
+              p_delivery_lat?: number
+              p_delivery_lng?: number
+              p_delivery_street?: string
+              p_expires_at?: string
+              p_idempotency_key: string
+              p_items: Json
+              p_loyalty_discount_bhd?: number
+              p_notes?: string
+              p_order_type: string
+              p_payment_method?: string
+              p_points_to_redeem?: number
+              p_source?: string
+              p_status?: string
+              p_total_bhd: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_branch_id: string
+              p_coupon_discount_bhd?: number
+              p_coupon_id?: string
+              p_customer_id?: string
+              p_customer_name: string
+              p_customer_notes?: string
+              p_customer_phone: string
+              p_delivery_address?: string
+              p_delivery_area?: string
+              p_delivery_building?: string
+              p_delivery_city?: string
+              p_delivery_flat?: string
+              p_delivery_lat?: number
+              p_delivery_lng?: number
+              p_delivery_street?: string
+              p_expires_at?: string
+              p_idempotency_key: string
+              p_items: Json
+              p_loyalty_discount_bhd?: number
+              p_notes?: string
+              p_order_type: string
+              p_payment_expires_at?: string
+              p_payment_method?: string
+              p_payment_mode?: string
+              p_points_to_redeem?: number
+              p_promotion_discount_bhd?: number
+              p_promotion_id?: string
+              p_source?: string
+              p_status?: string
+              p_table_number?: number
+              p_total_bhd: number
+            }
+            Returns: string
+          }
       rpc_create_promotion: { Args: { p_payload: Json }; Returns: Json }
       rpc_create_purchase_order: {
         Args: {
@@ -5015,6 +5070,9 @@ export type Database = {
         }[]
       }
       rpc_delete_coupon: { Args: { p_id: string }; Returns: Json }
+      rpc_delete_menu_item: { Args: { p_slug: string }; Returns: Json }
+      rpc_delete_menu_option: { Args: { p_id: string }; Returns: Json }
+      rpc_delete_menu_option_group: { Args: { p_id: string }; Returns: Json }
       rpc_delete_promotion: { Args: { p_id: string }; Returns: Json }
       rpc_escalate_waste_approvals: { Args: never; Returns: undefined }
       rpc_expiry_report: {
@@ -5133,6 +5191,10 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_replace_recipes: {
+        Args: { p_rows: Json; p_slug: string; p_updated_by: string }
+        Returns: number
+      }
       rpc_restore_redeemed_loyalty_points: {
         Args: {
           p_actor_branch_id: string
@@ -5142,9 +5204,21 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_replace_recipes: {
-        Args: { p_rows: Json; p_slug: string; p_updated_by: string }
-        Returns: number
+      rpc_set_coupon_active: {
+        Args: { p_id: string; p_is_active: boolean }
+        Returns: Json
+      }
+      rpc_set_coupon_paused: {
+        Args: { p_id: string; p_is_paused: boolean }
+        Returns: Json
+      }
+      rpc_set_menu_item_available: {
+        Args: { p_available: boolean; p_slug: string }
+        Returns: Json
+      }
+      rpc_set_staff_active: {
+        Args: { p_activate: boolean; p_expected_state: boolean; p_id: string }
+        Returns: Json
       }
       rpc_transfer_stock: {
         Args: {
@@ -5159,6 +5233,10 @@ export type Database = {
       rpc_update_abc_classification: { Args: never; Returns: undefined }
       rpc_update_coupon: {
         Args: { p_id: string; p_payload: Json }
+        Returns: Json
+      }
+      rpc_update_menu_item: {
+        Args: { p_payload: Json; p_slug: string }
         Returns: Json
       }
       rpc_update_order_status: {
@@ -5190,23 +5268,6 @@ export type Database = {
         }
         Returns: Json
       }
-      rpc_after_auth_create_staff: {
-        Args: {
-          p_id: string
-          p_name: string
-          p_role: Database["public"]["Enums"]["staff_role"]
-          p_branch_id: string
-        }
-        Returns: Json
-      }
-      rpc_after_auth_create_staff_full: {
-        Args: { p_id: string; p_payload: Json }
-        Returns: Json
-      }
-      rpc_set_staff_active: {
-        Args: { p_id: string; p_activate: boolean; p_expected_state: boolean }
-        Returns: Json
-      }
       rpc_update_waitlist_status: {
         Args: {
           p_entry_id: string
@@ -5215,6 +5276,9 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_upsert_menu_items: { Args: { p_items: Json }; Returns: Json }
+      rpc_upsert_menu_option: { Args: { p_payload: Json }; Returns: Json }
+      rpc_upsert_menu_option_group: { Args: { p_payload: Json }; Returns: Json }
       update_order_item_station_status: {
         Args: {
           p_expected_status?: string
@@ -5430,6 +5494,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       abc_class: ["A", "B", "C"],

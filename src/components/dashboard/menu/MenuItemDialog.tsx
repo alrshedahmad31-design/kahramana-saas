@@ -65,6 +65,7 @@ const EMPTY_FORM = {
 export default function MenuItemDialog({ translations: t, locale }: Props) {
   const router  = useRouter()
   const isAr    = locale === 'ar'
+  const bhd     = isAr ? 'د.ب' : 'BHD'
   const [open, setOpen]       = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({ ...EMPTY_FORM })
@@ -169,7 +170,7 @@ export default function MenuItemDialog({ translations: t, locale }: Props) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="price">{t.price} (BHD)</Label>
+                <Label htmlFor="price">{t.price} ({bhd})</Label>
                 <Input
                   id="price"
                   type="number"

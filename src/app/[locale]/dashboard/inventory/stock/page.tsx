@@ -15,6 +15,7 @@ const ALLOWED_ROLES = ['owner', 'general_manager', 'branch_manager', 'inventory_
 export default async function StockPage({ params }: PageProps) {
   const { locale } = await params
   const isAr = locale !== 'en'
+  const bhd = isAr ? 'د.ب' : 'BHD'
   const prefix = locale === 'en' ? '/en' : ''
 
   const user = await getSession()
@@ -87,7 +88,7 @@ export default async function StockPage({ params }: PageProps) {
                     <p className="font-satoshi text-lg font-black text-brand-gold">
                       {branch.totalValue.toFixed(3)}
                     </p>
-                    <p className="font-satoshi text-xs text-brand-muted uppercase">BHD</p>
+                    <p className="font-satoshi text-xs text-brand-muted uppercase">{bhd}</p>
                   </div>
                   <div>
                     <p className="font-cairo text-xs text-brand-muted uppercase tracking-wide">

@@ -69,6 +69,7 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
   const t = useTranslations('inventory.reports.menuEngineering')
   const isAr = locale === 'ar'
   const font = isAr ? 'font-almarai' : 'font-satoshi'
+  const bhd = isAr ? 'د.ب' : 'BHD'
   const avgSold = rows.length ? rows.reduce((s, r) => s + r.total_sold, 0) / rows.length : 0
   const avgProfit = rows.length ? rows.reduce((s, r) => s + r.profit_bhd, 0) / rows.length : 0
   const maxSold = Math.max(...rows.map((row) => row.total_sold), avgSold, 1)
@@ -119,7 +120,7 @@ export default function MenuEngineeringMatrix({ rows }: { rows: MenuEngineeringR
         <div className="mb-6">
           <h3 className={`${font} text-sm font-black text-brand-text uppercase tracking-wider`}>{t('matrixTitle')}</h3>
           <p className={`${font} text-[10px] font-bold text-brand-muted uppercase tracking-widest mt-1`}>
-            {isAr ? 'X = الوحدات المباعة · Y = الربح د.ب · الحجم = الإيراد' : 'X = Units Sold · Y = Profit BHD · Size = Revenue'}
+            {isAr ? `X = الوحدات المباعة · Y = الربح ${bhd} · الحجم = الإيراد` : `X = Units Sold · Y = Profit ${bhd} · Size = Revenue`}
           </p>
         </div>
         

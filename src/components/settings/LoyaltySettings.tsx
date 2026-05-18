@@ -15,6 +15,7 @@ import { toast } from '@/lib/toast'
 
 export default function LoyaltySettings() {
   const isAr = useLocale() === 'ar'
+  const bhd = isAr ? 'د.ب' : 'BHD'
   const [cfg, setCfg]         = useState<LoyaltyConfig>(DEFAULT_LOYALTY_CONFIG)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState(false)
@@ -79,7 +80,7 @@ export default function LoyaltySettings() {
             onChange={(v) => patch('pointsPerBhd', Math.round(v))}
           />
           <Field
-            label={isAr ? 'قيمة النقطة (د.ب)' : 'Point value (BHD)'}
+            label={isAr ? `قيمة النقطة (${bhd})` : `Point value (${bhd})`}
             type="number"
             min={0.0001}
             step={0.0001}

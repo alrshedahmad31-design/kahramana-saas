@@ -6,7 +6,7 @@ import { Icon } from '@/components/ui/Icon'
 
 interface LoyaltyRedemptionWidgetProps {
   pointsBalance: number
-  /** BHD credit that will actually be applied — already capped at 50% of subtotal */
+  /** Credit value that will actually be applied — already capped at 50% of subtotal */
   appliedCreditBhd: number
   /** True when the applied credit was reduced from the full balance value */
   capped: boolean

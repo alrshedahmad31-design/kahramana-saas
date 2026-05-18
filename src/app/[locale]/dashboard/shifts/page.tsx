@@ -41,6 +41,8 @@ export default async function ShiftsPage({
 }) {
   const { locale } = await params
   const { branch: selectedBranchId } = await searchParams
+  const isAr = locale === 'ar'
+  const bhd = isAr ? 'د.ب' : 'BHD'
   const prefix = locale === 'en' ? '/en' : ''
   let user
   try {
@@ -123,6 +125,7 @@ export default async function ShiftsPage({
     fetch_summary_failed_toast: t('fetch_summary_failed_toast'),
     shift_closed_success_toast: t('shift_closed_success_toast'),
     close_shift_failed_toast:   t('close_shift_failed_toast'),
+    currency_symbol:            bhd,
   }
 
   return (
@@ -166,7 +169,7 @@ export default async function ShiftsPage({
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-white">
-              {shifts.reduce((sum: number, s: ShiftClosingData) => sum + Number(s.actual_cash_bhd ?? 0), 0).toFixed(3)} <span className="text-xs text-brand-gold ms-1">BHD</span>
+              {shifts.reduce((sum: number, s: ShiftClosingData) => sum + Number(s.actual_cash_bhd ?? 0), 0).toFixed(3)} <span className="text-xs text-brand-gold ms-1">{bhd}</span>
             </div>
           </CardContent>
         </Card>

@@ -47,6 +47,7 @@ interface Props {
 export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
   const t = useTranslations('dashboard')
   const isAr = locale === 'ar'
+  const bhd = isAr ? 'د.ب' : 'BHD'
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [tab, setTab] = useState<'ar' | 'en'>(isAr ? 'ar' : 'en')
@@ -243,7 +244,7 @@ export default function EditMenuItemDialog({ item, locale, onSuccess }: Props) {
 
           {/* Price (full width) */}
           <div className="space-y-2">
-            <Label htmlFor="price">{t('price')} (BHD)</Label>
+            <Label htmlFor="price">{t('price')} ({bhd})</Label>
             <Input
               id="price"
               type="number"

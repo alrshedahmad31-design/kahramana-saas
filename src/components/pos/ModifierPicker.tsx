@@ -13,6 +13,7 @@ interface Props {
 }
 
 export default function ModifierPicker({ item, isAr, baseUnitPriceBhd, onCancel, onConfirm }: Props) {
+  const bhd = isAr ? 'د.ب' : 'BHD'
   // selected[groupId] = Set<optionId>
   const [selected, setSelected] = useState<Record<string, Set<string>>>(() => {
     const init: Record<string, Set<string>> = {}
@@ -149,7 +150,7 @@ export default function ModifierPicker({ item, isAr, baseUnitPriceBhd, onCancel,
 
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-brand-border pt-4">
           <span className="font-satoshi tabular-nums text-brand-text">
-            {adjustedUnit.toFixed(3)} BHD
+            {adjustedUnit.toFixed(3)} {bhd}
           </span>
           <div className="flex gap-2">
             <button

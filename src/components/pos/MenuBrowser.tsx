@@ -142,6 +142,7 @@ function ItemCard({
 }: { item: POSItem; isAr: boolean; outOfStockLabel: string; onAdd: () => void }) {
   const [price] = useState(() => resolveMenuItemPrice(item))
   const disabled = !item.available
+  const bhd = isAr ? 'د.ب' : 'BHD'
 
   return (
     <button
@@ -149,8 +150,8 @@ function ItemCard({
       disabled={disabled}
       onClick={onAdd}
       aria-label={isAr
-        ? `إضافة ${item.nameAr} - ${price.toFixed(3)} د.ب`
-        : `Add ${item.nameEn} - ${price.toFixed(3)} BHD`}
+        ? `إضافة ${item.nameAr} - ${price.toFixed(3)} ${bhd}`
+        : `Add ${item.nameEn} - ${price.toFixed(3)} ${bhd}`}
       className={`group flex flex-col rounded-xl border bg-brand-surface text-start overflow-hidden transition-colors
         ${disabled
           ? 'border-brand-border opacity-50 cursor-not-allowed'
