@@ -1,127 +1,209 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 147: Dashboard RPC sweep finalization. Closes the last 15
-> direct writes flagged across menu / staff / coupons-toggles
-> dashboard surfaces with three new migrations (176, 177, 178), one
-> commit per migration+JS pair. Items 2 and 3 of the open lane
-> required no code (catering listing already shipped session 130;
-> staff seed is operator-side).
+> Sessions 148 + 149 (one Claude Code conversation, two close-outs).
+> 148 = PUB-007 extension on `rpc_create_order` + supabase_migrations
+> registry backfill for 174/175. 149 = single hygiene lane bundling
+> three items (BHD display drift, PUB-009 leftover, full types regen).
+> All 9 gates green at HEAD. Bridge body upstream still references
+> session 145 — Claude.ai owes a refresh.
 > Date: 2026-05-18
 > Author: Claude Code (Opus 4.7, 1M context)
 
-## SESSION 147 — SUMMARY
+## SESSION 148 — SUMMARY
 
-Open-lane execution — user supplied an ordered 3-item backlog
-(Dashboard RPC sweep → /dashboard/catering read-only UI → staff seed
-checklist), ground rule "one commit per migration+JS pair, propose
-SQL before writing, TSC green after each commit." The RPC sweep
-fully replaced the listed 15 direct writes; the other two items
-turned out to be already-shipped (catering) or operator-only (seed).
+User asked for "PUB-007: add proper SQLSTATE codes to all RPC error
+returns." PUB-007 itself (rpc_create_reservation) had already shipped
+in session 146 commit `5a57f9a` + migration 174. Scope question
+surfaced before going wide: 437 `RAISE EXCEPTION` sites across 55
+migration files vs. only 5 JS sites discriminating by
+`message.includes()` — all in `checkout/actions.ts:723-735` for
+rpc_create_order. User picked "Checkout RPC only (recommended)".
 
-### Commits (in order)
+### Commits
 
 | SHA | Item | Scope |
 |-----|------|-------|
-| `e0f3916` | RPC sweep — menu | Migration 176 adds 9 SECURITY DEFINER RPCs covering `dashboard/menu/actions.ts` writes (toggle availability, bulk sync, create/update/delete item, upsert/delete option group, upsert/delete option). Audit row inside same transaction as the parent mutation. Drops the `untypedServiceClient` helper — menu_option_groups / menu_options now flow via RPC return envelope. |
-| `1af2bad` | RPC sweep — staff | Migration 177 adds `rpc_after_auth_create_staff`, `rpc_after_auth_create_staff_full`, `rpc_set_staff_active`, plus DROP+CREATE of `rpc_update_staff` (return type VOID → JSONB, args unchanged). `createStaff` / `createStaffFull` still keep `auth.admin.createUser` JS-side (GoTrue not callable from DEFINER body) but the post-auth DB half — INSERT + profile fields + audit — now commits atomically. JS-side compensating `authAdmin.deleteUser` on RPC failure. Drops `auditPayload` helper. |
-| `da5ef6c` | RPC sweep — coupon toggles | Migration 178 adds `rpc_set_coupon_active` and `rpc_set_coupon_paused`, both reusing `_coupon_role_allowed` from migration 170 and inlining the same `created_by` / `applicable_branches` scope check `rpc_update_coupon` uses. Drops `assertCouponScope` + its `SupabaseClient` / `AuthUser` imports — scope check now SQL-side. |
+| `8f01b2f` | PUB-007 extension | Migration 179 + checkout/actions.ts |
+| `814866b` | Session 148 close-out | Bridge timestamp + master pointer refresh |
 
 ### Key technical decisions
 
-1. **Per-migration types.ts hand-patch instead of full regen.** The
-   MCP `generate_typescript_types` output exceeded the read window
-   (~176 KB single-line), so each commit hand-adds 9 / 4 / 2 entries
-   near sibling functions in the existing alphabetized `Functions`
-   block. A full `supabase gen types` pass can reorder later if
-   desired — TS doesn't care about object-literal key order.
-2. **`rpc_update_staff` DROP+CREATE not CREATE OR REPLACE.** Return
-   type changed from `VOID` to `JSONB` to match the rest of the
-   migration-170-era envelope shape (`{ ok: true } | { ok: false,
-   code }`). PG refuses `CREATE OR REPLACE` across return-type
-   changes — DROP required. Argument types unchanged. Verified zero
-   live JS callers before applying (the prior `staff/actions.ts`
-   ran a direct CAS UPDATE, never invoked the migration-126 RPC).
-3. **POS service audit row stays JS-side (WON'T-FIX).** Documented
-   in approval pass. `rpc_create_order` has no audit row of its own;
-   every one of its 5 callers writes audit JS-side for symmetry, and
-   the audit_logs insert in `pos/service/actions.ts:273` already
-   captures failure to Sentry. Adding a wrapper RPC for one row of
-   insert wouldn't reduce blast radius, and adding `p_audit_changes
-   jsonb` to `rpc_create_order` would touch all 5 callers — separate
-   lane if ever scheduled.
-4. **`auth.admin.createUser` rollback path preserved.** Both
-   `createStaff` and `createStaffFull` still call
-   `authAdmin.deleteUser(staffId)` on RPC failure. The 2-step is
-   inherent (GoTrue can't run inside a DEFINER body) but the DB half
-   no longer leaves partial rows behind, and the auth user is
-   guaranteed to be cleaned up on any post-auth failure.
-5. **clock_pin hashing stays JS-side.** `bcryptjs.hash` is JS-only,
-   so `createStaffFull` hashes the pin in TypeScript and passes
-   `clock_pin_hash` through the RPC's jsonb payload. The RPC inserts
-   it directly into `staff_basic.clock_pin_hash`.
-6. **`branch_id` CAS uses `COALESCE(.,'')` equality in
-   `rpc_update_staff`** — handles the NULL-branch case (owner / GM)
-   without the `q.is(null) / q.eq(x)` JS branching the prior code
-   needed.
+1. **One SQLSTATE per logical error class.** Migration 174 set the
+   precedent of pinning every sentinel in the function, not just the
+   caller-discriminated subset. Migration 179 follows: KH001 reused
+   for AUTH_REQUIRED (so the code maps to the same caller meaning
+   across RPCs), then KH015–KH021 for PRICE_MISMATCH / INVALID_TOTAL /
+   COUPON_INVALID (5 internal branches) / PROMOTION_INVALID (8) /
+   INSUFFICIENT_POINTS (4) / POINTS_OVER_CAP / INVALID_PAYMENT_MODE.
+   Message text preserved verbatim so Sentry/log lines stay readable.
 
-### Open-lane item 2 (catering UI) — no work needed
+2. **Registry backfill via MCP execute_sql, not re-apply.**
+   `list_migrations` revealed 174 + 175 were missing from
+   `supabase_migrations.schema_migrations` despite being applied
+   live (they had been run via direct SQL during session 146 without
+   the registry insert). Backfilled both rows with the verbatim
+   function bodies as `statements[0]` so fresh clones replay
+   correctly. Functions themselves were not touched —
+   `ON CONFLICT (version) DO NOTHING` for safety. Used version='174'
+   / '175' to match the 001-171 numeric series convention.
 
-`src/app/[locale]/dashboard/catering/` already has the full read-only
-listing UI from session 130 (commit `1d67b4a`). `page.tsx` enforces
-the owner/GM gate via `requireDashboardSection('catering')` +
-defense-in-depth re-check inside `CateringInquiriesList.tsx`. Reads
-last 200 rows from `catering_inquiries` (migration 160 already
-applied), renders bilingual cards with name + ref ID + NEW badge +
-phone + occasion + event date/time + guests + service + area +
-branch + budget + notes + WhatsApp CTA. Empty state + error state
-both styled. The user's prompt is captured here so it doesn't
-regrow as a backlog item.
-
-### Open-lane item 3 (staff seed) — operator checklist, no commits
-
-Migration 090 (`waiter` enum) was already applied. The actual seed
-mechanism is `scripts/seed-staff.ts` with `npm run seed:staff` /
-`seed:staff:dry`. Script is idempotent, defines 13 entries in
-`STAFF_ROSTER` with TODO placeholder emails. Operator steps surfaced
-to the user in chat:
-
-1. Collect 13 real email addresses from the owner.
-2. Verify Resend DKIM + SPF + Return-Path for `kahramanat.com`.
-3. Replace `TODO+...@kahramanat.com` placeholders in
-   `scripts/seed-staff.ts` and commit the edit.
-4. `npm run seed:staff:dry` — verify 13 OK lines + correct summary.
-5. `npm run seed:staff` — sends invites + writes `staff_basic` rows.
-6. Verify all 13 received the magic-link signup email + can log in.
-7. Flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true` in Vercel
-   Production env, redeploy.
-8. Smoke-test each role landing on its expected dashboard surface.
+3. **JS caller switched from include-chain to switch(error.code).**
+   Five `rpcError.message.includes('...')` branches in
+   `checkout/actions.ts:723-735` collapsed into a single
+   `switch (rpcError.code)` block. Same error-string outputs
+   downstream — `localizeCheckoutError` in CheckoutForm still
+   discriminates by the lowercase code.
 
 ### Verification
 
-Phase gate 1 (TSC) ran green after each of the three code-bearing
-commits. Did NOT run the full 9-gate suite. Recommend running the
-full suite before the next phase advance or before any deploy.
+All 9 gates green at HEAD (`814866b`). Gate 5 carried 14
+pre-existing display-label hits unrelated to this commit — flagged
+in the close-out summary as the source of session 149's lane.
+
+---
+
+## SESSION 149 — SUMMARY
+
+Single hygiene lane, three bundled items, one commit.
+
+### Commits
+
+| SHA | Item | Scope |
+|-----|------|-------|
+| `5848f24` | Hygiene lane | 14 BHD display fixes + OrderWithItems alias removal + full types regen |
+| `5152434` | Session 149 close-out | BACKLOG.md tooling entry + close-out marker |
+
+### Item 1 — Gate 5 BHD drift (14 hits across 12 files)
+
+Adopted the established `const bhd = isAr ? 'د.ب' : 'BHD'` pattern
+(already in use by QRTableClient, WaiterOrdersClient, etc.):
+
+- `MenuEngineeringMatrix.tsx` (in-ternary extraction)
+- `inventory/stock/page.tsx` (server, bare BHD label)
+- `shifts/page.tsx` + `CloseShiftDialog.tsx` (Translations interface
+  gains `currency_symbol`; parent computes once, dialog consumes 3×)
+- `menu/item/[slug]/page.tsx` (collapsed outer ternary, reuse bhd
+  const; AR side preserved as "دينار بحريني" for metadata wording)
+- `EditMenuItemDialog.tsx` + `MenuItemDialog.tsx` (price label)
+- `MenuBrowser ItemCard` + `pos/ServiceModeClient ServiceItemTile`
+  (aria-label)
+- `ModifierPicker` (subtotal pill)
+- `LoyaltySettings` ("Point value" label)
+- `LoyaltyRedemptionWidget` (dropped redundant "BHD" word from JSDoc)
+
+Gate 5 now returns 0. No rendered-text changes — same display in
+both locales.
+
+### Item 2 — PUB-009 leftover
+
+`OrderWithItems` alias removed from `custom-types.ts:106-109`.
+Session 146 commit `02f8ae2` swapped the `as unknown as
+OrderWithItems` cast for a narrow inline row type at the /order/[id]
+call site, orphaning the alias. Verified zero references via grep
+before removal.
+
+### Item 3 — Full types regen
+
+`npx supabase gen types typescript --linked > src/lib/supabase/types.ts`
+picked up the schema additions from migrations 174-179. Required
+two cleanups before TSC accepted the output:
+
+1. **CRLF stripped.** PowerShell `>` redirect converted LF to CRLF.
+   Normalized via `node -e fs.readFileSync().replace(/\r\n/g,'\n')`.
+
+2. **CLI stdout pollution stripped.** Two non-TypeScript bands
+   ended up in the file body because the CLI logs status to stdout,
+   not stderr: line 1 `"Initialising login role..."` (preamble) and
+   lines 5590-5591 `"A new version of Supabase CLI is available..."`
+   (footer). Trimmed via node to the `export type Json` →
+   `} as const` slice.
+
+Net diff: adds `graphql_public` schema (was missing), function-level
+additions `_menu_destructive_allowed` / `_menu_toggle_allowed` (from
+migration 176), `rpc_after_auth_create_staff` family (177), and the
+KH-class SQLSTATE-pinned signatures (174 reservation, 179
+create_order). 225 inserts / 102 deletes in types.ts.
+
+### Discovered tooling gap (added to BACKLOG.md)
+
+Under new heading `## Session 149 — Tooling`:
+
+> supabase gen types: wrap in a script that pipes through grep/sed
+> to strip CLI stdout preamble+footer and forces LF endings —
+> prevents types.ts pollution on every regen. Low priority, run
+> before next full types regen.
+
+### Key technical decisions
+
+1. **Per-file `const bhd` over a shared helper.** Existing
+   formatPrice in `src/lib/format.ts` uses `'BD'` not `'BHD'` —
+   reusing it would have changed visual output across all 12
+   surfaces. Introducing a new helper just for the label was more
+   churn than the 12 one-line const declarations and matched the
+   pattern already used in 8+ working files.
+
+2. **CloseShiftDialog gets `currency_symbol` via translations
+   object, not a new prop.** The dialog already takes a
+   `translations` bag built by its server-component parent. Adding
+   a `currency_symbol: string` field there kept the dialog signature
+   stable and centralized the `isAr` derivation in the parent.
+
+3. **Bridge body not refreshed locally.** Per `BRIDGE PROTOCOL`,
+   Claude.ai owns the CURRENT-SESSION.md body. The local sync script
+   only updates the Generated/Master pointer header. The body still
+   reads "Updated: 2026-05-18 (session 145 close-out...)" — a manual
+   Claude.ai update is owed to capture sessions 146-149.
+
+### Verification
+
+All 9 gates green at HEAD (`5152434`):
+
+- Gate 1 tsc: clean
+- Gate 2 RTL: 0
+- Gate 3 fonts (word-boundary): 0
+- Gate 4 colors: 0
+- Gate 5 BHD: 0 (down from 14)
+- Gate 6 phones: 0
+- Gate 7 hex: 0
+- Gate 8 i18n: AR=EN=2,548 keys, PASS
+- Gate 9 build: clean
+
+---
+
+## STATE AT END OF SESSION
+
+### Master HEAD
+`5152434 docs(session): session 149 close-out`
+
+### Migrations
+Local = Remote = **179** applied. Sessions 148/149 added migration 179
+(rpc_create_order SQLSTATE codes). Registry rows for 174 + 175
+backfilled during session 148 via MCP `execute_sql` with full
+function bodies — `supabase migration list --linked` should no longer
+flag a gap.
 
 ### Pending DB rollout
-
-None. All three migrations (176, 177, 178) applied to remote via
-MCP `apply_migration` during the session — local files match.
+None. Migration 179 applied via MCP `apply_migration` during
+session 148, registered under timestamp `20260518125817` per the
+project's MCP convention.
 
 ### What's next
 
-- Operator-side: items still in the bridge's pending list
-  (Supabase Pro + Singapore migration, Resend domain verify, 13
-  staff seed, TAP merchant keys, ~12 missing dish photos). No dev
-  work blocked on dev.
-- Dev-side: backlog is empty modulo the Session 111 entries that
+- **Operator-side:** Unchanged from session 147 close-out. Supabase
+  Pro + Singapore migration, Resend domain verify, 13 staff seed
+  (full operator checklist surfaced in chat during session 149 —
+  reproduced in the session-148 conversation if needed), TAP merchant
+  keys, ~12 missing dish photos.
+
+- **Dev-side:** Backlog has one new low-priority entry in
+  `.agent/BACKLOG.md` under "Session 149 — Tooling" (supabase gen
+  types wrapper script). Plus the older Session 111 entries that
   predate the launch sweep. No active lanes.
-- If a follow-up sweep is wanted: the 3 P1-J "RPC-PENDING" comments
-  in `staff/actions.ts` referring to GoTrue-callable DEFINER bodies
-  are now obsolete — the post-auth half *is* covered by 177. The
-  remaining unresolvable comment is that auth.admin.createUser
-  itself can't move into PG, which is a Supabase platform
-  limitation, not a code-side TODO.
-- One-line cleanup if/when convenient: `coupons/actions.ts` still
-  uses `.single()` in the prior pattern from session 146's note
-  (now moot because the toggles are RPC-based — that whole code
-  path is gone). No outstanding `.single()` vs `.maybeSingle()`
-  delta in this surface.
+
+- **Bridge maintenance:** Claude.ai should refresh
+  `CURRENT-SESSION.md` body upstream to cover sessions 146-149.
+  The local sync script only refreshes the Generated/Master pointer
+  header.
+
+### Carry-forward
+None for this lane. Both sessions closed cleanly with all gates
+green and no deferred work.
