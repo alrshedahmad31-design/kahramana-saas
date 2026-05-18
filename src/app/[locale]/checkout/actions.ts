@@ -720,20 +720,16 @@ export async function createOrderWithPoints(payload: CheckoutPayload): Promise<C
     })
 
     if (rpcError) {
-      if (rpcError.message.includes('COUPON_INVALID')) {
-        return { orderId: '', finalTotal: 0, error: 'coupon_invalid' }
-      }
-      if (rpcError.message.includes('INSUFFICIENT_POINTS')) {
-        return { orderId: '', finalTotal: 0, error: 'insufficient_points' }
-      }
-      if (rpcError.message.includes('POINTS_OVER_CAP')) {
-        return { orderId: '', finalTotal: 0, error: 'points_over_cap' }
-      }
-      if (rpcError.message.includes('PRICE_MISMATCH')) {
-        return { orderId: '', finalTotal: 0, error: 'price_mismatch' }
-      }
-      if (rpcError.message.includes('AUTH_REQUIRED')) {
-        return { orderId: '', finalTotal: 0, error: 'auth_required' }
+      // SQLSTATE codes assigned by migration 179. Matching on .code so a
+      // future RPC refactor wrapping context can't silently degrade these
+      // branches to toSafeError. error.message stays human-readable for
+      // Sentry/logs.
+      switch (rpcError.code) {
+        case 'KH001': return { orderId: '', finalTotal: 0, error: 'auth_required' }
+        case 'KH015': return { orderId: '', finalTotal: 0, error: 'price_mismatch' }
+        case 'KH017': return { orderId: '', finalTotal: 0, error: 'coupon_invalid' }
+        case 'KH019': return { orderId: '', finalTotal: 0, error: 'insufficient_points' }
+        case 'KH020': return { orderId: '', finalTotal: 0, error: 'points_over_cap' }
       }
       if (rpcError.code === '23505') {
         const existing = await findExistingOrderByIdempotencyKey(supabase, idempotency_key)
