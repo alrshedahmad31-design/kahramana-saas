@@ -5,22 +5,23 @@ Master: 626362b93754e0bc15bcfddd5354723eaaa60bb6
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 151 close-out — navbar redesign + Turkish Coffee seed)
-# Master: 6aa9d41
+# Updated: 2026-05-18 (session 152 close-out — navbar layout iteration)
+# Master: 3b6647c
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-151 ships two unrelated lanes — a luxury-restaurant
-navbar redesign (Header.tsx rewrite: centered logo on a 3-column grid,
-split nav groups around the logo, icon-only account button, literal
-EN/AR language toggle, hover changed from underline to gold-fade,
-calendar/reserve icon dropped from mobile top bar) and a Turkish Coffee
-seed (migration 180, applied to remote; row id `turkish-coffee` under
-category `the-heritage-tea-and-coffee`, station `mains` to match the
-other 3 drinks rows). Asset `/public/assets/gallery/turkish-coffee.webp`
-committed as `6aa9d41`. All 9 gates green at HEAD.
+Posture: session-152 iterated the navbar layout to a stable production
+shape across 6 commits (visual feedback loop with Playwright screenshots
+on /ar + /en at 1440/1280 widths). Final pattern: single flex row with
+absolutely-positioned logo (`left-1/2 -translate-x-1/2`) at the bar's
+geometric center; groupStart holds 4 nav links (menu, branches, catering,
+about); groupEnd holds 1 link (contact) + utilities (EN/AR, account, cart)
++ slim Reserve CTA (`px-4 py-2` from `px-6 py-2.5`); header now `h-20`
+unconditional (was `h-16 sm:h-20` morph) so the logo has stable headroom
+in both scrolled and unscrolled states. No code-only RTL conditionals on
+spacing. All 9 gates green at HEAD.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -323,6 +324,7 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
 ## MIGRATION STATE
 - Local = Remote — migrations applied through 180 (paired).
+- Session 152 added: **none** — pure frontend layout work in Header.tsx.
 - Session 151 added: 180 (seed Turkish Coffee item: id `turkish-coffee`,
   category `the-heritage-tea-and-coffee`, price 1.600 BHD, station
   `mains`, idempotent `ON CONFLICT (id) DO NOTHING`). Departs from 144's
@@ -360,6 +362,22 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last entries)
+- Session 152: navbar layout iteration (6 commits, `b7f73fd → 3b6647c`).
+  Drove the centering through several approaches before landing on the
+  proven Nobu/Zuma pattern: single flex row with the logo
+  absolutely-positioned at `left-1/2 -translate-x-1/2`. Attempted (and
+  reverted): absolute CTA outside the grid (`b7f73fd` — broken: a class
+  conflict in CinematicButton's hardcoded `inline-flex` collided with
+  `hidden md:inline-flex` and `hidden` won the cascade, rendering the
+  CTA `display:none` on every viewport); symmetric `minmax(0,1fr)` grid
+  with phantom CTA-shaped spacer (`7c7bfe3`); flex+absolute reverted
+  (`614658a`); min-w + slim CTA padding (`8732cb8`); `justify-end` to
+  pull groupStart content close to logo (`25e61b6`); finally moved About
+  to groupStart (4 vs 1+icons+CTA balances naturally, no min-w needed)
+  and bumped header to `h-20` unconditional for logo headroom
+  (`3b6647c`). Screenshots captured at each iteration via Playwright on
+  the local dev server (/ar + /en at 1440 and 1280 widths). No
+  migrations, no i18n changes, no other files touched.
 - Session 151: navbar redesign + Turkish Coffee seed. Three commits:
   `a612770` Header.tsx rewrite (luxury restaurant pattern — centered
   logo on `grid-cols-[1fr_auto_1fr]`, split nav groups, premium typo
