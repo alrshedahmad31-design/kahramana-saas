@@ -198,36 +198,28 @@ export default function Header() {
           }
         `}
       >
-        {/* Desktop: 3-column grid keeps the logo at the geometric center.
-            minmax(0, 1fr) on each side track pins both columns to the same
-            exact width — content overflow can't push the auto column off
-            center. An invisible CTA-shaped spacer in groupStart mirrors the
-            CTA in groupEnd so the two columns carry similar visual mass. */}
-        <div className="hidden md:grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-6 lg:gap-10">
+        {/* Desktop: single flex row. Logo is absolutely centered against
+            the bar via left-1/2 + -translate-x-1/2 (direction-agnostic —
+            translate-x uses physical X, identical in LTR and RTL). Groups
+            are relative + z-10 so they layer above the absolute logo. */}
+        <div className="hidden md:flex relative items-center w-full">
 
-          {/* groupStart — RTL: right side · LTR: left side.
-              Phantom CTA-shaped spacer at the far inline-start mirrors the
-              real CTA at the far inline-end of groupEnd. */}
-          <div className="justify-self-start flex items-center gap-3 lg:gap-5">
-            <span
-              aria-hidden="true"
-              className={`invisible inline-flex items-center justify-center px-6 py-2.5 text-[13px] font-semibold ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
-            >
-              {t('reserveTable')}
-            </span>
-            <nav className="flex items-center gap-1 lg:gap-2" aria-label={t('menu')}>
-              {GROUP_START.map(({ key, href }) => (
-                <NavItem key={key} navKey={key} href={href} />
-              ))}
-            </nav>
-          </div>
+          {/* groupStart — RTL: right side · LTR: left side */}
+          <nav
+            className="relative z-10 flex items-center gap-6"
+            aria-label={t('menu')}
+          >
+            {GROUP_START.map(({ key, href }) => (
+              <NavItem key={key} navKey={key} href={href} />
+            ))}
+          </nav>
 
-          {/* Center logo */}
+          {/* Logo — absolutely centered against the bar */}
           <Link
             href="/"
             onClick={closeMenu}
             aria-label={isRTL ? 'الرئيسية' : 'Home'}
-            className="justify-self-center shrink-0 flex items-center transition-transform hover:scale-105 active:scale-95"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 shrink-0 flex items-center transition-transform hover:scale-105 active:scale-95"
           >
             <Image
               src="/assets/brand/logo-full.webp"
@@ -240,116 +232,113 @@ export default function Header() {
             />
           </Link>
 
-          {/* groupEnd — nav links + utilities + CTA. CTA sits at the
-              inline-end edge; the matching invisible spacer in groupStart
-              keeps the two columns visually balanced and the logo centered. */}
-          <div className="justify-self-end flex items-center gap-3 lg:gap-5">
-            <nav className="flex items-center gap-1 lg:gap-2" aria-label={t('menu')}>
-              {GROUP_END.map(({ key, href }) => (
-                <NavItem key={key} navKey={key} href={href} />
-              ))}
-            </nav>
+          {/* groupEnd — anchored to inline-end via ms-auto. Nav links +
+              utilities + CTA in a single flex row spaced by gap-4. */}
+          <div className="relative z-10 flex items-center gap-4 ms-auto">
+            {GROUP_END.map(({ key, href }) => (
+              <NavItem key={key} navKey={key} href={href} />
+            ))}
 
-            {/* Utility cluster: language · account · cart */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleLocaleSwitch}
-                aria-label={t('languageAlt')}
-                className="font-satoshi text-[12px] font-medium tracking-[0.12em] text-brand-muted hover:text-brand-gold/80 transition-colors duration-300 px-2 py-2"
+            {/* Language toggle */}
+            <button
+              onClick={handleLocaleSwitch}
+              aria-label={t('languageAlt')}
+              className="font-satoshi text-[12px] font-medium tracking-[0.12em] text-brand-muted hover:text-brand-gold/80 transition-colors duration-300 px-2 py-2"
+            >
+              {toggleLabel}
+            </button>
+
+            {/* Account — icon only in both states */}
+            {!authLoaded ? (
+              <div className="w-11 h-11" aria-hidden />
+            ) : !customer ? (
+              <Link
+                href="/account"
+                aria-label={tAccount('loginOrRegister')}
+                className="flex items-center justify-center w-11 h-11 rounded-full border border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10 transition-colors duration-300"
               >
-                {toggleLabel}
-              </button>
-
-              {/* Account — icon only in both states */}
-              {!authLoaded ? (
-                <div className="w-11 h-11" aria-hidden />
-              ) : !customer ? (
-                <Link
-                  href="/account"
-                  aria-label={tAccount('loginOrRegister')}
-                  className="flex items-center justify-center w-11 h-11 rounded-full border border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10 transition-colors duration-300"
+                <UserIcon />
+              </Link>
+            ) : (
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                  aria-label={tAccount('title')}
+                  className="flex items-center gap-2 ps-2 pe-3 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
                 >
                   <UserIcon />
-                </Link>
-              ) : (
-                <div className="relative" ref={accountMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setAccountOpen((v) => !v)}
-                    aria-haspopup="menu"
-                    aria-expanded={accountOpen}
-                    aria-label={tAccount('title')}
-                    className="flex items-center gap-2 ps-2 pe-3 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
-                  >
-                    <UserIcon />
-                    <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
-                      {formattedPoints}
-                    </span>
-                    <TierBadge
-                      tier={customer.loyalty_tier}
-                      size="sm"
-                      showLabel={false}
-                      locale={locale}
-                    />
-                  </button>
-
-                  {accountOpen && (
-                    <div
-                      role="menu"
-                      aria-orientation="vertical"
-                      className="absolute top-full mt-2 end-0 w-64 p-2 glass-surface rounded-2xl text-start shadow-lg"
-                    >
-                      <div className="px-3 py-2 border-b border-brand-text/10">
-                        <p className={`text-xs text-brand-muted ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
-                          {tAccount('title')}
-                        </p>
-                        {customer.name && (
-                          <p className={`text-sm font-bold text-brand-text truncate ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
-                            {customer.name}
-                          </p>
-                        )}
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <TierBadge tier={customer.loyalty_tier} size="sm" locale={locale} />
-                          <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
-                            {formattedPoints} {tAccount('pointsShort')}
-                          </span>
-                        </div>
-                      </div>
-                      <Link
-                        href="/account"
-                        onClick={() => setAccountOpen(false)}
-                        role="menuitem"
-                        className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-brand-text/5 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
-                      >
-                        {tAccount('title')}
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={handleSignOut}
-                        role="menuitem"
-                        className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-brand-text/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
-                      >
-                        {tAccount('signOut')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <button
-                onClick={openCart}
-                aria-label={t('cartAlt')}
-                className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
-              >
-                <CartIcon />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] bg-brand-gold text-brand-black text-[10px] font-bold rounded-full flex items-center justify-center px-1 tabular-nums shadow-lg">
-                    {totalItems}
+                  <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
+                    {formattedPoints}
                   </span>
-                )}
-              </button>
-            </div>
+                  <TierBadge
+                    tier={customer.loyalty_tier}
+                    size="sm"
+                    showLabel={false}
+                    locale={locale}
+                  />
+                </button>
 
+                {accountOpen && (
+                  <div
+                    role="menu"
+                    aria-orientation="vertical"
+                    className="absolute top-full mt-2 end-0 w-64 p-2 glass-surface rounded-2xl text-start shadow-lg"
+                  >
+                    <div className="px-3 py-2 border-b border-brand-text/10">
+                      <p className={`text-xs text-brand-muted ${isRTL ? 'font-almarai' : 'font-satoshi'}`}>
+                        {tAccount('title')}
+                      </p>
+                      {customer.name && (
+                        <p className={`text-sm font-bold text-brand-text truncate ${isRTL ? 'font-cairo' : 'font-satoshi'}`}>
+                          {customer.name}
+                        </p>
+                      )}
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <TierBadge tier={customer.loyalty_tier} size="sm" locale={locale} />
+                        <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
+                          {formattedPoints} {tAccount('pointsShort')}
+                        </span>
+                      </div>
+                    </div>
+                    <Link
+                      href="/account"
+                      onClick={() => setAccountOpen(false)}
+                      role="menuitem"
+                      className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-brand-text/5 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                    >
+                      {tAccount('title')}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      role="menuitem"
+                      className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-brand-text/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                    >
+                      {tAccount('signOut')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cart */}
+            <button
+              onClick={openCart}
+              aria-label={t('cartAlt')}
+              className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
+            >
+              <CartIcon />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] bg-brand-gold text-brand-black text-[10px] font-bold rounded-full flex items-center justify-center px-1 tabular-nums shadow-lg">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+
+            {/* Reserve CTA */}
             <CinematicButton
               href="/reserve"
               isRTL={isRTL}
