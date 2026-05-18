@@ -8,7 +8,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { getCustomerSession } from '@/lib/auth/customerSession'
 import { getSession } from '@/lib/auth/session'
 import { verifyOrderAccessToken } from '@/lib/auth/order-access'
-import type { OrderWithItems } from '@/lib/supabase/custom-types'
+import type { OrderRow, OrderItemRow } from '@/lib/supabase/custom-types'
 import { formatPrice } from '@/lib/format'
 import { BRANCHES } from '@/constants/contact'
 import OrderTrackingStatus from '@/components/orders/OrderTrackingStatus'
@@ -24,6 +24,22 @@ export const dynamic = 'force-dynamic'
 type Props = {
   params: Promise<{ locale: string; id: string }>
   searchParams?: Promise<{ t?: string }>
+}
+
+// PUB-009: narrow shape literally enumerating the columns pulled by the
+// select below. .returns<OrderConfirmationRow[]>() makes the row type a
+// structural derivative of this list — not a blind cast — so any drift
+// between the select and downstream usage gets flagged by tsc.
+type OrderConfirmationRow = Pick<OrderRow,
+  | 'id' | 'status' | 'order_type' | 'branch_id'
+  | 'customer_name' | 'customer_phone' | 'total_bhd' | 'notes'
+  | 'created_at' | 'updated_at' | 'delivery_lat' | 'delivery_lng'
+> & {
+  order_items: Array<Pick<OrderItemRow,
+    | 'id' | 'menu_item_slug' | 'name_ar' | 'name_en' | 'quantity'
+    | 'selected_size' | 'selected_variant' | 'notes'
+    | 'unit_price_bhd' | 'item_total_bhd'
+  >>
 }
 
 
@@ -54,7 +70,7 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
   // actual_collected, cash_handed_over, handed_over_at, delivery_proof_url,
   // customer_signature, etc). Whitelist matches exactly what
   // OrderTrackingStatus + ReorderButton + the page body render.
-  let order: OrderWithItems | null = null
+  let order: OrderConfirmationRow | null = null
   let branchEstimatedMinutes: number | null = null
   try {
     const supabase = await createServiceClient()
@@ -65,9 +81,10 @@ export default async function OrderConfirmationPage({ params, searchParams }: Pr
       )
       .eq('id', id)
       .single()
+      .returns<OrderConfirmationRow>()
 
     if (!error && data) {
-      order = data as unknown as OrderWithItems
+      order = data
       const { data: branchSla } = await supabase
         .from('branches')
         .select('estimated_minutes')

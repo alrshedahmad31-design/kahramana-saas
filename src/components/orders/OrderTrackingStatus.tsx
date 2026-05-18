@@ -3,14 +3,23 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import type { OrderWithItems, OrderStatus } from '@/lib/supabase/custom-types'
+import type { OrderRow, OrderStatus } from '@/lib/supabase/custom-types'
 import dynamic from 'next/dynamic'
 import OrderTimeline from '@/components/orders/OrderTimeline'
 
 const OrderDriverMap = dynamic(() => import('@/components/orders/OrderDriverMap'), { ssr: false })
 
+// PUB-009: declare only the fields this component reads. Wider row types
+// (e.g. OrderConfirmationRow on the order confirmation page) satisfy this
+// via structural subtyping — no cast at the boundary.
+type TrackedOrder = Pick<OrderRow,
+  | 'id' | 'status' | 'order_type'
+  | 'created_at' | 'updated_at'
+  | 'delivery_lat' | 'delivery_lng'
+>
+
 interface Props {
-  initialOrder: OrderWithItems
+  initialOrder: TrackedOrder
   branchEstimatedMinutes: number | null
   locale: string
 }
@@ -38,7 +47,7 @@ export default function OrderTrackingStatus({ initialOrder, branchEstimatedMinut
           console.info('Order update received:', payload.new)
           const newStatus = payload.new.status as OrderStatus
           
-          setOrder((prev) => ({ ...prev, ...(payload.new as Partial<OrderWithItems>) }))
+          setOrder((prev) => ({ ...prev, ...(payload.new as Partial<TrackedOrder>) }))
 
           // 2. If completed, check for loyalty points
           if (newStatus === 'completed') {
