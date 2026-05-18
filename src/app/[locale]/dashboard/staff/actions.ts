@@ -15,8 +15,22 @@ import {
 } from '@/lib/auth/dashboard-guards'
 import { canManageStaff, canDeactivateStaff } from '@/lib/auth/rbac'
 import { toSafeError } from '@/lib/utils/safe-error'
-import type { StaffRole, StaffBasicRow, EmploymentType, TablesUpdate, Json } from '@/lib/supabase/custom-types'
+import type { StaffRole, StaffBasicRow, EmploymentType } from '@/lib/supabase/custom-types'
+import type { Json } from '@/lib/supabase/types'
 import { isTrivialPin, PIN_TRIVIAL_ERROR } from '@/lib/staff/pin-validation'
+
+// RPC envelope shared with migration 177 functions.
+type StaffRpcEnvelope = { ok: true } | { ok: false; code: string }
+function isStaffRpcEnvelope(v: unknown): v is StaffRpcEnvelope {
+  return typeof v === 'object' && v !== null && 'ok' in v
+}
+function staffRpcError(code: string, fallback: string): string {
+  switch (code) {
+    case 'not_found':               return 'Staff member not found'
+    case 'concurrent_change_retry': return 'concurrent_change_retry'
+    default:                        return fallback
+  }
+}
 
 // Unified denial string for resendStaffInvitation — same shape as
 // VULN-AUTH-01 in staff/[id]/actions.ts. Prevents staff-ID enumeration via
@@ -69,26 +83,6 @@ async function revalidateStaff(locale: string) {
   revalidatePath('/dashboard/staff')
 }
 
-function auditPayload(
-  userId: string,
-  role: StaffRole,
-  branchId: string | null,
-  table: string,
-  action: 'INSERT' | 'UPDATE' | 'DELETE',
-  recordId: string,
-  changes: Json,
-) {
-  return {
-    table_name: table,
-    action,
-    user_id:    userId,
-    record_id:  recordId,
-    changes,
-    branch_id:  branchId,
-    actor_role: role,
-  }
-}
-
 // ── createStaff ───────────────────────────────────────────────────────────────
 
 export type CreateStaffInput = {
@@ -133,30 +127,27 @@ export async function createStaff(input: CreateStaffInput): Promise<ActionResult
 
   const staffId: string = authData.user.id
 
-  // RPC-PENDING: createStaff is the auth + DB pair — auth.admin.createUser
-  // must commit before staff_basic INSERT can reference its uid, so the
-  // current two-step is intentional. Full RPC needs a SECURITY DEFINER
-  // function that wraps both via supabase.auth.admin (not yet exposed to
-  // postgres). Audit row + auth rollback on DB failure stay JS-side until
-  // that lands. Tracked as follow-up of P1-J.
-  const { error: insertError } = await service.from('staff_basic').insert({
-    id:        staffId,
-    name:      input.name.trim(),
-    role:      input.role,
-    branch_id: input.branch_id,
-    is_active: true,
+  // auth.admin.createUser is JS-side because GoTrue is not callable from
+  // a SECURITY DEFINER body. The post-auth DB half (staff_basic INSERT +
+  // audit row) runs inside rpc_after_auth_create_staff in one transaction,
+  // so audit failure can no longer leave a silent staff_basic row.
+  const { data: rpcRaw, error: rpcError } = await service.rpc('rpc_after_auth_create_staff', {
+    p_id:        staffId,
+    p_name:      input.name.trim(),
+    p_role:      input.role,
+    p_branch_id: input.branch_id ?? '',
   })
 
-  if (insertError) {
+  if (rpcError) {
     await authAdmin.deleteUser(staffId)
-    return { success: false, error: toSafeError(insertError) }
+    Sentry.captureException(rpcError, { tags: { area: 'staff', action: 'createStaff.rpc' } })
+    return { success: false, error: toSafeError(rpcError) }
   }
-
-  await service.from('audit_logs').insert(
-    auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'INSERT', staffId, {
-      name: input.name, role: input.role, branch_id: input.branch_id,
-    }),
-  )
+  const rpc = isStaffRpcEnvelope(rpcRaw) ? rpcRaw : null
+  if (!rpc || !rpc.ok) {
+    await authAdmin.deleteUser(staffId)
+    return { success: false, error: staffRpcError(rpc?.code ?? 'unknown', 'Failed to create staff') }
+  }
 
   await revalidateStaff(input.locale)
   return { success: true }
@@ -200,32 +191,25 @@ export async function updateStaff(input: UpdateStaffInput): Promise<ActionResult
   }
 
   const service = await createServiceClient()
-  // RPC-PENDING: updateStaff direct service-role write. Full migration to
-  // an rpc_update_staff RPC is tracked as follow-up of P1-J — the CAS-pinned
-  // update + the audit_logs INSERT below should commit atomically in a
-  // SECURITY DEFINER body. For now: JS-level CAS + best-effort audit.
-  // CAS: pin to the row state we just permission-checked. A concurrent role
-  // or branch reassignment will flip these columns and the update returns no
-  // rows — we bail with a retryable error rather than silently overwriting.
-  let q = service
-    .from('staff_basic')
-    .update({ name: input.name.trim(), role: input.role, branch_id: input.branch_id })
-    .eq('id', input.id)
-    .eq('role', target.role)
-    .eq('is_active', target.is_active)
-  q = target.branch_id == null ? q.is('branch_id', null) : q.eq('branch_id', target.branch_id)
-  const { data: updated, error } = await q.select('id')
+  // rpc_update_staff (migration 177) pins the row via SELECT FOR UPDATE,
+  // CAS-checks (role, is_active, branch_id) inside the same transaction
+  // as the audit_logs INSERT. Concurrent reassignment surfaces as
+  // concurrent_change_retry; the JS-side CAS dance is gone.
+  const { data: rpcRaw, error } = await service.rpc('rpc_update_staff', {
+    p_id:        input.id,
+    p_name:      input.name.trim(),
+    p_role:      input.role,
+    p_branch_id: input.branch_id ?? '',
+  })
 
-  if (error) return { success: false, error: toSafeError(error) }
-  if (!updated || updated.length === 0) {
-    return { success: false, error: 'concurrent_change_retry' }
+  if (error) {
+    Sentry.captureException(error, { tags: { area: 'staff', action: 'updateStaff.rpc' } })
+    return { success: false, error: toSafeError(error) }
   }
-
-  await service.from('audit_logs').insert(
-    auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'UPDATE', input.id, {
-      name: input.name, role: input.role, branch_id: input.branch_id,
-    }),
-  )
+  const rpc = isStaffRpcEnvelope(rpcRaw) ? rpcRaw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: staffRpcError(rpc?.code ?? 'unknown', 'Update failed') }
+  }
 
   await revalidateStaff(input.locale)
   return { success: true }
@@ -302,59 +286,44 @@ export async function createStaffFull(input: CreateStaffFullInput): Promise<Crea
 
   const staffId: string = authData.user.id
 
-  // RPC-PENDING: createStaffFull is the auth + DB + profile triple (see
-  // createStaff for the auth-first rationale). Full RPC requires
-  // supabase.auth.admin from a SECURITY DEFINER body — not yet exposed.
-  // Tracked as follow-up of P1-J.
-  const { error: insertError } = await service.from('staff_basic').insert({
-    id: staffId, name: input.name.trim(), role: input.role,
-    branch_id: input.branch_id, is_active: true,
+  // auth.admin.createUser is JS-side (GoTrue not callable from a DEFINER
+  // body). The post-auth DB half -- staff_basic INSERT including every
+  // profile field + audit row -- runs inside rpc_after_auth_create_staff_full
+  // in one transaction. The prior split (basic INSERT then conditional
+  // profile UPDATE then 2 audit rows) is collapsed into a single audited
+  // write; clock_pin still hashes JS-side because bcryptjs is not in PG.
+  const profilePayload: Record<string, string | number | null> = {
+    name:      input.name.trim(),
+    role:      input.role,
+    branch_id: input.branch_id,
+  }
+  if (input.phone)                   profilePayload.phone                   = input.phone
+  if (input.date_of_birth)           profilePayload.date_of_birth           = input.date_of_birth
+  if (input.id_number)               profilePayload.id_number               = input.id_number
+  if (input.address)                 profilePayload.address                 = input.address
+  if (input.profile_photo_url)       profilePayload.profile_photo_url       = input.profile_photo_url
+  if (input.hire_date)               profilePayload.hire_date               = input.hire_date
+  if (input.employment_type)         profilePayload.employment_type         = input.employment_type
+  if (input.hourly_rate != null)     profilePayload.hourly_rate             = input.hourly_rate
+  if (input.emergency_contact_name)  profilePayload.emergency_contact_name  = input.emergency_contact_name
+  if (input.emergency_contact_phone) profilePayload.emergency_contact_phone = input.emergency_contact_phone
+  if (input.clock_pin)               profilePayload.clock_pin_hash          = await bcryptjs.hash(input.clock_pin, 10)
+  if (input.staff_notes)             profilePayload.staff_notes             = input.staff_notes
+
+  const { data: rpcRaw, error: rpcError } = await service.rpc('rpc_after_auth_create_staff_full', {
+    p_id:      staffId,
+    p_payload: profilePayload as unknown as Json,
   })
-  if (insertError) {
+  if (rpcError) {
     await authAdmin.deleteUser(staffId)
-    return { success: false, error: toSafeError(insertError) }
+    Sentry.captureException(rpcError, { tags: { area: 'staff', action: 'createStaffFull.rpc' } })
+    return { success: false, error: toSafeError(rpcError) }
   }
-
-  const profile: TablesUpdate<'staff_basic'> = {}
-  if (input.phone)                   profile.phone                   = input.phone
-  if (input.date_of_birth)           profile.date_of_birth           = input.date_of_birth
-  if (input.id_number)               profile.id_number               = input.id_number
-  if (input.address)                 profile.address                 = input.address
-  if (input.profile_photo_url)       profile.profile_photo_url       = input.profile_photo_url
-  if (input.hire_date)               profile.hire_date               = input.hire_date
-  if (input.employment_type)         profile.employment_type         = input.employment_type
-  if (input.hourly_rate != null)     profile.hourly_rate             = input.hourly_rate
-  if (input.emergency_contact_name)  profile.emergency_contact_name  = input.emergency_contact_name
-  if (input.emergency_contact_phone) profile.emergency_contact_phone = input.emergency_contact_phone
-  if (input.clock_pin)               profile.clock_pin_hash          = await bcryptjs.hash(input.clock_pin, 10)
-  if (input.staff_notes)             profile.staff_notes             = input.staff_notes
-
-  if (Object.keys(profile).length > 0) {
-    // RPC-PENDING: this profile UPDATE rides immediately after the staff
-    // INSERT above and has no audit row of its own. Tracked as follow-up
-    // of P1-J — folding both writes into rpc_create_staff_full will produce
-    // a single audit row covering the full record. For now: surface failure
-    // via Sentry + an explicit audit row so a silent profile drop is visible.
-    const { error: profileError } = await service.from('staff_basic').update(profile).eq('id', staffId)
-    if (profileError) {
-      Sentry.captureException(profileError, {
-        tags:  { area: 'staff', action: 'createStaffFull.profileUpdate' },
-        extra: { staffId, profileKeys: Object.keys(profile) },
-      })
-    } else {
-      await service.from('audit_logs').insert(
-        auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'UPDATE', staffId, {
-          profile_fields: Object.keys(profile),
-        }),
-      )
-    }
+  const rpc = isStaffRpcEnvelope(rpcRaw) ? rpcRaw : null
+  if (!rpc || !rpc.ok) {
+    await authAdmin.deleteUser(staffId)
+    return { success: false, error: staffRpcError(rpc?.code ?? 'unknown', 'Failed to create staff') }
   }
-
-  await service.from('audit_logs').insert(
-    auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'INSERT', staffId, {
-      name: input.name, role: input.role, branch_id: input.branch_id,
-    }),
-  )
 
   // Send invitation email so staff can set their own password (non-fatal if SMTP not configured)
   let inviteSent = false
@@ -489,28 +458,22 @@ export async function toggleStaffActive(
   }
 
   const service = await createServiceClient()
-  // RPC-PENDING: setStaffActive direct service-role write. Folding the
-  // CAS-pinned flip + the audit row below into rpc_set_staff_active is
-  // tracked as follow-up of P1-J. For now: JS-level CAS + audit_logs.
-  // CAS: refuse to flip if another request already changed is_active in the
-  // moment between our read (permission check) and write.
-  const { data: updated, error } = await service
-    .from('staff_basic')
-    .update({ is_active: activate })
-    .eq('id', id)
-    .eq('is_active', !activate)
-    .select('id')
+  // rpc_set_staff_active (migration 177) CAS-flips on is_active and writes
+  // the audit row in the same transaction.
+  const { data: rpcRaw, error } = await service.rpc('rpc_set_staff_active', {
+    p_id:             id,
+    p_activate:       activate,
+    p_expected_state: !activate,
+  })
 
-  if (error) return { success: false, error: toSafeError(error) }
-  if (!updated || updated.length === 0) {
-    return { success: false, error: 'concurrent_change_retry' }
+  if (error) {
+    Sentry.captureException(error, { tags: { area: 'staff', action: 'toggleStaffActive.rpc' } })
+    return { success: false, error: toSafeError(error) }
   }
-
-  await service.from('audit_logs').insert(
-    auditPayload(caller.id, caller.role!, caller.branch_id, 'staff_basic', 'UPDATE', id, {
-      is_active: activate,
-    }),
-  )
+  const rpc = isStaffRpcEnvelope(rpcRaw) ? rpcRaw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: staffRpcError(rpc?.code ?? 'unknown', 'Toggle failed') }
+  }
 
   await revalidateStaff(locale)
   return { success: true }

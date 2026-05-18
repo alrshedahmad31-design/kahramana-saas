@@ -5180,7 +5180,24 @@ export type Database = {
           p_name: string
           p_role: Database["public"]["Enums"]["staff_role"]
         }
-        Returns: undefined
+        Returns: Json
+      }
+      rpc_after_auth_create_staff: {
+        Args: {
+          p_id: string
+          p_name: string
+          p_role: Database["public"]["Enums"]["staff_role"]
+          p_branch_id: string
+        }
+        Returns: Json
+      }
+      rpc_after_auth_create_staff_full: {
+        Args: { p_id: string; p_payload: Json }
+        Returns: Json
+      }
+      rpc_set_staff_active: {
+        Args: { p_id: string; p_activate: boolean; p_expected_state: boolean }
+        Returns: Json
       }
       rpc_update_waitlist_status: {
         Args: {
