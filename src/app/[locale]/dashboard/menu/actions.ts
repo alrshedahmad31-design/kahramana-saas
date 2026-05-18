@@ -124,18 +124,21 @@ export async function toggleMenuItemAvailability(
 
   const supabase = await createServiceClient()
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('menu_items')
     .update({
       is_available: isAvailable,
       updated_at:   new Date().toISOString(),
     })
     .eq('id', slug)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('[menu] toggleMenuItemAvailability failed:', error)
     return { success: false, error: toSafeError(error) }
   }
+  if (!updated) return { success: false, error: 'Menu item not found' }
 
   await supabase.from('audit_logs').insert({
     table_name: 'menu_items',
@@ -353,7 +356,7 @@ export async function updateMenuItem(
   const supabase = await createServiceClient()
 
   const menuSupabase = untypedServiceClient()
-  const { error } = await menuSupabase
+  const { data: updated, error } = await menuSupabase
     .from('menu_items')
     .update({
       ...editable,
@@ -361,11 +364,14 @@ export async function updateMenuItem(
       updated_at: new Date().toISOString(),
     })
     .eq('id', slug)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('[menu] updateMenuItem failed:', error)
     return { success: false, error: toSafeError(error) }
   }
+  if (!updated) return { success: false, error: 'Menu item not found' }
 
   await supabase.from('audit_logs').insert({
     table_name: 'menu_items',
@@ -539,11 +545,17 @@ export async function deleteMenuOptionGroup(groupId: string, slug: string): Prom
   }
 
   const supabase = untypedServiceClient()
-  const { error } = await supabase.from('menu_option_groups').delete().eq('id', groupId)
+  const { data: deleted, error } = await supabase
+    .from('menu_option_groups')
+    .delete()
+    .eq('id', groupId)
+    .select('id')
+    .maybeSingle()
   if (error) {
     console.error('[menu] deleteMenuOptionGroup failed:', error)
     return { success: false, error: toSafeError(error) }
   }
+  if (!deleted) return { success: false, error: 'Option group not found' }
   bustMenuCaches(slug)
   return { success: true }
 }
@@ -611,11 +623,17 @@ export async function deleteMenuOption(optionId: string): Promise<{
   }
 
   const supabase = untypedServiceClient()
-  const { error } = await supabase.from('menu_options').delete().eq('id', optionId)
+  const { data: deleted, error } = await supabase
+    .from('menu_options')
+    .delete()
+    .eq('id', optionId)
+    .select('id')
+    .maybeSingle()
   if (error) {
     console.error('[menu] deleteMenuOption failed:', error)
     return { success: false, error: toSafeError(error) }
   }
+  if (!deleted) return { success: false, error: 'Option not found' }
   bustMenuCaches()
   return { success: true }
 }
@@ -713,11 +731,17 @@ export async function deleteMenuItem(
 
   const supabase = await createServiceClient()
 
-  const { error } = await supabase.from('menu_items').delete().eq('id', slug)
+  const { data: deleted, error } = await supabase
+    .from('menu_items')
+    .delete()
+    .eq('id', slug)
+    .select('id')
+    .maybeSingle()
   if (error) {
     console.error('[menu] deleteMenuItem failed:', error)
     return { success: false, error: toSafeError(error) }
   }
+  if (!deleted) return { success: false, error: 'Menu item not found' }
 
   await supabase.from('audit_logs').insert({
     table_name: 'menu_items',
