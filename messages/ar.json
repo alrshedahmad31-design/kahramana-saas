@@ -2296,9 +2296,9 @@
     "nav": {
       "groups": {
         "operations": "التشغيل",
-        "customers":  "العملاء",
-        "finance":    "المالية",
-        "admin":      "الإدارة"
+        "customers": "العملاء",
+        "finance": "المالية",
+        "admin": "الإدارة"
       },
       "home": "الرئيسية",
       "owner": "لوحة المالك",
@@ -2335,72 +2335,72 @@
       "vsYesterday": "مقارنة بالأمس",
       "blocks": {
         "operations": "ملخص العمليات",
-        "financial":  "الملخص المالي",
-        "service":    "جودة الخدمة",
-        "branches":   "مقارنة الفروع"
+        "financial": "الملخص المالي",
+        "service": "جودة الخدمة",
+        "branches": "مقارنة الفروع"
       },
       "ops": {
-        "ordersToday":     "إجمالي طلبات اليوم",
-        "revenueToday":    "إيرادات اليوم",
-        "aov":             "متوسط قيمة الطلب",
-        "aovHint":         "اليوم",
-        "lateOrders":      "طلبات متأخرة",
-        "longestWait":     "أطول انتظار {mins} دقيقة",
-        "noLate":          "لا توجد تأخيرات",
+        "ordersToday": "إجمالي طلبات اليوم",
+        "revenueToday": "إيرادات اليوم",
+        "aov": "متوسط قيمة الطلب",
+        "aovHint": "اليوم",
+        "lateOrders": "طلبات متأخرة",
+        "longestWait": "أطول انتظار {mins} دقيقة",
+        "noLate": "لا توجد تأخيرات",
         "statusBreakdown": "حالة الطلبات",
-        "delayed":         "متأخر",
-        "sources":         "مصدر الطلب",
-        "topItems":        "أعلى ٣ أصناف اليوم",
-        "bottomItems":     "الأقل حركة اليوم (من المتابَعة)",
-        "bottomHint":      "من ضمن الأصناف المسجلة اليوم فقط"
+        "delayed": "متأخر",
+        "sources": "مصدر الطلب",
+        "topItems": "أعلى ٣ أصناف اليوم",
+        "bottomItems": "الأقل حركة اليوم (من المتابَعة)",
+        "bottomHint": "من ضمن الأصناف المسجلة اليوم فقط"
       },
       "sources": {
-        "whatsapp":     "واتساب",
-        "web":          "الموقع",
-        "pos":          "نقطة البيع",
-        "qr":           "QR / الطاولة",
-        "dine_in":      "داخل المطعم",
-        "walk_in":      "حضوري",
+        "whatsapp": "واتساب",
+        "web": "الموقع",
+        "pos": "نقطة البيع",
+        "qr": "QR / الطاولة",
+        "dine_in": "داخل المطعم",
+        "walk_in": "حضوري",
         "delivery_app": "تطبيقات التوصيل",
-        "delivery":     "توصيل",
-        "phone":        "هاتف"
+        "delivery": "توصيل",
+        "phone": "هاتف"
       },
       "fin": {
-        "period":           "الفترة",
-        "revenue":          "الإيرادات",
-        "orders":           "الطلبات",
-        "aov":              "متوسط الطلب",
-        "growth":           "النمو",
-        "today":            "اليوم",
-        "week":             "آخر ٧ أيام",
-        "month":            "هذا الشهر",
-        "foodCostPct":      "نسبة تكلفة الطعام",
-        "laborCostPct":     "نسبة تكلفة العمالة",
-        "estNetProfit":     "صافي الربح التقديري",
-        "noFoodCostData":   "لا توجد بيانات تكلفة بعد",
-        "noLaborData":      "لا توجد بيانات عمالة بعد",
+        "period": "الفترة",
+        "revenue": "الإيرادات",
+        "orders": "الطلبات",
+        "aov": "متوسط الطلب",
+        "growth": "النمو",
+        "today": "اليوم",
+        "week": "آخر ٧ أيام",
+        "month": "هذا الشهر",
+        "foodCostPct": "نسبة تكلفة الطعام",
+        "laborCostPct": "نسبة تكلفة العمالة",
+        "estNetProfit": "صافي الربح التقديري",
+        "noFoodCostData": "لا توجد بيانات تكلفة بعد",
+        "noLaborData": "لا توجد بيانات عمالة بعد",
         "foodCostThresholds": "الهدف أقل من ٢٨٪",
         "laborCostThresholds": "الهدف أقل من ٢٥٪",
-        "netProfitHint":    "الإيرادات ناقص الطعام والعمالة و١٥٪ مصاريف ثابتة",
-        "netMargin":        "هامش الربح {pct}٪"
+        "netProfitHint": "الإيرادات ناقص الطعام والعمالة و١٥٪ مصاريف ثابتة",
+        "netMargin": "هامش الربح {pct}٪"
       },
       "service": {
-        "acceptanceTime":     "وقت القبول",
+        "acceptanceTime": "وقت القبول",
         "acceptanceTimeHint": "غير متوفر",
-        "prepTime":           "متوسط التحضير",
-        "mins":               "دقيقة",
-        "basedOn":            "بناءً على {count} طلب",
-        "cancelledToday":     "ملغاة اليوم",
-        "cancelRate":         "نسبة",
-        "repeatRate":         "نسبة العملاء المتكررين",
-        "repeatHint":         "{repeat} من {total} عميل هذا الشهر"
+        "prepTime": "متوسط التحضير",
+        "mins": "دقيقة",
+        "basedOn": "بناءً على {count} طلب",
+        "cancelledToday": "ملغاة اليوم",
+        "cancelRate": "نسبة",
+        "repeatRate": "نسبة العملاء المتكررين",
+        "repeatHint": "{repeat} من {total} عميل هذا الشهر"
       },
       "branch": {
-        "label":         "فرع",
-        "todayRevenue":  "اليوم",
-        "monthRevenue":  "هذا الشهر",
-        "orders":        "طلب",
-        "aov":           "متوسط الطلب"
+        "label": "فرع",
+        "todayRevenue": "اليوم",
+        "monthRevenue": "هذا الشهر",
+        "orders": "طلب",
+        "aov": "متوسط الطلب"
       }
     },
     "stats": {
@@ -2642,15 +2642,15 @@
         "description": "ستظهر هنا الطلبات الواردة من نموذج التقديم الخارجي العام."
       },
       "table": {
-        "phone":       "الهاتف",
-        "occasion":    "نوع المناسبة",
-        "eventDate":   "تاريخ المناسبة",
-        "guests":      "عدد الضيوف",
-        "area":        "المنطقة / العنوان",
+        "phone": "الهاتف",
+        "occasion": "نوع المناسبة",
+        "eventDate": "تاريخ المناسبة",
+        "guests": "عدد الضيوف",
+        "area": "المنطقة / العنوان",
         "serviceType": "نوع الخدمة",
-        "branch":      "الفرع المفضّل",
-        "budget":      "الميزانية",
-        "received":    "تاريخ الاستلام"
+        "branch": "الفرع المفضّل",
+        "budget": "الميزانية",
+        "received": "تاريخ الاستلام"
       },
       "values": {
         "noBranch": "أي فرع",
@@ -2667,6 +2667,20 @@
         "pickup": "استلام من الفرع",
         "delivery": "توصيل",
         "coordination": "يحتاج تنسيق"
+      },
+      "filters": {
+        "title": "الفلاتر",
+        "from": "من تاريخ المناسبة",
+        "to": "إلى تاريخ المناسبة",
+        "occasion": "نوع المناسبة",
+        "occasionAll": "كل الأنواع",
+        "apply": "تطبيق",
+        "clear": "إعادة تعيين"
+      },
+      "pagination": {
+        "previous": "السابق",
+        "next": "التالي",
+        "showing": "عرض {from}–{to} من أصل {total}"
       }
     },
     "reservations": {
@@ -2740,7 +2754,6 @@
         "addSuccess": "تم إضافة الحجز بنجاح"
       }
     }
-
   },
   "paymentsPage": {
     "title": "المدفوعات",
@@ -3210,9 +3223,9 @@
       "balance": "رصيدك الحالي: {balance} نقطة",
       "tier": "مستواك في برنامج الولاء: {tier}",
       "tierNames": {
-        "bronze":   "برونزي",
-        "silver":   "فضي",
-        "gold":     "ذهبي",
+        "bronze": "برونزي",
+        "silver": "فضي",
+        "gold": "ذهبي",
         "platinum": "بلاتيني"
       },
       "accountCta": "زيارة حسابي",

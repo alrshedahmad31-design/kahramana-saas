@@ -11,10 +11,15 @@ import {
 } from '@/lib/whatsapp-catering-message'
 
 interface Props {
-  locale: 'ar' | 'en'
+  locale:    'ar' | 'en'
+  from?:     string
+  to?:       string
+  occasion?: string
+  page:      number
 }
 
 const NEW_BADGE_WINDOW_MS = 24 * 60 * 60 * 1000
+const PAGE_SIZE           = 25
 
 function isBranchId(value: string | null): value is BranchId {
   if (!value) return false
@@ -74,7 +79,7 @@ function isFresh(createdAt: string): boolean {
   return Date.now() - ts < NEW_BADGE_WINDOW_MS
 }
 
-export default async function CateringInquiriesList({ locale }: Props) {
+export default async function CateringInquiriesList({ locale, from, to, occasion, page }: Props) {
   const t = await getTranslations('dashboard.catering')
   const isAr = locale === 'ar'
 
@@ -93,11 +98,19 @@ export default async function CateringInquiriesList({ locale }: Props) {
   }
 
   const supabase = createServiceClient()
-  const { data, error } = await supabase
+  const fromIdx = (page - 1) * PAGE_SIZE
+  const toIdx   = fromIdx + PAGE_SIZE - 1
+
+  let query = supabase
     .from('catering_inquiries')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(200)
+
+  if (from)     query = query.gte('event_date', from)
+  if (to)       query = query.lte('event_date', to)
+  if (occasion) query = query.eq('occasion_type', occasion)
+
+  const { data, error, count } = await query.range(fromIdx, toIdx)
 
   if (error) {
     return (
@@ -108,6 +121,8 @@ export default async function CateringInquiriesList({ locale }: Props) {
   }
 
   const inquiries = data ?? []
+  const total     = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   if (inquiries.length === 0) {
     return (
@@ -122,8 +137,22 @@ export default async function CateringInquiriesList({ locale }: Props) {
     )
   }
 
+  // Preserve filter context across page jumps.
+  const baseQs = new URLSearchParams()
+  if (from)     baseQs.set('from', from)
+  if (to)       baseQs.set('to', to)
+  if (occasion) baseQs.set('occasion', occasion)
+  const pageHref = (n: number) => {
+    const qs = new URLSearchParams(baseQs)
+    qs.set('page', String(n))
+    return `?${qs.toString()}`
+  }
+  const showingFrom = fromIdx + 1
+  const showingTo   = Math.min(fromIdx + inquiries.length, total)
+
   return (
-    <ul className="flex flex-col gap-3" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col gap-4" dir={isAr ? 'rtl' : 'ltr'}>
+    <ul className="flex flex-col gap-3">
       {inquiries.map((row) => {
         const fresh    = isFresh(row.created_at)
         const branchId = isBranchId(row.preferred_branch) ? row.preferred_branch : null
@@ -224,6 +253,50 @@ export default async function CateringInquiriesList({ locale }: Props) {
         )
       })}
     </ul>
+
+    <nav
+      aria-label={t('pagination.previous')}
+      className="flex flex-wrap items-center justify-between gap-3 bg-brand-surface border border-brand-border rounded-xl px-4 py-3"
+    >
+      <p className={`text-xs text-brand-muted ${isAr ? 'font-almarai' : 'font-satoshi'}`}>
+        {t('pagination.showing', { from: showingFrom, to: showingTo, total })}
+      </p>
+
+      <div className="flex items-center gap-2">
+        {page > 1 ? (
+          <a
+            href={pageHref(page - 1)}
+            className="min-h-[40px] flex items-center px-4 bg-brand-black/40 border border-brand-border text-brand-text font-bold rounded-lg text-xs hover:border-brand-gold/40 transition-colors"
+          >
+            {t('pagination.previous')}
+          </a>
+        ) : (
+          <span
+            aria-disabled="true"
+            className="min-h-[40px] flex items-center px-4 bg-brand-black/40 border border-brand-border text-brand-muted/50 font-bold rounded-lg text-xs cursor-not-allowed"
+          >
+            {t('pagination.previous')}
+          </span>
+        )}
+
+        {page < totalPages ? (
+          <a
+            href={pageHref(page + 1)}
+            className="min-h-[40px] flex items-center px-4 bg-brand-black/40 border border-brand-border text-brand-text font-bold rounded-lg text-xs hover:border-brand-gold/40 transition-colors"
+          >
+            {t('pagination.next')}
+          </a>
+        ) : (
+          <span
+            aria-disabled="true"
+            className="min-h-[40px] flex items-center px-4 bg-brand-black/40 border border-brand-border text-brand-muted/50 font-bold rounded-lg text-xs cursor-not-allowed"
+          >
+            {t('pagination.next')}
+          </span>
+        )}
+      </div>
+    </nav>
+    </div>
   )
 }
 

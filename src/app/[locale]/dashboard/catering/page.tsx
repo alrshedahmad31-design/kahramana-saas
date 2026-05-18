@@ -6,11 +6,13 @@ import {
   requireDashboardSection,
 } from '@/lib/auth/dashboard-guards'
 import CateringInquiriesList from './CateringInquiriesList'
+import CateringFilters from './CateringFilters'
 
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-  params: Promise<{ locale: string }>
+  params:       Promise<{ locale: string }>
+  searchParams: Promise<{ from?: string; to?: string; occasion?: string; page?: string }>
 }
 
 function ListSkeleton() {
@@ -26,9 +28,22 @@ function ListSkeleton() {
   )
 }
 
-export default async function CateringPage({ params }: PageProps) {
+// YYYY-MM-DD whitelist. Anything else is silently dropped, so a bookmarked
+// dashboard URL can't trigger a Postgres cast error.
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+function safeDate(v?: string): string | undefined {
+  return v && ISO_DATE.test(v) ? v : undefined
+}
+
+function safePage(v?: string): number {
+  const n = Number.parseInt(v ?? '1', 10)
+  return Number.isFinite(n) && n >= 1 ? n : 1
+}
+
+export default async function CateringPage({ params, searchParams }: PageProps) {
   const { locale } = await params
-  const prefix = locale === 'en' ? '/en' : ''
+  const sp         = await searchParams
+  const prefix     = locale === 'en' ? '/en' : ''
 
   try {
     await requireDashboardSection('catering')
@@ -39,8 +54,18 @@ export default async function CateringPage({ params }: PageProps) {
     redirect(`${prefix}/dashboard`)
   }
 
-  const t = await getTranslations('dashboard.catering')
-  const isAr = locale === 'ar'
+  const t      = await getTranslations('dashboard.catering')
+  const isAr   = locale === 'ar'
+  const loc    = locale === 'en' ? 'en' : 'ar'
+
+  const from     = safeDate(sp.from)
+  const to       = safeDate(sp.to)
+  const occasion = sp.occasion?.trim() || undefined
+  const page     = safePage(sp.page)
+
+  // Suspense key forces a fresh fetch when filters change, so the skeleton
+  // appears for each navigation rather than flashing stale data.
+  const suspenseKey = `${from ?? ''}|${to ?? ''}|${occasion ?? ''}|${page}`
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto w-full">
@@ -61,8 +86,16 @@ export default async function CateringPage({ params }: PageProps) {
         </p>
       </header>
 
-      <Suspense fallback={<ListSkeleton />}>
-        <CateringInquiriesList locale={locale === 'en' ? 'en' : 'ar'} />
+      <CateringFilters locale={loc} from={from} to={to} occasion={occasion} />
+
+      <Suspense key={suspenseKey} fallback={<ListSkeleton />}>
+        <CateringInquiriesList
+          locale={loc}
+          from={from}
+          to={to}
+          occasion={occasion}
+          page={page}
+        />
       </Suspense>
     </div>
   )
