@@ -1,12 +1,20 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 155 close-out — open-lane sweep: logo/image fallback/KDS trigger alignment/loyalty grid)
-# Master: 624c7ed
+# Updated: 2026-05-18 (session 156 close-out — pre-launch checklist, no code)
+# Master: 5576d6b
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-155 shipped a 5-item open-lane sweep as 5 commits +
+Posture: session-156 produced `.agent/PRE-LAUNCH-CHECKLIST.md` (1 commit
+`5576d6b`, no code). Canonical single source of truth for what blocks
+ship: 3 operator-side blockers (Supabase Pro+Singapore, Resend domain
+DNS verification, 13 staff emails → migration 090), dev backlog empty,
+TAP/WhatsApp/Benefit Pay explicitly deferred as n/a-for-cash-only,
+10 customer + 9 staff manual smoke journeys for day-before launch.
+Generated from CLAUDE-AI-CONTEXT.md + LAST-SESSION.md + git log of
+sessions 137–155 + phase-state.json. Posture: session-155 shipped a
+5-item open-lane sweep as 5 commits +
 1 close-out. (1) `d77283e` brand asset cleanup — renamed `logoo.webp`
 typo to `logo.webp` (added in `f646ab6`, never referenced), restored
 the 44630b horizontal `logo-full.webp` that had been clobbered with
@@ -86,7 +94,27 @@ Optional next-lane candidates (none queued; fire only on explicit ask):
 - (none — session 153's KDS station-routing carry was closed in
   session 155 with a premise correction; see session 155 entry below.)
 
-CLOSED in sessions 137–155 (newest first):
+CLOSED in sessions 137–156 (newest first):
+
+✅ Session 156 — Pre-launch checklist (1 commit, 5576d6b — no code)
+   - `5576d6b` `.agent/PRE-LAUNCH-CHECKLIST.md` — single source of
+     truth for what blocks soft-launch. 7 sections: operator actions,
+     dev items, infrastructure (Supabase/Vercel/DNS), staff readiness,
+     content, testing, monitoring. Each row marked OK/PEND/BLOCK/NA
+     (NA = n/a-for-cash-only).
+   - Headline findings: 3 true blockers (Supabase Free→Pro+Singapore,
+     Resend domain DNS verification, 13 staff emails for migration
+     090); dev backlog empty (every audit finding through session 155
+     closed); 3 items deferred as n/a-for-cash-only (TAP refund API
+     wiring, WhatsApp Business API Sprint 6B, Benefit Pay Sprint 6C
+     — none affect cash flows); ~12 missing dish photos mitigated by
+     session 155's branded onError fallback.
+   - 10 customer + 9 staff manual smoke journeys listed for day-before
+     launch. Negative tests included (Turnstile fail-closed,
+     rate-limit triggers, unauthorized dashboard access, branch
+     isolation, malformed UUID guard).
+   - No gates run (doc-only commit). All 9 gates remain green at
+     HEAD per session 155 close-out.
 
 ✅ Session 155 — Open-lane sweep: brand assets, dish-image fallback, KDS trigger alignment, loyalty grid (5 commits, d77283e → 624c7ed)
    - `d77283e` fix(brand): rename `logoo.webp` typo → `logo.webp` (added
@@ -504,6 +532,7 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
 ## MIGRATION STATE
 - Local = Remote — migrations applied through 183 (paired).
+- Session 156 added: **none** — doc-only commit (PRE-LAUNCH-CHECKLIST.md).
 - Session 155 added: 183 (`kds_unassigned_fallback` — replaces
   fn_kds_enqueue_item's `'packing'` fallback with `'unassigned'` so
   the DB column matches the UI screen; UPDATE backfills 82 historical
@@ -552,6 +581,14 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last entries)
+- Session 156: pre-launch checklist (1 commit, `5576d6b`, no code).
+  Produced `.agent/PRE-LAUNCH-CHECKLIST.md` — canonical single source
+  of truth for cash-only soft-launch. 3 operator-side blockers
+  (Supabase Pro+Singapore, Resend DNS, 13 staff emails for migration
+  090). Dev backlog empty. TAP refund / WhatsApp Business API /
+  Benefit Pay explicitly deferred as n/a-for-cash-only. 10 customer
+  + 9 staff manual smoke journeys + negative tests listed for
+  day-before launch.
 - Session 155: open-lane sweep — brand assets, dish-image onError
   fallback, KDS trigger fallback alignment + migration 183, gitignore,
   loyalty tier panel carousel → 2-col grid (5 commits, `d77283e →
