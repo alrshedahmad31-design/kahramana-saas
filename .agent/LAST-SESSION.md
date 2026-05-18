@@ -1,206 +1,222 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 144: Public-surface hygiene audit + T3 cleanup. 6 commits
-> landed (bc0811c session-143 carry + c55f0c9 + 94e01c0 + 4444c3d +
-> 67f9f59 + a572bdb). All 9 gates green at HEAD. Two P2s deferred to
-> BACKLOG.md.
+> Session 145: Dashboard v4 P1 sweep finalization. Single fix commit
+> (`81d0194`) + close-out. All 6 dashboard v4 P1s (AUD-V4-004..009) now
+> closed on master; combined with session 144 this means every P1 in
+> both audit docs is closed.
 > Date: 2026-05-18
 > Author: Claude Code (Opus 4.7, 1M context)
 
-## SESSION 144 — SUMMARY
+## SESSION 145 — SUMMARY
 
-Long session that pivoted from a stale pending-list to a real audit.
-The user's opening prompt listed four "pending dev items" — all four
-were already merged on master. Verified each against disk + git log,
-flagged the discrepancy, then took a fresh direction.
+Short, focused session that converged on a 1-commit close-out for the
+remaining open items from `dashboard-audit-2026-05-13-v4.md`.
 
-### Phase 1 — Carry-over commits
+### Phase 1 — Audit mapping clarification
 
-Pushed session-143's chore commit (`bc0811c`) that was sitting unpushed
-on master since the prior session close-out. Then dropped the
-`as unknown as Record<string, never>` cast on the `notified_at` UPDATE
-in `src/app/api/cron/birthday-notify/route.ts` — `src/lib/supabase/types.ts`
-already had the column on `birthday_point_credits.Update` thanks to
-session 142's MCP regen. One commit (`c55f0c9`).
+Opening prompt asked to start "Pass 1 (error string sanitization only —
+no migrations)" against P1-1 through P1-6, referencing an audit "already
+in context." Fresh session — no audit was loaded. Two candidates fit
+"six P1 items":
 
-**Self-inflicted stumble**: my first attempt used `git commit -am`
-which staged the dirty `.agent/CURRENT-SESSION.md` + `LAST-SESSION.md`
-alongside the route fix. Caught it before pushing, ran
-`git reset --soft HEAD~1 && git restore --staged .`, then staged the
-route file by name. Hit the "git add -p always — never stage sibling
-work" rule. Lesson re-learned.
+- `.agent/public-audit-2026-05-18.md` — 6 P1s (PUB-001/002/003/004/013/014),
+  but all 6 already shipped in session 144.
+- `.agent/dashboard-audit-2026-05-13-v4.md` — 6 HIGH findings
+  (AUD-V4-004..009) if HIGH ≡ P1.
 
-### Phase 2 — The phantom audit list
+Asked the user to disambiguate. They picked the dashboard v4 HIGH set,
+so the P1-1..P1-6 enumeration mapped to:
 
-User asked to "surface the 19 P2 findings from session 141's
-public-audit list". After grepping `.agent/`, `docs/audit/`,
-`BACKLOG.md`, and every commit message: **the list never existed in
-the repo**. The bridge file (`.agent/CLAUDE-AI-CONTEXT.md`)
-referenced it as a candidate next-lane but the actual triage was
-presumably done in a Claude.ai conversation and never persisted.
+| Tag  | Audit ID    | Issue                                   |
+|------|-------------|-----------------------------------------|
+| P1-1 | AUD-V4-004  | Staff TOCTOU on update                  |
+| P1-2 | AUD-V4-005  | `approveShift` CAS + audit log          |
+| P1-3 | AUD-V4-006  | Service-role factory bypass (5 pages)   |
+| P1-4 | AUD-V4-007  | Sentry `enableLogs` + console scrub     |
+| P1-5 | AUD-V4-008  | Tap webhook returns DB error.message    |
+| P1-6 | AUD-V4-009  | `fast-uri` HIGH npm advisory            |
 
-Offered the user two options: (a) paste the list from wherever it
-lived, or (b) generate a fresh public-surface hygiene scan. They
-chose (b).
+### Phase 2 — Pre-Pass verification against master
 
-### Phase 3 — Fresh public-surface audit
+Before touching anything, verified each P1's current state:
 
-Spawned a general-purpose subagent with a scoped prompt covering all
-public routes (`/`, `/menu`, `/branches`, `/about`, `/contact`,
-`/reserve`, `/catering`, `/order/[id]`, `/account/**`, `/checkout`,
-`/payment/[orderId]`, `/login`) plus their server actions and
-customer-triggered API routes. Out of scope: dashboard, driver, waiter,
-clock, KDS, POS, cron, webhooks.
+- **P1-1 closed**: migration `126_rpc_update_staff.sql` exists + wired
+  into `dashboard/staff/actions.ts`.
+- **P1-2 closed**: migration `169_rpc_approve_shift.sql` exists + wired
+  into `dashboard/shifts/actions.ts`.
+- **P1-3 partially closed**: 3 of the audit's 5 listed pages (pos /
+  pos/service / promotions) had been converted; `dashboard/tables/page.tsx`
+  and `waiter/table/[tableNumber]/page.tsx` still inline. Two new
+  offenders appeared post-audit: `waiter/page.tsx` and
+  `table/[branchId]/[tableNumber]/page.tsx`. Net: 4 files to convert.
+- **P1-4 partially closed**: KDS console.log noise the audit complained
+  about is already gone; `enableLogs: true` still set in all three
+  Sentry config files; two `console.error` stragglers in
+  `getShiftSummary`.
+- **P1-5 closed**: Tap webhook route already routes errors through
+  `toSafeError(error)` at lines 312 + 317.
+- **P1-6 closed**: `npm audit --audit-level=high` reports 0
+  vulnerabilities; `fast-uri@3.1.2` is post-patch for GHSA-q3j6-qgpj-74h6.
 
-Output landed at `.agent/public-audit-2026-05-18.md`:
+So **0 migrations needed** for Pass 2 — entire remaining work is code-only
+across P1-3 + P1-4.
 
-- **0 P0** (deploy blockers) — session-142 T1/T2 visibly raised the floor
-- **6 P1** (this sprint) — PUB-001 / 002 / 003 / 004 / 013 / 014
-- **9 P2** (hygiene) — PUB-005 / 006 / 007 / 008 / 009 / 010 / 011 /
-  012 / 015
-- **Total: 15 findings**
+### Phase 3 — Pass 1 (Sentry scrub, no migrations)
 
-Each finding cites a file + line, evidence, P-rating rationale, and a
-one-sentence suggested fix. Read-only, no code touched in this phase.
+Five edits across three files:
 
-### Phase 4 — Batched execution (T3-A and T3-B)
+- `sentry.server.config.ts`: dropped `enableLogs: true`, comment updated
+  with AUD-V4-007 rationale.
+- `sentry.edge.config.ts`: same.
+- `src/instrumentation-client.ts`: same.
+- `dashboard/shifts/actions.ts:43`: `console.error` →
+  `Sentry.captureException(error, { tags: { stage: 'shifts.summary.query' } })`.
+- `dashboard/shifts/actions.ts:51`: `console.error` →
+  `Sentry.captureException(e, { tags: { stage: 'shifts.summary' } })`.
 
-Per the user's instruction: one commit per logical P1 group, all P2s
-folded into a single hygiene commit, TSC clean after each.
+Other `console.error` sites the audit had flagged (orders.ts:299
+audit-log fire-and-forget, KDS noise) were already cleaned in prior
+sessions. With `enableLogs` off they stay as plain Vercel logs —
+matches the audit's preferred-fix posture ("the few sites that
+actually need it" route through `Sentry.captureException`).
 
-**T3-A1 — fail-closed login surfaces** (`94e01c0`, 2 files, +75/−49):
-- `account/login/actions.ts`: `verifyTurnstile` returns false in
-  production when secret unset; `checkRateLimit` (login/register)
-  + `checkEmailRateLimit` capture-message + return false when Upstash
-  unset; try/catch wraps the limit calls.
-- `forgot-password/actions.ts`: same pattern on `verifyTurnstile` +
-  `checkRateLimit`. Adds `import * as Sentry from '@sentry/nextjs'`
-  to the file.
+TSC clean after Pass 1.
 
-Closes PUB-003, PUB-004, PUB-014 + the note-155 forgot-password
-Turnstile fall-through (audit ID was scoped to one file, the actual
-defect was on two). Mirrors the staff `/login` + contact/reserve
-post-T1 pattern.
+### Phase 4 — Pass 2 (service-role factory consolidation)
 
-**T3-A2 — Sentry on /payment page** (`4444c3d`, 1 file, +12/−3):
-Replaced two `console.warn` / `console.error` calls in
-`payment/[orderId]/page.tsx` with `Sentry.captureException` with
-stage tags (`payment_page.order_fetch`, `payment_page.fatal`). Closes
-PUB-001. CLAUDE.md "No console.error swallowing" rule.
+Verified `restaurant_tables` IS in `src/lib/supabase/types.ts:3446` —
+the stale "not yet in Database types" comments justifying the untyped
+client are obsolete since the session-142 type regen.
 
-**T3-A3 — force-dynamic pin** (`67f9f59`, 4 files, +20/−0):
-Added `export const dynamic = 'force-dynamic'` to
-`/order/[id]/page.tsx`, `/payment/[orderId]/page.tsx`,
-`/account/page.tsx`, `/checkout/page.tsx`. Each gets a 3-line comment
-explaining the structural-pin reasoning. Closes PUB-013.
+Seven edits across four files:
 
-**T3-B — P2 hygiene pass + PUB-002** (`a572bdb`, 9 files, +111/−30):
-- New `src/lib/validation/phone.ts` exports `PUBLIC_PHONE_RE`.
-- Contact / reserve / catering imports from the shared module
-  (PUB-015).
-- PUB-002 (P1, folded in): UUID regex guard on `/payment/[orderId]`
-  `orderId` param before the Supabase round-trip. Same gate as
-  `/order/[id]/page.tsx:48`.
-- PUB-005: `registerSchema` Zod object replaces ad-hoc manual checks
-  in registerAction. Specific error codes derived from
-  `parsed.error.flatten().fieldErrors`.
-- PUB-006: `.max(50)` on contact `branch_id`.
-- PUB-008: `q` searchParam clamped to 100 chars before passing to
-  MenuPageClient.
-- PUB-010: `.max(72)` on `newPassword` in setPasswordAction with a
-  `too_long` error code (matches loginSchema, matches bcrypt limit).
-- PUB-011: `checkSetPasswordRateLimit` — 5/15m sliding window keyed on
-  the live-session user id. Fail-closed in production when Upstash
-  unset.
-- PUB-012: `Sentry.captureException` in `checkout/error.tsx`
-  `useEffect`, alongside the console reference (kept as a comment-free
-  trail).
-- Three P2s **not** in this commit:
-  - PUB-007 (RPC SQLSTATE refactor — needs migration; deferred to
-    `.agent/BACKLOG.md`)
-  - PUB-009 (narrow row type for `/order/[id]` — ~15-line refactor;
-    deferred to BACKLOG.md)
-  - PUB-002 was actually a P1, folded into the P2 batch since it
-    lives on the same surface as PUB-001 from T3-A2. Loud in the
-    commit message.
+- `dashboard/tables/page.tsx`: dropped `createSupabaseClient` import +
+  the inline env-check + the redundant `auth` block →
+  `await createServiceClient()`.
+- `waiter/page.tsx`: dropped duplicate import (file already imported
+  `createServiceClient` for the orders query at line 81); collapsed
+  the separate "untyped" path for `restaurant_tables` into the same
+  client. Stale comment removed. `captureAnalyticsError` reporting
+  preserved verbatim — only the construction changed.
+- `waiter/table/[tableNumber]/page.tsx`: swapped inline `untypedTables`
+  for `await createServiceClient()`. Kept the `notFound()` branch for
+  table-not-found but removed the `notFound()` on missing env (now a
+  loud factory throw).
+- `table/[branchId]/[tableNumber]/page.tsx`: same pattern; customer-
+  facing QR route.
 
-### Phase 5 — Close-out (this session)
+**Behavior change worth flagging**: the three `notFound()` /
+`redirect()` fallbacks on missing env vars are gone. The factory throws
+a descriptive `Error('Missing Supabase env vars: ...')`. In production
+this surfaces a 500 + Sentry event rather than silently routing the
+user to /dashboard or 404. Intentional — missing env is a deploy bug,
+not a runtime path. Loud > silent.
 
-- Appended PUB-007 + PUB-009 to `.agent/BACKLOG.md` with full audit
-  context (severity, file, evidence, suggested fix, why-deferred).
-- Refreshed `.agent/CLAUDE-AI-CONTEXT.md`: header bumped to session 144;
-  CURRENT STATUS posture sentence updated; the stale "Tier 3 hygiene
-  — 19 P2 findings from the session-141 public-audit list" candidate
-  removed (replaced by PUB-007 / 009 reference); "Type regen drop"
-  candidate removed (closed by `c55f0c9`); two new architecture
-  decisions added (force-dynamic pin, shared phone regex); session
-  144 added to CLOSED list and SESSION HISTORY.
-- Regenerated `.agent/CURRENT-SESSION.md` via
+TSC clean after Pass 2.
+
+### Phase 5 — 9-gate suite + commit + push
+
+All nine gates ran green:
+
+- Gate 1 (TSC): clean.
+- Gate 2 (RTL pl-/pr-/ml-/mr-): clean. The original CLAUDE.md uses
+  basic-regex `\|` alternation which mis-parses in Git Bash on Windows;
+  re-running with `grep -E` returned zero matches.
+- Gate 3 (forbidden fonts): only `Intersection`/`International`/
+  `Interactive` substring matches, pre-existing on master from before
+  session 145.
+- Gate 4 (forbidden colors): clean.
+- Gate 5 (BHD display token): only the JSX display-text matches the
+  rule tolerates ("…toFixed(3) BHD" etc.), pre-existing on master.
+- Gate 6 (phones / wa.me): clean.
+- Gate 7 (raw hex): clean.
+- Gate 8 (i18n parity): AR 2,548 = EN 2,548; 642 source files; PASS.
+- Gate 9 (build): 548 routes, 0 errors. Routes I touched render
+  expected types — `/[locale]/waiter` SSG (locale params),
+  `/[locale]/waiter/table/[tableNumber]` ƒ Dynamic,
+  `/[locale]/table/[branchId]/[tableNumber]` ƒ Dynamic.
+
+Verified separately that none of the gate-3 / gate-5 noise originated
+in my edited files — grepped the 8 modified files for every forbidden
+pattern (fonts + colors + BHD + phones + hex), got "no matches."
+
+Commit `81d0194` (`fix(dashboard): close all 6 P1s — Sentry scrub +
+service-role factory consolidation`), 8 files, +30/-54, 0 migrations.
+Pushed cleanly: `11070d2..81d0194 master -> master`.
+
+### Phase 6 — Close-out (this commit)
+
+Bridge updates for session 145:
+
+- `.agent/CLAUDE-AI-CONTEXT.md`: header bumped to session 145 + master
+  `81d0194`; CURRENT STATUS posture rewritten to reflect both audits'
+  P1 sets now closed; new session 145 entry at the top of the CLOSED
+  list; two new architecture decisions added (service-role construction
+  must go through `createServiceClient()`; Sentry `enableLogs: true`
+  forbidden); MIGRATION STATE annotated with the "session 145 added:
+  none" line; SESSION HISTORY rotated (dropped session 140, added
+  session 145).
+- `.agent/LAST-SESSION.md`: this file, replacing the session 144
+  contents.
+- `.agent/CURRENT-SESSION.md`: regenerated via
   `pwsh .agent/sync-context.ps1`.
-- One close-out commit covering BACKLOG + CLAUDE-AI-CONTEXT +
-  LAST-SESSION + CURRENT-SESSION.
 
 ### Files changed across the session
 
 ```
-new:
-  .agent/public-audit-2026-05-18.md          (Phase 3 deliverable)
-  src/lib/validation/phone.ts                (T3-B PUB-015)
-
 modified — code:
-  src/app/api/cron/birthday-notify/route.ts            (c55f0c9)
-  src/app/[locale]/account/login/actions.ts            (94e01c0 + a572bdb)
-  src/app/[locale]/forgot-password/actions.ts          (94e01c0)
-  src/app/[locale]/payment/[orderId]/page.tsx          (4444c3d + 67f9f59 + a572bdb)
-  src/app/[locale]/order/[id]/page.tsx                 (67f9f59)
-  src/app/[locale]/account/page.tsx                    (67f9f59)
-  src/app/[locale]/checkout/page.tsx                   (67f9f59)
-  src/app/[locale]/contact/actions.ts                  (a572bdb)
-  src/app/[locale]/reserve/actions.ts                  (a572bdb)
-  src/app/[locale]/catering/actions.ts                 (a572bdb)
-  src/app/[locale]/menu/page.tsx                       (a572bdb)
-  src/app/[locale]/set-password/actions.ts             (a572bdb)
-  src/app/[locale]/checkout/error.tsx                  (a572bdb)
+  sentry.server.config.ts                              (81d0194)
+  sentry.edge.config.ts                                (81d0194)
+  src/instrumentation-client.ts                        (81d0194)
+  src/app/[locale]/dashboard/shifts/actions.ts         (81d0194)
+  src/app/[locale]/dashboard/tables/page.tsx           (81d0194)
+  src/app/[locale]/waiter/page.tsx                     (81d0194)
+  src/app/[locale]/waiter/table/[tableNumber]/page.tsx (81d0194)
+  src/app/[locale]/table/[branchId]/[tableNumber]/page.tsx (81d0194)
 
 modified — bridge:
-  .agent/BACKLOG.md                          (session 144 deferred items)
-  .agent/CLAUDE-AI-CONTEXT.md                (session 144 update)
-  .agent/CURRENT-SESSION.md                  (auto-regen)
-  .agent/LAST-SESSION.md                     (this file)
+  .agent/CLAUDE-AI-CONTEXT.md                          (session 145 update)
+  .agent/CURRENT-SESSION.md                            (auto-regen)
+  .agent/LAST-SESSION.md                               (this file)
 ```
 
 ### Commits this session (in order)
 
 ```
-bc0811c  (push of carry from session 143)
-c55f0c9  chore(types): drop notified_at cast in birthday-notify route
-94e01c0  fix(security): T3-A1 — fail-closed Turnstile + rate limit on /account/login + /forgot-password
-4444c3d  fix(observability): T3-A2 — route /payment page errors through Sentry
-67f9f59  fix(rendering): T3-A3 — pin force-dynamic on per-user authenticated pages
-a572bdb  chore(hygiene): T3-B — public-surface P2 cleanup pass (7 items) + PUB-002
-[session-144 close-out commit]
+81d0194  fix(dashboard): close all 6 P1s — Sentry scrub + service-role factory consolidation
+[session-145 close-out commit]
 ```
 
 ### Decisions worth remembering
 
-- **Generated a new audit because the referenced one didn't exist.**
-  The bridge cited a "session-141 public-audit list" but session 141
-  was the mobile-responsiveness sweep — no audit doc was produced
-  then. Phantom reference. Fresh audit replaces it cleanly.
-- **PUB-002 (P1) folded into T3-B (P2 batch)** rather than shipped as
-  a separate A4. Cost of a 4th P1 commit didn't justify itself for a
-  3-line UUID guard on the same surface as PUB-001. Surfaced loudly
-  in the commit body.
-- **PUB-007 + PUB-009 deferred to BACKLOG.md** rather than shipped.
-  Ground rule: "no migrations unless strictly required" (PUB-007);
-  P2 hygiene with 15-line refactor cost (PUB-009). Both fully
-  documented for the next hygiene lane.
-- **Forgot-password Turnstile bundled into T3-A1** even though the
-  audit ID PUB-014 was scoped to `account/login`. The same defect
-  shape lived in `forgot-password/actions.ts:13-16` (note 155 in the
-  audit). Single commit handles both since they're the same
-  architectural pattern.
+- **Stopped to disambiguate the audit reference** instead of assuming
+  the user meant the public audit. The public-audit P1s were already
+  shipped — running "Pass 1" against them would have been make-work.
+  Asking which audit took 30 seconds and routed the session to the
+  actually-open work.
+- **Verified each P1 against master HEAD before any edits.** Sessions
+  137-140 + session 144 had quietly closed 4 of the 6 dashboard v4 P1s
+  via prior migrations and the session-142 `toSafeError` work — none
+  of which the audit doc itself reflected. Pre-flight check turned
+  "close 6 items" into "close 2 items," saving redundant churn.
+- **Pass 1 + Pass 2 shipped as one commit.** User explicitly requested
+  this. Otherwise default would have been two commits (one per pass).
+  No regret — both passes are tightly coupled to the same audit + the
+  same gate suite ran once over both.
+- **Behavior change on missing env vars is intentional.** The four
+  refactored pages previously had soft-redirect fallbacks
+  (`notFound()` / `redirect('/dashboard')`) on missing
+  `SUPABASE_SERVICE_ROLE_KEY`. The central factory throws instead. In
+  production this becomes a 500 + Sentry event, which is louder and
+  more correct — a missing service-role key in production means a
+  deploy was misconfigured, not that the user took a wrong path. Soft
+  redirects masked the deploy bug. Documented in the commit body.
+- **`enableLogs: true` is now a forbidden flag** in the three Sentry
+  config files. Added as an architecture decision so a future session
+  doesn't re-enable it on a misread of the "should we capture more?"
+  question. The right answer is always: explicit `captureException`,
+  not console-firehose.
 
-## OPERATOR PENDING (unchanged from session 142/143)
+## OPERATOR PENDING (unchanged from session 142/143/144)
 
 - Supabase Free → Pro + Singapore migration
 - Resend domain verification for kahramanat.com
@@ -212,17 +228,23 @@ a572bdb  chore(hygiene): T3-B — public-surface P2 cleanup pass (7 items) + PUB
 
 ## NEXT SESSION
 
-- Optional: tackle PUB-007 + PUB-009 from BACKLOG together as a single
-  hygiene lane (one migration + one type refactor; both small, both
-  hygiene-tier, no production behaviour change).
-- Optional: re-run the public-surface audit subagent on dashboard
-  routes — same methodology, T1/T2/T3 already cleared on the customer
-  side, dashboard side has its own audit history (v3 + v4 from
-  session 105 + 97). Probably yields fewer than 15 findings given the
-  recent session-137-140 sweeps.
-- Push the session-144 close-out commit when this session ends.
+- With every P1 in both audit docs closed, no obvious next dev lane is
+  queued. Candidates if asked (none auto-fire):
+  - **PUB-007 + PUB-009** still sitting in `.agent/BACKLOG.md` from
+    session 144 — one Supabase migration (SQLSTATE in reserve RPC) +
+    one ~15-line narrow row type for `/order/[id]`. Smallest possible
+    hygiene lane. Pair them in one commit.
+  - A v5 dashboard audit re-run. The v4 was 2026-05-13; sessions 137-140
+    + 142 + 144 + 145 have all touched dashboard or adjacent code since.
+    A fresh audit would likely find <10 items given the recent sweeps,
+    but if appetite exists it would establish a new baseline.
+  - Operator-side: the Supabase Pro migration unblocks better
+    observability + the staff seed + Tap merchant approval — those are
+    the actual launch gates, not more dev work.
+- Push the session-145 close-out commit when this session ends.
 
-Posture: customer login + register + password-reset + set-password
-now all fail closed in production under env-var misconfiguration.
-Per-user authenticated pages pinned to dynamic. Shared phone
-validation in one module. All 9 gates green at HEAD.
+Posture: every P1 in both `.agent/dashboard-audit-2026-05-13-v4.md`
+and `.agent/public-audit-2026-05-18.md` is closed on master. Service-
+role construction is now exclusively through the central factory.
+Sentry no longer ingests application-level console output. All 9 gates
+green at HEAD (`81d0194`).

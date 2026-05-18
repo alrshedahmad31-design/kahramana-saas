@@ -1,16 +1,18 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 144 close-out — T3 public-surface hygiene sweep)
-# Master: a572bdb
+# Updated: 2026-05-18 (session 145 close-out — dashboard v4 P1 sweep finalization)
+# Master: 81d0194
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-144 raises floor again — customer-side login, register,
-password-reset, and set-password now all fail closed in production when
-Turnstile or Upstash env vars are missing. Per-user authenticated pages
-(/order/[id], /payment/[orderId], /account, /checkout) pinned to
-force-dynamic so a future layout-hoist refactor can't flip them to ISR.
+Posture: session-145 closes the last two open items from the
+dashboard-audit-2026-05-13-v4 P1 set — Sentry `enableLogs: true` dropped
+across all three Sentry configs (no more order/branch IDs flowing as
+breadcrumbs), and the four remaining inline service-role constructions
+collapsed into `createServiceClient()`. All 6 dashboard v4 P1s
+(AUD-V4-004..009) and all 6 public-audit P1s (PUB-001/002/003/004/013/014)
+are now closed on master. No open P1 lanes against either audit.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -63,7 +65,32 @@ Optional next-lane candidates (none queued; only fire on explicit ask):
   PUB-009 is a ~15-line narrow row type for `/order/[id]` to replace the
   `as unknown as OrderWithItems` cast. Pair them in the next hygiene lane.
 
-CLOSED in sessions 137–144 (newest first):
+CLOSED in sessions 137–145 (newest first):
+
+✅ Session 145 — Dashboard v4 P1 sweep finalization (1 commit, 81d0194)
+   - Verified the 2026-05-13 dashboard v4 audit's 6 HIGH findings
+     (AUD-V4-004..009) against current master. Four were already closed
+     pre-session by prior work: AUD-V4-004 (migration 126
+     `rpc_update_staff`), AUD-V4-005 (migration 169 `rpc_approve_shift`),
+     AUD-V4-008 (`toSafeError` in Tap webhook route), AUD-V4-009
+     (`npm audit --audit-level=high` = 0 vulns; fast-uri@3.1.2 post-patch).
+   - Pass 1 — P1-4 (AUD-V4-007) Sentry scrub: dropped `enableLogs: true`
+     from `sentry.server.config.ts`, `sentry.edge.config.ts`,
+     `src/instrumentation-client.ts`. Routed two `getShiftSummary` error
+     paths through `Sentry.captureException` with stage tags so the sites
+     that legitimately need observability stay visible.
+   - Pass 2 — P1-3 (AUD-V4-006) service-role factory consolidation:
+     replaced inline `createSupabaseClient(url, key, {...})` with
+     `await createServiceClient()` in 4 page.tsx files —
+     `dashboard/tables/page.tsx`, `waiter/page.tsx`,
+     `waiter/table/[tableNumber]/page.tsx`,
+     `table/[branchId]/[tableNumber]/page.tsx`. Removed three stale
+     "restaurant_tables not yet in Database types" comments (table is in
+     `types.ts:3446` since session-142 type regen).
+   - Behavior change: the 3 `notFound()` / `redirect()` fallbacks on
+     missing env vars are gone. Factory throws a descriptive Error that
+     surfaces in Sentry. Missing env is a deploy bug, not a runtime path.
+   - Single commit (`81d0194`), all 9 gates green at HEAD, no migrations.
 
 ✅ Session 144 — Public-surface hygiene audit + T3 cleanup (6 commits, 94e01c0 → a572bdb)
    - Generated `.agent/public-audit-2026-05-18.md` (15 findings: 0 P0,
@@ -260,6 +287,15 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 - AnalyticsResult<T> pattern for all analytics queries (AUD-V3-008)
 - createClient() (anon) for analytics reads where RLS covers it
 - createServiceClient() only for: matviews + RPCs without authenticated grant
+- **Service-role client construction goes through `createServiceClient()`** —
+  never inline `createClient(url, key, {...})` in pages or actions (AUD-V4-006,
+  closed session 145). Single source of truth for the env-var read, the
+  `persistSession: false` block, and any future hardening (regional clients,
+  key rotation, telemetry hooks).
+- **Sentry `enableLogs: true` is forbidden** in any of the three Sentry config
+  files (AUD-V4-007, closed session 145) — application-level console output
+  leaks order/branch IDs to breadcrumbs. Sites that need observability call
+  `Sentry.captureException` explicitly.
 - x-real-ip before x-forwarded-for for rate limiting
 - No console.error swallowing — Sentry via captureAnalyticsError
 - Customer-facing + staff-facing error strings go through next-intl
@@ -279,6 +315,10 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
 ## MIGRATION STATE
 - Local = Remote = 173 migrations applied (paired)
+- Session 145 added: **none** — both passes were code-only (Sentry config
+  flag flip + service-role factory consolidation). The 6 dashboard v4 P1s
+  were either already covered by prior migrations (126 for staff TOCTOU,
+  169 for approveShift CAS) or were never migration-shaped.
 - Session 142 added: 172 (birthday_point_credits.notified_at +
   partial index — cron send-idempotency for Vercel retries),
   173 (process_tap_webhook short-circuits on ANY prior payment_webhooks
@@ -307,9 +347,6 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last 5)
-- Session 140: second-pass dashboard audit clean — P0 coupon scope
-  clamp + 9 P1 groups (KDS/POS/waitlist/shifts/coupons/promotions/
-  reports/dynamic-imports/staff+settings) + migrations 168–171
 - Session 141: mobile responsiveness sweep across recipes/import/
   owner/reservations/shifts/alerts/orders/analytics/reports/payments/
   coupons/promotions/settings/pos/menu (Lane 1) + /kds/[station]
@@ -332,6 +369,16 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   pages; T3-B 7 P2s + PUB-002 + shared phone regex. Two P2s deferred
   to BACKLOG.md (PUB-007 needs migration, PUB-009 ~15-line refactor).
   No migrations, all 9 gates green.
+- Session 145: dashboard v4 P1 sweep finalization. Verified all 6
+  HIGH findings (AUD-V4-004..009) against current master — four were
+  already closed pre-session (migrations 126/169, toSafeError, npm
+  audit clean). Pass 1 dropped `enableLogs: true` across all 3 Sentry
+  configs + routed two `getShiftSummary` errors through
+  `Sentry.captureException`. Pass 2 collapsed 4 inline service-role
+  constructions into `createServiceClient()`. Single commit
+  (`81d0194`), no migrations, all 9 gates green. With this and the
+  session-144 PUB-* closures, every P1 in either audit doc is now
+  closed on master.
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
