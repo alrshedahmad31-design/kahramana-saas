@@ -369,8 +369,13 @@ export default function Header() {
               width={526}
               height={335}
               priority
-              sizes="180px"
-              className="h-12 w-auto max-w-[170px]"
+              sizes="200px"
+              // drop-shadow only at top state — glass capsule already gives the logo
+              // a frame against the page; the shadow stops the wordmark from
+              // dissolving into the dark hero photography behind the transparent bar.
+              className={`h-14 w-auto max-w-[190px] transition-[filter] duration-500 ${
+                isScrolled ? '' : 'drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]'
+              }`}
             />
           </Link>
 
@@ -497,7 +502,7 @@ export default function Header() {
                   <button
                     onClick={handleLocaleSwitch}
                     aria-label={t('languageAlt')}
-                    className="font-satoshi text-sm font-medium tracking-[0.12em] text-brand-muted"
+                    className="font-satoshi text-sm font-medium tracking-[0.12em] text-brand-muted min-w-11 h-11 flex items-center justify-start"
                   >
                     {toggleLabel}
                   </button>
