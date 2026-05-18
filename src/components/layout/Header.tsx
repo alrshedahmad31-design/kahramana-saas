@@ -229,8 +229,10 @@ export default function Header() {
             />
           </Link>
 
-          {/* groupEnd — nav links + utilities + CTA, anchored to inline-end */}
-          <div className="justify-self-end flex items-center gap-3 lg:gap-5">
+          {/* groupEnd — nav links + utilities only. CTA lives outside the
+              grid (absolute) so the 1fr columns stay balanced around the
+              logo. pe leaves room for the absolute CTA strip. */}
+          <div className="justify-self-end flex items-center gap-3 lg:gap-5 pe-32 lg:pe-44">
             <nav className="flex items-center gap-1 lg:gap-2" aria-label={t('menu')}>
               {GROUP_END.map(({ key, href }) => (
                 <NavItem key={key} navKey={key} href={href} />
@@ -337,16 +339,19 @@ export default function Header() {
               </button>
             </div>
 
-            <CinematicButton
-              href="/reserve"
-              isRTL={isRTL}
-              aria-label={t('reserveTable')}
-              className={`px-6 py-2.5 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
-            >
-              {t('reserveTable')}
-            </CinematicButton>
           </div>
         </div>
+
+        {/* Absolute Reserve CTA — outside the grid so the 3-column layout
+            balances around the centered logo. Desktop only. */}
+        <CinematicButton
+          href="/reserve"
+          isRTL={isRTL}
+          aria-label={t('reserveTable')}
+          className={`hidden md:inline-flex absolute end-6 top-1/2 -translate-y-1/2 px-6 py-2.5 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
+        >
+          {t('reserveTable')}
+        </CinematicButton>
 
         {/* Mobile: logo on inline-start, icons + hamburger on inline-end */}
         <div className="flex md:hidden items-center justify-between w-full">
