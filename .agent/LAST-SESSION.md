@@ -1,209 +1,288 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Sessions 148 + 149 (one Claude Code conversation, two close-outs).
-> 148 = PUB-007 extension on `rpc_create_order` + supabase_migrations
-> registry backfill for 174/175. 149 = single hygiene lane bundling
-> three items (BHD display drift, PUB-009 leftover, full types regen).
-> All 9 gates green at HEAD. Bridge body upstream still references
-> session 145 — Claude.ai owes a refresh.
+> Session 150 — open-lane sweep. 5 work items shipped as 5 commits
+> plus 1 close-out, all on master. No migrations. All 9 gates green at
+> HEAD including `npm run build` re-run at close-out.
 > Date: 2026-05-18
 > Author: Claude Code (Opus 4.7, 1M context)
 
-## SESSION 148 — SUMMARY
+## SESSION 150 — SUMMARY
 
-User asked for "PUB-007: add proper SQLSTATE codes to all RPC error
-returns." PUB-007 itself (rpc_create_reservation) had already shipped
-in session 146 commit `5a57f9a` + migration 174. Scope question
-surfaced before going wide: 437 `RAISE EXCEPTION` sites across 55
-migration files vs. only 5 JS sites discriminating by
-`message.includes()` — all in `checkout/actions.ts:723-735` for
-rpc_create_order. User picked "Checkout RPC only (recommended)".
+User opened with a 5-item priority lane and asked me to work through
+in order. Each item was scoped to one commit per logical group. The
+lane was a mix of CI hardening, audit cleanup, tooling, test coverage,
+and a small feature — chosen to drain residual dev candidates against
+current master before the soft-launch.
 
-### Commits
+### Commits (in master order, oldest first)
 
-| SHA | Item | Scope |
-|-----|------|-------|
-| `8f01b2f` | PUB-007 extension | Migration 179 + checkout/actions.ts |
-| `814866b` | Session 148 close-out | Bridge timestamp + master pointer refresh |
-
-### Key technical decisions
-
-1. **One SQLSTATE per logical error class.** Migration 174 set the
-   precedent of pinning every sentinel in the function, not just the
-   caller-discriminated subset. Migration 179 follows: KH001 reused
-   for AUTH_REQUIRED (so the code maps to the same caller meaning
-   across RPCs), then KH015–KH021 for PRICE_MISMATCH / INVALID_TOTAL /
-   COUPON_INVALID (5 internal branches) / PROMOTION_INVALID (8) /
-   INSUFFICIENT_POINTS (4) / POINTS_OVER_CAP / INVALID_PAYMENT_MODE.
-   Message text preserved verbatim so Sentry/log lines stay readable.
-
-2. **Registry backfill via MCP execute_sql, not re-apply.**
-   `list_migrations` revealed 174 + 175 were missing from
-   `supabase_migrations.schema_migrations` despite being applied
-   live (they had been run via direct SQL during session 146 without
-   the registry insert). Backfilled both rows with the verbatim
-   function bodies as `statements[0]` so fresh clones replay
-   correctly. Functions themselves were not touched —
-   `ON CONFLICT (version) DO NOTHING` for safety. Used version='174'
-   / '175' to match the 001-171 numeric series convention.
-
-3. **JS caller switched from include-chain to switch(error.code).**
-   Five `rpcError.message.includes('...')` branches in
-   `checkout/actions.ts:723-735` collapsed into a single
-   `switch (rpcError.code)` block. Same error-string outputs
-   downstream — `localizeCheckoutError` in CheckoutForm still
-   discriminates by the lowercase code.
-
-### Verification
-
-All 9 gates green at HEAD (`814866b`). Gate 5 carried 14
-pre-existing display-label hits unrelated to this commit — flagged
-in the close-out summary as the source of session 149's lane.
+| SHA       | Item | Scope |
+|-----------|------|-------|
+| `d958378` | 1    | CI workflows pinned to Node 24 |
+| `6e2ea45` | 2    | Dashboard P2 sweep — AUD-V4-011/013/016 closed |
+| `b141719` | 3    | `scripts/gen-types.ps1` wrapper + npm script |
+| `d665904` | 4    | Pre-launch smoke suite (12 tests) |
+| `b639a22` | 5    | Catering dashboard filters + pagination |
 
 ---
 
-## SESSION 149 — SUMMARY
+### Item 1 — CI workflows: Node 20 → 24 (`d958378`)
 
-Single hygiene lane, three bundled items, one commit.
+User briefed: "audit `.github/workflows/*.yml`, upgrade Node to 24,
+fix any deprecation warnings. One commit." Brief referenced a
+BACKLOG.md Node 24 item that turned out not to exist — the closest
+signal was the session-start hook flagging Node 18 as EOL with Node 24
+as the current LTS default. Surfaced this finding to the user before
+editing.
 
-### Commits
+Audit results: all three workflow files already use current action
+versions (`actions/checkout@v5`, `actions/setup-node@v5`,
+`actions/upload-artifact@v6`). No deprecation cleanup needed. Three
+changes:
 
-| SHA | Item | Scope |
-|-----|------|-------|
-| `5848f24` | Hygiene lane | 14 BHD display fixes + OrderWithItems alias removal + full types regen |
-| `5152434` | Session 149 close-out | BACKLOG.md tooling entry + close-out marker |
+- `audit.yml`: `node-version: '20'` → `'24'`
+- `e2e.yml`: `node-version: 20` → `'24'` on both jobs (auth-e2e +
+  realtime-rls); also quoted the scalar to match GitHub's recommended
+  convention so YAML can't interpret the version as a number.
+- `playwright.yml`: `node-version: lts/*` → `'24'` (explicit pin
+  matches the other two; `lts/*` would have started resolving to a
+  different major if a new LTS shipped). Also added the missing
+  `cache: 'npm'` — free CI speedup.
 
-### Item 1 — Gate 5 BHD drift (14 hits across 12 files)
+`engines.node` deliberately left at `>=20.0.0`. That's a
+contributor-floor decision, not CI hardening, and forcing it up in
+the same commit would muddy the scope.
 
-Adopted the established `const bhd = isAr ? 'د.ب' : 'BHD'` pattern
-(already in use by QRTableClient, WaiterOrdersClient, etc.):
+---
 
-- `MenuEngineeringMatrix.tsx` (in-ternary extraction)
-- `inventory/stock/page.tsx` (server, bare BHD label)
-- `shifts/page.tsx` + `CloseShiftDialog.tsx` (Translations interface
-  gains `currency_symbol`; parent computes once, dialog consumes 3×)
-- `menu/item/[slug]/page.tsx` (collapsed outer ternary, reuse bhd
-  const; AR side preserved as "دينار بحريني" for metadata wording)
-- `EditMenuItemDialog.tsx` + `MenuItemDialog.tsx` (price label)
-- `MenuBrowser ItemCard` + `pos/ServiceModeClient ServiceItemTile`
-  (aria-label)
-- `ModifierPicker` (subtotal pill)
-- `LoyaltySettings` ("Point value" label)
-- `LoyaltyRedemptionWidget` (dropped redundant "BHD" word from JSDoc)
+### Item 2 — Dashboard P2 sweep (`6e2ea45`)
 
-Gate 5 now returns 0. No rendered-text changes — same display in
-both locales.
+Surveyed `docs/audit/dashboard-audit-2026-05-13-v3.md` +
+`.agent/dashboard-audit-2026-05-13-v4.md` for open P2/MEDIUM
+findings, then code-verified each against current master. Most had
+been closed transparently by sessions 137-149's RPC sweep:
 
-### Item 2 — PUB-009 leftover
+- AUD-V4-010 — closed; `analyticsErr`/`analyticsOk` Result pattern in
+  place at `stats.ts:131` and `queries.ts:200`.
+- AUD-V4-012 — closed; `rpc_set_staff_active` (migration 177) carries
+  CAS via `p_expected_state` and writes the audit row in the same
+  transaction.
+- AUD-V4-014 — closed; `togglePromotion` and `deletePromotion` route
+  through `rpc_update_promotion` / `rpc_delete_promotion` (migration
+  171).
+- AUD-V3-008 — same finding as AUD-V4-010; closed.
+- AUD-V4-015 + AUD-V3-012 — author flagged as defense-in-depth only;
+  not exploitable. Deferred per author guidance.
 
-`OrderWithItems` alias removed from `custom-types.ts:106-109`.
-Session 146 commit `02f8ae2` swapped the `as unknown as
-OrderWithItems` cast for a narrow inline row type at the /order/[id]
-call site, orphaning the alias. Verified zero references via grep
-before removal.
+Three genuinely open. All fixed in one commit:
 
-### Item 3 — Full types regen
+**AUD-V4-011 — fire-and-forget `audit_logs.insert`** in 4 sites of
+`delivery/actions.ts` (`dispatch` / `cancel` / `confirm_delivery` /
+`reassign`). Each `.insert(...)` was awaited but its error never
+inspected, so an RLS rejection or full-table error would silently
+mask the audit gap. Each now destructures `{ error: auditError }`
+and routes failures through `Sentry.captureException` with an
+operation tag (`{ tags: { area: 'delivery', operation: 'dispatch' } }`
+etc.). Added `import * as Sentry from '@sentry/nextjs'` to the file
+(it wasn't previously imported in delivery actions).
 
-`npx supabase gen types typescript --linked > src/lib/supabase/types.ts`
-picked up the schema additions from migrations 174-179. Required
-two cleanups before TSC accepted the output:
+**AUD-V4-013 — `confirmCashHandover` lacked CAS.** The function had
+a pre-check at line 176 (`if (h.manager_confirmed) return { error:
+'Already confirmed' }`) but the UPDATE that followed pinned only
+`.eq('id', handoverId)`. Two managers racing on the same handover
+both succeeded; the second silently overwrote. Added
+`.eq('manager_confirmed', false).select('id')` so an empty result
+set returns `'Already confirmed'` matching the pre-check error
+string.
 
-1. **CRLF stripped.** PowerShell `>` redirect converted LF to CRLF.
-   Normalized via `node -e fs.readFileSync().replace(/\r\n/g,'\n')`.
+**AUD-V4-016 — `assignDriverToOrder` client inconsistency.** The
+order + driver pre-checks used the anon cookie client while the write
+used the service-role client. Caller authz is already enforced via
+`MANAGER_ROLES.has(caller.role)` + branch_id checks before either
+read, so the RLS pre-filter had no security value but would silently
+break if RLS on `orders` or `staff_basic` ever tightened. Switched
+both reads to the service client and removed the now-dead
+`createClient` import — this matches `unassignDriver` /
+`cancelDeliveryOrder` / `confirmDelivery` in the same file, which all
+use service throughout.
 
-2. **CLI stdout pollution stripped.** Two non-TypeScript bands
-   ended up in the file body because the CLI logs status to stdout,
-   not stderr: line 1 `"Initialising login role..."` (preamble) and
-   lines 5590-5591 `"A new version of Supabase CLI is available..."`
-   (footer). Trimmed via node to the `export type Json` →
-   `} as const` slice.
+---
 
-Net diff: adds `graphql_public` schema (was missing), function-level
-additions `_menu_destructive_allowed` / `_menu_toggle_allowed` (from
-migration 176), `rpc_after_auth_create_staff` family (177), and the
-KH-class SQLSTATE-pinned signatures (174 reservation, 179
-create_order). 225 inserts / 102 deletes in types.ts.
+### Item 3 — `scripts/gen-types.ps1` wrapper (`b141719`)
 
-### Discovered tooling gap (added to BACKLOG.md)
+User's lane brief referenced the BACKLOG.md "Session 149 — Tooling"
+entry. Session 149's close-out flagged two manual cleanups required
+after `supabase gen types typescript --linked > types.ts` on Windows
+PowerShell:
 
-Under new heading `## Session 149 — Tooling`:
+1. CRLF line endings sneak in via the `>` redirect path.
+2. Two stdout banners from the CLI land inside the file body —
+   `"Initialising login role..."` preamble + `"A new version of
+   Supabase CLI is available..."` footer.
 
-> supabase gen types: wrap in a script that pipes through grep/sed
-> to strip CLI stdout preamble+footer and forces LF endings —
-> prevents types.ts pollution on every regen. Low priority, run
-> before next full types regen.
+Wrapper design:
 
-### Key technical decisions
+- Captures stdout only (`& npx supabase gen types typescript
+  --linked`). Stderr flows to the console so the user still sees CLI
+  warnings (linked-project mismatch, network errors).
+- Joins the captured `string[]` with LF so substring offsets are
+  stable.
+- Slices to `[first 'export type Json' .. last '} as const' + 10]`.
+  This catches both the preamble (lands before `export type Json`)
+  and the footer (lands after `} as const`).
+- Normalizes `\r\n` → `\n` and trims trailing newlines, then writes
+  via `[IO.File]::WriteAllText(outFile, body,
+  [Text.UTF8Encoding]::new($false))`. The explicit `UTF8Encoding(false)`
+  avoids BOM and bypasses PowerShell's redirect-CRLF path entirely.
+- On marker miss or non-zero exit code, throws a descriptive error.
 
-1. **Per-file `const bhd` over a shared helper.** Existing
-   formatPrice in `src/lib/format.ts` uses `'BD'` not `'BHD'` —
-   reusing it would have changed visual output across all 12
-   surfaces. Introducing a new helper just for the label was more
-   churn than the 12 one-line const declarations and matched the
-   pattern already used in 8+ working files.
+Added `"db:gen-types": "pwsh scripts/gen-types.ps1"` alongside the
+existing `db:migrate:prod` and `db:status` scripts.
 
-2. **CloseShiftDialog gets `currency_symbol` via translations
-   object, not a new prop.** The dialog already takes a
-   `translations` bag built by its server-component parent. Adding
-   a `currency_symbol: string` field there kept the dialog signature
-   stable and centralized the `isAr` derivation in the parent.
+Validated end-to-end against the linked project — the regenerated
+file was byte-identical to the committed `types.ts` (no schema drift
+since session 149's full regen on migrations 174-179).
 
-3. **Bridge body not refreshed locally.** Per `BRIDGE PROTOCOL`,
-   Claude.ai owns the CURRENT-SESSION.md body. The local sync script
-   only updates the Generated/Master pointer header. The body still
-   reads "Updated: 2026-05-18 (session 145 close-out...)" — a manual
-   Claude.ai update is owed to capture sessions 146-149.
+---
 
-### Verification
+### Item 4 — Pre-launch smoke suite (`d665904`)
 
-All 9 gates green at HEAD (`5152434`):
+`tests/smoke/pre-launch.spec.ts` — 12 tests across 4 describes:
 
-- Gate 1 tsc: clean
-- Gate 2 RTL: 0
-- Gate 3 fonts (word-boundary): 0
-- Gate 4 colors: 0
-- Gate 5 BHD: 0 (down from 14)
-- Gate 6 phones: 0
-- Gate 7 hex: 0
-- Gate 8 i18n: AR=EN=2,548 keys, PASS
-- Gate 9 build: clean
+- `smoke: auth flow` — 4 tests covering `/login` form render, EN
+  `/en/account/login` customer login, `/forgot-password` reachability,
+  and unauthenticated `/dashboard` → `/login` redirect.
+- `smoke: order creation` — 3 tests: `/menu` lists ≥ 6 category/item
+  links; `/menu/item/grills-kahramana-mix` shows BHD 3-decimal price +
+  Add-to-Cart; clicking Add-to-Cart throws no JS errors.
+- `smoke: reservation` — 2 tests: `/reserve` renders all required
+  fields (`input[name="guest_name"]`, `input[name="phone"]`,
+  `input[name="reserved_date"]`, submit button) and initial render has
+  no JS errors.
+- `smoke: checkout` — 3 tests: `/checkout` reachable + form or
+  empty-cart visible; EN variant reachable; initial render has no JS
+  errors.
+
+Selector patterns mirror `tests/kahramana.spec.ts` (the existing 836-line
+E2E) so the smoke stays in lockstep. Scope is intentionally
+surface-level — actual form submits would require Turnstile bypass
+(fail-closed in production per architecture decision) and would dirty
+production data; full happy-path E2E lives in `tests/e2e/`.
+
+Wired via `npm run test:smoke` (filtered to `tests/smoke/`). Default
+`baseURL` per `playwright.config.ts` is
+`https://kahramana.vercel.app`; override with
+`E2E_BASE_URL=http://localhost:3000` for a dev-server run.
+
+**Not executed at close-out** — running 12 tests against production
+would generate phantom traffic and risk tripping rate limits. Spec
+was validated only via `npx playwright test --list tests/smoke/`
+(all 12 discovered) + `npx tsc --noEmit` (clean).
+
+---
+
+### Item 5 — Catering dashboard filters + pagination (`b639a22`)
+
+Replaced the `.limit(200)` hard cap in
+`src/app/[locale]/dashboard/catering/CateringInquiriesList.tsx`
+with proper pagination (25/page, `.range(...) + count: 'exact'`) and
+added two server-rendered filters living above the Suspense boundary
+in a new `CateringFilters.tsx`:
+
+- Event date from/to — filters `event_date` (the operationally
+  relevant column for owner triage of upcoming events).
+- Occasion type select — sources options from
+  `CATERING_OCCASION_TYPES` so new enum keys appear automatically.
+
+Filter bar is a native `<form method="GET">` — zero JS. Lives outside
+Suspense so it stays visible during the skeleton phase when the user
+submits new filters. The Suspense `key` serializes searchParams so
+each filter change forces a fresh fetch instead of flashing stale
+rows.
+
+Server-side input validation in `page.tsx`:
+
+- `from`/`to` whitelisted via `/^\d{4}-\d{2}-\d{2}$/` — anything else
+  is silently dropped so a bookmarked dashboard URL with a malformed
+  date can't trigger a Postgres cast error.
+- `page` coerced to a positive integer (`safePage` helper).
+- `occasion` left opaque — Supabase `.eq` with an unknown value
+  returns zero rows, not an error.
+
+Pagination footer renders `Showing X–Y of N` + prev/next links that
+preserve filter context via a shared `URLSearchParams` builder.
+Disabled prev/next are rendered as `<span aria-disabled="true">`
+with muted styling rather than absent — keeps the visual layout
+stable across page boundaries.
+
+i18n added 10 new keys per locale under `dashboard.catering`:
+
+- `filters.{title,from,to,occasion,occasionAll,apply,clear}` (7)
+- `pagination.{previous,next,showing}` (3)
+
+AR `from`/`to` labels clarified to "تاريخ المناسبة" since
+`event_date` is the column being filtered. Gate 8 PASS at
+AR=EN=2,558 (was 2,548).
+
+---
+
+### Close-out verification — all 9 gates green at HEAD
+
+| # | Gate | Result |
+|---|------|--------|
+| 1 | tsc | PASS |
+| 2 | RTL (`pl-/pr-/ml-/mr-`) | 0 |
+| 3 | fonts (word-boundary Inter/Poppins/...) | 0 |
+| 4 | colors (purple/violet/indigo/yellow-N/amber-N) | 0 |
+| 5 | BHD display-token | 0 |
+| 6 | phones / wa.me (excluding 3 exempt files) | 0 |
+| 7 | hex outside token files | 0 |
+| 8 | i18n parity + t() coverage | PASS (AR=EN=2,558) |
+| 9 | `npm run build` | PASS (exit 0) |
+
+---
+
+### Bridge maintenance at close-out
+
+- `.agent/BACKLOG.md`: removed the "Session 149 — Tooling" entry
+  (superseded by `b141719`).
+- `.agent/CURRENT-SESSION.md`: focused edits on header (session 145 →
+  150 + master pointer), CURRENT STATUS posture, ACTIVE DEV PRIORITIES
+  (prepended session 150 block + replaced PUB-007/009 candidate note
+  with sessions 146-149 reference), MIGRATION STATE (bumped 173 → 179
+  with 174-179 entries), SESSION HISTORY (replaced with sessions
+  146-150).
 
 ---
 
 ## STATE AT END OF SESSION
 
 ### Master HEAD
-`5152434 docs(session): session 149 close-out`
+`b639a22 feat(catering): date range + occasion filter + pagination on inquiries list`
+(close-out commit appended after this file is written)
 
 ### Migrations
-Local = Remote = **179** applied. Sessions 148/149 added migration 179
-(rpc_create_order SQLSTATE codes). Registry rows for 174 + 175
-backfilled during session 148 via MCP `execute_sql` with full
-function bodies — `supabase migration list --linked` should no longer
-flag a gap.
+Local = Remote = **179** applied. Session 150 added **none** — all 5
+items were code-only.
 
 ### Pending DB rollout
-None. Migration 179 applied via MCP `apply_migration` during
-session 148, registered under timestamp `20260518125817` per the
-project's MCP convention.
+None.
 
 ### What's next
 
-- **Operator-side:** Unchanged from session 147 close-out. Supabase
+- **Operator-side:** Unchanged from session 149 close-out. Supabase
   Pro + Singapore migration, Resend domain verify, 13 staff seed
-  (full operator checklist surfaced in chat during session 149 —
-  reproduced in the session-148 conversation if needed), TAP merchant
+  (then flip `NEXT_PUBLIC_ENABLE_QR_LOYALTY_SCAN=true`), TAP merchant
   keys, ~12 missing dish photos.
 
-- **Dev-side:** Backlog has one new low-priority entry in
-  `.agent/BACKLOG.md` under "Session 149 — Tooling" (supabase gen
-  types wrapper script). Plus the older Session 111 entries that
-  predate the launch sweep. No active lanes.
+- **Dev-side:** Backlog is empty after removing the session 149
+  tooling entry. Only the Session 111 entries remain (logo `sizes`
+  prop, dashboard HTML cache header rule, LCP root cause P3 pivot
+  notes) — all pre-launch P3.
 
-- **Bridge maintenance:** Claude.ai should refresh
-  `CURRENT-SESSION.md` body upstream to cover sessions 146-149.
-  The local sync script only refreshes the Generated/Master pointer
-  header.
+- **Bridge maintenance:** None pending. Session 150 refreshed
+  `CURRENT-SESSION.md` body in-process per user instruction
+  (overriding the usual Claude.ai-owns-the-body protocol).
 
 ### Carry-forward
-None for this lane. Both sessions closed cleanly with all gates
-green and no deferred work.
+None. The lane drained cleanly with all 9 gates green and zero
+deferred work.
