@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { getSession } from '@/lib/auth/session'
+import { createServiceClient } from '@/lib/supabase/server'
 import { getMenuData } from '@/lib/menu.server'
 import { loadModifierGroupsBySlug } from '@/lib/modifiers.server'
 import { BRANCH_LIST } from '@/constants/contact'
@@ -34,15 +34,9 @@ export default async function WaiterTablePage({ params, searchParams }: PageProp
 
   if (!branchId) redirect(`${prefix}/waiter`)
 
-  // Untyped client — restaurant_tables not yet in regenerated Database types.
-  const tablesUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const tablesKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!tablesUrl || !tablesKey) notFound()
-  const untypedTables = createSupabaseClient(tablesUrl, tablesKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  const supabase = await createServiceClient()
   type TableMeta = { id: string; label_ar: string | null; label_en: string | null }
-  const { data: tableMetaRaw, error: tableMetaError } = await untypedTables
+  const { data: tableMetaRaw, error: tableMetaError } = await supabase
     .from('restaurant_tables')
     .select('id, label_ar, label_en')
     .eq('branch_id', branchId)

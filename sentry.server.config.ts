@@ -15,8 +15,9 @@ Sentry.init({
   // 10% trace sampling — production-appropriate; full sampling burns Sentry quota.
   tracesSampleRate: 0.1,
 
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
+  // AUD-V4-007: enableLogs dropped to prevent application-level console output
+  // (order/branch IDs) from flowing into Sentry breadcrumbs. Sites that need
+  // visibility call Sentry.captureException explicitly.
 
   // Disable PII auto-capture (was true) — Sentry was auto-collecting client IPs
   // and cookies on every server event. We attach user context explicitly where

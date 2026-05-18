@@ -16,8 +16,7 @@ Sentry.init({
   // 10% trace sampling — aligned with server + client; full sampling burns Sentry quota.
   tracesSampleRate: 0.1,
 
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
+  // AUD-V4-007: enableLogs dropped in sync with server/client configs.
 
   // Aligned with server/client — no automatic PII capture from edge requests.
   sendDefaultPii: false,

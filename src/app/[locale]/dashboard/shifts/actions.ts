@@ -40,7 +40,7 @@ export async function getShiftSummary(branchId: string, date: string) {
       .in('status', ['delivered', 'completed'])
 
     if (error) {
-      console.error('[shifts] getShiftSummary query failed:', error)
+      Sentry.captureException(error, { tags: { stage: 'shifts.summary.query' } })
       return { error: 'db_error' as const, expectedCash: 0, orderCount: 0 }
     }
 
@@ -48,7 +48,7 @@ export async function getShiftSummary(branchId: string, date: string) {
     return { expectedCash, orderCount: (orders ?? []).length }
   } catch (e) {
     if (isDashboardGuardError(e)) return { error: 'forbidden' as const, expectedCash: 0, orderCount: 0 }
-    console.error('[shifts] getShiftSummary failed:', e)
+    Sentry.captureException(e, { tags: { stage: 'shifts.summary' } })
     return { error: 'unknown' as const, expectedCash: 0, orderCount: 0 }
   }
 }

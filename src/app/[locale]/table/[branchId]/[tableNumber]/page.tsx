@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { getMenuData } from '@/lib/menu.server'
 import { loadModifierGroupsBySlug } from '@/lib/modifiers.server'
 import { BRANCHES } from '@/constants/contact'
@@ -21,16 +21,11 @@ export default async function QRTablePage({ params }: PageProps) {
   const branch = (BRANCHES as Record<string, { id: string; nameAr: string; nameEn: string; status: string } | undefined>)[branchId]
   if (!branch || branch.status !== 'active') notFound()
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) notFound()
-  const untyped = createSupabaseClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  const supabase = await createServiceClient()
 
   // Validate table exists + is active
   type TableMeta = { id: string; label_ar: string | null; label_en: string | null }
-  const { data: tableMetaRaw } = await untyped
+  const { data: tableMetaRaw } = await supabase
     .from('restaurant_tables')
     .select('id, label_ar, label_en')
     .eq('branch_id', branchId)

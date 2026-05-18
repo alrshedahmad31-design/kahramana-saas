@@ -21,8 +21,10 @@ Sentry.init({
   // Restrict trace propagation (sentry-trace + baggage headers) to internal API routes only.
   // Prevents org_id / release SHA from leaking into HTML meta tags and third-party requests.
   tracePropagationTargets: [/^\/api\//],
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
+
+  // AUD-V4-007: enableLogs dropped to prevent browser-side console output
+  // from being forwarded to Sentry as breadcrumbs/events. Errors are still
+  // captured via the explicit Sentry.captureException sites + replayIntegration.
 
   // Define how likely Replay events are sampled.
   // This sets the sample rate to be 10%. You may want this to be 100% while
