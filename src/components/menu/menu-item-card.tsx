@@ -4,8 +4,8 @@ import { useTranslations } from 'next-intl'
 
 import { motion } from 'motion/react'
 import { Link } from '@/i18n/navigation'
-import Image from 'next/image'
 import type { NormalizedMenuItem } from '@/lib/menu'
+import MenuItemImage from '@/components/menu/menu-item-image'
 import { FilterTag, type TagType } from './FilterTag'
 import AddToCartButton from '@/components/cart/AddToCartButton'
 
@@ -42,20 +42,16 @@ export default function MenuItemCard({
       {/* ── IMAGE ZONE ── */}
       <Link href={`/menu/item/${item.slug}`}>
         <div className="relative aspect-[4/3] overflow-hidden">
-          <Image
-            src={item.image ?? '/images/placeholder/dish.jpg'}
-            alt={isRTL 
-              ? `${item.name.ar} — مطعم كهرمانة بغداد العراقي في البحرين` 
+          <MenuItemImage
+            src={item.image}
+            alt={isRTL
+              ? `${item.name.ar} — مطعم كهرمانة بغداد العراقي في البحرين`
               : `${item.name.en} — Kahramana Baghdad Iraqi Restaurant in Bahrain`
             }
-            fill
             priority={index < 8}
-            className="
-              object-cover
-              transition-transform duration-[400ms]
-              group-hover:scale-105
-            "
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="group-hover:scale-105"
+            withOverlay={false}
           />
 
           {/* Out-of-stock overlay */}
