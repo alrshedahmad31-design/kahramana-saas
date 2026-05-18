@@ -5119,6 +5119,10 @@ export type Database = {
         }
         Returns: Json
       }
+      rpc_replace_recipes: {
+        Args: { p_rows: Json; p_slug: string; p_updated_by: string }
+        Returns: number
+      }
       rpc_transfer_stock: {
         Args: {
           p_from_branch: string
