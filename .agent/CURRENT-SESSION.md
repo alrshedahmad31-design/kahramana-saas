@@ -1,28 +1,26 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KAHRAMANA — BRIDGE CONTEXT
-Generated: 2026-05-18 16:38
-Master: d9583783699f854c2ee7d7f8296416ee3d8f8113
+Generated: 2026-05-18 17:39
+Master: 626362b93754e0bc15bcfddd5354723eaaa60bb6
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 150 close-out — open-lane sweep: CI Node 24 + 3 P2s + tooling + smoke + catering filters)
-# Master: b639a22 (pre-close-out tip)
+# Updated: 2026-05-18 (session 151 close-out — navbar redesign + Turkish Coffee seed)
+# Master: 6aa9d41
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-150 ran a 5-item open lane that closed the last
-opportunistic dev candidates against current master. CI workflows
-pinned to Node 24 (Node 18 EOL prep); the final 3 open P2s from the
-dashboard v4 audit (AUD-V4-011 audit-log fire-and-forget × 4 sites,
-AUD-V4-013 confirmCashHandover CAS, AUD-V4-016 dispatch
-read/write client consistency) shipped; `scripts/gen-types.ps1`
-wrapper retires the session-149 manual cleanup loop; pre-launch
-smoke suite (12 tests, `npm run test:smoke`) added as a go/no-go
-gate; `/dashboard/catering` got date-range + occasion filters +
-25/page pagination replacing the old `.limit(200)` hard cap. All 9
-gates green at HEAD. No open P1 or P2 lanes against any audit doc.
+Posture: session-151 ships two unrelated lanes — a luxury-restaurant
+navbar redesign (Header.tsx rewrite: centered logo on a 3-column grid,
+split nav groups around the logo, icon-only account button, literal
+EN/AR language toggle, hover changed from underline to gold-fade,
+calendar/reserve icon dropped from mobile top bar) and a Turkish Coffee
+seed (migration 180, applied to remote; row id `turkish-coffee` under
+category `the-heritage-tea-and-coffee`, station `mains` to match the
+other 3 drinks rows). Asset `/public/assets/gallery/turkish-coffee.webp`
+committed as `6aa9d41`. All 9 gates green at HEAD.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -65,63 +63,17 @@ Assets (operator) 🟡
 
 **Status: empty.** All dev work that is not operator-blocked or
 externally locked is complete. The project is production-ready for
-soft-launch (cash-only). Every audit doc on file (dashboard v2/v3/v4
-+ public-audit) has zero open P0/P1/P2.
+soft-launch (cash-only).
 
-Optional next-lane candidates: none queued. Only fire on explicit
-ask.
+Optional next-lane candidates (none queued; only fire on explicit ask):
+- **PUB-007 + PUB-009** (deferred from session 144 T3-B). Both documented
+  in `.agent/BACKLOG.md` under "Session 144 — Public-surface audit
+  deferred items". PUB-007 needs a Supabase migration to switch the
+  reserve RPC from substring sentinel matching to SQLSTATE codes;
+  PUB-009 is a ~15-line narrow row type for `/order/[id]` to replace the
+  `as unknown as OrderWithItems` cast. Pair them in the next hygiene lane.
 
-CLOSED in session 150 (newest first):
-
-✅ Session 150 — Open-lane sweep (5 commits, d958378 → b639a22)
-   - `d958378` (item 1): CI workflows pinned to Node 24 across
-     audit.yml / e2e.yml (both jobs) / playwright.yml; playwright.yml
-     also picked up the missing `cache: 'npm'`. `engines.node` stays
-     `>=20.0.0` — contributor-floor decision, not CI hardening.
-   - `6e2ea45` (item 2): closed the last 3 open P2s from
-     dashboard-audit-2026-05-13-v4. AUD-V4-011: 4 fire-and-forget
-     `audit_logs.insert` calls in `delivery/actions.ts` now capture
-     errors via `Sentry.captureException` with operation tags.
-     AUD-V4-013: `confirmCashHandover` gains
-     `.eq('manager_confirmed', false).select('id')` CAS predicate;
-     empty rowset returns `'Already confirmed'`. AUD-V4-016:
-     `assignDriverToOrder` reads switched from anon → service to
-     match unassign/cancel/confirm in the same file.
-   - `b141719` (item 3): `scripts/gen-types.ps1` + `npm run
-     db:gen-types`. Slices CLI output to
-     `[first 'export type Json' .. last '} as const']` so stdout
-     banners never land in `types.ts`; writes via
-     `[IO.File]::WriteAllText` with `UTF8Encoding(false)` to skip
-     PowerShell's CRLF redirect. Validated end-to-end against the
-     linked project: byte-identical to the committed `types.ts`.
-   - `d665904` (item 4): `tests/smoke/pre-launch.spec.ts` — 12
-     tests across 4 describes covering auth flow / order creation /
-     reservation / checkout. Mirrors selectors used in
-     `tests/kahramana.spec.ts`. Surface-level only (Turnstile
-     fail-closed in production blocks real submits). Wired via
-     `npm run test:smoke`.
-   - `b639a22` (item 5): `/dashboard/catering` gains date-range
-     (event_date from/to) + occasion select + 25/page pagination
-     replacing `.limit(200)`. Native HTML `<form method=GET>` —
-     zero JS. Filter bar lives outside Suspense so it stays visible
-     during the skeleton phase. Suspense key serializes searchParams
-     so each filter change forces a fresh fetch. Inputs validated
-     server-side: dates whitelisted via `/^\d{4}-\d{2}-\d{2}$/`,
-     page coerced to positive int, occasion left opaque.
-     i18n added 10 new keys per locale under
-     `dashboard.catering.filters` (7) + `dashboard.catering.pagination`
-     (3); AR=EN=2,558 (was 2,548).
-   - No migrations, all 9 gates green at HEAD (gate 9 = `npm run
-     build` re-run at close-out, exit 0).
-
-CLOSED in sessions 137–149 (newest first):
-
-✅ Sessions 146–149 — see LAST-SESSION.md (sessions 148+149 in detail);
-   sessions 146+147 covered the dashboard RPC sweep finalization
-   (migrations 174 reserve SQLSTATE, 175 atomic replace_recipes,
-   176 menu writes, 177 staff writes incl. rpc_set_staff_active,
-   178 coupons toggle, 179 rpc_create_order SQLSTATE) plus the
-   PUB-007/PUB-009 closures deferred from session 144.
+CLOSED in sessions 137–145 (newest first):
 
 ✅ Session 145 — Dashboard v4 P1 sweep finalization (1 commit, 81d0194)
    - Verified the 2026-05-13 dashboard v4 audit's 6 HIGH findings
@@ -370,15 +322,12 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 - TBT ~1600ms on Slow 4G = animation cost, intentional brand decision
 
 ## MIGRATION STATE
-- Local = Remote = 179 migrations applied (paired)
-- Session 150 added: **none** — all 5 items were code-only.
-- Sessions 146–148 added: 174 (rpc_create_reservation SQLSTATE codes —
-  PUB-007), 175 (rpc_replace_recipes atomic), 176 (9 menu writes →
-  RPCs), 177 (4 staff writes → RPCs incl. rpc_set_staff_active for
-  AUD-V4-012), 178 (2 coupons toggles → RPCs incl. rpc_toggle_coupon
-  / rpc_set_coupon_active), 179 (rpc_create_order SQLSTATE codes —
-  PUB-007 extension; 174/175 registry rows also backfilled in 148 via
-  MCP execute_sql).
+- Local = Remote — migrations applied through 180 (paired).
+- Session 151 added: 180 (seed Turkish Coffee item: id `turkish-coffee`,
+  category `the-heritage-tea-and-coffee`, price 1.600 BHD, station
+  `mains`, idempotent `ON CONFLICT (id) DO NOTHING`). Departs from 144's
+  pattern by setting station explicitly to match sibling drinks rows
+  (default would have been `main`; existing drinks all carry `mains`).
 - Session 145 added: **none** — both passes were code-only (Sentry config
   flag flip + service-role factory consolidation). The 6 dashboard v4 P1s
   were either already covered by prior migrations (126 for staff TOCTOU,
@@ -410,39 +359,52 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   matching project's monotonic numbering. `supabase migration list
   --linked` flags the mismatch cosmetically; no production impact.
 
-## SESSION HISTORY (last 5)
-- Session 146: open-lane backlog sweep — PUB-007 reserve RPC SQLSTATE
-  pinning (migration 174 + `5a57f9a`), PUB-009 narrow row type for
-  /order/[id] (`02f8ae2`), 5 menu row-count guards (`c0c7749`), atomic
-  recipe replace via migration 175 (`f066d92`), backlog cleanup
-  (`ae006bd`). Close-out `0cb27d8`.
-- Session 147: dashboard RPC sweep finalization — 9 menu writes
-  (migration 176, `e0f3916`), 4 staff writes incl. AUD-V4-012's
-  `rpc_set_staff_active` (migration 177, `1af2bad`), 2 coupon toggles
-  (migration 178, `da5ef6c`). Close-out `1836ed3`.
-- Session 148: PUB-007 extension — `rpc_create_order` sentinels pinned
-  to SQLSTATE codes (migration 179, `8f01b2f`). 174/175 registry rows
-  backfilled via MCP `execute_sql` since they had been applied without
-  the `supabase_migrations.schema_migrations` insert. Close-out
-  `814866b`.
-- Session 149: hygiene lane — 14 BHD display-token drift hits across
-  12 files (adopted `const bhd = isAr ? 'د.ب' : 'BHD'` pattern),
-  orphaned `OrderWithItems` alias removed (`5848f24`), full types regen
-  on migrations 174-179 (required manual CRLF + preamble/footer cleanup
-  — added BACKLOG entry that session 150 fulfilled). Close-out
-  `5152434`; LAST-SESSION.md handoff `3c1f7bc`.
-- Session 150: open-lane sweep (5 commits, d958378 → b639a22). CI
-  pinned to Node 24 + npm cache on playwright (`d958378`); last 3
-  dashboard v4 P2s closed — AUD-V4-011 audit_log Sentry capture × 4,
-  AUD-V4-013 confirmCashHandover CAS, AUD-V4-016 dispatch service-role
-  consistency (`6e2ea45`); `scripts/gen-types.ps1` wrapper with
-  `npm run db:gen-types` alias (`b141719`); pre-launch smoke suite
-  (12 tests, `npm run test:smoke`) covering auth / order creation /
-  reservation / checkout (`d665904`); `/dashboard/catering` filters +
-  pagination replacing `.limit(200)` — event_date range, occasion
-  select, 25/page (`b639a22`). No migrations; all 9 gates green at
-  HEAD including `npm run build` exit 0. BACKLOG.md session-149
-  tooling entry removed at close-out (superseded by `b141719`).
+## SESSION HISTORY (last entries)
+- Session 151: navbar redesign + Turkish Coffee seed. Three commits:
+  `a612770` Header.tsx rewrite (luxury restaurant pattern — centered
+  logo on `grid-cols-[1fr_auto_1fr]`, split nav groups, premium typo
+  with English tracking + uppercase / Arabic untracked, gold-underline
+  on active route via `::after`, hover removes underline for gold-fade,
+  account icon-only signed-out + signed-in dropdown preserved, EN/AR
+  literal toggle, mobile drops calendar icon and bumps logo to h-12
+  max-w-[170px]). `42ef745` migration 180 seeds Turkish Coffee row
+  (applied to remote; idempotent). `6aa9d41` adds the asset file
+  `public/assets/gallery/turkish-coffee.webp`. All 9 gates green.
+  Note: id `turkish-coffee` does not follow the `drinks-*` prefix
+  convention used by the other 3 rows in this category — left as-is
+  per user decision; no corrective migration 181.
+- Session 141: mobile responsiveness sweep across recipes/import/
+  owner/reservations/shifts/alerts/orders/analytics/reports/payments/
+  coupons/promotions/settings/pos/menu (Lane 1) + /kds/[station]
+  single-station mobile route (Lane 2)
+- Session 142: Tier 1 + Tier 2 security hardening (15 commits) —
+  Turnstile + Upstash fail-closed, QR rate-limit, staff login server
+  action, order column allowlist, CRLF + phone whitelist, find-tables
+  rate-limit, cron timingSafeEqual + sanitize + notified_at idempotency
+  (migration 172), honeypot fake-success, slug cap, account login
+  Turnstile + email RL, Tap webhook replay dedup (migration 173).
+  Types regen + notes refresh.
+- Session 143: 9-gate hygiene chore — amber → brand-gold on 3 spots in
+  ReservationsClient.tsx; gate 5 BHD regex tightened to display-token
+  only; gate 6 exempt list adds birthday-notify cron. One commit
+  (`bc0811c`), no migrations, no runtime behaviour change.
+- Session 144: public-surface hygiene audit + T3 cleanup. Generated
+  `.agent/public-audit-2026-05-18.md` (15 findings, 0 P0, 6 P1, 9 P2).
+  Shipped 4 batches in 6 commits: T3-A1 fail-closed login surfaces;
+  T3-A2 Sentry on /payment page; T3-A3 force-dynamic pin on 4 auth
+  pages; T3-B 7 P2s + PUB-002 + shared phone regex. Two P2s deferred
+  to BACKLOG.md (PUB-007 needs migration, PUB-009 ~15-line refactor).
+  No migrations, all 9 gates green.
+- Session 145: dashboard v4 P1 sweep finalization. Verified all 6
+  HIGH findings (AUD-V4-004..009) against current master — four were
+  already closed pre-session (migrations 126/169, toSafeError, npm
+  audit clean). Pass 1 dropped `enableLogs: true` across all 3 Sentry
+  configs + routed two `getShiftSummary` errors through
+  `Sentry.captureException`. Pass 2 collapsed 4 inline service-role
+  constructions into `createServiceClient()`. Single commit
+  (`81d0194`), no migrations, all 9 gates green. With this and the
+  session-144 PUB-* closures, every P1 in either audit doc is now
+  closed on master.
 
 ## BRIDGE PROTOCOL
 - Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
