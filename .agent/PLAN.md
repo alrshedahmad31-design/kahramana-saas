@@ -1019,3 +1019,309 @@ Structure 4: { sizes: {...}, variants: [{label:{ar,en}}]} → 2 items (quzi: siz
 ```
 
 `sizes` keys (S/M/L/XL/Glass/0.5L/1L/1.5L/1KG/HALF KG) have no bilingual labels in JSON — UI layer maps them.
+
+---
+
+## مميزات تم إضافتها عند التنفيذ | Features Added During Implementation
+
+> Append-only section. Documents what was actually built across sessions 1–156
+> beyond the original Phase 1 SOW, confirmed by code in `src/app/[locale]/**`,
+> `src/components/**`, and migrations 001–183.
+> Master HEAD at time of writing: `a3916b9`. Local = Remote migrations = 183.
+
+### Initial Platform Schema
+- Status: ✅ SHIPPED
+- Migration: 001
+- Description: Core schema for `branches`, `orders`, `order_items`,
+  `staff_roles`, `staff_members`, `audit_logs`, and `order_status_events`
+  with the full `order_status` enum (including `payment_failed` and
+  `returned`). RLS enabled on every table from day one. Matches the
+  Phase 1 schema spec above with no drift.
+
+### Contact Form Persistence
+- Status: ✅ SHIPPED
+- Migration: 002
+- Description: `contact_messages` table behind `/contact` page with
+  Turnstile + Upstash rate-limiting (fail-closed in production per
+  session 142 T1). CRLF guard on name + PUBLIC_PHONE_RE on phone.
+
+### Kitchen Display System (KDS)
+- Status: ✅ SHIPPED
+- Migration: 005, 016, 072, 077–079, 089, 093–094, 100–113, 137,
+  161, 183
+- Description: Full KDS at `/kds` + `/kds/[station]` (single-station
+  mobile route from session 141). `fn_kds_enqueue_item` routes order
+  items to stations via `menu_items_sync` slug lookup; trigger
+  fallback writes `'unassigned'` directly (migration 183, session 155).
+  Stations enum + cold/mains/grill/unassigned mapping. Auto-complete
+  on terminal order status (161). RLS hardened (089). Real-time
+  Supabase subscriptions feed the operator screen.
+
+### Driver PWA & Delivery
+- Status: ✅ SHIPPED
+- Migration: 007, 021, 024–025, 029–031, 033–034, 039, 060, 115,
+  154, 157, 20260505190424
+- Description: Driver PWA at `/driver` with offline shell,
+  push subscriptions (VAPID configured in Vercel), cash handover
+  flow (single + multiple), order-issue reporting, availability
+  toggle, location retention policy, signed-delivery-proof
+  capture, unique active-driver-per-delivery constraint, and
+  customer signature stored separately from `orders` row. Includes
+  `delivery_flat` and `delivery_coordinates` columns for ops.
+
+### Loyalty Program (Bronze/Silver/Gold/Platinum)
+- Status: ✅ SHIPPED
+- Migration: 008, 061, 067, 084, 141, 152, 158, 159, 162, 172
+- Description: Full loyalty engine with tier benefits panel (UI
+  re-laid as 2-col grid in session 155), points-per-BHD config in
+  `loyalty_config`, 50% redemption UI cap aligned with server,
+  birthday gift flow (cron + Resend email + wa.me deep link +
+  idempotency via `notified_at`), customer `membership_id` as a
+  generated column, points restoration on order reversal (141),
+  and delivery-vs-non-delivery trigger split (067).
+
+### Coupons & Promotions
+- Status: ✅ SHIPPED
+- Migration: 009, 018, 086, 155, 170, 171, 178
+- Description: Enterprise coupon system at `/dashboard/coupons`
+  with branch-scoped redemption, in-RPC `coupon_usages` write to
+  prevent race conditions (155, VULN-004), branch_manager scope
+  clamp (170), enable/disable RPC (178). Promotions table +
+  CRUD RPCs (086, 171).
+
+### Online Payments (Tap)
+- Status: ✅ SHIPPED
+- Migration: 012, 049–050, 133, 139, 140, 142, 173
+- Description: Tap gateway integration with webhook handler,
+  amount-verification guard (139, 142), gateway-payload stripped
+  to `gateway_response` (133), replay-dedup on `gateway_id`
+  regardless of `processed` flag (173). `payment_status` split
+  from order status (049). Refund button currently flips DB state
+  only — wiring the Tap refund API is operator-blocked on
+  merchant key arrival (per `.agent/PRE-LAUNCH-CHECKLIST.md`).
+
+### Analytics & Reports
+- Status: ✅ SHIPPED
+- Migration: 014, 019, 027, 055, 097, 151
+- Description: Materialized analytics views (revenue per branch,
+  hour-of-day distribution, top items, labor cost, menu
+  engineering 4-quadrant). `/dashboard/analytics` +
+  `/dashboard/reports` with audit log + scheduled report
+  exports. `AnalyticsResult<T>` typed wrapper across read paths.
+
+### Staff Management + RBAC + Shifts
+- Status: ✅ SHIPPED
+- Migration: 006, 015, 017, 022, 026, 069, 071, 090, 092, 126,
+  127, 148, 149, 156, 167, 169, 177
+- Description: 9-role permission matrix, `staff_members` +
+  `staff_roles` + magic-link auth + 2FA, clock PINs hashed at
+  rest (069), shift open/close + approval RPC (071, 169),
+  branch-scoped RLS on shifts (092), leave-request RPC (167),
+  staff photo storage (private bucket, 156), `rpc_update_staff`
+  + `rpc_set_staff_active` with CAS (126, 177).
+
+### Restaurant Profile & App Settings
+- Status: ✅ SHIPPED
+- Migration: 020, 023, 136
+- Description: `restaurant_profile` + `settings_schema` + `app_config`
+  tables drive `/dashboard/settings` (loyalty config, branch
+  estimated minutes — migration 053, hours-of-operation, contact
+  routing email). Loaded at session start by server components.
+
+### Inventory & COGS
+- Status: ✅ SHIPPED
+- Migration: 035, 043, 044, 048, 057, 097, 124, 175
+- Description: `/dashboard/inventory` with stock, ingredients,
+  recipes, purchases (atomic via `rpc_create_purchase_order`,
+  124), waste logging, par-levels, count, transfers between
+  branches, prep-items, reports, budget. `rpc_replace_recipes`
+  (175) folds recipe writes into audit-trail pattern. Stock
+  update policy + RLS tightening (044, 048). Returned-status
+  fix (057). Labor + menu-engineering view (097). Excel chef
+  import wires deduction (session 128).
+
+### Catering Inquiries
+- Status: ✅ SHIPPED
+- Migration: 041, 160
+- Description: Public `/catering` form (honeypot fake-success +
+  Turnstile + rate-limit per session 142 T2) persists to
+  `catering_inquiries` with enum keys for occasion / service
+  type (legacy locale-string rows still render via typeguard
+  fallback). Owner/GM-only listing at `/dashboard/catering`
+  with filters + pagination (session 150). Budget feature in
+  inventory (041).
+
+### Cash Flow & Reconciliation
+- Status: ✅ SHIPPED
+- Migration: 036–038, 056, 123
+- Description: Opening-balance recording RPC (123), multiple
+  cash handovers per shift (036), order cash settlement (037),
+  discrepancy capture (038), full cash-flow system table (056).
+
+### Tips
+- Status: ✅ SHIPPED
+- Migration: 040
+- Description: Per-order tip column + audit trail. Surfaces in
+  driver earnings + analytics.
+
+### Atomic Order Creation (ARCH-004)
+- Status: ✅ SHIPPED
+- Migration: 062, 064, 073, 083, 091, 134, 135, 154, 163, 164,
+  179
+- Description: `rpc_create_order` packs order + items + loyalty
+  + coupon writes into a single transaction. `p_payment_mode`
+  branches `cod` / `online` / `tap_card`. Size + variant aware
+  price check (091). Modifiers support (083). 25-arg legacy
+  overload dropped (135). Delivery flat fee (154). KH-class
+  SQLSTATE sentinels (179) so JS callers discriminate on
+  `error.code`, never `error.message`. Closed across all 5
+  order-entry surfaces: checkout, table, waiter, POS, POS service.
+
+### Dine-In / QR Tables / Waiter
+- Status: ✅ SHIPPED
+- Migration: 085, 087, 090
+- Description: `/table/[branchId]/[tableNumber]` public QR
+  ordering surface (rate-limited per session 142 T1). Staff
+  `/waiter` view with QR scanner (member loyalty scan
+  feature-flagged off until staff seed lands). `staff_role`
+  enum extended with `waiter` (090).
+
+### Customer Accounts
+- Status: ✅ SHIPPED
+- Migration: 121, 130, 145, 147, 152, 162
+- Description: `/account/login`, `/account/register`,
+  `/forgot-password`, `/set-password` with Turnstile +
+  Upstash fail-closed in production, profile edit form,
+  default address, retroactive guest-order linking by phone
+  (130 + 145 — registration trigger handles phone conflict),
+  birthday capture (152), membership ID generated column
+  (162). Per-user pages pinned `force-dynamic` (T3-A3).
+
+### Reservations
+- Status: ✅ SHIPPED
+- Migration: 114, 116, 117, 118, 166, 174
+- Description: `/reserve` public form (honeypot + Turnstile +
+  rate-limit), international phone storage (116), seating-type
+  enum (117), `arrived` status + `ready_at` timestamp (118),
+  `rpc_create_reservation` with KH-class SQLSTATE codes
+  (174), `rpc_update_reservation_status` (166).
+
+### Waitlist
+- Status: ✅ SHIPPED
+- Migration: 099, 168
+- Description: `waitlist_entries` table + `rpc_add_waitlist_entry`
+  + `rpc_update_waitlist_status` (168). Dashboard view at
+  `/dashboard/waitlist`.
+
+### Menu CMS (Sanity bypass — DB-first)
+- Status: ✅ SHIPPED
+- Migration: 070, 074–076, 080–082, 088, 143, 144, 176,
+  180–182
+- Description: Menu rendered directly from Supabase
+  `menu_items` (DB-first, 088). Availability toggle (070),
+  enhanced columns (074), CRUD RLS + RPCs (075, 176),
+  image storage in private bucket (081), modifiers schema
+  (082). Seed migrations relocate samoon-meat to pastries
+  (143), seed egg sandwiches (144), Turkish coffee (180).
+  Egg-sandwich station mapping fix (181). `menu_items_sync`
+  backfilled (182) so KDS routing matches.
+
+### Stuck-Order Alerts
+- Status: ✅ SHIPPED
+- Migration: 150, 153
+- Description: SLA timer fires when an order sits in
+  `preparing` past branch's `estimated_minutes` threshold
+  (053). Surfaces in `/dashboard/alerts` + `OperationsAlertsBanner`.
+  Unmapped-item alerts deduplicated (153).
+
+### Security Hardening Sweep (ongoing)
+- Status: ✅ SHIPPED
+- Migration: 028, 042, 046, 058, 065, 095, 098, 119, 120,
+  122, 125, 127–132, 138, 148, 149
+- Description: `SECURITY INVOKER` views (119), RLS BL004
+  customer guard (120, 122), RPC grant audit (127), security
+  advisor fixes (128), `search_path` lockdown on all functions
+  (129), `REVOKE PUBLIC EXECUTE` on every RPC (131), revoke
+  anon on KDS + PO RPCs (132), atomic audit events (138),
+  staff basic grants hardening (148), revoke anon execute
+  audit (149). Legacy UUID overloads dropped (098). Public
+  write surfaces fail-closed under missing Turnstile/Upstash
+  env vars in production (T1 + T3-A1).
+
+### Onboarding Alerts & Activity Feed
+- Status: ✅ SHIPPED
+- Migration: n/a (UI only)
+- Description: `OnboardingAlerts.tsx` and `ActivityFeed.tsx`
+  surface first-run setup items (missing staff, missing
+  branch hours, unconfigured loyalty) plus a real-time audit
+  stream on the dashboard home (`HeroMetrics.tsx` +
+  `LiveOrdersPanel.tsx` + `TodayRevenueChart.tsx` +
+  `TodaySummary.tsx` + `TopSellingItems.tsx` +
+  `QuickActionsPanel.tsx`).
+
+### POS Surface (Counter Orders)
+- Status: ✅ SHIPPED
+- Migration: 164 (audit-only finalize)
+- Description: `/dashboard/pos` lets in-store staff create
+  orders via `rpc_create_order` with `tap_card` branch +
+  `rpc_pos_finalize_order` audit row. ARCH-004 fully closed
+  across this surface.
+
+### Public Audit / Tracking
+- Status: ✅ SHIPPED
+- Migration: n/a (UI only, on top of `orders` + `order_status_events`)
+- Description: `/order/[id]` shows public status with narrow
+  `OrderConfirmationRow = Pick<OrderRow, ...>` + `.returns<>()`
+  type (PUB-009, session 149). UUID guard at the route
+  boundary (PUB-010, T3-B). `/payment/[orderId]` UUID-guarded
+  payment landing page with Sentry on errors (PUB-001).
+
+### Brand & Asset Hygiene
+- Status: ✅ SHIPPED
+- Migration: n/a
+- Description: Self-hosted Cairo / Almarai / Editorial New /
+  Satoshi (`public/fonts/`). Brand tokens in
+  `src/lib/design-tokens.ts` (no raw hex in components).
+  Logo + horizontal `logo-full.webp` (session 155 corrected
+  the file that had been clobbered with the portrait
+  variant). Branded `onError` fallback on `MenuItemImage`
+  flips to dark + logo watermark (session 155) — preventive
+  UX layer over the 175/175 currently-resolving image URLs.
+
+### Mobile Navbar + a11y Focus Rings
+- Status: ✅ SHIPPED
+- Migration: n/a
+- Description: Nobu/Zuma centered-logo pattern in
+  `Header.tsx` (session 152). Top-state drop-shadow scrim
+  fades out when the scrolled glass capsule takes over so
+  the gold wordmark stays readable over hero photography at
+  375 + 430 px (session 154). Shared `FOCUS_RING` constant
+  applied to all 18 interactive controls via
+  `:focus-visible` only (session 154).
+
+### Cookie Consent + Analytics Gating
+- Status: ✅ SHIPPED
+- Migration: n/a (F-01, session 131)
+- Description: GA4 + Microsoft Clarity tags block until the
+  user consents. Consent state persisted in localStorage and
+  read by the analytics shim.
+
+### Bilingual Error Localization
+- Status: ✅ SHIPPED
+- Migration: n/a
+- Description: Customer-facing errors flow through
+  `localizeCheckoutError` (checkout) + `waiter.errors`
+  namespace + dashboard namespaces for waitlist / shifts /
+  coupons / promotions (dashboard RPC sweep). Raw English
+  strings removed.
+
+### Pre-Launch Checklist (Operational Artifact)
+- Status: ✅ SHIPPED
+- Migration: n/a (session 156)
+- Description: `.agent/PRE-LAUNCH-CHECKLIST.md` — 7-section
+  cash-only soft-launch checklist with each row marked
+  OK / PEND / BLOCK / NA. Identifies the 3 true blockers
+  (Supabase Pro+Singapore, Resend DNS, 13 staff emails for
+  migration 090) and lists 10 customer + 9 staff + 5
+  negative manual smoke journeys.
+
