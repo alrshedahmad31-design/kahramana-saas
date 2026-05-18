@@ -729,8 +729,11 @@ test.describe('Accessibility', () => {
 
   test('logo link has aria-label or contains image with alt', async ({ page }) => {
     await page.goto('/')
-    // Logo link may wrap an SVG/img — check aria-label OR img alt OR text
-    const logoLink = page.locator('header a').first()
+    await page.waitForLoadState('domcontentloaded')
+    // Session 151's navbar redesign moved the logo behind the groupStart nav
+    // (Header.tsx:219-244 — centered-logo pattern). `header a:first` now
+    // resolves to a NavItem; target the logo unambiguously by its home href.
+    const logoLink = page.locator('header a[href="/"], header a[href="/en"]').first()
     const ariaLabel = await logoLink.getAttribute('aria-label')
     const imgAlt = await logoLink.locator('img').getAttribute('alt').catch(() => null)
     const text = await logoLink.textContent()
