@@ -9,3 +9,7 @@ Items to handle before a known deadline. Move to PLAN.md when scheduled.
 - **LCP ceiling root cause**: renderDelay 3.2s on `/ar` traced to `HeroAnimationsLoader` blocking first paint (GSAP + Framer chunk loads sync with hero). Bundle reduction alone won't fix it — must defer load via `requestIdleCallback` gate after dynamic import.
 - **P3 pivot**: public-page JS (homepage hero + below-fold sections) is the LCP lever in Session 112, not dashboard bundle. Dashboard routes left untouched to avoid touching auth-gated code paths.
 
+## Session 149 — Tooling
+
+- **supabase gen types wrapper**: wrap in a script that pipes through grep/sed to strip CLI stdout preamble+footer and forces LF endings — prevents types.ts pollution on every regen. Low priority, run before next full types regen.
+
