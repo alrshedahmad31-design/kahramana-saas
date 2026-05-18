@@ -1,138 +1,169 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 157 — PLAN.md implementation-features append. 1 commit on
-> master, no code, no migrations. Doc-only output: appended new section
-> to `.agent/PLAN.md`.
+> Session 158 — Playwright CI green-lining. 3 commits on master, 1 test
+> fix + 2 workflow tweaks. No source code, no migrations.
 > Date: 2026-05-18
 > Author: Claude Code (Opus 4.7, 1M context)
 
-## SESSION 157 — SUMMARY
+## SESSION 158 — SUMMARY
 
-User opened with: "Read the existing PLAN.md first — do not modify or
-overwrite it. Then APPEND a new section at the very end of the file
-titled 'مميزات تم إضافتها عند التنفيذ | Features Added During
-Implementation'. To find what was added during implementation, read:
-src/app/[locale]/** — all routes; src/components/** — all components;
-supabase/migrations/000 through 183 — each migration = a shipped
-feature; .agent/CLAUDE-AI-CONTEXT.md + .agent/LAST-SESSION.md."
-Format: each feature as `### [Feature Name]` with `Status: ✅ SHIPPED`,
-`Migration: [number if applicable]`, `Description: [what it does, one
-paragraph]`. Rules: append only, only document what's confirmed in code
-or migrations, no speculation. Save to `.agent/PLAN.md`.
+User pasted a Gmail screenshot showing ~15 consecutive "Run failed:
+Playwright Tests" emails across every commit pushed to master since
+session 151 — including the last 3 doc-only commits from sessions 156
+and 157. The prior session-start status report I had produced cited
+"all 9 gates green at HEAD," but that referred only to the local
+pre-merge gates (tsc, RTL grep, font/color grep, currency, phones,
+hex, i18n, build). The GitHub Actions Playwright workflow was a
+separate red lane invisible to both the bridge files and
+`PRE-LAUNCH-CHECKLIST.md`. User selected Option C (Full fix): diagnose,
+fix root cause, add path-ignore filters, push, watch CI green.
+Required reporting diagnosis before any code change — confirmation
+gate before write.
 
 ### Inputs read
 
-- `.agent/PLAN.md` (existing 1021 lines — Phase 0–8 master plan, read
-  in full to confirm where to append)
-- `.agent/CLAUDE-AI-CONTEXT.md` (session 156 close-out — canonical
-  source for what's shipped)
-- `.agent/LAST-SESSION.md` (session 156 narrative)
-- `ls supabase/migrations/` (183 numbered migrations + 2 timestamped
-  driver-push variants)
-- `ls src/app/[locale]/` + `ls src/app/[locale]/dashboard/` +
-  `ls src/components/` (route + component inventory to confirm
-  feature surfaces match migrations)
+- `.github/workflows/playwright.yml` (original — push+PR on every commit,
+  60min timeout, no path filters)
+- `playwright.config.ts` (baseURL defaults to `https://kahramana.vercel.app`;
+  webServer only spins up when E2E_BASE_URL is localhost; viewport
+  defaults to 1280×720 → desktop layout)
+- `tests/kahramana.spec.ts:730-738` (failing test)
+- `tests/kahramana.spec.ts:1-40` (test header + helpers)
+- `tests/global-setup.ts` (E2E_CONFIGURED gate; skips test user creation
+  when env vars missing — matches the `[E2E setup] env vars missing —
+  skipping test user creation` log line)
+- `src/components/layout/Header.tsx:165-410` (the navbar after the
+  session 151 rewrite — Nobu/Zuma centered-logo pattern)
+- `gh run view 26053458513 --log-failed` (latest failed run, on
+  `a6952a8` session 157)
+- `gh run view 26050585740 --log-failed` (older failed run, on
+  `5b7445b` session 155 — confirmed same failure pattern)
+- `gh run list --workflow=playwright.yml --limit=30` (timeline showed
+  green up to `626362b` session 150, red from `42ef745` session 151
+  onward)
+- `git log --oneline 626362b..42ef745` (confirmed `a612770` Header.tsx
+  rewrite was the real breaking change, masked behind the
+  `42ef745` migration commit that happened to be tip when the workflow
+  next ran)
+
+### Diagnosis
+
+**1 test failed, 146 passed, 68 skipped** — single failure on
+`tests/kahramana.spec.ts:730 › Accessibility › logo link has aria-label
+or contains image with alt`. Exit code 1 → workflow red on every push.
+
+Failing assertion line:
+```ts
+const logoLink = page.locator('header a').first()
+```
+
+Pre-session-151 Header had the logo `<Link href="/">` as the first `<a>`
+in `<header>`. Post-session-151 `a612770` rewrote the navbar in the
+Nobu/Zuma centered-logo pattern: `<header>` now contains, in DOM order:
+
+1. `<nav>` (groupStart) with 4 NavItems → 4 `<a>` elements with text
+   like "Menu" / "Branches", **no aria-label, no nested `<img>`**.
+2. Logo `<Link href="/">` absolutely positioned at left-1/2 → 5th `<a>`.
+3. groupEnd with more NavItems + language toggle + account + cart + CTA.
+
+So `header a:first` resolves to the first NavItem. The chained call
+`logoLink.locator('img').getAttribute('alt')` auto-waits for an `<img>`
+descendant that never appears, exhausts the 30s test timeout, and the
+trailing `await logoLink.textContent()` is then reported as
+`Target page, context or browser has been closed` (browser killed by
+timeout, last-queued operation fails on teardown — misleading symptom,
+real cause is the silent 30s wait on the missing `<img>`).
+
+### Fix decisions
+
+- **Update the test, not the navbar.** The redesign was intentional and
+  shipped through 3 sessions of iteration (151/152/154). Reverting JSX
+  order would break the centered-logo design. The test was making a
+  structural assumption that no longer holds.
+- **Selector: `header a[href="/"], header a[href="/en"]`.** Targets the
+  logo by what's actually stable about it — it links to the locale
+  root. Two-form OR-list because next-intl's AR (default) renders
+  `<a href="/">` while EN renders `<a href="/en">`. Locale-agnostic
+  alternatives like `data-testid` would require touching production
+  code; this stays inside the test file.
+- **Add `waitForLoadState('domcontentloaded')`** to match the
+  immediately-preceding test (line 720-727). Cheap insurance against
+  hydration flakes.
+- **`paths-ignore` for doc-only changes.** `.agent/**`, `docs/**`,
+  `**/*.md`, `.gitignore` on both `push` and `pull_request` triggers.
+  Sessions 156 + 157 each burned 3.5min of CI for no signal; this
+  pattern would recur on every session close-out otherwise.
 
 ### Commits (in master order)
 
 | SHA       | Scope |
 |-----------|-------|
-| `da2fcfc` | `.agent/PLAN.md` — append 306-line implementation features section |
+| `f953b35` | `tests/kahramana.spec.ts:730-740` — selector by href + waitForLoadState. Comment cites Header.tsx:219-244 + commit `a612770` for the next refactor. |
+| `93738bf` | `.github/workflows/playwright.yml` — paths-ignore on `.agent/**`, `docs/**`, `**/*.md`, `.gitignore` for push+PR. Same commit also dropped `timeout-minutes` 60 → 10 and added `strategy.fail-fast: true` — **both wrong** (see `e536343`). |
+| `e536343` | `.github/workflows/playwright.yml` — self-correction. 10-min ceiling killed the next run mid-`apt-get` during `npx playwright install --with-deps`. I had misread `146 passed (3.5m)` as total CI time when that's test execution only — actual total is `npm ci` + browser install (3-5min on cold runner) + tests + upload ≈ 6-10min. Bumped to 25min. Dropped `fail-fast: true` — only meaningful for matrix builds, this job has none. Per CLAUDE.md "no aspirational config" rule. |
 
-### Output structure
+### Process notes (for the next session)
 
-27 feature groups appended to PLAN.md, each with `### [Name]`,
-`Status: ✅ SHIPPED`, `Migration: [list]`, `Description: [para]`:
-
-1. **Initial Platform Schema** (001)
-2. **Contact Form Persistence** (002)
-3. **Kitchen Display System (KDS)** (005, 016, 072, 077–079, 089,
-   093–094, 100–113, 137, 161, 183)
-4. **Driver PWA & Delivery** (007, 021, 024–025, 029–031, 033–034,
-   039, 060, 115, 154, 157, 20260505190424)
-5. **Loyalty Program** (008, 061, 067, 084, 141, 152, 158, 159, 162,
-   172)
-6. **Coupons & Promotions** (009, 018, 086, 155, 170, 171, 178)
-7. **Online Payments (Tap)** (012, 049–050, 133, 139, 140, 142, 173)
-8. **Analytics & Reports** (014, 019, 027, 055, 097, 151)
-9. **Staff Management + RBAC + Shifts** (006, 015, 017, 022, 026, 069,
-   071, 090, 092, 126, 127, 148, 149, 156, 167, 169, 177)
-10. **Restaurant Profile & App Settings** (020, 023, 136)
-11. **Inventory & COGS** (035, 043, 044, 048, 057, 097, 124, 175)
-12. **Catering Inquiries** (041, 160)
-13. **Cash Flow & Reconciliation** (036–038, 056, 123)
-14. **Tips** (040)
-15. **Atomic Order Creation (ARCH-004)** (062, 064, 073, 083, 091, 134,
-    135, 154, 163, 164, 179)
-16. **Dine-In / QR Tables / Waiter** (085, 087, 090)
-17. **Customer Accounts** (121, 130, 145, 147, 152, 162)
-18. **Reservations** (114, 116, 117, 118, 166, 174)
-19. **Waitlist** (099, 168)
-20. **Menu CMS (DB-first)** (070, 074–076, 080–082, 088, 143, 144, 176,
-    180–182)
-21. **Stuck-Order Alerts** (150, 153)
-22. **Security Hardening Sweep** (028, 042, 046, 058, 065, 095, 098,
-    119, 120, 122, 125, 127–132, 138, 148, 149)
-23. **Onboarding Alerts & Activity Feed** (UI only)
-24. **POS Surface** (164)
-25. **Public Audit / Tracking** (UI only)
-26. **Brand & Asset Hygiene** (no migration)
-27. **Mobile Navbar + a11y / Cookie Consent / Bilingual Error
-    Localization / Pre-Launch Checklist** (no migrations — UI + ops
-    artifacts)
-
-### Drafting decisions
-
-- **No code changes.** User briefed `Append only — never touch existing
-  PLAN.md content above the new section. Only document what is
-  confirmed in code or migrations. No speculation.` Did not touch any
-  source, migration, or i18n.
-- **Append-only enforcement.** Edit targeted the final line of PLAN.md
-  (`\`sizes\` keys (S/M/L/XL/Glass/0.5L/1L/1.5L/1KG/HALF KG)…`) and
-  inserted the new section after it. Lines 1–1021 of the original
-  PLAN.md are untouched.
-- **Grouped 183 migrations into 27 product features**, not 1:1.
-  Listing 183 entries would be unreadable noise. Each feature group
-  lists every migration that contributed so the mapping stays
-  auditable.
-- **Bridge protocol followed.** Updated `CLAUDE-AI-CONTEXT.md`
-  (canonical source) with session 157 entry in CURRENT STATUS, CLOSED
-  block, MIGRATION STATE, and SESSION HISTORY. Also rewrote
-  `LAST-SESSION.md` (this file). `CURRENT-SESSION.md` left alone — it
-  is auto-regenerated by `sync-context.ps1`.
-- **No gates run.** Doc-only commit. All 9 gates green at HEAD per
-  session 155 close-out (later session 156 also doc-only).
+- **`gh run watch --exit-status`** is the right primitive for "wait for
+  green." Returned exit 0 on success, exit non-zero on cancel/fail —
+  no polling required.
+- **`gh run view <id> --log-failed`** gave the exact Playwright error
+  + line number on the first try. No need to download artifacts or
+  scrub through the full log.
+- **Workflow regression caught fast.** First run after the
+  paths-ignore + timeout change cancelled at 10min; second run after
+  the timeout bump went green in 3.5min total. Cost: one extra
+  commit. Lesson: when narrowing a timeout, check the **distribution
+  of total CI time**, not just the test execution time — they're
+  different numbers in the same log.
+- **"All 9 gates green at HEAD" was a lie of omission.** The 9 gates
+  in CLAUDE.md are local pre-merge checks (grep/tsc/build); they say
+  nothing about CI. Bridge phrasing now says "all 9 **local gates**
+  green" — the canonical bridge has been updated to reflect this.
 
 ### Push
 
-`git push origin master` for `da2fcfc` succeeded
-(`a3916b9..da2fcfc master -> master`).
+`git push origin master` ran 3 times:
+- `a6952a8..93738bf` after commits `f953b35` + `93738bf`
+- `93738bf..e536343` after commit `e536343` (timeout regression fix)
+- (this close-out push will follow after these files are written)
+
+### CI runs
+
+| Run ID       | Commit    | Conclusion | Duration |
+|--------------|-----------|------------|----------|
+| `26054407226` | `93738bf` | **cancelled** (10-min timeout — my regression) | 10:00 hard kill |
+| `26054988165` | `e536343` | **success** — 147 passed, 68 skipped, 0 failed | 2.5m tests / ~3.5m total |
 
 ### State at end of session
 
 #### Master HEAD
-`da2fcfc docs(plan): append implementation features section — 27
-shipped feature groups`
+`e536343 ci(playwright): bump timeout 10→25min, drop meaningless
+fail-fast` (close-out doc commit will be appended after this file is
+written).
 
 #### Migrations
-Local = Remote = **183** applied. Session 157 added **none**.
+Local = Remote = **183** applied. Session 158 added **none**.
 
 #### Pending DB rollout
 None.
 
+#### Playwright CI lane
+**Green.** First green run on master since session 150 (`626362b`).
+
 #### What's next
 
-- **Operator-side:** unchanged from session 156 close-out. The 3 true
-  blockers remain Supabase Pro+Singapore, Resend domain DNS
-  verification, and 13 staff emails (which gates migration 090).
-  Consolidated in Section 1 + Section 3 of
-  `.agent/PRE-LAUNCH-CHECKLIST.md`.
-- **Dev-side:** backlog empty. No outstanding lanes that can be
-  unblocked by code alone.
-- **Day-before-launch:** run the 10 customer + 9 staff + 5 negative
-  manual smoke journeys from `.agent/PRE-LAUNCH-CHECKLIST.md`
-  Section 6.
-- **Bridge maintenance:** none pending.
+- **Operator-side:** unchanged from sessions 156 + 157. The 3 true
+  blockers remain Supabase Pro+Singapore, Resend DNS, 13 staff emails
+  for migration 090.
+- **Dev-side:** backlog empty.
+- **Bridge maintenance:** worth a one-pass refresh of
+  `phase-state.json` — its `last_updated` field still narrates
+  session 101 (2026-05-14) and its `last_git_commit` points at
+  `cbd34dc`. The phase blocks and external_dependencies are still
+  accurate, only the top narrative is stale. Surfaced as Red Flag 1
+  in the session-158 status report — defer until a quiet session.
 
 #### Carry-forward
-None. The PLAN.md append is a stand-alone artifact and complements
-(does not replace) `.agent/PRE-LAUNCH-CHECKLIST.md`.
+None. The fix is self-contained. Future navbar refactors should
+search `tests/` for `header a[href` before reshuffling Header.tsx
+DOM order.

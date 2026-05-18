@@ -1,20 +1,36 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 157 close-out — PLAN.md implementation features append, no code)
-# Master: da2fcfc
+# Updated: 2026-05-18 (session 158 close-out — Playwright CI green-lining, 3 commits)
+# Master: e536343
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-157 appended a new section to `.agent/PLAN.md` (1 commit
-`da2fcfc`, no code). 27 shipped feature groups documented as
-✅ SHIPPED with migration numbers + one-paragraph descriptions, grounded
-in code under `src/app/[locale]/**` + `src/components/**` + migrations
-001–183. Append-only — original PLAN.md (lines 1–1021) untouched. Pushed
-to origin/master (`a3916b9..da2fcfc`). No gates run (doc-only commit;
-all 9 gates remain green at HEAD per session 155). Prior posture from
-session-156 still stands: dev backlog empty, 3 operator blockers
-(Supabase Pro+Singapore, Resend DNS, 13 staff emails for migration 090),
+Posture: session-158 fixed a CI lane that had been silently red since
+session 151 (3 commits, `f953b35 → e536343`). Operator's Gmail screenshot
+surfaced ~15 consecutive failed Playwright runs — the prior status report
+had cited "all 9 gates green at HEAD," but that referred only to the
+local pre-merge gates (tsc, RTL/font/color grep, build); the GitHub
+Actions Playwright workflow was a separate red lane not reflected in
+phase-state.json or PRE-LAUNCH-CHECKLIST.md. Root cause: a single test
+(`tests/kahramana.spec.ts:730 › logo link has aria-label or contains
+image with alt`) used `page.locator('header a').first()` which assumed
+the logo was the first `<a>` in the header — session 151's Nobu/Zuma
+centered-logo redesign (`a612770`) pushed the groupStart NavItems ahead
+of the logo in DOM order, so the selector resolved to a text-only nav
+link with no aria-label and no nested `<img>`, hanging on auto-wait
+until the 30s test timeout. Fix targets the logo by home href:
+`header a[href="/"], header a[href="/en"]`. Also added `paths-ignore`
+on `.agent/**`, `docs/**`, `**/*.md`, `.gitignore` so doc-only commits
+no longer fire a 3.5-min E2E run (sessions 156 + 157 each burned CI
+for nothing). One regression introduced in `93738bf` (10-min timeout
+too tight — killed the job mid-`apt-get` during browser install)
+corrected in `e536343` (bumped to 25min, dropped meaningless
+`fail-fast: true` per CLAUDE.md no-aspirational-config rule). Final
+CI run on `e536343`: **147 passed, 68 skipped, 0 failed, 2.5m**
+(was 146 passed, 1 failed, 3.5m). Prior posture from session-156
+still stands: dev backlog empty, 3 operator blockers (Supabase
+Pro+Singapore, Resend DNS, 13 staff emails for migration 090),
 TAP/WhatsApp/Benefit Pay deferred n/a-for-cash-only. Posture: session-155 shipped a
 5-item open-lane sweep as 5 commits +
 1 close-out. (1) `d77283e` brand asset cleanup — renamed `logoo.webp`
@@ -96,7 +112,53 @@ Optional next-lane candidates (none queued; fire only on explicit ask):
 - (none — session 153's KDS station-routing carry was closed in
   session 155 with a premise correction; see session 155 entry below.)
 
-CLOSED in sessions 137–157 (newest first):
+CLOSED in sessions 137–158 (newest first):
+
+✅ Session 158 — Playwright CI green-lining (3 commits, f953b35 → e536343)
+   - **Trigger:** operator's Gmail screenshot showing ~15 consecutive
+     failed Playwright runs across every commit since session 151.
+     Bridge files had treated the lane as healthy ("9 gates green at
+     HEAD") because that phrase referred only to local pre-merge gates,
+     not the GitHub Actions workflow. Gap now documented as Red Flag 1
+     in the next status report and surfaced here for future bridges.
+   - **Diagnosis:** single test failing —
+     `tests/kahramana.spec.ts:730:7 › Accessibility › logo link has
+     aria-label or contains image with alt` (1 failed, 146 passed, 68
+     skipped, exit 1 → CI red). Last green commit `626362b` (session
+     150). First red commit `42ef745` (session 151) — but the real
+     breaking change was the preceding `a612770` (session 151 luxury
+     navbar redesign — Nobu/Zuma centered-logo pattern). Test selector
+     `page.locator('header a').first()` assumed the logo was the first
+     `<a>` in `<header>`. New Header.tsx puts groupStart `<nav>` with
+     4 NavItems before the logo Link (Header.tsx:219-244), so the
+     selector now resolves to a text-only NavItem with no aria-label
+     and no nested `<img>` — `logoLink.locator('img').getAttribute('alt')`
+     auto-waits 30s for an `<img>` child that never appears, test
+     times out with the misleading `Target page, context or browser
+     has been closed` on the trailing `textContent()` call.
+   - `f953b35` fix(e2e): target logo by `header a[href="/"], header a[href="/en"]`
+     instead of `header a:first`. Added `waitForLoadState('domcontentloaded')`
+     to match the sibling alt-text test pattern at line 720. Comment
+     in test cites Header.tsx:219-244 + commit `a612770` so the next
+     navbar refactor knows where to look.
+   - `93738bf` ci(playwright): paths-ignore on `.agent/**`, `docs/**`,
+     `**/*.md`, `.gitignore` for both `push` and `pull_request`
+     triggers. Doc-only commits (sessions 156 + 157 close-outs were
+     each ~3.5min of wasted CI) now skip the workflow entirely.
+     Same commit dropped `timeout-minutes` 60 → 10 + added
+     `strategy.fail-fast: true` — **both wrong** (see next).
+   - `e536343` ci(playwright): self-correction. The 10-min ceiling
+     killed the next run mid-`apt-get` during `npx playwright install
+     --with-deps` (browser install + system deps takes 3-5min on a
+     cold runner; I had read `146 passed (3.5m)` as total CI time
+     when that's test execution only). Bumped to 25min (2× safety
+     over typical 6-10min total). Dropped `fail-fast: true` — only
+     meaningful for matrix strategies, which this workflow has none
+     of. Per CLAUDE.md "no aspirational config" rule.
+   - **Result:** final run `26054988165` on `e536343`: **147 passed,
+     68 skipped, 0 failed, 2.5m execution / ~3.5m total CI**. First
+     green Playwright run on master since session 150 (`626362b`).
+   - **No migrations.** Local = Remote = 183.
 
 ✅ Session 157 — PLAN.md implementation-features append (1 commit, da2fcfc — no code)
    - `da2fcfc` `.agent/PLAN.md` — appended new section
@@ -554,6 +616,8 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
 ## MIGRATION STATE
 - Local = Remote — migrations applied through 183 (paired).
+- Session 158 added: **none** — CI lane fix (test + workflow), no
+  source/migration touch.
 - Session 157 added: **none** — doc-only commit (PLAN.md
   implementation-features append).
 - Session 156 added: **none** — doc-only commit (PRE-LAUNCH-CHECKLIST.md).
@@ -605,6 +669,25 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last entries)
+- Session 158: Playwright CI green-lining (3 commits, `f953b35 →
+  e536343`). Operator's Gmail screenshot caught a CI lane that had
+  been silently red since session 151 — 15+ consecutive failed runs
+  on every commit, including doc-only commits in sessions 156 + 157.
+  Single test failure (`tests/kahramana.spec.ts:730 › logo link has
+  aria-label or contains image with alt`) — selector
+  `header a:first` assumed logo was the first `<a>` in `<header>`,
+  but session 151's Nobu/Zuma centered-logo redesign (commit
+  `a612770`) put groupStart NavItems ahead of the logo in DOM order.
+  Fix: target logo by home href. Also added `paths-ignore` for
+  `.agent/**` + `docs/**` + `**/*.md` + `.gitignore` so doc-only
+  commits skip CI. One regression introduced in `93738bf` (10-min
+  timeout was too tight, killed the job mid-browser-install)
+  self-corrected in `e536343` (bumped to 25min, dropped meaningless
+  fail-fast). Final run on `e536343`: **147 passed, 0 failed**
+  (was 146 + 1 failed). First green Playwright run on master since
+  session 150 (`626362b`). Lesson: "all 9 gates green" was a local
+  gate metric, not a CI metric — bridge phrasing now distinguishes
+  them. No migrations.
 - Session 157: PLAN.md implementation-features append (1 commit,
   `da2fcfc`, no code). 306 lines added to `.agent/PLAN.md` —
   new section "مميزات تم إضافتها عند التنفيذ | Features Added
