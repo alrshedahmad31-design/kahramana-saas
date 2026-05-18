@@ -1,250 +1,118 @@
 # LAST-SESSION.md — Kahramana Baghdad
-> Session 145: Dashboard v4 P1 sweep finalization. Single fix commit
-> (`81d0194`) + close-out. All 6 dashboard v4 P1s (AUD-V4-004..009) now
-> closed on master; combined with session 144 this means every P1 in
-> both audit docs is closed.
+> Session 146: Open-lane backlog sweep. 5 commits closing PUB-007,
+> PUB-009, the menu-action CAS gap, the recipes atomic-replace gap,
+> and BACKLOG.md hygiene. Two new migrations (174, 175). All TSC +
+> build gates green after every code-bearing commit.
 > Date: 2026-05-18
 > Author: Claude Code (Opus 4.7, 1M context)
 
-## SESSION 145 — SUMMARY
+## SESSION 146 — SUMMARY
 
-Short, focused session that converged on a 1-commit close-out for the
-remaining open items from `dashboard-audit-2026-05-13-v4.md`.
+Open-lane execution — user supplied an ordered backlog (PUB-007 →
+PUB-009 → dashboard RPC sweep → GHA Node 24 upgrade) with the
+ground rule "one commit per item, propose migration SQL before
+writing, TSC + build green after each commit." The dashboard sweep
+turned into two commits after a site-by-site audit revealed the
+listed 20-site count overstated the real CAS-needed work by ~14
+(most listed sites were either already CAS-guarded or weren't
+CAS-shaped at all). The Node 24 GHA item was already done in
+pre-session commits — collapsed into a backlog-hygiene commit.
 
-### Phase 1 — Audit mapping clarification
+### Commits (in order)
 
-Opening prompt asked to start "Pass 1 (error string sanitization only —
-no migrations)" against P1-1 through P1-6, referencing an audit "already
-in context." Fresh session — no audit was loaded. Two candidates fit
-"six P1 items":
+| SHA | Item | Scope |
+|-----|------|-------|
+| `5a57f9a` | PUB-007 | Migration 174 — `rpc_create_reservation` SQLSTATE class KH (KH001–KH014). JS at `reserve/actions.ts:210` switches from `error.message.includes()` to `switch (error.code)`. |
+| `02f8ae2` | PUB-009 | `OrderConfirmationRow` narrow type at `order/[id]/page.tsx`; `.returns<OrderConfirmationRow>()` replaces `as unknown as OrderWithItems` cast. `OrderTrackingStatus` prop narrowed to `TrackedOrder`. |
+| `c0c7749` | Item 3a | CAS guards on 5 unguarded `menu/actions.ts` writes (`toggleMenuItemAvailability`, `updateMenuItem`, `deleteMenuOptionGroup`, `deleteMenuOption`, `deleteMenuItem`) via `.select('id').maybeSingle()` + not-found branch. |
+| `f066d92` | Item 3b | Migration 175 — `rpc_replace_recipes(p_slug, p_rows, p_updated_by)` runs delete+insert atomically. `upsertRecipe` switches to the RPC. `types.ts` hand-augmented. |
+| `ae006bd` | Item 4 + cleanup | BACKLOG.md removes the Node 24 GHA entry (closed by pre-session `b644a18` + `2999306`) plus PUB-007/009 entries closed this session. |
 
-- `.agent/public-audit-2026-05-18.md` — 6 P1s (PUB-001/002/003/004/013/014),
-  but all 6 already shipped in session 144.
-- `.agent/dashboard-audit-2026-05-13-v4.md` — 6 HIGH findings
-  (AUD-V4-004..009) if HIGH ≡ P1.
+### Key technical decisions
 
-Asked the user to disambiguate. They picked the dashboard v4 HIGH set,
-so the P1-1..P1-6 enumeration mapped to:
+1. **SQLSTATE class `KH`** introduced in migration 174 and reused in
+   175. No Postgres-reserved class starts with K. Codes assigned:
+   - KH001 = AUTH_REQUIRED, KH002 = FORBIDDEN_ROLE,
+     KH003 = FORBIDDEN_BRANCH_SCOPE, KH004 = INVALID_GUEST_NAME,
+     KH005 = INVALID_PHONE, KH006 = INVALID_PARTY_SIZE,
+     KH007 = INVALID_DURATION, KH008 = INVALID_RESERVED_FOR,
+     KH009 = INVALID_SOURCE, KH010 = INVALID_SEATING_TYPE,
+     KH011 = TABLE_NOT_FOUND, KH012 = TABLE_BRANCH_MISMATCH,
+     KH013 = TABLE_INACTIVE, KH014 = RESERVATION_CONFLICT,
+     KH015 = INVALID_SLUG, KH016 = INVALID_ROWS.
+   - Future RPC sentinel migrations should pick up at KH017.
+2. **`.maybeSingle()` over `.single()` for CAS** — the existing
+   coupons CAS pattern (`toggleCouponActive`, `toggleCouponPause`)
+   uses `.single()` followed by `if (!updated)`, but PostgREST
+   `.single()` returns `PGRST116` on 0 rows so the `!updated`
+   branch is dead. Menu CAS in `c0c7749` uses `.maybeSingle()` so
+   not-found lands cleanly in the `!updated` branch. Did NOT
+   retrofit coupons in this session — out of scope.
+3. **`OrderConfirmationRow` is page-local** — not added to
+   `custom-types.ts`. Only `page.tsx` produces it; `TrackedOrder`
+   in `OrderTrackingStatus.tsx` is structurally a subset, so the
+   page→tracker handoff works via TS width-subtyping without a
+   shared module.
+4. **`rpc_replace_recipes` takes `p_updated_by UUID` from JS**
+   (asked the user; they confirmed). Alternative would have been
+   `auth.uid()` inside the SECURITY DEFINER body, but service-role
+   calls collapse the operating user identity — JS-passed UUID
+   preserves audit fidelity. Caller trust is fine since the server
+   action has already permission-checked.
+5. **`OrderWithItems` alias intentionally kept** in
+   `custom-types.ts` after PUB-009 — nothing else uses it after
+   this session, but removing it is a separate cleanup. Same
+   narrow-commit discipline as PUB-007 leaving
+   `rpc_update_reservation_status` alone.
 
-| Tag  | Audit ID    | Issue                                   |
-|------|-------------|-----------------------------------------|
-| P1-1 | AUD-V4-004  | Staff TOCTOU on update                  |
-| P1-2 | AUD-V4-005  | `approveShift` CAS + audit log          |
-| P1-3 | AUD-V4-006  | Service-role factory bypass (5 pages)   |
-| P1-4 | AUD-V4-007  | Sentry `enableLogs` + console scrub     |
-| P1-5 | AUD-V4-008  | Tap webhook returns DB error.message    |
-| P1-6 | AUD-V4-009  | `fast-uri` HIGH npm advisory            |
+### Item 3 audit detail (mismatch between user count and reality)
 
-### Phase 2 — Pre-Pass verification against master
+The user's prompt enumerated 20 sites across 6 files for the
+"Dashboard RPC sweep" with migration required. Site-by-site audit:
 
-Before touching anything, verified each P1's current state:
+| File | Listed | Real CAS-needed |
+|------|--------|-----------------|
+| `menu/actions.ts` | 8 | 5 (rest already CAS or not-CAS-shaped) |
+| `staff/actions.ts` | 4 | 0 (`updateStaff` + `toggleStaffActive` already have full CAS pinning role/is_active/branch_id; `createStaff` / `createStaffFull` are auth+DB pairs with compensating deletes — not CAS-shaped; profile-update-after-insert has no race window) |
+| `recipes/[slug]/actions.ts` | 4 | 0 — but **delete-then-insert atomicity bug** is the real issue, handled by migration 175 |
+| `recipes/import/actions.ts` | 1 | 0 (bulk insert, audit insert already error-checked) |
+| `coupons/actions.ts` | 2 | 0 (both toggles already CAS, modulo the `.single()` quirk above) |
+| `pos/service/actions.ts` | 1 | 0 (audit insert already has `auditError` Sentry capture) |
 
-- **P1-1 closed**: migration `126_rpc_update_staff.sql` exists + wired
-  into `dashboard/staff/actions.ts`.
-- **P1-2 closed**: migration `169_rpc_approve_shift.sql` exists + wired
-  into `dashboard/shifts/actions.ts`.
-- **P1-3 partially closed**: 3 of the audit's 5 listed pages (pos /
-  pos/service / promotions) had been converted; `dashboard/tables/page.tsx`
-  and `waiter/table/[tableNumber]/page.tsx` still inline. Two new
-  offenders appeared post-audit: `waiter/page.tsx` and
-  `table/[branchId]/[tableNumber]/page.tsx`. Net: 4 files to convert.
-- **P1-4 partially closed**: KDS console.log noise the audit complained
-  about is already gone; `enableLogs: true` still set in all three
-  Sentry config files; two `console.error` stragglers in
-  `getShiftSummary`.
-- **P1-5 closed**: Tap webhook route already routes errors through
-  `toSafeError(error)` at lines 312 + 317.
-- **P1-6 closed**: `npm audit --audit-level=high` reports 0
-  vulnerabilities; `fast-uri@3.1.2` is post-patch for GHSA-q3j6-qgpj-74h6.
+Outcome: real work was 5 menu sites (commit 3a) + 1 atomic recipes
+RPC (commit 3b). Backlog should not regrow these.
 
-So **0 migrations needed** for Pass 2 — entire remaining work is code-only
-across P1-3 + P1-4.
+### Pending DB rollout
 
-### Phase 3 — Pass 1 (Sentry scrub, no migrations)
+Two migrations need applying to the live DB before the related code
+paths exercise them:
+- **174** (`rpc_create_reservation` SQLSTATE codes) — public reserve
+  flow will return `server_error` instead of `conflict` /
+  `invalid_phone` / `invalid_party_size` until applied (code matches
+  on `error.code === 'KHxxx'`, which the un-migrated RPC won't emit).
+- **175** (`rpc_replace_recipes`) — `upsertRecipe` will fail with
+  "function does not exist" until applied. Affects dashboard recipe
+  editor only.
 
-Five edits across three files:
+Rollout order doesn't matter (different surfaces).
 
-- `sentry.server.config.ts`: dropped `enableLogs: true`, comment updated
-  with AUD-V4-007 rationale.
-- `sentry.edge.config.ts`: same.
-- `src/instrumentation-client.ts`: same.
-- `dashboard/shifts/actions.ts:43`: `console.error` →
-  `Sentry.captureException(error, { tags: { stage: 'shifts.summary.query' } })`.
-- `dashboard/shifts/actions.ts:51`: `console.error` →
-  `Sentry.captureException(e, { tags: { stage: 'shifts.summary' } })`.
+### Verification
 
-Other `console.error` sites the audit had flagged (orders.ts:299
-audit-log fire-and-forget, KDS noise) were already cleaned in prior
-sessions. With `enableLogs` off they stay as plain Vercel logs —
-matches the audit's preferred-fix posture ("the few sites that
-actually need it" route through `Sentry.captureException`).
+Phase gates 1 (TSC) + 9 (build) ran green after each code-bearing
+commit. Did NOT run the full 9-gate suite this session — open-lane
+work was small and surgical. Recommend running the full suite
+before the next phase advance.
 
-TSC clean after Pass 1.
+### What's next
 
-### Phase 4 — Pass 2 (service-role factory consolidation)
-
-Verified `restaurant_tables` IS in `src/lib/supabase/types.ts:3446` —
-the stale "not yet in Database types" comments justifying the untyped
-client are obsolete since the session-142 type regen.
-
-Seven edits across four files:
-
-- `dashboard/tables/page.tsx`: dropped `createSupabaseClient` import +
-  the inline env-check + the redundant `auth` block →
-  `await createServiceClient()`.
-- `waiter/page.tsx`: dropped duplicate import (file already imported
-  `createServiceClient` for the orders query at line 81); collapsed
-  the separate "untyped" path for `restaurant_tables` into the same
-  client. Stale comment removed. `captureAnalyticsError` reporting
-  preserved verbatim — only the construction changed.
-- `waiter/table/[tableNumber]/page.tsx`: swapped inline `untypedTables`
-  for `await createServiceClient()`. Kept the `notFound()` branch for
-  table-not-found but removed the `notFound()` on missing env (now a
-  loud factory throw).
-- `table/[branchId]/[tableNumber]/page.tsx`: same pattern; customer-
-  facing QR route.
-
-**Behavior change worth flagging**: the three `notFound()` /
-`redirect()` fallbacks on missing env vars are gone. The factory throws
-a descriptive `Error('Missing Supabase env vars: ...')`. In production
-this surfaces a 500 + Sentry event rather than silently routing the
-user to /dashboard or 404. Intentional — missing env is a deploy bug,
-not a runtime path. Loud > silent.
-
-TSC clean after Pass 2.
-
-### Phase 5 — 9-gate suite + commit + push
-
-All nine gates ran green:
-
-- Gate 1 (TSC): clean.
-- Gate 2 (RTL pl-/pr-/ml-/mr-): clean. The original CLAUDE.md uses
-  basic-regex `\|` alternation which mis-parses in Git Bash on Windows;
-  re-running with `grep -E` returned zero matches.
-- Gate 3 (forbidden fonts): only `Intersection`/`International`/
-  `Interactive` substring matches, pre-existing on master from before
-  session 145.
-- Gate 4 (forbidden colors): clean.
-- Gate 5 (BHD display token): only the JSX display-text matches the
-  rule tolerates ("…toFixed(3) BHD" etc.), pre-existing on master.
-- Gate 6 (phones / wa.me): clean.
-- Gate 7 (raw hex): clean.
-- Gate 8 (i18n parity): AR 2,548 = EN 2,548; 642 source files; PASS.
-- Gate 9 (build): 548 routes, 0 errors. Routes I touched render
-  expected types — `/[locale]/waiter` SSG (locale params),
-  `/[locale]/waiter/table/[tableNumber]` ƒ Dynamic,
-  `/[locale]/table/[branchId]/[tableNumber]` ƒ Dynamic.
-
-Verified separately that none of the gate-3 / gate-5 noise originated
-in my edited files — grepped the 8 modified files for every forbidden
-pattern (fonts + colors + BHD + phones + hex), got "no matches."
-
-Commit `81d0194` (`fix(dashboard): close all 6 P1s — Sentry scrub +
-service-role factory consolidation`), 8 files, +30/-54, 0 migrations.
-Pushed cleanly: `11070d2..81d0194 master -> master`.
-
-### Phase 6 — Close-out (this commit)
-
-Bridge updates for session 145:
-
-- `.agent/CLAUDE-AI-CONTEXT.md`: header bumped to session 145 + master
-  `81d0194`; CURRENT STATUS posture rewritten to reflect both audits'
-  P1 sets now closed; new session 145 entry at the top of the CLOSED
-  list; two new architecture decisions added (service-role construction
-  must go through `createServiceClient()`; Sentry `enableLogs: true`
-  forbidden); MIGRATION STATE annotated with the "session 145 added:
-  none" line; SESSION HISTORY rotated (dropped session 140, added
-  session 145).
-- `.agent/LAST-SESSION.md`: this file, replacing the session 144
-  contents.
-- `.agent/CURRENT-SESSION.md`: regenerated via
-  `pwsh .agent/sync-context.ps1`.
-
-### Files changed across the session
-
-```
-modified — code:
-  sentry.server.config.ts                              (81d0194)
-  sentry.edge.config.ts                                (81d0194)
-  src/instrumentation-client.ts                        (81d0194)
-  src/app/[locale]/dashboard/shifts/actions.ts         (81d0194)
-  src/app/[locale]/dashboard/tables/page.tsx           (81d0194)
-  src/app/[locale]/waiter/page.tsx                     (81d0194)
-  src/app/[locale]/waiter/table/[tableNumber]/page.tsx (81d0194)
-  src/app/[locale]/table/[branchId]/[tableNumber]/page.tsx (81d0194)
-
-modified — bridge:
-  .agent/CLAUDE-AI-CONTEXT.md                          (session 145 update)
-  .agent/CURRENT-SESSION.md                            (auto-regen)
-  .agent/LAST-SESSION.md                               (this file)
-```
-
-### Commits this session (in order)
-
-```
-81d0194  fix(dashboard): close all 6 P1s — Sentry scrub + service-role factory consolidation
-[session-145 close-out commit]
-```
-
-### Decisions worth remembering
-
-- **Stopped to disambiguate the audit reference** instead of assuming
-  the user meant the public audit. The public-audit P1s were already
-  shipped — running "Pass 1" against them would have been make-work.
-  Asking which audit took 30 seconds and routed the session to the
-  actually-open work.
-- **Verified each P1 against master HEAD before any edits.** Sessions
-  137-140 + session 144 had quietly closed 4 of the 6 dashboard v4 P1s
-  via prior migrations and the session-142 `toSafeError` work — none
-  of which the audit doc itself reflected. Pre-flight check turned
-  "close 6 items" into "close 2 items," saving redundant churn.
-- **Pass 1 + Pass 2 shipped as one commit.** User explicitly requested
-  this. Otherwise default would have been two commits (one per pass).
-  No regret — both passes are tightly coupled to the same audit + the
-  same gate suite ran once over both.
-- **Behavior change on missing env vars is intentional.** The four
-  refactored pages previously had soft-redirect fallbacks
-  (`notFound()` / `redirect('/dashboard')`) on missing
-  `SUPABASE_SERVICE_ROLE_KEY`. The central factory throws instead. In
-  production this becomes a 500 + Sentry event, which is louder and
-  more correct — a missing service-role key in production means a
-  deploy was misconfigured, not that the user took a wrong path. Soft
-  redirects masked the deploy bug. Documented in the commit body.
-- **`enableLogs: true` is now a forbidden flag** in the three Sentry
-  config files. Added as an architecture decision so a future session
-  doesn't re-enable it on a misread of the "should we capture more?"
-  question. The right answer is always: explicit `captureException`,
-  not console-firehose.
-
-## OPERATOR PENDING (unchanged from session 142/143/144)
-
-- Supabase Free → Pro + Singapore migration
-- Resend domain verification for kahramanat.com
-- 13 staff emails from owner → run staff seed (migration 090)
-- TAP merchant keys → wire refund
-- WhatsApp Business API + Meta verification
-- Benefit Pay merchant approval (CBB)
-- ~12 missing dish photos (shoot list in `da5b199`)
-
-## NEXT SESSION
-
-- With every P1 in both audit docs closed, no obvious next dev lane is
-  queued. Candidates if asked (none auto-fire):
-  - **PUB-007 + PUB-009** still sitting in `.agent/BACKLOG.md` from
-    session 144 — one Supabase migration (SQLSTATE in reserve RPC) +
-    one ~15-line narrow row type for `/order/[id]`. Smallest possible
-    hygiene lane. Pair them in one commit.
-  - A v5 dashboard audit re-run. The v4 was 2026-05-13; sessions 137-140
-    + 142 + 144 + 145 have all touched dashboard or adjacent code since.
-    A fresh audit would likely find <10 items given the recent sweeps,
-    but if appetite exists it would establish a new baseline.
-  - Operator-side: the Supabase Pro migration unblocks better
-    observability + the staff seed + Tap merchant approval — those are
-    the actual launch gates, not more dev work.
-- Push the session-145 close-out commit when this session ends.
-
-Posture: every P1 in both `.agent/dashboard-audit-2026-05-13-v4.md`
-and `.agent/public-audit-2026-05-18.md` is closed on master. Service-
-role construction is now exclusively through the central factory.
-Sentry no longer ingests application-level console output. All 9 gates
-green at HEAD (`81d0194`).
+- Apply migrations 174 + 175 in production.
+- BACKLOG.md is now empty of closed items — only Session 111 entries
+  remain. No live items.
+- If the menu CAS pattern lands well, retrofit coupons toggles
+  (`.single()` → `.maybeSingle()`) for consistency — 1-line cleanup,
+  not currently in backlog.
+- The "RPC-PENDING" comments in `staff/actions.ts` (createStaff,
+  createStaffFull, profile update, toggleStaffActive) are still
+  open — tracked there as P1-J follow-up. Requires
+  `supabase.auth.admin` access from a SECURITY DEFINER body, not
+  yet exposed. Not blocking.
