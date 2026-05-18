@@ -7,8 +7,6 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { canManageCoupons } from '@/lib/auth/rbac'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AuthUser } from '@/lib/auth/session'
 
 // 3-decimal money precision (Bahraini Dinar fils).
 const bhd3 = z.number()
@@ -56,33 +54,6 @@ function validateCouponPayload(data: CouponFormData): { ok: true } | { ok: false
 }
 
 export type ActionResult = { success: true } | { success: false; error: string }
-
-// Branch-scope gate for coupon mutations on an existing row.
-// Branch managers and marketing may only touch coupons they created OR
-// coupons whose applicable_branches contains their branch. Owner / GM bypass.
-async function assertCouponScope(
-  supabase: SupabaseClient,
-  couponId: string,
-  caller:   AuthUser,
-): Promise<ActionResult> {
-  if (caller.role !== 'branch_manager' && caller.role !== 'marketing') {
-    return { success: true }
-  }
-  const { data: existing, error } = await supabase
-    .from('coupons')
-    .select('applicable_branches, created_by')
-    .eq('id', couponId)
-    .single<{ applicable_branches: string[] | null; created_by: string | null }>()
-  if (error || !existing) return { success: false, error: 'Coupon not found' }
-
-  const isCreator = existing.created_by === caller.id
-  const branches  = existing.applicable_branches ?? []
-  const inScope   = caller.branch_id != null && branches.includes(caller.branch_id)
-  if (!isCreator && !inScope) {
-    return { success: false, error: 'Coupon scope violation' }
-  }
-  return { success: true }
-}
 
 // Maps the RPC's typed { ok=false, code } payload onto the localized
 // dashboard.coupons.errors.* keys.
@@ -269,32 +240,24 @@ export async function toggleCouponActive(
   if (!canManageCoupons(caller)) return { success: false, error: t('forbiddenRole') }
 
   const supabase = await createClient()
-
-  const scope = await assertCouponScope(supabase, id, caller)
-  if (!scope.success) return { success: false, error: t('forbiddenBranch') }
-
-  const { data: updated, error } = await supabase
-    .from('coupons')
-    .update({ is_active: isActive })
-    .eq('id', id)
-    .select('id')
-    .single()
+  const { data: rpcRaw, error } = await supabase.rpc('rpc_set_coupon_active', {
+    p_id:        id,
+    p_is_active: isActive,
+  })
 
   if (error) {
     Sentry.captureException(error, { tags: { area: 'coupons', action: 'toggleCouponActive' } })
     return { success: false, error: t('rpcFailed') }
   }
-  if (!updated) return { success: false, error: t('notFound') }
 
-  await supabase.from('audit_logs').insert({
-    table_name: 'coupons',
-    action:     'UPDATE',
-    user_id:    caller.id,
-    record_id:  id,
-    changes:    { is_active: isActive },
-    branch_id:  caller.branch_id,
-    actor_role: caller.role,
-  })
+  const rpc = isRpcResult<object>(rpcRaw) ? rpcRaw : null
+  if (!rpc) {
+    Sentry.captureException(new Error('rpc_set_coupon_active unexpected payload'), {
+      tags: { area: 'coupons', action: 'toggleCouponActive' }, extra: { payload: rpcRaw },
+    })
+    return { success: false, error: t('rpcFailed') }
+  }
+  if (!rpc.ok) return { success: false, error: mapRpcCode(t, rpc.code, t('rpcFailed')) }
 
   revalidateCoupons(locale)
   return { success: true }
@@ -312,35 +275,24 @@ export async function toggleCouponPause(
   if (!canManageCoupons(caller)) return { success: false, error: t('forbiddenRole') }
 
   const supabase = await createClient()
-
-  const scope = await assertCouponScope(supabase, id, caller)
-  if (!scope.success) return { success: false, error: t('forbiddenBranch') }
-
-  const { data: updated, error } = await supabase
-    .from('coupons')
-    .update({
-      paused: isPaused,
-      paused_at: isPaused ? new Date().toISOString() : null
-    })
-    .eq('id', id)
-    .select('id')
-    .single()
+  const { data: rpcRaw, error } = await supabase.rpc('rpc_set_coupon_paused', {
+    p_id:        id,
+    p_is_paused: isPaused,
+  })
 
   if (error) {
     Sentry.captureException(error, { tags: { area: 'coupons', action: 'toggleCouponPause' } })
     return { success: false, error: t('rpcFailed') }
   }
-  if (!updated) return { success: false, error: t('notFound') }
 
-  await supabase.from('audit_logs').insert({
-    table_name: 'coupons',
-    action:     'UPDATE',
-    user_id:    caller.id,
-    record_id:  id,
-    changes:    { paused: isPaused },
-    branch_id:  caller.branch_id,
-    actor_role: caller.role,
-  })
+  const rpc = isRpcResult<object>(rpcRaw) ? rpcRaw : null
+  if (!rpc) {
+    Sentry.captureException(new Error('rpc_set_coupon_paused unexpected payload'), {
+      tags: { area: 'coupons', action: 'toggleCouponPause' }, extra: { payload: rpcRaw },
+    })
+    return { success: false, error: t('rpcFailed') }
+  }
+  if (!rpc.ok) return { success: false, error: mapRpcCode(t, rpc.code, t('rpcFailed')) }
 
   revalidateCoupons(locale)
   return { success: true }

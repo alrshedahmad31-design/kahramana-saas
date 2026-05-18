@@ -4887,6 +4887,14 @@ export type Database = {
         Returns: Json
       }
       rpc_create_coupon: { Args: { p_payload: Json }; Returns: Json }
+      rpc_set_coupon_active: {
+        Args: { p_id: string; p_is_active: boolean }
+        Returns: Json
+      }
+      rpc_set_coupon_paused: {
+        Args: { p_id: string; p_is_paused: boolean }
+        Returns: Json
+      }
       rpc_create_menu_item: { Args: { p_payload: Json }; Returns: Json }
       rpc_delete_menu_item: { Args: { p_slug: string }; Returns: Json }
       rpc_delete_menu_option: { Args: { p_id: string }; Returns: Json }
