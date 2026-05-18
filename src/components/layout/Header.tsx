@@ -198,18 +198,29 @@ export default function Header() {
           }
         `}
       >
-        {/* Desktop: 3-column grid keeps the logo perfectly centered regardless of group widths */}
-        <div className="hidden md:grid w-full grid-cols-[1fr_auto_1fr] items-center gap-6 lg:gap-10">
+        {/* Desktop: 3-column grid keeps the logo at the geometric center.
+            minmax(0, 1fr) on each side track pins both columns to the same
+            exact width — content overflow can't push the auto column off
+            center. An invisible CTA-shaped spacer in groupStart mirrors the
+            CTA in groupEnd so the two columns carry similar visual mass. */}
+        <div className="hidden md:grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-6 lg:gap-10">
 
-          {/* groupStart — RTL: right side · LTR: left side */}
-          <nav
-            className="justify-self-start flex items-center gap-1 lg:gap-2"
-            aria-label={t('menu')}
-          >
-            {GROUP_START.map(({ key, href }) => (
-              <NavItem key={key} navKey={key} href={href} />
-            ))}
-          </nav>
+          {/* groupStart — RTL: right side · LTR: left side.
+              Phantom CTA-shaped spacer at the far inline-start mirrors the
+              real CTA at the far inline-end of groupEnd. */}
+          <div className="justify-self-start flex items-center gap-3 lg:gap-5">
+            <span
+              aria-hidden="true"
+              className={`invisible inline-flex items-center justify-center px-6 py-2.5 text-[13px] font-semibold ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
+            >
+              {t('reserveTable')}
+            </span>
+            <nav className="flex items-center gap-1 lg:gap-2" aria-label={t('menu')}>
+              {GROUP_START.map(({ key, href }) => (
+                <NavItem key={key} navKey={key} href={href} />
+              ))}
+            </nav>
+          </div>
 
           {/* Center logo */}
           <Link
@@ -229,10 +240,10 @@ export default function Header() {
             />
           </Link>
 
-          {/* groupEnd — nav links + utilities only. CTA lives outside the
-              grid (absolute) so the 1fr columns stay balanced around the
-              logo. pe leaves room for the absolute CTA strip. */}
-          <div className="justify-self-end flex items-center gap-3 lg:gap-5 pe-32 lg:pe-44">
+          {/* groupEnd — nav links + utilities + CTA. CTA sits at the
+              inline-end edge; the matching invisible spacer in groupStart
+              keeps the two columns visually balanced and the logo centered. */}
+          <div className="justify-self-end flex items-center gap-3 lg:gap-5">
             <nav className="flex items-center gap-1 lg:gap-2" aria-label={t('menu')}>
               {GROUP_END.map(({ key, href }) => (
                 <NavItem key={key} navKey={key} href={href} />
@@ -339,19 +350,16 @@ export default function Header() {
               </button>
             </div>
 
+            <CinematicButton
+              href="/reserve"
+              isRTL={isRTL}
+              aria-label={t('reserveTable')}
+              className={`px-6 py-2.5 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
+            >
+              {t('reserveTable')}
+            </CinematicButton>
           </div>
         </div>
-
-        {/* Absolute Reserve CTA — outside the grid so the 3-column layout
-            balances around the centered logo. Desktop only. */}
-        <CinematicButton
-          href="/reserve"
-          isRTL={isRTL}
-          aria-label={t('reserveTable')}
-          className={`hidden md:inline-flex absolute end-6 top-1/2 -translate-y-1/2 px-6 py-2.5 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
-        >
-          {t('reserveTable')}
-        </CinematicButton>
 
         {/* Mobile: logo on inline-start, icons + hamburger on inline-end */}
         <div className="flex md:hidden items-center justify-between w-full">
