@@ -1,32 +1,41 @@
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 154 close-out — mobile navbar polish + a11y focus rings)
-# Master: 9dc0cf0
+# Updated: 2026-05-18 (session 155 close-out — open-lane sweep: logo/image fallback/KDS trigger alignment/loyalty grid)
+# Master: 624c7ed
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-154 shipped two small navbar refinements as 2 commits.
-(1) Mobile (375 + 430 px) logo was dissolving into the dark hero
-photography behind the transparent top-state bar — bumped from
-h-12/max-w-170 to h-14/max-w-190 and added a drop-shadow that fades out
-when the glass capsule takes over on scroll (the capsule already frames
-the logo). Also gave the hamburger sheet's AR/EN toggle a real 44x44 hit
-target (previously bare text). (2) Extracted a FOCUS_RING constant
-(`focus-visible:ring-2 focus-visible:ring-brand-gold/60
-focus-visible:outline-none`) and applied it to all 18 keyboard-interactive
-controls in Header.tsx — nav links, logo home links, language toggles,
-account button + dropdown items, signout buttons, cart, hamburger, mobile
-sheet rows, both Reserve CTAs. :focus-visible (not :focus) so mouse
-clicks don't paint the ring. All 9 gates green at HEAD.
-
-Process note: this session also fixed a bridge-protocol regression.
-Sessions 146–153 close-outs had been updating `CURRENT-SESSION.md`
-directly without also updating `CLAUDE-AI-CONTEXT.md` (the canonical
-source that `sync-context.ps1` reads). A fresh sync at session 154
-start regenerated `CURRENT-SESSION.md` from the stale session-145
-CLAUDE-AI-CONTEXT.md, silently losing 8 sessions of history. This
-file is now the consolidated source.
+Posture: session-155 shipped a 5-item open-lane sweep as 5 commits +
+1 close-out. (1) `d77283e` brand asset cleanup — renamed `logoo.webp`
+typo to `logo.webp` (added in `f646ab6`, never referenced), restored
+the 44630b horizontal `logo-full.webp` that had been clobbered with
+the 15286b portrait variant (Header renders it at 526x335), updated
+MembershipCard reference. (2) `a9b3962` branded onError fallback in
+MenuItemImage — flips to a dark `bg-brand-black` + logo watermark when
+next/image fires onError, instead of leaking a broken-image glyph onto
+the menu surface; refactored menu-item-card.tsx to use the same
+component with `withOverlay={false}` so the card doesn't inherit the
+hero's dark gradient. Image audit confirmed 0 missing today
+(160/160 DB image_urls + 175/175 menu.json image_urls resolve on
+disk) — fallback is preventive UX. (3) `351411f` + migration 183 —
+closed the carry-forward KDS station-routing alignment from session
+153. Premise correction: prior carry-forward described the gap as
+"fryer/drinks/desserts emitted by older triggers," but the real gap
+was `fn_kds_enqueue_item`'s `'packing'` fallback for slugs missing
+from `menu_items_sync` — `'packing'` isn't in STATION_CONFIG, so 82
+historical kds_queue rows had DB column `'packing'` while
+getStationConfig() cosmetically remapped them to Unassigned at render
+time. Trigger fallback now writes `'unassigned'` directly + UPDATE
+backfilled the 82 rows + any other abandoned legacy enum values.
+Applied to kahramana-prod via MCP; verified kds_queue distribution
+now reads `unassigned/cold/mains/grill` only. (4) `138641e`
+`.gitignore` adds `.tmp-screenshots/` (local visual-check scratch).
+(5) `624c7ed` loyalty tier benefits panel — replaced the horizontal
+snap carousel with a 2-col responsive grid so all four tiers are
+visible without horizontal scrolling; header re-flexes to column on
+mobile, row on sm+, badge self-aligns at start in stacked layout.
+All 9 gates green at HEAD.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -74,13 +83,55 @@ as deferred from session 144 in some older bridge revisions — were
 already closed earlier today by sessions 148 + 149 (see history below).
 
 Optional next-lane candidates (none queued; fire only on explicit ask):
-- **KDS station-routing alignment** (carried from session 153 audit).
-  STATION_CONFIG (the UI screen list) and the live trigger output set
-  don't fully overlap — `fryer`, `drinks`, `desserts` are emitted by
-  older trigger paths but have no UI screen, and conversely `mains`,
-  `shawarma`, `pizza` are configured screens but the slug-pattern CASE
-  trigger never emits them. Needs a survey of which UI screens are
-  actually wired vs which exist only in config.
+- (none — session 153's KDS station-routing carry was closed in
+  session 155 with a premise correction; see session 155 entry below.)
+
+CLOSED in sessions 137–155 (newest first):
+
+✅ Session 155 — Open-lane sweep: brand assets, dish-image fallback, KDS trigger alignment, loyalty grid (5 commits, d77283e → 624c7ed)
+   - `d77283e` fix(brand): rename `logoo.webp` typo → `logo.webp` (added
+     in `f646ab6` Driver UI rebuild, never referenced under the typo'd
+     name) + restored `logo-full.webp` to its 44630b horizontal mark
+     (had been clobbered with the 15286b portrait variant, which
+     Header.tsx renders at 526x335). MembershipCard reference updated
+     in the same commit since git detected the rename together.
+   - `a9b3962` feat(menu): branded onError fallback. MenuItemImage now
+     flips to a dark `bg-brand-black` placeholder with a centered logo
+     watermark (low opacity, mix-blend-screen) when next/image fires
+     onError, instead of leaking a browser broken-image glyph. Added
+     optional `withOverlay` prop (default true) so menu-item-card.tsx
+     can reuse the component without inheriting the dish-hero gradient.
+     Audit context: 160/160 DB image_urls + 175/175 src/data/menu.json
+     image_urls resolve on disk right now — this is preventive UX for
+     future CDN hiccups or seed-migration typos.
+   - `351411f` fix(kds): align trigger fallback with UI taxonomy. The
+     prior session-153 carry described the gap as "fryer/drinks/
+     desserts emitted by older triggers" — the live audit corrected
+     that. The actual live router is `fn_kds_enqueue_item`, which falls
+     back to `'packing'` (legacy enum, no STATION_CONFIG entry) when a
+     slug is missing from `menu_items_sync`. 82 historical kds_queue
+     rows carried `'packing'` while the UI cosmetically aliased them
+     to Unassigned via getStationConfig's fallback (kds.ts:49) — the
+     DB column and the UI screen disagreed. Migration 183 replaces the
+     trigger's fallback with `'unassigned'` and UPDATE-backfills the 82
+     `packing` rows + 8 other abandoned legacy values
+     (fryer/bakery/appetizer_drinks/main/fry/salads/drinks/desserts)
+     so the column matches the screen. Applied to prod via MCP;
+     verified kds_queue distribution now reads `unassigned/cold/mains/
+     grill` only — no legacy values remain in live data. KDSStation TS
+     union keeps the legacy values so historical export data still
+     type-checks.
+   - `138641e` chore(gitignore): added `.tmp-screenshots/` (Claude Code
+     visual-check scratch).
+   - `624c7ed` fix(loyalty): tier benefits panel — carousel → grid.
+     Replaced `overflow-x-auto snap-x snap-mandatory` horizontal
+     carousel with `grid grid-cols-2 gap-3 sm:gap-4` so all four tiers
+     are visible without horizontal scrolling. Each card drops the
+     carousel sizing (snap-start, min-w/max-w) and gains responsive
+     padding (p-4 sm:p-5). Header re-flexes to column on mobile, row
+     on sm+; the "current level" badge self-aligns at the start of
+     the stacked mobile header.
+   - All 9 gates green at HEAD. Migration 183 paired (local + remote).
 
 CLOSED in sessions 137–154 (newest first):
 
@@ -452,7 +503,11 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 - TBT ~1600ms on Slow 4G = animation cost, intentional brand decision
 
 ## MIGRATION STATE
-- Local = Remote — migrations applied through 182 (paired).
+- Local = Remote — migrations applied through 183 (paired).
+- Session 155 added: 183 (`kds_unassigned_fallback` — replaces
+  fn_kds_enqueue_item's `'packing'` fallback with `'unassigned'` so
+  the DB column matches the UI screen; UPDATE backfills 82 historical
+  rows + 8 other abandoned legacy enum values). Applied via MCP.
 - Session 154 added: **none** — both commits were frontend-only
   (Header.tsx polish + a11y focus rings).
 - Session 153 added: 181 (UPDATE menu_items SET station='mains' WHERE
@@ -497,6 +552,15 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last entries)
+- Session 155: open-lane sweep — brand assets, dish-image onError
+  fallback, KDS trigger fallback alignment + migration 183, gitignore,
+  loyalty tier panel carousel → 2-col grid (5 commits, `d77283e →
+  624c7ed`). Premise correction on session-153 carry: real KDS gap
+  was `fn_kds_enqueue_item`'s `'packing'` fallback (82 historical
+  rows), not "fryer/drinks/desserts." Trigger fallback now writes
+  `'unassigned'` directly + backfill UPDATE realigned 82 rows.
+  Image-asset audit: 0 missing (160/160 DB + 175/175 menu.json
+  resolve on disk).
 - Session 154: mobile navbar polish + a11y focus rings (2 commits,
   `32f4fc5 → 9dc0cf0`). At 375 + 430 px, logo at top state was
   dissolving into hero photography — bumped h-12→h-14, max-w-170→190,
