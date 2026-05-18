@@ -1,32 +1,38 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 KAHRAMANA — BRIDGE CONTEXT
-Generated: 2026-05-18 17:39
-Master: 626362b93754e0bc15bcfddd5354723eaaa60bb6
+Generated: 2026-05-18 20:19
+Master: 9dc0cf01e54312fc5040bc1a5e21cc22a2a599f8
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 153 close-out — KDS station coverage audit + fixes)
-# Master: c3694bf
+# Updated: 2026-05-18 (session 154 close-out — mobile navbar polish + a11y focus rings)
+# Master: 9dc0cf0
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-153 audited the KDS station-routing pipeline end-to-end
-and shipped two DB-only fixes. Audit surfaced a key fact the prior memory
-got wrong: the LIVE KDS router is `fn_kds_enqueue_item` (a slug-lookup
-against `menu_items_sync.station`, fallback to `'packing'`) — NOT the
-slug-pattern CASE trigger from migration 094 (`on_order_item_created`,
-which still runs but only writes to `order_item_station_status` for the
-status-grid view). Both triggers fire on every order_items insert. The 8
-items that migration 144 + 180 added (7 egg sandwiches, turkish-coffee)
-were missing from `menu_items_sync` and falling back to `packing` →
-Unassigned in the UI. Migration 182 backfilled them with proper stations
-(`mains` for egg sandwiches, `cold` for turkish-coffee, matching the
-existing convention where every `drinks-*` row is `cold`). Migration 181
-also normalized the 7 'main' rows in `menu_items.station` to 'mains'
-(cosmetic — that column isn't read by either trigger). All 9 gates
-green at HEAD.
+Posture: session-154 shipped two small navbar refinements as 2 commits.
+(1) Mobile (375 + 430 px) logo was dissolving into the dark hero
+photography behind the transparent top-state bar — bumped from
+h-12/max-w-170 to h-14/max-w-190 and added a drop-shadow that fades out
+when the glass capsule takes over on scroll (the capsule already frames
+the logo). Also gave the hamburger sheet's AR/EN toggle a real 44x44 hit
+target (previously bare text). (2) Extracted a FOCUS_RING constant
+(`focus-visible:ring-2 focus-visible:ring-brand-gold/60
+focus-visible:outline-none`) and applied it to all 18 keyboard-interactive
+controls in Header.tsx — nav links, logo home links, language toggles,
+account button + dropdown items, signout buttons, cart, hamburger, mobile
+sheet rows, both Reserve CTAs. :focus-visible (not :focus) so mouse
+clicks don't paint the ring. All 9 gates green at HEAD.
+
+Process note: this session also fixed a bridge-protocol regression.
+Sessions 146–153 close-outs had been updating `CURRENT-SESSION.md`
+directly without also updating `CLAUDE-AI-CONTEXT.md` (the canonical
+source that `sync-context.ps1` reads). A fresh sync at session 154
+start regenerated `CURRENT-SESSION.md` from the stale session-145
+CLAUDE-AI-CONTEXT.md, silently losing 8 sessions of history. This
+file is now the consolidated source.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -69,17 +75,153 @@ Assets (operator) 🟡
 
 **Status: empty.** All dev work that is not operator-blocked or
 externally locked is complete. The project is production-ready for
-soft-launch (cash-only).
+soft-launch (cash-only). Note that PUB-007 and PUB-009 — both flagged
+as deferred from session 144 in some older bridge revisions — were
+already closed earlier today by sessions 148 + 149 (see history below).
 
-Optional next-lane candidates (none queued; only fire on explicit ask):
-- **PUB-007 + PUB-009** (deferred from session 144 T3-B). Both documented
-  in `.agent/BACKLOG.md` under "Session 144 — Public-surface audit
-  deferred items". PUB-007 needs a Supabase migration to switch the
-  reserve RPC from substring sentinel matching to SQLSTATE codes;
-  PUB-009 is a ~15-line narrow row type for `/order/[id]` to replace the
-  `as unknown as OrderWithItems` cast. Pair them in the next hygiene lane.
+Optional next-lane candidates (none queued; fire only on explicit ask):
+- **KDS station-routing alignment** (carried from session 153 audit).
+  STATION_CONFIG (the UI screen list) and the live trigger output set
+  don't fully overlap — `fryer`, `drinks`, `desserts` are emitted by
+  older trigger paths but have no UI screen, and conversely `mains`,
+  `shawarma`, `pizza` are configured screens but the slug-pattern CASE
+  trigger never emits them. Needs a survey of which UI screens are
+  actually wired vs which exist only in config.
 
-CLOSED in sessions 137–145 (newest first):
+CLOSED in sessions 137–154 (newest first):
+
+✅ Session 154 — Mobile navbar polish + a11y focus rings (2 commits, 32f4fc5 → 9dc0cf0)
+   - `32f4fc5` fix(nav): mobile logo visibility + sheet language-toggle
+     hit target. At 375 + 430 px on the top (unscrolled) state, the
+     wordmark was dissolving into the dark hero photography behind the
+     transparent bar — gold emblem only became readable once the glass
+     capsule appeared on scroll. Bumped mobile logo from h-12/max-w-170
+     to h-14/max-w-190 and added drop-shadow that fades out when the
+     glass capsule takes over (purely a top-state scrim). transition-
+     [filter] matches the existing 500ms ease on the bar transition.
+     Hamburger sheet's AR/EN toggle now has a real 44x44 hit target
+     (min-w-11 h-11) — previously bare text.
+   - `9dc0cf0` a11y(nav): focus-visible rings on every interactive
+     control in Header. Extracted FOCUS_RING constant
+     (focus-visible:ring-2 ring-brand-gold/60 + outline-none) and
+     applied to all 18 keyboard-interactive controls: desktop nav
+     links (NavItem), home logo links, language toggles, account login
+     + dropdown trigger, account-menu items, signout buttons, cart
+     buttons, hamburger toggle, mobile sheet links, sheet
+     signin/customer/signout rows, and both Reserve CTAs. :focus-visible
+     (not :focus) so mouse clicks don't paint the ring. Small rounded-md
+     added to text-only controls so the ring renders tidily.
+   - Item 3 (PUB-007 reserve RPC SQLSTATE migration) and item 4
+     (PUB-009 /order/[id] row type refactor) from the user's open lane
+     were no-ops — both were already on master (see sessions 148 + 149).
+   - Process note: bridge sync revealed that sessions 146-153 close-outs
+     never updated CLAUDE-AI-CONTEXT.md. This file is now the
+     consolidated source — sessions 146-150 backfilled into history.
+   - All 9 gates green at HEAD. No migrations.
+
+✅ Session 153 — KDS station coverage audit + 2 DB fixes (3 commits, 5d35237 → 9ea3420)
+   - Audited the KDS station-routing pipeline end-to-end. Discovered
+     the prior memory got the trigger story wrong: the LIVE KDS router
+     is `fn_kds_enqueue_item`, a slug-lookup against
+     `menu_items_sync.station` with fallback to `'packing'` (which has
+     no UI screen and renders as Unassigned). The migration 094
+     slug-pattern CASE trigger (`on_order_item_created`) still runs but
+     only feeds `order_item_station_status` for the status-grid view,
+     not the operator-facing KDS screens.
+   - 8 items added by migrations 144 + 180 (7 egg sandwiches +
+     turkish-coffee) were missing from `menu_items_sync` entirely — so
+     every order containing them was landing in Unassigned at the
+     kitchen.
+   - `5d35237` migration 181 (cosmetic: UPDATE menu_items.station 'main'
+     → 'mains' on 7 rows — that column isn't read by either trigger,
+     so this is purely visual). `c3694bf` migration 182 (backfill 8
+     missing rows into menu_items_sync: egg sandwiches → 'mains',
+     turkish-coffee → 'cold' matching the 13 existing drinks-* rows
+     which all use 'cold'). menu_items_sync now has 176 rows =
+     menu_items count.
+   - Carried to backlog: STATION_CONFIG ↔ trigger-output overlap audit.
+
+✅ Session 152 — Navbar layout iteration (6 commits, b7f73fd → 3b6647c)
+   - Drove the centered-logo design through several approaches before
+     landing on the proven Nobu/Zuma pattern: single flex row with the
+     logo absolutely-positioned at `left-1/2 -translate-x-1/2`.
+   - Attempted (and reverted): absolute CTA outside the grid (`b7f73fd`
+     — broken: class conflict in CinematicButton's hardcoded
+     `inline-flex` collided with `hidden md:inline-flex` and `hidden`
+     won the cascade, rendering CTA `display:none` on every viewport);
+     symmetric `minmax(0,1fr)` grid with phantom CTA-shaped spacer
+     (`7c7bfe3`); flex+absolute reverted (`614658a`); min-w + slim CTA
+     padding (`8732cb8`); `justify-end` to pull groupStart close to
+     logo (`25e61b6`); finally moved About to groupStart (4 vs
+     1+icons+CTA balances naturally, no min-w needed) and bumped
+     header to `h-20` unconditional for logo headroom (`3b6647c`).
+   - Screenshots at each iteration via Playwright on local dev server
+     (/ar + /en at 1440 + 1280 widths). No migrations, no i18n changes.
+
+✅ Session 151 — Navbar redesign + Turkish Coffee seed (3 commits)
+   - `a612770` Header.tsx rewrite (luxury restaurant pattern — centered
+     logo on `grid-cols-[1fr_auto_1fr]`, split nav groups, premium typo
+     with English tracking + uppercase / Arabic untracked, gold-underline
+     on active route via `::after`, hover removes underline for
+     gold-fade, account icon-only signed-out + signed-in dropdown
+     preserved, EN/AR literal toggle, mobile drops calendar icon and
+     bumps logo to h-12 max-w-[170px]).
+   - `42ef745` migration 180 seeds Turkish Coffee row (applied to
+     remote; idempotent).
+   - `6aa9d41` adds asset `public/assets/gallery/turkish-coffee.webp`.
+   - Note: id `turkish-coffee` does not follow the `drinks-*` prefix
+     convention used by the other 3 rows in this category — left as-is
+     per user decision; session 153 instead set its station correctly
+     in menu_items_sync via migration 182.
+
+✅ Session 150 — Open-lane sweep (5 commits, d958378 → b639a22)
+   - `d958378` CI workflows pinned to Node 24 (audit.yml, e2e.yml,
+     playwright.yml). engines.node deliberately left at >=20.0.0 as a
+     contributor-floor decision.
+   - `6e2ea45` dashboard P2 sweep — AUD-V4-011 (fire-and-forget
+     audit_logs.insert in 4 sites of delivery/actions.ts now route
+     errors through Sentry), AUD-V4-013 (confirmCashHandover CAS via
+     .eq('manager_confirmed', false)), AUD-V4-016 (assignDriverToOrder
+     client consistency — both reads now use service-role to match
+     unassignDriver/cancelDeliveryOrder/confirmDelivery).
+   - `b141719` `scripts/gen-types.ps1` wrapper + `npm run gen:types`
+     script — handles CRLF cleanup + drops two CLI stdout banners that
+     would otherwise land inside types.ts.
+   - `d665904` pre-launch smoke suite (12 tests).
+   - `b639a22` catering dashboard filters + pagination.
+
+✅ Session 149 — BHD hygiene + PUB-009 leftover + types regen (2 commits)
+   - `5848f24` BHD display hygiene + orphaned type alias removal +
+     full types regen.
+   - `5152434` PUB-009 follow-up: confirmed `OrderConfirmationRow =
+     Pick<OrderRow, ...>` narrow type + `.returns<>()` in
+     `order/[id]/page.tsx` replaces the prior blind cast. PUB-009 now
+     fully closed.
+
+✅ Session 148 — PUB-007 extension + 174/175 registry sync (1 commit, 814866b)
+   - PUB-007 closed: `5a57f9a` (earlier in session) shipped migration
+     174 `rpc_create_reservation_sqlstate_codes.sql` — every sentinel
+     RAISE now carries a distinct ERRCODE in class KH (KH001…KH014).
+     `reserve/actions.ts:215` switches on `error.code` instead of
+     substring-matching `error.message`. Future RPC refactors that wrap
+     error context can no longer silently degrade to `server_error`.
+   - Migration 175 (`rpc_replace_recipes`) also landed in this session
+     to fold inventory recipe writes into the RPC + audit-trail pattern.
+   - `814866b` synced the migrations registry + the bridge.
+
+✅ Session 147 — Dashboard RPC sweep finalization (migrations 176–179)
+   - 176 (`rpc_menu_writes`) — all menu-item INSERT/UPDATE/DELETE
+     consolidated into RPCs with audit trail.
+   - 177 (`rpc_staff_writes`) — staff list mutations (including
+     `rpc_set_staff_active` with CAS via `p_expected_state`).
+   - 178 (`rpc_coupon_toggles`) — coupon enable/disable as RPC.
+   - 179 (`rpc_create_order_sqlstate_codes`) — extended the SQLSTATE
+     pattern from PUB-007 (migration 174) onto the order-creation path.
+
+✅ Session 146 — Open-lane backlog sweep (1 commit, 0cb27d8)
+   - Cleared residual P2/P3 items from BACKLOG.md that had been
+     transparently closed by sessions 137-145's RPC sweep. No code
+     changes — bridge + backlog hygiene only.
 
 ✅ Session 145 — Dashboard v4 P1 sweep finalization (1 commit, 81d0194)
    - Verified the 2026-05-13 dashboard v4 audit's 6 HIGH findings
@@ -98,13 +240,10 @@ CLOSED in sessions 137–145 (newest first):
      `await createServiceClient()` in 4 page.tsx files —
      `dashboard/tables/page.tsx`, `waiter/page.tsx`,
      `waiter/table/[tableNumber]/page.tsx`,
-     `table/[branchId]/[tableNumber]/page.tsx`. Removed three stale
-     "restaurant_tables not yet in Database types" comments (table is in
-     `types.ts:3446` since session-142 type regen).
+     `table/[branchId]/[tableNumber]/page.tsx`.
    - Behavior change: the 3 `notFound()` / `redirect()` fallbacks on
      missing env vars are gone. Factory throws a descriptive Error that
      surfaces in Sentry. Missing env is a deploy bug, not a runtime path.
-   - Single commit (`81d0194`), all 9 gates green at HEAD, no migrations.
 
 ✅ Session 144 — Public-surface hygiene audit + T3 cleanup (6 commits, 94e01c0 → a572bdb)
    - Generated `.agent/public-audit-2026-05-18.md` (15 findings: 0 P0,
@@ -126,13 +265,8 @@ CLOSED in sessions 137–145 (newest first):
      contact branch_id, `q` searchParam clamp on `/menu`, `.max(72)` +
      5/15m rate-limit on setPasswordAction, Sentry on checkout error
      boundary, UUID guard on `/payment/[orderId]`.
-   - Also: pre-audit chores landed early-session — `bc0811c` (session
-     143 9-gate hygiene chore — amber → brand-gold + gate-5/6 regex
-     tightening); `c55f0c9` (drop `Record<string, never>` cast on
-     `notified_at` UPDATE in birthday-notify route, types.ts now covers
-     migration 172).
-   - Deferred to backlog: PUB-007 (RPC SQLSTATE migration), PUB-009
-     (narrow row type refactor). Both in `.agent/BACKLOG.md`.
+   - Deferred at session-144 time: PUB-007 + PUB-009. Both subsequently
+     closed in sessions 148 + 149.
 
 ✅ Session 142 — Security Tier 1 + Tier 2 hardening sweep (15 commits, fb3995f → e53c17a)
    - T1 (fail-open holes): Turnstile + Upstash now fail-closed in
@@ -167,34 +301,13 @@ CLOSED in sessions 137–145 (newest first):
    - Second-pass P0: clamp coupon branch scope for branch_manager +
      marketing (`93d5ce7`).
    - P1-A → P1-J converting remaining dashboard direct writes into
-     RPCs with localized errors + audit trail: KDS advanceOrderStatus
-     (`d3582de`); POS post-RPC writes folded into rpc_create_order
-     (`aa23514`); waitlist via migration 168 + RPC wiring
-     (`7ed94fe` + `76307fd`); shifts approveShift via migration 169
-     (`44274e2` + `70da885`); coupon writes via migration 170
-     (`225e39b` + `8ace248`); promotion writes via migration 171
-     (`bdd60ab` + `03a8714`); reports + error-handling gaps across
-     8 pages (`2a3f8d2`); eliminate remaining dynamic imports on
-     dashboard routes (`094fe35`); staff + settings write hygiene +
-     audit trail (`c6893ae`).
-   - Close-outs: `ca230e9` + `f2ecc88`.
+     RPCs with localized errors + audit trail (migrations 168/169/170/
+     171). Final commits: `ca230e9` + `f2ecc88`.
 
 ✅ Sessions 137-139 — First-pass dashboard audit clean, 34 findings, migrations 165-167
-   - First-pass P0 sweep: section gates on menu + shifts + shifts
-     fail-closed (`444b042`); fail-closed null branch_id in orders
-     list (`7f60f59`); branch filter on ops_alerts + coupons + marketing
-     scope (`a835779`); staff branch filter + loyalty config audit
-     (`5d283de`); catering defense-in-depth + inventory RLS verified
-     (`24f99f3`).
-   - First-pass P1 sweep: orders write hygiene + error handling
-     (`4691f72`); KDS RBAC + client + branchId clamp (`3208f39`);
-     POS service RBAC + inventory branch clamp (`325ef2e`); reports +
-     reservations + waitlist (`b6243b6`); analytics + promotions +
-     payments + staff (`cb30180`); settings + menu i18n (`5fd1147`).
-   - Migrations 165 (rpc_update_order_status + rpc_cancel_order),
-     166 (rpc_update_reservation_status), 167 (rpc_create_leave_request)
-     replace direct dashboard writes. Wired via `7671239`.
-   - Close-out: `cc7147a`.
+   - First-pass P0 + P1 sweep converted direct supabase-js INSERT/UPDATE
+     calls on orders / reservations / leave_requests into SECURITY
+     DEFINER RPCs (migrations 165, 166, 167). Close-out: `cc7147a`.
 
 CLOSED in session 136:
 
@@ -281,23 +394,31 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   Order + payment row commit atomically in rpc_create_order via
   p_payment_mode = 'cod' | 'online' | 'tap_card'.
 - **All dashboard mutating writes via RPC + audit trail** — sessions
-  137–140 converted direct supabase-js INSERT/UPDATE calls on
+  137–147 converted direct supabase-js INSERT/UPDATE calls on
   orders / reservations / leave_requests / waitlist / shifts /
-  coupons / promotions / staff / settings into SECURITY DEFINER RPCs
-  (migrations 165–171). Audit row + parent mutation share a transaction.
+  coupons / promotions / staff / settings / menu / recipes into
+  SECURITY DEFINER RPCs (migrations 165–179). Audit row + parent
+  mutation share a transaction.
 - **Public write surfaces fail closed in production** (session 142, T1;
   extended in session 144, T3-A1) — Turnstile, Upstash, missing env vars
   all return rate_limit/error in production across contact, reserve,
   catering, staff login, customer login, customer register, forgot-password,
   set-password; dev/preview keep honeypot-only fallback.
 - **Per-user authenticated pages pin `force-dynamic`** (session 144, T3-A3) —
-  `/order/[id]`, `/payment/[orderId]`, `/account`, `/checkout`. Pure
-  insurance against a future layout-hoist refactor breaking the
-  implicit-dynamic guarantee and exposing user A's data via the shared
-  static cache.
+  `/order/[id]`, `/payment/[orderId]`, `/account`, `/checkout`.
 - **Shared public form validation** (session 144, T3-B) —
   `src/lib/validation/phone.ts` exports `PUBLIC_PHONE_RE`. Contact,
   reserve, catering all import from this; do not redeclare the regex.
+- **RPC error sentinels use SQLSTATE codes in class KH** (PUB-007,
+  closed session 148; extended to order-create in session 147 via
+  migration 179) — JS callers must discriminate on `error.code`, never
+  on `error.message` substring matching. A future RPC refactor wrapping
+  error context would silently degrade message-based branches to
+  generic server_error.
+- **Narrow row types via `Pick<X, ...>` + `.returns<>()`** on
+  hand-written explicit-column selects (PUB-009, closed session 149) —
+  never `as unknown as X` blind casts. Column drift between the select
+  list and the type then gets flagged by tsc.
 - AnalyticsResult<T> pattern for all analytics queries (AUD-V3-008)
 - createClient() (anon) for analytics reads where RLS covers it
 - createServiceClient() only for: matviews + RPCs without authenticated grant
@@ -310,6 +431,10 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   files (AUD-V4-007, closed session 145) — application-level console output
   leaks order/branch IDs to breadcrumbs. Sites that need observability call
   `Sentry.captureException` explicitly.
+- **Navbar keyboard accessibility** (session 154) — every interactive
+  control in `Header.tsx` carries the shared `FOCUS_RING` constant
+  (focus-visible:ring-2 ring-brand-gold/60 + outline-none). Use
+  :focus-visible, never :focus, so mouse clicks stay clean.
 - x-real-ip before x-forwarded-for for rate limiting
 - No console.error swallowing — Sentry via captureAnalyticsError
 - Customer-facing + staff-facing error strings go through next-intl
@@ -320,6 +445,11 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   CATERING_SERVICE_TYPES in src/lib/whatsapp-catering-message.ts)
 - Cron routes use `crypto.timingSafeEqual` on equal-length Buffers
   (matches verifyWebhookSignature in tap-client.ts)
+- **Bridge protocol** — close-outs that update `CURRENT-SESSION.md`
+  must ALSO update `.agent/CLAUDE-AI-CONTEXT.md` (the canonical source
+  that `sync-context.ps1` reads). Otherwise the next sync silently
+  drops history. Session 154 backfilled 146-153 after the regression
+  was caught.
 - git add -p always — never stage sibling work
 - Work on master directly — no worktrees unless explicitly requested
 
@@ -329,22 +459,22 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 
 ## MIGRATION STATE
 - Local = Remote — migrations applied through 182 (paired).
+- Session 154 added: **none** — both commits were frontend-only
+  (Header.tsx polish + a11y focus rings).
 - Session 153 added: 181 (UPDATE menu_items SET station='mains' WHERE
-  station='main' — cosmetic, doesn't affect KDS routing since neither
-  trigger reads menu_items.station), 182 (backfill 8 rows into
-  menu_items_sync — 7 egg sandwiches @ 'mains', turkish-coffee @ 'cold' —
-  closes the gap where these items were falling back to 'packing' and
-  showing up Unassigned in the KDS UI).
+  station='main' — cosmetic), 182 (backfill 8 rows into
+  menu_items_sync — 7 egg sandwiches @ 'mains', turkish-coffee @
+  'cold' — closes Unassigned-in-KDS gap).
 - Session 152 added: **none** — pure frontend layout work in Header.tsx.
 - Session 151 added: 180 (seed Turkish Coffee item: id `turkish-coffee`,
   category `the-heritage-tea-and-coffee`, price 1.600 BHD, station
-  `mains`, idempotent `ON CONFLICT (id) DO NOTHING`). Departs from 144's
-  pattern by setting station explicitly to match sibling drinks rows
-  (default would have been `main`; existing drinks all carry `mains`).
-- Session 145 added: **none** — both passes were code-only (Sentry config
-  flag flip + service-role factory consolidation). The 6 dashboard v4 P1s
-  were either already covered by prior migrations (126 for staff TOCTOU,
-  169 for approveShift CAS) or were never migration-shaped.
+  `mains`, idempotent `ON CONFLICT (id) DO NOTHING`).
+- Session 149 added: **none** — types regen + BHD hygiene + PUB-009
+  follow-up review only.
+- Session 148 added: 174 (rpc_create_reservation_sqlstate_codes —
+  PUB-007 close), 175 (rpc_replace_recipes).
+- Session 147 added: 176 (rpc_menu_writes), 177 (rpc_staff_writes),
+  178 (rpc_coupon_toggles), 179 (rpc_create_order_sqlstate_codes).
 - Session 142 added: 172 (birthday_point_credits.notified_at +
   partial index — cron send-idempotency for Vercel retries),
   173 (process_tap_webhook short-circuits on ANY prior payment_webhooks
@@ -373,90 +503,45 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last entries)
-- Session 153: KDS station coverage audit + 2 DB fixes (3 commits,
-  `5d35237 → c3694bf`). Audit revealed three triggers on order_items
-  (not one), with `fn_kds_enqueue_item` as the real KDS router — does a
-  lookup in `menu_items_sync.station` by slug, falls back to 'packing'
-  (which has no UI entry and renders as Unassigned). 8 items added by
-  migrations 144 + 180 (7 egg sandwiches, turkish-coffee) were missing
-  from `menu_items_sync` entirely and were falling to 'packing'. Shipped:
-  `5d35237` migration 181 (UPDATE menu_items.station 'main' → 'mains' on
-  7 egg sandwich rows — cosmetic only; that column isn't read by either
-  trigger); `c3694bf` migration 182 (backfill 8 rows into
-  menu_items_sync, 7 egg sandwiches → 'mains', turkish-coffee → 'cold'
-  matching the 13 existing `drinks-*` rows which all use 'cold').
-  menu_items_sync now has 176 rows = menu_items count. Audit also
-  surfaced parallel issues left UNFIXED this session: STATION_CONFIG
-  (the UI screen list) and the live trigger output set don't fully
-  overlap — `fryer`, `drinks`, `desserts` are emitted by older trigger
-  paths but have no UI screen, and conversely `mains`, `shawarma`,
-  `pizza` are configured screens but the slug-pattern CASE trigger never
-  emits them. Backlog item for a future lane.
-- Session 152: navbar layout iteration (6 commits, `b7f73fd → 3b6647c`).
-  Drove the centering through several approaches before landing on the
-  proven Nobu/Zuma pattern: single flex row with the logo
-  absolutely-positioned at `left-1/2 -translate-x-1/2`. Attempted (and
-  reverted): absolute CTA outside the grid (`b7f73fd` — broken: a class
-  conflict in CinematicButton's hardcoded `inline-flex` collided with
-  `hidden md:inline-flex` and `hidden` won the cascade, rendering the
-  CTA `display:none` on every viewport); symmetric `minmax(0,1fr)` grid
-  with phantom CTA-shaped spacer (`7c7bfe3`); flex+absolute reverted
-  (`614658a`); min-w + slim CTA padding (`8732cb8`); `justify-end` to
-  pull groupStart content close to logo (`25e61b6`); finally moved About
-  to groupStart (4 vs 1+icons+CTA balances naturally, no min-w needed)
-  and bumped header to `h-20` unconditional for logo headroom
-  (`3b6647c`). Screenshots captured at each iteration via Playwright on
-  the local dev server (/ar + /en at 1440 and 1280 widths). No
-  migrations, no i18n changes, no other files touched.
-- Session 151: navbar redesign + Turkish Coffee seed. Three commits:
-  `a612770` Header.tsx rewrite (luxury restaurant pattern — centered
-  logo on `grid-cols-[1fr_auto_1fr]`, split nav groups, premium typo
-  with English tracking + uppercase / Arabic untracked, gold-underline
-  on active route via `::after`, hover removes underline for gold-fade,
-  account icon-only signed-out + signed-in dropdown preserved, EN/AR
-  literal toggle, mobile drops calendar icon and bumps logo to h-12
-  max-w-[170px]). `42ef745` migration 180 seeds Turkish Coffee row
-  (applied to remote; idempotent). `6aa9d41` adds the asset file
-  `public/assets/gallery/turkish-coffee.webp`. All 9 gates green.
-  Note: id `turkish-coffee` does not follow the `drinks-*` prefix
-  convention used by the other 3 rows in this category — left as-is
-  per user decision; no corrective migration 181.
-- Session 141: mobile responsiveness sweep across recipes/import/
-  owner/reservations/shifts/alerts/orders/analytics/reports/payments/
-  coupons/promotions/settings/pos/menu (Lane 1) + /kds/[station]
-  single-station mobile route (Lane 2)
-- Session 142: Tier 1 + Tier 2 security hardening (15 commits) —
-  Turnstile + Upstash fail-closed, QR rate-limit, staff login server
-  action, order column allowlist, CRLF + phone whitelist, find-tables
-  rate-limit, cron timingSafeEqual + sanitize + notified_at idempotency
-  (migration 172), honeypot fake-success, slug cap, account login
-  Turnstile + email RL, Tap webhook replay dedup (migration 173).
-  Types regen + notes refresh.
-- Session 143: 9-gate hygiene chore — amber → brand-gold on 3 spots in
-  ReservationsClient.tsx; gate 5 BHD regex tightened to display-token
-  only; gate 6 exempt list adds birthday-notify cron. One commit
-  (`bc0811c`), no migrations, no runtime behaviour change.
-- Session 144: public-surface hygiene audit + T3 cleanup. Generated
-  `.agent/public-audit-2026-05-18.md` (15 findings, 0 P0, 6 P1, 9 P2).
-  Shipped 4 batches in 6 commits: T3-A1 fail-closed login surfaces;
-  T3-A2 Sentry on /payment page; T3-A3 force-dynamic pin on 4 auth
-  pages; T3-B 7 P2s + PUB-002 + shared phone regex. Two P2s deferred
-  to BACKLOG.md (PUB-007 needs migration, PUB-009 ~15-line refactor).
-  No migrations, all 9 gates green.
-- Session 145: dashboard v4 P1 sweep finalization. Verified all 6
-  HIGH findings (AUD-V4-004..009) against current master — four were
-  already closed pre-session (migrations 126/169, toSafeError, npm
-  audit clean). Pass 1 dropped `enableLogs: true` across all 3 Sentry
-  configs + routed two `getShiftSummary` errors through
-  `Sentry.captureException`. Pass 2 collapsed 4 inline service-role
-  constructions into `createServiceClient()`. Single commit
-  (`81d0194`), no migrations, all 9 gates green. With this and the
-  session-144 PUB-* closures, every P1 in either audit doc is now
-  closed on master.
+- Session 154: mobile navbar polish + a11y focus rings (2 commits,
+  `32f4fc5 → 9dc0cf0`). At 375 + 430 px, logo at top state was
+  dissolving into hero photography — bumped h-12→h-14, max-w-170→190,
+  added drop-shadow that fades out when glass capsule takes over.
+  Sheet language toggle now 44x44 hit target. FOCUS_RING constant
+  applied to all 18 interactive controls in Header.tsx
+  (focus-visible:ring-2 ring-brand-gold/60 + outline-none).
+  :focus-visible (not :focus) so mouse clicks stay clean. Items 3 + 4
+  from open lane (PUB-007 + PUB-009) were no-ops — already closed in
+  sessions 148 + 149. Process glitch caught: sessions 146-153 had
+  been writing to CURRENT-SESSION.md without updating
+  CLAUDE-AI-CONTEXT.md; this session backfilled the source.
+- Session 153: KDS station coverage audit + 2 DB fixes (migrations
+  181 + 182). fn_kds_enqueue_item identified as live router; 8 items
+  backfilled into menu_items_sync. Carry: STATION_CONFIG ↔ trigger
+  output overlap audit.
+- Session 152: navbar layout iteration (6 commits). Landed
+  Nobu/Zuma absolute-centered logo pattern after several reverts.
+- Session 151: navbar redesign + Turkish Coffee seed (3 commits +
+  migration 180).
+- Session 150: open-lane sweep (5 commits) — CI Node 24, dashboard
+  P2 sweep AUD-V4-011/013/016, gen-types.ps1 wrapper, smoke suite,
+  catering filters.
+- Session 149: BHD hygiene + PUB-009 leftover + types regen
+  (2 commits, no migrations).
+- Session 148: PUB-007 close + migrations 174 + 175 + registry sync.
+- Session 147: dashboard RPC sweep finalization (migrations 176-179).
+- Session 146: open-lane backlog hygiene (1 commit, no code).
+- Session 145: dashboard v4 P1 sweep finalization (Sentry enableLogs
+  drop + service-role factory consolidation).
 
 ## BRIDGE PROTOCOL
-- Claude Code reads this file at session start via: pwsh .agent/sync-context.ps1
-- Claude.ai updates this file after every strategic decision
-- Never delete this file — append/overwrite sections only
+- Claude Code reads `.agent/CURRENT-SESSION.md` at session start via:
+  `pwsh .agent/sync-context.ps1`
+- `sync-context.ps1` REGENERATES `CURRENT-SESSION.md` from
+  `CLAUDE-AI-CONTEXT.md`. Any edits made directly to
+  `CURRENT-SESSION.md` are lost on next sync.
+- Claude.ai (or Claude Code, when authoring a close-out) updates
+  `CLAUDE-AI-CONTEXT.md` — the canonical source.
+- Never delete either file — append/overwrite sections only.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
