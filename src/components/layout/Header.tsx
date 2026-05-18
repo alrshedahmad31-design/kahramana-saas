@@ -37,6 +37,12 @@ const ALL_LINKS = [...GROUP_START, ...GROUP_END] as const
 
 type NavKey = (typeof ALL_LINKS)[number]['key']
 
+// Shared focus-ring for every keyboard-interactive control in the navbar.
+// :focus-visible (not :focus) so mouse clicks never paint the ring, which keeps
+// the cinematic surface clean for pointer users while restoring a visible target
+// for tab/sr users.
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/60'
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Header() {
@@ -172,8 +178,9 @@ export default function Header() {
         href={href}
         aria-current={active ? 'page' : undefined}
         className={`
-          relative px-3 py-2 text-[13px] transition-colors duration-300
+          relative px-3 py-2 text-[13px] rounded-md transition-colors duration-300
           ${linkTypography}
+          ${FOCUS_RING}
           ${active ? 'text-brand-gold' : 'text-brand-muted hover:text-brand-gold/80'}
           after:content-[''] after:absolute after:bottom-1 after:inset-x-3 after:h-px after:bg-brand-gold
           after:origin-center after:transition-transform after:duration-300
@@ -223,7 +230,7 @@ export default function Header() {
             href="/"
             onClick={closeMenu}
             aria-label={isRTL ? 'الرئيسية' : 'Home'}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 shrink-0 flex items-center transition-transform hover:scale-105 active:scale-95"
+            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 shrink-0 flex items-center rounded-md transition-transform hover:scale-105 active:scale-95 ${FOCUS_RING}`}
           >
             <Image
               src="/assets/brand/logo-full.webp"
@@ -247,7 +254,7 @@ export default function Header() {
             <button
               onClick={handleLocaleSwitch}
               aria-label={t('languageAlt')}
-              className="font-satoshi text-[12px] font-medium tracking-[0.12em] text-brand-muted hover:text-brand-gold/80 transition-colors duration-300 px-2 py-2"
+              className={`font-satoshi text-[12px] font-medium tracking-[0.12em] text-brand-muted hover:text-brand-gold/80 transition-colors duration-300 px-2 py-2 rounded-md ${FOCUS_RING}`}
             >
               {toggleLabel}
             </button>
@@ -259,7 +266,7 @@ export default function Header() {
               <Link
                 href="/account"
                 aria-label={tAccount('loginOrRegister')}
-                className="flex items-center justify-center w-11 h-11 rounded-full border border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10 transition-colors duration-300"
+                className={`flex items-center justify-center w-11 h-11 rounded-full border border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10 transition-colors duration-300 ${FOCUS_RING}`}
               >
                 <UserIcon />
               </Link>
@@ -271,7 +278,7 @@ export default function Header() {
                   aria-haspopup="menu"
                   aria-expanded={accountOpen}
                   aria-label={tAccount('title')}
-                  className="flex items-center gap-2 ps-2 pe-3 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
+                  className={`flex items-center gap-2 ps-2 pe-3 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300 ${FOCUS_RING}`}
                 >
                   <UserIcon />
                   <span className="font-satoshi text-xs font-bold text-brand-gold tabular-nums">
@@ -311,7 +318,7 @@ export default function Header() {
                       href="/account"
                       onClick={() => setAccountOpen(false)}
                       role="menuitem"
-                      className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-brand-text/5 ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      className={`block px-3 py-2 mt-1 rounded-lg text-sm text-brand-text hover:bg-brand-text/5 ${isRTL ? 'font-cairo' : 'font-satoshi'} ${FOCUS_RING}`}
                     >
                       {tAccount('title')}
                     </Link>
@@ -319,7 +326,7 @@ export default function Header() {
                       type="button"
                       onClick={handleSignOut}
                       role="menuitem"
-                      className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-brand-text/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      className={`block w-full px-3 py-2 rounded-lg text-sm text-brand-muted hover:text-brand-text hover:bg-brand-text/5 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'} ${FOCUS_RING}`}
                     >
                       {tAccount('signOut')}
                     </button>
@@ -332,7 +339,7 @@ export default function Header() {
             <button
               onClick={openCart}
               aria-label={t('cartAlt')}
-              className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300"
+              className={`relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 hover:border-brand-gold/50 hover:bg-brand-text/5 transition-colors duration-300 ${FOCUS_RING}`}
             >
               <CartIcon />
               {totalItems > 0 && (
@@ -348,7 +355,7 @@ export default function Header() {
               href="/reserve"
               isRTL={isRTL}
               aria-label={t('reserveTable')}
-              className={`px-4 py-2 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
+              className={`px-4 py-2 text-[13px] font-semibold rounded-full ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'} ${FOCUS_RING}`}
             >
               {t('reserveTable')}
             </CinematicButton>
@@ -361,7 +368,7 @@ export default function Header() {
             href="/"
             onClick={closeMenu}
             aria-label={isRTL ? 'الرئيسية' : 'Home'}
-            className="shrink-0 flex items-center"
+            className={`shrink-0 flex items-center rounded-md ${FOCUS_RING}`}
           >
             <Image
               src="/assets/brand/logo-full.webp"
@@ -385,7 +392,7 @@ export default function Header() {
               <Link
                 href="/account"
                 aria-label={customer ? tAccount('title') : tAccount('loginOrRegister')}
-                className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-colors duration-300 ${
+                className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-colors duration-300 ${FOCUS_RING} ${
                   customer
                     ? 'border border-brand-text/10'
                     : 'border border-brand-gold/40 text-brand-gold'
@@ -408,7 +415,7 @@ export default function Header() {
             <button
               onClick={openCart}
               aria-label={t('cartAlt')}
-              className="relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10"
+              className={`relative flex items-center justify-center w-11 h-11 rounded-full border border-brand-text/10 ${FOCUS_RING}`}
             >
               <CartIcon />
               {totalItems > 0 && (
@@ -422,7 +429,7 @@ export default function Header() {
               onClick={() => setIsOpen(!isOpen)}
               aria-label={isOpen ? t('closeMenu') : t('openMenu')}
               aria-expanded={isOpen}
-              className="w-11 h-11 flex flex-col justify-center items-center gap-1.5"
+              className={`w-11 h-11 flex flex-col justify-center items-center gap-1.5 rounded-md ${FOCUS_RING}`}
             >
               <span
                 className={`w-5 h-0.5 bg-brand-text block rounded-full transition-transform duration-300 ${isOpen ? 'translate-y-2 rotate-45' : ''}`}
@@ -447,8 +454,9 @@ export default function Header() {
                       href={href}
                       onClick={closeMenu}
                       className={`
-                        text-base font-medium py-2 border-b border-brand-text/5 last:border-0 text-start
+                        text-base font-medium py-2 px-1 -mx-1 rounded-md border-b border-brand-text/5 last:border-0 text-start
                         ${linkTypography}
+                        ${FOCUS_RING}
                         ${pathname === href ? 'text-brand-gold' : 'text-brand-text'}
                       `}
                     >
@@ -461,7 +469,7 @@ export default function Header() {
                   <Link
                     href="/account"
                     onClick={closeMenu}
-                    className={`text-base font-medium py-2 border-b border-brand-text/5 text-start text-brand-gold ${linkTypography}`}
+                    className={`text-base font-medium py-2 px-1 -mx-1 rounded-md border-b border-brand-text/5 text-start text-brand-gold ${linkTypography} ${FOCUS_RING}`}
                   >
                     {tAccount('loginOrRegister')}
                   </Link>
@@ -471,7 +479,7 @@ export default function Header() {
                     <Link
                       href="/account"
                       onClick={closeMenu}
-                      className={`flex items-center justify-between gap-3 py-2 text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      className={`flex items-center justify-between gap-3 py-2 px-1 -mx-1 rounded-md text-start ${isRTL ? 'font-cairo' : 'font-satoshi'} ${FOCUS_RING}`}
                     >
                       <span className="text-base font-bold text-brand-text">
                         {tAccount('title')}
@@ -491,7 +499,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className={`mt-1 text-sm text-brand-muted text-start ${isRTL ? 'font-cairo' : 'font-satoshi'}`}
+                      className={`mt-1 text-sm text-brand-muted text-start px-1 -mx-1 rounded-md ${isRTL ? 'font-cairo' : 'font-satoshi'} ${FOCUS_RING}`}
                     >
                       {tAccount('signOut')}
                     </button>
@@ -502,7 +510,7 @@ export default function Header() {
                   <button
                     onClick={handleLocaleSwitch}
                     aria-label={t('languageAlt')}
-                    className="font-satoshi text-sm font-medium tracking-[0.12em] text-brand-muted min-w-11 h-11 flex items-center justify-start"
+                    className={`font-satoshi text-sm font-medium tracking-[0.12em] text-brand-muted min-w-11 h-11 px-2 flex items-center justify-start rounded-md ${FOCUS_RING}`}
                   >
                     {toggleLabel}
                   </button>
@@ -510,7 +518,7 @@ export default function Header() {
                     href="/reserve"
                     isRTL={isRTL}
                     aria-label={t('reserveTable')}
-                    className={`px-6 py-3 rounded-full font-semibold ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'}`}
+                    className={`px-6 py-3 rounded-full font-semibold ${isRTL ? 'font-cairo' : 'font-satoshi tracking-[0.04em]'} ${FOCUS_RING}`}
                   >
                     {t('reserveTable')}
                   </CinematicButton>
