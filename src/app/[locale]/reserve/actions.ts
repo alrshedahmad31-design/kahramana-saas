@@ -208,11 +208,16 @@ export async function createPublicReservation(
   })
 
   if (error) {
-    const message = error.message ?? ''
-    if (message.includes('RESERVATION_CONFLICT')) return { success: false, error: 'conflict' }
-    if (message.includes('INVALID_PHONE'))         return { success: false, error: 'invalid_phone' }
-    if (message.includes('INVALID_PARTY_SIZE'))    return { success: false, error: 'invalid_party_size' }
-    return { success: false, error: 'server_error' }
+    // SQLSTATE codes assigned by migration 174. error.message is left
+    // human-readable for Sentry/logs; matching keys on .code so a
+    // future RPC refactor wrapping context can't silently degrade
+    // these branches to server_error.
+    switch (error.code) {
+      case 'KH014': return { success: false, error: 'conflict' }
+      case 'KH005': return { success: false, error: 'invalid_phone' }
+      case 'KH006': return { success: false, error: 'invalid_party_size' }
+      default:      return { success: false, error: 'server_error' }
+    }
   }
 
   // 5. WhatsApp confirmation link to the chosen branch's number — opens a
