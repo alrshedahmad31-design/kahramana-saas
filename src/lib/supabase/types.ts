@@ -4887,6 +4887,21 @@ export type Database = {
         Returns: Json
       }
       rpc_create_coupon: { Args: { p_payload: Json }; Returns: Json }
+      rpc_create_menu_item: { Args: { p_payload: Json }; Returns: Json }
+      rpc_delete_menu_item: { Args: { p_slug: string }; Returns: Json }
+      rpc_delete_menu_option: { Args: { p_id: string }; Returns: Json }
+      rpc_delete_menu_option_group: { Args: { p_id: string }; Returns: Json }
+      rpc_set_menu_item_available: {
+        Args: { p_slug: string; p_available: boolean }
+        Returns: Json
+      }
+      rpc_update_menu_item: {
+        Args: { p_slug: string; p_payload: Json }
+        Returns: Json
+      }
+      rpc_upsert_menu_items: { Args: { p_items: Json }; Returns: Json }
+      rpc_upsert_menu_option: { Args: { p_payload: Json }; Returns: Json }
+      rpc_upsert_menu_option_group: { Args: { p_payload: Json }; Returns: Json }
       rpc_create_customer_profile: {
         Args: { p_email?: string; p_name?: string; p_phone: string }
         Returns: undefined

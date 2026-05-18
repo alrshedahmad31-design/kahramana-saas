@@ -1,27 +1,11 @@
 'use server'
 
+import * as Sentry from '@sentry/nextjs'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
 import { toSafeError } from '@/lib/utils/safe-error'
-
-// Untyped service client for tables added by migration but not yet in the
-// regenerated `Database` type (082_menu_modifiers). Drop this helper when
-// `npx supabase gen types` is re-run.
-function untypedServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) {
-    throw new Error(
-      'Missing Supabase env vars: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required',
-    )
-  }
-  return createSupabaseClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-}
 import {
   getDashboardGuardErrorMessage,
   requireDashboardSection,
@@ -32,6 +16,7 @@ import { MENU_CATEGORY_IDS, getSlugPrefix } from '@/constants/menu-categories'
 import { ALL_STATIONS } from '@/lib/kds/constants'
 import { isSafeImageUrl, IMAGE_URL_ERROR } from '@/lib/security/image-url'
 import type { StaffRole, KDSStation } from '@/lib/supabase/custom-types'
+import type { Json } from '@/lib/supabase/types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,6 +64,25 @@ const updatePayloadSchema = itemPayloadSchema.omit({ id: true }).partial({
 
 const DESTRUCTIVE_ROLES: readonly StaffRole[] = ['owner', 'general_manager'] as const
 
+// ── RPC envelope mapping ──────────────────────────────────────────────────────
+
+type RpcEnvelope = { ok: true; id?: string; count?: number } | { ok: false; code: string }
+
+function isRpcEnvelope(v: unknown): v is RpcEnvelope {
+  return typeof v === 'object' && v !== null && 'ok' in v
+}
+
+async function mapMenuRpcError(code: string, fallback: string): Promise<string> {
+  const t = await getTranslations('dashboard')
+  switch (code) {
+    case 'forbidden_role': return 'Forbidden: only owners or general managers can perform this action'
+    case 'slug_taken':     return t('slug_taken')
+    case 'not_found':      return 'Menu item not found'
+    case 'invalid_input':  return 'Invalid payload'
+    default:               return fallback
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function bustMenuCaches(slug?: string) {
@@ -108,9 +112,8 @@ export async function toggleMenuItemAvailability(
   slug: string,
   isAvailable: boolean,
 ): Promise<{ success: boolean; error?: string }> {
-  let caller
   try {
-    caller = await requireDashboardSection('menu')
+    await requireDashboardSection('menu')
   } catch (err) {
     return { success: false, error: getDashboardGuardErrorMessage(err) }
   }
@@ -123,31 +126,19 @@ export async function toggleMenuItemAvailability(
   }
 
   const supabase = await createServiceClient()
-
-  const { data: updated, error } = await supabase
-    .from('menu_items')
-    .update({
-      is_available: isAvailable,
-      updated_at:   new Date().toISOString(),
-    })
-    .eq('id', slug)
-    .select('id')
-    .maybeSingle()
+  const { data: raw, error } = await supabase.rpc('rpc_set_menu_item_available', {
+    p_slug:      slug,
+    p_available: isAvailable,
+  })
 
   if (error) {
-    console.error('[menu] toggleMenuItemAvailability failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'toggleMenuItemAvailability' } })
     return { success: false, error: toSafeError(error) }
   }
-  if (!updated) return { success: false, error: 'Menu item not found' }
-
-  await supabase.from('audit_logs').insert({
-    table_name: 'menu_items',
-    action:     'UPDATE',
-    user_id:    caller.id,
-    record_id:  slug,
-    actor_role: caller.role,
-    changes:    { is_available: isAvailable },
-  })
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Toggle failed') }
+  }
 
   bustMenuCaches(slug)
   return { success: true }
@@ -181,26 +172,28 @@ export async function syncMenuItemsWithDatabase(): Promise<{
       price_bhd:      item.price_bhd ?? 0,
       category:       slugify(cat.category.en),
       image_url:      item.image_url || null,
-      station:        ((item.station || 'unassigned') as KDSStation),
-      updated_at:     new Date().toISOString(),
+      station:        (item.station || 'unassigned'),
     })),
   )
 
   if (allItems.length === 0) return { success: true, count: 0 }
 
-  const supabase = untypedServiceClient()
-  // Use the untyped client until generated types include the full station taxonomy.
-  const { error } = await supabase.from('menu_items').upsert(allItems, {
-    onConflict: 'id',
+  const supabase = await createServiceClient()
+  const { data: raw, error } = await supabase.rpc('rpc_upsert_menu_items', {
+    p_items: allItems as unknown as Json,
   })
 
   if (error) {
-    console.error('[menu] sync failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'syncMenuItemsWithDatabase' } })
     return { success: false, error: toSafeError(error) }
+  }
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Sync failed') }
   }
 
   bustMenuCaches()
-  return { success: true, count: allItems.length }
+  return { success: true, count: rpc.count ?? allItems.length }
 }
 
 // ── Export to JSON ────────────────────────────────────────────────────────────
@@ -274,46 +267,22 @@ export async function createMenuItem(
   }
 
   const supabase = await createServiceClient()
-
-  // Uniqueness check against menu_items (the live editable table).
-  // menu_items.id stores the slug value (TEXT PRIMARY KEY); there is no
-  // separate slug column on this table.
-  const { data: existing, error: lookupError } = await supabase
-    .from('menu_items')
-    .select('id')
-    .eq('id', generatedSlug)
-    .maybeSingle()
-
-  if (lookupError) {
-    console.error('[menu] createMenuItem uniqueness check failed:', lookupError)
-    return { success: false, error: lookupError.message }
-  }
-  if (existing) {
-    const t = await getTranslations('dashboard')
-    return { success: false, error: t('slug_taken') }
-  }
-
-  const menuSupabase = untypedServiceClient()
-  const { error } = await menuSupabase.from('menu_items').insert({
-    ...payload,
-    id:         generatedSlug,
-    image_url:  payload.image_url || null,
-    updated_at: new Date().toISOString(),
+  const { data: raw, error } = await supabase.rpc('rpc_create_menu_item', {
+    p_payload: {
+      ...payload,
+      id:        generatedSlug,
+      image_url: payload.image_url || null,
+    } as unknown as Json,
   })
 
   if (error) {
-    console.error('[menu] createMenuItem failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'createMenuItem' } })
     return { success: false, error: toSafeError(error) }
   }
-
-  await supabase.from('audit_logs').insert({
-    table_name: 'menu_items',
-    action:     'INSERT',
-    user_id:    caller.id,
-    record_id:  generatedSlug,
-    actor_role: caller.role,
-    changes:    { action: 'menu_item_created', ...payload, id: generatedSlug },
-  })
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Create failed') }
+  }
 
   bustMenuCaches(generatedSlug)
   return { success: true }
@@ -354,33 +323,19 @@ export async function updateMenuItem(
   void _ignored
 
   const supabase = await createServiceClient()
-
-  const menuSupabase = untypedServiceClient()
-  const { data: updated, error } = await menuSupabase
-    .from('menu_items')
-    .update({
-      ...editable,
-      image_url:  editable.image_url || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', slug)
-    .select('id')
-    .maybeSingle()
+  const { data: raw, error } = await supabase.rpc('rpc_update_menu_item', {
+    p_slug:    slug,
+    p_payload: { ...editable, image_url: editable.image_url || null } as unknown as Json,
+  })
 
   if (error) {
-    console.error('[menu] updateMenuItem failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'updateMenuItem' } })
     return { success: false, error: toSafeError(error) }
   }
-  if (!updated) return { success: false, error: 'Menu item not found' }
-
-  await supabase.from('audit_logs').insert({
-    table_name: 'menu_items',
-    action:     'UPDATE',
-    user_id:    caller.id,
-    record_id:  slug,
-    actor_role: caller.role,
-    changes:    { action: 'menu_item_updated', slug, ...editable },
-  })
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Update failed') }
+  }
 
   bustMenuCaches(slug)
   return { success: true }
@@ -444,7 +399,7 @@ export async function listMenuOptionGroups(slug: string): Promise<{
     return { success: false, error: 'Invalid slug' }
   }
 
-  const supabase = untypedServiceClient()
+  const supabase = await createServiceClient()
   const { data: groups, error: groupsError } = await supabase
     .from('menu_option_groups')
     .select('*')
@@ -472,7 +427,7 @@ export async function listMenuOptionGroups(slug: string): Promise<{
   }
 
   const merged: MenuOptionGroupRow[] = (groups ?? []).map((g) => ({
-    ...(g as MenuOptionGroupRow),
+    ...(g as unknown as Omit<MenuOptionGroupRow, 'options'>),
     options: opts.filter((o) => o.group_id === g.id),
   }))
 
@@ -501,29 +456,22 @@ export async function upsertMenuOptionGroup(input: unknown): Promise<{
   }
   const payload = parsed.data
 
-  const supabase = untypedServiceClient()
-  const row = {
-    menu_item_slug: payload.menu_item_slug,
-    name_ar:        payload.name_ar,
-    name_en:        payload.name_en,
-    required:       payload.required,
-    multi_select:   payload.multi_select,
-    sort_order:     payload.sort_order,
-    updated_at:     new Date().toISOString(),
-  }
+  const supabase = await createServiceClient()
+  const { data: raw, error } = await supabase.rpc('rpc_upsert_menu_option_group', {
+    p_payload: payload as unknown as Json,
+  })
 
-  const query = payload.id
-    ? supabase.from('menu_option_groups').update(row).eq('id', payload.id).select('id').single()
-    : supabase.from('menu_option_groups').insert(row).select('id').single()
-
-  const { data, error } = await query
   if (error) {
-    console.error('[menu] upsertMenuOptionGroup failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'upsertMenuOptionGroup' } })
     return { success: false, error: toSafeError(error) }
+  }
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Upsert failed') }
   }
 
   bustMenuCaches(payload.menu_item_slug)
-  return { success: true, id: (data as { id?: string } | null)?.id }
+  return { success: true, id: rpc.id }
 }
 
 export async function deleteMenuOptionGroup(groupId: string, slug: string): Promise<{
@@ -544,18 +492,18 @@ export async function deleteMenuOptionGroup(groupId: string, slug: string): Prom
     return { success: false, error: 'Invalid id' }
   }
 
-  const supabase = untypedServiceClient()
-  const { data: deleted, error } = await supabase
-    .from('menu_option_groups')
-    .delete()
-    .eq('id', groupId)
-    .select('id')
-    .maybeSingle()
+  const supabase = await createServiceClient()
+  const { data: raw, error } = await supabase.rpc('rpc_delete_menu_option_group', { p_id: groupId })
+
   if (error) {
-    console.error('[menu] deleteMenuOptionGroup failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'deleteMenuOptionGroup' } })
     return { success: false, error: toSafeError(error) }
   }
-  if (!deleted) return { success: false, error: 'Option group not found' }
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Delete failed') }
+  }
+
   bustMenuCaches(slug)
   return { success: true }
 }
@@ -582,26 +530,22 @@ export async function upsertMenuOption(input: unknown): Promise<{
   }
   const payload = parsed.data
 
-  const supabase = untypedServiceClient()
-  const row = {
-    group_id:       payload.group_id,
-    name_ar:        payload.name_ar,
-    name_en:        payload.name_en,
-    price_modifier: payload.price_modifier,
-    is_available:   payload.is_available,
-    sort_order:     payload.sort_order,
-  }
-  const query = payload.id
-    ? supabase.from('menu_options').update(row).eq('id', payload.id).select('id').single()
-    : supabase.from('menu_options').insert(row).select('id').single()
+  const supabase = await createServiceClient()
+  const { data: raw, error } = await supabase.rpc('rpc_upsert_menu_option', {
+    p_payload: payload as unknown as Json,
+  })
 
-  const { data, error } = await query
   if (error) {
-    console.error('[menu] upsertMenuOption failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'upsertMenuOption' } })
     return { success: false, error: toSafeError(error) }
   }
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Upsert failed') }
+  }
+
   bustMenuCaches()
-  return { success: true, id: (data as { id?: string } | null)?.id }
+  return { success: true, id: rpc.id }
 }
 
 export async function deleteMenuOption(optionId: string): Promise<{
@@ -622,18 +566,18 @@ export async function deleteMenuOption(optionId: string): Promise<{
     return { success: false, error: 'Invalid id' }
   }
 
-  const supabase = untypedServiceClient()
-  const { data: deleted, error } = await supabase
-    .from('menu_options')
-    .delete()
-    .eq('id', optionId)
-    .select('id')
-    .maybeSingle()
+  const supabase = await createServiceClient()
+  const { data: raw, error } = await supabase.rpc('rpc_delete_menu_option', { p_id: optionId })
+
   if (error) {
-    console.error('[menu] deleteMenuOption failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'deleteMenuOption' } })
     return { success: false, error: toSafeError(error) }
   }
-  if (!deleted) return { success: false, error: 'Option not found' }
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Delete failed') }
+  }
+
   bustMenuCaches()
   return { success: true }
 }
@@ -680,7 +624,7 @@ export async function uploadMenuImage(
     file.type === 'image/png'  ? 'png'  : 'jpg'
   const objectName = `menu/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
 
-  const supabase = createServiceClient()
+  const supabase = await createServiceClient()
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const { error: uploadError } = await supabase.storage
@@ -730,27 +674,16 @@ export async function deleteMenuItem(
   }
 
   const supabase = await createServiceClient()
+  const { data: raw, error } = await supabase.rpc('rpc_delete_menu_item', { p_slug: slug })
 
-  const { data: deleted, error } = await supabase
-    .from('menu_items')
-    .delete()
-    .eq('id', slug)
-    .select('id')
-    .maybeSingle()
   if (error) {
-    console.error('[menu] deleteMenuItem failed:', error)
+    Sentry.captureException(error, { tags: { area: 'menu', action: 'deleteMenuItem' } })
     return { success: false, error: toSafeError(error) }
   }
-  if (!deleted) return { success: false, error: 'Menu item not found' }
-
-  await supabase.from('audit_logs').insert({
-    table_name: 'menu_items',
-    action:     'DELETE',
-    user_id:    caller.id,
-    record_id:  slug,
-    actor_role: caller.role,
-    changes:    { action: 'menu_item_deleted', slug },
-  })
+  const rpc = isRpcEnvelope(raw) ? raw : null
+  if (!rpc || !rpc.ok) {
+    return { success: false, error: await mapMenuRpcError(rpc?.code ?? 'unknown', 'Delete failed') }
+  }
 
   bustMenuCaches(slug)
   return { success: true }
