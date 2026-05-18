@@ -5,23 +5,28 @@ Master: 626362b93754e0bc15bcfddd5354723eaaa60bb6
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # Claude.ai → Claude Code Context Bridge
-# Updated: 2026-05-18 (session 152 close-out — navbar layout iteration)
-# Master: 3b6647c
+# Updated: 2026-05-18 (session 153 close-out — KDS station coverage audit + fixes)
+# Master: c3694bf
 
 ## CURRENT STATUS
 Launch Risk: 8/10
 Phase: pre_launch_operational  →  **dev work complete; only operator actions remain**
 Next milestone: Soft-launch (cash-only)
-Posture: session-152 iterated the navbar layout to a stable production
-shape across 6 commits (visual feedback loop with Playwright screenshots
-on /ar + /en at 1440/1280 widths). Final pattern: single flex row with
-absolutely-positioned logo (`left-1/2 -translate-x-1/2`) at the bar's
-geometric center; groupStart holds 4 nav links (menu, branches, catering,
-about); groupEnd holds 1 link (contact) + utilities (EN/AR, account, cart)
-+ slim Reserve CTA (`px-4 py-2` from `px-6 py-2.5`); header now `h-20`
-unconditional (was `h-16 sm:h-20` morph) so the logo has stable headroom
-in both scrolled and unscrolled states. No code-only RTL conditionals on
-spacing. All 9 gates green at HEAD.
+Posture: session-153 audited the KDS station-routing pipeline end-to-end
+and shipped two DB-only fixes. Audit surfaced a key fact the prior memory
+got wrong: the LIVE KDS router is `fn_kds_enqueue_item` (a slug-lookup
+against `menu_items_sync.station`, fallback to `'packing'`) — NOT the
+slug-pattern CASE trigger from migration 094 (`on_order_item_created`,
+which still runs but only writes to `order_item_station_status` for the
+status-grid view). Both triggers fire on every order_items insert. The 8
+items that migration 144 + 180 added (7 egg sandwiches, turkish-coffee)
+were missing from `menu_items_sync` and falling back to `packing` →
+Unassigned in the UI. Migration 182 backfilled them with proper stations
+(`mains` for egg sandwiches, `cold` for turkish-coffee, matching the
+existing convention where every `drinks-*` row is `cold`). Migration 181
+also normalized the 7 'main' rows in `menu_items.station` to 'mains'
+(cosmetic — that column isn't read by either trigger). All 9 gates
+green at HEAD.
 
 ## OPERATOR ACTIONS PENDING (Ahmed — not dev work)
 
@@ -323,7 +328,13 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
 - TBT ~1600ms on Slow 4G = animation cost, intentional brand decision
 
 ## MIGRATION STATE
-- Local = Remote — migrations applied through 180 (paired).
+- Local = Remote — migrations applied through 182 (paired).
+- Session 153 added: 181 (UPDATE menu_items SET station='mains' WHERE
+  station='main' — cosmetic, doesn't affect KDS routing since neither
+  trigger reads menu_items.station), 182 (backfill 8 rows into
+  menu_items_sync — 7 egg sandwiches @ 'mains', turkish-coffee @ 'cold' —
+  closes the gap where these items were falling back to 'packing' and
+  showing up Unassigned in the KDS UI).
 - Session 152 added: **none** — pure frontend layout work in Header.tsx.
 - Session 151 added: 180 (seed Turkish Coffee item: id `turkish-coffee`,
   category `the-heritage-tea-and-coffee`, price 1.600 BHD, station
@@ -362,6 +373,25 @@ CLOSED since session 120 (sessions 121-135 — preserved list, in commit order):
   --linked` flags the mismatch cosmetically; no production impact.
 
 ## SESSION HISTORY (last entries)
+- Session 153: KDS station coverage audit + 2 DB fixes (3 commits,
+  `5d35237 → c3694bf`). Audit revealed three triggers on order_items
+  (not one), with `fn_kds_enqueue_item` as the real KDS router — does a
+  lookup in `menu_items_sync.station` by slug, falls back to 'packing'
+  (which has no UI entry and renders as Unassigned). 8 items added by
+  migrations 144 + 180 (7 egg sandwiches, turkish-coffee) were missing
+  from `menu_items_sync` entirely and were falling to 'packing'. Shipped:
+  `5d35237` migration 181 (UPDATE menu_items.station 'main' → 'mains' on
+  7 egg sandwich rows — cosmetic only; that column isn't read by either
+  trigger); `c3694bf` migration 182 (backfill 8 rows into
+  menu_items_sync, 7 egg sandwiches → 'mains', turkish-coffee → 'cold'
+  matching the 13 existing `drinks-*` rows which all use 'cold').
+  menu_items_sync now has 176 rows = menu_items count. Audit also
+  surfaced parallel issues left UNFIXED this session: STATION_CONFIG
+  (the UI screen list) and the live trigger output set don't fully
+  overlap — `fryer`, `drinks`, `desserts` are emitted by older trigger
+  paths but have no UI screen, and conversely `mains`, `shawarma`,
+  `pizza` are configured screens but the slug-pattern CASE trigger never
+  emits them. Backlog item for a future lane.
 - Session 152: navbar layout iteration (6 commits, `b7f73fd → 3b6647c`).
   Drove the centering through several approaches before landing on the
   proven Nobu/Zuma pattern: single flex row with the logo
